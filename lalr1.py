@@ -1,6 +1,7 @@
 import re
 import types
 
+#...............................................................................................
 class Parser:
 	_PARSER_TABLES = '' # placeholders so pylint doesn't have a fit
 	_PARSER_TOP    = ''
@@ -8,7 +9,7 @@ class Parser:
 
 	_SYMBOL_rec = re.compile (r'(.*[^_\d])(_?\d+)?')
 
-	def __init__ (self): # rfuncs = [func, ...]
+	def __init__ (self):
 		if isinstance (self._PARSER_TABLES, bytes):
 			import ast, base64, zlib
 
@@ -83,6 +84,7 @@ class Parser:
 
 		return tokens
 
+	#...............................................................................................
 	def parse_getextrastate (self):
 		return None
 
@@ -92,17 +94,18 @@ class Parser:
 	def parse_error (self):
 		return False # True if state fixed to continue parsing, False to fail
 
-	# def parse_success (self, reduct):
-	# 	return True # True to contunue checking conflict backtracks, False to stop and return
+	def parse_success (self, reduct):
+		'NO PARSE_SUCCESS'
+		return None # True to contunue checking conflict backtracks, False to stop and return
 
 	def parse (self, src):
-		parse_success = getattr (self, 'parse_success', None)
+		has_parse_success = (self.parse_success.__doc__ != 'NO PARSE_SUCCESS')
 
 		rules, terms, nterms, rfuncs = self.rules, self.terms, self.nterms, self.rfuncs
 
 		tokens = self.tokens = self.tokenize (src)
 		tokidx = 0
-		cstack = self.cstack = [] # [(action, tokidx, stack, stidx, parser stidx), ...] # conflict backtrack stack
+		cstack = self.cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
 		stack  = self.stack  = [(0, None, None)] # [(stidx, symbol, reduction), ...]
 		stidx  = 0
 
@@ -114,10 +117,10 @@ class Parser:
 				self.tokidx, self.stidx, self.tok, self.text, self.pos = tokidx, stidx, tok, text, pos
 
 				if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1] [1] == rules [0] [1]:
-					if not parse_success:
+					if not has_parse_success:
 						return stack [1] [2]
 
-					if not parse_success (stack [1] [2]) or not cstack:
+					if not self.parse_success (stack [1] [2]) or not cstack:
 						return None
 
 				elif self.parse_error ():
@@ -126,20 +129,19 @@ class Parser:
 					continue
 
 				elif not cstack:
-					if parse_success: # do not raise SyntaxError if parser relies on parse_success
+					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
-					else:
-						raise SyntaxError ( \
-							'unexpected end of input' if tok == '$end' else \
-							f'invalid token {text!r}' if tok == '$err' else \
-							f'invalid syntax {src [pos : pos + 16]!r}')
+					raise SyntaxError ( \
+						'unexpected end of input' if tok == '$end' else \
+						f'invalid token {text!r}' if tok == '$err' else \
+						f'invalid syntax {src [pos : pos + 16]!r}')
 
 			if act is None:
-				act, tokens, tokidx, stack, stidx, pstate = cstack.pop ()
+				act, tokens, tokidx, stack, stidx, estate = cstack.pop ()
 				tok, text, pos                            = tokens [tokidx]
 
-				self.parse_setextrastate (pstate)
+				self.parse_setextrastate (estate)
 
 			elif conf is not None:
 				cstack.append ((conf, tokens [:], tokidx, stack [:], stidx, self.parse_getextrastate ()))

@@ -8,6 +8,14 @@ body {
 	margin: 1em 1em 6em 1em;
 }
 
+#Greeting {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	color: #aaa;
+}
+
 #Clipboard {
 	color: transparent;
 	border: 0px;

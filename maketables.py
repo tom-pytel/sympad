@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+import sys
+assert sys.version_info >= (3, 6), 'Python version 3.6+ required'
 import getopt
 import importlib
 import importlib.util
 import os
 import re
-import sys
 import types
 
 from lalr1 import Parser
@@ -140,12 +141,12 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 	# find and extract data from parser class
 	for name, obj in mod.__dict__.items ():
 		if isinstance (obj, object) and (hasattr (obj, '_PARSER_TABLES') and \
-				hasattr (obj, 'TOKENS') or hasattr (obj, '_PARSER_TOP')):
+				hasattr (obj, 'TOKENS') and hasattr (obj, '_PARSER_TOP')):
 
-			pc_name, pc_obj, pc_start, pc_funcs = name, obj, getattr (obj, '_PARSER_TOP'), {} # {'prod': [('name', func, ('parm', ...)), ...], ...} - 'self' stripped from parms
-
-			if pc_start:
-				pc_start = Parser._SYMBOL_rec.match (pc_start).group (1)
+			pc_name  = name
+			pc_obj   = obj
+			pc_start = Parser._SYMBOL_rec.match (obj._PARSER_TOP).group (1)
+			pc_funcs = {} # {'prod': [('name', func, ('parm', ...)), ...], ...} - 'self' stripped from parms
 
 			for name, obj in pc_obj.__dict__.items ():
 				if name [0] != '_' and type (obj) is types.FunctionType and len (obj.__code__.co_varnames) >= 2:
@@ -248,6 +249,7 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 
 			break
 
+#...............................................................................................
 def cmdline ():
 	nodelete   = False
 	width      = 192

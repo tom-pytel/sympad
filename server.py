@@ -1,8 +1,11 @@
+#! /usr/bin/env python
+
+import sys
+assert sys.version_info >= (3, 6), 'Python version 3.6+ required'
 import json
 import os
 import re
 import subprocess
-import sys
 import time
 import threading
 
@@ -14,6 +17,7 @@ import lalr1
 import sparser
 import sym
 
+#...............................................................................................
 _last_ast = ('#', 0) # last evaluated expression for _ usage
 
 def _ast_replace (ast, src, dst):
@@ -77,6 +81,7 @@ class Handler (SimpleHTTPRequestHandler):
 class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
 	pass
 
+#...............................................................................................
 _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 
 if __name__ == '__main__':
@@ -87,9 +92,15 @@ if __name__ == '__main__':
 			while 1:
 				subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED': '1'})
 
+		if len (sys.argv) < 2:
+			host, port = '', 8000
+		else:
+			host, port = (re.split (r'(?<=\]):' if sys.argv [1].startswith ('[') else ':', sys.argv [1]) + ['8000']) [:2]
+			host, port = host.strip ('[]'), int (port)
+
 		watch   = ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
-		httpd   = ThreadingHTTPServer (("", 8000), Handler)
+		httpd   = ThreadingHTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
 
 		thread.start ()
@@ -100,7 +111,7 @@ if __name__ == '__main__':
 			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _month_name [m], y, hh, mm, ss)}] {msg}\n')
 
-		log_message ('Serving...')
+		log_message (f'Serving on {httpd.server_address [0]}:{httpd.server_address [1]}')
 
 		while 1:
 			time.sleep (0.5)

@@ -49,7 +49,7 @@ def _ast2tex_log (ast):
 
 def _ast2tex_trigh (ast):
 	t = ast2tex (ast [2])
-	t = f'\\left({t}\\right)' if t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
+	t = f'\\left({t}\\right)' if ast [2] [0] == '^' or t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
 	n = f'\\operatorname{{{ast [1] [1:]}}}^{{-1}}' if ast [1] in ('asech', 'acsch') else f'\\{ast [1] [1:]}^{{-1}}' \
 			if ast [1] [0] == 'a' else \
 			f'\\operatorname{{{ast [1]}}}' if ast [1] in ('sech', 'csch') else f'\\{ast [1]}'
@@ -58,20 +58,20 @@ def _ast2tex_trigh (ast):
 
 def _ast2tex_sympy (ast):
 	t = ast2tex (ast [2])
-	t = f'\\left({t}\\right)' if t [:6] not in {'\\left(', '\\left['} else t
+	t = f'\\left({t}\\right)' if ast [2] [0] == '^' or t [:6] not in {'\\left(', '\\left['} else t
 
 	return f'\\operatorname{{{ast [1]}}}{t}'
 
 def _ast2tex_lim (ast):
 	t = ast2tex (ast [3])
-	t = f'\\left({t}\\right)' if t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
+	t = f'\\left({t}\\right)' if ast [3] [0] == '^' or t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
 	s = ast2tex (ast [2]) if not ast [4] else ast2tex (('^', ast [2], ('#', 1))) [:-1] + ast [4]
 
 	return f'\\lim_{{{ast2tex (ast [1])}\\to {s}}}{t}'
 
 def _ast2tex_sum (ast):
 	t = ast2tex (ast [4])
-	t = f'\\left({t}\\right)' if t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
+	t = f'\\left({t}\\right)' if ast [4] [0] == '^' or t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
 	s = ast2tex (('^', ('#', 1), ast [3])) [1:]
 
 	return f'\\sum_{{{ast2tex (ast [1])}={ast2tex (ast [2])}}}{s}{t}'
@@ -143,6 +143,10 @@ def _spt_isneg (spt):
 	return (isinstance (spt, (sp.Integer, sp.Float)) and spt < 0) or \
 			(isinstance (spt, sp.Mul) and isinstance (spt.args [0], (sp.Integer, sp.Float)) and spt.args [0] < 0)
 
+def _spt2ast_float (spt):
+	f = float (spt)
+	return ('#', int (f) if f.is_integer () else f)
+
 def _spt2ast_mul (spt):
 	if spt.args [0] == -1:
 		return ('-', spt2ast (sp.Mul (*spt.args [1:])))
@@ -181,7 +185,7 @@ def _spt2ast_trigh (spt):
 
 _spt2ast_funcs = {
 	sp.Integer: lambda spt: ('#', spt.p),
-	sp.Float: lambda spt: ('#', spt.n ()),
+	sp.Float: _spt2ast_float, # lambda spt: ('#', float (spt)), # spt.n ()),
 	sp.Rational: lambda spt: ('/', ('#', spt.p), ('#', spt.q)) if spt.p >= 0 else ('-', ('/', ('#', -spt.p), ('#', spt.q))),
 	sp.numbers.ImaginaryUnit: lambda ast: ('@', 'i'),
 	sp.numbers.Pi: lambda spt: ('@', '\\pi'),
