@@ -1,0 +1,146 @@
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	margin: 1em 1em 6em 1em;
+}
+
+#Clipboard {
+	color: transparent;
+	border: 0px;
+	position: fixed;
+	bottom: 0;
+}
+
+.InputBG {
+	position: fixed;
+	height: 5em;
+	bottom: -1em;
+	left: -1em;
+	right: -1em;
+	background-color: white;
+	/* border: 1px solid black; */
+}
+
+#Input {
+	position: fixed;
+	bottom: 2em;
+	left: 4em;
+	right: 1em;
+	border-color: transparent;
+	outline-color: transparent;
+}
+
+#Log {
+	padding-inline-start: 3em;
+}
+
+.LogEntry {
+	margin-bottom: 1.5em;
+}
+
+.LogLine {
+	display: inline-block;
+	margin-bottom: 0.5em;
+}
+
+.LogError {
+	display: inline-block;
+	margin-bottom: 0.5em;
+	color: red;
+}
+
+.LogInputWait {
+	margin-left: 0.5em;
+}
+
+#OverlayGood {
+	-webkit-text-fill-color: transparent;
+}
+
+#OverlayError {
+	-webkit-text-fill-color: #f44;
+}
+
+#OverlayAutocomplete {
+	-webkit-text-fill-color: #999;
+}
+
+
+
+/* .blinking {
+	animation: blinkingText 1s infinite;
+}
+
+@keyframes blinkingText {
+	0%   { color: #000; }
+	49%  { color: #000; }
+	50%  { color: transparent; }
+	100% { color: transparent; }
+} */
+
+/* .rotator {
+	display: inline-block;
+	animation: rotator 1s infinite;
+}
+
+@keyframes rotator {
+	0%   { rotate: 0deg; }
+	25%  { rotate: 90deg; }
+	50%  { rotate: 180deg; }
+	75%  { rotate: 270deg; }
+	100% { rotate: 360deg; }
+}
+ */
+
+/* .spinner1 {
+	position: absolute;
+	animation: spinner1 1s infinite;
+}
+
+@keyframes spinner1 {
+	0%   { color: #000; }
+	25%  { color: transparent; }
+	75%  { color: transparent; }
+	100% { color: #000; }
+}
+
+.spinner2 {
+	position: absolute;
+	animation: spinner2 1s infinite;
+}
+
+@keyframes spinner2 {
+	0%   { color: transparent; }
+	25%  { color: #000; }
+	50%  { color: transparent; }
+	100% { color: transparent; }
+}
+
+.spinner3 {
+	position: absolute;
+	animation: spinner3 1s infinite;
+}
+
+@keyframes spinner3 {
+	0%   { color: transparent; }
+	25%  { color: transparent; }
+	50%  { color: #000; }
+	75%  { color: transparent; }
+	100% { color: transparent; }
+}
+
+.spinner4 {
+	position: absolute;
+	animation: spinner4 1s infinite;
+}
+
+@keyframes spinner4 {
+	0%   { color: transparent; }
+	50%  { color: transparent; }
+	75%  { color: #000; }
+	100% { color: transparent; }
+} */

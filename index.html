@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />		<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico"><!-- <link rel="icon" href="/SymPy-Favicon.ico"> -->
+	<title>SymPad</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="style.css">
+
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="script.js"></script>
+	<script type="text/x-mathjax-config">
+		MathJax.Hub.Config ({
+			messageStyle: "none",
+			tex2jax: {inlineMath: [["$","$"], ["\\(","\\)"]]}
+		});
+
+		MathJax.Hub.Register.StartupHook ("End", readyMathJax);
+	</script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML-full"></script>
+
+</head>
+
+<body onresize="resize ()">
+
+	<ol id="Log"></ol>
+	<input id="Clipboard">
+	<div class="InputBG"></div>
+	<input id="Input" oninput="inputting (this.value)" autofocus>
+	<div id="InputOverlay"><span id="OverlayGood"></span><span id="OverlayError"></span><span id="OverlayAutocomplete"></span></div>
+
+</body>
+</html>
