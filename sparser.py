@@ -131,7 +131,7 @@ class Parser (lalr1.Parser):
 	# 	return expr_divide
 
 	def expr_diff       (self, expr_divide): # here we catch and convert possible cases of derivatives
-		def interpret_divide (ast):
+		def _interpret_divide (ast):
 			if ast [1] == ('@', 'd'):
 				p = 1
 			elif ast [1] [0] == '^' and ast [1] [1] == ('@', 'd') and ast [1] [2] [0] == '#' and ast [1] [2] [1] > 0 and isinstance (ast [1] [2] [1], int):
@@ -171,38 +171,39 @@ class Parser (lalr1.Parser):
 			return None
 
 		# start here
-		if expr_divide [0] == '/':
-			diff = interpret_divide (expr_divide)
+		if expr_divide [0] == '/': # this part handles d/dx
+			diff = _interpret_divide (expr_divide)
 
 			if diff and diff [1]:
 				return diff
 
-		# elif expr_divide [0] == '*':
-		# 	tail = []
-		# 	end  = len (expr_divide)
+		elif expr_divide [0] == '*': # this part needed to handle \frac{d}{dx}
+			tail = []
+			end  = len (expr_divide)
 
-		# 	for i in range (end - 1, 0, -1):
-		# 		if expr_divide [i] [0] == '/':
-		# 			diff = interpret_divide (expr_divide [i])
+			for i in range (end - 1, 0, -1):
+				if expr_divide [i] [0] == '/':
+					diff = _interpret_divide (expr_divide [i])
 
-		# 			if diff:
-		# 				if diff [1]:
-		# 					if i < end - 1:
-		# 						tail [0 : 0] = expr_divide [i + 1 : end]
+					if diff:
+						if diff [1]:
+							if i < end - 1:
+								tail [0 : 0] = expr_divide [i + 1 : end]
 
-		# 					tail.insert (0, diff)
+							tail.insert (0, diff)
 
-		# 				elif i < end - 1:
-		# 					tail.insert (0, ('diff', expr_divide [i + 1] if i == end - 2 else ('*',) + expr_divide [i + 1 : end]) + diff [2:])
+						elif i < end - 1:
+							tail.insert (0, ('diff', expr_divide [i + 1] if i == end - 2 else ('*',) + expr_divide [i + 1 : end]) + diff [2:])
 
-		# 				else:
-		# 					continue
+						else:
+							continue
 
-		# 				end = i
+						end = i
 
-		# 	if tail:
-		# 		raise RuntimeError ('unexpected derivative')
-		# 		print (end, tail)
+			if tail:
+				tail = tail [0] if len (tail) == 1 else ('*',) + tuple (tail)
+
+				return tail if end == 1 else _ast_flatcat ('*', expr_divide [1], tail) if end == 2 else _ast_flatcat ('*', expr_divide [:end], tail)
 
 		return expr_divide
 
@@ -243,7 +244,6 @@ class Parser (lalr1.Parser):
 	def expr_fact_1     (self, expr_fact, FACTORIAL):                        return ('!', expr_fact)
 	def expr_fact_2     (self, expr_pow):                                    return expr_pow
 
-	# def expr_pow_1      (self, expr_pow, POWERSTAR, expr_negative):          return ('^', expr_pow, expr_negative)
 	def expr_pow_1      (self, expr_pow, POWERSTAR, expr_abs):               return ('^', expr_pow, expr_abs)
 	def expr_pow_5      (self, expr_pow, POWERSTAR, MINUS, expr_mul_imp):    return ('^', expr_pow, _ast_negate (expr_mul_imp))
 	def expr_pow_2      (self, expr_pow, POWER, expr_frac):                  return ('^', expr_pow, expr_frac)

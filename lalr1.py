@@ -132,7 +132,6 @@ class Parser:
 
 				elif self.parse_error ():
 					tokidx, stidx = self.tokidx, self.stidx
-
 					continue
 
 				elif not cstack:
@@ -169,7 +168,6 @@ class Parser:
 
 				except SyntaxError as e:
 					rederr = e or True
-
 					continue
 
 				del stack [rnlen:]

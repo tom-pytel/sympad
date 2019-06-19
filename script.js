@@ -191,11 +191,25 @@ function ajaxResponse (resp) {
 				}
 			}
 
-			$(eLogEval).append ('<div class="LogError">' + resp.err [resp.err.length - 1] + '</div>');
+			let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
 
-			$(eLogEval).click (function () {
-				eLogErrorHidden.style.display = eLogErrorHidden.style.display === 'none' ? 'block' : 'none';
+			$(eLogEval).append ('<div class="LogError">' + resp.err [resp.err.length - 1] + '<span id="LogErrorTriangle' + resp.idx + '" class="LogErrorTriange">\u25b6</span></div>');
+
+			var eLogErrorTriangle = document.getElementById (idLogErrorTriangle);
+
+			$(eLogEval).click (function () { // '\u25b2\u25ba\u25b3\u25b7'
+				if (eLogErrorHidden.style.display === 'none') {
+					eLogErrorHidden.style.display = 'block';
+					eLogErrorTriangle.innerText   = '\u25b2'; // '\u25b9' // '\u25b4' // '\u25b3' //
+				} else {
+					eLogErrorHidden.style.display = 'none';
+					eLogErrorTriangle.innerText   = '\u25b6'; // '\u25b5' // '\u25b8' // '\u25b7' //
+				}
+
 				logResize ();
+
+				// eLogErrorHidden.style.display = eLogErrorHidden.style.display === 'none' ? 'block' : 'none';
+				// logResize ();
 			});
 
 			logResize ();

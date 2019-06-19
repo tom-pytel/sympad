@@ -1,3 +1,5 @@
+import re
+
 import sympy as sp
 
 #...............................................................................................
@@ -75,11 +77,27 @@ def _ast2tex_sum (ast):
 
 	return f'\\sum_{{{ast2tex (ast [1])}={ast2tex (ast [2])}}}{s}{_ast_paren (ast [4])}'
 
-def _ast2tex_diff (ast):
-	p = sum (1 if ast [i] [0] == '@' else ast [i] [2] [1] for i in range (2, len (ast)))
-	p = f'd^{p}' if p > 1 else 'd'
+_diff_var_start_rec = re.compile ('^d')
 
-	return f'\\frac{{{p}}}{{{"".join (ast2tex (ast [i]) for i in range (2, len (ast)))}}}{_ast_paren (ast [1])}'
+def _ast2tex_diff (ast):
+	ds = set ()
+	p  = 0
+
+	for i in range (2, len (ast)):
+		if ast [i] [0] == '@':
+			ds.add (ast [i] [1])
+			p += 1
+		else:
+			ds.add (ast [i] [1] [1])
+			p += ast [i] [2] [1]
+
+	if len (ds) == 1:
+		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{"".join (ast2tex (ast [i]) for i in range (2, len (ast)))}}}{_ast_paren (ast [1])}'
+
+	else:
+		s = ''.join (_diff_var_start_rec.sub ('\\partial ', ast2tex (ast [i])) for i in range (2, len (ast)))
+
+		return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{_ast_paren (ast [1])}'
 
 _ast2tex_funcs = {
 	'#': lambda ast: str (ast [1]),
