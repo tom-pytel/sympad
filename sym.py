@@ -1,6 +1,10 @@
 import sympy as sp
 
 #...............................................................................................
+def _fltoint (v): # (lambda f: int (f) if f.is_integer () else f) (float (v))
+	f = float (v)
+	return int (f) if f.is_integer () else f
+
 def _ast_ignore_fact (ast):
 	return ast if ast [0] != '!' else _ast_ignore_fact (ast [1])
 
@@ -13,7 +17,7 @@ def _ast2tex_mul (ast):
 
 	for i in range (1, len (ast)):
 		if i != 1 and (_ast_ignore_fact (ast [i]) [0] == '#' or \
-				(_ast_ignore_fact (ast [i]) [0] == '/' and (ast [i - 1] [0] == '#' or ast [i - 1] [0] == '/'))):
+				(_ast_ignore_fact (ast [i]) [0] in ('/', 'diff') and (ast [i - 1] [0] == '#' or ast [i - 1] [0]  in ('/', 'diff')))):
 			t.append (f'\\cdot{ast2tex (ast [i])}')
 		elif ast [i] [0] == '+':
 			t.append (f'\\left({ast2tex (ast [i])}\\right)')
@@ -52,33 +56,30 @@ def _ast2tex_log (ast):
 			f'\\log_{t}\\left({ast2tex (ast [1])}\\right)'
 
 def _ast2tex_trigh (ast):
-	t = ast2tex (ast [2])
-	t = f'\\left({t}\\right)' if ast [2] [0] == '^' or t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
 	n = f'\\operatorname{{{ast [1] [1:]}}}^{{-1}}' if ast [1] in ('asech', 'acsch') else f'\\{ast [1] [1:]}^{{-1}}' \
 			if ast [1] [0] == 'a' else \
 			f'\\operatorname{{{ast [1]}}}' if ast [1] in ('sech', 'csch') else f'\\{ast [1]}'
 
-	return f'{n}{t}'
+	return f'{n}{_ast_paren (ast [2])}'
 
 def _ast2tex_sympy (ast):
-	t = ast2tex (ast [2])
-	t = f'\\left({t}\\right)' if ast [2] [0] == '^' or t [:6] not in {'\\left(', '\\left['} else t
-
-	return f'\\operatorname{{{ast [1]}}}{t}'
+	return f'\\operatorname{{{ast [1]}}}{_ast_paren (ast [2])}'
 
 def _ast2tex_lim (ast):
-	t = ast2tex (ast [3])
-	t = f'\\left({t}\\right)' if ast [3] [0] == '^' or t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
 	s = ast2tex (ast [2]) if not ast [4] else ast2tex (('^', ast [2], ('#', 1))) [:-1] + ast [4]
 
-	return f'\\lim_{{{ast2tex (ast [1])}\\to {s}}}{t}'
+	return f'\\lim_{{{ast2tex (ast [1])}\\to {s}}}{_ast_paren (ast [3])}'
 
 def _ast2tex_sum (ast):
-	t = ast2tex (ast [4])
-	t = f'\\left({t}\\right)' if ast [4] [0] == '^' or t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
 	s = ast2tex (('^', ('#', 1), ast [3])) [1:]
 
-	return f'\\sum_{{{ast2tex (ast [1])}={ast2tex (ast [2])}}}{s}{t}'
+	return f'\\sum_{{{ast2tex (ast [1])}={ast2tex (ast [2])}}}{s}{_ast_paren (ast [4])}'
+
+def _ast2tex_diff (ast):
+	p = sum (1 if ast [i] [0] == '@' else ast [i] [2] [1] for i in range (2, len (ast)))
+	p = f'd^{p}' if p > 1 else 'd'
+
+	return f'\\frac{{{p}}}{{{"".join (ast2tex (ast [i]) for i in range (2, len (ast)))}}}{_ast_paren (ast [1])}'
 
 _ast2tex_funcs = {
 	'#': lambda ast: str (ast [1]),
@@ -98,7 +99,7 @@ _ast2tex_funcs = {
 	'sympy': _ast2tex_sympy,
 	'lim': _ast2tex_lim,
 	'sum': _ast2tex_sum,
-	'diff': lambda ast: f'\\frac{{d}}{{d{ast [1] [1]}}}{ast2tex (ast [2])}',
+	'diff': _ast2tex_diff,
 }
 
 def ast2tex (ast):
@@ -107,6 +108,10 @@ def ast2tex (ast):
 	return _ast2tex_funcs [ast [0]] (ast)
 
 #...............................................................................................
+def _ast2spt_diff (ast):
+	args = sum (((ast2spt (('@', n [1] [1:])),) if n [0] == '@' else (ast2spt (('@', n [1] [1] [1:])), sp.Integer (n [2] [1])) for n in ast [2:]), ())
+	return sp.diff (ast2spt (ast [1]), *args)
+
 _ast2spt_vars = {
 	'i': sp.I,
 	'\\pi': sp.pi,
@@ -136,7 +141,7 @@ _ast2spt_funcs = {
 	'sympy': lambda ast: getattr (sp, _ast2spt_sympy.get (ast [1], ast [1])) (ast2spt (ast [2])),
 	'lim': lambda ast: sp.limit (ast2spt (ast [3]), ast2spt (ast [1]), ast2spt (ast [2]), dir = ast [4] if ast [4] else '+-'),
 	'sum': lambda ast: sp.Sum (ast2spt (ast [4]), (ast2spt (ast [1]), ast2spt (ast [2]), ast2spt (ast [3]))).doit (),
-	'diff': lambda ast: sp.diff (ast2spt (ast [2]), ast2spt (ast [1])),
+	'diff': _ast2spt_diff,
 }
 
 def ast2spt (ast):
@@ -145,23 +150,18 @@ def ast2spt (ast):
 	return _ast2spt_funcs [ast [0]] (ast)
 
 #...............................................................................................
-def _spt_isneg (spt):
-	return (isinstance (spt, (sp.Integer, sp.Float)) and spt < 0) or \
-			(isinstance (spt, sp.Mul) and isinstance (spt.args [0], (sp.Integer, sp.Float)) and spt.args [0] < 0)
-
-def _spt2ast_float (spt):
-	f = float (spt)
-	return ('#', int (f) if f.is_integer () else f)
-
 def _spt2ast_mul (spt):
 	if spt.args [0] == -1:
 		return ('-', spt2ast (sp.Mul (*spt.args [1:])))
+
+	if spt.args [0].is_negative:
+		return ('-', spt2ast (sp.Mul (*((-spt.args [0],) + spt.args [1:]))))
 
 	numer = []
 	denom = []
 
 	for arg in spt.args:
-		if isinstance (arg, sp.Pow) and _spt_isneg (arg.args [1]):
+		if isinstance (arg, sp.Pow) and arg.args [1].is_negative:
 			denom.append (spt2ast (sp.Pow (arg.args [0], -arg.args [1])))
 		else:
 			numer.append (spt2ast (arg))
@@ -172,16 +172,14 @@ def _spt2ast_mul (spt):
 	if not numer:
 		return ('/', ('#', 1), ('*',) + tuple (denom) if len (denom) > 1 else denom [0])
 
-	print ('n/d:', numer, denom)
-
 	return ('/', ('*',) + tuple (numer) if len (numer) > 1 else numer [0], \
 			('*',) + tuple (denom) if len (denom) > 1 else denom [0])
 
 def _spt2ast_pow (spt):
-	if _spt_isneg (spt.args [1]):
+	if spt.args [1].is_negative:
 		return ('/', ('#', 1), spt2ast (sp.Pow (spt.args [0], -spt.args [1])))
 
-	if spt.args [1] == 0.5: # sp.numbers.Half:
+	if spt.args [1] == 0.5:
 		return ('sqrt', spt2ast (spt.args [0]))
 
 	return ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
@@ -191,7 +189,7 @@ def _spt2ast_trigh (spt):
 
 _spt2ast_funcs = {
 	sp.Integer: lambda spt: ('#', spt.p),
-	sp.Float: _spt2ast_float, # lambda spt: ('#', float (spt)), # spt.n ()),
+	sp.Float: lambda spt: ('#', _fltoint (spt)),
 	sp.Rational: lambda spt: ('/', ('#', spt.p), ('#', spt.q)) if spt.p >= 0 else ('-', ('/', ('#', -spt.p), ('#', spt.q))),
 	sp.numbers.ImaginaryUnit: lambda ast: ('@', 'i'),
 	sp.numbers.Pi: lambda spt: ('@', '\\pi'),

@@ -105,18 +105,23 @@ class Parser:
 
 		rules, terms, nterms, rfuncs = self.rules, self.terms, self.nterms, self.rfuncs
 
-		tokens = self.tokens = self.tokenize (src)
+		tokens = self.tokenize (src)
 		tokidx = 0
-		cstack = self.cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
-		stack  = self.stack  = [(0, None, None)] # [(stidx, symbol, reduction), ...]
+		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
+		stack  = [(0, None, None)] # [(stidx, symbol, reduction), ...]
 		stidx  = 0
+		rederr = None # reduction function raised SyntaxError
 
 		while 1:
-			tok, text, pos = tokens [tokidx]
-			act, conf      = terms [stidx].get (tok, (None, None))
+			if not rederr:
+				tok, text, pos = tokens [tokidx]
+				act, conf      = terms [stidx].get (tok, (None, None))
 
-			if act is None:
-				self.tokidx, self.stidx, self.tok, self.text, self.pos = tokidx, stidx, tok, text, pos
+			if rederr or act is None:
+				rederr = None
+
+				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.text, self.pos = \
+						tokens, tokidx, cstack, stack, stidx, tok, text, pos
 
 				if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1] [1] == rules [0] [1]:
 					if not has_parse_success:
@@ -139,7 +144,7 @@ class Parser:
 						f'invalid token {text!r}' if tok == '$err' else \
 						f'invalid syntax {src [pos : pos + 16]!r}')
 
-			if act is None:
+			# if act is None:
 				act, tokens, tokidx, stack, stidx, estate = cstack.pop ()
 				tok, text, pos                            = tokens [tokidx]
 
@@ -155,14 +160,20 @@ class Parser:
 				stack.append ((stidx, tok, text))
 
 			else:
-				rnum   = -act
-				rule   = rules [rnum]
-				rnlen  = -len (rule [1])
-				prod   = rule [0]
-				reduct = rfuncs [rnum] (*(t [2] for t in stack [rnlen:]))
+				rule  = rules [-act]
+				rnlen = -len (rule [1])
+				prod  = rule [0]
+
+				try:
+					reduct = rfuncs [-act] (*(t [2] for t in stack [rnlen:]))
+
+				except SyntaxError as e:
+					rederr = e or True
+
+					continue
 
 				del stack [rnlen:]
 
-				stidx  = nterms [stack [-1] [0]] [prod]
+				stidx = nterms [stack [-1] [0]] [prod]
 
 				stack.append ((stidx, prod, reduct))

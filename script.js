@@ -164,21 +164,6 @@ function ajaxResponse (resp) {
 					eLogInputWait.style.visibility = 'hidden';
 					eMath.style.visibility         = '';
 
-
-					// cursor_test = function (element) {
-					// 	if (!element.children.length && element.innerText == '∥') {
-					// 		console.log (element, element.classList);
-					// 		element.innerText = '|';
-					// 		element.classList.add ('blinking');
-					// 	}
-
-					// 	for (let e of element.children) {
-					// 		cursor_test (e);
-					// 	}
-					// }
-
-					// cursor_test (eLogInput.children [0]);
-
 					logResize ();
 				}
 			}]);
@@ -194,7 +179,24 @@ function ajaxResponse (resp) {
 		if (resp.err !== undefined) {
 			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
 
-			$(eLogEval).append ('<span class="LogError">' + resp.err + '</span>');
+			if (resp.err.length > 1) {
+				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
+
+				$(eLogEval).append ('<div id="' + idLogErrorHidden + '" style="display: none"></div>');
+
+				var eLogErrorHidden = document.getElementById (idLogErrorHidden);
+
+				for (let i = 0; i < resp.err.length - 1; i ++) {
+					$(eLogErrorHidden).append ('<div class="LogError">' + resp.err [i] + '</div>');
+				}
+			}
+
+			$(eLogEval).append ('<div class="LogError">' + resp.err [resp.err.length - 1] + '</div>');
+
+			$(eLogEval).click (function () {
+				eLogErrorHidden.style.display = eLogErrorHidden.style.display === 'none' ? 'block' : 'none';
+				logResize ();
+			});
 
 			logResize ();
 			scrollToEnd ();
@@ -376,4 +378,20 @@ $(function () {
 
 	resize ();
 	logResize ();
+	scrollToEnd ();
 });
+
+
+// cursor_test = function (element) {
+// 	if (!element.children.length && element.innerText == '∥') {
+// 		console.log (element, element.classList);
+// 		element.innerText = '|';
+// 		element.classList.add ('blinking');
+// 	}
+
+// 	for (let e of element.children) {
+// 		cursor_test (e);
+// 	}
+// }
+
+// cursor_test (eLogInput.children [0]);

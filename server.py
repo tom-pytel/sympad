@@ -8,6 +8,7 @@ import re
 import subprocess
 import time
 import threading
+import traceback
 
 from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
@@ -66,9 +67,10 @@ class Handler (SimpleHTTPRequestHandler):
 				resp      = {'tex': sym.ast2tex (ast)}
 
 			except Exception as e:
-				s    = str (e)
-				s    = (s if s [0] != '"' else s [1 : -1]) if s else ''
-				resp = {'err': f'{e.__class__.__name__}' + (f': {s}' if s else '')}
+				# s    = str (e)
+				# s    = (s if s [0] != '"' else s [1 : -1]) if s else ''
+				# resp = {'err': [f'{e.__class__.__name__}' + (f': {s}' if s else '')]}
+				resp = {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
 
 		resp ['mode'] = req ['mode']
 		resp ['idx']  = req ['idx']
