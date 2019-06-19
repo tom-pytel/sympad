@@ -4,6 +4,10 @@ import sympy as sp
 def _ast_ignore_fact (ast):
 	return ast if ast [0] != '!' else _ast_ignore_fact (ast [1])
 
+def _ast_paren (ast):
+	t = ast2tex (ast)
+	return f'\\left({t}\\right)' if ast [0] == '^' or t [:6] not in {'\\left(', '\\left[', '\\left|'} else t
+
 def _ast2tex_mul (ast):
 	t = []
 
@@ -94,6 +98,7 @@ _ast2tex_funcs = {
 	'sympy': _ast2tex_sympy,
 	'lim': _ast2tex_lim,
 	'sum': _ast2tex_sum,
+	'diff': lambda ast: f'\\frac{{d}}{{d{ast [1] [1]}}}{ast2tex (ast [2])}',
 }
 
 def ast2tex (ast):
@@ -130,7 +135,8 @@ _ast2spt_funcs = {
 	'trigh': lambda ast: getattr (sp, ast [1]) (ast2spt (ast [2])),
 	'sympy': lambda ast: getattr (sp, _ast2spt_sympy.get (ast [1], ast [1])) (ast2spt (ast [2])),
 	'lim': lambda ast: sp.limit (ast2spt (ast [3]), ast2spt (ast [1]), ast2spt (ast [2]), dir = ast [4] if ast [4] else '+-'),
-	'sum': lambda ast: sp.Sum (ast2spt (ast [4]), (ast2spt (ast [1]), ast2spt (ast [2]), ast2spt (ast [3]))).doit ()
+	'sum': lambda ast: sp.Sum (ast2spt (ast [4]), (ast2spt (ast [1]), ast2spt (ast [2]), ast2spt (ast [3]))).doit (),
+	'diff': lambda ast: sp.diff (ast2spt (ast [2]), ast2spt (ast [1])),
 }
 
 def ast2spt (ast):

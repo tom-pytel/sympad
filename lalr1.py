@@ -47,11 +47,13 @@ class Parser:
 		for name in dir (self):
 			obj = getattr (self, name)
 
-			if name [0] != '_' and type (obj) is types.MethodType and len (obj.__code__.co_varnames) >= 2:
+			# if name [0] != '_' and type (obj) is types.MethodType and len (obj.__code__.co_varnames) >= 2:
+			if name [0] != '_' and type (obj) is types.MethodType and obj.__code__.co_argcount >= 2:
 				m = Parser._SYMBOL_rec.match (name)
 
 				if m:
-					parms = tuple (p if p in self.TOKENS else Parser._SYMBOL_rec.match (p).group (1) for p in obj.__code__.co_varnames [1:])
+					# parms = tuple (p if p in self.TOKENS else Parser._SYMBOL_rec.match (p).group (1) for p in obj.__code__.co_varnames [1:])
+					parms = tuple (p if p in self.TOKENS else Parser._SYMBOL_rec.match (p).group (1) for p in obj.__code__.co_varnames [1 : obj.__code__.co_argcount])
 					prods [(m.group (1), parms)] = obj
 
 		for irule in range (1, len (self.rules)):

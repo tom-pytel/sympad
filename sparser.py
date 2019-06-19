@@ -4,32 +4,44 @@ import re
 import lalr1
 
 #...............................................................................................
+def _flatcat (op, ast0, ast1):
+	if ast0 [0] == op:
+		if ast1 [0] == op:
+			return ast0 + ast1 [1:]
+		return ast0 + (ast1,)
+	elif ast1 [0] == op:
+		return (op, ast0) + ast1 [1:]
+	return (op, ast0, ast1)
+
+def _negate (ast):
+	return ('-', ast) if ast [0] != '#' else ('#', -ast [1])
+
 class Parser (lalr1.Parser):
 	_PARSER_TABLES = \
-			b'eJzlXGlvHDcS/TMLWANwgObVZPubD8UrrHxElrMIBoKh2F7AQOw15Di7iyD/PfWqyG72MZc9oxl5IaqbR5Gseq94NLulk8W987On99S9l6/4+uPFJd3On+Hy/AldLy/OnvwdJT8/ffEz3Z+ePXv1EqWnP0Dy4YMLur54cHH67JwiZ0+ePb84ff3o1cU5hH+4' \
-			b'ePAo3XS6G7pzMcR/4trPuOu/vfv4Npe1bSLykGr94/QSUeiCXl88/+cpy5yzLi9fPcyZLy9FIcS5ywePLp9fnD1Ab4/Pfjp7fIo+Hj9HK5dnT09fdh2cS0uo9eIiFV0+p8vpj68enCP1+csvv1/fUOTdfz/dvP745UOOfrq+efcxJ65/+dzm//s/Ofrl4/XN' \
-			b'/3LiX9dvfsvxD19+ff3+w6ecfPv+9/dv37WCN9dv2viXj2/KShTJyd/e3bS6fO7UKpT99X2be/32bYreu1KLk7lWczNTdPfqJKpGUYYxqpnlPM5pk3NdI2b41zg1t7MuHbokRVChkotBI3qWshBFzMjFxFlKzrVDrFEnSNQUZjltu0QWmrMmUZ2QrDTBcWvY' \
-			b'BF1k2iLulPHcdpFjSwHfixsqavo5oUgW7ZBliFh1UqELYEUtAzGlmwzMVCl1QUCulQk9kbnHPfCvrbIWKa27NEWArZYLgTyb5agwRM0GjtSEcsV9VbOcEVXKMmUu1dbJrpw3bzji5GJqbr6XBRz7OSEnya8QI1/Thd11Qs60XrVMwDKfWWbO5kDNUkcScOme' \
-			b'7CWYQ6emZWwoRtqRPRZaCYaSQSnKnJUS/dKUkuGh4YlZ0YxSmwfMJ/KQGuTXOWXtjAbrolJaeVWTLxDEBIyJGFrOKeeVq+EIxD0NAFIJnUSGp8JgAIPsZ9QsRjm5PNnoK+U1OCZKXaUcXY1yJKesYoQteRP1ToOOGrU09KCrC8pF5RrljfJWeWrHK0/C/gqu' \
-			b'S4N7QURhjHu+kjKkPaHNJZ4ldt/z4sTU3J0Jcovc7eLEcfrogXNR1G4EJtINSecFPO1TtthoK7lpKYXmjLqUarH4YLaQIvHgGjQCZ5W8wIhHGiM3e1j9Tmyi2bhDA2VkkObRIrBZwWenHXlhQFfJZ13yWcl24tEupYwIOZtgEq1CUtLejREtutv6TmhrY+KD' \
-			b'sV4zuOw6mROd5q/k514Y9FZuUujF9TwD5IPyUflG1ZWqNRRKUx5tuWZHC9uCVrcjVg+rrZnJ2mhkbTSyNhoeXkFKSWUji42R8cW1DokqAXdQDbCUMjSaITr60atjUrfBfc2Mf2B2sRaLUxpWZPOlyh5acSeKM9h7dH62s10pdRrDju/76NDpbYjA6iz83YWh' \
-			b'scC24Q7oeSKk2zTv2HgXlObtwpoJB7sFk/YARhZ/M17uF9gbGNkUyCLk5TnOy3ORl41pncZEnR8wLT9g2rTGWVnjrKxxdOvrI0ueTUuelSVvSgrQyvOVlecpmyZXe9j5p0qWmkMrYkWRKDDt/GkBc52VxwHmUroRYq1chWwrGmiR8OmWtPOy2/FRbrw0jqiu' \
-			b'ux2SE+9x4j1OTg8cpzHiOK25/JArfSMKGrnx1YrSNvLNJ3f1go1nrx2PNzLYi8FeDPZ3Yb4hbbzwcQfUhbcwuHy1kvBClk9kMZ3MRi1s1MJGnd2vFnORhrRP0uF4nzoWMCOIGSGbEcQMpKF+FGOjSMU0JcdjNopUiWv31kE1x2wD6XTE+sEFmplAfcxq4oi5' \
-			b'SmfMVTqlrdjRK7Wo2ikpJg2sT91g1pIZ2KqaBjwN9kYFqxqtGqMa6rhCS2QYq0ta49wXhuLcEmeFOK0zgXqiltScNJR7o+Ye70C8Kn/mpPXc43WXJplAcUO/eF1SpXLkRfptulpXWE5vy4oGLxwduGp6VjTFzyorpLyzov254lk3WQE1hNca/pKMMiO72C3g' \
-			b'ZREe09noe2YGmq6o56qztwlbmAxNLBuN96mSKgO/ESugGEv0pe0IoFxielB1VQq8+q1d8e7qKEFzimFJoLlhGIE2kuhLT4CWSgagtVVK0HqtATR3nKClN5AJtFEYgbYyTIKWSgagtVVK0HqtXfGz21GCVkONFrR6GEagjST60hOgpZIBaG2VErRea1f8qHuU' \
-			b'oEXo0IIWh2EE2kiiLz0BWioZgNZWKUHrtQbQAkCT5R7QxbQZ6Jb7FTuJvAUZQ4unLUE3b03ShkEP9wzdg9cA+EoFzfDTvrgGCaEBD1GraFS0KtKOmPSNQ2YayiFDK9NxVIEvWNaM+YJxeB/a4w08Uj62MHjnbCvi0cGuOXmNSpMtf7iDOQS8Gc7HNz8NrviO' \
-			b'BpQSQfy5BIiyXFGNJ2TOo52YlNV8jdyK5qu0i1Wr4ibavoa+IB/vYBuAz16s1OY6+A4ETkjZDjpRGA8ztEhaGXyhFFMP1BaSoedFgAmfRtVZEcdXfI1i0AtPYRGO5cbjkZ3pazypHaebeE8etqt9pe8lSzxkNKIpIiEP6i6D2E+xAfUszdcB+Vm86lopmhPS' \
-			b'ubIp8icmgUKplSRzszHLjrntqwAim2+YIfyuJwm983mi2mKu2GSe4A+8MFHA8npyqpASFMJfap4ucBv4jJfC9M3YwG2kPtxGYjrdojSo5SZ1sxvV4kYsGUP6FG3NFMLNSF1wWq/1r7qdRYAj+1pSbXIu4YbrAhInOheTifrDVPdpOo3m/jz+KS9/tphbNvTB' \
-			b'45leopLQTi9tBtxFYgNXAfCRXWW8ocg1qq6hosXkGlFco82fmmE6vVZ7QGJdZCcY76nAj9T6+10rGiWhJbPNsG1suFY0zGQzZjKJV10rRXOJyUaYbPOnmOyUWs1kI0yK7ASTvXAl7xr2wmQ1IjMchk+csHHIfHYZxGeKDfhkab4O+MziVddKGTKluUNTFE2w' \
-			b'Wqi2klVuOWbZMat9LZhV+72zqpWEltU2A6xKbMiqZlb1mNUkXnWtlKFlNXVoiqIpVjvVVrOqhVWRnWC1pwWz6r53VvkPHvA3D5nVNgOsSmzIqmFWzZjVJF51rZShZTV1WBZNsdqptppVeRZLshOs9rRgVv3XsGqa7t3BmF480+qC5LAZz66gOu6FbTtgnPpS' \
-			b'3QFVSpH2fB9umUB0zYqq8f5aatCzhVHBpZa6n8y29Ga6/ILqxrZsZ7VWUl0z0yw45rnonEmuv2roLmd4B9waptetY9h+M8lQnUM7rNsMDGuJDYc1H710gsPBnSpVncggtOM79Wz6pSXvjnlnqdCXWu4AKK0r6Shm8YnhPtTrSr7AOSJn2GSU78AHvJLQ+kCb' \
-			b'AR+Q2NAH8t+MpeKhD6RKVScyCK0PpJ5Nv3Rqmu/UXEq9rhL3cjCT5Ce4H+rD3Ed6xFB2cCwTpo5iQp/syKcudX6LK9TGlUcrzbpDleLkddkpSpNOTcoTEzkumTooAZlLzlLn41EM7ubp79HmfEDZjVuwtf6wAycdm52VlielS0425uk0Y3AuShW/nrJqN6zF' \
-			b'Zilx4pDTBFI5ZhdMLy2ZFZ8F75fUYPfGK4xexW02foLj7liw4zvPUhO8kwo7HqpmJ6NVH/GIjRMnUTsYtDBy+4FL+t3eXBv+H6bbJtzKjEuVDrZIehXr75K7CeLkXco+CLRTBNZHu9GxicG4NYu+miISCB39lgdv0vkTAzQ2waP6w9j75JJ4gUNa3q1ta1jC' \
-			b'JGA62vH49eNQc2PTY9Hj+0r+ZolMqrGDcgBCjojkNACBZWu1kGfSwKQuYXSCQruULeFpxBFGVXoUZOTxxFqvRnsJssB0DYB26r1W38FDtry+BeMx1RQAeN1hEG8VAzyt93GIm3nA5Dj+VieANauHHEvswQ/0fQL/T/mPFa39m0xuS4FYPn1tiIXdZiZaNfMA' \
-			b'l/VzzDQ08t85EiK7nfR3N90XyMH+/c/le5rFr+SP9O4Q2vauo23wCTu+FeSlkrRYDJZJx2flHFjC8XG2gIqx3MOFahGIrDRUGPTlpWqmpEPcD+EFUr29Q/GRaOVHDdfLGq63arjuN5z+nxp/oSsf5JZ/KpFOgfG5LA658JmXwUNwen5q8sETFJyb9a2Qbw9/' \
-			b'uKotq47/YqP7qnfyfaKSH9lg2uJnanMo//Mqncz3Pkeucv9yBD/4Fnlw5i6n7cVRu7yRak/YcZgeJhQfnpgH9XU/5E5NneI4HRxJsKH+W3AlU1b/cBf1PrBsUdwEQjj/8iBvQQaZIa6q0qxo0IQ2weaHb0GYh+xWgfuM0ufEt/Qrv59PH8xPQdpTChm9tUYX' \
-			b'QdYXRHiJafPzghJ60jmw2s1qTxnrvsRBVntHz5SgtgqxKuJu84psnq72S0ujdh1Ebb2d2nZrzUHxxiGaDSVFebOtT7UOtb03Gf4XnYOA/wwxlb8iLK8iNtlJm7Y0aL01BltK7DY3DrSZ3ExS7Fizyu6WG6v2HMQmf5s2ObXnIDatWcF3a1NQew5iUzj4rgQP' \
-			b'bgcIYn7MzwryeENPDA2/KKb9/uwvjLfIoQ=='
+			b'eJzlXHlvGzcW/zILxAIoYHgNyfznJG7WWOeo43RRCEbgJu4iQJMNcu0CRb5730EOyRnKkl3JkhOIHnJ4PL7jx5vjg8W9k+Mn98S9Fy/p+fPpGXgnT/Hx7DE8z06PH/8TU3598vxX8J8cP335AlOPfsKcDw5P4fn88PTo6QkEjh8/fXZ69Orhy9MTzPzT6eHD' \
+			b'6MnoK/ApGbP/QqWfUtX/uHz/JqUNNDHwAEr96+gMg8gL1vr82b+PKM8J8fLi5YMU+eKMGcIwVXn48OzZ6fEh1vbo+JfjR0dYx6NnSOXs+MnRi1zBCVPCUs9PY9LZM3gc/fzy8ATfPn357evFRwhc/v/Dx1fvv7xLwQ8XHy/fp5eL3z4N8f/9Xwr+fvH6cwq/' \
+			b'+/LHq7fvPqTXN2+/vn1zOZC9/M/F57dfh/ffP168HsJf3r8uiUAgvX6+/Diw8ylzVvD7x9sh9uLNmxi8dy4WB3Mp5momwLfiwIsgIEIpEWYpjmKG17nsMaToTxkx17P87vIrBLCA5IcCIn4WY+aS69P8UDFBQ4LBUBAHEgj04GbpXeeXlGlOjHhxoBJtCmtF' \
+			b'EsgiUhdhI5Ql2kWMLjPYKqwgKdQxrngt6MxlhwEQqsMqUFVAGRUmZEh6aaVCFaDHlXlclWVu0Xf0p7sUH99lfgf2ULeKH6Dk2SwHMdSJg0EgeAH7UAhqcxToQfkdsdDNUoQXMUqVsWBZGcVNcfNAAcMPNWhriEHt1jEuvQLYMAQAlIU2+qhPNUBtWQZNVk55' \
+			b'5iQNclmyCBlM9Flc4ALY1lg7c8oR8AaRszJHnRrfuG1IxGFiKCljiEPVNuLwbRTfpzetZ9BSF52QwooekACaBAUoj+3K9MI4YTzCACwP8AeWsBJPauiwKaChCGVAFgAFSsKGDrAHScGUYDmjhNHCGGEA4QJCQgNFoN4JA+oCohoaHvJqgrCdsMCKElYLa4S1' \
+			b'woJK3DkCF+CzAIMgiiw9gRngHkBGKZoid8fh4kD1xJZy7Hlib3EAhZCxfVew7ZjtwOo0LIxxrGRpY7SnaM2ZteRU5Jysw4Wk27UppN85B4HV2UUUKEauUuzp3fJ3YCRbDMeHnTKiIrA0Qyc1GtaeZjVt1DDaMEaTYSQbxrBhjGbPMLBN5I4TdYhl9J1o0SZq' \
+			b'1t8NblMPT7pe0bj0qjwHks1sI84tW9CyeW1M5HHEEvSsE9YLG0TfiV5ipxYHFpBqtrdqW8AouMfs4aisZjw2Kh4bFY+NippX4FTDqcZR9AKHlz0WaoHj3h7zh8MwqVWStve+5Usf2SU0rJhjETJ2OV7JCGhFjKw/OdS7Ztww4363fCxwUFd5AEaf+wC1a8aM' \
+			b'vo5JcY7ASLgLjWyBk5c7wOcBg0PHLsF0d4FpmrSs6LpwzqLiTETxFERNJx0LnKEonprwUGh5NWl53WV5XtzHttOn5bCm5bCOI63mkVbzSAtezQ8PvDoOvJoH3lYuVC2v8jSv6nTspvVue7IuSqp2zYgmxXjWoWKP4/hFB/b4GfOxUiXnsNHTLJLl+ZH17FGT' \
+			b'nZil74Y5lWFLG7a04f0GjsbWwQscSt/l+B6YQcUePTXHISUUNELLsoosqW3aNkBgywJbFtjehb7BMNfG3QV2ES2kXHpCccvmMYxKw9YxEX49W6Nna/QJfj2Li++Y28bcbn+nzAsUw7EYLonhWAx8R/Y9C+s5l4/dp99noQyxu1LwsM8yAE97zB9CIMxY1fvM' \
+			b'Jm5Kd3FXuov7uh0BvROLbuiSfKybedEuVW9TP6xFD+0b2nYQTosgRVAiIK8W/kA8Yhr4wv1iFBf3O3GPEbf5FNoTKIk58km+hD88S3H0Xv7mwP/c4oEa5AHR5iDV3OLRSyrr4M/DX8ilznFgvV15Ap5rgjzsZ3nC6HeVPJye5Rl+59QTgzyGJEJm2No9oigK' \
+			b'qJbKCNhDOGhEQZbXViI76MqAgy7LHtw1xEd+yKEO8BR3iMgpeORWaGaao1VGTzSWUlSlu4KBrMCa2jlNwfZai0awG7Roxm6ixUmOVpmGFmPKSIuZgUKLFTXUotlvLfKJp81anLiJFluZJmUaWowpIy1mBgotVtTOabm211rsBbtBi/3YTbQ4ydEq09BiTBlp' \
+			b'MTNQaLGidk7L3b3WohfsBi36sZtocZKjVaahxZgy0mJmoNBiRQ216FCLPK9ATfo468jziiumLGmuM9U0TFHKeQvOhDzNTyaTk7zCG1mgE06SHaxwPVrDBTSIl8Ir4bXwRnjg149NFCAGBO1UNlaHhkPJwtRwKBwe1VYGRINCPM6V8Dhcd2BQg3LNAUQi9tJ4' \
+			b'8YguYoBqQQOGU2BOBk+8CIT3RfBaDXa2aChLyWLak1OctuwDT3RFhKgwLU7Hka8jEibVNcYC3z7CuQXd2+HSVAavrACbYJM5GAUv+egpYpAilFWYqYs1gMh44aqenqCa8GpXPwhNTOPFGYW1uHPaFGk3z52ASW8PQJOWDwF2qeXnCEPXiRI6yMvooAz0HOEj' \
+			b'FtYDGcllsaezhBLyuGzECREzRdWNfoNKcda18EFkMkAS4SZElC3dufhTyfvz8G2Gd/5u3uHYTcNEbrzb6a7R9azT7Si6dTbn1Uzf7Hk4BRMRX33GV1/hC63SE8SmA3gsr20Kyeh5JhjpctkEsZ4hRjm94/yreiQiw2XXw1w/YA71SLiLrLVx11O/VKiEvaJv' \
+			b'KrAou2t2UhsH4C77KS/YDf3UEIE48hlHvsIRWsUTjqZTmFheJ2KEI8848owjzzjyGUeecTTU3uqqPMPGrwsbX3dVkXAbMr50FTzkDzuGBcFuwMYQYfjKdcJGPcOhDPQcA4ML60SJgBEYGIGBERgYIQMjMDCGqlvACAyMsC4wQg2MSLgNjMpVwFi2J7NBYLR2' \
+			b'8qoTkR3CAzc0ySV45AiAB3oRHtTrZ3hQBnqO4BEL60QJ4UGeZ2oyxSsuHhGS6jQFAw2QUMFYfh2QEJkMkkS4CZKhYnIVSJZtOf0oIJGC3QCSIcKwl0Aia5BIAomcgoRL6USJQCIZJJJBEuly8QSSWKcpGGiBRDJI5LogkTVIIuE2SGTpKpAs21H7UUBCX9Xg' \
+			b'hzUJJEOEoSOTASSqBokikKgpSLiwTpQIJIpBohgkHK+4eAJJrNMUDLRAohgkal2QqBokkXAbJKp0FUiWbRiuAokK+expihY8RJITzLjrwMYUyPG3Ah49AhDULfJWZXwDsfIyqF4F0QqoJ+bFdB3EuWHpp4QzMQc/Pb8pGX0j8kqI6zSx9noZFPQAHl76rLvy' \
+			b'6SvkMNkmbvr8q0CzbH90Zc+yHDEbxooiuJj1EKM3CBoUi9zQ6wwR2OvkDTwMlr0O7eDlzOO+h2O1HdLTB18pQskhFPPG7idWXhDX9QYfCI84olxhINKxtwpPmKnnvGVvFCtp90Zm5CpsuT3G1vqd0EYhxef3edcvRyCk8q6frnf9dPoUM2YeQ4pji3SmgJDi' \
+			b'CCWHEH/SmSAVaRfEdXsfUPM+oF5nH1B2EUr1XmAi3oaSHbkKSh5Wm0KPdgJdC0SuBo4nsPSEEZWg4a/czQurxqQCCMsAEOJGXblJxzt0rb05NP6S04D5tAOZRwujeeeKZ7LJnmjJ1ftraMj1xpfSfEsMN48baKOdfSh4c5N1m7GaD0sNxyBtGxDSsbPC3mow' \
+			b'ZkenGds1qtNbsysKfZVtk/ANG+ed6Gzv1Ks17A4sbLipqo20VrnHLdY39jM30GhRyOs3XODv9vpa9yN0t8HdSo8LhXY2SFrh++/Sdg3D8fGd3IIBdcuA/d5OdHS0oL+2FW3XMiRqaO+nPHgXhC7JILGGHWHWqu8DJHHaClzerWmrW2JJtNHetsebt0NJxNpt' \
+			b'0eIlZLqXByL1uNgzqAjeDePNCXSUtxcLXuJuyrR6A+bEBhhXma221m/MRiZs1Cp1C3JJtRvsBjehXez2Cg1b2VSy31cl4/5ErWh/tzCMerleP0Mlbg/C6j4hwICnv/F/zLkbCkYpN9+Rb0HDHai2/8b/ZmixnSF2+3tCxZCKOtn+iHqb20DiTynvw0zhG38e' \
+			b'/F0YSX/XRlL4rQ7eY6ZPEIDFxWgCZOhQhhzlMHROwpbAL6KqrgVKgeZJIuSvaL4z+p8vC6YcSw9mspMeqh/NCrPQuBc/JtwvI9xfi3BfE47/q5I+G+NvB8rvw+KZAN7px+1LvDOqcHsjroxD2lJEBudqNRVoEOMfFdVl0WUfq+UPEJqn6YJ/cQFBbUcXv1Yj' \
+			b'4H8vGI9zqq8oZOKFD21Gn1DQ+Uw8nNHpTKY4kOEj1PgVha4/nlh2iOLEzX6Aq9BTCLd/J+kko/376gVZVv+osn4bCmVVrqNHbArLHZ+WjSKdv6pIWJak3PBCgru/r2VqwzdwVL9vKr7FTfMboCt0XLGocPyCZzmEyZYrR64hMo1WrlmG5AhXA2gqyhLcrCuQ' \
+			b'E9dyvivCZs1SJFi+cr1dCwWxNcdyyFuRAydR23Ish7odOej/Jm/HsRz6ui3mxqIoMXX433xa8dd3LM2KEXmD0mixTcfS2FuTxohtOpZmxeC+QWmc2KZjadxupyq4ILxtx4L7tJbg5Q+sKAJdEYD1wOwvJQTcLw=='
 
 	_PARSER_TOP = 'expr'
 
@@ -75,8 +87,8 @@ class Parser (lalr1.Parser):
 
 	def expr            (self, expr_add):                      	             return expr_add
 
-	def expr_add_1      (self, expr_add, PLUS, expr_lim):                    return expr_add + (expr_lim,) if expr_add [0] == '+' else ('+', expr_add, expr_lim)
-	def expr_add_2      (self, expr_add, MINUS, expr_lim):                   return self.expr_add_1 (expr_add, '+', self.expr_unary_1 ('-', expr_lim))
+	def expr_add_1      (self, expr_add, PLUS, expr_lim):                    return _flatcat ('+', expr_add, expr_lim)
+	def expr_add_2      (self, expr_add, MINUS, expr_lim):                   return _flatcat ('+', expr_add, _negate (expr_lim))
 	def expr_add_3      (self, expr_lim):                                    return expr_lim
 
 	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_lim):               return ('lim', expr_var, expr, expr_lim, '')
@@ -88,8 +100,12 @@ class Parser (lalr1.Parser):
 	def expr_sum_2      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER, expr_term, expr_lim): return ('sum', expr_var, expr, expr_term, expr_lim)
 	def expr_sum_3      (self, expr_mul_exp):                                return expr_mul_exp
 
-	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_func):               return expr_mul_exp + (expr_func,) if expr_mul_exp [0] == '*' else ('*', expr_mul_exp, expr_func)
-	def expr_mul_exp_2  (self, expr_mul_exp, TIMES, expr_func):              return self.expr_mul_exp_1 (expr_mul_exp, '*', expr_func)
+	# def expr_diff_1     (self, VARD, DIVIDE, text_var_diff, expr_lim):       return ('diff', ('@', text_var_diff [1:]), expr_lim)
+	# def expr_diff_2     (self, FRAC, VARD, text_var_diff, expr_lim):         return ('diff', ('@', text_var_diff [1:]), expr_lim)
+	# def expr_diff_3     (self, expr_mul_exp):                                return expr_mul_exp
+
+	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_lim):                return _flatcat ('*', expr_mul_exp, expr_lim)
+	def expr_mul_exp_2  (self, expr_mul_exp, TIMES, expr_lim):               return _flatcat ('*', expr_mul_exp, expr_lim)
 	def expr_mul_exp_3  (self, expr_func):                                   return expr_func
 
 	def expr_func_1     (self, SQRT, expr_func):                             return ('sqrt', expr_func)
@@ -108,20 +124,33 @@ class Parser (lalr1.Parser):
 
 	def expr_func_8     (self, TRIGH, POWER1, expr_func):                    return ('^', ('trigh', TRIGH.replace ('\\', '').replace ('arc', 'a'), expr_func), ('#', int (POWER1 [-1])))
 	def expr_func_9     (self, SYMPY, expr_func):                            return ('sympy', SYMPY, expr_func)
-	def expr_func_10    (self, expr_divide):                                 return expr_divide
+	def expr_func_10    (self, expr_negative):                               return expr_negative
 
-	def expr_divide_1   (self, expr_divide, DIVIDE, expr_mul_imp):           return ('/', expr_divide, expr_mul_imp)
+	_derivative_var_rec = re.compile ('d[^_]')
+	def expr_negative_1 (self, MINUS, expr_func):                            return _negate (expr_func)
+# ('*', ('/', ('@', 'd'), ('@', 'dx')), ('@', 'y'))
+# ('/', ('@', 'd'), ('*', ('@', 'dx'), ('@', 'y')))
+	def expr_negative_2 (self, expr_divide): # here we catch and convert the two possible cases of derivative forms
+		if expr_divide [0] == '*' and expr_divide [1] [0] == '/' and expr_divide [1] [1] == ('@', 'd') and \
+				expr_divide [1] [2] [0] == '@' and self._derivative_var_rec.match (expr_divide [1] [2] [1]):
+			return ('diff', ('@', expr_divide [1] [2] [1] [1:]), expr_divide [2] if len (expr_divide) == 3 else ('*',) + expr_divide [2:])
+
+		if expr_divide [0] == '/' and expr_divide [1] == ('@', 'd') and expr_divide [2] [0] == '*' and expr_divide [2] [1] [0] == '@' and \
+				self._derivative_var_rec.match (expr_divide [2] [1] [1]):
+			return ('diff', ('@', expr_divide [2] [1] [1] [1:]), expr_divide [2] [2]) if len (expr_divide [2]) == 3 else ('*',) + expr_divide [2] [2:]
+
+		return expr_divide
+
+	def expr_divide_1   (self, expr_divide, DIVIDE, expr_func):              return ('/', expr_divide, expr_func)
 	def expr_divide_2   (self, expr_mul_imp):                                return expr_mul_imp
 
-	def expr_mul_imp_1  (self, expr_mul_imp, expr_fact):                     return self.expr_mul_exp_1 (expr_mul_imp, '*', expr_fact)
-	def expr_mul_imp_2  (self, expr_unary):                                  return expr_unary
+	def expr_mul_imp_1  (self, expr_mul_imp, expr_fact):                     return _flatcat ('*', expr_mul_imp, expr_fact)
+	def expr_mul_imp_2  (self, expr_fact):                                   return expr_fact
 
-	def expr_unary_1    (self, MINUS, expr_unary):                           return ('-', expr_unary) if expr_unary [0] != '#' else ('#', -expr_unary [1])
-	def expr_unary_2    (self, expr_fact):                                   return expr_fact
 	def expr_fact_1     (self, expr_fact, FACTORIAL):                        return ('!', expr_fact)
 	def expr_fact_2     (self, expr_pow):                                    return expr_pow
 
-	def expr_pow_1      (self, expr_pow, POWERSTAR, expr_unary):             return ('^', expr_pow, expr_unary)
+	def expr_pow_1      (self, expr_pow, POWERSTAR, expr_func):              return ('^', expr_pow, expr_func)
 	def expr_pow_2      (self, expr_pow, POWER, expr_frac):                  return ('^', expr_pow, expr_frac)
 	def expr_pow_3      (self, expr_pow, POWER1):                            return ('^', expr_pow, ('#', int (POWER1 [-1])))
 	def expr_pow_4      (self, expr_abs):                                    return expr_abs
@@ -208,6 +237,7 @@ class Parser (lalr1.Parser):
 
 		else:
 			self.tokens.insert (self.tokidx, ('VAR', '', self.pos))
+
 			self.autocompleting = False
 
 			if self.erridx is None:
@@ -230,3 +260,8 @@ class Parser (lalr1.Parser):
 
 		return next (iter (sorted ((r is None, -e if e is not None else float ('-inf'), len (a), (r, e, a)) \
 				for r, e, a in self.parse_results))) [-1]
+
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('1/2 x*')
+# 	print (a)
