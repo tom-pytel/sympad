@@ -3,7 +3,7 @@ import re
 import sympy as sp
 
 #...............................................................................................
-def _fltoint (v): # (lambda f: int (f) if f.is_integer () else f) (float (v))
+def _fltoint (v):
 	f = float (v)
 	return int (f) if f.is_integer () else f
 
@@ -18,9 +18,9 @@ def _ast2tex_mul (ast):
 	t = []
 
 	for i in range (1, len (ast)):
-		if i != 1 and (_ast_ignore_fact (ast [i]) [0] == '#' or \
-				(_ast_ignore_fact (ast [i]) [0] in ('/', 'diff') and (ast [i - 1] [0] == '#' or ast [i - 1] [0]  in ('/', 'diff')))):
-			t.append (f'\\cdot{ast2tex (ast [i])}')
+		if i != 1 and (_ast_ignore_fact (ast [i]) [0] == '#' or ast [i-1] in {('@', 'd'), ('@', '\\partial')} or \
+				(_ast_ignore_fact (ast [i]) [0] in ('/', 'diff') and (ast [i - 1] [0] == '#' or ast [i - 1] [0] in ('/', 'diff')))):
+			t.append (f'\\cdot {ast2tex (ast [i])}')
 		elif ast [i] [0] == '+':
 			t.append (f'\\left({ast2tex (ast [i])}\\right)')
 		elif ast [i - 1] [0] == '@' and '\\' in ast [i - 1] [1]:
@@ -91,7 +91,7 @@ def _ast2tex_diff (ast):
 			ds.add (ast [i] [1] [1])
 			p += ast [i] [2] [1]
 
-	if len (ds) == 1:
+	if len (ds) == 1 and ds.pop () [0] != '\\': # is not '\\partial'
 		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{"".join (ast2tex (ast [i]) for i in range (2, len (ast)))}}}{_ast_paren (ast [1])}'
 
 	else:
@@ -126,8 +126,15 @@ def ast2tex (ast):
 	return _ast2tex_funcs [ast [0]] (ast)
 
 #...............................................................................................
+_diff_start_rec = re.compile (r'^(?:d|\\partial )(?!_)')
+
 def _ast2spt_diff (ast):
-	args = sum (((ast2spt (('@', n [1] [1:])),) if n [0] == '@' else (ast2spt (('@', n [1] [1] [1:])), sp.Integer (n [2] [1])) for n in ast [2:]), ())
+	args = sum ((
+			(ast2spt (('@', _diff_start_rec.sub ('', n [1]))),) \
+			if n [0] == '@' else \
+			(ast2spt (('@', _diff_start_rec.sub ('', n [1] [1]))), sp.Integer (n [2] [1])) for n in ast [2:] \
+	), ())
+
 	return sp.diff (ast2spt (ast [1]), *args)
 
 _ast2spt_vars = {

@@ -140,7 +140,7 @@ function ajaxResponse (resp) {
 
 			[queue, MJQueue.queue] = [MJQueue.queue, queue];
 
-			MJQueue.queue = queue.filter (function (obj, idx, arr) {
+			MJQueue.queue = queue.filter (function (obj, idx, arr) { // remove previous pending updates to same element
 				return obj.data [0].parentElement !== eLogInput;
 			})
 
