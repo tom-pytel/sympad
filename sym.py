@@ -231,7 +231,8 @@ _spt2ast_funcs = {
 }
 
 def spt2ast (spt):
-	print ('spt2ast:', spt, repr (spt), type (spt)) ## DEBUG!
+	# print ('spt2ast:', spt, repr (spt), type (spt)) ## DEBUG!
+	print ('spt2ast latex:', sp.latex (spt)) ## DEBUG!
 
 	for cls in spt.__class__.__mro__:
 		func = _spt2ast_funcs.get (cls)

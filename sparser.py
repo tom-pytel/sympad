@@ -1,11 +1,12 @@
-# TODO: complete derivatives
-
 from collections import OrderedDict
 import re
 
 import lalr1
 
 #...............................................................................................
+def _ast_negate (ast):
+	return ('-', ast) if ast [0] != '#' else ('#', -ast [1])
+
 def _ast_flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 	if ast0 [0] == op:
 		if ast1 [0] == op:
@@ -15,9 +16,86 @@ def _ast_flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 		return (op, ast0) + ast1 [1:]
 	return (op, ast0, ast1)
 
-def _ast_negate (ast):
-	return ('-', ast) if ast [0] != '#' else ('#', -ast [1])
+_diff_var_rec = re.compile ('d[^_]')
 
+def _ast_diff (ast): # here we catch and convert possible cases of derivatives
+	def _interpret_divide (ast):
+		if ast [1] == ('@', 'd'):
+			p = 1
+		elif ast [1] [0] == '^' and ast [1] [1] == ('@', 'd') and ast [1] [2] [0] == '#' and ast [1] [2] [1] > 0 and isinstance (ast [1] [2] [1], int):
+			p = ast [1] [2] [1]
+		else:
+			return None
+
+		ns = (ast [2],) if ast [2] [0] != '*' else ast [2] [1:]
+		ds = []
+		cp = p
+
+		for i in range (len (ns)):
+			n = ns [i]
+
+			if n [0] == '@' and _diff_var_rec.match (n [1]):
+				dec = 1
+			elif n [0] == '^' and n [1] [0] == '@' and _diff_var_rec.match (n [1] [1]) and n [2] [0] == '#' and n [2] [1] > 0 and isinstance (n [2] [1], int):
+				dec = n [2] [1]
+			else:
+				return None
+
+			cp -= dec
+
+			if cp < 0:
+				return None # raise SyntaxError #
+
+			ds.append (n)
+
+			if not cp:
+				if i == len (ns) - 1:
+					return ('diff', None) + tuple (ds)
+				elif i == len (ns) - 2:
+					return ('diff', ns [-1]) + tuple (ds)
+				else:
+					return ('diff', ('*',) + ns [i + 1:]) + tuple (ds)
+
+		return None
+
+	# start here
+	if ast [0] == '/': # this part handles d/dx
+		diff = _interpret_divide (ast)
+
+		if diff and diff [1]:
+			return diff
+
+	elif ast [0] == '*': # this part needed to handle \frac{d}{dx}
+		tail = []
+		end  = len (ast)
+
+		for i in range (end - 1, 0, -1):
+			if ast [i] [0] == '/':
+				diff = _interpret_divide (ast [i])
+
+				if diff:
+					if diff [1]:
+						if i < end - 1:
+							tail [0 : 0] = ast [i + 1 : end]
+
+						tail.insert (0, diff)
+
+					elif i < end - 1:
+						tail.insert (0, ('diff', ast [i + 1] if i == end - 2 else ('*',) + ast [i + 1 : end]) + diff [2:])
+
+					else:
+						continue
+
+					end = i
+
+		if tail:
+			tail = tail [0] if len (tail) == 1 else ('*',) + tuple (tail)
+
+			return tail if end == 1 else _ast_flatcat ('*', ast [1], tail) if end == 2 else _ast_flatcat ('*', ast [:end], tail)
+
+	return ast
+
+#...............................................................................................
 class Parser (lalr1.Parser):
 	_PARSER_TABLES = \
 			b'eJztnWtv20YWhv/MArGAEcC5ksy3tHW7xjqXOk4XhREUbuMuAmyzRdp0Fyjy3/ec854hhxJF0YlkS2kgmuQM53Iuzww5nJF8cvXg/OzxA/Pg+QvePz578uI5h769uKTD+RPePf2G9pcXZ9/8na98//jZ9xx7+jWn+OLRBe2fPbo4fXJOJ2ffPHl6cfrDly8u' \
@@ -59,7 +137,7 @@ class Parser (lalr1.Parser):
 		('LOG',          r'\\?log'),
 		('LIM',          r'\\lim'),
 		('SUM',          r'\\sum'),
-		('VAR',          r'\b_|d?(?:[a-zA-Z]|\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\pi|\\rho|\\sigma|\\tau|\\upsilon|\\phi|\\chi|\\psi|\\omega|\\infty)'),
+		('VAR',          r'\b_|d?(?:[a-zA-Z]|\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\pi|\\rho|\\sigma|\\tau|\\upsilon|\\phi|\\chi|\\psi|\\omega)|\\infty'),
 		('NUM',          r'[0-9]+(?:\.[0-9]*)?|\.[0-9]+'),
 		('SUB1',         r'_[0-9]'),
 		('SUB',          r'_'),
@@ -102,7 +180,7 @@ class Parser (lalr1.Parser):
 	def expr_lim_4      (self, expr_sum):                                    return expr_sum
 
 	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER1, expr_lim):           return ('sum', expr_var, expr, ('#', int (POWER1 [-1])), expr_lim)
-	def expr_sum_2      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER, expr_term, expr_lim): return ('sum', expr_var, expr, expr_term, expr_lim)
+	def expr_sum_2      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER, expr_frac, expr_lim): return ('sum', expr_var, expr, expr_frac, expr_lim)
 	def expr_sum_3      (self, expr_mul_exp):                                return expr_mul_exp
 
 	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_lim):                return _ast_flatcat ('*', expr_mul_exp, expr_lim)
@@ -112,110 +190,7 @@ class Parser (lalr1.Parser):
 	def expr_negative_1 (self, MINUS, expr_diff):                            return _ast_negate (expr_diff)
 	def expr_negative_2 (self, expr_diff):                                   return expr_diff
 
-	# ('*', ('@', 'z'), ('/', ('@', 'd'), ('@', 'dx')), ('@', 'y'))
-	# ('*', ('/', ('@', 'd'), ('@', 'dx')), ('@', 'y'))
-	# ('/', ('@', 'd'), ('*', ('@', 'dx'), ('@', 'y')))
-	# ('/', ('^', ('@', 'd'), ('#', 2)), ('*', ('@', 'dx'), ('@', 'dy'), ('@', 'y')))
-	# ('/', ('^', ('@', 'd'), ('#', 2)), ('*', ('^', ('@', 'dx'), ('#', 2)), ('@', 'y')))
-	_diff_var_rec = re.compile ('d[^_]')
-
-	# def expr_diff       (self, expr_divide): # here we catch and convert possible cases of derivatives
-	# 	if expr_divide [0] == '*' and expr_divide [1] [0] == '/' and expr_divide [1] [1] == ('@', 'd') and \
-	# 			expr_divide [1] [2] [0] == '@' and self._derivative_var_rec.match (expr_divide [1] [2] [1]):
-	# 		return ('diff', ('@', expr_divide [1] [2] [1] [1:]), expr_divide [2] if len (expr_divide) == 3 else ('*',) + expr_divide [2:])
-
-	# 	if expr_divide [0] == '/' and expr_divide [1] == ('@', 'd') and expr_divide [2] [0] == '*' and expr_divide [2] [1] [0] == '@' and \
-	# 			self._derivative_var_rec.match (expr_divide [2] [1] [1]):
-	# 		return ('diff', ('@', expr_divide [2] [1] [1] [1:]), expr_divide [2] [2]) if len (expr_divide [2]) == 3 else ('*',) + expr_divide [2] [2:]
-
-	# 	return expr_divide
-
-	def expr_diff       (self, expr_divide): # here we catch and convert possible cases of derivatives
-		def _interpret_divide (ast):
-			if ast [1] == ('@', 'd'):
-				p = 1
-			elif ast [1] [0] == '^' and ast [1] [1] == ('@', 'd') and ast [1] [2] [0] == '#' and ast [1] [2] [1] > 0 and isinstance (ast [1] [2] [1], int):
-				p = ast [1] [2] [1]
-			else:
-				return None
-
-			ns = (ast [2],) if ast [2] [0] != '*' else ast [2] [1:]
-			ds = []
-			cp = p
-
-			for i in range (len (ns)):
-				n = ns [i]
-
-				if n [0] == '@' and self._diff_var_rec.match (n [1]):
-					dec = 1
-				elif n [0] == '^' and n [1] [0] == '@' and self._diff_var_rec.match (n [1] [1]) and n [2] [0] == '#' and n [2] [1] > 0 and isinstance (n [2] [1], int):
-					dec = n [2] [1]
-				else:
-					return None
-
-				cp -= dec
-
-				if cp < 0:
-					return None # raise SyntaxError #
-
-				ds.append (n)
-
-				if not cp:
-					if i == len (ns) - 1:
-						return ('diff', None) + tuple (ds)
-					elif i == len (ns) - 2:
-						return ('diff', ns [-1]) + tuple (ds)
-					else:
-						return ('diff', ('*',) + ns [i + 1:]) + tuple (ds)
-
-			return None
-
-		# start here
-		if expr_divide [0] == '/': # this part handles d/dx
-			diff = _interpret_divide (expr_divide)
-
-			if diff and diff [1]:
-				return diff
-
-		elif expr_divide [0] == '*': # this part needed to handle \frac{d}{dx}
-			tail = []
-			end  = len (expr_divide)
-
-			for i in range (end - 1, 0, -1):
-				if expr_divide [i] [0] == '/':
-					diff = _interpret_divide (expr_divide [i])
-
-					if diff:
-						if diff [1]:
-							if i < end - 1:
-								tail [0 : 0] = expr_divide [i + 1 : end]
-
-							tail.insert (0, diff)
-
-						elif i < end - 1:
-							tail.insert (0, ('diff', expr_divide [i + 1] if i == end - 2 else ('*',) + expr_divide [i + 1 : end]) + diff [2:])
-
-						else:
-							continue
-
-						end = i
-
-			if tail:
-				tail = tail [0] if len (tail) == 1 else ('*',) + tuple (tail)
-
-				return tail if end == 1 else _ast_flatcat ('*', expr_divide [1], tail) if end == 2 else _ast_flatcat ('*', expr_divide [:end], tail)
-
-		return expr_divide
-
-		# if expr_divide [0] == '*' and expr_divide [1] [0] == '/' and expr_divide [1] [1] == ('@', 'd') and \
-		# 		expr_divide [1] [2] [0] == '@' and self._diff_var_rec.match (expr_divide [1] [2] [1]):
-		# 	return ('diff', (expr_divide [2] if len (expr_divide) == 3 else ('*',) + expr_divide [2:]), ('@', expr_divide [1] [2] [1] [1:]))
-
-		# if expr_divide [0] == '/' and expr_divide [1] == ('@', 'd') and expr_divide [2] [0] == '*' and expr_divide [2] [1] [0] == '@' and \
-		# 		self._diff_var_rec.match (expr_divide [2] [1] [1]):
-		# 	return ('diff', (expr_divide [2] [2] if len (expr_divide [2]) == 3 else ('*',) + expr_divide [2] [2:]), ('@', expr_divide [2] [1] [1] [1:]))
-
-		# return expr_divide
+	def expr_diff       (self, expr_divide):                                 return _ast_diff (expr_divide)
 
 	def expr_divide_1   (self, expr_divide, DIVIDE, expr_mul_imp):           return ('/', expr_divide, expr_mul_imp)
 	def expr_divide_2   (self, expr_mul_imp):                                return expr_mul_imp
@@ -226,7 +201,7 @@ class Parser (lalr1.Parser):
 	def expr_func_1     (self, SQRT, expr_lim):                              return ('sqrt', expr_lim)
 	def expr_func_2     (self, SQRT, BRACKETL, expr, BRACKETR, expr_lim):    return ('sqrt', expr_lim, expr)
 	def expr_func_3     (self, LN, expr_lim):                                return ('log', expr_lim)
-	def expr_func_4     (self, LOG, SUB, expr_term, expr_lim):               return ('log', expr_lim, expr_term)
+	def expr_func_4     (self, LOG, SUB, expr_frac, expr_lim):               return ('log', expr_lim, expr_frac)
 	def expr_func_5     (self, LOG, SUB1, expr_lim):                         return ('log', expr_lim, ('#', int (SUB1 [-1])))
 	def expr_func_6     (self, TRIGH, expr_lim):                             return ('trigh', TRIGH.replace ('\\', '').replace ('arc', 'a'), expr_lim)
 	def expr_func_7     (self, TRIGH, POWER, expr_frac, expr_lim):

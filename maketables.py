@@ -149,11 +149,9 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 			pc_funcs = {} # {'prod': [('name', func, ('parm', ...)), ...], ...} - 'self' stripped from parms
 
 			for name, obj in pc_obj.__dict__.items ():
-				# if name [0] != '_' and type (obj) is types.FunctionType and len (obj.__code__.co_varnames) >= 2:
 				if name [0] != '_' and type (obj) is types.FunctionType and obj.__code__.co_argcount >= 2:
 					name_sym = Parser._SYMBOL_rec.match (name).group (1)
 
-					# pc_funcs.setdefault (name_sym, []).append ((name, obj, obj.__code__.co_varnames [1:]))
 					pc_funcs.setdefault (name_sym, []).append ((name, obj, obj.__code__.co_varnames [1 : obj.__code__.co_argcount]))
 
 					if pc_start is None:
