@@ -1,16 +1,22 @@
+// TODO: Fix firefox tabbing out of input.
+
 var URL             = '/';
 var MJQueue         = null;
+var MarginTop       = Infinity;
 var PreventFocusOut = true;
 
 var History         = [];
 var HistIdx         = 0;
 var LogIdx          = 0;
-var ErrorIdx        = null;
-var UniqueId        = 0;
-var Autocomplete    = [];
-var MarginTop       = Infinity;
+var UniqueID        = 1;
 
-//-----------------------------------------------------------------------------------------------
+var Validations     = [undefined];
+var Evaluations     = [undefined];
+var ErrorIdx        = null;
+var Autocomplete    = [];
+
+var LastClickTime   = 0;
+var NumClicks       = 0;
 
 //...............................................................................................
 function generateBG () {
@@ -22,7 +28,7 @@ function generateBG () {
 
 			for (let x = x0; x < width; x ++) {
 				d            = 244 + Math.floor (Math.random () * 12);
-				data [p]     = data [p + 1] = d; // data [p + 2] = d
+				data [p]     = data [p + 1] = d;
 				data [p + 2] = d - 8;
 				data [p + 3] = 255;
 				p            = p + 4;
@@ -76,12 +82,11 @@ function resize () {
 
 //...............................................................................................
 function logResize () {
-	let body   = $('body');
-	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - body.height () - BodyMarginBottom + 2)); // 2 is fudge factor
+	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 2)); // 2 is fudge factor
 
 	if (margin < MarginTop) {
-		window.MarginTop = margin
-		body.css ({'margin-top': margin});
+		MarginTop = margin
+		$('body').css ({'margin-top': margin});
 	}
 }
 
@@ -93,8 +98,7 @@ function readyMathJax () {
 	var PREFILTER  = TEX.prefilterMath;
 
 	TEX.Augment ({
-		prefilterMath: (tex, displaymode, script) => {
-			// tex = '\\displaystyle{' + tex.replace ('\\right|', '\\ \\right|') + '}'
+		prefilterMath: function (tex, displaymode, script) {
 			return PREFILTER.call (TEX, '\\displaystyle{' + tex + '}', displaymode, script);
 		}
 	});
@@ -116,38 +120,54 @@ function addLogEntry () {
 	$('#Log').append ('<li class="LogEntry" id="LogEntry' + LogIdx + '"><div id="LogInput' + LogIdx + '" class="LogLine">' +
 			'<img id="LogInputWait' + LogIdx + '" class="LogInputWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16" style="visibility: hidden">' +
 			'</div></li>');
+
+	Validations.push (undefined);
+	Evaluations.push (undefined);
 }
 
-//...............................................................................................
-function parseTeX (text) {
-	return text.replace (/(\\left|\\right)(\(|\)|\[|\])/g, '$2').replace (/\\operatorname{(sech|csch)}/g, '\\$1')
-			.replace (/\\operatorname{(\?|\w+)}/g, '$1');
-}
+// function parseTeX (text) {
+// 	return text.replace (/(\\left| \\right)(\(|\)|\[|\])/g, '$2').replace (/\\operatorname{(sech|csch)}/g, '\\$1').replace (/\\operatorname{(\?|\w+)}/g, '$1');
+// }
 
 //...............................................................................................
-function copyToClipboard (elem) {
-	window.PreventFocusOut = false;
+function writeToClipboard (text) {
+	PreventFocusOut = false;
 
-	$('#Clipboard').val (parseTeX ($('#' + elem.id + ' > script').text ()));
+	$('#Clipboard').val (text);
 	$('#Clipboard').focus ();
 	$('#Clipboard').select ();
-
 	document.execCommand ('copy');
 
-	window.PreventFocusOut = true;
+	PreventFocusOut = true;
 
 	JQInput.focus ();
-
-	elem.style.color      = 'transparent';
-	elem.style.background = 'black';
-
-	setTimeout (() => {
-		elem.style.color      = 'black';
-		elem.style.background = 'transparent';
-	}, 100);
 }
 
-//-----------------------------------------------------------------------------------------------
+//...............................................................................................
+function copyToClipboard (e, val_or_eval, idx) {
+	console.log (Validations, Evaluations);
+
+	let t = performance.now ();
+
+	if ((t - LastClickTime) > 500) {
+		NumClicks = 1;
+	} else{
+		NumClicks += 1;
+	}
+
+	LastClickTime = t;
+	let resp      = (val_or_eval ? Evaluations : Validations) [idx];
+
+	writeToClipboard (NumClicks == 1 ? resp.simple : NumClicks == 2 ? resp.py : resp.tex);
+
+	e.style.color      = 'transparent';
+	e.style.background = 'black';
+
+	setTimeout (function () {
+		e.style.color      = 'black';
+		e.style.background = 'transparent';
+	}, 100);
+}
 
 //...............................................................................................
 function updateOverlay (text, erridx, autocomplete) {
@@ -169,24 +189,28 @@ function updateOverlay (text, erridx, autocomplete) {
 //...............................................................................................
 function ajaxResponse (resp) {
 	if (resp.mode == 'validate') {
-		if (resp.tex !== null) {
-			let eLogInput = document.getElementById ('LogInput' + resp.idx);
-			let queue     = [];
+		if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
+			return; // ignore out of order responses
+		}
 
+		if (resp.tex !== null) {
+			Validations [resp.idx] = resp;
+
+			let eLogInput = document.getElementById ('LogInput' + resp.idx);
+
+			let queue              = [];
 			[queue, MJQueue.queue] = [MJQueue.queue, queue];
 
 			MJQueue.queue = queue.filter (function (obj, idx, arr) { // remove previous pending updates to same element
 				return obj.data [0].parentElement !== eLogInput;
 			})
 
-			let idMath        = 'LogInputMath' + (++ UniqueId);
-			let eLogInputWait = document.getElementById ('LogInputWait' + resp.idx);
-
+			let eLogInputWait              = document.getElementById ('LogInputWait' + resp.idx);
 			eLogInputWait.style.visibility = '';
 
-			$(eLogInput).append ('<span id="' + idMath + '" onclick="copyToClipboard (this)" style="visibility: hidden">$' + resp.tex + '$</span>');
-
-			let eMath = document.getElementById (idMath);
+			let idMath = 'LogInputMath' + UniqueID ++;
+			$(eLogInput).append ('<span id="' + idMath + '" onclick="copyToClipboard (this, 0, ' + resp.idx + ')" style="visibility: hidden">$' + resp.tex + '$</span>');
+			let eMath  = document.getElementById (idMath);
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
 				if (eMath === eLogInput.children [eLogInput.children.length - 1]) {
@@ -209,6 +233,8 @@ function ajaxResponse (resp) {
 		updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
 
 	} else { // resp.mode == 'evaluate'
+		Evaluations [resp.idx] = resp;
+
 		let eLogEval = document.getElementById ('LogEval' + resp.idx);
 
 		if (resp.err !== undefined) {
@@ -216,10 +242,8 @@ function ajaxResponse (resp) {
 
 			if (resp.err.length > 1) {
 				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
-
 				$(eLogEval).append ('<div id="' + idLogErrorHidden + '" style="display: none"></div>');
-
-				var eLogErrorHidden = document.getElementById (idLogErrorHidden);
+				var eLogErrorHidden  = document.getElementById (idLogErrorHidden);
 
 				for (let i = 0; i < resp.err.length - 1; i ++) {
 					$(eLogErrorHidden).append ('<div class="LogError">' + resp.err [i] + '</div>');
@@ -227,10 +251,8 @@ function ajaxResponse (resp) {
 			}
 
 			let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
-
 			$(eLogEval).append ('<div class="LogError">' + resp.err [resp.err.length - 1] + '<span id="LogErrorTriangle' + resp.idx + '" class="LogErrorTriange">\u25b6</span></div>');
-
-			var eLogErrorTriangle = document.getElementById (idLogErrorTriangle);
+			var eLogErrorTriangle  = document.getElementById (idLogErrorTriangle);
 
 			$(eLogEval).click (function () { // '\u25b2\u25ba\u25b3\u25b7'
 				if (eLogErrorHidden.style.display === 'none') {
@@ -242,20 +264,15 @@ function ajaxResponse (resp) {
 				}
 
 				logResize ();
-
-				// eLogErrorHidden.style.display = eLogErrorHidden.style.display === 'none' ? 'block' : 'none';
-				// logResize ();
 			});
 
 			logResize ();
 			scrollToEnd ();
 
 		} else { // no error
-			let idEvalMath   = 'LogEvalMath' + resp.idx;
-
-			$(eLogEval).append ('<span id="' + idEvalMath + '" style="visibility: hidden" onclick="copyToClipboard (this)">$' + resp.tex + '$</span>');
-
-			let eLogEvalMath = document.getElementById (idEvalMath);
+			let idLogEvalMath = 'LogEvalMath' + resp.idx;
+			$(eLogEval).append ('<span id="' + idLogEvalMath + '" style="visibility: hidden" onclick="copyToClipboard (this, 1, ' + resp.idx + ')">$' + resp.tex + '$</span>');
+			let eLogEvalMath  = document.getElementById (idLogEvalMath);
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
 				eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
@@ -285,10 +302,15 @@ function inputting (text, reset = false) {
 	$.ajax ({
 		url: URL,
 		type: 'POST',
-		data: {mode: 'validate', idx: LogIdx, text: text, csrfmiddlewaretoken: window.CSRF_TOKEN},
 		cache: false,
 		dataType: 'json',
-		success: ajaxResponse
+		success: ajaxResponse,
+		data: {
+			mode: 'validate',
+			idx: LogIdx,
+			subidx: UniqueID ++,
+			text: text,
+		},
 	});
 }
 
@@ -297,10 +319,14 @@ function inputted (text) {
 	$.ajax ({
 		url: URL,
 		type: 'POST',
-		data: {mode: 'evaluate', idx: LogIdx, text: text, csrfmiddlewaretoken: window.CSRF_TOKEN},
 		cache: false,
 		dataType: 'json',
-		success: ajaxResponse
+		success: ajaxResponse,
+		data: {
+			mode: 'evaluate',
+			idx: LogIdx,
+			text: text,
+		},
 	});
 
 	$('#LogEntry' + LogIdx).append ('<div id="LogEval' + LogIdx + '">' +
@@ -315,8 +341,6 @@ function inputted (text) {
 	logResize ();
 	scrollToEnd ();
 }
-
-//-----------------------------------------------------------------------------------------------
 
 //...............................................................................................
 function inputKeypress (e) {
@@ -374,7 +398,7 @@ function inputKeydown (e) {
 			inputting (History [++ HistIdx], true);
 			return false;
 
-		} else {
+		} else if (HistIdx != History.length) {
 			HistIdx = History.length;
 			inputting ('', true);
 
@@ -405,6 +429,7 @@ function inputFocusout (e) {
 	if (PreventFocusOut) {
 		e.preventDefault ();
 		$(this).focus ();
+		return false;
 	}
 }
 
@@ -412,10 +437,10 @@ function inputFocusout (e) {
 $(function () {
 	window.JQInput = $('#Input');
 
-	let margin              = $('body').css ('margin-top');
-	window.BodyMarginTop    = Number (margin.slice (0, margin.length - 2));
-	margin                  = $('body').css ('margin-bottom');
-	window.BodyMarginBottom = Number (margin.slice (0, margin.length - 2));
+	let margin       = $('body').css ('margin-top');
+	BodyMarginTop    = Number (margin.slice (0, margin.length - 2));
+	margin           = $('body').css ('margin-bottom');
+	BodyMarginBottom = Number (margin.slice (0, margin.length - 2));
 
 	addLogEntry ();
 

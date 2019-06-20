@@ -46,13 +46,25 @@ class Handler (SimpleHTTPRequestHandler):
 
 		if req ['mode'] == 'validate':
 			ast, erridx, autocomplete = parser.parse (req ['text'])
-			tex                       = None
+			tex = simple = py         = None
 
 			if ast is not None:
-				tex = sym.ast2tex (_ast_replace (ast, ('@', '_'), _last_ast))
+				ast    = _ast_replace (ast, ('@', '_'), _last_ast)
+				tex    = sym.ast2tex (ast)
+				simple = sym.ast2simple (ast)
+				py     = sym.ast2py (ast)
+
+				print ()
+				print ('ast:   ', ast) ## DEBUG!
+				print ('tex:   ', tex) ## DEBUG!
+				print ('simple:', simple) ## DEBUG!
+				print ('py:    ', py) ## DEBUG!
+				print ()
 
 			resp = {
 				'tex'         : tex,
+				'simple'      : simple,
+				'py'          : py,
 				'erridx'      : erridx,
 				'autocomplete': autocomplete,
 			}
@@ -64,12 +76,14 @@ class Handler (SimpleHTTPRequestHandler):
 				spt       = sym.ast2spt (ast)
 				ast       = sym.spt2ast (spt)
 				_last_ast = ast
-				resp      = {'tex': sym.ast2tex (ast)}
+
+				resp      = {
+					'tex'   : sym.ast2tex (ast),
+					'simple': sym.ast2simple (ast),
+					'py'    : sym.ast2py (ast),
+				}
 
 			except Exception as e:
-				# s    = str (e)
-				# s    = (s if s [0] != '"' else s [1 : -1]) if s else ''
-				# resp = {'err': [f'{e.__class__.__name__}' + (f': {s}' if s else '')]}
 				resp = {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
 
 		resp ['mode'] = req ['mode']
