@@ -1,3 +1,5 @@
+# TODO: Proper function ordering and parameter capturing.
+
 from collections import OrderedDict
 import re
 

@@ -26,11 +26,15 @@
 
 <body onresize="resize ()">
 
+	<input id="Clipboard">
+	<!-- <canvas id="Background" width="1278" height="1327"></canvas> -->
+	<canvas id="Background"></canvas>
 	<div id="Greeting">Hello World...</div>
 
 	<ol id="Log"></ol>
-	<input id="Clipboard">
-	<div class="InputBG"></div>
+	<!-- <div id="InputBG"></div> -->
+	<canvas id="InputBG"></canvas>
+
 	<input id="Input" oninput="inputting (this.value)" autofocus>
 	<div id="InputOverlay"><span id="OverlayGood"></span><span id="OverlayError"></span><span id="OverlayAutocomplete"></span></div>
 

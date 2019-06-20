@@ -13,6 +13,38 @@ var MarginTop       = Infinity;
 //-----------------------------------------------------------------------------------------------
 
 //...............................................................................................
+function generateBG () {
+	function writeRandomData (data, x0, y0, width, height) {
+		let p, d;
+
+		for (let y = y0; y < height; y ++) {
+			p = (width * y + x0) * 4;
+
+			for (let x = x0; x < width; x ++) {
+				data [p]     = data [p + 1] = data [p + 2] = 244 + Math.floor (Math.random () * 12);
+				data [p + 3] = 255;
+				p            = p + 4;
+			}
+		}
+	}
+
+	let canv    = document.getElementById ('Background');
+	canv.width  = window.innerWidth;
+	canv.height = window.innerHeight;
+	let ctx     = canv.getContext ('2d');
+	let imgd    = ctx.getImageData (0, 0, canv.width, canv.height); // ctx.createImageData (width, height);
+
+	writeRandomData (imgd.data, 0, 0, canv.width, canv.height);
+	ctx.putImageData (imgd, 0, 0);
+
+	canv        = $('#InputBG') [0];
+	ctx         = canv.getContext ('2d');
+	canv.width  = window.innerWidth;
+
+	ctx.putImageData (imgd, 0, 0);
+}
+
+//...............................................................................................
 function copyInputStyle () {
 	JQInput.css ({left: $('#LogEntry1').position ().left})
 	JQInput.width ($('#Log').width ());
@@ -37,6 +69,7 @@ function scrollToEnd () {
 function resize () {
 	copyInputStyle ();
 	scrollToEnd ();
+	generateBG ();
 }
 
 //...............................................................................................
@@ -389,10 +422,10 @@ $(function () {
 	JQInput.focusout (inputFocusout);
 
 	$('#Clipboard').prop ('readonly', true);
+	$('#InputBG') [0].height = $('#InputBG').height ();
 
-	resize ();
 	logResize ();
-	scrollToEnd ();
+	resize ();
 });
 
 

@@ -8,6 +8,20 @@ body {
 	margin: 1em 1em 6em 1em;
 }
 
+#Clipboard {
+	position: fixed;
+	bottom: 0;
+	color: transparent;
+	border: 0px;
+}
+
+#Background {
+	position: fixed;
+	z-index: -1;
+	left: 0;
+	top: 0;
+}
+
 #Greeting {
 	position: fixed;
 	left: 50%;
@@ -16,29 +30,42 @@ body {
 	color: #aaa;
 }
 
-#Clipboard {
-	color: transparent;
-	border: 0px;
+#InputBG {
 	position: fixed;
+	z-index: 2;
+	height: 4em;
 	bottom: 0;
-}
-
-.InputBG {
-	position: fixed;
-	height: 5em;
-	bottom: -1em;
-	left: -1em;
-	right: -1em;
+	left: 0;
+	right: 0;
 	background-color: white;
 }
 
 #Input {
 	position: fixed;
+	z-index: 3;
 	bottom: 2em;
 	left: 4em;
 	right: 1em;
 	border-color: transparent;
 	outline-color: transparent;
+	background-color: transparent;
+}
+
+#InputOverlay {
+	z-index: 4;
+}
+
+#OverlayGood {
+	-webkit-text-fill-color: transparent;
+}
+
+#OverlayError {
+	-webkit-text-fill-color: #f44;
+}
+
+#OverlayAutocomplete {
+	z-index: 1;
+	-webkit-text-fill-color: #999;
 }
 
 #Log {
@@ -54,6 +81,10 @@ body {
 	margin-bottom: 0.5em;
 }
 
+.LogInputWait {
+	margin-left: 0.5em;
+}
+
 .LogError {
 	position: relative;
 	margin-bottom: 0.2em;
@@ -67,21 +98,6 @@ body {
 	top: 0.3em;
 }
 
-.LogInputWait {
-	margin-left: 0.5em;
-}
-
-#OverlayGood {
-	-webkit-text-fill-color: transparent;
-}
-
-#OverlayError {
-	-webkit-text-fill-color: #f44;
-}
-
-#OverlayAutocomplete {
-	-webkit-text-fill-color: #999;
-}
 
 
 
