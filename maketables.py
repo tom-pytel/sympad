@@ -130,8 +130,8 @@ def parse_rules ():
 
 #...............................................................................................
 def process (fnm, nodelete = False, compress = False, width = 512):
-	parser_tables_re      = re.compile (r'^(\s*)_PARSER_TABLES\s*=')
-	parser_tables_cont_re = re.compile (r'\\\s*$')
+	parser_tables_rec      = re.compile (r'^(\s*)_PARSER_TABLES\s*=')
+	parser_tables_cont_rec = re.compile (r'\\\s*$')
 
 	spec = importlib.util.spec_from_file_location (fnm, fnm + '.py')
 	mod  = importlib.util.module_from_spec (spec)
@@ -145,12 +145,12 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 
 			pc_name  = name
 			pc_obj   = obj
-			pc_start = Parser._SYMBOL_rec.match (obj._PARSER_TOP).group (1)
+			pc_start = Parser._SYMBOL_notail_rec.match (obj._PARSER_TOP).group (1)
 			pc_funcs = {} # {'prod': [('name', func, ('parm', ...)), ...], ...} - 'self' stripped from parms
 
 			for name, obj in pc_obj.__dict__.items ():
 				if name [0] != '_' and type (obj) is types.FunctionType and obj.__code__.co_argcount >= 2:
-					name_sym = Parser._SYMBOL_rec.match (name).group (1)
+					name_sym = Parser._SYMBOL_notail_rec.match (name).group (1)
 
 					pc_funcs.setdefault (name_sym, []).append ((name, obj, obj.__code__.co_varnames [1 : obj.__code__.co_argcount]))
 
@@ -184,7 +184,7 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 		rhss = prods.setdefault (prod, [])
 
 		for name, func, parms in pc_funcs [prod]:
-			parms = [p if p in pc_obj.TOKENS else Parser._SYMBOL_rec.match (p).group (1) for p in parms]
+			parms = [p if p in pc_obj.TOKENS else Parser._SYMBOL_notail_rec.match (p).group (1) for p in parms]
 
 			rhss.append (parms)
 			stack.extend (filter (lambda p: p not in pc_obj.TOKENS and p not in prods and p not in stack, parms))
@@ -210,17 +210,17 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 	os.unlink ('parsetab.py')
 
 	# write generated data into file
-	class_re = re.compile (fr'^\s*class\s+{pc_name}\s*[:(]')
-	lines    = open (f'{fnm}.py').readlines ()
+	class_rec = re.compile (fr'^\s*class\s+{pc_name}\s*[:(]')
+	lines     = open (f'{fnm}.py').readlines ()
 
 	for idx in range (len (lines)):
-		if class_re.match (lines [idx]):
+		if class_rec.match (lines [idx]):
 			for idx in range (idx + 1, len (lines)):
-				m = parser_tables_re.match (lines [idx])
+				m = parser_tables_rec.match (lines [idx])
 
 				if m:
 					for end in range (idx, len (lines)):
-						if not parser_tables_cont_re.search (lines [end]):
+						if not parser_tables_cont_rec.search (lines [end]):
 							break
 
 					end       += 1
@@ -229,9 +229,9 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 					lines_new  = [f'{tab1}_PARSER_TABLES = \\\n']
 
 					if not compress:
-						parser_tables_split_re = re.compile (r'.{0,' + str (width) + r'}[,)}\]]')
+						parser_tables_split_rec = re.compile (r'.{0,' + str (width) + r'}[,)}\]]')
 
-						for line in parser_tables_split_re.findall (text):
+						for line in parser_tables_split_rec.findall (text):
 							lines_new.append (f'{tab2}{line} \\\n')
 
 					else:
@@ -266,7 +266,9 @@ def cmdline ():
 		elif opt in ('-w', '--width'):
 			width = int (arg)
 
-	process (argv [0], nodelete = nodelete, compress = compress, width = width)
+	fnm = argv [0] if argv else 'sparser'
+
+	process (fnm, nodelete = nodelete, compress = compress, width = width)
 
 if __name__ == '__main__':
 	cmdline ()

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 import sys
 assert sys.version_info >= (3, 6), 'Python version 3.6+ required'
@@ -102,8 +102,7 @@ if __name__ == '__main__':
 
 		watch   = ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
-		# httpd   = ThreadingHTTPServer ((host, port), Handler)
-		httpd   = HTTPServer ((host, port), Handler)
+		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
 
 		thread.start ()

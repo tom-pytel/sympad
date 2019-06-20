@@ -70,6 +70,7 @@ body {
 
 #Log {
 	padding-inline-start: 3em;
+	cursor: default;
 }
 
 .LogEntry {
@@ -78,7 +79,7 @@ body {
 
 .LogLine {
 	display: inline-block;
-	margin-bottom: 0.5em;
+	margin-bottom: 0.75em;
 }
 
 .LogInputWait {
@@ -95,7 +96,7 @@ body {
 	font-size: 0.7em;
 	position: absolute;
 	left: -1.25em;
-	top: 0.3em;
+	top: 0.25em;
 }
 
 

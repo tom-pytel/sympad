@@ -21,7 +21,9 @@ function generateBG () {
 			p = (width * y + x0) * 4;
 
 			for (let x = x0; x < width; x ++) {
-				data [p]     = data [p + 1] = data [p + 2] = 244 + Math.floor (Math.random () * 12);
+				d            = 244 + Math.floor (Math.random () * 12);
+				data [p]     = data [p + 1] = d; // data [p + 2] = d
+				data [p + 2] = d - 8;
 				data [p + 3] = 255;
 				p            = p + 4;
 			}
@@ -136,12 +138,12 @@ function copyToClipboard (elem) {
 
 	JQInput.focus ();
 
-	elem.style.color      = 'white';
+	elem.style.color      = 'transparent';
 	elem.style.background = 'black';
 
 	setTimeout (() => {
 		elem.style.color      = 'black';
-		elem.style.background = 'white';
+		elem.style.background = 'transparent';
 	}, 100);
 }
 
