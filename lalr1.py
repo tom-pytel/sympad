@@ -12,13 +12,20 @@ class Parser:
 	def __init__ (self):
 		if isinstance (self._PARSER_TABLES, bytes):
 			import ast, base64, zlib
-
 			symbols, rules, strules, terms, nterms = ast.literal_eval (zlib.decompress (base64.b64decode (self._PARSER_TABLES)).decode ('utf8'))
-
 		else:
 			symbols, rules, strules, terms, nterms = self._PARSER_TABLES
 
-		self.tokre   = '|'.join (f'(?P<{tok}>{pat})' for tok, pat in self.TOKENS.items ())
+		self.tokgrps = {} # {'token': (groups pos start, groups pos end), ...}
+		tokpats      = list (self.TOKENS.items ())
+		pos          = 0
+
+		for tok, pat in tokpats:
+			l                   = re.compile (pat).groups + 1
+			self.tokgrps [tok]  = (pos, pos + l)
+			pos                += l
+
+		self.tokre   = '|'.join (f'(?P<{tok}>{pat})' for tok, pat in tokpats)
 		self.tokrec  = re.compile (self.tokre)
 		self.rules   = [(0, (symbols [-1]))] + [(symbols [r [0]], tuple (symbols [s] for s in (r [1] if isinstance (r [1], tuple) else (r [1],)))) for r in rules]
 		self.strules = [[t if isinstance (t, tuple) else (t, 0) for t in (sr if isinstance (sr, list) else [sr])] for sr in strules]
@@ -78,6 +85,13 @@ class Parser:
 			else:
 				if m.lastgroup != 'ignore':
 					tokens.append ((m.lastgroup, m.group (0), pos))
+
+					# tok  = m.group (0)
+					# s, e = self.tokgrps [m.lastgroup]
+					# print (m.groups () [s : e])
+
+
+				# print (m.lastindex, len (m.groups ()), len (m.groupdict ()), m.groups (), m.groupdict ())
 
 				pos += len (m.group (0))
 
