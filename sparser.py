@@ -1,5 +1,3 @@
-# TODO: derivative explicit parentheses
-
 from collections import OrderedDict
 import re
 
