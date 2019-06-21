@@ -116,9 +116,9 @@ _ast2tex_funcs = {
 	'(': lambda ast: f'\\left({ast2tex (ast [1])} \\right)',
 	'[': lambda ast: f'\\left[{ast2tex (ast [1])} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast [1])} \\right|',
-	'-': lambda ast: f'-{ast2tex (ast [1])}' if ast [1] [0] in {'#', '@', '(', '[', '|', '*', '!', '^'} else f'-{_ast2tex_paren (ast [1])}',
-	'!': lambda ast: f'{_ast2tex_paren (ast [1])}!' if ast [1] [0] not in {'#', '@', '(', '[', '|', '!', '^'} or \
-			(ast [1] [0] == '#' and ast [1] [1] < 0) else f'{ast2tex (ast [1])}!',
+	'-': lambda ast: f'-{_ast2tex_paren (ast [1])}' if ast [1] [0] in {'+', '-'} else f'-{ast2tex (ast [1])}',
+	'!': lambda ast: f'{_ast2tex_paren (ast [1])}!' if (ast [1] [0] not in {'#', '@', '(', '[', '|', '!', '^'} or \
+			(ast [1] [0] == '#' and ast [1] [1] < 0)) else f'{ast2tex (ast [1])}!',
 	'+': lambda ast: ' + '.join (ast2tex (n) for n in ast [1:]).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
 	'/': lambda ast: f'\\frac{{{ast2tex (ast [1])}}}{{{ast2tex (ast [2])}}}',
@@ -231,9 +231,9 @@ _ast2simple_funcs = {
 	'(': lambda ast: f'({ast2simple (ast [1])})',
 	'[': lambda ast: f'[{ast2simple (ast [1])}]',
 	'|': lambda ast: f'|{ast2simple (ast [1])}|',
-	'-': lambda ast: f'-{ast2simple (ast [1])}' if ast [1] [0] in {'#', '@', '(', '[', '|', '*', '!', '^'} else f'-{_ast2simple_paren (ast [1])}',
-	'!': lambda ast: f'{_ast2simple_paren (ast [1])}!' if ast [1] [0] not in {'#', '@', '(', '[', '|', '!', '^'} or \
-			(ast [1] [0] == '#' and ast [1] [1] < 0) else f'{ast2simple (ast [1])}!',
+	'-': lambda ast: f'-{_ast2simple_paren (ast [1])}' if ast [1] [0] in {'+', '-'} else f'-{ast2simple (ast [1])}',
+	'!': lambda ast: f'{_ast2simple_paren (ast [1])}!' if (ast [1] [0] not in {'#', '@', '(', '[', '|', '!', '^'} or \
+			(ast [1] [0] == '#' and ast [1] [1] < 0)) else f'{ast2simple (ast [1])}!',
 	'+': lambda ast: ' + '.join (ast2simple (n) for n in ast [1:]).replace (' + -', ' - '),
 	'*': _ast2simple_mul,
 	'/': _ast2simple_div,
