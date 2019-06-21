@@ -1,4 +1,16 @@
 // TODO: Fix firefox tabbing out of input.
+// TODO: When horizontal size exceeds window ordered list gets misaligned vertically.
+
+// TODO: Need to copyInputStyle when bottom scroll bar appears.
+// Check if body height is higher than window height :)
+// if ($(document).height() > $(window).height()) {
+// 	alert("Vertical Scrollbar! D:");
+// }
+
+// // Check if body width is higher than window width :)
+// if ($(document).width() > $(window).width()) {
+// 	alert("Horizontal Scrollbar! D:<");
+// }
 
 var URL             = '/';
 var MJQueue         = null;
@@ -75,6 +87,7 @@ function scrollToEnd () {
 
 //...............................................................................................
 function resize () {
+	console.log ('resize');
 	copyInputStyle ();
 	scrollToEnd ();
 	generateBG ();
@@ -124,10 +137,6 @@ function addLogEntry () {
 	Validations.push (undefined);
 	Evaluations.push (undefined);
 }
-
-// function parseTeX (text) {
-// 	return text.replace (/(\\left| \\right)(\(|\)|\[|\])/g, '$2').replace (/\\operatorname{(sech|csch)}/g, '\\$1').replace (/\\operatorname{(\?|\w+)}/g, '$1');
-// }
 
 //...............................................................................................
 function writeToClipboard (text) {
