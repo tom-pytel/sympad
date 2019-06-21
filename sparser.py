@@ -7,11 +7,8 @@ def _fltoint (v):
 	v = float (v)
 	return int (v) if v.is_integer () else v
 
-def _ast_num_or_var (text):
-	try:
-		return ('#', _fltoint (text))
-	except ValueError:
-		return ('@', text)
+def _tok_digit_or_var (tok, i = 0):
+	return ('#', int (tok.grp [i])) if tok.grp [i] else ('@', tok.grp [i + 1])
 
 def _ast_negate (ast):
 	# return ('-', ast) if ast [0] != '-' else ast [1]
@@ -144,9 +141,8 @@ class Parser (lalr1.Parser):
 	_GREEK     = r'\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\pi|\\rho|' \
 			r'\\sigma|\\tau|\\upsilon|\\phi|\\chi|\\psi|\\omega|\\Gamma|\\Delta|\\Theta|\\Lambda|\\Upsilon|\\Xi|\\Phi|\\Pi|\\Psi|\\Sigma|\\Omega'
 	_CHAR      = rf'[a-zA-Z]'
-	_ONEVAR    = rf'(?:{_CHAR}|{_GREEK})'
-	_ONEVARDI  = rf'(?:{_CHAR}|{_GREEK}|\d|\\infty)'
-	_ONEVARDIP = rf'(?:{_CHAR}|{_GREEK}|\d|\\infty|\\partial)'
+	_ONEVAR    = rf'{_CHAR}|{_GREEK}'
+	_ONEVARPI  = rf'{_CHAR}|{_GREEK}|\\partial|\\infty'
 
 	TOKENS = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
@@ -161,15 +157,16 @@ class Parser (lalr1.Parser):
 		('RIGHT',         r'\\right'),
 		('CDOT',          r'\\cdot'),
 		('TO',            r'\\to'),
-		('FRAC2',        fr'\\frac\s*({_ONEVARDIP})\s*({_ONEVARDIP})'),
-		('FRAC1',        fr'\\frac\s*{_ONEVARDIP}'),
+		('FRAC2',        fr'\\frac\s*(?:(\d)|({_ONEVARPI}))\s*(?:(\d)|({_ONEVARPI}))'),
+		('FRAC1',        fr'\\frac\s*(?:(\d)|({_ONEVARPI}))'),
 		('FRAC',          r'\\frac'),
+		# ('VAR',          fr'\b_|d?(?:{_ONEVAR})|\\partial\s?(?:{_ONEVAR})|\\infty|\\partial'),
+		('VAR',          fr'\b_|(d|\\partial\s?)?({_ONEVAR})|\\infty|\\partial'),
 		('OPERATOR',     fr'\\operatorname\{{({_CHAR}\w+)\}}|\\({_CHAR}\w+)'),
-		('VAR',          fr'\b_|d?{_ONEVAR}|\\partial\s?{_ONEVAR}|\\infty|\\partial'),
 		('NUM',           r'\d+(?:\.\d*)?|\.\d+'),
-		('SUB1',         fr'_{_ONEVARDIP}'),
+		('SUB1',         fr'_(?:(\d)|({_ONEVARPI}))'),
 		('SUB',           r'_'),
-		('POWER1',       fr'\^{_ONEVARDIP}'),
+		('POWER1',       fr'\^(?:(\d)|({_ONEVARPI}))'),
 		('POWER',         r'\^'),
 		('DOUBLESTAR',    r'\*\*'),
 		('PRIMES',        r"'+"),
@@ -204,7 +201,7 @@ class Parser (lalr1.Parser):
 	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, POWER, MINUS, CURLYR, expr_lim):         return ('lim', expr_var, expr, expr_lim, '-')
 	def expr_lim_4      (self, expr_sum):                                    return expr_sum
 
-	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER1, expr_lim):           return ('sum', expr_var, expr, _ast_num_or_var (POWER1 [1:]), expr_lim)
+	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER1, expr_lim):           return ('sum', expr_var, expr, _tok_digit_or_var (POWER1), expr_lim)
 	def expr_sum_2      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER, expr_frac, expr_lim): return ('sum', expr_var, expr, expr_frac, expr_lim)
 	def expr_sum_3      (self, expr_negative):                               return expr_negative
 
@@ -219,88 +216,68 @@ class Parser (lalr1.Parser):
 	def expr_mul_imp_1  (self, expr_mul_imp, expr_func):                     return _ast_flatcat ('*', expr_mul_imp, expr_func)
 	def expr_mul_imp_2  (self, expr_func):                                   return expr_func
 
-
-	_trigh_rec    = re.compile (TOKENS ['TRIGH'])
-	_operator_rec = re.compile (TOKENS ['OPERATOR'])
-
 	def expr_func_1     (self, SQRT, expr_fact):                             return ('sqrt', expr_fact)
 	def expr_func_2     (self, SQRT, BRACKETL, expr, BRACKETR, expr_fact):   return ('sqrt', expr_fact, expr)
 	def expr_func_3     (self, LN, expr_fact):                               return ('log', expr_fact)
 	def expr_func_4     (self, LOG, SUB, expr_frac, expr_fact):              return ('log', expr_fact, expr_frac)
-	def expr_func_5     (self, LOG, SUB1, expr_fact):                        return ('log', expr_fact, _ast_num_or_var (SUB1 [1:]))
-	def expr_func_6     (self, TRIGH, expr_fact):
-		is_inv, func, func2 = self._trigh_rec.match (TRIGH).group (1, 2, 3)
-		return ('trigh', f'{"a" if is_inv else ""}{func or func2}', expr_fact)
-
+	def expr_func_5     (self, LOG, SUB1, expr_fact):                        return ('log', expr_fact, _tok_digit_or_var (SUB1))
+	def expr_func_6     (self, TRIGH, expr_fact):                            return ('trigh', f'{"a" if TRIGH.grp [0] else ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_fact)
 	def expr_func_7     (self, TRIGH, POWER, expr_frac, expr_fact):
-		is_inv, func, func2 = self._trigh_rec.match (TRIGH).group (1, 2, 3)
-		func                = func or func2
 		return \
-				('^', ('trigh', func, expr_fact), expr_frac) \
+				('^', ('trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_fact), expr_frac) \
 				if expr_frac != ('#', -1) else \
-				('trigh', func, expr_fact) \
-				if is_inv else \
-				('trigh', 'a' + func, expr_fact)
+				('trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_fact) \
+				if TRIGH.grp [0] else \
+				('trigh', 'a' + (TRIGH.grp [1] or TRIGH.grp [2]), expr_fact)
 
 	def expr_func_8     (self, TRIGH, POWER1, expr_fact):
-		is_inv, func, func2 = self._trigh_rec.match (TRIGH).group (1, 2, 3)
-		func                = func or func2
-		return ('^', ('trigh', f'a{func}' if is_inv else func, expr_fact), _ast_num_or_var (POWER1 [1:]))
+		return \
+				('^', ('trigh', f'a{TRIGH.grp [1] or TRIGH.grp [2]}' if TRIGH.grp [0] else TRIGH.grp [1] or TRIGH.grp [2], expr_fact), \
+				_tok_digit_or_var (POWER1))
 
-	def expr_func_9     (self, SYMPY, expr_fact):                            return ('sympy', SYMPY, expr_fact)
-	def expr_func_10    (self, OPERATOR, expr_fact):
-		o1, o2 = self._operator_rec.match (OPERATOR).group (1, 2)
-		return ('sympy', o1 or o2, expr_fact)
-
+	def expr_func_9     (self, SYMPY, expr_fact):                            return ('sympy', SYMPY.text, expr_fact)
+	def expr_func_10    (self, OPERATOR, expr_fact):                         return ('sympy', OPERATOR.grp [0] or OPERATOR.grp [1], expr_fact)
 	def expr_func_11    (self, expr_fact):                                   return expr_fact
-
 
 	def expr_fact_1     (self, expr_fact, FACTORIAL):                        return ('!', expr_fact)
 	def expr_fact_2     (self, expr_pow):                                    return expr_pow
 
 	def expr_pow_1      (self, expr_pow, DOUBLESTAR, expr_func):             return ('^', expr_pow, expr_func)
-	def expr_pow_5      (self, expr_pow, DOUBLESTAR, MINUS, expr_func):      return ('^', expr_pow, _ast_negate (expr_func))
-	def expr_pow_2      (self, expr_pow, POWER, expr_frac):                  return ('^', expr_pow, expr_frac)
-	def expr_pow_3      (self, expr_pow, POWER1):                            return ('^', expr_pow, _ast_num_or_var (POWER1 [1:]))
-	def expr_pow_4      (self, expr_abs):                                    return expr_abs
+	def expr_pow_2      (self, expr_pow, DOUBLESTAR, MINUS, expr_func):      return ('^', expr_pow, _ast_negate (expr_func))
+	def expr_pow_3      (self, expr_pow, POWER, expr_frac):                  return ('^', expr_pow, expr_frac)
+	def expr_pow_4      (self, expr_pow, POWER1):                            return ('^', expr_pow, _tok_digit_or_var (POWER1))
+	def expr_pow_5      (self, expr_abs):                                    return expr_abs
 
 	def expr_abs_1      (self, LEFT, BAR1, expr, RIGHT, BAR2):               return ('|', expr)
 	def expr_abs_2      (self, BAR1, expr, BAR2):                            return ('|', expr)
 	def expr_abs_3      (self, expr_paren):                                  return expr_paren
 
-	def expr_paren_3    (self, PARENL, expr, PARENR):                        return ('(', expr)
-	def expr_paren_4    (self, LEFT, PARENL, expr, RIGHT, PARENR):           return ('(', expr)
-	def expr_paren_5    (self, IGNORE_CURLY, CURLYL, expr, CURLYR):          return expr
-	def expr_paren_6    (self, expr_frac):                                   return expr_frac
-
-	_frac2_rec = re.compile (TOKENS ['FRAC2'])
+	def expr_paren_1    (self, PARENL, expr, PARENR):                        return ('(', expr)
+	def expr_paren_2    (self, LEFT, PARENL, expr, RIGHT, PARENR):           return ('(', expr)
+	def expr_paren_3    (self, IGNORE_CURLY, CURLYL, expr, CURLYR):          return expr
+	def expr_paren_4    (self, expr_frac):                                   return expr_frac
 
 	def expr_frac_1     (self, FRAC, expr_term1, expr_term2):                return ('/', expr_term1, expr_term2)
-	def expr_frac_2     (self, FRAC1, expr_term):                            return ('/', _ast_num_or_var (FRAC1 [5:]), expr_term)
-	def expr_frac_3     (self, FRAC2):
-		n, d = self._frac2_rec.match (FRAC2).group (1, 2)
-		return ('/', _ast_num_or_var (n), _ast_num_or_var (d))
-
+	def expr_frac_2     (self, FRAC1, expr_term):                            return ('/', _tok_digit_or_var (FRAC1), expr_term)
+	def expr_frac_3     (self, FRAC2):                                       return ('/', _tok_digit_or_var (FRAC2), _tok_digit_or_var (FRAC2, 2))
 	def expr_frac_4     (self, expr_term):                                   return expr_term
 
 	def expr_term_1     (self, CURLYL, expr, CURLYR):                        return expr
 	def expr_term_2     (self, expr_var):                                    return expr_var
 	def expr_term_3     (self, expr_num):                                    return expr_num
 
-	def expr_num        (self, NUM):                                         return ('#', _fltoint (NUM))
-	def expr_var_1      (self, text_var, PRIMES, subvar):                    return ('@', f'{text_var}{subvar}{PRIMES}')
-	def expr_var_2      (self, text_var, subvar, PRIMES):                    return ('@', f'{text_var}{subvar}{PRIMES}')
-	def expr_var_3      (self, text_var, PRIMES):                            return ('@', f'{text_var}{PRIMES}')
+	def expr_num        (self, NUM):                                         return ('#', _fltoint (NUM.text))
+	def expr_var_1      (self, text_var, PRIMES, subvar):                    return ('@', f'{text_var}{subvar}{PRIMES.text}')
+	def expr_var_2      (self, text_var, subvar, PRIMES):                    return ('@', f'{text_var}{subvar}{PRIMES.text}')
+	def expr_var_3      (self, text_var, PRIMES):                            return ('@', f'{text_var}{PRIMES.text}')
 	def expr_var_4      (self, text_var, subvar):                            return ('@', f'{text_var}{subvar}')
 	def expr_var_5      (self, text_var):                                    return ('@', text_var)
 	def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):               return f'_{{{expr_var [1]}}}'
-	def subvar_2        (self, SUB, CURLYL, NUM, CURLYR):                    return f'_{{{NUM}}}'
-	def subvar_3        (self, SUB, CURLYL, NUM, subvar, CURLYR):            return f'_{{{NUM}{subvar}}}'
-	def subvar_5        (self, SUB1):                                        return SUB1
+	def subvar_2        (self, SUB, CURLYL, NUM, CURLYR):                    return f'_{{{NUM.text}}}'
+	def subvar_3        (self, SUB, CURLYL, NUM, subvar, CURLYR):            return f'_{{{NUM.text}{subvar}}}'
+	def subvar_5        (self, SUB1):                                        return SUB1.text
 
-	_partial_var_rec = re.compile (fr'\\partial(?={_ONEVAR})')
-
-	def text_var        (self, VAR):                                         return self._partial_var_rec.sub ('\\partial ', VAR)
+	def text_var        (self, VAR):                                         return f'\\partial {VAR.grp [1]}' if VAR.grp [0] and VAR.grp [0] [0] == '\\' else VAR.text
 
 	#...............................................................................................
 	_AUTOCOMPLETE_SUBSTITUTE = {
@@ -327,11 +304,11 @@ class Parser (lalr1.Parser):
 
 	def parse_error (self): # add tokens to continue parsing for autocomplete if syntax allows
 		if self.tok != '$end':
-			self.parse_results.append ((None, self.pos, []))
+			self.parse_results.append ((None, self.tok.pos, []))
 
 			return False
 
-		if self.tokidx and self.tokens [self.tokidx - 1] [0] == 'LEFT':
+		if self.tokidx and self.tokens [self.tokidx - 1] == 'LEFT':
 			for irule, pos in self.strules [self.stidx]:
 				if self.rules [irule] [1] [pos] == 'PARENL':
 					break
@@ -349,7 +326,7 @@ class Parser (lalr1.Parser):
 		sym = rule [1] [pos]
 
 		if sym in self.TOKENS:
-			self.tokens.insert (self.tokidx, (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.pos))
+			self.tokens.insert (self.tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.tok.pos))
 
 			if self.autocompleting and sym in self._AUTOCOMPLETE_CLOSE:
 				self.autocomplete.append (self._AUTOCOMPLETE_CLOSE [sym])
@@ -357,12 +334,12 @@ class Parser (lalr1.Parser):
 				self.autocompleting = False
 
 		else:
-			self.tokens.insert (self.tokidx, ('VAR', '', self.pos))
+			self.tokens.insert (self.tokidx, lalr1.Token ('VAR', '', self.tok.pos, (None, None)))
 
 			self.autocompleting = False
 
 			if self.erridx is None:
-				self.erridx = self.tokens [self.tokidx - 1] [2]
+				self.erridx = self.tokens [self.tokidx - 1].pos
 
 		return True
 
