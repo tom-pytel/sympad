@@ -56,7 +56,7 @@ def _ast2tex_pow (ast):
 		return f'{b}{p}'
 
 	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ast [2] [0] == '#' and ast [2] [1] >= 0:
-		i = len (ast [1] [1]) + 1
+		i = len (ast [1] [1]) + (15 if ast [1] [1] in {'sech', 'csch'} else 1)
 
 		return f'{b [:i]}{p}{b [i:]}'
 
@@ -67,17 +67,18 @@ def _ast2tex_pow (ast):
 
 def _ast2tex_log (ast):
 	if len (ast) == 2:
-		return f'\\ln\\left({ast2tex (ast [1])} \\right)'
+		return f'\\ln{_ast2tex_paren (ast [1])}'
 
-	t = ast2tex (ast [2])
-
-	return f'\\log_{{{t}}}\\left({ast2tex (ast [1])} \\right)' if len (t) > 1 else \
-			f'\\log_{t}\\left({ast2tex (ast [1])} \\right)'
+	return f'\\log_{ast2tex (ast [2])}{_ast2tex_paren (ast [1])}' if _ast_is_single_unit (ast [2]) else \
+			f'\\log_{{{ast2tex (ast [2])}}}{_ast2tex_paren (ast [1])}'
 
 def _ast2tex_trigh (ast):
 	n = (f'\\operatorname{{{ast [1] [1:]}}}^{{-1}}' if ast [1] in {'asech', 'acsch'} else f'\\{ast [1] [1:]}^{{-1}}') \
 			if ast [1] [0] == 'a' else \
 			(f'\\operatorname{{{ast [1]}}}' if ast [1] in {'sech', 'csch'} else f'\\{ast [1]}')
+	# n = f'\\operatorname{{{ast [1]}}}' if ast [1] in {'sech', 'csch', 'asech', 'acsch'} else \
+	# 		f'\\{ast [1] [1:]}^{{-1}}' if ast [1] [0] == 'a' else \
+	# 		f'\\{ast [1]}'
 
 	return f'{n}{_ast2tex_paren (ast [2])}'
 
@@ -121,7 +122,8 @@ _ast2tex_funcs = {
 	'[': lambda ast: f'\\left[{ast2tex (ast [1])} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast [1])} \\right|',
 	'-': lambda ast: f'-{ast2tex (ast [1])}',
-	'!': lambda ast: f'{_ast2tex_paren (ast [1])}!' if ast [1] [0] in {'+', '-', '*', '/', 'sqrt'} else f'{ast2tex (ast [1])}!',
+	# '!': lambda ast: f'{_ast2tex_paren (ast [1])}!' if ast [1] [0] in {'+', '-', '*', '/', 'sqrt', 'log', 'trigh', 'sympy'} else f'{ast2tex (ast [1])}!',
+	'!': lambda ast: f'{ast2tex (ast [1])}!' if ast [1] [0] in {'#', '@', '(', '[', '|', '!', '^'} else f'{_ast2tex_paren (ast [1])}!',
 	'+': lambda ast: ' + '.join (ast2tex (n) for n in ast [1:]).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
 	'/': lambda ast: f'\\frac{{{ast2tex (ast [1])}}}{{{ast2tex (ast [2])}}}',
@@ -147,15 +149,14 @@ def _ast2simple_mul (ast, ret_has_star = False):
 	has_star = False
 
 	for i in range (1, len (ast)):
-		aif = _ast_ignore_fact (ast [i])
-
-		if i != 1 and (aif [0] == '#' or ast [i] [0] == '!' or aif [0] in {'/', 'diff'} or ast [i - 1] [0] in {'/', 'diff'}):
+		if i != 1 and (ast [i] [0] == '!' or ast [i] [0] == '#' or ast [i] [0] in {'/', 'diff'} or ast [i - 1] [0] in {'/', 'diff'}):
 			t.append (f' * {ast2simple (ast [i])}')
 			has_star = True
 		elif i != 1 and (ast [i - 1] in {('@', 'd'), ('@', '\\partial')} or \
-				(aif [0] == '@' and _diff_var_start_rec.match (aif [1])) or \
+				(ast [i] [0] not in {'#', '@', '(', '[', '|', '^'} or ast [i - 1] [0] not in {'#', '@', '(', '[', '|', '^'}) or \
+				(ast [i] [0] == '@' and _diff_var_start_rec.match (ast [i] [1])) or \
 				(ast [i - 1] [0] == '@' and _diff_var_start_rec.match (ast [i - 1] [1]))):
-			t.append (f' {ast2tex (ast [i])}')
+			t.append (f' {ast2simple (ast [i])}')
 		else:
 			t.append (f'{_ast2simple_paren (ast [i]) if ast [i] [0] == "+" else ast2simple (ast [i])}')
 
@@ -186,24 +187,21 @@ def _ast2simple_pow (ast):
 
 def _ast2simple_log (ast):
 	if len (ast) == 2:
-		return f'\\ln({ast2simple (ast [1])})'
+		return f'ln{_ast2simple_paren (ast [1])}'
 
-	return f'\\log_{ast2simple (ast [2])}({ast2simple (ast [1])})' if _ast_is_single_unit (ast [2]) else \
-			f'\\log_{{{ast2simple (ast [2])}}}({ast2simple (ast [1])})'
+	return f'log_{ast2simple (ast [2])}{_ast2simple_paren (ast [1])}' if _ast_is_single_unit (ast [2]) else \
+			f'log_{{{ast2simple (ast [2])}}}{_ast2simple_paren (ast [1])}'
 
 def _ast2simple_trigh (ast):
-	n = f'\\{ast [1] [1:]}^{{-1}}' if ast [1] [0] == 'a' else f'\\{ast [1]}'
-
-	return f'{n}{_ast2simple_paren (ast [2])}'
+	return f'{ast [1]}{_ast2simple_paren (ast [2])}'
 
 def _ast2simple_sympy (ast):
 	return f'{ast [1]}{_ast2simple_paren (ast [2])}'
 
 def _ast2simple_lim (ast):
 	s = ast2simple (ast [2]) if not ast [4] else ast2simple (('^', ast [2], ('#', 0))) [:-1] + ast [4]
-	s = f' {s}' if s [0] != '\\' else s
 
-	return f'\\lim_{{{ast2simple (ast [1])}\\to{s}}}{_ast2simple_paren (ast [3])}'
+	return f'\\lim_{{{ast2simple (ast [1])} \\to {s}}}{_ast2simple_paren (ast [3])}'
 
 def _ast2simple_sum (ast):
 	s = ast2simple (('^', ('#', 0), ast [3])) [1:]
@@ -234,12 +232,13 @@ def _ast2simple_diff (ast):
 
 _ast2simple_funcs = {
 	'#': lambda ast: str (ast [1]),
-	'@': lambda ast: str (ast [1]) if ast [1] else '', # '\\Vert', # '{}',
+	'@': lambda ast: str (ast [1]) if ast [1] else '',
 	'(': lambda ast: f'({ast2simple (ast [1])})',
 	'[': lambda ast: f'[{ast2simple (ast [1])}]',
 	'|': lambda ast: f'|{ast2simple (ast [1])}|',
 	'-': lambda ast: f'-{ast2simple (ast [1])}',
-	'!': lambda ast: f'{ast2simple (ast [1])}!',
+	# '!': lambda ast: f'{_ast2simple_paren (ast [1])}!' if ast [1] [0] in {'+', '-', '*', '/', 'sqrt', 'log', 'trigh', 'sympy'} else f'{ast2simple (ast [1])}!',
+	'!': lambda ast: f'{ast2simple (ast [1])}!' if ast [1] [0] in {'#', '@', '(', '[', '|', '!', '^'} else f'{_ast2simple_paren (ast [1])}!',
 	'+': lambda ast: ' + '.join (ast2simple (n) for n in ast [1:]).replace (' + -', ' - '),
 	'*': _ast2simple_mul,
 	'/': _ast2simple_div,
