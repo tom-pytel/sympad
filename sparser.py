@@ -3,16 +3,16 @@ import re
 
 import lalr1
 
-def _fltoint (v):
-	v = float (v)
-	return int (v) if v.is_integer () else v
-
 def _tok_digit_or_var (tok, i = 0):
 	return ('#', int (tok.grp [i])) if tok.grp [i] else ('@', tok.grp [i + 1])
 
 def _ast_negate (ast):
-	# return ('-', ast) if ast [0] != '-' else ast [1]
-	return ('-', ast) if ast [0] != '#' else ('#', -ast [1])
+	return \
+			ast [1]                        if ast [0] == '-' else \
+			('-', ast)                     if ast [0] != '#' else \
+			('#', -ast [1])                if len (ast) == 2 else \
+			('#', -ast [1], ast [2] [1:])  if ast [2] [:1] == '-' else \
+			('#', -ast [1], f'-{ast [2]}')
 
 def _ast_flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 	if ast0 [0] == op:
@@ -54,7 +54,7 @@ def _ast_diff (ast): # here we catch and convert possible cases of derivatives
 			cp -= dec
 
 			if cp < 0:
-				return None # raise SyntaxError #
+				return None # raise SyntaxError?
 
 			ds.append (n)
 
@@ -66,7 +66,7 @@ def _ast_diff (ast): # here we catch and convert possible cases of derivatives
 				else:
 					return ('diff', ('*',) + ns [i + 1:]) + tuple (ds)
 
-		return None
+		return None # raise SyntaxError?
 
 	# start here
 	if ast [0] == '/': # this part handles d/dx
@@ -138,11 +138,12 @@ class Parser (lalr1.Parser):
 
 	_PARSER_TOP = 'expr'
 
-	_GREEK     = r'\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\pi|\\rho|' \
+	_GREEK    = r'\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\pi|\\rho|' \
 			r'\\sigma|\\tau|\\upsilon|\\phi|\\chi|\\psi|\\omega|\\Gamma|\\Delta|\\Theta|\\Lambda|\\Upsilon|\\Xi|\\Phi|\\Pi|\\Psi|\\Sigma|\\Omega'
-	_CHAR      = rf'[a-zA-Z]'
-	_ONEVAR    = rf'{_CHAR}|{_GREEK}'
-	_ONEVARPI  = rf'{_CHAR}|{_GREEK}|\\partial|\\infty'
+	_SPECIAL  = r'\\partial|\\infty'
+	_CHAR     = fr'[a-zA-Z]'
+	_ONEVAR   = fr'{_CHAR}|{_GREEK}'
+	_ONEVARPI = fr'{_CHAR}|{_GREEK}|{_SPECIAL}'
 
 	TOKENS = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
@@ -160,10 +161,9 @@ class Parser (lalr1.Parser):
 		('FRAC2',        fr'\\frac\s*(?:(\d)|({_ONEVARPI}))\s*(?:(\d)|({_ONEVARPI}))'),
 		('FRAC1',        fr'\\frac\s*(?:(\d)|({_ONEVARPI}))'),
 		('FRAC',          r'\\frac'),
-		# ('VAR',          fr'\b_|d?(?:{_ONEVAR})|\\partial\s?(?:{_ONEVAR})|\\infty|\\partial'),
-		('VAR',          fr'\b_|(d|\\partial\s?)?({_ONEVAR})|\\infty|\\partial'),
+		('VAR',          fr'\b_|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}'),
 		('OPERATOR',     fr'\\operatorname\{{({_CHAR}\w+)\}}|\\({_CHAR}\w+)'),
-		('NUM',           r'\d+(?:\.\d*)?|\.\d+'),
+		('NUM',           r'(\d+\.\d*|\.\d+)|(\d+)'), # r'\d+(?:\.\d*)?|\.\d+'), #
 		('SUB1',         fr'_(?:(\d)|({_ONEVARPI}))'),
 		('SUB',           r'_'),
 		('POWER1',       fr'\^(?:(\d)|({_ONEVARPI}))'),
@@ -223,6 +223,7 @@ class Parser (lalr1.Parser):
 	def expr_func_5     (self, LOG, SUB1, expr_fact):                        return ('log', expr_fact, _tok_digit_or_var (SUB1))
 	def expr_func_6     (self, TRIGH, expr_fact):                            return ('trigh', f'{"a" if TRIGH.grp [0] else ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_fact)
 	def expr_func_7     (self, TRIGH, POWER, expr_frac, expr_fact):
+		print ('expr_frac:', expr_frac)
 		return \
 				('^', ('trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_fact), expr_frac) \
 				if expr_frac != ('#', -1) else \
@@ -266,7 +267,7 @@ class Parser (lalr1.Parser):
 	def expr_term_2     (self, expr_var):                                    return expr_var
 	def expr_term_3     (self, expr_num):                                    return expr_num
 
-	def expr_num        (self, NUM):                                         return ('#', _fltoint (NUM.text))
+	def expr_num        (self, NUM):                                         return ('#', float (NUM.grp [0]), NUM.text) if NUM.grp [0] else ('#', int (NUM.grp [1]))
 	def expr_var_1      (self, text_var, PRIMES, subvar):                    return ('@', f'{text_var}{subvar}{PRIMES.text}')
 	def expr_var_2      (self, text_var, subvar, PRIMES):                    return ('@', f'{text_var}{subvar}{PRIMES.text}')
 	def expr_var_3      (self, text_var, PRIMES):                            return ('@', f'{text_var}{PRIMES.text}')
@@ -359,8 +360,8 @@ class Parser (lalr1.Parser):
 		rated = sorted ((r is None, -e if e is not None else float ('-inf'), len (a), i, (r, e, a)) \
 				for i, (r, e, a) in enumerate (self.parse_results))
 
-		# rated = list (rated)
-		# for i in rated: print (i)
+		rated = list (rated)
+		for i in rated: print (i)
 
 		return next (iter (rated)) [-1]
 

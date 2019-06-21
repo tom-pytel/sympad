@@ -87,7 +87,6 @@ function scrollToEnd () {
 
 //...............................................................................................
 function resize () {
-	console.log ('resize');
 	copyInputStyle ();
 	scrollToEnd ();
 	generateBG ();

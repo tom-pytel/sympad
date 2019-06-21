@@ -175,7 +175,7 @@ class Parser:
 				tokidx += 1
 				stidx   = act
 
-				stack.append ((stidx, tok, tok)) # can modify to store only two items?
+				stack.append ((stidx, tok)) # (stidx, tok, tok)
 
 			else:
 				rule  = rules [-act]
@@ -183,7 +183,7 @@ class Parser:
 				prod  = rule [0]
 
 				try:
-					reduct = rfuncs [-act] (*(t [2] for t in stack [rnlen:]))
+					reduct = rfuncs [-act] (*(t [-1] for t in stack [rnlen:])) # t [2]
 
 				except SyntaxError as e:
 					rederr = e or True

@@ -6,18 +6,11 @@ _diff_var_single_start_rec = re.compile (r'^d(?=[^_])')
 _diff_var_start_rec        = re.compile (r'^(?:d(?=[^_])|\\partial )')
 _var_multiple_rec          = re.compile (r'^(?:d(?=[^_])|\\partial )|(?:.*_)')
 
-def _fltoint (v):
-	v = float (v)
-	return int (v) if v.is_integer () else v
-
-def _num_is_int (n):
-	return isinstance (n, int) or (isinstance (n, float) and n.is_integer ())
-
 def _ast_is_0to9 (ast):
-	return ast [0] == '#' and _num_is_int (ast [1]) and 0 <= ast [1] <= 9
+	return ast [0] == '#' and isinstance (ast [1], int) and 0 <= ast [1] <= 9
 
 def _ast_is_single_var (ast):
-	return ast [0] == '@' and not _var_multiple_rec.match (ast [1]) # and '_' not in ast [1]
+	return ast [0] == '@' and not _var_multiple_rec.match (ast [1])
 
 def _ast_is_single_unit (ast):
 	return _ast_is_0to9 (ast) or _ast_is_single_var (ast)
@@ -111,7 +104,7 @@ def _ast2tex_diff (ast):
 		return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{_ast2tex_paren (ast [1])}'
 
 _ast2tex_funcs = {
-	'#': lambda ast: str (ast [1]),
+	'#': lambda ast: str (ast [-1]),
 	'@': lambda ast: str (ast [1]) if ast [1] else '{}', # '\\Vert', # '{}',
 	'(': lambda ast: f'\\left({ast2tex (ast [1])} \\right)',
 	'[': lambda ast: f'\\left[{ast2tex (ast [1])} \\right]',
@@ -226,7 +219,7 @@ def _ast2simple_diff (ast):
 		return f'\\partial{"" if p == 1 else f"^{p}"}/{s}{_ast2simple_paren (ast [1])}'
 
 _ast2simple_funcs = {
-	'#': lambda ast: str (ast [1]),
+	'#': lambda ast: str (ast [-1]),
 	'@': lambda ast: str (ast [1]) if ast [1] else '',
 	'(': lambda ast: f'({ast2simple (ast [1])})',
 	'[': lambda ast: f'[{ast2simple (ast [1])}]',
@@ -277,7 +270,7 @@ _ast2spt_sympy = {
 }
 
 _ast2spt_funcs = {
-	'#': lambda ast: sp.S (ast [1]),
+	'#': lambda ast: sp.S (ast [-1]),
 	'@': lambda ast: _ast2spt_vars.get (ast [1], sp.Symbol (ast [1])),
 	'(': lambda ast: ast2spt (ast [1]),
 	'[': lambda ast: ast2spt (ast [1]),
@@ -340,7 +333,7 @@ def _spt2ast_trigh (spt):
 
 _spt2ast_funcs = {
 	sp.Integer: lambda spt: ('#', spt.p),
-	sp.Float: lambda spt: ('#', _fltoint (spt)),
+	sp.Float: lambda spt: ('#', int (spt)) if spt.is_integer else ('#', float (spt), str (spt)),
 	sp.Rational: lambda spt: ('/', ('#', spt.p), ('#', spt.q)) if spt.p >= 0 else ('-', ('/', ('#', -spt.p), ('#', spt.q))),
 	sp.numbers.ImaginaryUnit: lambda ast: ('@', 'i'),
 	sp.numbers.Pi: lambda spt: ('@', '\\pi'),
