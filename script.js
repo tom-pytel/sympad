@@ -260,16 +260,16 @@ function ajaxResponse (resp) {
 			}
 
 			let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
-			$(eLogEval).append (`<div class="LogError">${resp.err [resp.err.length - 1]}</div><div class="LogErrorTriange" id="LogErrorTriangle${resp.idx}">+</div>`); // \u25b6
+			$(eLogEval).append (`<div class="LogError">${resp.err [resp.err.length - 1]}</div><div class="LogErrorTriange" id="LogErrorTriangle${resp.idx}">\u25b7</div>`);
 			var eLogErrorTriangle  = document.getElementById (idLogErrorTriangle);
 
 			$(eLogEval).click (function () {
 				if (eLogErrorHidden.style.display === 'none') {
 					eLogErrorHidden.style.display = 'block';
-					eLogErrorTriangle.innerText   = '-'; // '\u25bc';
+					eLogErrorTriangle.innerText   = '\u25bd'; // '\u25bc'; // '-'; // '\u25bc';
 				} else {
 					eLogErrorHidden.style.display = 'none';
-					eLogErrorTriangle.innerText   = '+'; // '\u25b6';
+					eLogErrorTriangle.innerText   = '\u25b7'; // '\u25e2'; // '+'; // '\u25b6';
 				}
 
 				logResize ();
@@ -358,7 +358,10 @@ function inputKeypress (e) {
 		s = JQInput.val ().trim ();
 
 		if (s && ErrorIdx === null) {
-			s = s + Autocomplete.join ('');
+			if (Autocomplete.length > 0) {
+				s = s + Autocomplete.join ('');
+				inputting (s);
+			}
 
 			JQInput.val ('');
 

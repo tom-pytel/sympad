@@ -111,11 +111,11 @@ body {
 
 .LogErrorTriange {
 	position: absolute;
-	/* left: -1.25em;
+	left: -1.25em;
 	top: 0.25em;
-	font-size: 0.7em; */
-	top: 0;
-	left: -1em;
+	font-size: 0.7em;
+	/* left: -1em;
+	top: 0; */
 	color: red;
 	font-weight: bold;
 }
