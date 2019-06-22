@@ -15,7 +15,7 @@ def _ast_is_var_differential (ast):
 def _ast_is_var_partial (ast):
 	return ast [0] == '@' and _var_part_start_rec.match (ast [1])
 
-def _ast_neg (ast): # negatives are only represented as ('-', ast), not like ('#', -1)
+def _ast_neg (ast): # negatives are only represented here as ('-', ast), not as ('#', -1) or ('*', ('#', -1), ...)
 	return ('-', ast)
 
 def _ast_flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
@@ -198,7 +198,7 @@ class Parser (lalr1.Parser):
 		('FRAC',          r'\\frac'),
 		('VAR',          fr'\b_|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}'),
 		('OPERATOR',     fr'\\operatorname\{{({_CHAR}\w+)\}}|\\({_CHAR}\w+)'),
-		('NUM',           r'(\d+\.\d*|\.\d+)|(\d+)'), # r'\d+(?:\.\d*)?|\.\d+'), #
+		('NUM',           r'(\d+\.\d*|\.\d+)|(\d+)'),
 		('SUB1',         fr'_(?:(\d)|({_ONEVARPI}))'),
 		('SUB',           r'_'),
 		('POWER1',       fr'\^(?:(\d)|({_ONEVARPI}))'),
@@ -323,6 +323,29 @@ class Parser (lalr1.Parser):
 	def text_var        (self, VAR):                                         return f'\\partial {VAR.grp [1]}' if VAR.grp [0] and VAR.grp [0] [0] == '\\' else VAR.text
 
 	#...............................................................................................
+	def _parse_autocomplete_expr_int (self):
+		s               = self.stack [-1]
+		self.stack [-1] = (s [0], s [1], ('*', s [2], ('@', '')))
+		expr_vars       = set ()
+
+		if self.autocompleting:
+			stack = [s [2]]
+
+			while stack:
+				ast = stack.pop ()
+
+				if ast [0] == '@':
+					expr_vars.add (ast [1])
+				else:
+					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
+
+		if len (expr_vars) == 1:
+			self.autocomplete.append (f' d{expr_vars.pop ()}')
+		elif self.erridx is None:
+			self.erridx = self.tokens [self.tokidx - 1].pos
+
+		return True
+
 	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be drawn, not expression
 		'POWER1': 'POWER',
 		'SUB1'  : 'SUB',
@@ -366,13 +389,7 @@ class Parser (lalr1.Parser):
 
 		if pos >= len (rule [1]): # syntax error raised by rule reduction function?
 			if rule [0] == 'expr_int': # special case error handling for integration
-				s               = self.stack [-1]
-				self.stack [-1] = (s [0], s [1], ('*', s [2], ('@', '')))
-
-				if self.erridx is None:
-					self.erridx = self.tokens [self.tokidx - 1].pos
-
-				return True
+				return self._parse_autocomplete_expr_int ()
 
 			return False
 
