@@ -360,8 +360,8 @@ class Parser (lalr1.Parser):
 		rated = sorted ((r is None, -e if e is not None else float ('-inf'), len (a), i, (r, e, a)) \
 				for i, (r, e, a) in enumerate (self.parse_results))
 
-		rated = list (rated)
-		for i in rated: print (i)
+		# rated = list (rated)
+		# for i in rated: print (i)
 
 		return next (iter (rated)) [-1]
 

@@ -5,7 +5,9 @@
 }
 
 body {
-	margin: 1em 1em 6em 1em;
+	margin-top: 1em;
+	margin-bottom: 6em;
+	cursor: default;
 }
 
 #Clipboard {
@@ -64,39 +66,58 @@ body {
 }
 
 #OverlayAutocomplete {
-	z-index: 1;
 	-webkit-text-fill-color: #999;
 }
 
-#Log {
-	padding-inline-start: 3em;
-	cursor: default;
-}
-
 .LogEntry {
+	width: 100%;
 	margin-bottom: 1.5em;
 }
 
-.LogLine {
+.LogMargin {
 	display: inline-block;
-	margin-bottom: 0.75em;
+	height: 100%;
+	width: 4em;
+	vertical-align: top;
+	text-align: right;
+	padding-right: 0.5em;
 }
 
-.LogInputWait {
-	margin-left: 0.5em;
+.LogBody {
+	display: inline-block;
+	margin-right: -9999em;
+}
+
+.LogWait {
+	vertical-align: top;
+}
+
+.LogInput {
+	margin-bottom: 0.75em;
+	width: fit-content;
+	cursor: pointer;
+}
+
+.LogEval {
+	position: relative;
+	margin-bottom: 0.25em;
+	cursor: pointer;
 }
 
 .LogError {
-	position: relative;
-	margin-bottom: 0.2em;
+	margin-bottom: 0.25em;
 	color: red;
 }
 
 .LogErrorTriange {
-	font-size: 0.7em;
 	position: absolute;
-	left: -1.25em;
+	/* left: -1.25em;
 	top: 0.25em;
+	font-size: 0.7em; */
+	top: 0;
+	left: -1em;
+	color: red;
+	font-weight: bold;
 }
 
 

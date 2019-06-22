@@ -76,12 +76,12 @@ def _ast2tex_sympy (ast):
 def _ast2tex_lim (ast):
 	s = ast2tex (ast [2]) if not ast [4] else ast2tex (('^', ast [2], ('#', 1))) [:-1] + ast [4]
 
-	return f'\\lim_{{{ast2tex (ast [1])} \\to {s}}}{_ast2tex_paren (ast [3])}'
+	return f'\\lim_{{{ast2tex (ast [1])} \\to {s}}} {_ast2tex_paren (ast [3])}'
 
 def _ast2tex_sum (ast):
 	s = ast2tex (('^', ('#', 1), ast [3])) [1:]
 
-	return f'\\sum_{{{ast2tex (ast [1])} = {ast2tex (ast [2])}}}{s}{_ast2tex_paren (ast [4])}'
+	return f'\\sum_{{{ast2tex (ast [1])} = {ast2tex (ast [2])}}}{s} {_ast2tex_paren (ast [4])}'
 
 def _ast2tex_diff (ast):
 	ds = set ()
@@ -151,10 +151,13 @@ def _ast2simple_mul (ast, ret_has_star = False):
 	return ''.join (t) if not ret_has_star else (''.join (t), has_star)
 
 def _ast2simple_div (ast):
-	n, ns = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else (ast2simple (ast [1]), True) if ast [1] [0] == '+' else (ast2simple (ast [1]), False)
-	d, ds = _ast2simple_mul (ast [2], True) if ast [2] [0] == '*' else (ast2simple (ast [2]), True) if ast [2] [0] == '+' else (ast2simple (ast [2]), False)
+	n, ns = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
+			(ast2simple (ast [1]), True) if ast [1] [0] in {'+', '/', 'lim', 'sum', 'diff'} else (ast2simple (ast [1]), False)
+	d, ds = _ast2simple_mul (ast [2], True) if ast [2] [0] == '*' else \
+			(ast2simple (ast [2]), True) if ast [2] [0] in {'+', '/', 'lim', 'sum', 'diff'} else (ast2simple (ast [2]), False)
+	s     = ' / ' if ns or ds else '/'
 
-	return f'{f"{{{n}}}" if ns else n}/{f"{{{d}}}" if ds else d}'
+	return f'{f"{{{n}}}" if ns else n}{s}{f"{{{d}}}" if ds else d}'
 
 def _ast2simple_pow (ast):
 	b = ast2simple (ast [1])
@@ -189,12 +192,12 @@ def _ast2simple_sympy (ast):
 def _ast2simple_lim (ast):
 	s = ast2simple (ast [2]) if not ast [4] else ast2simple (('^', ast [2], ('#', 0))) [:-1] + ast [4]
 
-	return f'\\lim_{{{ast2simple (ast [1])} \\to {s}}}{_ast2simple_paren (ast [3])}'
+	return f'\\lim_{{{ast2simple (ast [1])} \\to {s}}} {_ast2simple_paren (ast [3])}'
 
 def _ast2simple_sum (ast):
 	s = ast2simple (('^', ('#', 0), ast [3])) [1:]
 
-	return f'\\sum_{{{ast2simple (ast [1])}={ast2simple (ast [2])}}}{s}{_ast2simple_paren (ast [4])}'
+	return f'\\sum_{{{ast2simple (ast [1])}={ast2simple (ast [2])}}}{s} {_ast2simple_paren (ast [4])}'
 
 _ast2simple_diff_single_rec = re.compile ('^d')
 
@@ -294,6 +297,9 @@ def ast2spt (ast):
 	return _ast2spt_funcs [ast [0]] (ast)
 
 #...............................................................................................
+def _spt2ast_float (spt):
+	return ('#', int (spt) if spt.is_integer else float (spt), str (spt))
+
 def _spt2ast_mul (spt):
 	if spt.args [0] == -1:
 		return ('-', spt2ast (sp.Mul (*spt.args [1:])))
@@ -333,7 +339,7 @@ def _spt2ast_trigh (spt):
 
 _spt2ast_funcs = {
 	sp.Integer: lambda spt: ('#', spt.p),
-	sp.Float: lambda spt: ('#', int (spt)) if spt.is_integer else ('#', float (spt), str (spt)),
+	sp.Float: _spt2ast_float,
 	sp.Rational: lambda spt: ('/', ('#', spt.p), ('#', spt.q)) if spt.p >= 0 else ('-', ('/', ('#', -spt.p), ('#', spt.q))),
 	sp.numbers.ImaginaryUnit: lambda ast: ('@', 'i'),
 	sp.numbers.Pi: lambda spt: ('@', '\\pi'),

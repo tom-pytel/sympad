@@ -1,7 +1,9 @@
-// TODO: Fix firefox tabbing out of input.
+// TODO: Arrow keys in Edge?
+// TODO: Change how error, auto and good text are displayed?
 // TODO: When horizontal size exceeds window ordered list gets misaligned vertically.
 
 // TODO: Need to copyInputStyle when bottom scroll bar appears.
+
 // Check if body height is higher than window height :)
 // if ($(document).height() > $(window).height()) {
 // 	alert("Vertical Scrollbar! D:");
@@ -77,7 +79,6 @@ function copyInputStyle () {
 	}
 
 	overlay.style ['backgroundColor'] = 'transparent';
-	// overlay.style.width               = 'auto';
 }
 
 //...............................................................................................
@@ -129,9 +130,10 @@ function reprioritizeMJQueue () {
 function addLogEntry () {
 	LogIdx += 1;
 
-	$('#Log').append ('<li class="LogEntry" id="LogEntry' + LogIdx + '"><div id="LogInput' + LogIdx + '" class="LogLine">' +
-			'<img id="LogInputWait' + LogIdx + '" class="LogInputWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16" style="visibility: hidden">' +
-			'</div></li>');
+	$('#Log').append (`
+			<div class="LogEntry"><div class="LogMargin">${LogIdx}.</div><div class="LogBody" id="LogEntry${LogIdx}"><div class="LogInput" id="LogInput${LogIdx}">
+				<img class="LogWait" id="LogInputWait${LogIdx}" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16" style="visibility: hidden">
+			</div></div></div>`)
 
 	Validations.push (undefined);
 	Evaluations.push (undefined);
@@ -217,7 +219,7 @@ function ajaxResponse (resp) {
 			eLogInputWait.style.visibility = '';
 
 			let idMath = 'LogInputMath' + UniqueID ++;
-			$(eLogInput).append ('<span id="' + idMath + '" onclick="copyToClipboard (this, 0, ' + resp.idx + ')" style="visibility: hidden">$' + resp.tex + '$</span>');
+			$(eLogInput).append (`<span id="${idMath}" onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">$${resp.tex}$</span>`);
 			let eMath  = document.getElementById (idMath);
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
@@ -250,25 +252,25 @@ function ajaxResponse (resp) {
 
 			if (resp.err.length > 1) {
 				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
-				$(eLogEval).append ('<div id="' + idLogErrorHidden + '" style="display: none"></div>');
+				$(eLogEval).append (`<div id="${idLogErrorHidden}" style="display: none"></div>`);
 				var eLogErrorHidden  = document.getElementById (idLogErrorHidden);
 
 				for (let i = 0; i < resp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append ('<div class="LogError">' + resp.err [i] + '</div>');
+					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i]}</div>`);
 				}
 			}
 
 			let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
-			$(eLogEval).append ('<div class="LogError">' + resp.err [resp.err.length - 1] + '<span id="LogErrorTriangle' + resp.idx + '" class="LogErrorTriange">\u25b6</span></div>');
+			$(eLogEval).append (`<div class="LogError">${resp.err [resp.err.length - 1]}</div><div class="LogErrorTriange" id="LogErrorTriangle${resp.idx}">+</div>`); // \u25b6
 			var eLogErrorTriangle  = document.getElementById (idLogErrorTriangle);
 
-			$(eLogEval).click (function () { // '\u25b2\u25ba\u25b3\u25b7'
+			$(eLogEval).click (function () {
 				if (eLogErrorHidden.style.display === 'none') {
 					eLogErrorHidden.style.display = 'block';
-					eLogErrorTriangle.innerText   = '\u25b2'; // '\u25b9' // '\u25b4' // '\u25b3' //
+					eLogErrorTriangle.innerText   = '-'; // '\u25bc';
 				} else {
 					eLogErrorHidden.style.display = 'none';
-					eLogErrorTriangle.innerText   = '\u25b6'; // '\u25b5' // '\u25b8' // '\u25b7' //
+					eLogErrorTriangle.innerText   = '+'; // '\u25b6';
 				}
 
 				logResize ();
@@ -279,7 +281,7 @@ function ajaxResponse (resp) {
 
 		} else { // no error
 			let idLogEvalMath = 'LogEvalMath' + resp.idx;
-			$(eLogEval).append ('<span id="' + idLogEvalMath + '" style="visibility: hidden" onclick="copyToClipboard (this, 1, ' + resp.idx + ')">$' + resp.tex + '$</span>');
+			$(eLogEval).append (`<span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</span>`);
 			let eLogEvalMath  = document.getElementById (idLogEvalMath);
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
@@ -337,9 +339,10 @@ function inputted (text) {
 		},
 	});
 
-	$('#LogEntry' + LogIdx).append ('<div id="LogEval' + LogIdx + '">' +
-			'<img id="LogEvalWait' + LogIdx + '" class="LogLine" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">' +
-			'</div>');
+	$('#LogEntry' + LogIdx).append (`
+			<div class="LogEval" id="LogEval${LogIdx}">
+				<img class="LogWait" id="LogEvalWait${LogIdx}" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
+			</div>`);
 
 	History.push (text);
 
@@ -391,11 +394,14 @@ function inputKeydown (e) {
 		e.preventDefault ();
 		$(this).focus ();
 
+		return false;
+
 	} else if (e.code == 'ArrowUp') {
 		e.preventDefault ();
 
 		if (HistIdx) {
 			inputting (History [-- HistIdx], true);
+
 			return false;
 		}
 
@@ -404,6 +410,7 @@ function inputKeydown (e) {
 
 		if (HistIdx < History.length - 1) {
 			inputting (History [++ HistIdx], true);
+
 			return false;
 
 		} else if (HistIdx != History.length) {
@@ -433,12 +440,22 @@ function inputKeydown (e) {
 }
 
 //...............................................................................................
-function inputFocusout (e) {
+// function inputFocusout (e) {
+// 	if (PreventFocusOut) {
+// 		e.preventDefault ();
+// 		$(this).focus ();
+
+// 		return false;
+// 	}
+// }
+
+//...............................................................................................
+function keepInputFocus () {
 	if (PreventFocusOut) {
-		e.preventDefault ();
-		$(this).focus ();
-		return false;
+		JQInput.focus ();
 	}
+
+	setTimeout (keepInputFocus, 50);
 }
 
 //...............................................................................................
@@ -450,19 +467,28 @@ $(function () {
 	margin           = $('body').css ('margin-bottom');
 	BodyMarginBottom = Number (margin.slice (0, margin.length - 2));
 
-	addLogEntry ();
-
-	JQInput.keypress (inputKeypress);
-	JQInput.keydown (inputKeydown);
-	JQInput.focusout (inputFocusout);
-
 	$('#Clipboard').prop ('readonly', true);
 	$('#InputBG') [0].height = $('#InputBG').height ();
 
+	JQInput.keypress (inputKeypress);
+	JQInput.keydown (inputKeydown);
+	// JQInput.focusout (inputFocusout);
+	// JQInput.blur (inputFocusout);
+
+	addLogEntry ();
 	logResize ();
 	resize ();
+	keepInputFocus ();
 });
 
+
+// $('#txtSearch').blur(function (event) {
+// 	setTimeout(function () { $("#txtSearch").focus(); }, 20);
+// });
+
+// document.getElementById('txtSearch').addEventListener('blur', e => {
+//   e.target.focus();
+// });
 
 // cursor_test = function (element) {
 // 	if (!element.children.length && element.innerText == '∥') {
