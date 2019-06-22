@@ -134,7 +134,7 @@ class Parser (lalr1.Parser):
 			b'zAa5a8ujNaiODulB9JmkIoX2dVJXlBr0SHIPqgw5a4JDzheaOdWKonpKkHOa/ne2VHA9UrCuqpVKHmhJ/vU1fbTMtwa7HyXL8Qd+1oZbsXgxN+C2iyzOXdoYRQmnZnEp+G+xBz/KartZ+TioXIBV/ONpjm1/VIybL2b+Q+t8pFO8MQd9Kv94FtUNKU2EJvRf' \
 			b'iuU4DIGo+2dgdTr6ssODLjzi4sMtOtmSM63OgRafOssJlseDq3RMNdeG4fET/kOA9X7IVOBU8uLW+NyPGh1ur20Ymhb/qLJ6oYZX0W1Xpcvpk84AVzPR0tMnb7NcRrxkLh5qeby9mnF8X8dQ/fkrkltJYNO/k1jZkBD8qcKtpXBqXcNS6HEpmHPLCuLVmIl6' \
 			b'NCoZlsV0esSoOFWf83GRXEGxcVFl98DAlKKXDCcRhXQspF2j27rUYZfvrb02RJUNzpU6E6VuVNfwXGkYnmZJkSdIhYzcRnf3bTT03/63b7iBi99um2+gV3diuIFhBw2M6k4MN3Dx23Ot+cnqr1Fc0dxo+BrPwmRdA+ua5VKyLuK90YVXuzOsi+bezVtxjbN7' \
-			b'w+uZisTJK0VYdTV0HQRWTZO/AKortNU='
+			b'w+uZisTJK0VYdTV0HQRWTZO/AKortNU=' 
 
 	_PARSER_TOP = 'expr'
 
@@ -367,5 +367,5 @@ class Parser (lalr1.Parser):
 
 # if __name__ == '__main__':
 # 	p = Parser ()
-# 	a = p.parse ('\\operatorname{test}x')
+# 	a = p.parse ('sin (x) y')
 # 	print (a)
