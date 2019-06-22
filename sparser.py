@@ -115,12 +115,18 @@ def _ast_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/',
 	return ast
 
 def _expr_int (ast): # construct indefinite integral ast
-	if _ast_is_var_differential (ast) or ast == ('@', ''): # second part is for autocomplete
+	if _ast_is_var_differential (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
 		return ('int', ast)
-	elif ast [0] == '/' and _ast_is_var_differential (ast [1]):
-		return ('int', ('/', ('#', 1), ast [2]), ast [1])
-	elif ast [0] == '*' and _ast_is_var_differential (ast [-1]):
+
+	elif ast [0] == '/':
+		if _ast_is_var_differential (ast [1]):
+			return ('int', ('/', ('#', 1), ast [2]), ast [1])
+		elif ast [2] [0] == '*' and _ast_is_var_differential (ast [2] [-1]):
+			return ('int', ('/', ast [1], ast [2] [1] if len (ast [2]) == 3 else ast [2] [:-1]), ast [2] [-1])
+
+	elif ast [0] == '*' and (_ast_is_var_differential (ast [-1]) or ast [-1] == ('@', '')): # ('@', '') is for autocomplete
 		return ('int', ast [1] if len (ast) == 3 else ast [:-1], ast [-1])
+
 	elif ast [0] == '+' and ast [-1] [0] == '*' and _ast_is_var_differential (ast [-1] [-1]):
 		return ('int', \
 				ast [:-1] + (ast [-1] [:-1],) \
@@ -317,7 +323,7 @@ class Parser (lalr1.Parser):
 	def text_var        (self, VAR):                                         return f'\\partial {VAR.grp [1]}' if VAR.grp [0] and VAR.grp [0] [0] == '\\' else VAR.text
 
 	#...............................................................................................
-	_AUTOCOMPLETE_SUBSTITUTE = {
+	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be drawn, not expression
 		'POWER1': 'POWER',
 		'SUB1'  : 'SUB',
 		'POWER1': 'POWER',
@@ -359,6 +365,15 @@ class Parser (lalr1.Parser):
 		rule = self.rules [irule]
 
 		if pos >= len (rule [1]): # syntax error raised by rule reduction function?
+			if rule [0] == 'expr_int': # special case error handling for integration
+				s               = self.stack [-1]
+				self.stack [-1] = (s [0], s [1], ('*', s [2], ('@', '')))
+
+				if self.erridx is None:
+					self.erridx = self.tokens [self.tokidx - 1].pos
+
+				return True
+
 			return False
 
 		sym = rule [1] [pos]
@@ -407,5 +422,5 @@ class Parser (lalr1.Parser):
 
 if __name__ == '__main__':
 	p = Parser ()
-	a = p.parse ('\\int x+y dx')
+	a = p.parse ('\\int x')
 	print (a)

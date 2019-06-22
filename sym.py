@@ -8,15 +8,6 @@ _diff_var_single_start_rec = re.compile (r'^d(?=[^_])')
 _diff_var_start_rec        = re.compile (r'^(?:d(?=[^_])|\\partial )')
 _var_multiple_rec          = re.compile (r'^(?:d(?=[^_])|\\partial )|(?:.*_)')
 
-# def _ast_is_0to9 (ast):
-# 	return ast [0] == '#' and isinstance (ast [1], int) and 0 <= ast [1] <= 9
-
-# def _ast_is_single_var (ast):
-# 	return ast [0] == '@' and not _var_multiple_rec.match (ast [1])
-
-# def _ast_is_single_unit (ast):
-# 	return _ast_is_0to9 (ast) or _ast_is_single_var (ast)
-
 def _ast_is_single_unit (ast):
 	if ast [0] == '#':
 		return isinstance (ast [1], int) and 0 <= ast [1] <= 9
