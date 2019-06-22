@@ -88,6 +88,7 @@ function scrollToEnd () {
 
 //...............................................................................................
 function resize () {
+	console.log ('resize');
 	copyInputStyle ();
 	scrollToEnd ();
 	generateBG ();
@@ -155,8 +156,6 @@ function writeToClipboard (text) {
 
 //...............................................................................................
 function copyToClipboard (e, val_or_eval, idx) {
-	console.log (Validations, Evaluations);
-
 	let t = performance.now ();
 
 	if ((t - LastClickTime) > 500) {

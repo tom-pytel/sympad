@@ -127,7 +127,7 @@ class Parser:
 		tokens = self.tokenize (src)
 		tokidx = 0
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
-		stack  = [(0, None, None)] # [(stidx, symbol, reduction), ...]
+		stack  = [(0, None, None)] # [(stidx, symbol, reduction) or (stidx, token), ...]
 		stidx  = 0
 		rederr = None # reduction function raised SyntaxError
 

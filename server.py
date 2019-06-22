@@ -77,6 +77,11 @@ class Handler (SimpleHTTPRequestHandler):
 				ast       = sym.spt2ast (spt)
 				_last_ast = ast
 
+				print ()
+				print ('spt:        ', repr (spt))
+				print ('sympy latex:', sym.sp.latex (spt))
+				print ()
+
 				resp      = {
 					'tex'   : sym.ast2tex (ast),
 					'simple': sym.ast2simple (ast),
@@ -109,7 +114,7 @@ if __name__ == '__main__':
 				subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED': '1'})
 
 		if len (sys.argv) < 2:
-			host, port = '', 8000
+			host, port = 'localhost', 8000
 		else:
 			host, port = (re.split (r'(?<=\]):' if sys.argv [1].startswith ('[') else ':', sys.argv [1]) + ['8000']) [:2]
 			host, port = host.strip ('[]'), int (port)

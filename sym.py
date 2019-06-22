@@ -8,62 +8,75 @@ _diff_var_single_start_rec = re.compile (r'^d(?=[^_])')
 _diff_var_start_rec        = re.compile (r'^(?:d(?=[^_])|\\partial )')
 _var_multiple_rec          = re.compile (r'^(?:d(?=[^_])|\\partial )|(?:.*_)')
 
-def _ast_is_0to9 (ast):
-	return ast [0] == '#' and isinstance (ast [1], int) and 0 <= ast [1] <= 9
+# def _ast_is_0to9 (ast):
+# 	return ast [0] == '#' and isinstance (ast [1], int) and 0 <= ast [1] <= 9
 
-def _ast_is_single_var (ast):
-	return ast [0] == '@' and not _var_multiple_rec.match (ast [1])
+# def _ast_is_single_var (ast):
+# 	return ast [0] == '@' and not _var_multiple_rec.match (ast [1])
+
+# def _ast_is_single_unit (ast):
+# 	return _ast_is_0to9 (ast) or _ast_is_single_var (ast)
 
 def _ast_is_single_unit (ast):
-	return _ast_is_0to9 (ast) or _ast_is_single_var (ast)
+	if ast [0] == '#':
+		return isinstance (ast [1], int) and 0 <= ast [1] <= 9
+	elif ast [0] == '@':
+		return not _var_multiple_rec.match (ast [1])
 
-def _ast_ignore_fact (ast):
-	return ast if ast [0] != '!' else _ast_ignore_fact (ast [1])
+	return False
+
+def _ast_is_neg (ast):
+	return \
+			ast [0] == '-' or \
+			ast [0] == '#' and ast [1] < 0 or \
+			ast [0] == '*' and _ast_is_neg (ast [1])
 
 #...............................................................................................
 def _ast2tex_paren (ast):
 	return f'\\left({ast2tex (ast)} \\right)' if ast [0] != '(' else ast2tex (ast)
 
+def _ast2tex_curly (ast):
+	return f'{ast2tex (ast)}' if _ast_is_single_unit (ast) else f'{{{ast2tex (ast)}}}'
+
 def _ast2tex_mul (ast):
 	t = []
 
 	for i in range (1, len (ast)):
-		aif = _ast_ignore_fact (ast [i])
+		s = f'{_ast2tex_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and _ast_is_neg (ast [i])) else ast2tex (ast [i])}'
 
-		if i != 1 and (aif [0] == '#' or ast [i] [0] == '!' or (aif [0] in {'/', 'diff'} and ast [i - 1] [0] in {'#', '/', 'diff'})):
+		if i != 1 and (ast [i] [0] == '!' or ast [i] [0] == '#' or (ast [i]  [0] in {'/', 'diff'} and ast [i - 1] [0] in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {ast2tex (ast [i])}')
 		elif i != 1 and (ast [i - 1] in {('@', 'd'), ('@', '\\partial')} or ast [i - 1] [0] == 'sqrt' or \
-				(aif [0] == '@' and _diff_var_start_rec.match (aif [1])) or \
+				(ast [i] [0] == '@' and _diff_var_start_rec.match (ast [i]  [1])) or \
 				(ast [i - 1] [0] == '@' and _diff_var_start_rec.match (ast [i - 1] [1]))):
-			t.append (f'\\ {ast2tex (ast [i])}')
+			t.append (f'\\ {s}')
 		else:
-			t.append (f'{"" if i == 1 else " "}{_ast2tex_paren (ast [i]) if ast [i] [0] == "+" else ast2tex (ast [i])}')
+			t.append (f'{"" if i == 1 else " "}{s}')
 
 	return ''.join (t)
 
 def _ast2tex_pow (ast):
 	b = ast2tex (ast [1])
-	p = f'^{ast2tex (ast [2])}' if _ast_is_single_unit (ast [2]) else f'^{{{ast2tex (ast [2])}}}'
+	p = _ast2tex_curly (ast [2])
 
 	if ast [1] [0] in '([|':
-		return f'{b}{p}'
+		return f'{b}^{p}'
 
 	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ast [2] [0] == '#' and ast [2] [1] >= 0:
 		i = len (ast [1] [1]) + (15 if ast [1] [1] in {'sech', 'csch'} else 1)
 
-		return f'{b [:i]}{p}{b [i:]}'
+		return f'{b [:i]}^{p}{b [i:]}'
 
 	elif ast [1] [0] == '@' or (ast [1] [0] == '#' and ast [1] [1] >= 0):
-		return f'{b}{p}'
+		return f'{b}^{p}'
 
-	return f'\\left({b} \\right){p}'
+	return f'\\left({b} \\right)^{p}'
 
 def _ast2tex_log (ast):
-	if len (ast) == 2:
-		return f'\\ln{_ast2tex_paren (ast [1])}'
-
-	return f'\\log_{ast2tex (ast [2])}{_ast2tex_paren (ast [1])}' if _ast_is_single_unit (ast [2]) else \
-			f'\\log_{{{ast2tex (ast [2])}}}{_ast2tex_paren (ast [1])}'
+	return \
+			f'\\ln{_ast2tex_paren (ast [1])}' \
+			if len (ast) == 2 else \
+			f'\\log_{_ast2tex_curly (ast [2])}{_ast2tex_paren (ast [1])}'
 
 def _ast2tex_trigh (ast):
 	n = (f'\\operatorname{{{ast [1] [1:]}}}^{{-1}}' if ast [1] in {'asech', 'acsch'} else f'\\{ast [1] [1:]}^{{-1}}') \
@@ -105,6 +118,18 @@ def _ast2tex_diff (ast):
 
 		return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{_ast2tex_paren (ast [1])}'
 
+def _ast2tex_int (ast):
+	l = len (ast)
+
+	return \
+			f'\\int \\ {ast2tex (ast [1])}' \
+			if l == 2 else \
+			f'\\int {ast2tex (ast [1])} \\ {ast2tex (ast [2])}' \
+			if l == 3 else \
+			f'\\int_{_ast2tex_curly (ast [2])}^{_ast2tex_curly (ast [3])} \\ {ast2tex (ast [1])}' \
+			if l == 4 else \
+			f'\\int_{_ast2tex_curly (ast [3])}^{_ast2tex_curly (ast [4])} {ast2tex (ast [1])} \\ {ast2tex (ast [2])}' \
+
 _ast2tex_funcs = {
 	'#': lambda ast: str (ast [-1]),
 	'@': lambda ast: str (ast [1]) if ast [1] else '{}', # '\\Vert', # '{}',
@@ -125,6 +150,7 @@ _ast2tex_funcs = {
 	'lim': _ast2tex_lim,
 	'sum': _ast2tex_sum,
 	'diff': _ast2tex_diff,
+	'int': _ast2tex_int,
 }
 
 def ast2tex (ast):
@@ -134,11 +160,16 @@ def ast2tex (ast):
 def _ast2simple_paren (ast):
 	return f'({ast2simple (ast)})' if ast [0] != '(' else ast2simple (ast)
 
+def _ast2simple_curly (ast):
+	return f'{ast2simple (ast)}' if _ast_is_single_unit (ast) else f'{{{ast2simple (ast)}}}'
+
 def _ast2simple_mul (ast, ret_has_star = False):
 	t        = []
 	has_star = False
 
 	for i in range (1, len (ast)):
+		s = f'{_ast2simple_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and _ast_is_neg (ast [i])) else ast2simple (ast [i])}'
+
 		if i != 1 and (ast [i] [0] == '!' or ast [i] [0] == '#' or ast [i] [0] in {'/', 'diff'} or ast [i - 1] [0] in {'/', 'diff'}):
 			t.append (f' * {ast2simple (ast [i])}')
 			has_star = True
@@ -146,9 +177,9 @@ def _ast2simple_mul (ast, ret_has_star = False):
 				(ast [i] [0] not in {'#', '@', '(', '[', '|', '^'} or ast [i - 1] [0] not in {'#', '@', '(', '[', '|', '^'}) or \
 				(ast [i] [0] == '@' and _diff_var_start_rec.match (ast [i] [1])) or \
 				(ast [i - 1] [0] == '@' and _diff_var_start_rec.match (ast [i - 1] [1]))):
-			t.append (f' {ast2simple (ast [i])}')
+			t.append (f' {s}')
 		else:
-			t.append (f'{_ast2simple_paren (ast [i]) if ast [i] [0] == "+" else ast2simple (ast [i])}')
+			t.append (s)
 
 	return ''.join (t) if not ret_has_star else (''.join (t), has_star)
 
@@ -163,27 +194,26 @@ def _ast2simple_div (ast):
 
 def _ast2simple_pow (ast):
 	b = ast2simple (ast [1])
-	p = f'^{ast2simple (ast [2])}' if _ast_is_single_unit (ast [2]) else f'^{{{ast2simple (ast [2])}}}'
+	p = _ast2simple_curly (ast [2])
 
 	if ast [1] [0] in '([|':
-		return f'{b}{p}'
+		return f'{b}^{p}'
 
 	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ast [2] [0] == '#' and ast [2] [1] >= 0:
 		i = len (ast [1] [1]) + 1
 
-		return f'{b [:i]}{p}{b [i:]}'
+		return f'{b [:i]}^{p}{b [i:]}'
 
 	elif ast [1] [0] == '@' or (ast [1] [0] == '#' and ast [1] [1] >= 0):
-		return f'{b}{p}'
+		return f'{b}^{p}'
 
-	return f'({b}){p}'
+	return f'({b})^{p}'
 
 def _ast2simple_log (ast):
-	if len (ast) == 2:
-		return f'ln{_ast2simple_paren (ast [1])}'
-
-	return f'log_{ast2simple (ast [2])}{_ast2simple_paren (ast [1])}' if _ast_is_single_unit (ast [2]) else \
-			f'log_{{{ast2simple (ast [2])}}}{_ast2simple_paren (ast [1])}'
+	return \
+			f'ln{_ast2simple_paren (ast [1])}' \
+			if len (ast) == 2 else \
+			f'log_{_ast2simple_curly (ast [2])}{_ast2simple_paren (ast [1])}'
 
 def _ast2simple_trigh (ast):
 	return f'{ast [1]}{_ast2simple_paren (ast [2])}'
@@ -223,6 +253,18 @@ def _ast2simple_diff (ast):
 
 		return f'\\partial{"" if p == 1 else f"^{p}"}/{s}{_ast2simple_paren (ast [1])}'
 
+def _ast2simple_int (ast):
+	l = len (ast)
+
+	return \
+			f'\\int {ast2simple (ast [1])}' \
+			if l == 2 else \
+			f'\\int {ast2simple (ast [1])} {ast2simple (ast [2])}' \
+			if l == 3 else \
+			f'\\int_{_ast2simple_curly (ast [2])}^{_ast2simple_curly (ast [3])} {ast2simple (ast [1])}' \
+			if l == 4 else \
+			f'\\int_{_ast2simple_curly (ast [3])}^{_ast2simple_curly (ast [4])} {ast2simple (ast [1])} {ast2simple (ast [2])}' \
+
 _ast2simple_funcs = {
 	'#': lambda ast: str (ast [-1]),
 	'@': lambda ast: str (ast [1]) if ast [1] else '',
@@ -243,6 +285,7 @@ _ast2simple_funcs = {
 	'lim': _ast2simple_lim,
 	'sum': _ast2simple_sum,
 	'diff': _ast2simple_diff,
+	'int': _ast2simple_int,
 }
 
 def ast2simple (ast):
@@ -262,6 +305,18 @@ def _ast2spt_diff (ast):
 	), ())
 
 	return sp.diff (ast2spt (ast [1]), *args)
+
+def _ast2spt_int (ast):
+	l = len (ast)
+
+	return \
+			sp.integrate (1, ast2spt (('@', _diff_var_start_rec.sub ('', ast [1] [1])))) \
+			if l == 2 else \
+			sp.integrate (ast2spt (ast [1]), ast2spt (('@', _diff_var_start_rec.sub ('', ast [2] [1])))) \
+			if l == 3 else \
+			sp.integrate (1, (ast2spt (('@', _diff_var_start_rec.sub ('', ast [1] [1]))), ast2spt (ast [2]), ast2spt (ast [3]))) \
+			if l == 4 else \
+			sp.integrate (ast2spt (ast [1]), (ast2spt (('@', _diff_var_start_rec.sub ('', ast [2] [1]))), ast2spt (ast [3]), ast2spt (ast [4])))
 
 _ast2spt_vars = {
 	'i': sp.I,
@@ -293,6 +348,7 @@ _ast2spt_funcs = {
 	'lim': lambda ast: sp.limit (ast2spt (ast [3]), ast2spt (ast [1]), ast2spt (ast [2]), dir = ast [4] if ast [4] else '+-'),
 	'sum': lambda ast: sp.Sum (ast2spt (ast [4]), (ast2spt (ast [1]), ast2spt (ast [2]), ast2spt (ast [3]))).doit (),
 	'diff': _ast2spt_diff,
+	'int': _ast2spt_int,
 }
 
 def ast2spt (ast):
@@ -339,6 +395,13 @@ def _spt2ast_pow (spt):
 def _spt2ast_trigh (spt):
 	return ('trigh', spt.__class__.__name__, spt2ast (spt.args [0]))
 
+def _spt2ast_integral (spt):
+	print (spt.args)
+	return \
+			('int', spt2ast (spt.args [0]), ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])) \
+			if len (spt.args [1]) == 3 else \
+			('int', spt2ast (spt.args [0]), ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
+
 _spt2ast_funcs = {
 	sp.Integer: lambda spt: ('#', spt.p),
 	sp.Float: _spt2ast_float,
@@ -362,6 +425,7 @@ _spt2ast_funcs = {
 	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_trigh,
 	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_trigh,
 	sp.Sum: lambda spt: ('sum', spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2]), spt2ast (spt.args [0])),
+	sp.Integral: _spt2ast_integral,
 }
 
 def spt2ast (spt):
@@ -371,7 +435,8 @@ def spt2ast (spt):
 		if func:
 			return func (spt)
 
-	raise RuntimeError (f'unexpected class {spt.__class__!r}')
+	raise RuntimeError (f'unexpected class {spt.__class__.__name__!r}')
 
-# if __name__ == '__main__':
-# 	t = ast2simple (('trigh', 'sin', ('(', ('@', 'x'))))
+if __name__ == '__main__':
+	t = ast2spt (('int', ('@', 'dx')))
+	print (t)
