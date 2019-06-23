@@ -16,7 +16,7 @@ class Parser:
 	_PARSER_TOP    = ''
 	TOKENS         = {}
 
-	_SYMBOL_notail_rec = re.compile (r'(.*[^_\d])(_?\d+)?')
+	_SYMBOL_notail_rec = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
 
 	def __init__ (self):
 		if isinstance (self._PARSER_TABLES, bytes):
@@ -89,7 +89,8 @@ class Parser:
 
 			if m is None:
 				tokens.append (Token ('$err', text [pos], pos))
-				pos += 1
+
+				break
 
 			else:
 				if m.lastgroup != 'ignore':
@@ -175,7 +176,7 @@ class Parser:
 				tokidx += 1
 				stidx   = act
 
-				stack.append ((stidx, tok)) # (stidx, tok, tok)
+				stack.append ((stidx, tok))
 
 			else:
 				rule  = rules [-act]
@@ -183,7 +184,7 @@ class Parser:
 				prod  = rule [0]
 
 				try:
-					reduct = rfuncs [-act] (*(t [-1] for t in stack [rnlen:])) # t [2]
+					reduct = rfuncs [-act] (*(t [-1] for t in stack [rnlen:]))
 
 				except SyntaxError as e:
 					rederr = e or True
