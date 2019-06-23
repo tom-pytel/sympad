@@ -1,6 +1,5 @@
 // TODO: Arrow keys in Edge?
 // TODO: Change how error, auto and good text are displayed?
-// TODO: When horizontal size exceeds window ordered list gets misaligned vertically.
 
 // TODO: Need to copyInputStyle when bottom scroll bar appears.
 

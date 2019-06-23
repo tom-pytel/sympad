@@ -31,7 +31,7 @@ def is_single_unit (ast): # is single positive digit or single non-differential 
 
 	return False
 
-def is_neg (ast): # is explicit negative?
+def is_neg (ast): # is explicitly negative?
 	return \
 			ast [0] == '-' or \
 			ast [0] == '#' and ast [1] < 0 or \

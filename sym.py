@@ -2,7 +2,7 @@
 
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
 # TODO: 1e+100 float string representation
-# TODO: py representation
+# TODO: change simple to use ** instead of ^
 
 import re
 import sympy as sp
@@ -15,7 +15,7 @@ _FUNCS_ALL_PY     = set (ass.FUNCS_PY) | _FUNCS_PY_AND_TEX
 _rec_var_diff_or_part_start = re.compile (r'^(?:d(?=[^_])|\\partial )')
 
 #...............................................................................................
-def ast2tex (ast): # abstract syntax tree (tuples) -> LaTeX
+def ast2tex (ast): # abstract syntax tree (tuples) -> LaTeX text
 	return _ast2tex_funcs [ast [0]] (ast)
 
 def _ast2tex_curly (ast):
@@ -221,7 +221,7 @@ def _ast2simple_pow (ast):
 	b = ast2simple (ast [1])
 	p = _ast2simple_curly (ast [2])
 
-	if ast [1] [0] in '([|':
+	if ast [1] [0] in '(|':
 		return f'{b}^{p}'
 
 	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ast [2] [0] == '#' and ast [2] [1] >= 0:
@@ -323,7 +323,84 @@ _ast2simple_funcs = {
 
 #...............................................................................................
 def ast2py (ast): # abstract syntax tree (tuples) -> python code text
-	return ''
+	return _ast2py_funcs [ast [0]] (ast)
+
+def _ast2py_curly (ast):
+	has = ast [0] in {'+', '*', '/'} or ast [0] == 'log' and len (ast) > 2
+	s   = _ast2py_paren (ast) if has else ast2py (ast)
+
+	return s, has
+
+def _ast2py_paren (ast):
+	return f'({ast2py (ast)})' if ast [0] != '(' else ast2py (ast)
+
+def _ast2py_div (ast):
+	n, ns = _ast2py_curly (ast [1])
+	d, ds = _ast2py_curly (ast [2])
+
+	return f'{n}{" / " if ast [1] [0] not in {"#", "@", "-"} or ast [2] [0] not in {"#", "@", "-"} else "/"}{d}'
+
+def _ast2py_pow (ast):
+	b, _ = _ast2py_curly (ast [1])
+	e, _ = _ast2py_curly (ast [2])
+
+	return f'{b}**{e}'
+
+def _ast2py_log (ast):
+	return \
+			f'log{_ast2py_paren (ast [1])}' \
+			if len (ast) == 2 else \
+			f'log{_ast2py_paren (ast [1])} / log{_ast2py_paren (ast [2])}' \
+
+def _ast2py_lim (ast):
+	return \
+		f'''Limit({ast2py (ast [1])}, {ast2py (ast [2])}, {ast2py (ast [3])}''' \
+		f'''{", dir='+-'" if len (ast) == 4 else ", dir='-'" if ast [4] == '-' else ""})'''
+
+def _ast2py_diff (ast):
+	args = sum ((
+			(ast2py (('@', _rec_var_diff_or_part_start.sub ('', n [1]))),) \
+			if n [0] == '@' else \
+			(ast2py (('@', _rec_var_diff_or_part_start.sub ('', n [1] [1]))), str (n [2] [1])) \
+			for n in ast [2:] \
+			), ())
+
+	return f'Derivative({ast2py (ast [1])}, {", ".join (args)})'
+
+def _ast2py_int (ast):
+	l = len (ast)
+
+	return \
+			f'Integral(1, {ast2py (("@", _rec_var_diff_or_part_start.sub ("", ast [1] [1])))})' \
+			if l == 2 else \
+			f'Integral({ast2py (ast [1])}, {ast2py (("@", _rec_var_diff_or_part_start.sub ("", ast [2] [1])))})' \
+			if l == 3 else \
+			f'Integral(1, ({ast2py (("@", _rec_var_diff_or_part_start.sub ("", ast [1] [1])))}, {ast2py (ast [2])}, {ast2py (ast [3])}))' \
+			if l == 4 else \
+			f'Integral({ast2py (ast [1])}, ({ast2py (("@", _rec_var_diff_or_part_start.sub ("", ast [2] [1])))}, {ast2py (ast [3])}, {ast2py (ast [4])}))'
+
+_rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
+
+_ast2py_funcs = {
+	'#': lambda ast: str (ast [-1]),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast [1]).replace ('\\', '').replace ("'", '_prime'),
+	'(': lambda ast: f'({ast2py (ast [1])})',
+	'|': lambda ast: f'abs({ast2py (ast [1])})',
+	'-': lambda ast: f'-{ast2py (ast [1])}',
+	'!': lambda ast: f'factorial({ast2py (ast [1])})',
+	'+': lambda ast: ' + '.join (ast2py (n) for n in ast [1:]).replace (' + -', ' - '),
+	'*': lambda ast: '*'.join (ast2py (n) for n in ast [1:]),
+	'/': _ast2py_div,
+	'^': _ast2py_pow,
+	'log': _ast2py_log,
+	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast [1])}' if len (ast) == 2 else ast2py (('^', ast [1], ('/', ('#', 1), ast [2]))),
+	'trigh': lambda ast: f'{ast [1]}({ast2py (ast [2])})',
+	'func': lambda ast: f'{ast [1]}({ast2py (ast [2])})',
+	'lim': _ast2py_lim,
+	'sum': lambda ast: f'Sum({ast2py (ast [1])}, ({ast2py (ast [2])}, {ast2py (ast [3])}, {ast2py (ast [4])}))',
+	'diff': _ast2py_diff,
+	'int': _ast2py_int,
+}
 
 #...............................................................................................
 def ast2spt (ast): # abstract syntax tree (tuples) -> SymPy tree (expression)
@@ -335,7 +412,7 @@ def _ast2spt_diff (ast):
 			if n [0] == '@' else \
 			(ast2spt (('@', _rec_var_diff_or_part_start.sub ('', n [1] [1]))), sp.Integer (n [2] [1])) \
 			for n in ast [2:] \
-	), ())
+			), ())
 
 	return sp.diff (ast2spt (ast [1]), *args)
 
