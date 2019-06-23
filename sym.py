@@ -1,5 +1,6 @@
+# TODO: display 18 \sum_{n=0}^\infty (3^n2^{-3n})
+
 # TODO: NaN -> undefined
-# TODO: sympy representations
 # TODO: 1e+100 float string representation
 # TODO: py representation
 
@@ -31,28 +32,33 @@ def _ast2tex_paren (ast):
 def _ast2tex_curly (ast):
 	return f'{ast2tex (ast)}' if _ast_is_single_unit (ast) else f'{{{ast2tex (ast)}}}'
 
-def _ast2tex_mul (ast):
-	t = []
+def _ast2tex_mul (ast, ret_has_exp = False):
+	t       = []
+	has_exp = False
 
 	for i in range (1, len (ast)):
 		s = f'{_ast2tex_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and _ast_is_neg (ast [i])) else ast2tex (ast [i])}'
 
-		if i != 1 and (ast [i] [0] == '!' or ast [i] [0] == '#' or (ast [i]  [0] in {'/', 'diff'} and ast [i - 1] [0] in {'#', '/', 'diff'})):
+		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or \
+				(ast [i]  [0] in {'/', 'diff'} and ast [i - 1] [0] in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {ast2tex (ast [i])}')
+			has_exp = True
+
 		elif i != 1 and (ast [i - 1] in {('@', 'd'), ('@', '\\partial')} or ast [i - 1] [0] == 'sqrt' or \
 				(ast [i] [0] == '@' and _diff_var_start_rec.match (ast [i]  [1])) or \
 				(ast [i - 1] [0] == '@' and _diff_var_start_rec.match (ast [i - 1] [1]))):
 			t.append (f'\\ {s}')
+
 		else:
 			t.append (f'{"" if i == 1 else " "}{s}')
 
-	return ''.join (t)
+	return ''.join (t) if not ret_has_exp else (''.join (t), has_exp)
 
 def _ast2tex_pow (ast):
 	b = ast2tex (ast [1])
 	p = _ast2tex_curly (ast [2])
 
-	if ast [1] [0] in '([|':
+	if ast [1] [0] in {'(', '|'}:
 		return f'{b}^{p}'
 
 	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ast [2] [0] == '#' and ast [2] [1] >= 0:
@@ -82,14 +88,24 @@ def _ast2tex_sympy (ast):
 	return f'\\operatorname{{{ast [1]}}}{_ast2tex_paren (ast [2])}'
 
 def _ast2tex_lim (ast):
-	s = ast2tex (ast [2]) if not ast [4] else ast2tex (('^', ast [2], ('#', 1))) [:-1] + ast [4]
+	e, es = _ast2tex_mul (ast [1], True) if ast [1] [0] == '*' else \
+			(ast2tex (ast [1]), True) if ast [1] [0] == '+' else (ast2tex (ast [1]), False)
+	s     = ast2tex (ast [3]) if len (ast) == 4 else ast2tex (('^', ast [3], ('#', 1))) [:-1] + ast [4]
 
-	return f'\\lim_{{{ast2tex (ast [1])} \\to {s}}} {_ast2tex_paren (ast [3])}'
+	return \
+			f'\\lim_{{{ast2tex (ast [2])} \\to {s}}} \\left({ast2tex (ast [1])} \\right)' \
+			if es else \
+			f'\\lim_{{{ast2tex (ast [2])} \\to {s}}} {ast2tex (ast [1])}'
 
 def _ast2tex_sum (ast):
-	s = ast2tex (('^', ('#', 1), ast [3])) [1:]
+	e, es = _ast2tex_mul (ast [1], True) if ast [1] [0] == '*' else \
+			(ast2tex (ast [1]), True) if ast [1] [0] == '+' else (ast2tex (ast [1]), False)
+	s     = ast2tex (('^', ('#', 1), ast [4])) [1:]
 
-	return f'\\sum_{{{ast2tex (ast [1])} = {ast2tex (ast [2])}}}{s} {_ast2tex_paren (ast [4])}'
+	return \
+			f'\\sum_{{{ast2tex (ast [2])} = {ast2tex (ast [3])}}}{s} \\left({ast2tex (ast [1])} \\right)' \
+			if es else \
+			f'\\sum_{{{ast2tex (ast [2])} = {ast2tex (ast [3])}}}{s} {ast2tex (ast [1])}'
 
 _diff_var_single_start_rec = re.compile (r'^d(?=[^_])')
 
@@ -127,12 +143,11 @@ def _ast2tex_int (ast):
 
 _ast2tex_funcs = {
 	'#': lambda ast: str (ast [-1]),
-	'@': lambda ast: str (ast [1]) if ast [1] else '{}', # '\\Vert', # '{}',
+	'@': lambda ast: str (ast [1]) if ast [1] else '{}',
 	'(': lambda ast: f'\\left({ast2tex (ast [1])} \\right)',
-	'[': lambda ast: f'\\left[{ast2tex (ast [1])} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast [1])} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast [1])}' if ast [1] [0] in {'+', '-'} else f'-{ast2tex (ast [1])}',
-	'!': lambda ast: f'{_ast2tex_paren (ast [1])}!' if (ast [1] [0] not in {'#', '@', '(', '[', '|', '!', '^'} or \
+	'!': lambda ast: f'{_ast2tex_paren (ast [1])}!' if (ast [1] [0] not in {'#', '@', '(', '|', '!', '^'} or \
 			(ast [1] [0] == '#' and ast [1] [1] < 0)) else f'{ast2tex (ast [1])}!',
 	'+': lambda ast: ' + '.join (ast2tex (n) for n in ast [1:]).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
@@ -158,25 +173,28 @@ def _ast2simple_paren (ast):
 def _ast2simple_curly (ast):
 	return f'{ast2simple (ast)}' if _ast_is_single_unit (ast) else f'{{{ast2simple (ast)}}}'
 
-def _ast2simple_mul (ast, ret_has_star = False):
-	t        = []
-	has_star = False
+def _ast2simple_mul (ast, ret_has_exp = False):
+	t       = []
+	has_exp = False
 
 	for i in range (1, len (ast)):
 		s = f'{_ast2simple_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and _ast_is_neg (ast [i])) else ast2simple (ast [i])}'
 
-		if i != 1 and (ast [i] [0] == '!' or ast [i] [0] == '#' or ast [i] [0] in {'/', 'diff'} or ast [i - 1] [0] in {'/', 'diff'}):
+		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or \
+				ast [i] [0] in {'/', 'diff'} or ast [i - 1] [0] in {'/', 'diff'}):
 			t.append (f' * {ast2simple (ast [i])}')
-			has_star = True
+			has_exp = True
+
 		elif i != 1 and (ast [i - 1] in {('@', 'd'), ('@', '\\partial')} or \
-				(ast [i] [0] not in {'#', '@', '(', '[', '|', '^'} or ast [i - 1] [0] not in {'#', '@', '(', '[', '|', '^'}) or \
+				(ast [i] [0] not in {'#', '@', '(', '|', '^'} or ast [i - 1] [0] not in {'#', '@', '(', '|', '^'}) or \
 				(ast [i] [0] == '@' and _diff_var_start_rec.match (ast [i] [1])) or \
 				(ast [i - 1] [0] == '@' and _diff_var_start_rec.match (ast [i - 1] [1]))):
 			t.append (f' {s}')
+
 		else:
 			t.append (s)
 
-	return ''.join (t) if not ret_has_star else (''.join (t), has_star)
+	return ''.join (t) if not ret_has_exp else (''.join (t), has_exp)
 
 def _ast2simple_div (ast):
 	n, ns = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
@@ -219,14 +237,24 @@ def _ast2simple_sympy (ast):
 	return f'{s}{ast [1]}{_ast2simple_paren (ast [2])}'
 
 def _ast2simple_lim (ast):
-	s = ast2simple (ast [2]) if not ast [4] else ast2simple (('^', ast [2], ('#', 0))) [:-1] + ast [4]
+	e, es = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
+			(ast2simple (ast [1]), True) if ast [1] [0] == '+' else (ast2simple (ast [1]), False)
+	s     = ast2simple (ast [3]) if len (ast) == 4 else ast2simple (('^', ast [3], ('#', 0))) [:-1] + ast [4]
 
-	return f'\\lim_{{{ast2simple (ast [1])} \\to {s}}} {_ast2simple_paren (ast [3])}'
+	return \
+			f'\\lim_{{{ast2simple (ast [2])} \\to {s}}} ({ast2simple (ast [1])})' \
+			if es else \
+			f'\\lim_{{{ast2simple (ast [2])} \\to {s}}} {ast2simple (ast [1])}'
 
 def _ast2simple_sum (ast):
-	s = ast2simple (('^', ('#', 0), ast [3])) [1:]
+	e, es = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
+			(ast2simple (ast [1]), True) if ast [1] [0] == '+' else (ast2simple (ast [1]), False)
+	s     = ast2simple (('^', ('#', 0), ast [4])) [1:]
 
-	return f'\\sum_{{{ast2simple (ast [1])}={ast2simple (ast [2])}}}{s} {_ast2simple_paren (ast [4])}'
+	return \
+			f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}{s} ({ast2simple (ast [1])})' \
+			if es else \
+			f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}{s} {ast2simple (ast [1])}'
 
 _ast2simple_diff_single_rec = re.compile ('^d')
 
@@ -266,10 +294,9 @@ _ast2simple_funcs = {
 	'#': lambda ast: str (ast [-1]),
 	'@': lambda ast: str (ast [1]) if ast [1] else '',
 	'(': lambda ast: f'({ast2simple (ast [1])})',
-	'[': lambda ast: f'[{ast2simple (ast [1])}]',
 	'|': lambda ast: f'|{ast2simple (ast [1])}|',
 	'-': lambda ast: f'-{_ast2simple_paren (ast [1])}' if ast [1] [0] in {'+', '-'} else f'-{ast2simple (ast [1])}',
-	'!': lambda ast: f'{_ast2simple_paren (ast [1])}!' if (ast [1] [0] not in {'#', '@', '(', '[', '|', '!', '^'} or \
+	'!': lambda ast: f'{_ast2simple_paren (ast [1])}!' if (ast [1] [0] not in {'#', '@', '(', '|', '!', '^'} or \
 			(ast [1] [0] == '#' and ast [1] [1] < 0)) else f'{ast2simple (ast [1])}!',
 	'+': lambda ast: ' + '.join (ast2simple (n) for n in ast [1:]).replace (' + -', ' - '),
 	'*': _ast2simple_mul,
@@ -330,7 +357,6 @@ _ast2spt_funcs = {
 	'#': lambda ast: sp.S (ast [-1]),
 	'@': lambda ast: _ast2spt_vars.get (ast [1], sp.Symbol (ast [1])),
 	'(': lambda ast: ast2spt (ast [1]),
-	'[': lambda ast: ast2spt (ast [1]),
 	'|': lambda ast: sp.Abs (ast2spt (ast [1])),
 	'-': lambda ast: -ast2spt (ast [1]),
 	'!': lambda ast: sp.factorial (ast2spt (ast [1])),
@@ -342,8 +368,8 @@ _ast2spt_funcs = {
 	'sqrt': lambda ast: sp.Pow (ast2spt (ast [1]), sp.Pow (2, -1)) if len (ast) == 2 else sp.Pow (ast2spt (ast [1]), sp.Pow (ast2spt (ast [2]), -1)),
 	'trigh': lambda ast: getattr (sp, ast [1]) (ast2spt (ast [2])),
 	'sympy': lambda ast: getattr (sp, _ast2spt_sympy.get (ast [1], ast [1])) (ast2spt (ast [2])),
-	'lim': lambda ast: sp.limit (ast2spt (ast [3]), ast2spt (ast [1]), ast2spt (ast [2]), dir = ast [4] if ast [4] else '+-'),
-	'sum': lambda ast: sp.Sum (ast2spt (ast [4]), (ast2spt (ast [1]), ast2spt (ast [2]), ast2spt (ast [3]))).doit (),
+	'lim': lambda ast: sp.limit (ast2spt (ast [1]), ast2spt (ast [2]), ast2spt (ast [3]), dir = '+-' if len (ast) == 4 else ast [4]),
+	'sum': lambda ast: sp.Sum (ast2spt (ast [1]), (ast2spt (ast [2]), ast2spt (ast [3]), ast2spt (ast [4]))).doit (),
 	'diff': _ast2spt_diff,
 	'int': _ast2spt_int,
 }
@@ -421,7 +447,7 @@ _spt2ast_funcs = {
 	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_trigh,
 	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_trigh,
 	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_trigh,
-	sp.Sum: lambda spt: ('sum', spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2]), spt2ast (spt.args [0])),
+	sp.Sum: lambda spt: ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,
 }
 
@@ -434,6 +460,6 @@ def spt2ast (spt):
 
 	raise RuntimeError (f'unexpected class {spt.__class__.__name__!r}')
 
-if __name__ == '__main__':
-	t = ast2spt (('int', ('@', 'dx')))
-	print (t)
+# if __name__ == '__main__':
+# 	t = ast2spt (('int', ('@', 'dx')))
+# 	print (t)

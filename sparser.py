@@ -1,4 +1,32 @@
-# change func (x)^y to not equal func ((x)^y) but (func (x))^y
+# Builds expression tree from text, nodes are nested tuples (in order of precedence more or less):
+#
+# ('#', int)                   - integer
+# ('#', float, 'float')        - floating point number with original 'string' for arbitrary precision
+# ('@', 'var')                 - variable name, can take forms 'x', 'dx', '\partial x', 'x_2', '\partial x_{y_2}'
+# ('/', expr1, expr2)          - fraction expr1 / expr2
+# ('(', expr)                  - explicit parentheses
+# ('|', expr)                  - absolute value
+# ('^', expr1, expr2)          - power expr1^expr2
+# ('!', expr)                  - factorial
+# ('sympy', 'func', expr)      - SymPy (or regular py) function 'func' which takes a SymPy expression
+# ('trigh', 'func', expr)      - trigonometric or hyperbolic function or inverse: 'sin', 'asin', 'acsch'
+# ('log', expr)                - natural logarithm of expr
+# ('log', expr1, expr2)        - logarithm of expr1 in base expr2
+# ('sqrt', expr)               - square root of expr
+# ('sqrt', expr1, expr2)       - expr2th root of expr1
+# ('*', expr1, expr2, ...)     - multiplication
+# ('diff', expr, var1, ...)    - differentiation of expr with respect to var1 and optional other vars
+# ('-', expr)                  - negative of expression, negative numbers are represented with this
+# ('sum', expr, var, from, to) - summation of expr over variable var from from to to
+# ('lim', expr, var, to)       - limit of expr when variable var approaches to from both positive and negative directions
+# ('lim', expr, var, to, dir)  - limit of expr when variable var approaches to from direction dir - may be '+' or '-'
+# ('int', var)                 - anti-derivative of 1 with respect to differential var
+# ('int', expr, var)           - anti-derivative of expr with respect to differential var
+# ('int', from, to)            - definite integral of 1 with respect to differential var
+# ('int', expr, from, to)      - definite integral of expr with respect to differential var
+#
+# When parsing, explicit and implicit multiplication have different precedence, as well as latex
+# \frac and normal '/' operators.
 
 from collections import OrderedDict
 import re
@@ -9,10 +37,11 @@ def _tok_digit_or_var (tok, i = 0):
 	return ('#', int (tok.grp [i])) if tok.grp [i] else ('@', tok.grp [i + 1])
 
 _var_diff_start_rec = re.compile (r'^d(?=[^_])')
-_var_part_start_rec = re.compile (r'^\\partial ')
 
 def _ast_is_var_differential (ast):
 	return ast [0] == '@' and _var_diff_start_rec.match (ast [1])
+
+_var_part_start_rec = re.compile (r'^\\partial ')
 
 def _ast_is_var_partial (ast):
 	return ast [0] == '@' and _var_part_start_rec.match (ast [1])
@@ -28,8 +57,6 @@ def _ast_flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 	elif ast1 [0] == op:
 		return (op, ast0) + ast1 [1:]
 	return (op, ast0, ast1)
-
-_diff_or_part_numer_rec = re.compile (r'^(?:d|\\partial)$')
 
 def _expr_int (ast): # construct indefinite integral ast
 	if _ast_is_var_differential (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
@@ -52,6 +79,8 @@ def _expr_int (ast): # construct indefinite integral ast
 				, ast [-1] [-1])
 
 	raise SyntaxError ('integration expecting a differential')
+
+_diff_or_part_numer_rec = re.compile (r'^(?:d|\\partial)$')
 
 def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('diff', expr, 'dx')
 	def _interpret_divide (ast):
@@ -251,13 +280,13 @@ class Parser (lalr1.Parser):
 	def expr_mul_exp_2  (self, expr_mul_exp, STAR, expr_lim):                return _ast_flatcat ('*', expr_mul_exp, expr_lim)
 	def expr_mul_exp_3  (self, expr_lim):                                    return expr_lim
 
-	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_lim):                       return ('lim', expr_var, expr, expr_lim, '')
-	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, POWER, PLUS, CURLYR, expr_lim):          return ('lim', expr_var, expr, expr_lim, '+')
-	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, POWER, MINUS, CURLYR, expr_lim):         return ('lim', expr_var, expr, expr_lim, '-')
+	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_lim):                       return ('lim', expr_lim, expr_var, expr)
+	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, POWER, PLUS, CURLYR, expr_lim):          return ('lim', expr_lim, expr_var, expr, '+')
+	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, POWER, MINUS, CURLYR, expr_lim):         return ('lim', expr_lim, expr_var, expr, '-')
 	def expr_lim_4      (self, expr_sum):                                                                     return expr_sum
 
-	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER1, expr_lim):           return ('sum', expr_var, expr, _tok_digit_or_var (POWER1), expr_lim)
-	def expr_sum_2      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER, expr_frac, expr_lim): return ('sum', expr_var, expr, expr_frac, expr_lim)
+	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER1, expr_lim):           return ('sum', expr_lim, expr_var, expr, _tok_digit_or_var (POWER1))
+	def expr_sum_2      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER, expr_frac, expr_lim): return ('sum', expr_lim, expr_var, expr, expr_frac)
 	def expr_sum_3      (self, expr_neg):                                                                     return expr_neg
 
 	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg (expr_diff)
@@ -379,10 +408,6 @@ class Parser (lalr1.Parser):
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
 		else:
 			self._mark_error ()
-			# self.autocompleting = False
-
-			# if self.erridx is None:
-			# 	self.erridx = self.tokens [self.tokidx - 1].pos
 
 		return True
 
@@ -427,12 +452,8 @@ class Parser (lalr1.Parser):
 				self.autocompleting = False
 
 		else:
-			self.tokens.insert (self.tokidx, lalr1.Token ('VAR', '', self.tok.pos, (None, None)))
+			self.tokens.insert (self.tokidx, lalr1.Token ('VAR', '', self.tok.pos, (None, '')))
 			self._mark_error ()
-			# self.autocompleting = False
-
-			# if self.erridx is None:
-			# 	self.erridx = self.tokens [self.tokidx - 1].pos
 
 		return True
 
@@ -460,7 +481,7 @@ class Parser (lalr1.Parser):
 
 		return next (iter (rated)) [-1]
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('sin^{-1}x')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('sin^{-1}x')
+# 	print (a)
