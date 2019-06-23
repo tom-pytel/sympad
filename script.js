@@ -436,7 +436,8 @@ function inputKeydown (e) {
 			}
 
 			JQInput.val (text);
-			updateOverlay (text, ErrorIdx, Autocomplete);
+			inputting (text);
+			// updateOverlay (text, ErrorIdx, Autocomplete);
 		}
 	}
 }

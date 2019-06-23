@@ -1,12 +1,14 @@
-# TODO: 1e+100 float string representation.
+# TODO: NaN -> undefined
+# TODO: sympy representations
+# TODO: 1e+100 float string representation
+# TODO: py representation
 
 import re
 
 import sympy as sp
 
-_diff_var_single_start_rec = re.compile (r'^d(?=[^_])')
-_diff_var_start_rec        = re.compile (r'^(?:d(?=[^_])|\\partial )')
-_var_multiple_rec          = re.compile (r'^(?:d(?=[^_])|\\partial )|(?:.*_)')
+_diff_var_start_rec = re.compile (r'^(?:d(?=[^_])|\\partial )')
+_var_multiple_rec   = re.compile (r'^(?:d(?=[^_])|\\partial )|(?:.*_)')
 
 def _ast_is_single_unit (ast):
 	if ast [0] == '#':
@@ -88,6 +90,8 @@ def _ast2tex_sum (ast):
 	s = ast2tex (('^', ('#', 1), ast [3])) [1:]
 
 	return f'\\sum_{{{ast2tex (ast [1])} = {ast2tex (ast [2])}}}{s} {_ast2tex_paren (ast [4])}'
+
+_diff_var_single_start_rec = re.compile (r'^d(?=[^_])')
 
 def _ast2tex_diff (ast):
 	ds = set ()
@@ -210,7 +214,9 @@ def _ast2simple_trigh (ast):
 	return f'{ast [1]}{_ast2simple_paren (ast [2])}'
 
 def _ast2simple_sympy (ast):
-	return f'{ast [1]}{_ast2simple_paren (ast [2])}'
+	s = '' if ast [1] in {'simplify', 'expand', 'factor', '?'} else '$'
+
+	return f'{s}{ast [1]}{_ast2simple_paren (ast [2])}'
 
 def _ast2simple_lim (ast):
 	s = ast2simple (ast [2]) if not ast [4] else ast2simple (('^', ast [2], ('#', 0))) [:-1] + ast [4]

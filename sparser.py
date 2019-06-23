@@ -1,3 +1,5 @@
+# change func (x)^y to not equal func ((x)^y) but (func (x))^y
+
 from collections import OrderedDict
 import re
 
@@ -6,7 +8,7 @@ import lalr1
 def _tok_digit_or_var (tok, i = 0):
 	return ('#', int (tok.grp [i])) if tok.grp [i] else ('@', tok.grp [i + 1])
 
-_var_diff_start_rec = re.compile (r'^d[^_]')
+_var_diff_start_rec = re.compile (r'^d(?=[^_])')
 _var_part_start_rec = re.compile (r'^\\partial ')
 
 def _ast_is_var_differential (ast):
@@ -29,15 +31,39 @@ def _ast_flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 
 _diff_or_part_numer_rec = re.compile (r'^(?:d|\\partial)$')
 
-def _ast_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('diff', expr, 'dx')
+def _expr_int (ast): # construct indefinite integral ast
+	if _ast_is_var_differential (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
+		return ('int', ast)
+
+	elif ast [0] == '/':
+		if _ast_is_var_differential (ast [1]):
+			return ('int', ('/', ('#', 1), ast [2]), ast [1])
+		elif ast [2] [0] == '*' and _ast_is_var_differential (ast [2] [-1]):
+			return ('int', ('/', ast [1], ast [2] [1] if len (ast [2]) == 3 else ast [2] [:-1]), ast [2] [-1])
+
+	elif ast [0] == '*' and (_ast_is_var_differential (ast [-1]) or ast [-1] == ('@', '')): # ('@', '') is for autocomplete
+		return ('int', ast [1] if len (ast) == 3 else ast [:-1], ast [-1])
+
+	elif ast [0] == '+' and ast [-1] [0] == '*' and _ast_is_var_differential (ast [-1] [-1]):
+		return ('int', \
+				ast [:-1] + (ast [-1] [:-1],) \
+				if len (ast [-1]) > 3 else \
+				ast [:-1] + (ast [-1] [1],) \
+				, ast [-1] [-1])
+
+	raise SyntaxError ('integration expecting a differential')
+
+def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('diff', expr, 'dx')
 	def _interpret_divide (ast):
 		if ast [1] [0] == '@' and _diff_or_part_numer_rec.match (ast [1] [1]):
 			p = 1
 			v = ast [1] [1]
+
 		elif ast [1] [0] == '^' and ast [1] [1] [0] == '@' and _diff_or_part_numer_rec.match (ast [1] [1] [1]) and \
 				ast [1] [2] [0] == '#' and ast [1] [2] [1] > 0 and isinstance (ast [1] [2] [1], int):
 			p = ast [1] [2] [1]
 			v = ast [1] [1] [1]
+
 		else:
 			return None
 
@@ -50,10 +76,8 @@ def _ast_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/',
 		for i in range (len (ns)):
 			n = ns [i]
 
-			# if n [0] == '@' and _diff_start_rec.match (n [1]):
 			if _ast_dv_check (n):
 				dec = 1
-			# elif n [0] == '^' and n [1] [0] == '@' and _diff_start_rec.match (n [1] [1]) and \
 			elif n [0] == '^' and _ast_dv_check (n [1]) and \
 					n [2] [0] == '#' and n [2] [1] > 0 and isinstance (n [2] [1], int):
 				dec = n [2] [1]
@@ -114,27 +138,16 @@ def _ast_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/',
 
 	return ast
 
-def _expr_int (ast): # construct indefinite integral ast
-	if _ast_is_var_differential (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
-		return ('int', ast)
+def _expr_func (iparm, *args): # reorder higherarchy of ast tree for explicit parentheses func (x)^y or func(x)!
+	if args [iparm] [0] == '!':
+		if args [iparm] [1] [0] == '(':
+			return ('!', args [:iparm] + (args [iparm] [1] [1],) + args [iparm + 1:])
 
-	elif ast [0] == '/':
-		if _ast_is_var_differential (ast [1]):
-			return ('int', ('/', ('#', 1), ast [2]), ast [1])
-		elif ast [2] [0] == '*' and _ast_is_var_differential (ast [2] [-1]):
-			return ('int', ('/', ast [1], ast [2] [1] if len (ast [2]) == 3 else ast [2] [:-1]), ast [2] [-1])
+	elif args [iparm] [0] == '^':
+		if args [iparm] [1] [0] == '(':
+			return ('^', args [:iparm] + (args [iparm] [1] [1],) + args [iparm + 1:], args [iparm] [2])
 
-	elif ast [0] == '*' and (_ast_is_var_differential (ast [-1]) or ast [-1] == ('@', '')): # ('@', '') is for autocomplete
-		return ('int', ast [1] if len (ast) == 3 else ast [:-1], ast [-1])
-
-	elif ast [0] == '+' and ast [-1] [0] == '*' and _ast_is_var_differential (ast [-1] [-1]):
-		return ('int', \
-				ast [:-1] + (ast [-1] [:-1],) \
-				if len (ast [-1]) > 3 else \
-				ast [:-1] + (ast [-1] [1],) \
-				, ast [-1] [-1])
-
-	raise SyntaxError ('integration expecting a differential')
+	return args
 
 #...............................................................................................
 class Parser (lalr1.Parser):
@@ -197,7 +210,7 @@ class Parser (lalr1.Parser):
 		('FRAC1',        fr'\\frac\s*(?:(\d)|({_ONEVARPI}))'),
 		('FRAC',          r'\\frac'),
 		('VAR',          fr'\b_|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}'),
-		('OPERATOR',     fr'\\operatorname\{{({_CHAR}\w+)\}}|\\({_CHAR}\w+)'),
+		('OPERATOR',     fr'\\operatorname\{{({_CHAR}\w+)\}}|\$({_CHAR}\w+)'),
 		('NUM',           r'(\d+\.\d*|\.\d+)|(\d+)'),
 		('SUB1',         fr'_(?:(\d)|({_ONEVARPI}))'),
 		('SUB',           r'_'),
@@ -250,7 +263,7 @@ class Parser (lalr1.Parser):
 	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg (expr_diff)
 	def expr_neg_2      (self, expr_diff):                                   return expr_diff
 
-	def expr_diff       (self, expr_div):                                    return _ast_diff (expr_div)
+	def expr_diff       (self, expr_div):                                    return _expr_diff (expr_div)
 
 	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):              return ('/', expr_div, expr_mul_imp)
 	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return ('/', expr_div, _ast_neg (expr_mul_imp))
@@ -259,27 +272,27 @@ class Parser (lalr1.Parser):
 	def expr_mul_imp_1  (self, expr_mul_imp, expr_func):                     return _ast_flatcat ('*', expr_mul_imp, expr_func)
 	def expr_mul_imp_2  (self, expr_func):                                   return expr_func
 
-	def expr_func_1     (self, SQRT, expr_func):                             return ('sqrt', expr_func)
-	def expr_func_2     (self, SQRT, BRACKETL, expr, BRACKETR, expr_func):   return ('sqrt', expr_func, expr)
-	def expr_func_3     (self, LN, expr_func):                               return ('log', expr_func)
-	def expr_func_4     (self, LOG, SUB, expr_frac, expr_func):              return ('log', expr_func, expr_frac)
-	def expr_func_5     (self, LOG, SUB1, expr_func):                        return ('log', expr_func, _tok_digit_or_var (SUB1))
-	def expr_func_6     (self, TRIGH, expr_func):                            return ('trigh', f'{"a" if TRIGH.grp [0] else ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func)
+	def expr_func_1     (self, SQRT, expr_func):                             return _expr_func (1, 'sqrt', expr_func)
+	def expr_func_2     (self, SQRT, BRACKETL, expr, BRACKETR, expr_func):   return _expr_func (1, 'sqrt', expr_func, expr)
+	def expr_func_3     (self, LN, expr_func):                               return _expr_func (1, 'log', expr_func)
+	def expr_func_4     (self, LOG, SUB, expr_frac, expr_func):              return _expr_func (1, 'log', expr_func, expr_frac)
+	def expr_func_5     (self, LOG, SUB1, expr_func):                        return _expr_func (1, 'log', expr_func, _tok_digit_or_var (SUB1))
+	def expr_func_6     (self, TRIGH, expr_func):                            return _expr_func (2, 'trigh', f'{"a" if TRIGH.grp [0] else ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func)
 	def expr_func_7     (self, TRIGH, POWER, expr_frac, expr_func):
 		return \
-				('^', ('trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_func), expr_frac) \
-				if expr_frac != ('#', -1) else \
-				('trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_func) \
+				('^', _expr_func (2, 'trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_func), expr_frac) \
+				if expr_frac != ('-', ('#', 1)) else \
+				_expr_func (2, 'trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_func) \
 				if TRIGH.grp [0] else \
-				('trigh', 'a' + (TRIGH.grp [1] or TRIGH.grp [2]), expr_func)
+				_expr_func (2, 'trigh', 'a' + (TRIGH.grp [1] or TRIGH.grp [2]), expr_func)
 
 	def expr_func_8     (self, TRIGH, POWER1, expr_func):
 		return \
-				('^', ('trigh', f'a{TRIGH.grp [1] or TRIGH.grp [2]}' if TRIGH.grp [0] else TRIGH.grp [1] or TRIGH.grp [2], expr_func), \
+				('^', _expr_func (2, 'trigh', f'a{TRIGH.grp [1] or TRIGH.grp [2]}' if TRIGH.grp [0] else TRIGH.grp [1] or TRIGH.grp [2], expr_func), \
 				_tok_digit_or_var (POWER1))
 
-	def expr_func_9     (self, SYMPY, expr_func):                            return ('sympy', SYMPY.text, expr_func)
-	def expr_func_10    (self, OPERATOR, expr_func):                         return ('sympy', OPERATOR.grp [0] or OPERATOR.grp [1], expr_func)
+	def expr_func_9     (self, SYMPY, expr_func):                            return _expr_func (2, 'sympy', SYMPY.text, expr_func)
+	def expr_func_10    (self, OPERATOR, expr_func):                         return _expr_func (2, 'sympy', OPERATOR.grp [0] or OPERATOR.grp [1], expr_func)
 	def expr_func_11    (self, expr_fact):                                   return expr_fact
 
 	def expr_fact_1     (self, expr_fact, FACTORIAL):                        return ('!', expr_fact)
@@ -323,6 +336,29 @@ class Parser (lalr1.Parser):
 	def text_var        (self, VAR):                                         return f'\\partial {VAR.grp [1]}' if VAR.grp [0] and VAR.grp [0] [0] == '\\' else VAR.text
 
 	#...............................................................................................
+	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not expression
+		'POWER1': 'POWER',
+		'SUB1'  : 'SUB',
+		'POWER1': 'POWER',
+		'FRAC2' : 'FRAC',
+		'FRAC1' : 'FRAC',
+	}
+
+	_AUTOCOMPLETE_CLOSE = {
+		# 'LEFT'    : '\\left',
+		'RIGHT'   : '\\right',
+		'PARENR'  : ')',
+		'CURLYR'  : '}',
+		'BRACKETR': ']',
+		'BAR'     : '|',
+	}
+
+	def _mark_error (self):
+		self.autocompleting = False
+
+		if self.erridx is None:
+			self.erridx = self.tokens [self.tokidx - 1].pos
+
 	def _parse_autocomplete_expr_int (self):
 		s               = self.stack [-1]
 		self.stack [-1] = (s [0], s [1], ('*', s [2], ('@', '')))
@@ -341,27 +377,14 @@ class Parser (lalr1.Parser):
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
-		elif self.erridx is None:
-			self.erridx = self.tokens [self.tokidx - 1].pos
+		else:
+			self._mark_error ()
+			# self.autocompleting = False
+
+			# if self.erridx is None:
+			# 	self.erridx = self.tokens [self.tokidx - 1].pos
 
 		return True
-
-	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be drawn, not expression
-		'POWER1': 'POWER',
-		'SUB1'  : 'SUB',
-		'POWER1': 'POWER',
-		'FRAC2' : 'FRAC',
-		'FRAC1' : 'FRAC',
-	}
-
-	_AUTOCOMPLETE_CLOSE = {
-		# 'LEFT'    : '\\left',
-		'RIGHT'   : '\\right',
-		'PARENR'  : ')',
-		'CURLYR'  : '}',
-		'BRACKETR': ']',
-		'BAR'     : '|',
-	}
 
 	def parse_getextrastate (self):
 		return (self.autocomplete [:], self.autocompleting, self.erridx)
@@ -405,11 +428,11 @@ class Parser (lalr1.Parser):
 
 		else:
 			self.tokens.insert (self.tokidx, lalr1.Token ('VAR', '', self.tok.pos, (None, None)))
+			self._mark_error ()
+			# self.autocompleting = False
 
-			self.autocompleting = False
-
-			if self.erridx is None:
-				self.erridx = self.tokens [self.tokidx - 1].pos
+			# if self.erridx is None:
+			# 	self.erridx = self.tokens [self.tokidx - 1].pos
 
 		return True
 
@@ -439,5 +462,5 @@ class Parser (lalr1.Parser):
 
 if __name__ == '__main__':
 	p = Parser ()
-	a = p.parse ('\\int x')
+	a = p.parse ('sin^{-1}x')
 	print (a)
