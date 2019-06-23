@@ -183,7 +183,7 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 
 		rhss = prods.setdefault (prod, [])
 
-		for name, func, parms in pc_funcs [prod]:
+		for name, func, parms in sorted (pc_funcs [prod]): # pc_funcs [prod]:
 			parms = [p if p in pc_obj.TOKENS else Parser._SYMBOL_notail_rec.match (p).group (1) for p in parms]
 
 			rhss.append (parms)

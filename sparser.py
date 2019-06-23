@@ -1,32 +1,40 @@
-# Builds expression tree from text, nodes are nested tuples:
+# Builds expression tree from text, nodes are nested tuples of the form:
 #
 # ('#', int)                   - integer
 # ('#', float, 'float')        - floating point number with original 'string' for arbitrary precision
-# ('@', 'var')                 - variable name, can take forms 'x', 'dx', '\partial x', 'x_2', '\partial x_{y_2}'
-# ('/', expr1, expr2)          - fraction expr1 / expr2
+# ('@', 'var')                 - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
+# ('/', numer, denom)          - fraction numer(ator) / denom(inator)
 # ('(', expr)                  - explicit parentheses
 # ('|', expr)                  - absolute value
-# ('^', expr1, expr2)          - power expr1^expr2
+# ('^', base, exp)             - power base ^ exp(onent)
 # ('!', expr)                  - factorial
 # ('sympy', 'func', expr)      - SymPy (or regular py) function 'func' which takes a SymPy expression
 # ('trigh', 'func', expr)      - trigonometric or hyperbolic function or inverse: 'sin', 'asin', 'acsch'
 # ('log', expr)                - natural logarithm of expr
-# ('log', expr1, expr2)        - logarithm of expr1 in base expr2
+# ('log', expr, base)          - logarithm of expr in base
 # ('sqrt', expr)               - square root of expr
-# ('sqrt', expr1, expr2)       - expr2th root of expr1
+# ('sqrt', expr, n)            - nth root of expr, n is ('#', int)
 # ('*', expr1, expr2, ...)     - multiplication
 # ('diff', expr, var1, ...)    - differentiation of expr with respect to var1 and optional other vars
 # ('-', expr)                  - negative of expression, negative numbers are represented with this
 # ('sum', expr, var, from, to) - summation of expr over variable var from from to to
 # ('lim', expr, var, to)       - limit of expr when variable var approaches to from both positive and negative directions
-# ('lim', expr, var, to, dir)  - limit of expr when variable var approaches to from direction dir - may be '+' or '-'
+# ('lim', expr, var, to, dir)  - limit of expr when variable var approaches to from direction dir: may be '+' or '-'
 # ('int', var)                 - anti-derivative of 1 with respect to differential var
 # ('int', expr, var)           - anti-derivative of expr with respect to differential var
 # ('int', from, to)            - definite integral of 1 with respect to differential var
 # ('int', expr, from, to)      - definite integral of expr with respect to differential var
 #
-# When parsing, explicit and implicit multiplication have different precedence, as well as latex
-# \frac and regular '/' division operators.
+# ) When parsing, explicit and implicit multiplication have different precedence, as well as latex
+#   \frac and regular '/' division operators.
+#
+# ) Explicit multiplication and addition have higher precedence than integration, so they are included,
+#   but lower precedence than limits or sums, so they end those expressions.
+#
+# ) Differentiation and partially integration are dynamically extracted from the ast tree being built so they have
+#   no specific full grammar rules.
+#
+# ) Parsed negative numbers are always initiallly represented as ('-', ('#', positive))
 
 from collections import OrderedDict
 import re
@@ -181,36 +189,36 @@ def _expr_func (iparm, *args): # reorder higherarchy of ast tree for explicit pa
 #...............................................................................................
 class Parser (lalr1.Parser):
 	_PARSER_TABLES = \
-			b'eJztnftv20YSx/+ZA2IDS4D7JvNb0rg949IkdZMeCsEI0jY9FGhzRfq4AkX/95uZ75LcXZGy5MiR7BpmxOVyHzOzHw73JeVk9eD82csH6sHT88/p88tX/Pn5+bNXX/LVFxdy6xl/PP+MPl9enH/2T77z9ecvvqbz8xdnF49ePr/gBGefcuLHj/jixaOLs2dP' \
-			b'KXD+2bPnF2evP3l18ZTTf3rx6JN00uls6Cy3Ofkzqf8rKeMfb999N9wby+TAY8r1r7OXHGRxuNYXz/99diHyP8Ynl/7k+avHT8++fAmJOIXU+egTEvj8EVf35Pyr8ydnXMmT51zMkPapqJ/q4YQvLs4/P+O4l8/p4+yLV4+e8tUvv33z+5v3FPj17R+/vkbw' \
-			b'7R8/v3/97refhuCvb9+P4Z/fvH/7brh4880vY/x//zcEv3/z7a9j+Ld33w7hn3778fUPP/08XH73w+9T8Pvvx3rf/mcI/jKJkAn24w8/5SVSYBTnu+/Get+/Gev94d0gzoNLtTpptGrMqaJzUCe6VZqutTKOAqdjtMRNEY2OHHLyzzrV+NPserqkAGdoKYOW' \
-			b'kMaH5fLMaRVl80gOcsjhw7an6bLRUqglqfii43+nQ4zPrnTAmWM4K93nDPZ0urJedLVFtC+ugjKkr63jYhFRXxlfZ6G4vojoiqviHmnJIaNO2lR5Kg/GyeP7MjLOpYx1sjHcSD3cvlyeJi2islFMQg0QThfvem70q9MUSRppBS//rBni07WdrhtpNm3wMZoF' \
-			b'QQr16oRNBB56CfH9XqVmjiSMEQkSSxFYm4R1Hm1FZFZ3iGukDu3xYbJWmqLseiRbvYzph8sGHHbqxGQ26pKVuWmg+VICNOiQpumlWEpcSk534hDQkiZyE7fKkuVTohRDlxR7WqSp7qdLuhJQ6BEdBUs3pziqcS6Or6Z4I8JR4SQbOZ0VBVh128pzbxgAIsqr' \
-			b'oEj1XrlWOc1PJ0lvxRg+KB+V75RzynnVKWpv8VXOKGe5QiKAyue6DD/R3NKe7cn8d9z81NpeK2+UpwBVRnepKam4qByV2ytPBZLb8+Q5WAnfq9CqoFUwKlgVnAokYFCOhNSX/CCxT9P8uTohZfjKItJqnAxOlk+3XV3fQlMSnJXy8kk5uT3JvYmiMIJrU6yT' \
-			b'pMcgvEvNZCG2DTjFJKgXwW8/kiHh10FbDzU91DzxHZrH4y6u0GR6aDINcp2Qe5CWspBOQzzdH0gQeqTbw1WNVjAmtYqxuMajZ/zhBAuHqzoerurE4tAcGs3h0UoeXt6nSJcetvSU4abrUlZ7NxyNg3Iu3hF1+uR0RK+rUuuYUvutUsMJh/QGCgAigJaAJzqk' \
-			b't6kkDVGFToVexZZFQ/Y49TMM+hl02kVFahYjb0CNAsiyePXx5S1ppxWPvG6RtFYa69ildO3xS8ldSZM6cAYdOIMOnBFn2+OuR7SPCW48LFoUPKDsBmJ0EFKLVLffaZoW+hi9oy9accfGHKZ7aZIbNG53of3BhAbWXD66IYAdntwfypYr7vLs+Bby6TE2d+IR' \
-			b'WHG/7i4ociINyd05aR13NzyU9OfMFj00D7UD/HSQTEUvbMX9NYOOGt4sATMeASOD0KPTH9uxl2bRS7Po9Wu+3q3vYDjLrW8BD0NUE0NhJpYvLS5tetNbvOkt3vR0qmqBS+mR3iOhX0rIvQF7yKmNFXdE7CE7IjqZygDHQ7zJTJLAHUwCYOV1osYcShAqhgUx' \
-			b'gLID5biIOIFXLaZi52QxbhS5A/oCocNJHPYs9ORB3K6up+Ust971kOi3Xw1+D7jkDh3coYM7dBi+49oP11ra7qBODsAd4tGWBmff4tAvlivYo8NJZOOHBw8RnrogD1r1widu/B2gp2Ut+FHwCSIPiDwg8neim+ehj78b+vAT5IVcD3I9kHXw9w7ECttUUGrW' \
-			b'gGYNaNYw+IYAs/A1ZxogiMc+37NiZSKUiYMyEcpE6SySmFC5Q6ou9QG741fNi7S7WqM/fsVIsqOXkhnpT9EKxy8sL1S3aaW6TUu5rTwPrVqRj0sCssfT7OhGXeDrqP70TjMqOhXpyaeCO9Vp1XFJJElLorRcCykr22QojpfaWB/ev8CbF2xHNZIj5Z0vocVZ' \
-			b'tp8EuuYtPnQmiZuolU1/svOF1GlInya2simMN+twDG/+sWr6a8i5NSRnE/pL2VGxhWZoIqqULLs3Lekf3ef1cV7Y4jU7z32BXvEfay7nBc376q+2QL9mgSztZIEp9lLeAUdmC176lIPNkUILBhmTVkdtGL3ORp0jM09561IGTWIjvOW7ZCt+FrPnjOfexyd1' \
-			b'7B5stCS/eLPnmJ1DXz6mcdnURnVWdU51ns3eUWtSc3vVk+9hCUm+1sy3BkvNMrPQ7HF4K0DeQrzRiHcZ8RajtdZi52LKVuOlTXY6vFjNK9XeUivSS5Rs3rKyvM2LukRRGrThbWfkABu+wTvJqEUdbyeUfXB0y3NCxx8LjR7TX0Om7KlAZ2SPpuwlo39cFm9I' \
-			b'48xG9SyFG3JUWPA9xfsGSbOGNBNGeCMjlcib4kihhlqHN8e5WNCD0rDRrTG8C5W3OvZjPVwIRXQFV2wuSsqdIyTjDgddswB8FRk1N6AWB8xi9lpYfydsR1qNWSek6a1hA2DkYYxg5gbS4naw+Q8Abs099GwMRiuFgoQYIkSMR86UpJDPJVdS5U1USTGowFic' \
-			b'JrhEDpdlqt0OHHImEPIktuT2LF6lFiViWW2zlJWKXMo+unukNiLFZmgFqRQKOBFSpi2OHClJIZ8LSNV5E1JSTCrN4jQhJXK4LFOFlIGXygRCnoSU3J5FqtSiRCqrbRapUpFL2ZR5j9RmpLDB3aMrr4EUXnWIGI8CKS1I6WWkqrwDUhpIaSClS6Q0kBoz1Uhp' \
-			b'IDUJhDwDUosvwVKLCqmptnmkCkUYqXiP1BVIGTaDIIVQkJAgZYqjQMoIUmYZqSrvgJQBUgZImRIpA6TGTDVSBkhNAqVTQsosIlVoUSE11TaPVKEII9XdI3UFUla+mcRIIRQkJEiVR4GUFaSWh2V13gEpC6QskCo76iKHyzLVSGEIlwmEPANSdhGpQosKqam2' \
-			b'eaSK7Jeyl/0eqc1IOSUGblUKBQkJUq44CqScIOWWkaryDkg5IOWAlCuRckBqzFQj5YDUJBDyDEi5RaQKLSqkptrmkSoUucTewXumNjPVydfkmCmEgoSEqa44CqY6YapbZqrKOzDVgakOTHUlUx2YGjPVTHVgahIIeQamukWmCi0qpqba5pkqFBGmZIbTjHNW' \
-			b'ccOs1SJn3UbUzFVTWZuBa7eb07oWf3qeQR4QjxzSPf6myUYefcbkNnNe8v1b+b6l54kuJ19m7GXyy/Rzs18G8xa84z47cohDSoTv9s5z3NiyCJ4YM9MUhsEUhsEUhimnMAymMJCRrWrWpzEkTT1PlkmLUgbCFyc1UnJrxowT5Wx7IZ0TsJn0kGiGeLFlSusz' \
-			b'QXhrdl/Mp6k/dXzIU4xd/7BhOhxdtX9hh+tuTnfzw3A3/a7F1+g9tMYg1mIQi4jxKJDtkQhfwV9Yw6myJ1QtxrEW41hbjmMtxrFTpnr9B+PYTCbkSWDaxXFsqUjperPaZl1vqYi4Xnv/Or8CKyPfzmesEAoSEqxMceRYSQr5XGKqyjswhYGsxUDWlgNZi4Hs' \
-			b'lKlmCgPZTKB0SkwtDmRLLSqmptrmmSoUucQGvb0xpTdiFQey5paMF/lqr4tYt2fMQo2alR9+YNQQChIS1MqjQE0GuHbDEvR69oE2jHGHMqfSM+aSTC7LXWOXkvS5fAanRN7ieHdNrwq+qc55+OoShL89LiH8vfjz8gMwzB9CQULCny+Ogj8v/Pll/vxa9oE/' \
-			b'D/5SmXYMZfwlmVyWu+YvJelz+QxOiT+/yF+tV8XfVOc8f7Vqwt8e1xv+XvwF+XUWLz/SwqGAn2th/kJxFPwF4S8s8xfWsg/8BZV+EkZCdgxl/CWZXJa75i8l6XP5DE6Jv7DIX61Xxd9U5zx/tWrC37UXJ4btofkmsFkQeeOW/gAcbUZkPG4ouWAst6ZQwMnZ' \
-			b'FDEexQq+LLdqmTfQWHSV08xSfllIF1TXIXta08cC7FCFHUPZyn4S0ZXiZJjqNmKNP6Xsc6kh4bDMv7gmu6ZttdI/1Tu/0t9WxyW+AnxNVLfjdD+Efgie8WP4zZ61F7+JUJCQ+M2+OAq/KTM1KV5HnGa8Z79WyOA9MVUzlGzHUOY9k2SuLKB2oClVIajBKTnQ' \
-			b'5c0nZkbJyolO9c470fq4xO/s3CYyg8DZHSefrD1caAoFnIhP1xZHzqekGOJJFjfvP6sS3OQ5HTznULIdQxOfg2SuLKDic7rh+0pcgxModYu+c0bICtKs8llI10qQ3bCtWplpo+fGXZ5M5+y8eDeAWG3ojCVnu+/gHGe2a5aG2ewNs9gyg91XM9aNzueqeaJ6' \
-			b'yz2azfJSXSPD4WmNbm5bJvNRM3HdvZiNzKSst/8wkbxhCrmRYUyo92BSQXuBoN0rB3ZLFox48M1MuMQF3ed9/yMfVraoflxOunijqGjZhHQ1LoNxNmDDdmrEnuyX9YjQ4JvnUDI360/0jbiU9ha7FdbwJl2LlvWKD3Iv9pDvGH3/mllngXtoh3nVuCPpb/Q8' \
-			b'nmzveZj3Ddg70H4kJvzVTJgtsLDbkhH7j9oZDYkMvQ86AoY4DMLVfHTttRDh8dxH7p1qGdT1MvSbw0T9acJDeip4LwNJv+Kv+mnZkm1lmBa5EdiYPEjG1GLkiUH5AhWHLvFrX6vZPJaHzrFDag5J6o7uMI6bybvaD8Ut2KqZmh0gMyseg19hwF/JwE5+Ybv2' \
-			b'rdt1drBZtlc/GPLKp3jLh3dvFuWnMrNqwM4O1mOzYbvdbMuTI3u1L0+TFDYm1Y4X1uC2eqEdElb/kBr+L/yuBwy5ZX9kq57Ili+YuZfLVbZlzXbsOOzcYdja98/5/XmT4/dyydLX7Qbe3JzT1q2w9DrnWcqwr17eNV7fTn7s4Bqv7q2bb6knR3a5u026t477' \
-			b'dZo0Sv2HaFLHTXr94dpxNGq7qWH3OSj7mPPA27ctT3Quta/nr5iTKbzsPLHct0bvWBqmfOlEnxacAySvHHoc8w7tOrWWqd9fIVkst8S4IhfXyu42lG13Krt6EaX/sGsla8r4PZD8Fz/SmhUv4/MEN+/j1zKpNMwf2GFamcVspl8XWS+q02rmF0IuZfBLPePi' \
-			b'T0abw8iSd30r2RjZpM22WFGMa2uJUufMOqFPy4NpbRBLgqNcWAAc1/0cL/fNrukVv2uyuFan5v+o455f9jzk71O4S5FcW56Ia1z/428iSEhM4q5jcjLI8p8U66tiYdKtCifbpj/4tbD+J1WE2SrWf3VmviI1v9uYnGn+B5c68zfnEE/l/6i6mjAr29525Sza' \
-			b'bK25WwfuQ6CTyZmbPgx8TRXNC1DbliAW7m6i2Vm4PRwiYH8jAjq1j0MEHL5CGPcto+eujVx+4AEx9Q2JGdSeDohpNotpakn7dhdho9pwkBOoI7mZN+WBzFu9CNe9Uzf4pUydNUe0jQMqVOzUeKz3dvO7+TH2cKvs8tW9rGM7xnPvdr4smMQdkUl4VHCwA+bw' \
-			b'x2QO+T9PD3TAHOGYzBHV4Q6YY5tuzscyB4+cD3bAHN1H6PXta4Bh5T9I3nxgj+M2KfODJxh2zVMesGZ/m6wp/73wUR4YUbe3ckDCM2DHfsC+WoQdF0NjwMwKs3x5+n8zGrKJ'
+			b'eJztnftv3DYSx/+ZA2IDFCDxrfyWh9szLq+6SYFiYQRpkx4CNLkiTXoFDv3fb2a+pB5caa111t61a6y84kvkcPjRkCKp9dHq3umzl/fUvSenT+n7+1f8/fT02avv2ffdGUc9f3Fy9uDl8zNO9Yy/nn9L3y/PTr/9Jyf68emLHzn05BtO/PABp3vx4Ozk2RNy' \
+			b'nH777PnZyetHr86ecKJvzh48SqcmnTWdJZqTP5Pyf5A8/vHu49sc1+XJjod01b9OXrKTZeBSH1HcS5H/Ib4598fPXz18cvL9S8lNUkiZDx5RXU4fcHGPT384fXzCsY+fy+VI++KJVD+VwwlfnJ0+PeGwl8/p6+S7Vw+esO/3Lz/98eYTOT6/+/Pzazjf/fnb' \
+			b'p9cfv3zIzs/vPnXu3958evcxe9789HsX/p//Zucvb37+3Lm/fPw5uz98+fX1+w+/Ze/b93/0zl9+6cp99+/s/L0XYSDYr+8/DHMkRyfO27dduZ/edOW+/5jFuXeuVkdVoyp9rOjs1VFTq4b8jdKWHMddsIT1AVUT2GXlz1hVueOBv/eSgy+o6YJGXA2+DOen' \
+			b'j4sgMwxkJ7ssvkx9nLxVI5kakoo9kf+Oc4gb+BqPM4fwpRTPF5jj7HNDH2XdpzJOdGBGyf3IF5SmAFOGhVFALHzalZdQWDsK6H1aHdWpkHSdXgtvx4FhKmUok3XuSqrM7cv5NSR7UCZI1akB/PFsrONGvzjNKEklreDkz+gcnvym91fSbI3GV6caOMnVqiNW' \
+			b'IXhoxcXxrUrNHEgYLRIklgKw1gnrYbARkbm6OaySMhqHLz1owD7IrAey1schbfZW4DCqIz3QUUxa5qZBzecSoEFzmqqVbCnxWHKKCdnRSJrATVwrQ5pPiVIIeSn0eJSmiE9e8gkodIt2gqXIPoxKnApjXx+uRTjKnGQjo7MiB1fd1HLfawaAiHLKK6p6q2yt' \
+			b'bMN3IUlvRBnOKxeUi8paZZ2KitpbbJXVyhoukAig/LkszXcut7RjfTL/kZufWts1ymnlyEGFUSw1JWUXlKV8W+UoQzJ7jiwHV8K1ytfKN8pr5Y3yVnkS0CtLQjbnfCOxTWv4e3VElWGfQaBpcNI4GT7d9Oq6GjUlwblSTr7pSm5PsnxSUSjB1inUStJDEN6m' \
+			b'ZjIQ23icQhLUieA3H0mf8IuorUM1Hap55CKaxyEWPjRZk5usAblWyN1LSxlI10A83exJEJKg3VvROtkWnVpF76s5qGiDdrBZFNxBGmjpsD/B4v7IgE4c7hUHK+9SoE03W7rLEGljUp+5HYbGonI23JLqtMnoSL0uSt2ElNotSo07xaceyAMID1o8OlOfelNJ' \
+			b'6oPyUflWhZpFw+WhH2dojDPotE0VqVm09IANMiDNoutj7w1pJ9LejZLWSGMdupS2PnwpeSip0wBOYwCnMYDTYmxbxDoEu5Dgxs3SSAX3KLuGGBFCarkDb77RbJJ2UTutU+3MlpZpxWMLvZ/BpnZJaL+90GFvQieOHCy503sSZMVDni17IZduY30rboEVj+tu' \
+			b'Q0WOpCF5OCetY9tbUSsZz+kFI7RkBTwsmZeLRqOwFY/XNAZq6Fk8Zjw8nlJ9i0F/qLtRmsEozWDU37B/u7GD5ktufAs4KKKYGPIToew18JrU0xv09AY9PZ2KUmBSWqR3SOjmEvJowOxzamPFAxGzz4GIbqAqKszsqe+ySQK/NwkCMEmqcHpfgjhphCMNKCMo' \
+			b'hwciWvDaiMrYOBk8N4rcPsAeRZzEYE9CTxbEbmt6ar7kxpseEv3mV4P7AZvMoYU5tDCHFo/v8Lvsb6Tt9mnktKh9L7e2kbrrpBINH/QRcZKbgW8e3ES467zcaEWHT9y4W0BPzbXgW8EliBwgcoDI3YphnkN93O2oD99BTsh1INcBWQt7b0GssE0ZpWb1aFaP' \
+			b'ZvXZNniohf18UYYgHPp8z4orE1CZkCsTUJkgg0USE1WOSBXTGDAeftWcSLutNtrDrxhJdvBSMiPtMVrh8IXlheo6rVTXaSm3lvuhViuycUlAtngNG7quLrB1VH7q07QKVgW68ynjqGKjIudEktQkSs2lUGVlmwyF8aoe14f3L/DmBROpRDKkvPPF1zjL9hNP' \
+			b'ft7iQ2eSuAqNMukjO1+oOhXVpwq1bArjzTocwpt/jOo/FRm3iuSsfHsuOyoW1AxNRIWSZndWS/qjeF4f54UtXrNzPBZoFX+45nKeqXlbfEoNtGsaGKTtNdCHnksfcGC64KVPOVgdyTWjkC5pcZSKadbZKK8YqGccdS4PTaIj9PIx6YrvxcF9JpuU8p3aDQ82' \
+			b'apI73sF93BkHvllxm4Z5VWsVjYpWRcdqj9Sa1NxOtWR7WEKSr9bTrcFSs8wsNFsc3gAxbCHeaMS7jHiL0VprsXHR41bjpU02OrxYzSvVzlArUidKOq+5srzNi4ZEQRq04m1nVMeKI3gnGbWo5e2EvIOTm8lxQstfM40e0qciVbZ0ldWyR5MTcxOTT/MfZU+V' \
+			b'aVkKm68osOA4xfsGqWYV1UwY4Y2MlIS3WVKFKmod3hxnw4ge5MYb2Vh0ysHxVsc2l8ObEjkgjrhidVEWPDhCMh5wkJ8FYF9g1GxGLWTMwlq3MOwTlpE2jRm6BbMANgBGFkYLZjaTFpbB5r4CuDXz0LIyGK3k8uJiiFKAzlHCA5iSFAiYMSXt6MhUyRU9VpI9' \
+			b'ctOIdHZYWGF2YJD7eA0RElsSPYnXSJICsUHEJGXjipzLPro7pDYixWqoBank8jgRUilA56iBmZIUCJhGaniR7g2VXNEjJdkjN41IZ4eFjZHSsFJ9vIYICSmJnkRqJEmB1CBiEqlxRc5lU+YdUpuR0qwDQQouLy5BCgE6R2ndI6UFKT2PlB4dHVJ6jBT6Pzkh' \
+			b'0tlhYQVSGkh18RoiZKT0LFJDSUqk+ohppEYVYaTCHVIXIGXkdRFGCi4vLkEKATpH4bUSIGUEqfkxdHdFui4jZcZIGSBlgJQBUn1hBVIYb/fxGiJkpMwsUkNJSqT6iGmkRpczUvEOqQuQsqwAQQouLy5BCgE6R2nbI2UFKTuPlB0dHVJ2jJQFUhZIWSDVF1Yg' \
+			b'ZYFUF59PCSk7i9Qw0xKpPmIaqVFFzmUv+x1Sm5HCq0qMFFxeXIIUAnSO0q5HyglSbh4pNzo6pNwYKQek8OwncthhYQVSDkh18Wi5Dik3i9RQkhKpPmIaqVFFzrF38I6pzUxFeU2OmYLLi0uYQoDOUXidDkxFYSrOMxVHR8dUHDMVwVQEUxFM9YUVTEUw1cVr' \
+			b'iJCZirNMDSUpmeojppkaVUSYkhlO3c1ZhQ2zVrOcxY2o6WVTWXPA1cvmtC7FXzPNID8QdxxSHL9gspFHN2ByyZyXvGcr71s6nuiy8jJjK5Nfup2a/dKYt+Ad95i3gEv38xY+JULYNMeVMf2FkhrJM8/jKQyNKQyNKQyNKQxcyFrV69MYkqacJ+tL0ygtEz47' \
+			b'qZGSG91d2FPOuhfSOQGrqekSrRMvukxp3UAQ3prdjubT1P+acJ+nGGN7v2I6LPnqv7CleDuju/lmuJ121+A1eodaN1iZwXxtCtA5Sl63T8i2SISwmTWc8ZFRlSt6VKUEhxMinR2WV6z/NAJmH68hQgLTzE7mjiQpTO8gYtL0jisiptfcdecXYKXl7XzGCi4v' \
+			b'LsEKATpHmX5uRFIgYIYpPTo6psZzIwZzIwZzIwZzI4PCCqYwN9LHa4iQmZqdGxlJUjLVR0wzNarIOTbo7Yyp5mKs5paMZ/mqL4tY3DFmvkTNyA8/MGpweXEJagjQOcr0cyaSAgEzqJny6GgbT5vkQlznitnl7LDgAruUpB0k0ZAokzc7hVIKVsLXR0zDV+Yg' \
+			b'/O1wCeHvxZ+TH3ph/uDy4hL+EKBzlOmfhiUFAmb4c+XR8Td+IM6FdMl0zC5nhwUX/KUk7SCJhkSZv9mH41Kwkr8+Ypq/smrC3w7XG/5e/Hn5dRYnP9LCLo+fa2H+EKBzlPE9f1748/P8+fLo+PNj/lIhrnPF7HJ2WHDBX0rSDpJoSJT587P8FYKV/PUR0/yV' \
+			b'VRP+Lr04kbeHDjeBTYLIG7ear8DRDIgMhw0lZ4zl1uTyOFmTA3SOavrlVknB30EjOOA0sZRfj47oVYy4PK3pjxdgc5muc8XscnaU0xDTpg5Y408p20EybXFKy/yza7KFoGsr/X3E9Ep/XRzneAX4kqgu43Q3hH4NnuE67GbLtRe7CZcXl9hNBOgcZfrJGknR' \
+			b'hQWcJqxnWx6d9RxP1eSiXOeK2eXsOIPSgKZUwyTa4pQM6PzmE23W5CuNaB8xbUTLQ8i89NrJXsj0Amc8TD659jChyeVxIj5TgM5RtjehkqILCzit82nr8sh82rHlzEW5zhWzy9lxBgWffYRrxwm1xQmU2lnbOSFkAekgYhLStRxkN2ytVrrf6LlxlyfTOTkv' \
+			b'HjOIxYbOMOZs+x2c3cx2yVKezd4wiy0z2G0xY101w7lqnqheuEezml/9reRxuF/2ndqWyXyUTFx2L2Yl8zbr7Z8nkjdMIVfyGOPLPZh0wU4gqHfKgVnIghYLvpkJm7igeN733/FhZIvq9XISw5WiwkpZgktWzgZsWE+V6JPtctMhlG3zFEr6au1JcyUmpb7B' \
+			b'ZoVreJWmpZH1iq8yL2affUxz182ss8AjtP10NfZAxhstP0/WdzxM2wbsHaiviQm3iAl7ERZmKRmhvdbBqE9kNLuig5/t/BI+Yn0pRPh57ppHp4081LXy6DeFifqf9vfprvgLv0aw4lf9Gtn6auQZLHAjsDL5IRlTiy1PDMoLVNT6AC3whRPXGH5oDhGpiQ/Z' \
+			b'U0TKWXFzX2CQLrZDYQFbJVOTD8jMisPDr2DgLmRgK7uwrH3Ldp182By3VztQ5Oa7eOHNuzON8l1ZatVwiRcoNm6nW54c2al+eZpkpGOq2uHC6sKiDm2fsDb3qe3/wu96QJELxyOLRiILO5ipzuVC3eqtBw5bDxgW2/4puz+tcvxeLmn6ssPAq5tzWtwKc905' \
+			b'z1L6XY3yLtF9W/mxg0t03Yubb24kR3q5vU26s4H7ZZo0SPn7aFLLTXr5x7XDaNR6U8Pu8qHsOueBl7ctT3TOta/jV8xJFU52nhgeW2N0LA0z7nSCSwvOHpIXBj101+Z27VtLl/2XTxobaqJbkQtreccNeZut8i46ovQPu1aypozfAxn+4kdas+JlfJ7g5n38' \
+			b'jUwq5fkDk6eVWcyq/3WR9axioyZ+IeRcHn61Gn/kaTM/WfKubyUbI6u02RYriiGvJXYLiVLmxDqhywuDWBXEkmAnFxYAu3U/y8t9k2t6o981mV2rU9MfGrgPvS0/8rfJHVMglzZMxCWuf/hNBHGJSuxlVE4Kmf9Itq7IFipdlDnpNn1g1/z6R4rwk0Ws/+rM' \
+			b'dEFqercxGdPhByZ14jNlEI/lf1RdTJiRbW/bchbMYK05rgP3NdDJ5MxVHxq2pgjmBailOYiG41U0Owu3g0MEbK9EQKt2cYiA+RXCsGsZHQ9txPuVB8RsrkhMr3Z0QEy9WUxdStrW2wgb1IaDjEAZyM286RrIvKgjXK9Fne3SoDprhmiJARpVMaru6Ee7eag7' \
+			b'jB0e3Qi3uFxe3RsMbLtwHt1O5wWV2ANSicZM1H4OqMMdkjq82t8BdfhDUof8W9c9HVDHkmHOdamDn5z3dkAd8RpGfbt6wDDyD5I3H9jjuCTl8OAJhm2vGR/QZnuTtCn/XvggDzxR1zfygYRnwA79gH4bEbZbDA0eMyvM8vnx/wHH9LHX'
 
 	_PARSER_TOP = 'expr'
 
@@ -243,8 +251,8 @@ class Parser (lalr1.Parser):
 		('NUM',           r'(\d+\.\d*|\.\d+)|(\d+)'),
 		('SUB1',         fr'_(?:(\d)|({_ONEVARPI}))'),
 		('SUB',           r'_'),
-		('POWER1',       fr'\^(?:(\d)|({_ONEVARPI}))'),
-		('POWER',         r'\^'),
+		('CARET1',       fr'\^(?:(\d)|({_ONEVARPI}))'),
+		('CARET',         r'\^'),
 		('DOUBLESTAR',    r'\*\*'),
 		('PRIMES',        r"'+"),
 		('PARENL',        r'\('),
@@ -265,10 +273,10 @@ class Parser (lalr1.Parser):
 
 	def expr            (self, expr_int):                      	             return expr_int
 
-	def expr_int_1      (self, INT, SUB, expr_frac1, POWER, expr_frac2, expr_int):  return _expr_int (expr_int) + (expr_frac1, expr_frac2)
-	def expr_int_2      (self, INT, SUB, expr_frac, POWER1, expr_int):              return _expr_int (expr_int) + (expr_frac, _tok_digit_or_var (POWER1))
-	def expr_int_3      (self, INT, SUB1, POWER, expr_frac, expr_int):              return _expr_int (expr_int) + (_tok_digit_or_var (SUB1), expr_frac)
-	def expr_int_4      (self, INT, SUB1, POWER1, expr_int):                        return _expr_int (expr_int) + (_tok_digit_or_var (SUB1), _tok_digit_or_var (POWER1))
+	def expr_int_1      (self, INT, SUB, expr_frac1, CARET, expr_frac2, expr_int):  return _expr_int (expr_int) + (expr_frac1, expr_frac2)
+	def expr_int_2      (self, INT, SUB, expr_frac, CARET1, expr_int):              return _expr_int (expr_int) + (expr_frac, _tok_digit_or_var (CARET1))
+	def expr_int_3      (self, INT, SUB1, CARET, expr_frac, expr_int):              return _expr_int (expr_int) + (_tok_digit_or_var (SUB1), expr_frac)
+	def expr_int_4      (self, INT, SUB1, CARET1, expr_int):                        return _expr_int (expr_int) + (_tok_digit_or_var (SUB1), _tok_digit_or_var (CARET1))
 	def expr_int_5      (self, INT, expr_int):                                      return _expr_int (expr_int)
 	def expr_int_6      (self, expr_add):                                           return expr_add
 
@@ -281,12 +289,12 @@ class Parser (lalr1.Parser):
 	def expr_mul_exp_3  (self, expr_lim):                                    return expr_lim
 
 	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_lim):                       return ('lim', expr_lim, expr_var, expr)
-	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, POWER, PLUS, CURLYR, expr_lim):          return ('lim', expr_lim, expr_var, expr, '+')
-	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, POWER, MINUS, CURLYR, expr_lim):         return ('lim', expr_lim, expr_var, expr, '-')
+	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CARET, PLUS, CURLYR, expr_lim):          return ('lim', expr_lim, expr_var, expr, '+')
+	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CARET, MINUS, CURLYR, expr_lim):         return ('lim', expr_lim, expr_var, expr, '-')
 	def expr_lim_4      (self, expr_sum):                                                                     return expr_sum
 
-	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER1, expr_lim):           return ('sum', expr_lim, expr_var, expr, _tok_digit_or_var (POWER1))
-	def expr_sum_2      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, POWER, expr_frac, expr_lim): return ('sum', expr_lim, expr_var, expr, expr_frac)
+	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, CARET1, expr_lim):           return ('sum', expr_lim, expr_var, expr, _tok_digit_or_var (CARET1))
+	def expr_sum_2      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, CARET, expr_frac, expr_lim): return ('sum', expr_lim, expr_var, expr, expr_frac)
 	def expr_sum_3      (self, expr_neg):                                                                     return expr_neg
 
 	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg (expr_diff)
@@ -307,7 +315,7 @@ class Parser (lalr1.Parser):
 	def expr_func_4     (self, LOG, SUB, expr_frac, expr_func):              return _expr_func (1, 'log', expr_func, expr_frac)
 	def expr_func_5     (self, LOG, SUB1, expr_func):                        return _expr_func (1, 'log', expr_func, _tok_digit_or_var (SUB1))
 	def expr_func_6     (self, TRIGH, expr_func):                            return _expr_func (2, 'trigh', f'{"a" if TRIGH.grp [0] else ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func)
-	def expr_func_7     (self, TRIGH, POWER, expr_frac, expr_func):
+	def expr_func_7     (self, TRIGH, CARET, expr_frac, expr_func):
 		return \
 				('^', _expr_func (2, 'trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_func), expr_frac) \
 				if expr_frac != ('-', ('#', 1)) else \
@@ -315,10 +323,10 @@ class Parser (lalr1.Parser):
 				if TRIGH.grp [0] else \
 				_expr_func (2, 'trigh', 'a' + (TRIGH.grp [1] or TRIGH.grp [2]), expr_func)
 
-	def expr_func_8     (self, TRIGH, POWER1, expr_func):
+	def expr_func_8     (self, TRIGH, CARET1, expr_func):
 		return \
 				('^', _expr_func (2, 'trigh', f'a{TRIGH.grp [1] or TRIGH.grp [2]}' if TRIGH.grp [0] else TRIGH.grp [1] or TRIGH.grp [2], expr_func), \
-				_tok_digit_or_var (POWER1))
+				_tok_digit_or_var (CARET1))
 
 	def expr_func_9     (self, SYMPY, expr_func):                            return _expr_func (2, 'sympy', SYMPY.text, expr_func)
 	def expr_func_10    (self, OPERATOR, expr_func):                         return _expr_func (2, 'sympy', OPERATOR.grp [0] or OPERATOR.grp [1], expr_func)
@@ -329,8 +337,8 @@ class Parser (lalr1.Parser):
 
 	def expr_pow_1      (self, expr_pow, DOUBLESTAR, expr_func):             return ('^', expr_pow, expr_func)
 	def expr_pow_2      (self, expr_pow, DOUBLESTAR, MINUS, expr_func):      return ('^', expr_pow, _ast_neg (expr_func))
-	def expr_pow_3      (self, expr_pow, POWER, expr_frac):                  return ('^', expr_pow, expr_frac)
-	def expr_pow_4      (self, expr_pow, POWER1):                            return ('^', expr_pow, _tok_digit_or_var (POWER1))
+	def expr_pow_3      (self, expr_pow, CARET, expr_frac):                  return ('^', expr_pow, expr_frac)
+	def expr_pow_4      (self, expr_pow, CARET1):                            return ('^', expr_pow, _tok_digit_or_var (CARET1))
 	def expr_pow_5      (self, expr_abs):                                    return expr_abs
 
 	def expr_abs_1      (self, LEFT, BAR1, expr, RIGHT, BAR2):               return ('|', expr)
@@ -366,9 +374,9 @@ class Parser (lalr1.Parser):
 
 	#...............................................................................................
 	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not expression
-		'POWER1': 'POWER',
+		'CARET1': 'CARET',
 		'SUB1'  : 'SUB',
-		'POWER1': 'POWER',
+		'CARET1': 'CARET',
 		'FRAC2' : 'FRAC',
 		'FRAC1' : 'FRAC',
 	}

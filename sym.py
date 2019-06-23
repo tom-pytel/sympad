@@ -10,7 +10,7 @@ import sympy as sp
 _diff_var_start_rec = re.compile (r'^(?:d(?=[^_])|\\partial )')
 _var_multiple_rec   = re.compile (r'^(?:d(?=[^_])|\\partial )|(?:.*_)')
 
-def _ast_is_single_unit (ast):
+def _ast_is_single_unit (ast): # is single positive digit or single non-differential non-subbed variable?
 	if ast [0] == '#':
 		return isinstance (ast [1], int) and 0 <= ast [1] <= 9
 	elif ast [0] == '@':
@@ -18,7 +18,7 @@ def _ast_is_single_unit (ast):
 
 	return False
 
-def _ast_is_neg (ast):
+def _ast_is_neg (ast): # is explicit negative?
 	return \
 			ast [0] == '-' or \
 			ast [0] == '#' and ast [1] < 0 or \
