@@ -1,6 +1,5 @@
-# TODO: display 18 \sum_{n=0}^\infty (3^n2^{-3n})
+# Whan happens when an entire source file is one gigantic hack?
 
-# TODO: NaN -> undefined
 # TODO: 1e+100 float string representation
 # TODO: py representation
 
@@ -26,15 +25,25 @@ def _ast_is_neg (ast):
 			ast [0] == '*' and _ast_is_neg (ast [1])
 
 #...............................................................................................
-def _ast2tex_paren (ast):
-	return f'\\left({ast2tex (ast)} \\right)' if ast [0] != '(' else ast2tex (ast)
-
 def _ast2tex_curly (ast):
 	return f'{ast2tex (ast)}' if _ast_is_single_unit (ast) else f'{{{ast2tex (ast)}}}'
 
-def _ast2tex_mul (ast, ret_has_exp = False):
-	t       = []
-	has_exp = False
+def _ast2tex_paren (ast):
+	return f'\\left({ast2tex (ast)} \\right)' if ast [0] != '(' else ast2tex (ast)
+
+def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'+'}):
+	if ast [0] == '*':
+		s, has = _ast2tex_mul (ast, True)
+	else:
+		s, has = ast2tex (ast), ast [0] in also
+
+	s = f'\\left({s} \\right)' if has else s
+
+	return (s, has) if ret_has else s
+
+def _ast2tex_mul (ast, ret_has = False):
+	t   = []
+	has = False
 
 	for i in range (1, len (ast)):
 		s = f'{_ast2tex_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and _ast_is_neg (ast [i])) else ast2tex (ast [i])}'
@@ -42,7 +51,7 @@ def _ast2tex_mul (ast, ret_has_exp = False):
 		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or \
 				(ast [i]  [0] in {'/', 'diff'} and ast [i - 1] [0] in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {ast2tex (ast [i])}')
-			has_exp = True
+			has = True
 
 		elif i != 1 and (ast [i - 1] in {('@', 'd'), ('@', '\\partial')} or ast [i - 1] [0] == 'sqrt' or \
 				(ast [i] [0] == '@' and _diff_var_start_rec.match (ast [i]  [1])) or \
@@ -52,7 +61,7 @@ def _ast2tex_mul (ast, ret_has_exp = False):
 		else:
 			t.append (f'{"" if i == 1 else " "}{s}')
 
-	return ''.join (t) if not ret_has_exp else (''.join (t), has_exp)
+	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2tex_pow (ast):
 	b = ast2tex (ast [1])
@@ -88,24 +97,32 @@ def _ast2tex_sympy (ast):
 	return f'\\operatorname{{{ast [1]}}}{_ast2tex_paren (ast [2])}'
 
 def _ast2tex_lim (ast):
-	e, es = _ast2tex_mul (ast [1], True) if ast [1] [0] == '*' else \
-			(ast2tex (ast [1]), True) if ast [1] [0] == '+' else (ast2tex (ast [1]), False)
-	s     = ast2tex (ast [3]) if len (ast) == 4 else ast2tex (('^', ast [3], ('#', 1))) [:-1] + ast [4]
+	# e, es = _ast2tex_mul (ast [1], True) if ast [1] [0] == '*' else \
+	# 		(ast2tex (ast [1]), True) if ast [1] [0] == '+' else (ast2tex (ast [1]), False)
+	# s     = ast2tex (ast [3]) if len (ast) == 4 else ast2tex (('^', ast [3], ('#', 1))) [:-1] + ast [4]
 
-	return \
-			f'\\lim_{{{ast2tex (ast [2])} \\to {s}}} \\left({ast2tex (ast [1])} \\right)' \
-			if es else \
-			f'\\lim_{{{ast2tex (ast [2])} \\to {s}}} {ast2tex (ast [1])}'
+	# return \
+	# 		f'\\lim_{{{ast2tex (ast [2])} \\to {s}}} \\left({ast2tex (ast [1])} \\right)' \
+	# 		if es else \
+	# 		f'\\lim_{{{ast2tex (ast [2])} \\to {s}}} {ast2tex (ast [1])}'
+	s = ast2tex (ast [3]) if len (ast) == 4 else ast2tex (('^', ast [3], ('#', 1))) [:-1] + ast [4]
+
+	return f'\\lim_{{{ast2tex (ast [2])} \\to {s}}} {_ast2tex_paren_mul_exp (ast [1])}'
 
 def _ast2tex_sum (ast):
-	e, es = _ast2tex_mul (ast [1], True) if ast [1] [0] == '*' else \
-			(ast2tex (ast [1]), True) if ast [1] [0] == '+' else (ast2tex (ast [1]), False)
-	s     = ast2tex (('^', ('#', 1), ast [4])) [1:]
+	# e, es = _ast2tex_mul (ast [1], True) if ast [1] [0] == '*' else \
+	# 		(ast2tex (ast [1]), True) if ast [1] [0] == '+' else (ast2tex (ast [1]), False)
+	# s     = ast2tex (('^', ('#', 1), ast [4])) [1:]
 
-	return \
-			f'\\sum_{{{ast2tex (ast [2])} = {ast2tex (ast [3])}}}{s} \\left({ast2tex (ast [1])} \\right)' \
-			if es else \
-			f'\\sum_{{{ast2tex (ast [2])} = {ast2tex (ast [3])}}}{s} {ast2tex (ast [1])}'
+	# return \
+	# 		f'\\sum_{{{ast2tex (ast [2])} = {ast2tex (ast [3])}}}{s} \\left({ast2tex (ast [1])} \\right)' \
+	# 		if es else \
+	# 		f'\\sum_{{{ast2tex (ast [2])} = {ast2tex (ast [3])}}}{s} {ast2tex (ast [1])}'
+	s = ast2tex (('^', ('#', 1), ast [4])) [1:]
+
+	return f'\\sum_{{{ast2tex (ast [2])} = {ast2tex (ast [3])}}}{s} {_ast2tex_paren_mul_exp (ast [1])}' \
+
+_ast2tex_paren_mul_exp
 
 _diff_var_single_start_rec = re.compile (r'^d(?=[^_])')
 
@@ -167,15 +184,25 @@ def ast2tex (ast):
 	return _ast2tex_funcs [ast [0]] (ast)
 
 #...............................................................................................
-def _ast2simple_paren (ast):
-	return f'({ast2simple (ast)})' if ast [0] != '(' else ast2simple (ast)
-
 def _ast2simple_curly (ast):
 	return f'{ast2simple (ast)}' if _ast_is_single_unit (ast) else f'{{{ast2simple (ast)}}}'
 
-def _ast2simple_mul (ast, ret_has_exp = False):
-	t       = []
-	has_exp = False
+def _ast2simple_paren (ast):
+	return f'({ast2simple (ast)})' if ast [0] != '(' else ast2simple (ast)
+
+def _ast2simple_paren_mul_exp (ast, ret_has = False, also = {'+'}):
+	if ast [0] == '*':
+		s, has = _ast2simple_mul (ast, True)
+	else:
+		s, has = ast2simple (ast), ast [0] in also
+
+	s = f'({s})' if has else s
+
+	return (s, has) if ret_has else s
+
+def _ast2simple_mul (ast, ret_has = False):
+	t   = []
+	has = False
 
 	for i in range (1, len (ast)):
 		s = f'{_ast2simple_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and _ast_is_neg (ast [i])) else ast2simple (ast [i])}'
@@ -183,7 +210,7 @@ def _ast2simple_mul (ast, ret_has_exp = False):
 		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or \
 				ast [i] [0] in {'/', 'diff'} or ast [i - 1] [0] in {'/', 'diff'}):
 			t.append (f' * {ast2simple (ast [i])}')
-			has_exp = True
+			has = True
 
 		elif i != 1 and (ast [i - 1] in {('@', 'd'), ('@', '\\partial')} or \
 				(ast [i] [0] not in {'#', '@', '(', '|', '^'} or ast [i - 1] [0] not in {'#', '@', '(', '|', '^'}) or \
@@ -194,7 +221,7 @@ def _ast2simple_mul (ast, ret_has_exp = False):
 		else:
 			t.append (s)
 
-	return ''.join (t) if not ret_has_exp else (''.join (t), has_exp)
+	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2simple_div (ast):
 	n, ns = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
@@ -237,24 +264,30 @@ def _ast2simple_sympy (ast):
 	return f'{s}{ast [1]}{_ast2simple_paren (ast [2])}'
 
 def _ast2simple_lim (ast):
-	e, es = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
-			(ast2simple (ast [1]), True) if ast [1] [0] == '+' else (ast2simple (ast [1]), False)
-	s     = ast2simple (ast [3]) if len (ast) == 4 else ast2simple (('^', ast [3], ('#', 0))) [:-1] + ast [4]
+	# e, es = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
+	# 		(ast2simple (ast [1]), True) if ast [1] [0] == '+' else (ast2simple (ast [1]), False)
+	# s     = ast2simple (ast [3]) if len (ast) == 4 else ast2simple (('^', ast [3], ('#', 0))) [:-1] + ast [4]
 
-	return \
-			f'\\lim_{{{ast2simple (ast [2])} \\to {s}}} ({ast2simple (ast [1])})' \
-			if es else \
-			f'\\lim_{{{ast2simple (ast [2])} \\to {s}}} {ast2simple (ast [1])}'
+	# return \
+	# 		f'\\lim_{{{ast2simple (ast [2])} \\to {s}}} ({ast2simple (ast [1])})' \
+	# 		if es else \
+	# 		f'\\lim_{{{ast2simple (ast [2])} \\to {s}}} {ast2simple (ast [1])}'
+	s = ast2simple (ast [3]) if len (ast) == 4 else ast2simple (('^', ast [3], ('#', 0))) [:-1] + ast [4]
+
+	return f'\\lim_{{{ast2simple (ast [2])} \\to {s}}} {_ast2simple_paren_mul_exp (ast [1])}'
 
 def _ast2simple_sum (ast):
-	e, es = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
-			(ast2simple (ast [1]), True) if ast [1] [0] == '+' else (ast2simple (ast [1]), False)
-	s     = ast2simple (('^', ('#', 0), ast [4])) [1:]
+	# e, es = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
+	# 		(ast2simple (ast [1]), True) if ast [1] [0] == '+' else (ast2simple (ast [1]), False)
+	# s     = ast2simple (('^', ('#', 0), ast [4])) [1:]
 
-	return \
-			f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}{s} ({ast2simple (ast [1])})' \
-			if es else \
-			f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}{s} {ast2simple (ast [1])}'
+	# return \
+	# 		f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}{s} ({ast2simple (ast [1])})' \
+	# 		if es else \
+	# 		f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}{s} {ast2simple (ast [1])}'
+	s = ast2simple (('^', ('#', 0), ast [4])) [1:]
+
+	return f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}{s} {_ast2simple_paren_mul_exp (ast [1])}' \
 
 _ast2simple_diff_single_rec = re.compile ('^d')
 
@@ -378,6 +411,9 @@ def ast2spt (ast):
 	return _ast2spt_funcs [ast [0]] (ast)
 
 #...............................................................................................
+def _spt2ast_nan (spt):
+	raise ValueError ('undefined')
+
 def _spt2ast_float (spt):
 	return ('#', int (spt) if spt.is_integer else float (spt), str (spt))
 
@@ -419,13 +455,13 @@ def _spt2ast_trigh (spt):
 	return ('trigh', spt.__class__.__name__, spt2ast (spt.args [0]))
 
 def _spt2ast_integral (spt):
-	print (spt.args)
 	return \
 			('int', spt2ast (spt.args [0]), ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])) \
 			if len (spt.args [1]) == 3 else \
 			('int', spt2ast (spt.args [0]), ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
+	sp.numbers.NaN: _spt2ast_nan,
 	sp.Integer: lambda spt: ('#', spt.p),
 	sp.Float: _spt2ast_float,
 	sp.Rational: lambda spt: ('/', ('#', spt.p), ('#', spt.q)) if spt.p >= 0 else ('-', ('/', ('#', -spt.p), ('#', spt.q))),

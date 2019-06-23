@@ -1,4 +1,4 @@
-# Builds expression tree from text, nodes are nested tuples (in order of precedence more or less):
+# Builds expression tree from text, nodes are nested tuples:
 #
 # ('#', int)                   - integer
 # ('#', float, 'float')        - floating point number with original 'string' for arbitrary precision
@@ -26,7 +26,7 @@
 # ('int', expr, from, to)      - definite integral of expr with respect to differential var
 #
 # When parsing, explicit and implicit multiplication have different precedence, as well as latex
-# \frac and normal '/' operators.
+# \frac and regular '/' division operators.
 
 from collections import OrderedDict
 import re
