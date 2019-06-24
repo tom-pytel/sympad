@@ -31,7 +31,7 @@ def is_single_unit (ast): # is single positive digit or single non-differential 
 
 	return False
 
-def is_neg (ast): # is explicitly negative?
+def is_neg (ast):
 	return \
 			ast [0] == '-' or \
 			ast [0] == '#' and ast [1] < 0 or \
@@ -39,9 +39,6 @@ def is_neg (ast): # is explicitly negative?
 
 def strip_paren (ast):
 	return ast [1] if ast [0] == '(' else ast
-
-def neg (ast): # negatives are only represented here as ('-', ast), not as ('#', -1) or ('*', ('#', -1), ...)
-	return ('-', ast)
 
 def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 	if ast0 [0] == op:

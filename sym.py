@@ -1,11 +1,9 @@
-# Whan happens when an entire source file is one gigantic hack?
-
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
 # TODO: 1e+100 float string representation
-# TODO: change simple to use ** instead of ^
 
 import re
 import sympy as sp
+sp.numbers = sp.numbers # pylint medication
 
 import aststuff as ass
 
@@ -41,8 +39,8 @@ def _ast2tex_mul (ast, ret_has = False):
 	for i in range (1, len (ast)):
 		s = f'{_ast2tex_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and ass.is_neg (ast [i])) else ast2tex (ast [i])}'
 
-		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or \
-				(ast [i]  [0] in {'/', 'diff'} and ast [i - 1] [0] in {'#', '/', 'diff'})):
+		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or ast [i] == ('@', '') or \
+				(ast [i] [0] in {'/', 'diff'} and ast [i - 1] [0] in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {ast2tex (ast [i])}')
 			has = True
 
@@ -60,15 +58,12 @@ def _ast2tex_pow (ast):
 	b = ast2tex (ast [1])
 	p = _ast2tex_curly (ast [2])
 
-	if ast [1] [0] in {'(', '|'}:
-		return f'{b}^{p}'
-
 	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ast [2] [0] == '#' and ast [2] [1] >= 0:
 		i = len (ast [1] [1]) + (15 if ast [1] [1] in {'sech', 'csch'} else 1)
 
 		return f'{b [:i]}^{p}{b [i:]}'
 
-	elif ast [1] [0] == '@' or (ast [1] [0] == '#' and ast [1] [1] >= 0):
+	if ast [1] [0] in {'(', '|', '@'} or (ast [1] [0] == '#' and ast [1] [1] >= 0):
 		return f'{b}^{p}'
 
 	return f'\\left({b} \\right)^{p}'
@@ -191,7 +186,7 @@ def _ast2simple_mul (ast, ret_has = False):
 	for i in range (1, len (ast)):
 		s = f'{_ast2simple_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and ass.is_neg (ast [i])) else ast2simple (ast [i])}'
 
-		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or \
+		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or ast [i] == ('@', '') or \
 				ast [i] [0] in {'/', 'diff'} or ast [i - 1] [0] in {'/', 'diff'}):
 			t.append (f' * {ast2simple (ast [i])}')
 			has = True
@@ -208,10 +203,6 @@ def _ast2simple_mul (ast, ret_has = False):
 	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2simple_div (ast):
-	# n, ns = _ast2simple_mul (ast [1], True) if ast [1] [0] == '*' else \
-	# 		(ast2simple (ast [1]), True) if ast [1] [0] in {'+', '/', 'lim', 'sum', 'diff'} else (ast2simple (ast [1]), False)
-	# d, ds = _ast2simple_mul (ast [2], True) if ast [2] [0] == '*' else \
-	# 		(ast2simple (ast [2]), True) if ast [2] [0] in {'+', '/', 'lim', 'sum', 'diff'} else (ast2simple (ast [2]), False)
 	n, ns = _ast2simple_paren_mul_exp (ast [1], True, {'+', '/', 'lim', 'sum', 'diff'})
 	d, ds = _ast2simple_paren_mul_exp (ast [2], True, {'+', '/', 'lim', 'sum', 'diff'})
 
@@ -221,18 +212,15 @@ def _ast2simple_pow (ast):
 	b = ast2simple (ast [1])
 	p = _ast2simple_curly (ast [2])
 
-	if ast [1] [0] in '(|':
-		return f'{b}^{p}'
-
 	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ast [2] [0] == '#' and ast [2] [1] >= 0:
 		i = len (ast [1] [1]) + 1
 
-		return f'{b [:i]}^{p}{b [i:]}'
+		return f'{b [:i]}**{p}{b [i:]}'
 
-	elif ast [1] [0] == '@' or (ast [1] [0] == '#' and ast [1] [1] >= 0):
-		return f'{b}^{p}'
+	if ast [1] [0] in {'#', '@', '(', '|'}:
+		return f'{b}**{p}'
 
-	return f'({b})^{p}'
+	return f'({b})**{p}'
 
 def _ast2simple_log (ast):
 	return \
@@ -255,10 +243,6 @@ def _ast2simple_lim (ast):
 	return f'\\lim_{{{ast2simple (ast [2])} \\to {s}}} {_ast2simple_paren_mul_exp (ast [1])}'
 
 def _ast2simple_sum (ast):
-	# s = ast2simple (('^', ('#', 0), ast [4])) [1:]
-
-	# return f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}{s} {_ast2simple_paren_mul_exp (ast [1])}' \
-
 	return f'\\sum_{{{ast2simple (ast [2])}={ast2simple (ast [3])}}}^{_ast2simple_curly (ast [4])} {_ast2simple_paren_mul_exp (ast [1])}' \
 
 _ast2simple_diff_single_rec = re.compile ('^d')
@@ -382,7 +366,7 @@ _ast2py_funcs = {
 	'-': lambda ast: f'-{ast2py (ast [1])}',
 	'!': lambda ast: f'factorial({ast2py (ast [1])})',
 	'+': lambda ast: ' + '.join (ast2py (n) for n in ast [1:]).replace (' + -', ' - '),
-	'*': lambda ast: '*'.join (ast2py (n) for n in ast [1:]),
+	'*': lambda ast: '*'.join (_ast2py_paren (n) if n [0] == "+" else ast2py (n) for n in ast [1:]),
 	'/': _ast2py_div,
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
@@ -474,7 +458,8 @@ def _spt2ast_mul (spt):
 		return ('-', spt2ast (sp.Mul (*spt.args [1:])))
 
 	if spt.args [0].is_negative:
-		return ('-', spt2ast (sp.Mul (*((-spt.args [0],) + spt.args [1:]))))
+		return ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:])))
+		# return ('-', spt2ast (sp.Mul (*((-spt.args [0],) + spt.args [1:]))))
 
 	numer = []
 	denom = []

@@ -33,8 +33,6 @@
 #
 # ) Differentiation and partially integration are dynamically extracted from the tree being built so they have
 #   no specific full grammar rules.
-#
-# ) Parsed negative numbers are always initiallly represented as ('-', ('#', positive))
 
 from collections import OrderedDict
 import re
@@ -44,6 +42,13 @@ import aststuff as ass
 
 def _ast_from_tok_digit_or_var (tok, i = 0): # special-cased infinity 'oo' is super-special
 	return ('#', int (tok.grp [i])) if tok.grp [i] else ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
+
+def _ast_neg (ast):
+	return \
+			('-', ast)                     if ast [0] != '#' else \
+			('#', -ast [1])                if isinstance (ast [1], int) else \
+			('#', -ast [1], ast [2] [1:])  if ast [1] < 0 else \
+			('#', -ast [1], f'-{ast [2]}')
 
 def _expr_int (ast): # construct indefinite integral ast
 	if ass.is_var_differential (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
@@ -60,8 +65,7 @@ def _expr_int (ast): # construct indefinite integral ast
 
 	elif ast [0] == '+' and ast [-1] [0] == '*' and ass.is_var_differential (ast [-1] [-1]):
 		return ('int', \
-				ast [:-1] + (ast [-1] [:-1],) \
-				if len (ast [-1]) > 3 else \
+				ast [:-1] + (ast [-1] [:-1],) if len (ast [-1]) > 3 else \
 				ast [:-1] + (ast [-1] [1],) \
 				, ast [-1] [-1])
 
@@ -198,7 +202,7 @@ class Parser (lalr1.Parser):
 			b'oqP+WjrammMF9DJc1Mu9TPO+3eXp4NZAHskonRrQSLighnMB/Y7XoV35BzDHCejlRcPv1fQymmMF9DJfSy8bc6yAXjZXNpXaq9/stW0NOAt2YbZ+YN9tt6wQRXtDRBHN9QX4LMubNr/28s9+rjtAOBabFsxVy7/pN8e/D2IzzC6KLFKRU5mlD7jrpQfd/kYO' \
 			b'cFTxSjm77ityGeXnpNj5nP8f+6N6hA=='
 
-	_PARSER_TOP = 'expr'
+	_PARSER_TOP  = 'expr'
 
 	_GREEK       = r'\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\pi|\\rho|' \
 			r'\\sigma|\\tau|\\upsilon|\\phi|\\chi|\\psi|\\omega|\\Gamma|\\Delta|\\Theta|\\Lambda|\\Upsilon|\\Xi|\\Phi|\\Pi|\\Psi|\\Sigma|\\Omega'
@@ -229,7 +233,7 @@ class Parser (lalr1.Parser):
 		('FRAC1',        fr'\\frac\s*(?:{_DIONEVARSP})'),
 		('FRAC',          r'\\frac'),
 		('VAR',          fr'\b_|(oo)|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}'),
-		('NUM',           r'(\d+\.\d*|\.\d+)|(\d+)'),
+		('NUM',           r'(?:(\d*\.\d+|\d+\.)|\d+)(e[+-]\d+)?'),
 		('SUB1',         fr'_(?:{_DIONEVARSP})'),
 		('SUB',           r'_'),
 		('CARET1',       fr'\^(?:{_DIONEVARSP})'),
@@ -265,7 +269,7 @@ class Parser (lalr1.Parser):
 	def expr_int_3      (self, expr_add):                                    return expr_add
 
 	def expr_add_1      (self, expr_add, PLUS, expr_mul_exp):                return ass.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return ass.flatcat ('+', expr_add, ass.neg (expr_mul_exp))
+	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return ass.flatcat ('+', expr_add, _ast_neg (expr_mul_exp))
 	def expr_add_3      (self, expr_mul_exp):                                return expr_mul_exp
 
 	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_lim):                return ass.flatcat ('*', expr_mul_exp, expr_lim)
@@ -280,13 +284,13 @@ class Parser (lalr1.Parser):
 	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, expr_super, expr_lim):             return ('sum', expr_lim, expr_var, expr, expr_super)
 	def expr_sum_2      (self, expr_neg):                                                                           return expr_neg
 
-	def expr_neg_1      (self, MINUS, expr_diff):                            return ass.neg (expr_diff)
+	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg (expr_diff) if expr_diff [0] == '@' and expr_diff [1] >= 0 else ('-', expr_diff)
 	def expr_neg_2      (self, expr_diff):                                   return expr_diff
 
 	def expr_diff       (self, expr_div):                                    return _expr_diff (expr_div)
 
 	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):              return ('/', expr_div, expr_mul_imp)
-	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return ('/', expr_div, ass.neg (expr_mul_imp))
+	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return ('/', expr_div, _ast_neg (expr_mul_imp))
 	def expr_div_3      (self, expr_mul_imp):                                return expr_mul_imp
 
 	def expr_mul_imp_1  (self, expr_mul_imp, expr_func):                     return ass.flatcat ('*', expr_mul_imp, expr_func)
@@ -342,7 +346,7 @@ class Parser (lalr1.Parser):
 	def expr_term_2     (self, expr_var):                                    return expr_var
 	def expr_term_3     (self, expr_num):                                    return expr_num
 
-	def expr_num        (self, NUM):                                         return ('#', float (NUM.grp [0]), NUM.text) if NUM.grp [0] else ('#', int (NUM.grp [1]))
+	def expr_num        (self, NUM):                                         return ('#', float (NUM.text), NUM.text) if NUM.grp [0] or NUM.grp [1] else ('#', int (NUM.text))
 
 	def expr_var_1      (self, var, PRIMES, subvar):                         return ('@', f'{var}{subvar}{PRIMES.text}')
 	def expr_var_2      (self, var, subvar, PRIMES):                         return ('@', f'{var}{subvar}{PRIMES.text}')
@@ -360,7 +364,7 @@ class Parser (lalr1.Parser):
 	def expr_sub_2      (self, SUB1):                                        return _ast_from_tok_digit_or_var (SUB1)
 
 	def expr_super_1    (self, DOUBLESTAR, expr_func):                       return expr_func
-	def expr_super_2    (self, DOUBLESTAR, MINUS, expr_func):                return ass.neg (expr_func)
+	def expr_super_2    (self, DOUBLESTAR, MINUS, expr_func):                return _ast_neg (expr_func)
 	def expr_super_3    (self, CARET, expr_frac):                            return expr_frac
 	def expr_super_4    (self, CARET1):                                      return _ast_from_tok_digit_or_var (CARET1)
 
@@ -371,13 +375,11 @@ class Parser (lalr1.Parser):
 	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not expression
 		'CARET1': 'CARET',
 		'SUB1'  : 'SUB',
-		'CARET1': 'CARET',
 		'FRAC2' : 'FRAC',
 		'FRAC1' : 'FRAC',
 	}
 
 	_AUTOCOMPLETE_CLOSE = {
-		# 'LEFT'    : '\\left',
 		'RIGHT'   : '\\right',
 		'PARENR'  : ')',
 		'CURLYR'  : '}',
@@ -479,8 +481,13 @@ class Parser (lalr1.Parser):
 		rated = sorted ((r is None, -e if e is not None else float ('-inf'), len (a), i, (r, e, a)) \
 				for i, (r, e, a) in enumerate (self.parse_results))
 
-		# rated = list (rated)
-		# for i in rated: print (i)
+		## DEBUG!
+		rated = list (rated)
+		print ()
+		for res in rated:
+			print ('parse:', res [-1])
+		print ()
+		## DEBUG!
 
 		return next (iter (rated)) [-1]
 

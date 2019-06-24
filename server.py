@@ -1,11 +1,11 @@
 #!/usr/bin/env python
+# python 3.6+
 
-import sys
-assert sys.version_info >= (3, 6), 'Python version 3.6+ required'
 import json
 import os
 import re
 import subprocess
+import sys
 import time
 import threading
 import traceback
@@ -88,7 +88,7 @@ class Handler (SimpleHTTPRequestHandler):
 					'py'    : sym.ast2py (ast),
 				}
 
-			except Exception as e:
+			except Exception:
 				resp = {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
 
 		resp ['mode'] = req ['mode']

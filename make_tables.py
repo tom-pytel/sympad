@@ -1,12 +1,12 @@
 #!/usr/bin/env python
+# python 3.6+
 
-import sys
-assert sys.version_info >= (3, 6), 'Python version 3.6+ required'
 import getopt
 import importlib
 import importlib.util
 import os
 import re
+import sys
 import types
 
 from lalr1 import Parser
