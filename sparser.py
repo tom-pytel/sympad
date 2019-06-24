@@ -1,7 +1,6 @@
 # Builds expression tree from text, nodes are nested tuples of the form:
 #
-# ('#', int)                   - integer
-# ('#', float, 'float')        - floating point number with original 'string' for arbitrary precision
+# ('#', 'num')                 - numbers represented as strings to pass on arbitrary precision to sympy
 # ('@', 'var')                 - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
 # ('/', numer, denom)          - fraction numer(ator) / denom(inator)
 # ('(', expr)                  - explicit parentheses
@@ -41,29 +40,28 @@ import lalr1
 import aststuff as ass
 
 def _ast_from_tok_digit_or_var (tok, i = 0): # special-cased infinity 'oo' is super-special
-	return ('#', int (tok.grp [i])) if tok.grp [i] else ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
+	return ('#', tok.grp [i]) if tok.grp [i] else ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
 
 def _ast_neg (ast):
 	return \
-			('-', ast)                     if ast [0] != '#' else \
-			('#', -ast [1])                if isinstance (ast [1], int) else \
-			('#', -ast [1], ast [2] [1:])  if ast [1] < 0 else \
-			('#', -ast [1], f'-{ast [2]}')
+			('-', ast)            if ast [0] != '#' else \
+			('#', ast [1] [1:])   if ast [1] [0] == '-' else \
+			('#', f'-{ast [1]}')
 
 def _expr_int (ast): # construct indefinite integral ast
-	if ass.is_var_differential (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
+	if ass.is_differential_var (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
 		return ('int', ast)
 
 	elif ast [0] == '/':
-		if ass.is_var_differential (ast [1]):
-			return ('int', ('/', ('#', 1), ast [2]), ast [1])
-		elif ast [2] [0] == '*' and ass.is_var_differential (ast [2] [-1]):
+		if ass.is_differential_var (ast [1]):
+			return ('int', ('/', ('#', '1'), ast [2]), ast [1])
+		elif ast [2] [0] == '*' and ass.is_differential_var (ast [2] [-1]):
 			return ('int', ('/', ast [1], ast [2] [1] if len (ast [2]) == 3 else ast [2] [:-1]), ast [2] [-1])
 
-	elif ast [0] == '*' and (ass.is_var_differential (ast [-1]) or ast [-1] == ('@', '')): # ('@', '') is for autocomplete
+	elif ast [0] == '*' and (ass.is_differential_var (ast [-1]) or ast [-1] == ('@', '')): # ('@', '') is for autocomplete
 		return ('int', ast [1] if len (ast) == 3 else ast [:-1], ast [-1])
 
-	elif ast [0] == '+' and ast [-1] [0] == '*' and ass.is_var_differential (ast [-1] [-1]):
+	elif ast [0] == '+' and ast [-1] [0] == '*' and ass.is_differential_var (ast [-1] [-1]):
 		return ('int', \
 				ast [:-1] + (ast [-1] [:-1],) if len (ast [-1]) > 3 else \
 				ast [:-1] + (ast [-1] [1],) \
@@ -79,15 +77,14 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			p = 1
 			v = ast [1] [1]
 
-		elif ast [1] [0] == '^' and ast [1] [1] [0] == '@' and _rec_var_d_or_partial.match (ast [1] [1] [1]) and \
-				ast [1] [2] [0] == '#' and ast [1] [2] [1] > 0 and isinstance (ast [1] [2] [1], int):
-			p = ast [1] [2] [1]
+		elif ast [1] [0] == '^' and ast [1] [1] [0] == '@' and _rec_var_d_or_partial.match (ast [1] [1] [1]) and ass.is_pos_int (ast [1] [2]):
+			p = int (ast [1] [2] [1])
 			v = ast [1] [1] [1]
 
 		else:
 			return None
 
-		_ast_dv_check = ass.is_var_differential if v [0] == 'd' else ass.is_var_partial # make sure all are same type of differential, single or partial
+		_ast_dv_check = ass.is_differential_var if v [0] == 'd' else ass.is_partial_var # make sure all are same type of differential, single or partial
 
 		ns = (ast [2],) if ast [2] [0] != '*' else ast [2] [1:]
 		ds = []
@@ -98,9 +95,8 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if _ast_dv_check (n):
 				dec = 1
-			elif n [0] == '^' and _ast_dv_check (n [1]) and \
-					n [2] [0] == '#' and n [2] [1] > 0 and isinstance (n [2] [1], int):
-				dec = n [2] [1]
+			elif n [0] == '^' and _ast_dv_check (n [1]) and ass.is_pos_int (n [2]):
+				dec = int (n [2] [1])
 			else:
 				return None
 
@@ -233,7 +229,7 @@ class Parser (lalr1.Parser):
 		('FRAC1',        fr'\\frac\s*(?:{_DIONEVARSP})'),
 		('FRAC',          r'\\frac'),
 		('VAR',          fr'\b_|(oo)|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}'),
-		('NUM',           r'(?:(\d*\.\d+|\d+\.)|\d+)(e[+-]\d+)?'),
+		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
 		('SUB1',         fr'_(?:{_DIONEVARSP})'),
 		('SUB',           r'_'),
 		('CARET1',       fr'\^(?:{_DIONEVARSP})'),
@@ -284,7 +280,7 @@ class Parser (lalr1.Parser):
 	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, expr_super, expr_lim):             return ('sum', expr_lim, expr_var, expr, expr_super)
 	def expr_sum_2      (self, expr_neg):                                                                           return expr_neg
 
-	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg (expr_diff) if expr_diff [0] == '@' and expr_diff [1] >= 0 else ('-', expr_diff)
+	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg (expr_diff) if expr_diff [0] == '#' and expr_diff [1] [0] != '-' else ('-', expr_diff)
 	def expr_neg_2      (self, expr_diff):                                   return expr_diff
 
 	def expr_diff       (self, expr_div):                                    return _expr_diff (expr_div)
@@ -304,7 +300,7 @@ class Parser (lalr1.Parser):
 	def expr_func_6     (self, TRIGH, CARET, expr_frac, expr_func):
 		return \
 				('^', _expr_func (2, 'trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_func), expr_frac) \
-				if expr_frac != ('-', ('#', 1)) else \
+				if expr_frac != ('#', '-1') else \
 				_expr_func (2, 'trigh', TRIGH.grp [1] or TRIGH.grp [2], expr_func) \
 				if TRIGH.grp [0] else \
 				_expr_func (2, 'trigh', 'a' + (TRIGH.grp [1] or TRIGH.grp [2]), expr_func)
@@ -346,7 +342,7 @@ class Parser (lalr1.Parser):
 	def expr_term_2     (self, expr_var):                                    return expr_var
 	def expr_term_3     (self, expr_num):                                    return expr_num
 
-	def expr_num        (self, NUM):                                         return ('#', float (NUM.text), NUM.text) if NUM.grp [0] or NUM.grp [1] else ('#', int (NUM.text))
+	def expr_num        (self, NUM):                                         return ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else ('#', NUM.grp [1])
 
 	def expr_var_1      (self, var, PRIMES, subvar):                         return ('@', f'{var}{subvar}{PRIMES.text}')
 	def expr_var_2      (self, var, subvar, PRIMES):                         return ('@', f'{var}{subvar}{PRIMES.text}')

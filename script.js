@@ -13,23 +13,25 @@
 // 	alert("Horizontal Scrollbar! D:<");
 // }
 
-var URL             = '/';
-var MJQueue         = null;
-var MarginTop       = Infinity;
-var PreventFocusOut = true;
+var URL              = '/';
+var MJQueue          = null;
+var MarginTop        = Infinity;
+var PreventFocusOut  = true;
 
-var History         = [];
-var HistIdx         = 0;
-var LogIdx          = 0;
-var UniqueID        = 1;
+var History          = [];
+var HistIdx          = 0;
+var LogIdx           = 0;
+var UniqueID         = 1;
 
-var Validations     = [undefined];
-var Evaluations     = [undefined];
-var ErrorIdx        = null;
-var Autocomplete    = [];
+var Validations      = [undefined];
+var Evaluations      = [undefined];
+var ErrorIdx         = null;
+var Autocomplete     = [];
 
-var LastClickTime   = 0;
-var NumClicks       = 0;
+var LastClickTime    = 0;
+var NumClicks        = 0;
+
+var GreetingFadedOut = false;
 
 //...............................................................................................
 function generateBG () {
@@ -381,6 +383,11 @@ function inputKeypress (e) {
 
 //...............................................................................................
 function inputKeydown (e) {
+	if (!GreetingFadedOut) {
+		GreetingFadedOut = true;
+		$('#Greeting').fadeOut (3000);
+	}
+
 	if (e.code == 'Escape') {
 		e.preventDefault ();
 
