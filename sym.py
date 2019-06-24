@@ -383,7 +383,7 @@ _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 
 _ast2py_funcs = {
 	'#': lambda ast: str (ast [-1]),
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast [1]).replace ('\\', '').replace ("'", '_prime'),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast [1]).replace ('\\infty', 'oo').replace ('\\', '').replace ("'", '_prime'),
 	'(': lambda ast: f'({ast2py (ast [1])})',
 	'|': lambda ast: f'abs({ast2py (ast [1])})',
 	'-': lambda ast: f'-{ast2py (ast [1])}',
