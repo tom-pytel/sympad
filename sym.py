@@ -249,10 +249,6 @@ def _ast2simple_func (ast):
 			if ast [1] in _FUNCS_ALL_PY else \
 			f'${ast [1]}{_ast2simple_paren (ast [2])}'
 
-	s = '' if ast [1] in {'simplify', 'expand', 'factor', '?'} else '$'
-
-	return f'{s}{ast [1]}{_ast2simple_paren (ast [2])}'
-
 def _ast2simple_lim (ast):
 	s = ast2simple (ast [3]) if len (ast) == 4 else ast2simple (('^', ast [3], ('#', 0))) [:-1] + ast [4]
 
@@ -326,23 +322,20 @@ def ast2py (ast): # abstract syntax tree (tuples) -> python code text
 	return _ast2py_funcs [ast [0]] (ast)
 
 def _ast2py_curly (ast):
-	has = ast [0] in {'+', '*', '/'} or ast [0] == 'log' and len (ast) > 2
-	s   = _ast2py_paren (ast) if has else ast2py (ast)
-
-	return s, has
+	return _ast2py_paren (ast) if ast [0] in {'+', '*', '/'} or ast [0] == 'log' and len (ast) > 2 else ast2py (ast)
 
 def _ast2py_paren (ast):
 	return f'({ast2py (ast)})' if ast [0] != '(' else ast2py (ast)
 
 def _ast2py_div (ast):
-	n, ns = _ast2py_curly (ast [1])
-	d, ds = _ast2py_curly (ast [2])
+	n = _ast2py_curly (ast [1])
+	d = _ast2py_curly (ast [2])
 
 	return f'{n}{" / " if ast [1] [0] not in {"#", "@", "-"} or ast [2] [0] not in {"#", "@", "-"} else "/"}{d}'
 
 def _ast2py_pow (ast):
-	b, _ = _ast2py_curly (ast [1])
-	e, _ = _ast2py_curly (ast [2])
+	b = _ast2py_curly (ast [1])
+	e = _ast2py_curly (ast [2])
 
 	return f'{b}**{e}'
 
