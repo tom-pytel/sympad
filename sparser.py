@@ -14,17 +14,17 @@
 # ('log', expr, base)           - logarithm of expr in base
 # ('sqrt', expr)                - square root of expr
 # ('sqrt', expr, n)             - nth root of expr
-# ('*', expr1, expr2, ...)      - multiplication
-# ('diff', expr, var1, ...)     - differentiation of expr with respect to var1 and optional other vars
+# ('*', (expr1, expr2, ...))    - multiplication
+# ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
 # ('-', expr)                   - negative of expression, negative numbers are represented with this at least initially
 # ('sum', expr, var, from, to)  - summation of expr over variable var from from to to
 # ('lim', expr, var, to)        - limit of expr when variable var approaches to from both positive and negative directions
 # ('lim', expr, var, to, dir)   - limit of expr when variable var approaches to from direction dir: may be '+' or '-'
-# ('intg', var)                 - anti-derivative of 1 with respect to differential var
+# ('intg', None, var)           - anti-derivative of 1 with respect to differential var
 # ('intg', expr, var)           - anti-derivative of expr with respect to differential var
-# ('intg', var, from, to)       - definite integral of 1 with respect to differential var
+# ('intg', None, var, from, to) - definite integral of 1 with respect to differential var
 # ('intg', expr, var, from, to) - definite integral of expr with respect to differential var
-# ('+', expr1, expr2, ...)      - addition
+# ('+', (expr1, expr2, ...))    - addition
 #
 # ) When parsing, explicit and implicit multiplication have different precedence, as well as latex
 #   \frac and regular '/' division operators.
@@ -40,34 +40,36 @@ import re
 
 import lalr1
 import sast as ass
+from sast import ast as AST
 
 def _ast_from_tok_digit_or_var (tok, i = 0): # special-cased infinity 'oo' is super-special
-	return ('#', tok.grp [i]) if tok.grp [i] else ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
+	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
 
-def _ast_neg (ast):
+def _ast_neg_stack (ast):
 	return \
-			('-', ast)            if ast [0] != '#' else \
-			('#', ast [1] [1:])   if ast [1] [0] == '-' else \
-			('#', f'-{ast [1]}')
+			AST ('-', ast)            if not ast.is_num else \
+			AST ('#', ast.num [1:])   if ast.num [0] == '-' else \
+			AST ('#', f'-{ast.num}')
 
-def _expr_int (ast): # construct indefinite integral ast
-	if ass.is_differential_var (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
-		return ('intg', ast)
+def _expr_int (ast, from_to = ()): # construct indefinite integral ast
+	if ast.is_differential_var or ast.is_null_var:# == ('@', ''): # ('@', '') is for autocomplete
+		return AST ('intg', None, ast, *from_to)
 
-	elif ast [0] == '/':
-		if ass.is_differential_var (ast [1]):
-			return ('intg', ('/', ('#', '1'), ast [2]), ast [1])
-		elif ast [2] [0] == '*' and ass.is_differential_var (ast [2] [-1]):
-			return ('intg', ('/', ast [1], ast [2] [1] if len (ast [2]) == 3 else ast [2] [:-1]), ast [2] [-1])
+	elif ast.is_div:
+		if ast.numer.is_differential_var:
+			return AST ('intg', ('/', ast.One, ast.denom), ast.numer, *from_to)
+		elif ast.denom.is_mul and ast.denom.muls [-1].is_differential_var:
+			return AST ('intg', ('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else AST ('*', ast.denom.muls [:-1])), ast.denom.muls [-1], *from_to)
 
-	elif ast [0] == '*' and (ass.is_differential_var (ast [-1]) or ast [-1] == ('@', '')): # ('@', '') is for autocomplete
-		return ('intg', ast [1] if len (ast) == 3 else ast [:-1], ast [-1])
+	elif ast.is_mul and (ast.muls [-1].is_differential_var or ast.muls [-1].is_null_var): # ast [-1] == ('@', '')): # ('@', '') is for autocomplete
+		return AST ('intg', ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1]), ast.muls [-1], *from_to)
 
-	elif ast [0] == '+' and ast [-1] [0] == '*' and ass.is_differential_var (ast [-1] [-1]):
-		return ('intg', \
-				ast [:-1] + (ast [-1] [:-1],) if len (ast [-1]) > 3 else \
-				ast [:-1] + (ast [-1] [1],) \
-				, ast [-1] [-1])
+	elif ast.is_add and ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_differential_var:
+		return AST ('intg', \
+				AST ('+', ast.adds [:-1] + (AST ('*', ast.adds [-1].muls [:-1]),))
+				if len (ast.adds [-1]) > 3 else \
+				AST ('+', ast.adds [:-1] + (ast.adds [-1].muls [0],)) \
+				, ast.adds [-1].muls [-1], *from_to)
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -75,30 +77,32 @@ _rec_var_d_or_partial = re.compile (r'^(?:d|\\partial)$')
 
 def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('diff', expr, 'dx')
 	def _interpret_divide (ast):
-		if ast [1] [0] == '@' and _rec_var_d_or_partial.match (ast [1] [1]):
+		if ast.numer.is_var and _rec_var_d_or_partial.match (ast.numer.var):
 			p = 1
-			v = ast [1] [1]
+			v = ast.numer.var
 
-		elif ast [1] [0] == '^' and ast [1] [1] [0] == '@' and _rec_var_d_or_partial.match (ast [1] [1] [1]) and ass.is_pos_int (ast [1] [2]):
-			p = int (ast [1] [2] [1])
-			v = ast [1] [1] [1]
+		elif ast.numer.is_pow and ast.numer.base.is_var and _rec_var_d_or_partial.match (ast.numer.base.var) and ast.numer.exp.is_pos_int:
+			p = int (ast.numer.exp.num)
+			v = ast.numer.base.var
 
 		else:
 			return None
 
-		_ast_dv_check = ass.is_differential_var if v [0] == 'd' else ass.is_partial_var # make sure all are same type of differential, single or partial
+		# is_partial = (v [0] != 'd')
+		# _ast_dv_check = AST.var.is_differential_var if v [0] == 'd' else AST.var.is_partial_var # make sure all are same type of differential, single or partial
+		ast_dv_check = (lambda n: n.is_differential_var) if v [0] == 'd' else (lambda n: n.is_partial_var)
 
-		ns = (ast [2],) if ast [2] [0] != '*' else ast [2] [1:]
+		ns = ast.denom.muls if ast.denom.is_mul else (ast.denom,)
 		ds = []
 		cp = p
 
 		for i in range (len (ns)):
 			n = ns [i]
 
-			if _ast_dv_check (n):
+			if ast_dv_check (n):
 				dec = 1
-			elif n [0] == '^' and _ast_dv_check (n [1]) and ass.is_pos_int (n [2]):
-				dec = int (n [2] [1])
+			elif n.is_pow and ast_dv_check (n.base) and n.exp.is_pos_int:
+				dec = int (n.exp.num)
 			else:
 				return None
 
@@ -111,38 +115,38 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if not cp:
 				if i == len (ns) - 1:
-					return ('diff', None) + tuple (ds)
+					return AST ('diff', None, tuple (ds))
 				elif i == len (ns) - 2:
-					return ('diff', ns [-1]) + tuple (ds)
+					return AST ('diff', ns [-1], tuple (ds))
 				else:
-					return ('diff', ('*',) + ns [i + 1:]) + tuple (ds)
+					return AST ('diff', AST ('*', ns [i + 1:]), tuple (ds))
 
 		return None # raise SyntaxError?
 
 	# start here
-	if ast [0] == '/': # this part handles d/dx
+	if ast.is_div: # this part handles d/dx
 		diff = _interpret_divide (ast)
 
 		if diff and diff [1]:
 			return diff
 
-	elif ast [0] == '*': # this part needed to handle \frac{d}{dx}
+	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
 		tail = []
-		end  = len (ast)
+		end  = len (ast.muls)
 
-		for i in range (end - 1, 0, -1):
-			if ast [i] [0] == '/':
-				diff = _interpret_divide (ast [i])
+		for i in range (end - 1, -1, -1):
+			if ast.muls [i].is_div:
+				diff = _interpret_divide (ast.muls [i])
 
 				if diff:
-					if diff [1]:
+					if diff.expr:
 						if i < end - 1:
-							tail [0 : 0] = ast [i + 1 : end]
+							tail [0 : 0] = ast.muls [i + 1 : end]
 
 						tail.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, ('diff', ast [i + 1] if i == end - 2 else ('*',) + ast [i + 1 : end]) + diff [2:])
+						tail.insert (0, AST ('diff', ast.muls [i + 1] if i == end - 2 else AST ('*', ast [i + 1 : end]), diff.vars))
 
 					else:
 						continue
@@ -150,22 +154,22 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 					end = i
 
 		if tail:
-			tail = tail [0] if len (tail) == 1 else ('*',) + tuple (tail)
+			tail = tail [0] if len (tail) == 1 else AST ('*', tuple (tail))
 
-			return tail if end == 1 else ass.flatcat ('*', ast [1], tail) if end == 2 else ass.flatcat ('*', ast [:end], tail)
+			return tail if end == 0 else AST.flatcat ('*', ast.muls [0], tail) if end == 1 else AST.flatcat ('*', AST ('*', ast.muls [:end]), tail)
 
 	return ast
 
 def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
-	if args [iparm] [0] == '!':
-		if args [iparm] [1] [0] == '(':
-			return ('!', args [:iparm] + (args [iparm] [1] [1],) + args [iparm + 1:])
+	if args [iparm].is_fact:
+		if args [iparm].fact.is_paren:
+			return AST ('!', AST (*(args [:iparm] + (args [iparm].fact.paren,) + args [iparm + 1:])))
 
-	elif args [iparm] [0] == '^':
-		if args [iparm] [1] [0] == '(':
-			return ('^', args [:iparm] + (args [iparm] [1] [1],) + args [iparm + 1:], args [iparm] [2])
+	elif args [iparm].is_pow:
+		if args [iparm].base.is_paren:
+			return AST ('^', AST (*(args [:iparm] + (args [iparm].base.paren,) + args [iparm + 1:])), args [iparm].exp)
 
-	return args
+	return AST (*args)
 
 #...............................................................................................
 class Parser (lalr1.Parser):
@@ -253,43 +257,43 @@ class Parser (lalr1.Parser):
 	])
 
 	_FUNC_AST_REMAP = {
-		'abs'      : lambda expr: _expr_func (1, '|', ass.strip_paren (expr)),
-		'factorial': lambda expr: _expr_func (1, '!', ass.strip_paren (expr)),
+		'abs'      : lambda expr: _expr_func (1, '|', expr.strip_paren ()),
+		'factorial': lambda expr: _expr_func (1, '!', expr.strip_paren ()),
 		'ln'       : lambda expr: _expr_func (1, 'log', expr),
 	}
 
 	def expr            (self, expr_int):                      	             return expr_int
 
-	def expr_int_1      (self, INT, expr_sub, expr_super, expr_int):         return _expr_int (expr_int) + (expr_sub, expr_super)
+	def expr_int_1      (self, INT, expr_sub, expr_super, expr_int):         return _expr_int (expr_int, (expr_sub, expr_super))
 	def expr_int_2      (self, INT, expr_int):                               return _expr_int (expr_int)
 	def expr_int_3      (self, expr_add):                                    return expr_add
 
-	def expr_add_1      (self, expr_add, PLUS, expr_mul_exp):                return ass.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return ass.flatcat ('+', expr_add, _ast_neg (expr_mul_exp))
+	def expr_add_1      (self, expr_add, PLUS, expr_mul_exp):                return AST.flatcat ('+', expr_add, expr_mul_exp)
+	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return AST.flatcat ('+', expr_add, _ast_neg_stack (expr_mul_exp))
 	def expr_add_3      (self, expr_mul_exp):                                return expr_mul_exp
 
-	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_lim):                return ass.flatcat ('*', expr_mul_exp, expr_lim)
-	def expr_mul_exp_2  (self, expr_mul_exp, STAR, expr_lim):                return ass.flatcat ('*', expr_mul_exp, expr_lim)
+	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_lim):                return AST.flatcat ('*', expr_mul_exp, expr_lim)
+	def expr_mul_exp_2  (self, expr_mul_exp, STAR, expr_lim):                return AST.flatcat ('*', expr_mul_exp, expr_lim)
 	def expr_mul_exp_3  (self, expr_lim):                                    return expr_lim
 
-	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_lim):                             return ('lim', expr_lim, expr_var, expr)
-	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_doublestar, PLUS, CURLYR, expr_lim):  return ('lim', expr_lim, expr_var, expr, '+')
-	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_doublestar, MINUS, CURLYR, expr_lim): return ('lim', expr_lim, expr_var, expr, '-')
+	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_lim):                             return AST ('lim', expr_lim, expr_var, expr)
+	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_doublestar, PLUS, CURLYR, expr_lim):  return AST ('lim', expr_lim, expr_var, expr, '+')
+	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_doublestar, MINUS, CURLYR, expr_lim): return AST ('lim', expr_lim, expr_var, expr, '-')
 	def expr_lim_6      (self, expr_sum):                                                                           return expr_sum
 
-	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, expr_super, expr_lim):             return ('sum', expr_lim, expr_var, expr, expr_super)
+	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, expr_super, expr_lim):             return AST ('sum', expr_lim, expr_var, expr, expr_super)
 	def expr_sum_2      (self, expr_neg):                                                                           return expr_neg
 
-	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg (expr_diff) if expr_diff [0] == '#' and expr_diff [1] [0] != '-' else ('-', expr_diff)
+	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg_stack (expr_diff) if expr_diff.is_pos_num else AST ('-', expr_diff)
 	def expr_neg_2      (self, expr_diff):                                   return expr_diff
 
 	def expr_diff       (self, expr_div):                                    return _expr_diff (expr_div)
 
-	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):              return ('/', expr_div, expr_mul_imp)
-	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return ('/', expr_div, _ast_neg (expr_mul_imp))
+	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):              return AST ('/', expr_div, expr_mul_imp)
+	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return AST ('/', expr_div, _ast_neg_stack (expr_mul_imp))
 	def expr_div_3      (self, expr_mul_imp):                                return expr_mul_imp
 
-	def expr_mul_imp_1  (self, expr_mul_imp, expr_func):                     return ass.flatcat ('*', expr_mul_imp, expr_func)
+	def expr_mul_imp_1  (self, expr_mul_imp, expr_func):                     return AST.flatcat ('*', expr_mul_imp, expr_func)
 	def expr_mul_imp_2  (self, expr_func):                                   return expr_func
 
 	def expr_func_1     (self, SQRT, expr_func):                             return _expr_func (1, 'sqrt', expr_func)
@@ -299,8 +303,8 @@ class Parser (lalr1.Parser):
 	def expr_func_5     (self, TRIGH, expr_func):                            return _expr_func (2, 'func', f'{"a" if TRIGH.grp [0] else ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func)
 	def expr_func_6     (self, TRIGH, expr_super, expr_func):
 		return \
-				('^', _expr_func (2, 'func', f'{TRIGH.grp [0] or ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func), expr_super) \
-				if expr_super != ('#', '-1') else \
+				AST ('^', _expr_func (2, 'func', f'{TRIGH.grp [0] or ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func), expr_super) \
+				if expr_super != AST.MinusOne else \
 				_expr_func (2, 'func', TRIGH.grp [1] or TRIGH.grp [2], expr_func) \
 				if TRIGH.grp [0] else \
 				_expr_func (2, 'func', f'a{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func)
@@ -309,41 +313,41 @@ class Parser (lalr1.Parser):
 		name = FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [2] or FUNC.grp [3] or FUNC.text
 		func = self._FUNC_AST_REMAP.get (name)
 
-		return func (expr_func) if func else  _expr_func (2, 'func', name, expr_func)
+		return func (expr_func) if func else _expr_func (2, 'func', name, expr_func)
 
 	def expr_func_8     (self, expr_fact):                                   return expr_fact
 
-	def expr_fact_1     (self, expr_fact, FACTORIAL):                        return ('!', expr_fact)
+	def expr_fact_1     (self, expr_fact, FACTORIAL):                        return AST ('!', expr_fact)
 	def expr_fact_2     (self, expr_pow):                                    return expr_pow
 
-	def expr_pow_1      (self, expr_pow, expr_super):                        return ('^', expr_pow, expr_super)
+	def expr_pow_1      (self, expr_pow, expr_super):                        return AST ('^', expr_pow, expr_super)
 	def expr_pow_2      (self, expr_abs):                                    return expr_abs
 
-	def expr_abs_1      (self, LEFT, BAR1, expr, RIGHT, BAR2):               return ('|', expr)
-	def expr_abs_2      (self, BAR1, expr, BAR2):                            return ('|', expr)
+	def expr_abs_1      (self, LEFT, BAR1, expr, RIGHT, BAR2):               return AST ('|', expr)
+	def expr_abs_2      (self, BAR1, expr, BAR2):                            return AST ('|', expr)
 	def expr_abs_3      (self, expr_paren):                                  return expr_paren
 
-	def expr_paren_1    (self, PARENL, expr, PARENR):                        return ('(', expr)
-	def expr_paren_2    (self, LEFT, PARENL, expr, RIGHT, PARENR):           return ('(', expr)
+	def expr_paren_1    (self, PARENL, expr, PARENR):                        return AST ('(', expr)
+	def expr_paren_2    (self, LEFT, PARENL, expr, RIGHT, PARENR):           return AST ('(', expr)
 	def expr_paren_3    (self, IGNORE_CURLY, CURLYL, expr, CURLYR):          return expr
 	def expr_paren_4    (self, expr_frac):                                   return expr_frac
 
-	def expr_frac_1     (self, FRAC, expr_term1, expr_term2):                return ('/', expr_term1, expr_term2)
-	def expr_frac_2     (self, FRAC1, expr_term):                            return ('/', _ast_from_tok_digit_or_var (FRAC1), expr_term)
-	def expr_frac_3     (self, FRAC2):                                       return ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
+	def expr_frac_1     (self, FRAC, expr_term1, expr_term2):                return AST ('/', expr_term1, expr_term2)
+	def expr_frac_2     (self, FRAC1, expr_term):                            return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_term)
+	def expr_frac_3     (self, FRAC2):                                       return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
 	def expr_frac_4     (self, expr_term):                                   return expr_term
 
 	def expr_term_1     (self, CURLYL, expr, CURLYR):                        return expr
 	def expr_term_2     (self, expr_var):                                    return expr_var
 	def expr_term_3     (self, expr_num):                                    return expr_num
 
-	def expr_num        (self, NUM):                                         return ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else ('#', NUM.grp [1])
+	def expr_num        (self, NUM):                                         return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
 
-	def expr_var_1      (self, var, PRIMES, subvar):                         return ('@', f'{var}{subvar}{PRIMES.text}')
-	def expr_var_2      (self, var, subvar, PRIMES):                         return ('@', f'{var}{subvar}{PRIMES.text}')
-	def expr_var_3      (self, var, PRIMES):                                 return ('@', f'{var}{PRIMES.text}')
-	def expr_var_4      (self, var, subvar):                                 return ('@', f'{var}{subvar}')
-	def expr_var_5      (self, var):                                         return ('@', var)
+	def expr_var_1      (self, var, PRIMES, subvar):                         return AST ('@', f'{var}{subvar}{PRIMES.text}')
+	def expr_var_2      (self, var, subvar, PRIMES):                         return AST ('@', f'{var}{subvar}{PRIMES.text}')
+	def expr_var_3      (self, var, PRIMES):                                 return AST ('@', f'{var}{PRIMES.text}')
+	def expr_var_4      (self, var, subvar):                                 return AST ('@', f'{var}{subvar}')
+	def expr_var_5      (self, var):                                         return AST ('@', var)
 
 	def var             (self, VAR):                                         return f'\\partial {VAR.grp [2]}' if VAR.grp [1] and VAR.grp [1] [0] == '\\' else '\\infty' if VAR.grp [0] else VAR.text
 	def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):               return f'_{{{expr_var [1]}}}'
@@ -355,7 +359,7 @@ class Parser (lalr1.Parser):
 	def expr_sub_2      (self, SUB1):                                        return _ast_from_tok_digit_or_var (SUB1)
 
 	def expr_super_1    (self, DOUBLESTAR, expr_func):                       return expr_func
-	def expr_super_2    (self, DOUBLESTAR, MINUS, expr_func):                return _ast_neg (expr_func)
+	def expr_super_2    (self, DOUBLESTAR, MINUS, expr_func):                return _ast_neg_stack (expr_func)
 	def expr_super_3    (self, CARET, expr_frac):                            return expr_frac
 	def expr_super_4    (self, CARET1):                                      return _ast_from_tok_digit_or_var (CARET1)
 
@@ -386,7 +390,7 @@ class Parser (lalr1.Parser):
 
 	def _parse_autocomplete_expr_int (self):
 		s               = self.stack [-1]
-		self.stack [-1] = (s [0], s [1], ('*', s [2], ('@', '')))
+		self.stack [-1] = (s [0], s [1], AST ('*', (s [2], ('@', ''))))
 		expr_vars       = set ()
 
 		if self.autocompleting:
@@ -395,8 +399,8 @@ class Parser (lalr1.Parser):
 			while stack:
 				ast = stack.pop ()
 
-				if ast [0] == '@':
-					expr_vars.add (ast [1])
+				if ast.is_var:
+					expr_vars.add (ast.var)
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
@@ -481,7 +485,37 @@ class Parser (lalr1.Parser):
 
 		return next (iter (rated)) [-1]
 
-# if __name__ == '__main__':
-# 	p = Parser ()
-# 	a = p.parse ('dx')
-# 	print (a)
+if __name__ == '__main__':
+	p = Parser ()
+	# print (p.parse ('1') [0])
+	# print (p.parse ('x') [0])
+	# print (p.parse ('x!') [0])
+	# print (p.parse ('|x|') [0])
+	# print (p.parse ('x/y') [0])
+	# print (p.parse ('x/(y/z)') [0])
+	# print (p.parse ('sin x') [0])
+	# print (p.parse ('sin x**2') [0])
+	# print (p.parse ('sin (x**2)') [0])
+	# print (p.parse ('sin (x)**2') [0])
+	# print (p.parse ('x') [0])
+	# print (p.parse ('-x') [0])
+	# print (p.parse ('-{-x}') [0])
+	# print (p.parse ('\\int dx') [0])
+	# print (p.parse ('\\int dx/2') [0])
+	# print (p.parse ('\\int 2 dx') [0])
+	# print (p.parse ('\\int 3 / 2 dx') [0])
+	# print (p.parse ('\\int x + y dx') [0])
+	# print (p.parse ('\\int_0^1 dx') [0])
+	# print (p.parse ('\\int_0^1 dx/2') [0])
+	# print (p.parse ('\\int_0^1 2 dx') [0])
+	# print (p.parse ('\\int_0^1 3 / 2 dx') [0])
+	# print (p.parse ('\\int_0^1 x + y dx') [0])
+	# print (p.parse ('dx') [0])
+	# print (p.parse ('d / dx x') [0])
+	# print (p.parse ('d**2 / dx**2 x') [0])
+	# print (p.parse ('d**2 / dx dy x') [0])
+	# print (p.parse ('\\frac{d}{dx} x') [0])
+	# print (p.parse ('\\frac{d**2}{dx**2} x') [0])
+	# print (p.parse ('\\frac{d**2}{dxdy} x') [0])
+	a = p.parse ('sin**') [0]
+	print (a)

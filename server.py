@@ -15,6 +15,7 @@ from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import lalr1
+from sast import ast as AST
 import sparser
 import sym
 
@@ -49,10 +50,10 @@ class Handler (SimpleHTTPRequestHandler):
 			tex = simple = py         = None
 
 			if ast is not None:
-				ast    = _ast_replace (ast, ('@', '_'), _last_ast)
+				# ast    = _ast_replace (ast, ('@', '_'), _last_ast)
 				tex    = sym.ast2tex (ast)
-				simple = sym.ast2simple (ast)
-				py     = sym.ast2py (ast)
+				# simple = sym.ast2simple (ast)
+				# py     = sym.ast2py (ast)
 
 				## DEBUG!
 				print ()

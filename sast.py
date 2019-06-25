@@ -13,16 +13,16 @@ FUNCS_PY_AND_TEX = list (reversed (sorted ('''
 	ln
 	'''.strip ().split ())))
 
-rec_num_int        = re.compile (r'^-?\d+$')
-rec_num_pos_int    = re.compile (r'^\d+$')
-rec_var_diff_start = re.compile (r'^d(?=[^_])')
-rec_var_part_start = re.compile (r'^\\partial ')
-rec_var_not_single = re.compile (r'^(?:d.|\\partial |.+_)')
-rec_trigh          = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
-rec_trigh_noninv   = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
+_rec_num_int        = re.compile (r'^-?\d+$')
+_rec_num_pos_int    = re.compile (r'^\d+$')
+_rec_var_diff_start = re.compile (r'^d(?=[^_])')
+_rec_var_part_start = re.compile (r'^\\partial ')
+_rec_var_not_single = re.compile (r'^(?:d.|\\partial |.+_)')
+_rec_trigh          = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
+_rec_trigh_noninv   = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 def is_int_text (text): # >= 0
-	return rec_num_pos_int.match (text)
+	return _rec_num_pos_int.match (text)
 
 def is_pos_num (ast): # >= 0
 	return ast [0] == '#' and ast [1] [0] != '-'
@@ -31,7 +31,7 @@ def is_neg_num (ast): # < 0
 	return ast [0] == '#' and ast [1] [0] == '-'
 
 def is_pos_int (ast): # >= 0
-	return ast [0] == '#' and rec_num_pos_int.match (ast [1])
+	return ast [0] == '#' and _rec_num_pos_int.match (ast [1])
 
 def is_neg (ast):
 	return \
@@ -40,22 +40,22 @@ def is_neg (ast):
 			ast [0] == '*' and is_neg (ast [1])
 
 def is_differential_var (ast):
-	return ast [0] == '@' and rec_var_diff_start.match (ast [1])
+	return ast [0] == '@' and _rec_var_diff_start.match (ast [1])
 
 def is_partial_var (ast):
-	return ast [0] == '@' and rec_var_part_start.match (ast [1])
+	return ast [0] == '@' and _rec_var_part_start.match (ast [1])
 
 def is_single_unit (ast): # is single positive digit or single non-differential non-subscripted variable?
 	if ast [0] == '#':
 		return len (ast [1]) == 1
 
-	return ast [0] == '@' and not rec_var_not_single.match (ast [1])
+	return ast [0] == '@' and not _rec_var_not_single.match (ast [1])
 
 def is_trigh (ast):
-	return ast [0] == 'func' and rec_trigh.match (ast [1])
+	return ast [0] == 'func' and _rec_trigh.match (ast [1])
 
 def is_trigh_noninv (ast):
-	return ast [0] == 'func' and rec_trigh_noninv.match (ast [1])
+	return ast [0] == 'func' and _rec_trigh_noninv.match (ast [1])
 
 def strip_paren (ast):
 	return ast [1] if ast [0] == '(' else ast
@@ -68,14 +68,6 @@ def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 	elif ast1 [0] == op:
 		return (op, ast0) + ast1 [1:]
 	return (op, ast0, ast1)
-
-
-
-	# def is_trigh (self):
-	# 	return self [0] == 'func' and rec_trigh.match (self [1])
-
-	# def is_trigh_noninv (self):
-	# 	return self [0] == 'func' and rec_trigh_noninv.match (self [1])
 
 #...............................................................................................
 class ast (tuple):
@@ -104,14 +96,14 @@ class ast (tuple):
 
 		return self
 
-	def __getattr__ (self, name): # calculate value for self.name* calling self._name ()
+	def __getattr__ (self, name): # calculate value for nonexistent self.name by calling self._name ()
 		func                 = getattr (self, f'_{name}') if name [0] != '_' else None
 		val                  = func and func ()
 		self.__dict__ [name] = val
 
 		return val
 
-	def _is_neg (self):
+	def _is_negative (self):
 		return \
 				self.op == '-' or \
 				self.op == '#' and self.num == '-' or \
@@ -121,7 +113,7 @@ class ast (tuple):
 		if self.op == '#':
 			return len (self.num) == 1
 
-		return self.op == '@' and not rec_var_not_single.match (self.name)
+		return self.op == '@' and not _rec_var_not_single.match (self.var)
 
 	def strip_paren (self):
 		while self.op == '(':
@@ -131,17 +123,17 @@ class ast (tuple):
 
 	@staticmethod
 	def is_int_text (text): # >= 0
-		return rec_num_pos_int.match (text)
+		return _rec_num_pos_int.match (text)
 
-	@staticmethod # TODO: new args system
+	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
-		if ast0 [0] == op:
-			if ast1 [0] == op:
-				return ast0 + ast1 [1:]
-			return ast0 + (ast1,)
-		elif ast1 [0] == op:
-			return ast (op, ast0) + ast1 [1:]
-		return ast (op, ast0, ast1)
+		if ast0.op == op:
+			if ast1.op == op:
+				return ast (op, ast0 [-1] + ast1 [-1])
+			return ast (op, ast0 [-1] + (ast1,))
+		elif ast1.op == op:
+			return ast (op, (ast0,) + ast1 [-1])
+		return ast (op, (ast0, ast1))
 
 class ast_num (ast):
 	def _init (self, num):
@@ -157,92 +149,149 @@ class ast_num (ast):
 		return self.num [0] == '-'
 
 	def _is_pos_int (self):
-		return rec_num_pos_int.match (self.num)
+		return _rec_num_pos_int.match (self.num)
 
 class ast_var (ast):
-	def _init (self, name):
-		self.name = name
+	def _init (self, var):
+		self.var = var
+
+	def _is_var (self):
+		return True
+
+	def _is_null_var (self):
+		return not self.var
 
 	def _is_differential_var (self):
-		return rec_var_diff_start.match (self.name)
+		return _rec_var_diff_start.match (self.var)
 
 	def _is_partial_var (self):
-		return rec_var_part_start.match (self.name)
+		return _rec_var_part_start.match (self.var)
 
 class ast_paren (ast):
-	def _init (self, arg):
-		self.arg = arg
+	def _init (self, paren):
+		self.paren = paren
+
+	def _is_paren (self):
+		return True
 
 class ast_abs (ast):
-	def _init (self, arg):
-		self.arg = arg
+	def _init (self, abs):
+		self.abs = abs
+
+	def _is_abs (self):
+		return True
 
 class ast_neg (ast):
-	def _init (self, arg):
-		self.arg = arg
+	def _init (self, neg):
+		self.neg = neg
+
+	def _is_neg (self):
+		return True
 
 class ast_fact (ast):
-	def _init (self, arg):
-		self.arg = arg
+	def _init (self, fact):
+		self.fact = fact
+
+	def _is_fact (self):
+		return True
 
 class ast_add (ast):
-	def _init (self, args):
-		self.args = args
+	def _init (self, adds):
+		self.adds = adds
+
+	def _is_add (self):
+		return True
 
 class ast_mul (ast):
-	def _init (self, args):
-		self.args = args
+	def _init (self, muls):
+		self.muls = muls
+
+	def _is_mul (self):
+		return True
 
 class ast_div (ast):
 	def _init (self, numer, denom):
 		self.numer = numer
 		self.denom = denom
 
+	def _is_div (self):
+		return True
+
 class ast_pow (ast):
 	def _init (self, base, exp):
 		self.base = base
 		self.exp  = exp
+
+	def _is_pow (self):
+		return True
 
 class ast_log (ast):
 	def _init (self, arg, base = None):
 		self.arg  = arg
 		self.base = base
 
+	def _is_log (self):
+		return True
+
 class ast_sqrt (ast):
 	def _init (self, rad, idx = None):
 		self.rad = rad
 		self.idx = idx
 
+	def _is_sqrt (self):
+		return True
+
 class ast_func (ast):
-	def _init (self, name, arg):
-		self.name = name
+	def _init (self, func, arg):
+		self.func = func
 		self.arg  = arg
 
+	def _is_func (self):
+		return True
+
+	def _is_trigh (self):
+		return _rec_trigh.match (self.func)
+
+	def _is_trigh_noninv (self):
+		return _rec_trigh_noninv.match (self.func)
+
 class ast_lim (ast):
-	def _init (self, expr, var, to, dir = None):
-		self.expr = expr
-		self.var  = var
-		self.to   = to
-		self.dir  = dir
+	def _init (self, lim, var, to, dir = None):
+		self.lim = lim
+		self.var = var
+		self.to  = to
+		self.dir = dir
+
+	def _is_lim (self):
+		return True
 
 class ast_sum (ast):
-	def _init (self, expr, var, from_, to):
-		self.expr  = expr
+	def _init (self, sum, var, from_, to):
+		self.sum   = sum
 		self.var   = var
 		self.from_ = from_
 		self.to    = to
+
+	def _is_sum (self):
+		return True
 
 class ast_diff (ast):
-	def _init (self, expr, vars):
-		self.expr = expr
+	def _init (self, diff, vars):
+		self.diff = diff
 		self.vars = vars
 
+	def _is_diff (self):
+		return True
+
 class ast_intg (ast):
-	def _init (self, var, expr = None, from_ = None, to = None):
+	def _init (self, intg, var, from_ = None, to = None):
+		self.intg  = intg
 		self.var   = var
-		self.expr  = expr
 		self.from_ = from_
 		self.to    = to
+
+	def _is_intg (self):
+		return True
 
 _AST_OP2CLS = {
 	'#': ast_num,
@@ -267,4 +316,8 @@ _AST_OP2CLS = {
 _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
 
 for cls in _AST_CLS2OP:
-	setattr (ast, cls.__name__.split ('_') [1], cls)
+	setattr (ast, cls.__name__ [4:], cls)
+
+ast.Zero     = ast ('#', '0')
+ast.One      = ast ('#', '1')
+ast.MinusOne = ast ('#', '-1')
