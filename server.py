@@ -54,12 +54,14 @@ class Handler (SimpleHTTPRequestHandler):
 				simple = sym.ast2simple (ast)
 				py     = sym.ast2py (ast)
 
+				## DEBUG!
 				print ()
-				print ('ast:   ', ast) ## DEBUG!
-				print ('tex:   ', tex) ## DEBUG!
-				print ('simple:', simple) ## DEBUG!
-				print ('py:    ', py) ## DEBUG!
+				print ('ast:   ', ast)
+				print ('tex:   ', tex)
+				print ('simple:', simple)
+				print ('py:    ', py)
 				print ()
+				## DEBUG!
 
 			resp = {
 				'tex'         : tex,
@@ -73,6 +75,9 @@ class Handler (SimpleHTTPRequestHandler):
 			try:
 				ast, _, _ = parser.parse (req ['text'])
 				ast       = _ast_replace (ast, ('@', '_'), _last_ast)
+
+				sym.set_precision (ast)
+
 				spt       = sym.ast2spt (ast)
 				ast       = sym.spt2ast (spt)
 				_last_ast = ast

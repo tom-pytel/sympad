@@ -37,7 +37,7 @@ from collections import OrderedDict
 import re
 
 import lalr1
-import aststuff as ass
+import sast as ass
 
 def _ast_from_tok_digit_or_var (tok, i = 0): # special-cased infinity 'oo' is super-special
 	return ('#', tok.grp [i]) if tok.grp [i] else ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
@@ -482,7 +482,6 @@ class Parser (lalr1.Parser):
 		print ()
 		for res in rated:
 			print ('parse:', res [-1])
-		print ()
 		## DEBUG!
 
 		return next (iter (rated)) [-1]

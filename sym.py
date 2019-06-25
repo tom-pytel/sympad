@@ -4,12 +4,36 @@ import re
 import sympy as sp
 sp.numbers = sp.numbers # pylint medication
 
-import aststuff as ass
+import sast as ass
 
-_FUNCS_PY_AND_TEX = set (ass.FUNCS_PY_AND_TEX)
-_FUNCS_ALL_PY     = set (ass.FUNCS_PY) | _FUNCS_PY_AND_TEX
+_FUNCS_PY_AND_TEX           = set (ass.FUNCS_PY_AND_TEX)
+_FUNCS_ALL_PY               = set (ass.FUNCS_PY) | _FUNCS_PY_AND_TEX
 
 _rec_var_diff_or_part_start = re.compile (r'^(?:d(?=[^_])|\\partial )')
+_rec_num_deconstructed      = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
+
+_SYMPY_FLOAT_PRECISION      = None
+
+#...............................................................................................
+def set_precision (ast): # set sympy float precision according to largest string of digits provided
+	global _SYMPY_FLOAT_PRECISION
+
+	prec  = 15
+	stack = [ast]
+
+	while stack:
+		ast = stack.pop ()
+
+		if ast [0] == '#':
+			prec = max (prec, len (ast [1]))
+		elif ast [0] in {'(', '|', '-', '!'}:
+			stack.append (ast [1])
+		elif ast in {'trigh', 'func'}:
+			stack.append (ast [2])
+		else:
+			stack.extend (ast [1:])
+
+	_SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
 #...............................................................................................
 def ast2tex (ast): # abstract syntax tree -> LaTeX text
@@ -103,8 +127,6 @@ def _ast2tex_lim (ast):
 
 def _ast2tex_sum (ast):
 	return f'\\sum_{{{ast2tex (ast [2])} = {ast2tex (ast [3])}}}^{_ast2tex_curly (ast [4])} {_ast2tex_paren_mul_exp (ast [1])}' \
-
-_ast2tex_paren_mul_exp
 
 _diff_var_single_start_rec = re.compile (r'^d(?=[^_])')
 
@@ -385,7 +407,7 @@ _ast2py_funcs = {
 }
 
 #...............................................................................................
-def ast2spt (ast): # abstract syntax tree -> SymPy tree (expression)
+def ast2spt (ast): # abstract syntax tree -> sympy tree (expression)
 	return _ast2spt_funcs [ast [0]] (ast)
 
 def _ast2spt_diff (ast):
@@ -422,7 +444,7 @@ _ast2spt_func_alias = {
 }
 
 _ast2spt_funcs = {
-	'#': lambda ast: sp.Integer (ast [1]) if ass.is_int_text (ast [1]) else sp.Float (ast [1]),
+	'#': lambda ast: sp.Integer (ast [1]) if ass.is_int_text (ast [1]) else sp.Float (ast [1], _SYMPY_FLOAT_PRECISION),
 	'@': lambda ast: _ast2spt_consts.get (ast [1], sp.Symbol (ast [1])),
 	'(': lambda ast: ast2spt (ast [1]),
 	'|': lambda ast: sp.Abs (ast2spt (ast [1])),
@@ -443,7 +465,7 @@ _ast2spt_funcs = {
 }
 
 #...............................................................................................
-def spt2ast (spt): # SymPy tree (expression) -> abstract syntax tree
+def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 	for cls in spt.__class__.__mro__:
 		func = _spt2ast_funcs.get (cls)
 
@@ -455,10 +477,8 @@ def spt2ast (spt): # SymPy tree (expression) -> abstract syntax tree
 def _spt2ast_nan (spt):
 	raise ValueError ('undefined')
 
-_rec_spt2ast_num = re.compile (r'(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:(e)([+-]\d+))?') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
-
 def _spt2ast_num (spt):
-	m = _rec_spt2ast_num.match (str (spt))
+	m = _rec_num_deconstructed.match (str (spt))
 	g = [g or '' for g in m.groups ()]
 
 	if g [5]:
@@ -545,6 +565,6 @@ _spt2ast_funcs = {
 }
 
 if __name__ == '__main__':
-	print (_rec_spt2ast_num.match ('10100.0010100').groups ())
+	print (_rec_num_deconstructed.match ('10100.0010100').groups ())
 	t = ast2spt (('int', ('@', 'dx')))
 	print (t)
