@@ -69,7 +69,7 @@ def _ast2tex_mul (ast, ret_has = False):
 	for i in range (1, len (ast)):
 		s = f'{_ast2tex_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and ass.is_neg (ast [i])) else ast2tex (ast [i])}'
 
-		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or ast [i] == ('@', '') or \
+		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'intg'} or ast [i] == ('@', '') or \
 				(ast [i] [0] == '^' and ass.is_pos_num (ast [i] [1])) or \
 				(ast [i] [0] in {'/', 'diff'} and ast [i - 1] [0] in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {s}')
@@ -138,7 +138,7 @@ def _ast2tex_diff (ast):
 		if ast [i] [0] == '@':
 			ds.add (ast [i] [1])
 			p += 1
-		else: # ast [i] = ('^', ('@', 'differential'), ('#', 'int'))
+		else: # ast [i] = ('^', ('@', 'differential'), ('#', 'intg'))
 			ds.add (ast [i] [1] [1])
 			p += int (ast [i] [2] [1])
 
@@ -179,7 +179,7 @@ _ast2tex_funcs = {
 	'lim': _ast2tex_lim,
 	'sum': _ast2tex_sum,
 	'diff': _ast2tex_diff,
-	'int': _ast2tex_int,
+	'intg': _ast2tex_int,
 }
 
 #...............................................................................................
@@ -209,7 +209,7 @@ def _ast2simple_mul (ast, ret_has = False):
 	for i in range (1, len (ast)):
 		s = f'{_ast2simple_paren (ast [i]) if ast [i] [0] == "+" or (i != 1 and ass.is_neg (ast [i])) else ast2simple (ast [i])}'
 
-		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'int'} or ast [i] == ('@', '') or \
+		if i != 1 and (ast [i] [0] in {'!', '#', 'lim', 'sum', 'intg'} or ast [i] == ('@', '') or \
 				(ast [i] [0] == '^' and ass.is_pos_num (ast [i] [1])) or \
 				ast [i] [0] in {'/', 'diff'} or ast [i - 1] [0] in {'/', 'diff'}):
 			t.append (f' * {ast2simple (ast [i])}')
@@ -234,7 +234,7 @@ def _ast2simple_div (ast):
 
 def _ast2simple_pow (ast):
 	b = ast2simple (ast [1])
-	p = f'{ast2simple (ast [2])}' if ast [2] [0] in {'+', '*', '/', 'lim', 'sum', 'diff', 'int'} else ast2simple (ast [2])
+	p = f'{ast2simple (ast [2])}' if ast [2] [0] in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2simple (ast [2])
 
 	if ass.is_trigh_noninv (ast [1]) and ass.is_single_unit (ast [2]):
 		i = len (ast [1] [1])
@@ -279,7 +279,7 @@ def _ast2simple_diff (ast):
 		if ast [i] [0] == '@':
 			ds.add (ast [i] [1])
 			p += 1
-		else: # ast [i] = ('^', ('@', 'differential'), ('#', 'int'))
+		else: # ast [i] = ('^', ('@', 'differential'), ('#', 'intg'))
 			ds.add (ast [i] [1] [1])
 			p += int (ast [i] [2] [1])
 
@@ -320,7 +320,7 @@ _ast2simple_funcs = {
 	'lim': _ast2simple_lim,
 	'sum': _ast2simple_sum,
 	'diff': _ast2simple_diff,
-	'int': _ast2simple_int,
+	'intg': _ast2simple_int,
 }
 
 #...............................................................................................
@@ -400,7 +400,7 @@ _ast2py_funcs = {
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast [1])}, ({ast2py (ast [2])}, {ast2py (ast [3])}, {ast2py (ast [4])}))',
 	'diff': _ast2py_diff,
-	'int': _ast2py_int,
+	'intg': _ast2py_int,
 }
 
 #...............................................................................................
@@ -457,7 +457,7 @@ _ast2spt_funcs = {
 	'lim': lambda ast: sp.limit (ast2spt (ast [1]), ast2spt (ast [2]), ast2spt (ast [3]), dir = '+-' if len (ast) == 4 else ast [4]),
 	'sum': lambda ast: sp.Sum (ast2spt (ast [1]), (ast2spt (ast [2]), ast2spt (ast [3]), ast2spt (ast [4]))).doit (),
 	'diff': _ast2spt_diff,
-	'int': _ast2spt_int,
+	'intg': _ast2spt_int,
 }
 
 #...............................................................................................
@@ -526,9 +526,9 @@ def _spt2ast_func (spt):
 
 def _spt2ast_integral (spt):
 	return \
-			('int', spt2ast (spt.args [0]), ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])) \
+			('intg', spt2ast (spt.args [0]), ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])) \
 			if len (spt.args [1]) == 3 else \
-			('int', spt2ast (spt.args [0]), ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
+			('intg', spt2ast (spt.args [0]), ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
 	sp.numbers.NaN: _spt2ast_nan,
@@ -560,7 +560,7 @@ _spt2ast_funcs = {
 	sp.Integral: _spt2ast_integral,
 }
 
-if __name__ == '__main__':
-	print (_rec_num_deconstructed.match ('10100.0010100').groups ())
-	t = ast2spt (('int', ('@', 'dx')))
-	print (t)
+# if __name__ == '__main__':
+# 	print (_rec_num_deconstructed.match ('10100.0010100').groups ())
+# 	t = ast2spt (('intg', ('@', 'dx')))
+# 	print (t)

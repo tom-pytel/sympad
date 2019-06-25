@@ -1,27 +1,30 @@
+# TODO: \int _
+
 # Builds expression tree from text, nodes are nested tuples of the form:
 #
-# ('#', 'num')                 - numbers represented as strings to pass on arbitrary precision to sympy
-# ('@', 'var')                 - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
-# ('/', numer, denom)          - fraction numer(ator) / denom(inator)
-# ('(', expr)                  - explicit parentheses
-# ('|', expr)                  - absolute value
-# ('^', base, exp)             - power base ^ exp(onent)
-# ('!', expr)                  - factorial
-# ('func', 'func', expr)       - sympy or regular python function 'func', will be called with sympy expression
-# ('log', expr)                - natural logarithm of expr
-# ('log', expr, base)          - logarithm of expr in base
-# ('sqrt', expr)               - square root of expr
-# ('sqrt', expr, n)            - nth root of expr, n is ('#', int)
-# ('*', expr1, expr2, ...)     - multiplication
-# ('diff', expr, var1, ...)    - differentiation of expr with respect to var1 and optional other vars
-# ('-', expr)                  - negative of expression, negative numbers are represented with this at least initially
-# ('sum', expr, var, from, to) - summation of expr over variable var from from to to
-# ('lim', expr, var, to)       - limit of expr when variable var approaches to from both positive and negative directions
-# ('lim', expr, var, to, dir)  - limit of expr when variable var approaches to from direction dir: may be '+' or '-'
-# ('int', var)                 - anti-derivative of 1 with respect to differential var
-# ('int', expr, var)           - anti-derivative of expr with respect to differential var
-# ('int', from, to)            - definite integral of 1 with respect to differential var
-# ('int', expr, from, to)      - definite integral of expr with respect to differential var
+# ('#', 'num')                  - numbers represented as strings to pass on arbitrary precision to sympy
+# ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
+# ('/', numer, denom)           - fraction numer(ator) / denom(inator)
+# ('(', expr)                   - explicit parentheses
+# ('|', expr)                   - absolute value
+# ('^', base, exp)              - power base ^ exp(onent)
+# ('!', expr)                   - factorial
+# ('func', 'func', expr)        - sympy or regular python function 'func', will be called with sympy expression
+# ('log', expr)                 - natural logarithm of expr
+# ('log', expr, base)           - logarithm of expr in base
+# ('sqrt', expr)                - square root of expr
+# ('sqrt', expr, n)             - nth root of expr
+# ('*', expr1, expr2, ...)      - multiplication
+# ('diff', expr, var1, ...)     - differentiation of expr with respect to var1 and optional other vars
+# ('-', expr)                   - negative of expression, negative numbers are represented with this at least initially
+# ('sum', expr, var, from, to)  - summation of expr over variable var from from to to
+# ('lim', expr, var, to)        - limit of expr when variable var approaches to from both positive and negative directions
+# ('lim', expr, var, to, dir)   - limit of expr when variable var approaches to from direction dir: may be '+' or '-'
+# ('intg', var)                 - anti-derivative of 1 with respect to differential var
+# ('intg', expr, var)           - anti-derivative of expr with respect to differential var
+# ('intg', var, from, to)       - definite integral of 1 with respect to differential var
+# ('intg', expr, var, from, to) - definite integral of expr with respect to differential var
+# ('+', expr1, expr2, ...)      - addition
 #
 # ) When parsing, explicit and implicit multiplication have different precedence, as well as latex
 #   \frac and regular '/' division operators.
@@ -49,19 +52,19 @@ def _ast_neg (ast):
 
 def _expr_int (ast): # construct indefinite integral ast
 	if ass.is_differential_var (ast) or ast == ('@', ''): # ('@', '') is for autocomplete
-		return ('int', ast)
+		return ('intg', ast)
 
 	elif ast [0] == '/':
 		if ass.is_differential_var (ast [1]):
-			return ('int', ('/', ('#', '1'), ast [2]), ast [1])
+			return ('intg', ('/', ('#', '1'), ast [2]), ast [1])
 		elif ast [2] [0] == '*' and ass.is_differential_var (ast [2] [-1]):
-			return ('int', ('/', ast [1], ast [2] [1] if len (ast [2]) == 3 else ast [2] [:-1]), ast [2] [-1])
+			return ('intg', ('/', ast [1], ast [2] [1] if len (ast [2]) == 3 else ast [2] [:-1]), ast [2] [-1])
 
 	elif ast [0] == '*' and (ass.is_differential_var (ast [-1]) or ast [-1] == ('@', '')): # ('@', '') is for autocomplete
-		return ('int', ast [1] if len (ast) == 3 else ast [:-1], ast [-1])
+		return ('intg', ast [1] if len (ast) == 3 else ast [:-1], ast [-1])
 
 	elif ast [0] == '+' and ast [-1] [0] == '*' and ass.is_differential_var (ast [-1] [-1]):
-		return ('int', \
+		return ('intg', \
 				ast [:-1] + (ast [-1] [:-1],) if len (ast [-1]) > 3 else \
 				ast [:-1] + (ast [-1] [1],) \
 				, ast [-1] [-1])
