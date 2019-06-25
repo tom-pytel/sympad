@@ -18,6 +18,8 @@ rec_num_pos_int    = re.compile (r'^\d+$')
 rec_var_diff_start = re.compile (r'^d(?=[^_])')
 rec_var_part_start = re.compile (r'^\\partial ')
 rec_var_not_single = re.compile (r'^(?:d.|\\partial |.+_)')
+rec_trigh          = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
+rec_trigh_noninv   = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 def is_int_text (text): # >= 0
 	return rec_num_pos_int.match (text)
@@ -49,6 +51,12 @@ def is_single_unit (ast): # is single positive digit or single non-differential 
 
 	return ast [0] == '@' and not rec_var_not_single.match (ast [1])
 
+def is_trigh (ast):
+	return ast [0] == 'func' and rec_trigh.match (ast [1])
+
+def is_trigh_noninv (ast):
+	return ast [0] == 'func' and rec_trigh_noninv.match (ast [1])
+
 def strip_paren (ast):
 	return ast [1] if ast [0] == '(' else ast
 
@@ -67,10 +75,10 @@ class ast (tuple):
 		return tuple.__new__ (cls, args)
 
 	def __add__ (self, other):
-		return ast (*(tuple (self) + tuple (other)))
+		return ast (*tuple.__add__ (self, other))
 
 	def __radd__ (self, other):
-		return ast (*(tuple (other) + tuple (self)))
+		return ast (*tuple.__add__ (other, self))
 
 	def __getitem__ (self, idx):
 		return ast (*tuple.__getitem__ (self, idx)) if isinstance (idx, slice) else tuple.__getitem__ (self, idx)
@@ -107,6 +115,12 @@ class ast (tuple):
 
 	def strip_paren (self):
 		return self [1] if self [0] == '(' else self
+
+	def is_trigh (self):
+		return self [0] == 'func' and rec_trigh.match (self [1])
+
+	def is_trigh_noninv (self):
+		return self [0] == 'func' and rec_trigh_noninv.match (self [1])
 
 	@staticmethod
 	def is_int_text (text): # >= 0

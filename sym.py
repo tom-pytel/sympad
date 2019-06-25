@@ -28,7 +28,7 @@ def set_precision (ast): # set sympy float precision according to largest string
 			prec = max (prec, len (ast [1]))
 		elif ast [0] in {'(', '|', '-', '!'}:
 			stack.append (ast [1])
-		elif ast in {'trigh', 'func'}:
+		elif ast == 'func':
 			stack.append (ast [2])
 		else:
 			stack.extend (ast [1:])
@@ -89,7 +89,7 @@ def _ast2tex_pow (ast):
 	b = ast2tex (ast [1])
 	p = _ast2tex_curly (ast [2])
 
-	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ass.is_single_unit (ast [2]):
+	if ass.is_trigh_noninv (ast [1]) and ass.is_single_unit (ast [2]):
 		i = len (ast [1] [1]) + (15 if ast [1] [1] in {'sech', 'csch'} else 1)
 
 		return f'{b [:i]}^{p}{b [i:]}'
@@ -105,16 +105,16 @@ def _ast2tex_log (ast):
 			if len (ast) == 2 else \
 			f'\\log_{_ast2tex_curly (ast [2])}{_ast2tex_paren (ast [1])}'
 
-def _ast2tex_trigh (ast):
-	n = (f'\\operatorname{{{ast [1] [1:]}}}^{{-1}}' \
-			if ast [1] in {'asech', 'acsch'} else \
-			f'\\{ast [1] [1:]}^{{-1}}') \
-			if ast [1] [0] == 'a' else \
-			(f'\\operatorname{{{ast [1]}}}' if ast [1] in {'sech', 'csch'} else f'\\{ast [1]}')
-
-	return f'{n}{_ast2tex_paren (ast [2])}'
-
 def _ast2tex_func (ast):
+	if ass.is_trigh (ast):
+		n = (f'\\operatorname{{{ast [1] [1:]}}}^{{-1}}' \
+				if ast [1] in {'asech', 'acsch'} else \
+				f'\\{ast [1] [1:]}^{{-1}}') \
+				if ast [1] [0] == 'a' else \
+				(f'\\operatorname{{{ast [1]}}}' if ast [1] in {'sech', 'csch'} else f'\\{ast [1]}')
+
+		return f'{n}{_ast2tex_paren (ast [2])}'
+
 	return \
 			f'\\{ast [1]}{_ast2tex_paren (ast [2])}' \
 			if ast [1] in _FUNCS_PY_AND_TEX else \
@@ -175,7 +175,6 @@ _ast2tex_funcs = {
 	'^': _ast2tex_pow,
 	'log': _ast2tex_log,
 	'sqrt': lambda ast: f'\\sqrt{{{ast2tex (ast [1])}}}' if len (ast) == 2 else f'\\sqrt[{ast2tex (ast [2])}]{{{ast2tex (ast [1])}}}',
-	'trigh': _ast2tex_trigh,
 	'func': _ast2tex_func,
 	'lim': _ast2tex_lim,
 	'sum': _ast2tex_sum,
@@ -237,10 +236,10 @@ def _ast2simple_pow (ast):
 	b = ast2simple (ast [1])
 	p = f'{ast2simple (ast [2])}' if ast [2] [0] in {'+', '*', '/', 'lim', 'sum', 'diff', 'int'} else ast2simple (ast [2])
 
-	if ast [1] [0] == 'trigh' and ast [1] [1] [0] != 'a' and ass.is_single_unit (ast [2]):
-		i = len (ast [1] [1]) + 1
+	if ass.is_trigh_noninv (ast [1]) and ass.is_single_unit (ast [2]):
+		i = len (ast [1] [1])
 
-		return f'{b [:i]}**{p}{b [i:]}'
+		return f'{b [:i]}^{p}{b [i:]}'
 
 	if ast [1] [0] in {'@', '(', '|'} or ass.is_pos_num (ast [1]):
 		return f'{b}**{p}'
@@ -253,10 +252,10 @@ def _ast2simple_log (ast):
 			if len (ast) == 2 else \
 			f'log_{_ast2simple_curly (ast [2])}{_ast2simple_paren (ast [1])}'
 
-def _ast2simple_trigh (ast):
-	return f'{ast [1]}{_ast2simple_paren (ast [2])}'
-
 def _ast2simple_func (ast):
+	if ass.is_trigh (ast):
+		return f'{ast [1]}{_ast2simple_paren (ast [2])}'
+
 	return \
 			f'{ast [1]}{_ast2simple_paren (ast [2])}' \
 			if ast [1] in _FUNCS_ALL_PY else \
@@ -317,7 +316,6 @@ _ast2simple_funcs = {
 	'^': _ast2simple_pow,
 	'log': _ast2simple_log,
 	'sqrt': lambda ast: f'\\sqrt{{{ast2simple (ast [1])}}}' if len (ast) == 2 else f'\\sqrt[{ast2simple (ast [2])}]{{{ast2simple (ast [1])}}}',
-	'trigh': _ast2simple_trigh,
 	'func': _ast2simple_func,
 	'lim': _ast2simple_lim,
 	'sum': _ast2simple_sum,
@@ -398,7 +396,6 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast [1])}' if len (ast) == 2 else ast2py (('^', ast [1], ('/', ('#', '1'), ast [2]))),
-	'trigh': lambda ast: f'{ast [1]}({ast2py (ast [2])})',
 	'func': lambda ast: f'{ast [1]}({ast2py (ast [2])})',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast [1])}, ({ast2py (ast [2])}, {ast2py (ast [3])}, {ast2py (ast [4])}))',
@@ -456,7 +453,6 @@ _ast2spt_funcs = {
 	'^': lambda ast: sp.Pow (ast2spt (ast [1]), ast2spt (ast [2])),
 	'log': lambda ast: sp.log (ast2spt (ast [1])) if len (ast) == 2 else sp.log (ast2spt (ast [1]), ast2spt (ast [2])),
 	'sqrt': lambda ast: sp.Pow (ast2spt (ast [1]), sp.Pow (2, -1)) if len (ast) == 2 else sp.Pow (ast2spt (ast [1]), sp.Pow (ast2spt (ast [2]), -1)),
-	'trigh': lambda ast: getattr (sp, ast [1]) (ast2spt (ast [2])),
 	'func': lambda ast: getattr (sp, _ast2spt_func_alias.get (ast [1], ast [1])) (ast2spt (ast [2])),
 	'lim': lambda ast: sp.limit (ast2spt (ast [1]), ast2spt (ast [2]), ast2spt (ast [3]), dir = '+-' if len (ast) == 4 else ast [4]),
 	'sum': lambda ast: sp.Sum (ast2spt (ast [1]), (ast2spt (ast [2]), ast2spt (ast [3]), ast2spt (ast [4]))).doit (),
@@ -525,8 +521,8 @@ def _spt2ast_pow (spt):
 
 	return ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
-def _spt2ast_trigh (spt):
-	return ('trigh', spt.__class__.__name__, spt2ast (spt.args [0]))
+def _spt2ast_func (spt):
+	return ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
 
 def _spt2ast_integral (spt):
 	return \
@@ -555,10 +551,10 @@ _spt2ast_funcs = {
 	sp.log: lambda spt: ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Mul: _spt2ast_mul,
 	sp.Pow: _spt2ast_pow,
-	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_trigh,
-	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_trigh,
-	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_trigh,
-	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_trigh,
+	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_func,
+	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_func,
+	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_func,
+	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_func,
 
 	sp.Sum: lambda spt: ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,
