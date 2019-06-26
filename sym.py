@@ -578,6 +578,3 @@ class sym: # for single script
 # 	print (_rec_num_deconstructed.match ('10100.0010100').groups ())
 # 	t = ast2spt (('intg', ('@', 'dx')))
 # 	print (t)
-
-
-\log_{\frac{1}{3}\pi}(\cos^{-1}(\frac{\int_0^\inftyx^4e^{-x}\dx}{\sqrt[3]{8}\cdot4!}))
