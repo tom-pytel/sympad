@@ -5,7 +5,7 @@
 
 import re
 import sympy as sp
-sp.numbers = sp.numbers # pylint medication
+sp.numbers = sp.numbers # medication for pylint
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 

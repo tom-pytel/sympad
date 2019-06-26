@@ -219,6 +219,7 @@ body {
 
 r"""// TODO: Arrow keys in Edge?
 // TODO: Change how error, auto and good text are displayed?
+// TODO: Stabilize scroll bars appearing and disappearing at start.
 
 // TODO: Need to copyInputStyle when bottom scroll bar appears.
 
@@ -781,9 +782,11 @@ r"""<!DOCTYPE html>
 	<div align="center">Type or click any of the following to get started:</div>
 	<br><br>
 	<a class="GreetingA" href="javascript:inputting ('? sqrt 2', true)">? sqrt 2</a>
-	<a class="GreetingA" href="javascript:inputting ('e ** ln (x)', true)">e ** ln (x)</a>
 	<a class="GreetingA" href="javascript:inputting ('sin (3\\pi / 2)', true)">sin (3\pi / 2)</a>
 	<a class="GreetingA" href="javascript:inputting ('cos^{-1} (-1)', true)">cos^{-1} (-1)</a>
+	<a class="GreetingA" href="javascript:inputting ('ln e', true)">ln e</a>
+	<a class="GreetingA" href="javascript:inputting ('e ** ln (x)', true)">e ** ln (x)</a>
+	<a class="GreetingA" href="javascript:inputting ('\\log_2{8}', true)">\log_2{8}</a>
 	<a class="GreetingA" href="javascript:inputting ('\\lim_{x \\to \\infty} 1/x', true)">\lim_{x \to \infty} 1/x</a>
 	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}^oo x^n / n!', true)">\sum_{n=0}^oo x^n / n!</a>
 	<a class="GreetingA" href="javascript:inputting ('d/dx x**2', true)">d/dx x**2</a>
@@ -793,7 +796,7 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('simplify (sin x / cos x)', true)">simplify (sin x / cos x)</a>
 	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**2', true)">expand {x+1}**2</a>
 	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
-	<a class="GreetingA" href="javascript:inputting ('\\arccos \\frac {\\int_0^\\infty x^4e^{-x} dx} {4!}', true)">\arccos \frac {\int_0^\infty x^4e^{-x} dx} {4!}</a>
+	<a class="GreetingA" href="javascript:inputting ('\\arccos\\frac{\\int_0^\\inftyx^4e^{-x}dx}{\\sqrt[3]{8}4!}', true)">\arccos\frac{\int_0^\inftyx^4e^{-x}dx}{\sqrt[3]{8}4!}</a>
 	<br><br>
 	<div align="center">
 	GitHub: <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')" style="color: #0007">https://github.com/Pristine-Cat/SymPad</a>
@@ -1368,6 +1371,7 @@ AST.I      = AST ('@', 'i')
 AST.E      = AST ('@', 'e')
 AST.Pi     = AST ('@', '\\pi')
 AST.Infty  = AST ('@', '\\infty')
+# TODO: sqrt(x)
 # TODO: \int _
 # TODO: redo _expr_diff d or \partial handling
 # TODO: iterated integrals
@@ -1863,12 +1867,13 @@ class sparser: # for single script
 # 	a = p.parse ('\\int_0^1x') [0]
 # 	print (a)
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
+# TODO: log_{1/3\pi}(acos(\int_0^\infty x**4e**-x dx / (\sqrt[3]{8} * 4!)))
 
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 import re
 import sympy as sp
-sp.numbers = sp.numbers # pylint medication
+sp.numbers = sp.numbers # medication for pylint
 
 
 _FUNCS_PY_AND_TEX           = set (AST.FUNCS_PY_AND_TEX)
@@ -2358,7 +2363,7 @@ def _spt2ast_mul (spt):
 	if spt.args [0] == -1:
 		return AST ('-', spt2ast (sp.Mul (*spt.args [1:])))
 
-	if spt.args [0].is_negative:
+	if spt.args [0].is_negative and isinstance (spt, sp.Number):
 		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:])))
 
 	numer = []
@@ -2451,6 +2456,7 @@ import sys
 import time
 import threading
 import traceback
+import webbrowser
 
 from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
@@ -2491,15 +2497,15 @@ class Handler (SimpleHTTPRequestHandler):
 	def do_POST (self):
 		global _last_ast
 
-		req    = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
-		parser = sparser.Parser ()
+		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
+		parser  = sparser.Parser ()
 
-		for key, val in list (req.items ()):
+		for key, val in list (request.items ()):
 			if len (val) == 1:
-				req [key] = val [0]
+				request [key] = val [0]
 
-		if req ['mode'] == 'validate':
-			ast, erridx, autocomplete = parser.parse (req ['text'])
+		if request ['mode'] == 'validate':
+			ast, erridx, autocomplete = parser.parse (request ['text'])
 			tex = simple = py         = None
 
 			if ast is not None:
@@ -2517,7 +2523,7 @@ class Handler (SimpleHTTPRequestHandler):
 				print ()
 				## DEBUG!
 
-			resp = {
+			response = {
 				'tex'         : tex,
 				'simple'      : simple,
 				'py'          : py,
@@ -2527,7 +2533,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 		else: # mode = 'evaluate'
 			try:
-				ast, _, _ = parser.parse (req ['text'])
+				ast, _, _ = parser.parse (request ['text'])
 				ast       = _ast_replace (ast, ('@', '_'), _last_ast)
 
 				sym.set_precision (ast)
@@ -2543,22 +2549,23 @@ class Handler (SimpleHTTPRequestHandler):
 				print ()
 				## DEBUG!
 
-				resp      = {
+				response  = {
 					'tex'   : sym.ast2tex (ast),
 					'simple': sym.ast2simple (ast),
 					'py'    : sym.ast2py (ast),
 				}
 
 			except Exception:
-				resp = {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
+				response = {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
 
-		resp ['mode'] = req ['mode']
-		resp ['idx']  = req ['idx']
+		response ['mode'] = request ['mode']
+		response ['idx']  = request ['idx']
+		response ['text'] = request ['text']
 
 		self.send_response (200)
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
-		self.wfile.write (json.dumps (resp).encode ('utf8'))
+		self.wfile.write (json.dumps (response).encode ('utf8'))
 
 class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
 	pass
@@ -2568,11 +2575,14 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		if 'RUNNED_AS_WATCHED' not in os.environ:
-			args = [sys.executable] + sys.argv
+		if 'SYMPAD_RUNNED_AS_WATCHED' not in os.environ:
+			args      = [sys.executable] + sys.argv
+			first_run = '1'
 
 			while 1:
-				subprocess.run (args, env = {**os.environ, 'RUNNED_AS_WATCHED': '1'})
+				subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+
+				first_run = ''
 
 		if len (sys.argv) < 2:
 			host, port = 'localhost', 8000
@@ -2594,6 +2604,9 @@ if __name__ == '__main__':
 					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _month_name [m], y, hh, mm, ss)}] {msg}\n')
 
 		log_message (f'Serving on {httpd.server_address [0]}:{httpd.server_address [1]}')
+
+		if os.environ ['SYMPAD_FIRST_RUN']:
+			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/')
 
 		while 1:
 			time.sleep (0.5)

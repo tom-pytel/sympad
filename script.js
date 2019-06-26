@@ -1,5 +1,6 @@
 // TODO: Arrow keys in Edge?
 // TODO: Change how error, auto and good text are displayed?
+// TODO: Stabilize scroll bars appearing and disappearing at start.
 
 // TODO: Need to copyInputStyle when bottom scroll bar appears.
 

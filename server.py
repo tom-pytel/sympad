@@ -9,6 +9,7 @@ import sys
 import time
 import threading
 import traceback
+import webbrowser
 
 from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
@@ -24,7 +25,7 @@ import sympy as sp ## DEBUG!
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _STATIC_FILES = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_FILES        = {} # for pylint # AUTO_REMOVE_IN_SINGLE_SCRIPT
+_FILES        = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 #...............................................................................................
 _last_ast = AST.Zero # last evaluated expression for _ usage
@@ -55,15 +56,15 @@ class Handler (SimpleHTTPRequestHandler):
 	def do_POST (self):
 		global _last_ast
 
-		req    = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
-		parser = sparser.Parser ()
+		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
+		parser  = sparser.Parser ()
 
-		for key, val in list (req.items ()):
+		for key, val in list (request.items ()):
 			if len (val) == 1:
-				req [key] = val [0]
+				request [key] = val [0]
 
-		if req ['mode'] == 'validate':
-			ast, erridx, autocomplete = parser.parse (req ['text'])
+		if request ['mode'] == 'validate':
+			ast, erridx, autocomplete = parser.parse (request ['text'])
 			tex = simple = py         = None
 
 			if ast is not None:
@@ -81,7 +82,7 @@ class Handler (SimpleHTTPRequestHandler):
 				print ()
 				## DEBUG!
 
-			resp = {
+			response = {
 				'tex'         : tex,
 				'simple'      : simple,
 				'py'          : py,
@@ -91,7 +92,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 		else: # mode = 'evaluate'
 			try:
-				ast, _, _ = parser.parse (req ['text'])
+				ast, _, _ = parser.parse (request ['text'])
 				ast       = _ast_replace (ast, ('@', '_'), _last_ast)
 
 				sym.set_precision (ast)
@@ -107,22 +108,23 @@ class Handler (SimpleHTTPRequestHandler):
 				print ()
 				## DEBUG!
 
-				resp      = {
+				response  = {
 					'tex'   : sym.ast2tex (ast),
 					'simple': sym.ast2simple (ast),
 					'py'    : sym.ast2py (ast),
 				}
 
 			except Exception:
-				resp = {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
+				response = {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
 
-		resp ['mode'] = req ['mode']
-		resp ['idx']  = req ['idx']
+		response ['mode'] = request ['mode']
+		response ['idx']  = request ['idx']
+		response ['text'] = request ['text']
 
 		self.send_response (200)
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
-		self.wfile.write (json.dumps (resp).encode ('utf8'))
+		self.wfile.write (json.dumps (response).encode ('utf8'))
 
 class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
 	pass
@@ -132,11 +134,14 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		if 'RUNNED_AS_WATCHED' not in os.environ:
-			args = [sys.executable] + sys.argv
+		if 'SYMPAD_RUNNED_AS_WATCHED' not in os.environ:
+			args      = [sys.executable] + sys.argv
+			first_run = '1'
 
 			while 1:
-				subprocess.run (args, env = {**os.environ, 'RUNNED_AS_WATCHED': '1'})
+				subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+
+				first_run = ''
 
 		if len (sys.argv) < 2:
 			host, port = 'localhost', 8000
@@ -158,6 +163,9 @@ if __name__ == '__main__':
 					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _month_name [m], y, hh, mm, ss)}] {msg}\n')
 
 		log_message (f'Serving on {httpd.server_address [0]}:{httpd.server_address [1]}')
+
+		if os.environ ['SYMPAD_FIRST_RUN']:
+			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/')
 
 		while 1:
 			time.sleep (0.5)
