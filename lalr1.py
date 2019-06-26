@@ -195,3 +195,7 @@ class Parser:
 				stidx = nterms [stack [-1] [0]] [prod]
 
 				stack.append ((stidx, prod, reduct))
+
+class lalr1: # for single script
+	Token  = Token
+	Parser = Parser

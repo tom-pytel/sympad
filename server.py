@@ -14,10 +14,14 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-import lalr1
-from sast import AST
-import sparser
-import sym
+import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
+from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
+import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
+import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
+
+import sympy as sp ## DEBUG!
+
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 #...............................................................................................
 _last_ast = AST.Zero # last evaluated expression for _ usage
@@ -83,10 +87,12 @@ class Handler (SimpleHTTPRequestHandler):
 				ast       = sym.spt2ast (spt)
 				_last_ast = ast
 
+				## DEBUG!
 				print ()
 				print ('spt:        ', repr (spt))
-				print ('sympy latex:', sym.sp.latex (spt))
+				print ('sympy latex:', sp.latex (spt))
 				print ()
+				## DEBUG!
 
 				resp      = {
 					'tex'   : sym.ast2tex (ast),

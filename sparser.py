@@ -1,30 +1,8 @@
 # TODO: \int _
+# TODO: redo _expr_diff d or \partial handling
+# TODO: iterated integrals
 
-# Builds expression tree from text, nodes are nested tuples of the form:
-#
-# ('#', 'num')                  - numbers represented as strings to pass on arbitrary precision to sympy
-# ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
-# ('/', numer, denom)           - fraction numer(ator) / denom(inator)
-# ('(', expr)                   - explicit parentheses
-# ('|', expr)                   - absolute value
-# ('^', base, exp)              - power base ^ exp(onent)
-# ('!', expr)                   - factorial
-# ('func', 'func', expr)        - sympy or regular python function 'func', will be called with sympy expression
-# ('log', expr)                 - natural logarithm of expr
-# ('log', expr, base)           - logarithm of expr in base
-# ('sqrt', expr)                - square root of expr
-# ('sqrt', expr, n)             - nth root of expr
-# ('*', (expr1, expr2, ...))    - multiplication
-# ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
-# ('-', expr)                   - negative of expression, negative numbers are represented with this at least initially
-# ('sum', expr, var, from, to)  - summation of expr over variable var from from to to
-# ('lim', expr, var, to)        - limit of expr when variable var approaches to from both positive and negative directions
-# ('lim', expr, var, to, dir)   - limit of expr when variable var approaches to from direction dir: may be '+' or '-'
-# ('intg', None, var)           - anti-derivative of 1 with respect to differential var
-# ('intg', expr, var)           - anti-derivative of expr with respect to differential var
-# ('intg', None, var, from, to) - definite integral of 1 with respect to differential var
-# ('intg', expr, var, from, to) - definite integral of expr with respect to differential var
-# ('+', (expr1, expr2, ...))    - addition
+# Builds expression tree from text, nodes are nested AST tuples.
 #
 # ) When parsing, explicit and implicit multiplication have different precedence, as well as latex
 #   \frac and regular '/' division operators.
@@ -33,26 +11,19 @@
 #   but lower precedence than limits or sums, so they end those expressions.
 #
 # ) Differentiation and partially integration are dynamically extracted from the tree being built so they have
-#   no specific full grammar rules.
+#   no specific complete grammar rules.
 
 from collections import OrderedDict
 import re
 
-import lalr1
-import sast as ass
-from sast import AST
+import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
+from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 def _ast_from_tok_digit_or_var (tok, i = 0): # special-cased infinity 'oo' is super-special
 	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
 
-# def _ast_neg_stack (ast):
-# 	return \
-# 			AST ('-', ast)            if not ast.is_num else \
-# 			AST ('#', ast.num [1:])   if ast.num.is_minus else \
-# 			AST ('#', f'-{ast.num}')
-
 def _expr_int (ast, from_to = ()): # construct indefinite integral ast
-	if ast.is_diff_var or ast.is_null_var:# == ('@', ''): # ('@', '') is for autocomplete
+	if ast.is_diff_var or ast.is_null_var: # null_var is for autocomplete
 		return AST ('intg', None, ast, *from_to)
 
 	elif ast.is_div:
@@ -211,8 +182,8 @@ class Parser (lalr1.Parser):
 	_ONEVARSP    = fr'{_CHAR}|{_GREEK}|{_SPECIAL}'
 	_DIONEVARSP  = fr'(\d)|(oo)|({_ONEVARSP})'
 
-	_FUNCPY      = '|'.join (ass.FUNCS_PY)
-	_FUNCPYTEX   = '|'.join (ass.FUNCS_PY_AND_TEX)
+	_FUNCPY      = '|'.join (AST.FUNCS_PY)
+	_FUNCPYTEX   = '|'.join (AST.FUNCS_PY_AND_TEX)
 
 	TOKENS       = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
@@ -483,37 +454,41 @@ class Parser (lalr1.Parser):
 
 		return next (iter (rated)) [-1]
 
-if __name__ == '__main__':
-	p = Parser ()
-	# print (p.parse ('1') [0])
-	# print (p.parse ('x') [0])
-	# print (p.parse ('x!') [0])
-	# print (p.parse ('|x|') [0])
-	# print (p.parse ('x/y') [0])
-	# print (p.parse ('x/(y/z)') [0])
-	# print (p.parse ('sin x') [0])
-	# print (p.parse ('sin x**2') [0])
-	# print (p.parse ('sin (x**2)') [0])
-	# print (p.parse ('sin (x)**2') [0])
-	# print (p.parse ('x') [0])
-	# print (p.parse ('-x') [0])
-	# print (p.parse ('-{-x}') [0])
-	# print (p.parse ('\\int dx') [0])
-	# print (p.parse ('\\int dx/2') [0])
-	# print (p.parse ('\\int 2 dx') [0])
-	# print (p.parse ('\\int 3 / 2 dx') [0])
-	# print (p.parse ('\\int x + y dx') [0])
-	# print (p.parse ('\\int_0^1 dx') [0])
-	# print (p.parse ('\\int_0^1 dx/2') [0])
-	# print (p.parse ('\\int_0^1 2 dx') [0])
-	# print (p.parse ('\\int_0^1 3 / 2 dx') [0])
-	# print (p.parse ('\\int_0^1 x + y dx') [0])
-	# print (p.parse ('dx') [0])
-	# print (p.parse ('d / dx x') [0])
-	# print (p.parse ('d**2 / dx**2 x') [0])
-	# print (p.parse ('d**2 / dx dy x') [0])
-	# print (p.parse ('\\frac{d}{dx} x') [0])
-	# print (p.parse ('\\frac{d**2}{dx**2} x') [0])
-	# print (p.parse ('\\frac{d**2}{dxdy} x') [0])
-	a = p.parse ('\\int_0^1x') [0]
-	print (a)
+class sparser: # for single script
+	Parser = Parser
+
+## DEBUG!
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	print (p.parse ('1') [0])
+# 	print (p.parse ('x') [0])
+# 	print (p.parse ('x!') [0])
+# 	print (p.parse ('|x|') [0])
+# 	print (p.parse ('x/y') [0])
+# 	print (p.parse ('x/(y/z)') [0])
+# 	print (p.parse ('sin x') [0])
+# 	print (p.parse ('sin x**2') [0])
+# 	print (p.parse ('sin (x**2)') [0])
+# 	print (p.parse ('sin (x)**2') [0])
+# 	print (p.parse ('x') [0])
+# 	print (p.parse ('-x') [0])
+# 	print (p.parse ('-{-x}') [0])
+# 	print (p.parse ('\\int dx') [0])
+# 	print (p.parse ('\\int dx/2') [0])
+# 	print (p.parse ('\\int 2 dx') [0])
+# 	print (p.parse ('\\int 3 / 2 dx') [0])
+# 	print (p.parse ('\\int x + y dx') [0])
+# 	print (p.parse ('\\int_0^1 dx') [0])
+# 	print (p.parse ('\\int_0^1 dx/2') [0])
+# 	print (p.parse ('\\int_0^1 2 dx') [0])
+# 	print (p.parse ('\\int_0^1 3 / 2 dx') [0])
+# 	print (p.parse ('\\int_0^1 x + y dx') [0])
+# 	print (p.parse ('dx') [0])
+# 	print (p.parse ('d / dx x') [0])
+# 	print (p.parse ('d**2 / dx**2 x') [0])
+# 	print (p.parse ('d**2 / dx dy x') [0])
+# 	print (p.parse ('\\frac{d}{dx} x') [0])
+# 	print (p.parse ('\\frac{d**2}{dx**2} x') [0])
+# 	print (p.parse ('\\frac{d**2}{dxdy} x') [0])
+# 	a = p.parse ('\\int_0^1x') [0]
+# 	print (a)

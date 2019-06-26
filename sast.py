@@ -1,17 +1,28 @@
 import re
 
-FUNCS_PY = list (reversed (sorted ('''
-	abs
-	expand
-	factor
-	factorial
-	simplify
-	'''.strip ().split ())))
-
-FUNCS_PY_AND_TEX = list (reversed (sorted ('''
-	arg
-	ln
-	'''.strip ().split ())))
+# ('#', 'num')                  - numbers represented as strings to pass on maximum precision to sympy
+# ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
+# ('(', expr)                   - explicit parentheses
+# ('|', expr)                   - absolute value
+# ('-', expr)                   - negative of expression, negative numbers are represented with this at least initially
+# ('!', expr)                   - factorial
+# ('+', (expr1, expr2, ...))    - addition
+# ('*', (expr1, expr2, ...))    - multiplication
+# ('/', numer, denom)           - fraction numer(ator) / denom(inator)
+# ('^', base, exp)              - power base ^ exp(onent)
+# ('log', expr)                 - natural logarithm of expr
+# ('log', expr, base)           - logarithm of expr in base
+# ('sqrt', expr)                - square root of expr
+# ('sqrt', expr, n)             - nth root of expr
+# ('func', 'func', expr)        - sympy or regular python function 'func', will be called with sympy expression
+# ('lim', expr, var, to)        - limit of expr when variable var approaches to from both positive and negative directions
+# ('lim', expr, var, to, dir)   - limit of expr when variable var approaches to from direction dir which may be '+' or '-'
+# ('sum', expr, var, from, to)  - summation of expr over variable var from from to to
+# ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
+# ('intg', None, var)           - anti-derivative of 1 with respect to differential var ('dx', 'dy', etc ...)
+# ('intg', expr, var)           - anti-derivative of expr with respect to differential var ('dx', 'dy', etc ...)
+# ('intg', None, var, from, to) - definite integral of 1 with respect to differential var ('dx', 'dy', etc ...)
+# ('intg', expr, var, from, to) - definite integral of expr with respect to differential var ('dx', 'dy', etc ...)
 
 _rec_num_int                = re.compile (r'^-?\d+$')
 _rec_num_pos_int            = re.compile (r'^\d+$')
@@ -22,6 +33,19 @@ _rec_func_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 _rec_func_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 class AST (tuple):
+	FUNCS_PY = list (reversed (sorted ('''
+		abs
+		expand
+		factor
+		factorial
+		simplify
+		'''.strip ().split ())))
+
+	FUNCS_PY_AND_TEX = list (reversed (sorted ('''
+		arg
+		ln
+		'''.strip ().split ())))
+
 	def __new__ (cls, *args):
 		op       = _AST_CLS2OP.get (cls)
 		cls_args = tuple (AST (*arg) if arg.__class__ is tuple else arg for arg in args)

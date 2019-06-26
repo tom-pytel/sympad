@@ -1,15 +1,15 @@
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
-# TODO: ast2py -{-x}
+
+# Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 import re
 import sympy as sp
 sp.numbers = sp.numbers # pylint medication
 
-import sast as ass
-from sast import AST
+from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_FUNCS_PY_AND_TEX           = set (ass.FUNCS_PY_AND_TEX)
-_FUNCS_ALL_PY               = set (ass.FUNCS_PY) | _FUNCS_PY_AND_TEX
+_FUNCS_PY_AND_TEX           = set (AST.FUNCS_PY_AND_TEX)
+_FUNCS_ALL_PY               = set (AST.FUNCS_PY) | _FUNCS_PY_AND_TEX
 
 _rec_var_diff_or_part_start = re.compile (r'^(?:d(?=[^_])|\\partial )')
 _rec_num_deconstructed      = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
@@ -564,6 +564,15 @@ _spt2ast_funcs = {
 	sp.Integral: _spt2ast_integral,
 }
 
+class sym: # for single script
+	set_precision = set_precision
+	ast2tex       = ast2tex
+	ast2simple    = ast2simple
+	ast2py        = ast2py
+	ast2spt       = ast2spt
+	spt2ast       = spt2ast
+
+## DEBUG!
 # if __name__ == '__main__':
 # 	print (_rec_num_deconstructed.match ('10100.0010100').groups ())
 # 	t = ast2spt (('intg', ('@', 'dx')))

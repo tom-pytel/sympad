@@ -2,53 +2,68 @@
 <html>
 <head>
 
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />		<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
-	<title>SymPad</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" type="text/css" href="style.css">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
+<title>SymPad</title>
+<link rel="stylesheet" type="text/css" href="style.css">
 
-	<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
-	<script type="text/javascript" src="script.js"></script>
-	<script type="text/x-mathjax-config">
-		MathJax.Hub.Config ({
-			messageStyle: "none",
-			tex2jax: {inlineMath: [["$","$"], ["\\(","\\)"]]}
-		});
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="script.js"></script>
+<script type="text/x-mathjax-config">
+	MathJax.Hub.Config ({
+		messageStyle: "none",
+		tex2jax: {inlineMath: [["$","$"], ["\\(","\\)"]]}
+	});
 
-		MathJax.Hub.Register.StartupHook ("End", readyMathJax);
-	</script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML-full"></script>
+	MathJax.Hub.Register.StartupHook ("End", readyMathJax);
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML-full"></script>
 
 </head>
 
 <body onresize="resize ()">
 
-	<input id="Clipboard">
-	<canvas id="Background"></canvas>
-	<div id="Greeting">
-		simplify x, expand x, factor x, ? x
-		<br><br>
-		? x = N (x): numerically evaluate x
-		<br><br>
-		d/dx = \frac{d}{dx} = $ \frac{d}{dx} $
-		<br>
-		d^2/dxdy = \frac{\partial}{\partial x\partial y} = $ \frac{\partial}{\partial x\partial y} $
-		<br><br>
-		^ and ** are both the power operator but they bind differently, ^ follows latex rules and ** follows python rules
-		<br><br>
-		sin^{-1}(x) = $ \sin^{-1}(x) $: is interpreted as the inverse sin function arcsin,
-		same goes for cos, tan, sec, csc, cot, sinh, cosh, tanh, sech, csch and coth
+<input id="Clipboard">
+<canvas id="Background"></canvas>
 
+<div id="Greeting">
+	<h2 align="center">SymPad v0.1</h2>
+	<br><br>
+	<div align="center">Type '<b>help</b>' at any time for more information.</div>
+	<br>
+	<div align="center">-or-</div>
+	<br>
+	<div align="center">Type or click any of the following to get started:</div>
+	<br><br>
+	<a class="GreetingA" href="javascript:inputting ('? sqrt 2', true)">? sqrt 2</a>
+	<a class="GreetingA" href="javascript:inputting ('e ** ln (x)', true)">e ** ln (x)</a>
+	<a class="GreetingA" href="javascript:inputting ('sin (3\\pi / 2)', true)">sin (3\pi / 2)</a>
+	<a class="GreetingA" href="javascript:inputting ('cos^{-1} (-1)', true)">cos^{-1} (-1)</a>
+	<a class="GreetingA" href="javascript:inputting ('\\lim_{x \\to \\infty} 1/x', true)">\lim_{x \to \infty} 1/x</a>
+	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}^oo x^n / n!', true)">\sum_{n=0}^oo x^n / n!</a>
+	<a class="GreetingA" href="javascript:inputting ('d/dx x**2', true)">d/dx x**2</a>
+	<a class="GreetingA" href="javascript:inputting ('d**2/dxdy x^2 y^3', true)">d**2/dxdy x^2 y^3</a>
+	<a class="GreetingA" href="javascript:inputting ('\\int 1 / (x**2 + 1) dx', true)">\int 1 / (x**2 + 1) dx</a>
+	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\infty e**-x**2 dx', true)">\int_0^\infty e**-x**2 dx</a>
+	<a class="GreetingA" href="javascript:inputting ('simplify (sin x / cos x)', true)">simplify (sin x / cos x)</a>
+	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**2', true)">expand {x+1}**2</a>
+	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
+	<a class="GreetingA" href="javascript:inputting ('\\arccos \\frac {\\int_0^\\infty x^4e^{-x} dx} {4!}', true)">\arccos \frac {\int_0^\infty x^4e^{-x} dx} {4!}</a>
+	<br><br>
+	<div align="center">
+	GitHub: <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')" style="color: #0007">https://github.com/Pristine-Cat/SymPad</a>
+	<br><br>
+	Copyright (c) 2019 Tomasz Pytel, All rights reserved.
 	</div>
+</div>
 
-	<div id="Log"></div>
+<div id="Log"></div>
 
-	<canvas id="InputBG"></canvas>
-	<input id="Input" oninput="inputting (this.value)" autofocus>
-	<div id="InputOverlay"><span id="OverlayGood"></span><span id="OverlayError"></span><span id="OverlayAutocomplete"></span></div>
+<canvas id="InputBG"></canvas>
+<input id="Input" oninput="inputting (this.value)" autofocus>
+<div id="InputOverlay"><span id="OverlayGood"></span><span id="OverlayError"></span><span id="OverlayAutocomplete"></span></div>
 
 </body>
 </html>

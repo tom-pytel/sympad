@@ -29,7 +29,14 @@ body {
 	left: 50%;
 	top: 50%;
 	transform: translate(-50%, -50%);
-	color: #aaa;
+	color: #0007;
+}
+
+.GreetingA {
+	display: block;
+	color: #0007;
+	text-decoration: none;
+	margin-bottom: 0.5em;
 }
 
 #InputBG {

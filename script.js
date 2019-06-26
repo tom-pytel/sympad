@@ -359,13 +359,24 @@ function inputKeypress (e) {
 		s = JQInput.val ().trim ();
 
 		if (s && ErrorIdx === null) {
+			if (!GreetingFadedOut) {
+				GreetingFadedOut = true;
+				$('#Greeting').fadeOut (3000);
+			}
+
+			if (s === 'help') {
+				window.open (`${URL}help.html`);
+				inputting ('', true);
+
+				return false;
+			}
+
 			if (Autocomplete.length > 0) {
 				s = s + Autocomplete.join ('');
 				inputting (s);
 			}
 
 			JQInput.val ('');
-
 			updateOverlay ('', null, []);
 			inputted (s);
 
@@ -383,11 +394,6 @@ function inputKeypress (e) {
 
 //...............................................................................................
 function inputKeydown (e) {
-	if (!GreetingFadedOut) {
-		GreetingFadedOut = true;
-		$('#Greeting').fadeOut (3000);
-	}
-
 	if (e.code == 'Escape') {
 		e.preventDefault ();
 
@@ -469,7 +475,7 @@ function keepInputFocus () {
 
 //...............................................................................................
 $(function () {
-	window.JQInput = $('#Input');
+	window.JQInput   = $('#Input');
 
 	let margin       = $('body').css ('margin-top');
 	BodyMarginTop    = Number (margin.slice (0, margin.length - 2));
