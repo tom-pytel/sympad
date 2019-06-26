@@ -1,12 +1,22 @@
 #!/usr/bin/env python
 # python 3.6+
 
+# Build parser tables for sparser.py using grammar dynamically generated from
+# class methods in that file.
+
+import sys
+
+try:
+	import ply
+except ModuleNotFoundError:
+	print ("This program requires the 'ply' python package to be installed.")
+	sys.exit (-1)
+
 import getopt
 import importlib
 import importlib.util
 import os
 import re
-import sys
 import types
 
 from lalr1 import Parser

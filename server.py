@@ -15,7 +15,7 @@ from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import lalr1
-from sast import ast as AST
+from sast import AST
 import sparser
 import sym
 

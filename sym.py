@@ -6,7 +6,7 @@ import sympy as sp
 sp.numbers = sp.numbers # pylint medication
 
 import sast as ass
-from sast import ast as AST
+from sast import AST
 
 _FUNCS_PY_AND_TEX           = set (ass.FUNCS_PY_AND_TEX)
 _FUNCS_ALL_PY               = set (ass.FUNCS_PY) | _FUNCS_PY_AND_TEX
@@ -17,7 +17,7 @@ _rec_num_deconstructed      = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*
 _SYMPY_FLOAT_PRECISION      = None
 
 #...............................................................................................
-def set_precision (ast): # set sympy float precision according to largest string of digits provided
+def set_precision (ast): # recurse through ast to set sympy float precision according to largest string of digits found
 	global _SYMPY_FLOAT_PRECISION
 
 	prec  = 15
@@ -32,14 +32,6 @@ def set_precision (ast): # set sympy float precision according to largest string
 			prec = max (prec, len (ast.num))
 		else:
 			stack.extend (ast [1:])
-		# elif ast.op in {'+', '*'}:
-		# 	stack.extend (ast [1])
-		# elif ast.is_func:
-		# 	stack.append (ast.arg)
-		# elif ast.is_diff:
-		# 	stack.append (ast.diff)
-		# elif not ast.is_var:
-		# 	stack.extend (ast [1:])
 
 	_SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
@@ -99,7 +91,7 @@ def _ast2tex_pow (ast):
 	b = ast2tex (ast.base)
 	p = _ast2tex_curly (ast.exp)
 
-	if ast.base.is_trigh_noninv and ast.exp.is_single_unit:
+	if ast.base.is_trigh_func_noninv_func and ast.exp.is_single_unit:
 		i = len (ast.base.func) + (15 if ast.base.func in {'sech', 'csch'} else 1)
 
 		return f'{b [:i]}^{p}{b [i:]}'
@@ -116,7 +108,7 @@ def _ast2tex_log (ast):
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
 def _ast2tex_func (ast):
-	if ast.is_trigh:
+	if ast.is_trigh_func:
 		n = (f'\\operatorname{{{ast.func [1:]}}}^{{-1}}' \
 				if ast.func in {'asech', 'acsch'} else \
 				f'\\{ast.func [1:]}^{{-1}}') \
@@ -248,7 +240,7 @@ def _ast2simple_pow (ast):
 	b = ast2simple (ast.base)
 	p = f'{ast2simple (ast.exp)}' if ast.exp.op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2simple (ast.exp)
 
-	if ast.base.is_trigh_noninv and ast.exp.is_single_unit:
+	if ast.base.is_trigh_func_noninv_func and ast.exp.is_single_unit:
 		i = len (ast.base.func)
 
 		return f'{b [:i]}^{p}{b [i:]}'
@@ -265,7 +257,7 @@ def _ast2simple_log (ast):
 			f'log_{_ast2simple_curly (ast.base)}{_ast2simple_paren (ast.log)}'
 
 def _ast2simple_func (ast):
-	if ast.is_trigh:
+	if ast.is_trigh_func:
 		return f'{ast.func}{_ast2simple_paren (ast.arg)}'
 
 	return \

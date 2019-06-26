@@ -40,7 +40,7 @@ import re
 
 import lalr1
 import sast as ass
-from sast import ast as AST
+from sast import AST
 
 def _ast_from_tok_digit_or_var (tok, i = 0): # special-cased infinity 'oo' is super-special
 	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
@@ -52,19 +52,19 @@ def _ast_from_tok_digit_or_var (tok, i = 0): # special-cased infinity 'oo' is su
 # 			AST ('#', f'-{ast.num}')
 
 def _expr_int (ast, from_to = ()): # construct indefinite integral ast
-	if ast.is_differential_var or ast.is_null_var:# == ('@', ''): # ('@', '') is for autocomplete
+	if ast.is_diff_var or ast.is_null_var:# == ('@', ''): # ('@', '') is for autocomplete
 		return AST ('intg', None, ast, *from_to)
 
 	elif ast.is_div:
-		if ast.numer.is_differential_var:
+		if ast.numer.is_diff_var:
 			return AST ('intg', ('/', ast.One, ast.denom), ast.numer, *from_to)
-		elif ast.denom.is_mul and ast.denom.muls [-1].is_differential_var:
+		elif ast.denom.is_mul and ast.denom.muls [-1].is_diff_var:
 			return AST ('intg', ('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else AST ('*', ast.denom.muls [:-1])), ast.denom.muls [-1], *from_to)
 
-	elif ast.is_mul and (ast.muls [-1].is_differential_var or ast.muls [-1].is_null_var): # null_var is for autocomplete
+	elif ast.is_mul and (ast.muls [-1].is_diff_var or ast.muls [-1].is_null_var): # null_var is for autocomplete
 		return AST ('intg', ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1]), ast.muls [-1], *from_to)
 
-	elif ast.is_add and ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_differential_var:
+	elif ast.is_add and ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_diff_var:
 		return AST ('intg', \
 				AST ('+', ast.adds [:-1] + (AST ('*', ast.adds [-1].muls [:-1]),))
 				if len (ast.adds [-1]) > 3 else \
@@ -88,7 +88,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		else:
 			return None
 
-		ast_dv_check = (lambda n: n.is_differential_var) if v [0] == 'd' else (lambda n: n.is_partial_var)
+		ast_dv_check = (lambda n: n.is_diff_var) if v [0] == 'd' else (lambda n: n.is_part_var)
 
 		ns = ast.denom.muls if ast.denom.is_mul else (ast.denom,)
 		ds = []
