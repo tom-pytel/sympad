@@ -14,6 +14,18 @@
 // 	alert("Horizontal Scrollbar! D:<");
 // }
 
+// 	function scrollBars(){
+// 		var body= $('body')[0]
+// 		return {
+// 			vertical:body.scrollHeight>body.clientHeight,
+// 			horizontal:body.scrollWidth>body.clientWidth
+// 		}
+// 	}
+
+// var hasScrollbar = window.innerWidth > document.documentElement.clientWidth
+
+// return this.get(0).scrollHeight > this.height();
+
 var URL              = '/';
 var MJQueue          = null;
 var MarginTop        = Infinity;
@@ -90,7 +102,6 @@ function scrollToEnd () {
 
 //...............................................................................................
 function resize () {
-	console.log ('resize');
 	copyInputStyle ();
 	scrollToEnd ();
 	generateBG ();

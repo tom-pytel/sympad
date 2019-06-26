@@ -800,7 +800,7 @@ r"""<!DOCTYPE html>
 	<br><br>
 	<div align="center">Type '<b>help</b>' at any time for more information.</div>
 	<br>
-	<div align="center">-or-</div>
+	<div align="center">- or -</div>
 	<br>
 	<div align="center">Type or click any of the following to get started:</div>
 	<br><br>
@@ -1564,7 +1564,7 @@ class Parser (lalr1.Parser):
 			b'r4RNqQW/J446CHwIAKMtJlD2/u88ae72Da+pr+rowTQIgl7qLWS6UZrXE2USo91+77GD8PYhOJSaeQhK/pO/x4tS295ybGM29mIqRJA4dq5gBnadgPc56Ff8veilxjHlaakFQlzKKoskNOQzyvcnm4aJqZryuW4ScJairSUWeI034C07k+ylpsN0026npisB' \
 			b'0E9T07k8Phfboo8oe4HEXYNfFML3xvQzFfg+SN4VxPQSd0U/c5u+W3u5nRiKpuhL8WbwwY0HfKgZu2UzTo1+qA03bIN9YZMtwRCRD0+jvvxQe36sPfGtjbY64siCzVjx4al6mFdPuXP6NeLeMxiGPkEixdLBGNw8VP4+R26+7OMr/XpBPO3sxev00FM3yQBa' \
 			b'gBsJlkGcM7SeKkkiiXtQBvkmrhaIhnYfNFh11UA0dD00rkOFwwWp41+e2DkQIeXp7+tQwr+hfcXAlOi1lOiamHYtPfx7GxOh9Zcym8tZgckyG0bxusFbktsP2I2DNaocBisBo8pHZcjLgKouJhpOoaTresyhPTiHuAA6RGD+3OH5s+oggfnzh+fPqYME5m/T' \
-			b'PHoD/EV1kMD8xU38bb9C2IlL3HqsDTGue9qZDdWHgXltb2ZNtAPTRq0PfHpqY7EcYL+1RTHmvrt17r26jcB7jOburIct/ZOT2wssEM2uAaSnw59xm/M/TKGv7lt8L8VvjPBNh6P1l+AI3ZLQTPYlwKayo4M5/NThbwxp+qUhkPxq/n9Hh+Kn' 
+			b'PHoD/EV1kMD8xU38bb9C2IlL3HqsDTGue9qZDdWHgXltb2ZNtAPTRq0PfHpqY7EcYL+1RTHmvrt17r26jcB7jOburIct/ZOT2wssEM2uAaSnw59xm/M/TKGv7lt8L8VvjPBNh6P1l+AI3ZLQTPYlwKayo4M5/NThbwxp+qUhkPxq/n9Hh+Kn'
 
 	_PARSER_TOP  = 'expr'
 
@@ -2590,8 +2590,8 @@ class Handler (SimpleHTTPRequestHandler):
 		self.end_headers ()
 		self.wfile.write (json.dumps (response).encode ('utf8'))
 
-class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
-	pass
+# class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
+# 	pass
 
 #...............................................................................................
 _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
@@ -2603,7 +2603,10 @@ if __name__ == '__main__':
 			first_run = '1'
 
 			while 1:
-				subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+				ret = subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+
+				if ret.returncode != 0:
+					sys.exit (0)
 
 				first_run = ''
 
@@ -2636,8 +2639,15 @@ if __name__ == '__main__':
 
 			if [os.stat (fnm).st_mtime for fnm in watch] != tstamps:
 				log_message ('Files changed, restarting...')
+				sys.exit (0)
 
-				break
+	except OSError as e:
+		if e.errno != 98:
+			raise
+
+		print (f'Port {port} seems to be in use, try specifying different address and/or port as a parameter, e.g. localhost:8001')
 
 	except KeyboardInterrupt:
-		pass
+		sys.exit (0)
+
+	sys.exit (-1)

@@ -126,8 +126,8 @@ class Handler (SimpleHTTPRequestHandler):
 		self.end_headers ()
 		self.wfile.write (json.dumps (response).encode ('utf8'))
 
-class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
-	pass
+# class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
+# 	pass
 
 #...............................................................................................
 _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
@@ -139,7 +139,10 @@ if __name__ == '__main__':
 			first_run = '1'
 
 			while 1:
-				subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+				ret = subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+
+				if ret.returncode != 0:
+					sys.exit (0)
 
 				first_run = ''
 
@@ -172,8 +175,15 @@ if __name__ == '__main__':
 
 			if [os.stat (fnm).st_mtime for fnm in watch] != tstamps:
 				log_message ('Files changed, restarting...')
+				sys.exit (0)
 
-				break
+	except OSError as e:
+		if e.errno != 98:
+			raise
+
+		print (f'Port {port} seems to be in use, try specifying different address and/or port as a parameter, e.g. localhost:8001')
 
 	except KeyboardInterrupt:
-		pass
+		sys.exit (0)
+
+	sys.exit (-1)

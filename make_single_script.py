@@ -38,10 +38,9 @@ _RUNNING_AS_SINGLE_SCRIPT = True
 '''.lstrip ()
 
 if __name__ == '__main__':
-	fdout = open ('sympad.py', 'w')
+	fdout = open ('sympad.py', 'w', newline = '')
 
 	fdout.write (_HEADER)
-
 	fdout.write ('\n_FILES = {\n')
 
 	for fnm in _OTHER_FILES:

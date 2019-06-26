@@ -1,5 +1,5 @@
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
-# TODO: log_{1/3\pi}(acos(\int_0^\infty x**4e**-x dx / (\sqrt[3]{8} * 4!)))
+# TODO: log_{1/3\pi}(acos(\int_0^\infty x**4e**-x dx / (\sqrt[3]{8} * 4!)
 
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
