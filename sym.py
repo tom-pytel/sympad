@@ -1,5 +1,5 @@
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
-# TODO: log_{1/3\pi}(acos(\int_0^\infty x**4e**-x dx / (\sqrt[3]{8} * 4!)
+# TODO: log_{1/3\pi}(acos(\int_0^\infty x**4e**-x dx / (\sqrt[3]{8} * 4!)?
 
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
@@ -177,7 +177,7 @@ _ast2tex_funcs = {
 	'/': lambda ast: f'\\frac{{{ast2tex (ast.numer)}}}{{{ast2tex (ast.denom)}}}',
 	'^': _ast2tex_pow,
 	'log': _ast2tex_log,
-	'sqrt': lambda ast: f'\\sqrt{{{ast2tex (ast.rad)}}}' if ast.idx is None else f'\\sqrt[{ast2tex (ast.idx)}]{{{ast2tex (ast.rad)}}}',
+	'sqrt': lambda ast: f'\\sqrt{{{ast2tex (ast.rad.strip_paren (1))}}}' if ast.idx is None else f'\\sqrt[{ast2tex (ast.idx)}]{{{ast2tex (ast.rad.strip_paren (1))}}}',
 	'func': _ast2tex_func,
 	'lim': _ast2tex_lim,
 	'sum': _ast2tex_sum,
@@ -320,7 +320,7 @@ _ast2simple_funcs = {
 	'/': _ast2simple_div,
 	'^': _ast2simple_pow,
 	'log': _ast2simple_log,
-	'sqrt': lambda ast: f'\\sqrt{{{ast2simple (ast.rad)}}}' if ast.idx is None else f'\\sqrt[{ast2simple (ast.idx)}]{{{ast2simple (ast.rad)}}}',
+	'sqrt': lambda ast: f'\\sqrt{{{ast2simple (ast.rad.strip_paren (1))}}}' if ast.idx is None else f'\\sqrt[{ast2simple (ast.idx)}]{{{ast2simple (ast.rad.strip_paren (1))}}}',
 	'func': _ast2simple_func,
 	'lim': _ast2simple_lim,
 	'sum': _ast2simple_sum,
@@ -400,7 +400,7 @@ _ast2py_funcs = {
 	'/': _ast2py_div,
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
-	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad)}' if ast.base is None else ast2py (AST ('^', ast.rad, ('/', AST.One, ast.idx))),
+	'sqrt': lambda ast: ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))) if ast.base is None else f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}',
 	'func': lambda ast: f'{ast.func}({ast2py (ast.arg)})',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',

@@ -83,6 +83,12 @@ class AST (tuple):
 				self.op == '#' and self.num == '-' or \
 				self.op == '*' and self.muls [0].is_neg
 
+	def _is_single_unit (self): # is single positive digit or single non-differential non-subscripted variable?
+		if self.op == '#':
+			return len (self.num) == 1
+
+		return self.op == '@' and not _rec_var_not_single.match (self.var)
+
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
 			return \
@@ -96,15 +102,10 @@ class AST (tuple):
 					AST ('#', self.num [1:])   if self.num [0] == '-' else \
 					AST ('#', f'-{self.num}')
 
-	def _is_single_unit (self): # is single positive digit or single non-differential non-subscripted variable?
-		if self.op == '#':
-			return len (self.num) == 1
-
-		return self.op == '@' and not _rec_var_not_single.match (self.var)
-
-	def strip_paren (self):
-		while self.op == '(':
-			self = self.arg
+	def strip_paren (self, count = None):
+		while self.op == '(' and (count is None or count):
+			self   = self.paren
+			count -= 1
 
 		return self
 

@@ -1,5 +1,3 @@
-# TODO: sqrt(x)
-# TODO: \int _
 # TODO: redo _expr_diff d or \partial handling
 # TODO: iterated integrals
 
@@ -13,6 +11,8 @@
 #
 # ) Differentiation and partially integration are dynamically extracted from the tree being built so they have
 #   no specific complete grammar rules.
+#
+# ) Future: matrices, assumptions, stateful variables, multi-parameter function calls, piecewise expressions
 
 from collections import OrderedDict
 import re
@@ -254,7 +254,7 @@ class Parser (lalr1.Parser):
 	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, expr_super, expr_lim):             return AST ('sum', expr_lim, expr_var, expr, expr_super)
 	def expr_sum_2      (self, expr_neg):                                                                           return expr_neg
 
-	def expr_neg_1      (self, MINUS, expr_diff):                            return expr_diff.neg (True) # _ast_neg_stack (expr_diff.neg (True) if expr_diff.is_pos_num else AST ('-', expr_diff)
+	def expr_neg_1      (self, MINUS, expr_diff):                            return expr_diff.neg (True)
 	def expr_neg_2      (self, expr_diff):                                   return expr_diff
 
 	def expr_diff       (self, expr_div):                                    return _expr_diff (expr_div)
