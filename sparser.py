@@ -45,11 +45,11 @@ from sast import ast as AST
 def _ast_from_tok_digit_or_var (tok, i = 0): # special-cased infinity 'oo' is super-special
 	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', '\\infty' if tok.grp [i + 1] else tok.grp [i + 2])
 
-def _ast_neg_stack (ast):
-	return \
-			AST ('-', ast)            if not ast.is_num else \
-			AST ('#', ast.num [1:])   if ast.num [0] == '-' else \
-			AST ('#', f'-{ast.num}')
+# def _ast_neg_stack (ast):
+# 	return \
+# 			AST ('-', ast)            if not ast.is_num else \
+# 			AST ('#', ast.num [1:])   if ast.num.is_minus else \
+# 			AST ('#', f'-{ast.num}')
 
 def _expr_int (ast, from_to = ()): # construct indefinite integral ast
 	if ast.is_differential_var or ast.is_null_var:# == ('@', ''): # ('@', '') is for autocomplete
@@ -61,7 +61,7 @@ def _expr_int (ast, from_to = ()): # construct indefinite integral ast
 		elif ast.denom.is_mul and ast.denom.muls [-1].is_differential_var:
 			return AST ('intg', ('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else AST ('*', ast.denom.muls [:-1])), ast.denom.muls [-1], *from_to)
 
-	elif ast.is_mul and (ast.muls [-1].is_differential_var or ast.muls [-1].is_null_var): # ast [-1] == ('@', '')): # ('@', '') is for autocomplete
+	elif ast.is_mul and (ast.muls [-1].is_differential_var or ast.muls [-1].is_null_var): # null_var is for autocomplete
 		return AST ('intg', ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1]), ast.muls [-1], *from_to)
 
 	elif ast.is_add and ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_differential_var:
@@ -88,8 +88,6 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		else:
 			return None
 
-		# is_partial = (v [0] != 'd')
-		# _ast_dv_check = AST.var.is_differential_var if v [0] == 'd' else AST.var.is_partial_var # make sure all are same type of differential, single or partial
 		ast_dv_check = (lambda n: n.is_differential_var) if v [0] == 'd' else (lambda n: n.is_partial_var)
 
 		ns = ast.denom.muls if ast.denom.is_mul else (ast.denom,)
@@ -269,7 +267,7 @@ class Parser (lalr1.Parser):
 	def expr_int_3      (self, expr_add):                                    return expr_add
 
 	def expr_add_1      (self, expr_add, PLUS, expr_mul_exp):                return AST.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return AST.flatcat ('+', expr_add, _ast_neg_stack (expr_mul_exp))
+	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return AST.flatcat ('+', expr_add, expr_mul_exp.neg (True))
 	def expr_add_3      (self, expr_mul_exp):                                return expr_mul_exp
 
 	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_lim):                return AST.flatcat ('*', expr_mul_exp, expr_lim)
@@ -284,13 +282,13 @@ class Parser (lalr1.Parser):
 	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, expr_super, expr_lim):             return AST ('sum', expr_lim, expr_var, expr, expr_super)
 	def expr_sum_2      (self, expr_neg):                                                                           return expr_neg
 
-	def expr_neg_1      (self, MINUS, expr_diff):                            return _ast_neg_stack (expr_diff) if expr_diff.is_pos_num else AST ('-', expr_diff)
+	def expr_neg_1      (self, MINUS, expr_diff):                            return expr_diff.neg (True) # _ast_neg_stack (expr_diff.neg (True) if expr_diff.is_pos_num else AST ('-', expr_diff)
 	def expr_neg_2      (self, expr_diff):                                   return expr_diff
 
 	def expr_diff       (self, expr_div):                                    return _expr_diff (expr_div)
 
 	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):              return AST ('/', expr_div, expr_mul_imp)
-	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return AST ('/', expr_div, _ast_neg_stack (expr_mul_imp))
+	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return AST ('/', expr_div, expr_mul_imp.neg (True))
 	def expr_div_3      (self, expr_mul_imp):                                return expr_mul_imp
 
 	def expr_mul_imp_1  (self, expr_mul_imp, expr_func):                     return AST.flatcat ('*', expr_mul_imp, expr_func)
@@ -304,7 +302,7 @@ class Parser (lalr1.Parser):
 	def expr_func_6     (self, TRIGH, expr_super, expr_func):
 		return \
 				AST ('^', _expr_func (2, 'func', f'{TRIGH.grp [0] or ""}{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func), expr_super) \
-				if expr_super != AST.MinusOne else \
+				if expr_super != AST.NegOne else \
 				_expr_func (2, 'func', TRIGH.grp [1] or TRIGH.grp [2], expr_func) \
 				if TRIGH.grp [0] else \
 				_expr_func (2, 'func', f'a{TRIGH.grp [1] or TRIGH.grp [2]}', expr_func)
@@ -359,7 +357,7 @@ class Parser (lalr1.Parser):
 	def expr_sub_2      (self, SUB1):                                        return _ast_from_tok_digit_or_var (SUB1)
 
 	def expr_super_1    (self, DOUBLESTAR, expr_func):                       return expr_func
-	def expr_super_2    (self, DOUBLESTAR, MINUS, expr_func):                return _ast_neg_stack (expr_func)
+	def expr_super_2    (self, DOUBLESTAR, MINUS, expr_func):                return expr_func.neg (True)
 	def expr_super_3    (self, CARET, expr_frac):                            return expr_frac
 	def expr_super_4    (self, CARET1):                                      return _ast_from_tok_digit_or_var (CARET1)
 
@@ -517,5 +515,5 @@ if __name__ == '__main__':
 	# print (p.parse ('\\frac{d}{dx} x') [0])
 	# print (p.parse ('\\frac{d**2}{dx**2} x') [0])
 	# print (p.parse ('\\frac{d**2}{dxdy} x') [0])
-	a = p.parse ('sin**') [0]
+	a = p.parse ('\\int_0^1x') [0]
 	print (a)

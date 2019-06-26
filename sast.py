@@ -87,9 +87,8 @@ class ast (tuple):
 				cls      = cls2
 				cls_args = cls_args [1:]
 
-		self     = tuple.__new__ (cls, args)
-		self.op  = op
-		self.cls = cls
+		self    = tuple.__new__ (cls, args)
+		self.op = op
 
 		if op:
 			self._init (*cls_args)
@@ -103,11 +102,24 @@ class ast (tuple):
 
 		return val
 
-	def _is_negative (self):
+	def _is_neg (self):
 		return \
 				self.op == '-' or \
 				self.op == '#' and self.num == '-' or \
-				self.op == '*' and self.args [0].is_neg
+				self.op == '*' and self.muls [0].is_neg
+
+	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
+		if stack:
+			return \
+					ast ('-', self)            if not self.is_pos_num else \
+					ast ('#', f'-{self.num}')
+
+		else:
+			return \
+					self.minus                 if self.is_minus else \
+					ast ('-', self)            if not self.is_num else \
+					ast ('#', self.num [1:])   if self.num [0] == '-' else \
+					ast ('#', f'-{self.num}')
 
 	def _is_single_unit (self): # is single positive digit or single non-differential non-subscripted variable?
 		if self.op == '#':
@@ -123,7 +135,7 @@ class ast (tuple):
 
 	@staticmethod
 	def is_int_text (text): # >= 0
-		return _rec_num_pos_int.match (text)
+		return _rec_num_int.match (text)
 
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
@@ -181,11 +193,11 @@ class ast_abs (ast):
 	def _is_abs (self):
 		return True
 
-class ast_neg (ast):
-	def _init (self, neg):
-		self.neg = neg
+class ast_minus (ast):
+	def _init (self, minus):
+		self.minus = minus
 
-	def _is_neg (self):
+	def _is_minus (self):
 		return True
 
 class ast_fact (ast):
@@ -226,8 +238,8 @@ class ast_pow (ast):
 		return True
 
 class ast_log (ast):
-	def _init (self, arg, base = None):
-		self.arg  = arg
+	def _init (self, log, base = None):
+		self.log  = log
 		self.base = base
 
 	def _is_log (self):
@@ -298,7 +310,7 @@ _AST_OP2CLS = {
 	'@': ast_var,
 	'(': ast_paren,
 	'|': ast_abs,
-	'-': ast_neg,
+	'-': ast_minus,
 	'!': ast_fact,
 	'+': ast_add,
 	'*': ast_mul,
@@ -318,6 +330,10 @@ _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
 for cls in _AST_CLS2OP:
 	setattr (ast, cls.__name__ [4:], cls)
 
-ast.Zero     = ast ('#', '0')
-ast.One      = ast ('#', '1')
-ast.MinusOne = ast ('#', '-1')
+ast.Zero   = ast ('#', '0')
+ast.One    = ast ('#', '1')
+ast.NegOne = ast ('#', '-1')
+ast.I      = ast ('@', 'i')
+ast.E      = ast ('@', 'e')
+ast.Pi     = ast ('@', '\\pi')
+ast.Infty  = ast ('@', '\\infty')

@@ -20,13 +20,13 @@ import sparser
 import sym
 
 #...............................................................................................
-_last_ast = ('#', 0) # last evaluated expression for _ usage
+_last_ast = AST.Zero # last evaluated expression for _ usage
 
 def _ast_replace (ast, src, dst):
 	return \
-			ast if not isinstance (ast, tuple) else \
+			ast if not isinstance (ast, AST) else \
 			dst if ast == src else \
-			tuple (_ast_replace (s, src, dst) for s in ast)
+			AST (*(_ast_replace (s, src, dst) for s in ast))
 
 class Handler (SimpleHTTPRequestHandler):
 	def do_GET (self):
@@ -50,10 +50,10 @@ class Handler (SimpleHTTPRequestHandler):
 			tex = simple = py         = None
 
 			if ast is not None:
-				# ast    = _ast_replace (ast, ('@', '_'), _last_ast)
+				ast    = _ast_replace (ast, ('@', '_'), _last_ast)
 				tex    = sym.ast2tex (ast)
-				# simple = sym.ast2simple (ast)
-				# py     = sym.ast2py (ast)
+				simple = sym.ast2simple (ast)
+				py     = sym.ast2py (ast)
 
 				## DEBUG!
 				print ()
