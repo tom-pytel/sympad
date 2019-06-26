@@ -1,3 +1,4 @@
+# TODO: sqrt(x)
 # TODO: \int _
 # TODO: redo _expr_diff d or \partial handling
 # TODO: iterated integrals
@@ -372,6 +373,8 @@ class Parser (lalr1.Parser):
 					expr_vars.add (ast.var)
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
+
+		expr_vars -= {'_', 'e', 'i', '\\pi', '\\infty'}
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')

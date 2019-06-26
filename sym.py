@@ -1,4 +1,5 @@
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
+# TODO: log_{1/3\pi}(acos(\int_0^\infty x**4e**-x dx / (\sqrt[3]{8} * 4!)))
 
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
@@ -434,9 +435,9 @@ def _ast2spt_intg (ast):
 				sp.integrate (ast2spt (ast [1]), (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to)))
 
 _ast2spt_consts = {
+	'e': sp.E,
 	'i': sp.I,
 	'\\pi': sp.pi,
-	'e': sp.E,
 	'\\infty': sp.oo,
 }
 
@@ -495,7 +496,7 @@ def _spt2ast_mul (spt):
 	if spt.args [0] == -1:
 		return AST ('-', spt2ast (sp.Mul (*spt.args [1:])))
 
-	if spt.args [0].is_negative:
+	if spt.args [0].is_negative and isinstance (spt, sp.Number):
 		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:])))
 
 	numer = []
@@ -577,3 +578,6 @@ class sym: # for single script
 # 	print (_rec_num_deconstructed.match ('10100.0010100').groups ())
 # 	t = ast2spt (('intg', ('@', 'dx')))
 # 	print (t)
+
+
+\log_{\frac{1}{3}\pi}(\cos^{-1}(\frac{\int_0^\inftyx^4e^{-x}\dx}{\sqrt[3]{8}\cdot4!}))

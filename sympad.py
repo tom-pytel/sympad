@@ -3,6 +3,856 @@
 
 _RUNNING_AS_SINGLE_SCRIPT = True
 
+
+_FILES = {
+
+	'style.css': # style.css
+
+r"""* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	margin-top: 1em;
+	margin-bottom: 6em;
+	cursor: default;
+}
+
+#Clipboard {
+	position: fixed;
+	bottom: 0;
+	color: transparent;
+	border: 0px;
+}
+
+#Background {
+	position: fixed;
+	z-index: -1;
+	left: 0;
+	top: 0;
+}
+
+#Greeting {
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	color: #0007;
+}
+
+.GreetingA {
+	display: block;
+	color: #0007;
+	text-decoration: none;
+	margin-bottom: 0.5em;
+}
+
+#InputBG {
+	position: fixed;
+	z-index: 2;
+	height: 4em;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background-color: white;
+}
+
+#Input {
+	position: fixed;
+	z-index: 3;
+	bottom: 2em;
+	left: 4em;
+	right: 1em;
+	border-color: transparent;
+	outline-color: transparent;
+	background-color: transparent;
+}
+
+#InputOverlay {
+	z-index: 4;
+}
+
+#OverlayGood {
+	-webkit-text-fill-color: transparent;
+}
+
+#OverlayError {
+	-webkit-text-fill-color: #f44;
+}
+
+#OverlayAutocomplete {
+	-webkit-text-fill-color: #999;
+}
+
+.LogEntry {
+	width: 100%;
+	margin-bottom: 1.5em;
+}
+
+.LogMargin {
+	display: inline-block;
+	height: 100%;
+	width: 4em;
+	vertical-align: top;
+	text-align: right;
+	padding-right: 0.5em;
+}
+
+.LogBody {
+	display: inline-block;
+	margin-right: -9999em;
+}
+
+.LogWait {
+	vertical-align: top;
+}
+
+.LogInput {
+	margin-bottom: 0.75em;
+	width: fit-content;
+	cursor: pointer;
+}
+
+.LogEval {
+	position: relative;
+	margin-bottom: 0.25em;
+	cursor: pointer;
+}
+
+.LogError {
+	margin-bottom: 0.25em;
+	color: red;
+}
+
+.LogErrorTriange {
+	position: absolute;
+	left: -1.25em;
+	top: 0.25em;
+	font-size: 0.7em;
+	/* left: -1em;
+	top: 0; */
+	color: red;
+	font-weight: bold;
+}
+
+
+
+
+/* .blinking {
+	animation: blinkingText 1s infinite;
+}
+
+@keyframes blinkingText {
+	0%   { color: #000; }
+	49%  { color: #000; }
+	50%  { color: transparent; }
+	100% { color: transparent; }
+} */
+
+/* .rotator {
+	display: inline-block;
+	animation: rotator 1s infinite;
+}
+
+@keyframes rotator {
+	0%   { rotate: 0deg; }
+	25%  { rotate: 90deg; }
+	50%  { rotate: 180deg; }
+	75%  { rotate: 270deg; }
+	100% { rotate: 360deg; }
+}
+ */
+
+/* .spinner1 {
+	position: absolute;
+	animation: spinner1 1s infinite;
+}
+
+@keyframes spinner1 {
+	0%   { color: #000; }
+	25%  { color: transparent; }
+	75%  { color: transparent; }
+	100% { color: #000; }
+}
+
+.spinner2 {
+	position: absolute;
+	animation: spinner2 1s infinite;
+}
+
+@keyframes spinner2 {
+	0%   { color: transparent; }
+	25%  { color: #000; }
+	50%  { color: transparent; }
+	100% { color: transparent; }
+}
+
+.spinner3 {
+	position: absolute;
+	animation: spinner3 1s infinite;
+}
+
+@keyframes spinner3 {
+	0%   { color: transparent; }
+	25%  { color: transparent; }
+	50%  { color: #000; }
+	75%  { color: transparent; }
+	100% { color: transparent; }
+}
+
+.spinner4 {
+	position: absolute;
+	animation: spinner4 1s infinite;
+}
+
+@keyframes spinner4 {
+	0%   { color: transparent; }
+	50%  { color: transparent; }
+	75%  { color: #000; }
+	100% { color: transparent; }
+} */
+""".encode ("utf8"),
+
+	'script.js': # script.js
+
+r"""// TODO: Arrow keys in Edge?
+// TODO: Change how error, auto and good text are displayed?
+
+// TODO: Need to copyInputStyle when bottom scroll bar appears.
+
+// Check if body height is higher than window height :)
+// if ($(document).height() > $(window).height()) {
+// 	alert("Vertical Scrollbar! D:");
+// }
+
+// // Check if body width is higher than window width :)
+// if ($(document).width() > $(window).width()) {
+// 	alert("Horizontal Scrollbar! D:<");
+// }
+
+var URL              = '/';
+var MJQueue          = null;
+var MarginTop        = Infinity;
+var PreventFocusOut  = true;
+
+var History          = [];
+var HistIdx          = 0;
+var LogIdx           = 0;
+var UniqueID         = 1;
+
+var Validations      = [undefined];
+var Evaluations      = [undefined];
+var ErrorIdx         = null;
+var Autocomplete     = [];
+
+var LastClickTime    = 0;
+var NumClicks        = 0;
+
+var GreetingFadedOut = false;
+
+//...............................................................................................
+function generateBG () {
+	function writeRandomData (data, x0, y0, width, height) {
+		let p, d;
+
+		for (let y = y0; y < height; y ++) {
+			p = (width * y + x0) * 4;
+
+			for (let x = x0; x < width; x ++) {
+				d            = 244 + Math.floor (Math.random () * 12);
+				data [p]     = data [p + 1] = d;
+				data [p + 2] = d - 8;
+				data [p + 3] = 255;
+				p            = p + 4;
+			}
+		}
+	}
+
+	let canv    = document.getElementById ('Background');
+	canv.width  = window.innerWidth;
+	canv.height = window.innerHeight;
+	let ctx     = canv.getContext ('2d');
+	let imgd    = ctx.getImageData (0, 0, canv.width, canv.height); // ctx.createImageData (width, height);
+
+	writeRandomData (imgd.data, 0, 0, canv.width, canv.height);
+	ctx.putImageData (imgd, 0, 0);
+
+	canv        = $('#InputBG') [0];
+	ctx         = canv.getContext ('2d');
+	canv.width  = window.innerWidth;
+
+	ctx.putImageData (imgd, 0, 0);
+}
+
+//...............................................................................................
+function copyInputStyle () {
+	JQInput.css ({left: $('#LogEntry1').position ().left})
+	JQInput.width ($('#Log').width ());
+
+	let style   = getComputedStyle (document.getElementById ('Input'));
+	let overlay = document.getElementById ('InputOverlay');
+
+  for (let prop of style) {
+    overlay.style [prop] = style [prop];
+	}
+
+	overlay.style ['backgroundColor'] = 'transparent';
+}
+
+//...............................................................................................
+function scrollToEnd () {
+	window.scrollTo (0, document.body.scrollHeight);
+}
+
+//...............................................................................................
+function resize () {
+	console.log ('resize');
+	copyInputStyle ();
+	scrollToEnd ();
+	generateBG ();
+}
+
+//...............................................................................................
+function logResize () {
+	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 2)); // 2 is fudge factor
+
+	if (margin < MarginTop) {
+		MarginTop = margin
+		$('body').css ({'margin-top': margin});
+	}
+}
+
+//...............................................................................................
+function readyMathJax () {
+	window.MJQueue = MathJax.Hub.queue;
+
+	var TEX        = MathJax.InputJax.TeX;
+	var PREFILTER  = TEX.prefilterMath;
+
+	TEX.Augment ({
+		prefilterMath: function (tex, displaymode, script) {
+			return PREFILTER.call (TEX, '\\displaystyle{' + tex + '}', displaymode, script);
+		}
+	});
+}
+
+//...............................................................................................
+function reprioritizeMJQueue () {
+	let p = MJQueue.queue.pop ();
+
+	if (p !== undefined) {
+		MJQueue.queue.splice (0, 0, p);
+	}
+}
+
+//...............................................................................................
+function addLogEntry () {
+	LogIdx += 1;
+
+	$('#Log').append (`
+			<div class="LogEntry"><div class="LogMargin">${LogIdx}.</div><div class="LogBody" id="LogEntry${LogIdx}"><div class="LogInput" id="LogInput${LogIdx}">
+				<img class="LogWait" id="LogInputWait${LogIdx}" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16" style="visibility: hidden">
+			</div></div></div>`)
+
+	Validations.push (undefined);
+	Evaluations.push (undefined);
+}
+
+//...............................................................................................
+function writeToClipboard (text) {
+	PreventFocusOut = false;
+
+	$('#Clipboard').val (text);
+	$('#Clipboard').focus ();
+	$('#Clipboard').select ();
+	document.execCommand ('copy');
+
+	PreventFocusOut = true;
+
+	JQInput.focus ();
+}
+
+//...............................................................................................
+function copyToClipboard (e, val_or_eval, idx) {
+	let t = performance.now ();
+
+	if ((t - LastClickTime) > 500) {
+		NumClicks = 1;
+	} else{
+		NumClicks += 1;
+	}
+
+	LastClickTime = t;
+	let resp      = (val_or_eval ? Evaluations : Validations) [idx];
+
+	writeToClipboard (NumClicks == 1 ? resp.simple : NumClicks == 2 ? resp.py : resp.tex);
+
+	e.style.color      = 'transparent';
+	e.style.background = 'black';
+
+	setTimeout (function () {
+		e.style.color      = 'black';
+		e.style.background = 'transparent';
+	}, 100);
+}
+
+//...............................................................................................
+function updateOverlay (text, erridx, autocomplete) {
+	ErrorIdx     = erridx;
+	Autocomplete = autocomplete;
+
+	if (ErrorIdx === null) {
+		$('#OverlayGood').text (text);
+		$('#OverlayError').text ('');
+
+	} else {
+		$('#OverlayGood').text (text.substr (0, ErrorIdx));
+		$('#OverlayError').text (text.substr (ErrorIdx));
+	}
+
+	$('#OverlayAutocomplete').text (Autocomplete.join (''));
+}
+
+//...............................................................................................
+function ajaxResponse (resp) {
+	if (resp.mode == 'validate') {
+		if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
+			return; // ignore out of order responses
+		}
+
+		if (resp.tex !== null) {
+			Validations [resp.idx] = resp;
+
+			let eLogInput = document.getElementById ('LogInput' + resp.idx);
+
+			let queue              = [];
+			[queue, MJQueue.queue] = [MJQueue.queue, queue];
+
+			MJQueue.queue = queue.filter (function (obj, idx, arr) { // remove previous pending updates to same element
+				return obj.data [0].parentElement !== eLogInput;
+			})
+
+			let eLogInputWait              = document.getElementById ('LogInputWait' + resp.idx);
+			eLogInputWait.style.visibility = '';
+
+			let idMath = 'LogInputMath' + UniqueID ++;
+			$(eLogInput).append (`<span id="${idMath}" onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">$${resp.tex}$</span>`);
+			let eMath  = document.getElementById (idMath);
+
+			MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
+				if (eMath === eLogInput.children [eLogInput.children.length - 1]) {
+					eLogInput.appendChild (eLogInputWait);
+
+					for (let i = eLogInput.children.length - 3; i >= 0; i --) {
+						eLogInput.removeChild (eLogInput.children [i]);
+					}
+
+					eLogInputWait.style.visibility = 'hidden';
+					eMath.style.visibility         = '';
+
+					logResize ();
+				}
+			}]);
+
+			reprioritizeMJQueue ();
+		}
+
+		updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
+
+	} else { // resp.mode == 'evaluate'
+		Evaluations [resp.idx] = resp;
+
+		let eLogEval = document.getElementById ('LogEval' + resp.idx);
+
+		if (resp.err !== undefined) {
+			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+
+			if (resp.err.length > 1) {
+				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
+				$(eLogEval).append (`<div id="${idLogErrorHidden}" style="display: none"></div>`);
+				var eLogErrorHidden  = document.getElementById (idLogErrorHidden);
+
+				for (let i = 0; i < resp.err.length - 1; i ++) {
+					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i]}</div>`);
+				}
+			}
+
+			let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
+			$(eLogEval).append (`<div class="LogError">${resp.err [resp.err.length - 1]}</div><div class="LogErrorTriange" id="LogErrorTriangle${resp.idx}">\u25b7</div>`);
+			var eLogErrorTriangle  = document.getElementById (idLogErrorTriangle);
+
+			$(eLogEval).click (function () {
+				if (eLogErrorHidden.style.display === 'none') {
+					eLogErrorHidden.style.display = 'block';
+					eLogErrorTriangle.innerText   = '\u25bd'; // '\u25bc'; // '-'; // '\u25bc';
+				} else {
+					eLogErrorHidden.style.display = 'none';
+					eLogErrorTriangle.innerText   = '\u25b7'; // '\u25e2'; // '+'; // '\u25b6';
+				}
+
+				logResize ();
+			});
+
+			logResize ();
+			scrollToEnd ();
+
+		} else { // no error
+			let idLogEvalMath = 'LogEvalMath' + resp.idx;
+			$(eLogEval).append (`<span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</span>`);
+			let eLogEvalMath  = document.getElementById (idLogEvalMath);
+
+			MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
+				eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+
+				eLogEvalMath.style.visibility = '';
+
+				logResize ();
+				scrollToEnd ();
+			}]);
+
+			reprioritizeMJQueue ();
+		}
+	}
+}
+
+//...............................................................................................
+function inputting (text, reset = false) {
+	if (reset) {
+		ErrorIdx     = null;
+		Autocomplete = [];
+
+		JQInput.val (text);
+	}
+
+	updateOverlay (text, ErrorIdx, Autocomplete);
+
+	$.ajax ({
+		url: URL,
+		type: 'POST',
+		cache: false,
+		dataType: 'json',
+		success: ajaxResponse,
+		data: {
+			mode: 'validate',
+			idx: LogIdx,
+			subidx: UniqueID ++,
+			text: text,
+		},
+	});
+}
+
+//...............................................................................................
+function inputted (text) {
+	$.ajax ({
+		url: URL,
+		type: 'POST',
+		cache: false,
+		dataType: 'json',
+		success: ajaxResponse,
+		data: {
+			mode: 'evaluate',
+			idx: LogIdx,
+			text: text,
+		},
+	});
+
+	$('#LogEntry' + LogIdx).append (`
+			<div class="LogEval" id="LogEval${LogIdx}">
+				<img class="LogWait" id="LogEvalWait${LogIdx}" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
+			</div>`);
+
+	History.push (text);
+
+	HistIdx = History.length;
+
+	addLogEntry ();
+	logResize ();
+	scrollToEnd ();
+}
+
+//...............................................................................................
+function inputKeypress (e) {
+	if (e.which == 13) {
+		s = JQInput.val ().trim ();
+
+		if (s && ErrorIdx === null) {
+			if (!GreetingFadedOut) {
+				GreetingFadedOut = true;
+				$('#Greeting').fadeOut (3000);
+			}
+
+			if (s === 'help') {
+				window.open (`${URL}help.html`);
+				inputting ('', true);
+
+				return false;
+			}
+
+			if (Autocomplete.length > 0) {
+				s = s + Autocomplete.join ('');
+				inputting (s);
+			}
+
+			JQInput.val ('');
+			updateOverlay ('', null, []);
+			inputted (s);
+
+			return false;
+		}
+
+	} else if (e.which == 32) {
+		if (!JQInput.val ()) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+//...............................................................................................
+function inputKeydown (e) {
+	if (e.code == 'Escape') {
+		e.preventDefault ();
+
+		if (JQInput.val ()) {
+			HistIdx = History.length;
+			inputting ('', true);
+
+			return false;
+		}
+
+	} else if (e.code == 'Tab') {
+		e.preventDefault ();
+		$(this).focus ();
+
+		return false;
+
+	} else if (e.code == 'ArrowUp') {
+		e.preventDefault ();
+
+		if (HistIdx) {
+			inputting (History [-- HistIdx], true);
+
+			return false;
+		}
+
+	} else if (e.code == 'ArrowDown') {
+		e.preventDefault ();
+
+		if (HistIdx < History.length - 1) {
+			inputting (History [++ HistIdx], true);
+
+			return false;
+
+		} else if (HistIdx != History.length) {
+			HistIdx = History.length;
+			inputting ('', true);
+
+			return false;
+		}
+
+	} else if (e.code == 'ArrowRight') {
+		if (JQInput.get (0).selectionStart === JQInput.val ().length && Autocomplete.length) {
+			let text = JQInput.val ();
+
+			if (Autocomplete [0] === '\\left' || Autocomplete [0] === '\\right') {
+				text         = text + Autocomplete.slice (0, 2).join ('');
+				Autocomplete = Autocomplete.slice (2);
+
+			} else {
+				text         = text + Autocomplete [0];
+				Autocomplete = Autocomplete.slice (1);
+			}
+
+			JQInput.val (text);
+			inputting (text);
+			// updateOverlay (text, ErrorIdx, Autocomplete);
+		}
+	}
+}
+
+//...............................................................................................
+// function inputFocusout (e) {
+// 	if (PreventFocusOut) {
+// 		e.preventDefault ();
+// 		$(this).focus ();
+
+// 		return false;
+// 	}
+// }
+
+//...............................................................................................
+function keepInputFocus () {
+	if (PreventFocusOut) {
+		JQInput.focus ();
+	}
+
+	setTimeout (keepInputFocus, 50);
+}
+
+//...............................................................................................
+$(function () {
+	window.JQInput   = $('#Input');
+
+	let margin       = $('body').css ('margin-top');
+	BodyMarginTop    = Number (margin.slice (0, margin.length - 2));
+	margin           = $('body').css ('margin-bottom');
+	BodyMarginBottom = Number (margin.slice (0, margin.length - 2));
+
+	$('#Clipboard').prop ('readonly', true);
+	$('#InputBG') [0].height = $('#InputBG').height ();
+
+	JQInput.keypress (inputKeypress);
+	JQInput.keydown (inputKeydown);
+	// JQInput.focusout (inputFocusout);
+	// JQInput.blur (inputFocusout);
+
+	addLogEntry ();
+	logResize ();
+	resize ();
+	keepInputFocus ();
+});
+
+
+// $('#txtSearch').blur(function (event) {
+// 	setTimeout(function () { $("#txtSearch").focus(); }, 20);
+// });
+
+// document.getElementById('txtSearch').addEventListener('blur', e => {
+//   e.target.focus();
+// });
+
+// cursor_test = function (element) {
+// 	if (!element.children.length && element.innerText == '∥') {
+// 		console.log (element, element.classList);
+// 		element.innerText = '|';
+// 		element.classList.add ('blinking');
+// 	}
+
+// 	for (let e of element.children) {
+// 		cursor_test (e);
+// 	}
+// }
+
+// cursor_test (eLogInput.children [0]);
+""".encode ("utf8"),
+
+	'index.html': # index.html
+
+r"""<!DOCTYPE html>
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
+<title>SymPad</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="script.js"></script>
+<script type="text/x-mathjax-config">
+	MathJax.Hub.Config ({
+		messageStyle: "none",
+		tex2jax: {inlineMath: [["$","$"], ["\\(","\\)"]]}
+	});
+
+	MathJax.Hub.Register.StartupHook ("End", readyMathJax);
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML-full"></script>
+
+</head>
+
+<body onresize="resize ()">
+
+<input id="Clipboard">
+<canvas id="Background"></canvas>
+
+<div id="Greeting">
+	<h2 align="center">SymPad v0.1</h2>
+	<br><br>
+	<div align="center">Type '<b>help</b>' at any time for more information.</div>
+	<br>
+	<div align="center">-or-</div>
+	<br>
+	<div align="center">Type or click any of the following to get started:</div>
+	<br><br>
+	<a class="GreetingA" href="javascript:inputting ('? sqrt 2', true)">? sqrt 2</a>
+	<a class="GreetingA" href="javascript:inputting ('e ** ln (x)', true)">e ** ln (x)</a>
+	<a class="GreetingA" href="javascript:inputting ('sin (3\\pi / 2)', true)">sin (3\pi / 2)</a>
+	<a class="GreetingA" href="javascript:inputting ('cos^{-1} (-1)', true)">cos^{-1} (-1)</a>
+	<a class="GreetingA" href="javascript:inputting ('\\lim_{x \\to \\infty} 1/x', true)">\lim_{x \to \infty} 1/x</a>
+	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}^oo x^n / n!', true)">\sum_{n=0}^oo x^n / n!</a>
+	<a class="GreetingA" href="javascript:inputting ('d/dx x**2', true)">d/dx x**2</a>
+	<a class="GreetingA" href="javascript:inputting ('d**2/dxdy x^2 y^3', true)">d**2/dxdy x^2 y^3</a>
+	<a class="GreetingA" href="javascript:inputting ('\\int 1 / (x**2 + 1) dx', true)">\int 1 / (x**2 + 1) dx</a>
+	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\infty e**-x**2 dx', true)">\int_0^\infty e**-x**2 dx</a>
+	<a class="GreetingA" href="javascript:inputting ('simplify (sin x / cos x)', true)">simplify (sin x / cos x)</a>
+	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**2', true)">expand {x+1}**2</a>
+	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
+	<a class="GreetingA" href="javascript:inputting ('\\arccos \\frac {\\int_0^\\infty x^4e^{-x} dx} {4!}', true)">\arccos \frac {\int_0^\infty x^4e^{-x} dx} {4!}</a>
+	<br><br>
+	<div align="center">
+	GitHub: <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')" style="color: #0007">https://github.com/Pristine-Cat/SymPad</a>
+	<br><br>
+	Copyright (c) 2019 Tomasz Pytel, All rights reserved.
+	</div>
+</div>
+
+<div id="Log"></div>
+
+<canvas id="InputBG"></canvas>
+<input id="Input" oninput="inputting (this.value)" autofocus>
+<div id="InputOverlay"><span id="OverlayGood"></span><span id="OverlayError"></span><span id="OverlayAutocomplete"></span></div>
+
+</body>
+</html>""".encode ("utf8"),
+
+	'help.html': # help.html
+
+r"""<!DOCTYPE html>
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
+<title>SymPad Help</title>
+
+</head>
+
+<body>
+
+<h2 align="center">SymPad v0.1</h2>
+<br>
+<p>Type '<b>help</b>' at any time for more information.</p>
+<br><br>
+simplify x, expand x, factor x, ? x
+<br><br>
+? x = N (x): numerically evaluate x
+<br><br>
+d/dx = \frac{d}{dx} = $ \frac{d}{dx} $
+<br>
+d^2/dxdy = \frac{\partial}{\partial x\partial y} = $ \frac{\partial}{\partial x\partial y} $
+<br><br>
+^ and ** are both the power operator but they bind differently, ^ follows latex rules and ** follows python rules
+<br><br>
+sin^{-1}(x) = $ \sin^{-1}(x) $: is interpreted as the inverse sin function arcsin,
+same goes for cos, tan, sec, csc, cot, sinh, cosh, tanh, sech, csch and coth
+<br><br><br>
+<div align="center">
+GitHub: <a href="https://github.com/Pristine-Cat/SymPad" style="color: #0007">https://github.com/Pristine-Cat/SymPad</a>
+<br>
+Copyright (c) 2019 Tomasz Pytel, All rights reserved.
+</div>
+
+</body>
+</html>""".encode ("utf8"),
+}
+
 import re
 import types
 
@@ -891,6 +1741,8 @@ class Parser (lalr1.Parser):
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
+		expr_vars -= {'_', 'e', 'i', '\\pi', '\\infty'}
+
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
 		else:
@@ -1445,9 +2297,9 @@ def _ast2spt_intg (ast):
 				sp.integrate (ast2spt (ast [1]), (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to)))
 
 _ast2spt_consts = {
+	'e': sp.E,
 	'i': sp.I,
 	'\\pi': sp.pi,
-	'e': sp.E,
 	'\\infty': sp.oo,
 }
 
@@ -1608,6 +2460,8 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 import sympy as sp ## DEBUG!
 
 
+_STATIC_FILES = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+
 #...............................................................................................
 _last_ast = AST.Zero # last evaluated expression for _ usage
 
@@ -1622,7 +2476,17 @@ class Handler (SimpleHTTPRequestHandler):
 		if self.path == '/':
 			self.path = '/index.html'
 
-		return SimpleHTTPRequestHandler.do_GET (self)
+		if self.path not in _STATIC_FILES:
+			self.send_error (404, f'Invalid path {self.path!r}')
+
+		elif not _RUNNING_AS_SINGLE_SCRIPT:
+			return SimpleHTTPRequestHandler.do_GET (self)
+
+		else:
+			self.send_response (200)
+			self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
+			self.end_headers ()
+			self.wfile.write (_FILES [self.path [1:]])
 
 	def do_POST (self):
 		global _last_ast
@@ -1694,7 +2558,7 @@ class Handler (SimpleHTTPRequestHandler):
 		self.send_response (200)
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
-		self.wfile.write (json.dumps (resp).encode ('utf-8'))
+		self.wfile.write (json.dumps (resp).encode ('utf8'))
 
 class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
 	pass
@@ -1704,11 +2568,11 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		if 'SYMPAD_RUNNED' not in os.environ:
+		if 'RUNNED_AS_WATCHED' not in os.environ:
 			args = [sys.executable] + sys.argv
 
 			while 1:
-				subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED': '1'})
+				subprocess.run (args, env = {**os.environ, 'RUNNED_AS_WATCHED': '1'})
 
 		if len (sys.argv) < 2:
 			host, port = 'localhost', 8000
@@ -1716,7 +2580,7 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if sys.argv [1].startswith ('[') else ':', sys.argv [1]) + ['8000']) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		watch   = ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
+		watch   = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
@@ -1741,811 +2605,3 @@ if __name__ == '__main__':
 
 	except KeyboardInterrupt:
 		pass
-
-_FILES = {
-
-	'style.css': # style.css
-
-"""* {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-}
-
-body {
-	margin-top: 1em;
-	margin-bottom: 6em;
-	cursor: default;
-}
-
-#Clipboard {
-	position: fixed;
-	bottom: 0;
-	color: transparent;
-	border: 0px;
-}
-
-#Background {
-	position: fixed;
-	z-index: -1;
-	left: 0;
-	top: 0;
-}
-
-#Greeting {
-	position: fixed;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
-	color: #0007;
-}
-
-.GreetingA {
-	display: block;
-	color: #0007;
-	text-decoration: none;
-	margin-bottom: 0.5em;
-}
-
-#InputBG {
-	position: fixed;
-	z-index: 2;
-	height: 4em;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	background-color: white;
-}
-
-#Input {
-	position: fixed;
-	z-index: 3;
-	bottom: 2em;
-	left: 4em;
-	right: 1em;
-	border-color: transparent;
-	outline-color: transparent;
-	background-color: transparent;
-}
-
-#InputOverlay {
-	z-index: 4;
-}
-
-#OverlayGood {
-	-webkit-text-fill-color: transparent;
-}
-
-#OverlayError {
-	-webkit-text-fill-color: #f44;
-}
-
-#OverlayAutocomplete {
-	-webkit-text-fill-color: #999;
-}
-
-.LogEntry {
-	width: 100%;
-	margin-bottom: 1.5em;
-}
-
-.LogMargin {
-	display: inline-block;
-	height: 100%;
-	width: 4em;
-	vertical-align: top;
-	text-align: right;
-	padding-right: 0.5em;
-}
-
-.LogBody {
-	display: inline-block;
-	margin-right: -9999em;
-}
-
-.LogWait {
-	vertical-align: top;
-}
-
-.LogInput {
-	margin-bottom: 0.75em;
-	width: fit-content;
-	cursor: pointer;
-}
-
-.LogEval {
-	position: relative;
-	margin-bottom: 0.25em;
-	cursor: pointer;
-}
-
-.LogError {
-	margin-bottom: 0.25em;
-	color: red;
-}
-
-.LogErrorTriange {
-	position: absolute;
-	left: -1.25em;
-	top: 0.25em;
-	font-size: 0.7em;
-	/* left: -1em;
-	top: 0; */
-	color: red;
-	font-weight: bold;
-}
-
-
-
-
-/* .blinking {
-	animation: blinkingText 1s infinite;
-}
-
-@keyframes blinkingText {
-	0%   { color: #000; }
-	49%  { color: #000; }
-	50%  { color: transparent; }
-	100% { color: transparent; }
-} */
-
-/* .rotator {
-	display: inline-block;
-	animation: rotator 1s infinite;
-}
-
-@keyframes rotator {
-	0%   { rotate: 0deg; }
-	25%  { rotate: 90deg; }
-	50%  { rotate: 180deg; }
-	75%  { rotate: 270deg; }
-	100% { rotate: 360deg; }
-}
- */
-
-/* .spinner1 {
-	position: absolute;
-	animation: spinner1 1s infinite;
-}
-
-@keyframes spinner1 {
-	0%   { color: #000; }
-	25%  { color: transparent; }
-	75%  { color: transparent; }
-	100% { color: #000; }
-}
-
-.spinner2 {
-	position: absolute;
-	animation: spinner2 1s infinite;
-}
-
-@keyframes spinner2 {
-	0%   { color: transparent; }
-	25%  { color: #000; }
-	50%  { color: transparent; }
-	100% { color: transparent; }
-}
-
-.spinner3 {
-	position: absolute;
-	animation: spinner3 1s infinite;
-}
-
-@keyframes spinner3 {
-	0%   { color: transparent; }
-	25%  { color: transparent; }
-	50%  { color: #000; }
-	75%  { color: transparent; }
-	100% { color: transparent; }
-}
-
-.spinner4 {
-	position: absolute;
-	animation: spinner4 1s infinite;
-}
-
-@keyframes spinner4 {
-	0%   { color: transparent; }
-	50%  { color: transparent; }
-	75%  { color: #000; }
-	100% { color: transparent; }
-} */
-""",
-
-	'script.js': # script.js
-
-"""// TODO: Arrow keys in Edge?
-// TODO: Change how error, auto and good text are displayed?
-
-// TODO: Need to copyInputStyle when bottom scroll bar appears.
-
-// Check if body height is higher than window height :)
-// if ($(document).height() > $(window).height()) {
-// 	alert("Vertical Scrollbar! D:");
-// }
-
-// // Check if body width is higher than window width :)
-// if ($(document).width() > $(window).width()) {
-// 	alert("Horizontal Scrollbar! D:<");
-// }
-
-var URL              = '/';
-var MJQueue          = null;
-var MarginTop        = Infinity;
-var PreventFocusOut  = true;
-
-var History          = [];
-var HistIdx          = 0;
-var LogIdx           = 0;
-var UniqueID         = 1;
-
-var Validations      = [undefined];
-var Evaluations      = [undefined];
-var ErrorIdx         = null;
-var Autocomplete     = [];
-
-var LastClickTime    = 0;
-var NumClicks        = 0;
-
-var GreetingFadedOut = false;
-
-//...............................................................................................
-function generateBG () {
-	function writeRandomData (data, x0, y0, width, height) {
-		let p, d;
-
-		for (let y = y0; y < height; y ++) {
-			p = (width * y + x0) * 4;
-
-			for (let x = x0; x < width; x ++) {
-				d            = 244 + Math.floor (Math.random () * 12);
-				data [p]     = data [p + 1] = d;
-				data [p + 2] = d - 8;
-				data [p + 3] = 255;
-				p            = p + 4;
-			}
-		}
-	}
-
-	let canv    = document.getElementById ('Background');
-	canv.width  = window.innerWidth;
-	canv.height = window.innerHeight;
-	let ctx     = canv.getContext ('2d');
-	let imgd    = ctx.getImageData (0, 0, canv.width, canv.height); // ctx.createImageData (width, height);
-
-	writeRandomData (imgd.data, 0, 0, canv.width, canv.height);
-	ctx.putImageData (imgd, 0, 0);
-
-	canv        = $('#InputBG') [0];
-	ctx         = canv.getContext ('2d');
-	canv.width  = window.innerWidth;
-
-	ctx.putImageData (imgd, 0, 0);
-}
-
-//...............................................................................................
-function copyInputStyle () {
-	JQInput.css ({left: $('#LogEntry1').position ().left})
-	JQInput.width ($('#Log').width ());
-
-	let style   = getComputedStyle (document.getElementById ('Input'));
-	let overlay = document.getElementById ('InputOverlay');
-
-  for (let prop of style) {
-    overlay.style [prop] = style [prop];
-	}
-
-	overlay.style ['backgroundColor'] = 'transparent';
-}
-
-//...............................................................................................
-function scrollToEnd () {
-	window.scrollTo (0, document.body.scrollHeight);
-}
-
-//...............................................................................................
-function resize () {
-	console.log ('resize');
-	copyInputStyle ();
-	scrollToEnd ();
-	generateBG ();
-}
-
-//...............................................................................................
-function logResize () {
-	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 2)); // 2 is fudge factor
-
-	if (margin < MarginTop) {
-		MarginTop = margin
-		$('body').css ({'margin-top': margin});
-	}
-}
-
-//...............................................................................................
-function readyMathJax () {
-	window.MJQueue = MathJax.Hub.queue;
-
-	var TEX        = MathJax.InputJax.TeX;
-	var PREFILTER  = TEX.prefilterMath;
-
-	TEX.Augment ({
-		prefilterMath: function (tex, displaymode, script) {
-			return PREFILTER.call (TEX, '\\displaystyle{' + tex + '}', displaymode, script);
-		}
-	});
-}
-
-//...............................................................................................
-function reprioritizeMJQueue () {
-	let p = MJQueue.queue.pop ();
-
-	if (p !== undefined) {
-		MJQueue.queue.splice (0, 0, p);
-	}
-}
-
-//...............................................................................................
-function addLogEntry () {
-	LogIdx += 1;
-
-	$('#Log').append (`
-			<div class="LogEntry"><div class="LogMargin">${LogIdx}.</div><div class="LogBody" id="LogEntry${LogIdx}"><div class="LogInput" id="LogInput${LogIdx}">
-				<img class="LogWait" id="LogInputWait${LogIdx}" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16" style="visibility: hidden">
-			</div></div></div>`)
-
-	Validations.push (undefined);
-	Evaluations.push (undefined);
-}
-
-//...............................................................................................
-function writeToClipboard (text) {
-	PreventFocusOut = false;
-
-	$('#Clipboard').val (text);
-	$('#Clipboard').focus ();
-	$('#Clipboard').select ();
-	document.execCommand ('copy');
-
-	PreventFocusOut = true;
-
-	JQInput.focus ();
-}
-
-//...............................................................................................
-function copyToClipboard (e, val_or_eval, idx) {
-	let t = performance.now ();
-
-	if ((t - LastClickTime) > 500) {
-		NumClicks = 1;
-	} else{
-		NumClicks += 1;
-	}
-
-	LastClickTime = t;
-	let resp      = (val_or_eval ? Evaluations : Validations) [idx];
-
-	writeToClipboard (NumClicks == 1 ? resp.simple : NumClicks == 2 ? resp.py : resp.tex);
-
-	e.style.color      = 'transparent';
-	e.style.background = 'black';
-
-	setTimeout (function () {
-		e.style.color      = 'black';
-		e.style.background = 'transparent';
-	}, 100);
-}
-
-//...............................................................................................
-function updateOverlay (text, erridx, autocomplete) {
-	ErrorIdx     = erridx;
-	Autocomplete = autocomplete;
-
-	if (ErrorIdx === null) {
-		$('#OverlayGood').text (text);
-		$('#OverlayError').text ('');
-
-	} else {
-		$('#OverlayGood').text (text.substr (0, ErrorIdx));
-		$('#OverlayError').text (text.substr (ErrorIdx));
-	}
-
-	$('#OverlayAutocomplete').text (Autocomplete.join (''));
-}
-
-//...............................................................................................
-function ajaxResponse (resp) {
-	if (resp.mode == 'validate') {
-		if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
-			return; // ignore out of order responses
-		}
-
-		if (resp.tex !== null) {
-			Validations [resp.idx] = resp;
-
-			let eLogInput = document.getElementById ('LogInput' + resp.idx);
-
-			let queue              = [];
-			[queue, MJQueue.queue] = [MJQueue.queue, queue];
-
-			MJQueue.queue = queue.filter (function (obj, idx, arr) { // remove previous pending updates to same element
-				return obj.data [0].parentElement !== eLogInput;
-			})
-
-			let eLogInputWait              = document.getElementById ('LogInputWait' + resp.idx);
-			eLogInputWait.style.visibility = '';
-
-			let idMath = 'LogInputMath' + UniqueID ++;
-			$(eLogInput).append (`<span id="${idMath}" onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">$${resp.tex}$</span>`);
-			let eMath  = document.getElementById (idMath);
-
-			MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
-				if (eMath === eLogInput.children [eLogInput.children.length - 1]) {
-					eLogInput.appendChild (eLogInputWait);
-
-					for (let i = eLogInput.children.length - 3; i >= 0; i --) {
-						eLogInput.removeChild (eLogInput.children [i]);
-					}
-
-					eLogInputWait.style.visibility = 'hidden';
-					eMath.style.visibility         = '';
-
-					logResize ();
-				}
-			}]);
-
-			reprioritizeMJQueue ();
-		}
-
-		updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
-
-	} else { // resp.mode == 'evaluate'
-		Evaluations [resp.idx] = resp;
-
-		let eLogEval = document.getElementById ('LogEval' + resp.idx);
-
-		if (resp.err !== undefined) {
-			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
-
-			if (resp.err.length > 1) {
-				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
-				$(eLogEval).append (`<div id="${idLogErrorHidden}" style="display: none"></div>`);
-				var eLogErrorHidden  = document.getElementById (idLogErrorHidden);
-
-				for (let i = 0; i < resp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i]}</div>`);
-				}
-			}
-
-			let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
-			$(eLogEval).append (`<div class="LogError">${resp.err [resp.err.length - 1]}</div><div class="LogErrorTriange" id="LogErrorTriangle${resp.idx}">\u25b7</div>`);
-			var eLogErrorTriangle  = document.getElementById (idLogErrorTriangle);
-
-			$(eLogEval).click (function () {
-				if (eLogErrorHidden.style.display === 'none') {
-					eLogErrorHidden.style.display = 'block';
-					eLogErrorTriangle.innerText   = '\u25bd'; // '\u25bc'; // '-'; // '\u25bc';
-				} else {
-					eLogErrorHidden.style.display = 'none';
-					eLogErrorTriangle.innerText   = '\u25b7'; // '\u25e2'; // '+'; // '\u25b6';
-				}
-
-				logResize ();
-			});
-
-			logResize ();
-			scrollToEnd ();
-
-		} else { // no error
-			let idLogEvalMath = 'LogEvalMath' + resp.idx;
-			$(eLogEval).append (`<span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</span>`);
-			let eLogEvalMath  = document.getElementById (idLogEvalMath);
-
-			MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-				eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
-
-				eLogEvalMath.style.visibility = '';
-
-				logResize ();
-				scrollToEnd ();
-			}]);
-
-			reprioritizeMJQueue ();
-		}
-	}
-}
-
-//...............................................................................................
-function inputting (text, reset = false) {
-	if (reset) {
-		ErrorIdx     = null;
-		Autocomplete = [];
-
-		JQInput.val (text);
-	}
-
-	updateOverlay (text, ErrorIdx, Autocomplete);
-
-	$.ajax ({
-		url: URL,
-		type: 'POST',
-		cache: false,
-		dataType: 'json',
-		success: ajaxResponse,
-		data: {
-			mode: 'validate',
-			idx: LogIdx,
-			subidx: UniqueID ++,
-			text: text,
-		},
-	});
-}
-
-//...............................................................................................
-function inputted (text) {
-	$.ajax ({
-		url: URL,
-		type: 'POST',
-		cache: false,
-		dataType: 'json',
-		success: ajaxResponse,
-		data: {
-			mode: 'evaluate',
-			idx: LogIdx,
-			text: text,
-		},
-	});
-
-	$('#LogEntry' + LogIdx).append (`
-			<div class="LogEval" id="LogEval${LogIdx}">
-				<img class="LogWait" id="LogEvalWait${LogIdx}" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
-			</div>`);
-
-	History.push (text);
-
-	HistIdx = History.length;
-
-	addLogEntry ();
-	logResize ();
-	scrollToEnd ();
-}
-
-//...............................................................................................
-function inputKeypress (e) {
-	if (e.which == 13) {
-		s = JQInput.val ().trim ();
-
-		if (s && ErrorIdx === null) {
-			if (!GreetingFadedOut) {
-				GreetingFadedOut = true;
-				$('#Greeting').fadeOut (3000);
-			}
-
-			if (s === 'help') {
-				window.open (`${URL}help.html`);
-				inputting ('', true);
-
-				return false;
-			}
-
-			if (Autocomplete.length > 0) {
-				s = s + Autocomplete.join ('');
-				inputting (s);
-			}
-
-			JQInput.val ('');
-			updateOverlay ('', null, []);
-			inputted (s);
-
-			return false;
-		}
-
-	} else if (e.which == 32) {
-		if (!JQInput.val ()) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-//...............................................................................................
-function inputKeydown (e) {
-	if (e.code == 'Escape') {
-		e.preventDefault ();
-
-		if (JQInput.val ()) {
-			HistIdx = History.length;
-			inputting ('', true);
-
-			return false;
-		}
-
-	} else if (e.code == 'Tab') {
-		e.preventDefault ();
-		$(this).focus ();
-
-		return false;
-
-	} else if (e.code == 'ArrowUp') {
-		e.preventDefault ();
-
-		if (HistIdx) {
-			inputting (History [-- HistIdx], true);
-
-			return false;
-		}
-
-	} else if (e.code == 'ArrowDown') {
-		e.preventDefault ();
-
-		if (HistIdx < History.length - 1) {
-			inputting (History [++ HistIdx], true);
-
-			return false;
-
-		} else if (HistIdx != History.length) {
-			HistIdx = History.length;
-			inputting ('', true);
-
-			return false;
-		}
-
-	} else if (e.code == 'ArrowRight') {
-		if (JQInput.get (0).selectionStart === JQInput.val ().length && Autocomplete.length) {
-			let text = JQInput.val ();
-
-			if (Autocomplete [0] === '\\left' || Autocomplete [0] === '\\right') {
-				text         = text + Autocomplete.slice (0, 2).join ('');
-				Autocomplete = Autocomplete.slice (2);
-
-			} else {
-				text         = text + Autocomplete [0];
-				Autocomplete = Autocomplete.slice (1);
-			}
-
-			JQInput.val (text);
-			inputting (text);
-			// updateOverlay (text, ErrorIdx, Autocomplete);
-		}
-	}
-}
-
-//...............................................................................................
-// function inputFocusout (e) {
-// 	if (PreventFocusOut) {
-// 		e.preventDefault ();
-// 		$(this).focus ();
-
-// 		return false;
-// 	}
-// }
-
-//...............................................................................................
-function keepInputFocus () {
-	if (PreventFocusOut) {
-		JQInput.focus ();
-	}
-
-	setTimeout (keepInputFocus, 50);
-}
-
-//...............................................................................................
-$(function () {
-	window.JQInput   = $('#Input');
-
-	let margin       = $('body').css ('margin-top');
-	BodyMarginTop    = Number (margin.slice (0, margin.length - 2));
-	margin           = $('body').css ('margin-bottom');
-	BodyMarginBottom = Number (margin.slice (0, margin.length - 2));
-
-	$('#Clipboard').prop ('readonly', true);
-	$('#InputBG') [0].height = $('#InputBG').height ();
-
-	JQInput.keypress (inputKeypress);
-	JQInput.keydown (inputKeydown);
-	// JQInput.focusout (inputFocusout);
-	// JQInput.blur (inputFocusout);
-
-	addLogEntry ();
-	logResize ();
-	resize ();
-	keepInputFocus ();
-});
-
-
-// $('#txtSearch').blur(function (event) {
-// 	setTimeout(function () { $("#txtSearch").focus(); }, 20);
-// });
-
-// document.getElementById('txtSearch').addEventListener('blur', e => {
-//   e.target.focus();
-// });
-
-// cursor_test = function (element) {
-// 	if (!element.children.length && element.innerText == '∥') {
-// 		console.log (element, element.classList);
-// 		element.innerText = '|';
-// 		element.classList.add ('blinking');
-// 	}
-
-// 	for (let e of element.children) {
-// 		cursor_test (e);
-// 	}
-// }
-
-// cursor_test (eLogInput.children [0]);
-""",
-
-	'index.html': # index.html
-
-"""<!DOCTYPE html>
-<html>
-<head>
-
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
-<title>SymPad</title>
-<link rel="stylesheet" type="text/css" href="style.css">
-
-<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="script.js"></script>
-<script type="text/x-mathjax-config">
-	MathJax.Hub.Config ({
-		messageStyle: "none",
-		tex2jax: {inlineMath: [["$","$"], ["\\(","\\)"]]}
-	});
-
-	MathJax.Hub.Register.StartupHook ("End", readyMathJax);
-</script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML-full"></script>
-
-</head>
-
-<body onresize="resize ()">
-
-<input id="Clipboard">
-<canvas id="Background"></canvas>
-
-<div id="Greeting">
-	<h2 align="center">SymPad v0.1</h2>
-	<br><br>
-	<div align="center">Type '<b>help</b>' at any time for more information.</div>
-	<br>
-	<div align="center">-or-</div>
-	<br>
-	<div align="center">Type or click any of the following to get started:</div>
-	<br><br>
-	<a class="GreetingA" href="javascript:inputting ('? sqrt 2', true)">? sqrt 2</a>
-	<a class="GreetingA" href="javascript:inputting ('e ** ln (x)', true)">e ** ln (x)</a>
-	<a class="GreetingA" href="javascript:inputting ('sin (3\\pi / 2)', true)">sin (3\pi / 2)</a>
-	<a class="GreetingA" href="javascript:inputting ('cos^{-1} (-1)', true)">cos^{-1} (-1)</a>
-	<a class="GreetingA" href="javascript:inputting ('\\lim_{x \\to \\infty} 1/x', true)">\lim_{x \to \infty} 1/x</a>
-	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}^oo x^n / n!', true)">\sum_{n=0}^oo x^n / n!</a>
-	<a class="GreetingA" href="javascript:inputting ('d/dx x**2', true)">d/dx x**2</a>
-	<a class="GreetingA" href="javascript:inputting ('d**2/dxdy x^2 y^3', true)">d**2/dxdy x^2 y^3</a>
-	<a class="GreetingA" href="javascript:inputting ('\\int 1 / (x**2 + 1) dx', true)">\int 1 / (x**2 + 1) dx</a>
-	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\infty e**-x**2 dx', true)">\int_0^\infty e**-x**2 dx</a>
-	<a class="GreetingA" href="javascript:inputting ('simplify (sin x / cos x)', true)">simplify (sin x / cos x)</a>
-	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**2', true)">expand {x+1}**2</a>
-	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
-	<a class="GreetingA" href="javascript:inputting ('\\arccos \\frac {\\int_0^\\infty x^4e^{-x} dx} {4!}', true)">\arccos \frac {\int_0^\infty x^4e^{-x} dx} {4!}</a>
-	<br><br>
-	<div align="center">
-	GitHub: <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')" style="color: #0007">https://github.com/Pristine-Cat/SymPad</a>
-	<br><br>
-	Copyright (c) 2019 Tomasz Pytel, All rights reserved.
-	</div>
-</div>
-
-<div id="Log"></div>
-
-<canvas id="InputBG"></canvas>
-<input id="Input" oninput="inputting (this.value)" autofocus>
-<div id="InputOverlay"><span id="OverlayGood"></span><span id="OverlayError"></span><span id="OverlayAutocomplete"></span></div>
-
-</body>
-</html>""",
-}

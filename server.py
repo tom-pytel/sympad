@@ -23,6 +23,9 @@ import sympy as sp ## DEBUG!
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+_STATIC_FILES = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_FILES        = {} # for pylint # AUTO_REMOVE_IN_SINGLE_SCRIPT
+
 #...............................................................................................
 _last_ast = AST.Zero # last evaluated expression for _ usage
 
@@ -37,7 +40,17 @@ class Handler (SimpleHTTPRequestHandler):
 		if self.path == '/':
 			self.path = '/index.html'
 
-		return SimpleHTTPRequestHandler.do_GET (self)
+		if self.path not in _STATIC_FILES:
+			self.send_error (404, f'Invalid path {self.path!r}')
+
+		elif not _RUNNING_AS_SINGLE_SCRIPT:
+			return SimpleHTTPRequestHandler.do_GET (self)
+
+		else:
+			self.send_response (200)
+			self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
+			self.end_headers ()
+			self.wfile.write (_FILES [self.path [1:]])
 
 	def do_POST (self):
 		global _last_ast
@@ -109,7 +122,7 @@ class Handler (SimpleHTTPRequestHandler):
 		self.send_response (200)
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
-		self.wfile.write (json.dumps (resp).encode ('utf-8'))
+		self.wfile.write (json.dumps (resp).encode ('utf8'))
 
 class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
 	pass
@@ -119,11 +132,11 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		if 'SYMPAD_RUNNED' not in os.environ:
+		if 'RUNNED_AS_WATCHED' not in os.environ:
 			args = [sys.executable] + sys.argv
 
 			while 1:
-				subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED': '1'})
+				subprocess.run (args, env = {**os.environ, 'RUNNED_AS_WATCHED': '1'})
 
 		if len (sys.argv) < 2:
 			host, port = 'localhost', 8000
@@ -131,7 +144,7 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if sys.argv [1].startswith ('[') else ':', sys.argv [1]) + ['8000']) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		watch   = ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
+		watch   = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
