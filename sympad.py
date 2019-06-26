@@ -1,6 +1,29 @@
 #!/usr/bin/env python
 # python 3.6+
 
+# Copyright (c) 2019 Tomasz Pytel
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 _RUNNING_AS_SINGLE_SCRIPT = True
 
 
@@ -1541,7 +1564,7 @@ class Parser (lalr1.Parser):
 			b'r4RNqQW/J446CHwIAKMtJlD2/u88ae72Da+pr+rowTQIgl7qLWS6UZrXE2USo91+77GD8PYhOJSaeQhK/pO/x4tS295ybGM29mIqRJA4dq5gBnadgPc56Ff8veilxjHlaakFQlzKKoskNOQzyvcnm4aJqZryuW4ScJairSUWeI034C07k+ylpsN0026npisB' \
 			b'0E9T07k8Phfboo8oe4HEXYNfFML3xvQzFfg+SN4VxPQSd0U/c5u+W3u5nRiKpuhL8WbwwY0HfKgZu2UzTo1+qA03bIN9YZMtwRCRD0+jvvxQe36sPfGtjbY64siCzVjx4al6mFdPuXP6NeLeMxiGPkEixdLBGNw8VP4+R26+7OMr/XpBPO3sxev00FM3yQBa' \
 			b'gBsJlkGcM7SeKkkiiXtQBvkmrhaIhnYfNFh11UA0dD00rkOFwwWp41+e2DkQIeXp7+tQwr+hfcXAlOi1lOiamHYtPfx7GxOh9Zcym8tZgckyG0bxusFbktsP2I2DNaocBisBo8pHZcjLgKouJhpOoaTresyhPTiHuAA6RGD+3OH5s+oggfnzh+fPqYME5m/T' \
-			b'PHoD/EV1kMD8xU38bb9C2IlL3HqsDTGue9qZDdWHgXltb2ZNtAPTRq0PfHpqY7EcYL+1RTHmvrt17r26jcB7jOburIct/ZOT2wssEM2uAaSnw59xm/M/TKGv7lt8L8VvjPBNh6P1l+AI3ZLQTPYlwKayo4M5/NThbwxp+qUhkPxq/n9Hh+Kn'
+			b'PHoD/EV1kMD8xU38bb9C2IlL3HqsDTGue9qZDdWHgXltb2ZNtAPTRq0PfHpqY7EcYL+1RTHmvrt17r26jcB7jOburIct/ZOT2wssEM2uAaSnw59xm/M/TKGv7lt8L8VvjPBNh6P1l+AI3ZLQTPYlwKayo4M5/NThbwxp+qUhkPxq/n9Hh+Kn' 
 
 	_PARSER_TOP  = 'expr'
 
