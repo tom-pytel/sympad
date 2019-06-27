@@ -6,6 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
 <title>SymPad Help</title>
+
+<style>
+	p { line-height: 135%; }
+	h3 { margin-top: 2em; }
+</style>
+
 <script type="text/x-mathjax-config">
 	MathJax.Hub.Config ({
 		messageStyle: "none",
@@ -38,7 +44,9 @@ result symbolically or numerically. The best way to see what it can do is to try
 
 <h3>Quick Start</h3>
 
-<p>Try entering any of the following into SymPad:</p>
+<p>
+Try entering any of the following into SymPad:
+</p><p>
 ? sqrt 2<br>
 sin (3\pi / 2)<br>
 cos^{-1} (-1)<br>
@@ -55,98 +63,96 @@ simplify (sin x / cos x)<br>
 expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 \arccos\frac{\int_0^\inftyx^4e^{-x}dx}{\sqrt[3]{8}4!}<br>
+</p>
 
 <h3>Usage</h3>
 
 <p>
-You enter expresstions and they get evaluated. The expressions may be in normal Pythonic style like "a * (b + sin (x)**2 + 3/4) / 2", LaTeX
-such as "a\frac{b+\sin^2{x}+\frac34}{2}" or a mix "a * (b + \sin**x{2} + \frac34) / 2". The input is displayed symbolically as you type.
-Input history is supported with the up and down arrows.
+You enter expresstions and they get evaluated. The expressions may be in normal Pythonic style like "<b>a * (b + sin (x)**2 + 3/4) / 2</b>",
+LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin**x{2} + \frac34) / 2</b>". The input is displayed symbolically as
+you type. Input history is supported with the up and down arrows.
 </p><p>
 The symbolic expressions can be copied to the clipboard in various formats. Single click for a simple short format meant to be pasted back into the
 input field. A double click copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
-"e" is copied as "e" and not the SymPy "E", "i" is copied as "i" and not "I" or "1j". Simply set "e = E" and "i = I" or "i = 1j" in the Python context
-depending on need. Finally a triple click will copy the expression in LaTeX format. The simple and LaTeX formats should be directly pasteable into
-SymPad whereas the Python representation may or may not be depending on what elements it includes.
+"<b>e</b>" is copied as "<b>e</b>" and not the SymPy "<b>E</b>", "<b>i</b>" is copied as "<b>i</b>" and not "<b>I</b>" or "<b>1j</b>". Simply set
+"<b>e = E</b>" and "<b>i = I</b>" or "<b>i = 1j</b>" in the Python context depending on need. Finally a triple click will copy the expression in
+LaTeX format. The simple and LaTeX formats should be directly pasteable into SymPad whereas the Python representation may or may not be depending
+on what elements it includes.
 </p><p>
-There is a special use for the "_" character which has the same meaning as in the Python interactive shell in that it represents the last
-expression successfully evaluated. To see this in action type in "1" and hit Enter, then type in "expand ((x+1)*_)" and hit Enter. Repeat this
-several times using the up arrow. This character may not want to follow directly after an alphanumeric character since it is also used to
-subscript variables, in this case simply precede it with a space.
+There is a special use for the "<b>_</b>" character which has the same meaning as in the Python interactive shell in that it represents the last
+expression successfully evaluated. To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
+Repeat this several times using the up arrow. This character may not want to follow directly after an alphanumeric character since it is also used
+to subscript variables, in this case simply precede it with a space.
 </p>
 
 <h3>Numbers</h3>
 
 <p>
 Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
-Keep in mind that "e" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together
-as "2e+22" as this will be interpreted to be 2 * 10^22, use spaces and/or explicit multiplication: 2 * e + 22.
+Keep in mind that "<b>e</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together
+as "<b>2e+22</b>" as this will be interpreted to be 2 * 10^22, use spaces and/or explicit multiplication: 2 * e + 22.
 </p>
 
 <h3>Variables</h3>
 
 <p>
-Variable names mostly follow LaTeX convention, they are single latin letters $x, y, z, A, B,$ ... or single greek letters preceded by a backslash
-such as "\alpha" ($\alpha$), "\beta" ($\beta$), \Psi ($\Psi$), etc... The variable names $i$, $e$ and $\pi$ represent their respective mathematical
-constants. There are two special case variables which are parsed as two letter constants without a slash since they are commonly used, those are
-"pi" without the slash and "oo" which represents "\infty" or $\infty$.
+Variable names mostly follow LaTeX convention, they are single latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", ... or
+single greek letters preceded by a backslash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
+"<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. There are two special case variables
+which are parsed as two letter constants without a slash since they are commonly used, those are "<b>pi</b>" without the slash and "<b>oo</b>" which
+represents "<b>\infty</b>" or $\infty$.
 </p><p>
-Variable names mostly follow LaTeX convention. With the exception of $i$ the imaginary unit and $e$ which is Euler"s number, variables
-are single letters: $x, y, z, A, B,$ etc... Variables may also be greek letters preceded by a backslash such as "\alpha" ($\alpha$),
-"\beta" ($\beta$), \Psi ($\Psi$), etc... Again with exception of "\pi" which of course is the mathematical constant $\pi$. There are two special
-case constants which are parsed as two letter constants without a slash since they are commonly used, those are "pi" without the slash, and "oo"
-which is infinity. Infinity may also be entered as "\infty".
+Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
+Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
+This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_{x_{y_0'}''}'''$).
 </p><p>
-Variable names may be followed by various primes ' such as " a' " ($a'$) or " \omega'' " ($\omega''$).
-Variables may be subscripted with other variables or numbers "x_1" ($x_1$), "y_z" ($y_z$), "\alpha_\omega" ($\alpha_\omega$).
-This can be extended to silly levels " \gamma_{x_{y_0'}''}''' " ($\gamma_{x_{y_0'}''}'''$).
-</p><p>
-Differentials entered as "dx", "\partialx" or "\partial x" and are treated as a single variable. If you want to enter "d" * "x" multiplied
-implicitly then put a space between them or two spaces between the "\partial" and the "x".
+Differentials entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable. If you want to enter "<b>d</b>"
+* "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
 </p>
 
 <h3>Parentheses</h3>
 
 <p>
-Explicit '()' or implicit curly '{}' parentheses allow prioritization of lower precedence operations over higher ones as usual and also
-delineate an expression as an input to a function. They may be used interchangeably, the only difference being that the implicit version is not
-drawn if it does not need to be.
+Explicit "<b>()</b>" or implicit curly "<b>{}</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
+delineate an expression as an input to a function. They may be used interchangeably, the only difference being that the implicit version is not drawn
+if it does not need to be.
 </p>
 
 <h3>Addition and Multiplication</h3>
-Addition is addition and subtraction is subtraction: "a + b", "a - b". Multiplication is explicit with a "*" operator or implicit simply by writing
-two symbols next to each other so that "a * b" is the same as "ab". There is however a difference between the two in that the implicit version
-has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, derivative or division "/" expression whereas
-implicit multiplication will not, e.g. "1/xy" = $\frac{1}{xy}$ whereas "1/x*y" = $\frac{1}{x} \cdot y$.
+Addition is addition and subtraction is subtraction: "<b>a + b</b>", "<b>a - b</b>". Multiplication is explicit with a "<b>*</b>" operator or implicit
+simply by writing two symbols next to each other so that "<b>a * b</b>" is the same as "<b>ab</b>". There is however a difference between the two in that
+the implicit version has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, derivative or division
+"<b>/</b>" expression whereas implicit multiplication will not, e.g. "<b>1/xy</b>" = $\frac{1}{xy}$ whereas "<b>1/x*y</b>" = $\frac{1}{x} \cdot y$.
 </p><p>
-Division also has two operators, the normal "/" which has a fairly low precedence and the LaTeX "\frac" version which has a very high precedence, even
-higher than exponentiation. So high in fact that parentheses are not needed if using "\frac" as an exponent as in "x^\frac{1}{2}" = $x^\frac{1}{2}$.
-The "\frac" operation also does not need parentheses if using single digit operands or single letter variables (latin or greek) such as "\frac12" =
-$\frac12$, "\frac\alpha\beta" = $\frac\alpha\beta$ or "\fracxy" = $\frac xy$ (although this last version without a space before the x is not legal in
-LaTeX but convenient for quick typing here).
+Division also has two operators, the normal "<b>/</b>" which has a fairly low precedence and the LaTeX "<b>\frac</b>" version which has a very high
+precedence, even higher than exponentiation. So high in fact that parentheses are not needed if using "<b>\frac</b>" as an exponent as in
+"<b>x^\frac{1}{2}</b>" = $x^\frac{1}{2}$. The "<b>\frac</b>" operation also does not need parentheses if using single digit operands or single letter
+variables (latin or greek) such as "<b>\frac12</b>" = $\frac12$, "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$ or "<b>\fracxy</b>" = $\frac xy$ (although
+this last version without a space before the x is not legal in LaTeX but convenient for quick typing here).
 </p>
 
 <h3>Exponentiation</h3>
 
 <p>
-There are two power opearators "^" and "**". They have the same precedence and can be used interchangeably but follow slightly different parsing
-rules. The "^" operator follows LaTeX rules which only allow a single positive digit or letter variable (lating or greek) without the use of curly
-braces whereas the "**" follows Python rules which allow negative values or variables or functions. To illustrate the diffference: "x**-2" = $x^{-2}$
-whereas "x^-2" = $x^-2$ (which makes no sense). Also, "e**log(x)" will work as expected $e^{\log(x)}$ whereas "e^log(x)" = $e^log(x)$.
+There are two power opearators "<b>^</b>" and "<b>**</b>". They have the same precedence and can be used interchangeably but follow slightly different
+parsing rules. The "<b>^</b>" operator follows LaTeX rules which only allow a single positive digit or letter variable (lating or greek) without the use
+of curly braces whereas the "<b>**</b>" follows Python rules which allow negative values or variables or functions. To illustrate the diffference:
+"<b>x**-2</b>" = $x^{-2}$ whereas "<b>x^-2</b>" = $x^-2$ (which makes no sense). Also, "<b>e**log(x)</b>" will work as expected $e^{\log(x)}$ whereas
+"<b>e^log(x)</b>" = $e^log(x)$.
 </p>
 
 <h3>Logarithms</h3>
 
 <p>
-The natural logarithm of x is specified "lnx", "\ln x", "log x", "\log{x}". A logarithm in a specific base is specified by "\log_b x" = $\log_b x$,
-"log_{10}(x)" = $\log_{10} {x}$, etc...
+The natural logarithm of x is specified by "<b>lnx</b>", "<b>\ln x</b>", "<b>log x</b>", "<b>\log{x}</b>". A logarithm in a specific base is specified
+by "<b>\log_b x</b>" = $\log_b x$, "<b>log_{10}(1000)</b>" = $\log_{10} {1000}$ = 3, etc...
 </p>
 
 <h3>Roots</h3>
 
 <p>
-The square root of x ($\sqrt{x}$) may be entered in any of these forms "sqrtx", "\sqrt x", "sqrt (x)", "\sqrt{x}", with or without the backslash.
-The cube (or any other) root is similar, $\sqrt[3]x$ = "sqrt[3]x", "sqrt[3] (x)" or "\sqrt[3] {x}".
+The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or
+without the backslash. The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
 </p>
 
 <h3>Functions</h3>
@@ -154,52 +160,55 @@ The cube (or any other) root is similar, $\sqrt[3]x$ = "sqrt[3]x", "sqrt[3] (x)"
 <p>
 Currently several single parameter functions are supported directly, with a mechanism for calling any other existing single parameter SymPy function
 explicitly. The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, with or without leading backslash:
-"sin", "acos", "arctan", "\acosh", etc... In addition these functions accept a special standard syntax for exponentiation or inverses as a convenience.
-For example "sin^2(x)" = $\sin^2(x)$ and "\tan^{-1}x" = $\arctan(x)$.
+"<b>sin</b>", "<b>acos</b>", "<b>arctan</b>", "<b>\acosh</b>", etc... In addition these functions accept a special commonly used syntax for exponentiation
+or inverses as a convenience. For example "<b>sin^2(x)</b>" = $\sin^2(x)$ and "<b>\tan^{-1}x</b>" = $\arctan(x)$.
 </p><p>
-Other SymPy functions are supported directly such as "simplify (sin(x) / cos(x))" = $\tan(x)$, "expand ({x+1}^3)" = $x^3+3x^2+3x+1$ and
-"factor (x^2 + 2x + 1)" = $(x+1)^2$. Functions don't technically REQUIRE explicit or implicit parentheses but for any parameter more complicated
+Other SymPy functions are supported directly such as "<b>simplify (sin(x) / cos(x))</b>" = $\tan(x)$, "<b>expand ({x+1}^3)</b>" = $x^3+3x^2+3x+1$ and
+"<b>factor (x^2 + 2x + 1)</b>" = $(x+1)^2$. Functions don't technically REQUIRE explicit or implicit parentheses but for any parameter more complicated
 than another function or variable to a power they will be needed.
 </p><p>
-Three functions have a special separate syntax. The function "abs (x)" is equivalent to the standard bar syntax for absolute value "|x|", the
-"factorial (x)" function is identical to writing "x!" and "exp (x)" is the same as writing "e^x". In fact those functions are translated on the fly.
+Three functions have a special separate syntax. The function "<b>abs (x)</b>" is equivalent to the standard bar syntax for absolute value "<b>|x|</b>",
+the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>". In fact those functions
+are translated on the fly.
 </p><p>
-If a function is not supported directly (and most are not) then it can still be called using a special escape characted "\($\)". To call the
-SymPy "sign" function for example simply enter "\($\)sign (-2)".
+If a SymPy function is not supported directly (and most are not) then it can still be called using a special escape characted "<b>\($\)</b>". To call the
+SymPy "<b>sign</b>" function for example simply enter "<b>\($\)sign (-2)</b>".
 </p><p>
-The last special function is "?", this is equivalent to SymPy "N ()" or "evalf ()" and it will ask SymPy to numerically evaluate whatever it can
-in the given expression. This is how you would get the numerical value of $\sqrt 2$ or $\sin(2)$ writing "? sqrt 2" or "? (\sin{2})".
+The last special function is "<b>?</b>", this is equivalent to SymPy "<b>N ()</b>" or "<b>evalf ()</b>" and it will ask SymPy to numerically evaluate
+whatever it can in the given expression. This is how you would get the numerical value of $\sqrt 2$ or $\sin(2)$ writing "<b>? sqrt 2</b>" or
+"<b>? (\sin{2})</b>".
 </p>
 
 <h3>Limits</h3>
 
 <p>
-To take the limit of an expression "z" as variable "x" approaches "y" enter "\lim_{x \to y} (z)" = $\lim_{x\to y} (z)$. This will only give the limit
-if it exists and is the same when approaching from both directions, unlike SymPy which defaults to approaching from the positive direction. To specify
-a direction add "^+" or "^-" to the equation as such: "\lim_{x \to y^+} (z)" = $\lim_{x\to y^+} (z)$.
+To take the limit of an expression "<b>z</b>" as variable "<b>x</b>" approaches "<b>y</b>" enter "<b>\lim_{x \to y} (z)</b>" = $\lim_{x\to y} (z)$.
+This will only give the limit if it exists and is the same when approaching from both directions, unlike SymPy which defaults to approaching from the
+positive direction. To specify a direction add "<b>^+</b>" or "<b>^-</b>" to the equation as such: "<b>\lim_{x \to 0^+} 1/x</b>" = $\lim_{x\to 0^+}
+\frac1x$ = $\infty$ and "<b>\lim_{x \to 0^-} 1/x</b>" = $\lim_{x\to 0^-} \frac1x$ = $-\infty$.
 </p>
 
 <h3>Sums</h3>
 
 <p>
-The summation (finite or infinite) of expression "z" as variable "n" ranges from "a" to "b" is written ad "\sum_{n=a}^b (z)" = $\sum_{n=a}^b (z)$.
-Iterated sums work as expected, "\sum_{n=1}^3 \sum_{m=1}^n m" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10.
+The summation (finite or infinite) of expression "<b>z</b>" as variable "<b>n</b>" ranges from "<b>a</b>" to "<b>b</b>" is written as "<b>\sum_{n=a}^b (z)</b>"
+= $\sum_{n=a}^b (z)$. Iterated sums work as expected, "<b>\sum_{n=1}^3 \sum_{m=1}^n m</b>" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10.
 </p>
 
 <h3>Differentiation</h3>
 
 <p>
-The derivative of expression "z" with respect to "x" is entered as "d/dx z" or "\frac{d}{dx} z" = $\frac{d}{dx} z$. The second derivative is
-"d^2/dx^2 (z)" or "\frac{d^2}{dx^2} (z)" = $\frac{d^2}{dx^2} (z)$. Using "\partial" ($\partial$) is allowed but must be consistent within the
-expression. Mixed derivatives are entered as "d^2/dxdy (z)" or "\partial^2 / \partial x\partial y (z)" =
+The derivative of expression "<b>z</b>" with respect to "<b>x</b>" is entered as "<b>d/dx z</b>" or "<b>\frac{d}{dx} z</b>" = $\frac{d}{dx} z$. The
+second derivative is "<b>d^2/dx^2 (z)</b>" or "<b>\frac{d^2}{dx^2} (z)</b>" = $\frac{d^2}{dx^2} (z)$. Using "<b>\partial</b>" ($\partial$) is allowed but
+must be consistent within the expression. Mixed derivatives are entered as "<b>d^2/dxdy (z)</b>" or "<b>\partial^2 / \partial x\partial y (z)</b>" =
 $\frac{\partial^2}{\partial x\partial y} (z)$.
 </p>
 
 <h3>Integration</h3>
 
 <p>
-The anti-derivative of expression "z" with respect to x is written as "\int z dx" = $\int z\ dx$. The definite integral from "a" to "b" is
-"\int_a^b z dx" = $\int_a^b z\ dx$. "\int dx/x" = $\int \frac1x\ dx$. Iterated and improper integrals also work.
+The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b>\int z dx</b>" = $\int z\ dx$. The definite integral from "<b>a</b>" to
+"<b>b</b>" is "<b>\int_a^b z dx</b>" = $\int_a^b z\ dx$. "<b>\int dx/x</b>" = $\int \frac1x\ dx$. Iterated and improper integrals also work.
 </p>
 
 <br><br><br>

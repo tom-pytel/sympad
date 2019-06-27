@@ -883,7 +883,39 @@ r"""<!DOCTYPE html>
 
 <h3>Introduction</h3>
 
-<h3>Interface</h3>
+<p>
+Sympad is a simple symbolic calculator. It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while
+studying some math without having to start a shell every time and import a packaged or fire up a browser and navigate to a site (technincally
+that last bit is exactly what happens but the response time is better :) This desire for simplicity led to the single script option "sympad.py"
+which I could plop down on my desktop and execute when needed.
+</p><p>
+As said, SymPad is a symbolic calculator using SymPy for the math and MathJax for the display in a web browser. It runs as a private web server
+on your machine and executes the system default browser pointing to itself on startup. User input is intended to be quick, easy and intuitive and
+is displayed in symbolic form as it is being entered. Sympad will accept LaTeX math formatting as well as Python-ish expressions and evaluate the
+result symbolically or numerically. The best way to see what it can do is to try a few things...
+</p>
+
+<h3>Quick Start</h3>
+
+<p>Try entering any of the following into SymPad:</p>
+? sqrt 2<br>
+sin (3\pi / 2)<br>
+cos^{-1} (-1)<br>
+ln e<br>
+e ** ln (x)<br>
+\log_2{8}<br>
+\lim_{x \to \infty} 1/x<br>
+\sum_{n=0}^oo x^n / n!<br>
+d/dx x**2<br>
+d**2/dxdy x^2 y^3<br>
+\int 1 / (x**2 + 1) dx<br>
+\int_0^\infty e**-x**2 dx<br>
+simplify (sin x / cos x)<br>
+expand {x+1}**2<br>
+factor (x^3 + 3x^2 + 3x + 1)<br>
+\arccos\frac{\int_0^\inftyx^4e^{-x}dx}{\sqrt[3]{8}4!}<br>
+
+<h3>Usage</h3>
 
 <p>
 You enter expresstions and they get evaluated. The expressions may be in normal Pythonic style like "a * (b + sin (x)**2 + 3/4) / 2", LaTeX
@@ -897,7 +929,7 @@ depending on need. Finally a triple click will copy the expression in LaTeX form
 SymPad whereas the Python representation may or may not be depending on what elements it includes.
 </p><p>
 There is a special use for the "_" character which has the same meaning as in the Python interactive shell in that it represents the last
-expression successfully evaluated. To see this in action type in "1" and hit Enter, then put in "expand ((x+1)*_)" and hit Enter. Repeat this
+expression successfully evaluated. To see this in action type in "1" and hit Enter, then type in "expand ((x+1)*_)" and hit Enter. Repeat this
 several times using the up arrow. This character may not want to follow directly after an alphanumeric character since it is also used to
 subscript variables, in this case simply precede it with a space.
 </p>
@@ -913,6 +945,11 @@ as "2e+22" as this will be interpreted to be 2 * 10^22, use spaces and/or explic
 <h3>Variables</h3>
 
 <p>
+Variable names mostly follow LaTeX convention, they are single latin letters $x, y, z, A, B,$ ... or single greek letters preceded by a backslash
+such as "\alpha" ($\alpha$), "\beta" ($\beta$), \Psi ($\Psi$), etc... The variable names $i$, $e$ and $\pi$ represent their respective mathematical
+constants. There are two special case variables which are parsed as two letter constants without a slash since they are commonly used, those are
+"pi" without the slash and "oo" which represents "\infty" or $\infty$.
+</p><p>
 Variable names mostly follow LaTeX convention. With the exception of $i$ the imaginary unit and $e$ which is Euler"s number, variables
 are single letters: $x, y, z, A, B,$ etc... Variables may also be greek letters preceded by a backslash such as "\alpha" ($\alpha$),
 "\beta" ($\beta$), \Psi ($\Psi$), etc... Again with exception of "\pi" which of course is the mathematical constant $\pi$. There are two special
@@ -922,6 +959,9 @@ which is infinity. Infinity may also be entered as "\infty".
 Variable names may be followed by various primes ' such as " a' " ($a'$) or " \omega'' " ($\omega''$).
 Variables may be subscripted with other variables or numbers "x_1" ($x_1$), "y_z" ($y_z$), "\alpha_\omega" ($\alpha_\omega$).
 This can be extended to silly levels " \gamma_{x_{y_0'}''}''' " ($\gamma_{x_{y_0'}''}'''$).
+</p><p>
+Differentials entered as "dx", "\partialx" or "\partial x" and are treated as a single variable. If you want to enter "d" * "x" multiplied
+implicitly then put a space between them or two spaces between the "\partial" and the "x".
 </p>
 
 <h3>Parentheses</h3>
@@ -1002,21 +1042,23 @@ a direction add "^+" or "^-" to the equation as such: "\lim_{x \to y^+} (z)" = $
 
 <p>
 The summation (finite or infinite) of expression "z" as variable "n" ranges from "a" to "b" is written ad "\sum_{n=a}^b (z)" = $\sum_{n=a}^b (z)$.
+Iterated sums work as expected, "\sum_{n=1}^3 \sum_{m=1}^n m" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10.
 </p>
 
 <h3>Differentiation</h3>
 
 <p>
-The derivative of expression "z" with respect to x is entered as "d/dx z" or "\frac{d}{dx} z" = $\frac{d}{dx} z$. The second derivative is
-"d**2/dx**2 (z)" or "\frac{d^2}{dx^2} (z)" = $\frac{d^2}{dx^2} (z)$. Using "\partial" is allowed but must be consistent within the expression.
-Mixed derivatives are entered as "d**2/dxdy (z)" or "\partial**2 / \partial x\partial y (z)" = $\frac{\partial^2}{\partial x\partial y} (z)$.
+The derivative of expression "z" with respect to "x" is entered as "d/dx z" or "\frac{d}{dx} z" = $\frac{d}{dx} z$. The second derivative is
+"d^2/dx^2 (z)" or "\frac{d^2}{dx^2} (z)" = $\frac{d^2}{dx^2} (z)$. Using "\partial" ($\partial$) is allowed but must be consistent within the
+expression. Mixed derivatives are entered as "d^2/dxdy (z)" or "\partial^2 / \partial x\partial y (z)" =
+$\frac{\partial^2}{\partial x\partial y} (z)$.
 </p>
 
 <h3>Integration</h3>
 
 <p>
 The anti-derivative of expression "z" with respect to x is written as "\int z dx" = $\int z\ dx$. The definite integral from "a" to "b" is
-"\int_a^b z dx" = $\int_a^b z\ dx$. Improper integrals are also allowed.
+"\int_a^b z dx" = $\int_a^b z\ dx$. "\int dx/x" = $\int \frac1x\ dx$. Iterated and improper integrals also work.
 </p>
 
 <br><br><br>
@@ -1269,20 +1311,24 @@ class AST (tuple):
 	VARS_SPECIAL_LONG  = {'\\pi': 'pi', '\\infty': 'oo'}
 	VARS_SPECIAL_SHORT = {'pi': '\\pi', 'oo': '\\infty'}
 
-	FUNCS_PY_ONLY = list (reversed (sorted ('''
+	FUNCS_ALIAS        = {'?': 'N'}
+
+	FUNCS_PY_ONLY      = set ('''
 		?
 		abs
 		expand
 		factor
 		factorial
 		simplify
-		'''.strip ().split ())))
+		'''.strip ().split ())
 
-	FUNCS_PY_AND_TEX = list (reversed (sorted ('''
+	FUNCS_PY_AND_TEX   = set ('''
 		arg
 		exp
 		ln
-		'''.strip ().split ())))
+		'''.strip ().split ())
+
+	FUNCS_PY_ALL       = FUNCS_PY_ONLY | FUNCS_PY_AND_TEX
 
 	def __new__ (cls, *args):
 		op       = _AST_CLS2OP.get (cls)
@@ -1557,7 +1603,6 @@ AST.E      = AST ('@', 'e')
 AST.Pi     = AST ('@', '\\pi')
 AST.Infty  = AST ('@', '\\infty')
 # TODO: redo _expr_diff d or \partial handling
-# TODO: iterated integrals
 
 # Builds expression tree from text, nodes are nested AST tuples.
 #
@@ -1585,20 +1630,33 @@ def _expr_int (ast, from_to = ()): # construct indefinite integral ast
 		return AST ('intg', None, ast, *from_to)
 
 	elif ast.is_div:
+		if ast.denom.is_mul and ast.denom.muls [-1].is_diff_var:
+			return AST ('intg', ('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else \
+					AST ('*', ast.denom.muls [:-1])), ast.denom.muls [-1], *from_to)
+
 		if ast.numer.is_diff_var:
 			return AST ('intg', ('/', ast.One, ast.denom), ast.numer, *from_to)
-		elif ast.denom.is_mul and ast.denom.muls [-1].is_diff_var:
-			return AST ('intg', ('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else AST ('*', ast.denom.muls [:-1])), ast.denom.muls [-1], *from_to)
 
 	elif ast.is_mul and (ast.muls [-1].is_diff_var or ast.muls [-1].is_null_var): # null_var is for autocomplete
 		return AST ('intg', ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1]), ast.muls [-1], *from_to)
 
-	elif ast.is_add and ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_diff_var:
-		return AST ('intg', \
-				AST ('+', ast.adds [:-1] + (AST ('*', ast.adds [-1].muls [:-1]),))
-				if len (ast.adds [-1]) > 3 else \
-				AST ('+', ast.adds [:-1] + (ast.adds [-1].muls [0],)) \
-				, ast.adds [-1].muls [-1], *from_to)
+	elif ast.is_add:
+		if ast.adds [-1].is_diff_var:
+			return AST ('intg', \
+					AST ('+', ast.adds [:-1])
+					if len (ast.adds) > 2 else \
+					ast.adds [0] \
+					, ast.adds [-1], *from_to)
+
+		if ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_diff_var:
+			return AST ('intg', \
+					AST ('+', ast.adds [:-1] + (AST ('*', ast.adds [-1].muls [:-1]),))
+					if len (ast.adds [-1].muls) > 2 else \
+					AST ('+', ast.adds [:-1] + (ast.adds [-1].muls [0],)) \
+					, ast.adds [-1].muls [-1], *from_to)
+
+	elif ast.is_intg and ast.intg is not None:
+		return AST ('intg', _expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to)), ast.var, *from_to)
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -1728,7 +1786,7 @@ class Parser (lalr1.Parser):
 			b'PhlftGhEi5t7mk3dzN5cS1Iso7SL29ilq7hnJyFOwfK346guXlbESamz1IsTdQ3rGyE8K0gEKrLyXdpW2706w4Lq0IkcVLBbNFsUM6zIuxRzdd5xmLf8pLvsgcQO35oXw7qFrrQYxd8G46lv+ZUUma6SeQuZu8b881x+B7r97vZiRrHO8jI8cDKDPx7j0Fmy' \
 			b'sRtm49Ton+Thhnlg1W9pTvTWpD80wz7/k/z8WH5pFXE015F1Omotsj809cOwsrWeyM9192ugYbj6KaJY2ePE45NiZVO+wUvvVL+UmS9f1mnbQVqsdMVa5LI6sE+4qSOA5S6Ae1rjMUUxcQ8mkRmn3Q6Rod6HDFbteogMTQ/IdaRw3LN1+P2TrQ8RJN+Gfx1J' \
 			b'8FPzOx6QRK+URJfC1CvlCWrFQe9PGVjVi/EgllnzLq95hXOJ+9d27SsbVXdwL8H3R/4oP6h/gAjUPyiSy86EKmW0kBLVtLdRTe4hHehALd2t1NKqQx2opb+VWjp1qAO1XNfI3kwtozrUgVrGdbXcqhOxVV15zLLyiM2aCDROWZtJdqDG9Y11nraoulGrD+wm' \
-			b'WxstP3istkE8KKE5BiV4dUsHRibVUfWirfz3Qbd6QC0aKxcsUsM/QTjB/zA1yxWEylOFeKBk2/kFl2YQtE6pLH78wfLkGaazWGVB+nqtFTC67hZIoscoNrU1vABDw0n50SzKdD75H6OtnPM=' 
+			b'WxstP3istkE8KKE5BiV4dUsHRibVUfWirfz3Qbd6QC0aKxcsUsM/QTjB/zA1yxWEylOFeKBk2/kFl2YQtE6pLH78wfLkGaazWGVB+nqtFTC67hZIoscoNrU1vABDw0n50SzKdD75H6OtnPM='
 
 	_PARSER_TOP = 'expr'
 
@@ -1742,8 +1800,8 @@ class Parser (lalr1.Parser):
 	_ONEVARSP   = fr'{_CHAR}|{_GREEK}|{_SPECIAL}'
 	_DSONEVARSP = fr'(\d)|({_SHORT})|({_ONEVARSP})'
 
-	_FUNCPYONLY = '|'.join ('\\?' if s == '?' else s for s in AST.FUNCS_PY_ONLY) # special cased function name '?' for regex
-	_FUNCPYTEX  = '|'.join (AST.FUNCS_PY_AND_TEX)
+	_FUNCPYONLY = '|'.join (reversed (sorted ('\\?' if s == '?' else s for s in AST.FUNCS_PY_ONLY))) # special cased function name '?' for regex
+	_FUNCPYTEX  = '|'.join (reversed (sorted (AST.FUNCS_PY_AND_TEX)))
 
 	TOKENS      = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
@@ -1786,9 +1844,9 @@ class Parser (lalr1.Parser):
 	])
 
 	_FUNC_AST_REMAP = {
-		'abs'      : lambda expr: _expr_func (1, '|', expr.strip_paren ()),
-		'exp'      : lambda expr: _expr_func (2, '^', ('@', 'e'), expr.strip_paren ()),
-		'factorial': lambda expr: _expr_func (1, '!', expr.strip_paren ()),
+		'abs'      : lambda expr: _expr_func (1, '|', expr), # expr.strip_paren ()),
+		'exp'      : lambda expr: _expr_func (2, '^', ('@', 'e'), expr), # expr.strip_paren ()),
+		'factorial': lambda expr: _expr_func (1, '!', expr), # expr.strip_paren ()),
 		'ln'       : lambda expr: _expr_func (1, 'log', expr),
 	}
 
@@ -2057,17 +2115,14 @@ class sparser: # for single script
 # 	print (p.parse ('\\frac{d**2}{dxdy} x') [0])
 # 	a = p.parse ('\\int_0^1x') [0]
 # 	print (a)
-# TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
-
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
+
+# TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
 
 import re
 import sympy as sp
-sp.numbers = sp.numbers # medication for pylint
+sp.numbers = sp.numbers # medication for hyperactive pylint
 
-
-_FUNCS_PY_AND_TEX           = set (AST.FUNCS_PY_AND_TEX)
-_FUNCS_PY_ALL               = set (AST.FUNCS_PY_ONLY) | _FUNCS_PY_AND_TEX # | {'sin','cos','tan','cot','sec','csc','sinh','cosh','tanh','coth','sech','csch','asin','acos','atan','acot','asec','acsc','asinh','acosh','atanh','acoth','asech','acsch'}
 
 _SYMPY_FLOAT_PRECISION      = None
 
@@ -2177,7 +2232,7 @@ def _ast2tex_func (ast):
 
 	return \
 			f'\\{ast.func}{_ast2tex_paren (ast.arg)}' \
-			if ast.func in _FUNCS_PY_AND_TEX else \
+			if ast.func in AST.FUNCS_PY_AND_TEX else \
 			f'\\operatorname{{{ast.func}}}{_ast2tex_paren (ast.arg)}'
 
 def _ast2tex_lim (ast):
@@ -2320,7 +2375,7 @@ def _ast2simple_func (ast):
 
 	return \
 			f'{ast.func}{_ast2simple_paren (ast.arg)}' \
-			if ast.func in _FUNCS_PY_ALL else \
+			if ast.func in AST.FUNCS_PY_ALL else \
 			f'${ast.func}{_ast2simple_paren (ast.arg)}'
 
 def _ast2simple_lim (ast):
@@ -2458,7 +2513,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.base is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.func}{_ast2py_paren (ast.arg)}',
+	'func': lambda ast: f'{AST.FUNCS_ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -2498,10 +2553,6 @@ _ast2spt_consts = {
 	'\\infty': sp.oo,
 }
 
-_ast2spt_func_alias = {
-	'?': 'N',
-}
-
 _ast2spt_funcs = {
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 	'@': lambda ast: _ast2spt_consts.get (ast.var, sp.Symbol (ast.var)),
@@ -2515,7 +2566,7 @@ _ast2spt_funcs = {
 	'^': lambda ast: sp.Pow (ast2spt (ast.base), ast2spt (ast.exp)),
 	'log': lambda ast: sp.log (ast2spt (ast.log)) if ast.base is None else sp.log (ast2spt (ast.log), ast2spt (ast.base)),
 	'sqrt': lambda ast: sp.Pow (ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (ast2spt (ast.rad), sp.Pow (ast2spt (ast.idx), -1)),
-	'func': lambda ast: getattr (sp, _ast2spt_func_alias.get (ast.func, ast.func)) (ast2spt (ast.arg)),
+	'func': lambda ast: getattr (sp, AST.FUNCS_ALIAS.get (ast.func, ast.func)) (ast2spt (ast.arg)),
 	'lim': lambda ast: sp.limit (ast2spt (ast.lim), ast2spt (ast.var), ast2spt (ast.to), dir = '+-' if ast.dir is None else ast [4]),
 	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.var), ast2spt (ast.from_), ast2spt (ast.to))).doit (),
 	'diff': _ast2spt_diff,
@@ -2664,8 +2715,10 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 import sympy as sp
 
 
+_DEFAULT_ADDRESS          = ('localhost', 8000)
 
-_STATIC_FILES = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+
+_STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
 
 #...............................................................................................
 _last_ast = AST.Zero # last evaluated expression for _ usage
@@ -2790,9 +2843,9 @@ if __name__ == '__main__':
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if not argv:
-			host, port = 'localhost', 8000
+			host, port = _DEFAULT_ADDRESS
 		else:
-			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + ['8000']) [:2]
+			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
 		watch   = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
@@ -2824,7 +2877,7 @@ if __name__ == '__main__':
 		if e.errno != 98:
 			raise
 
-		print (f'Port {port} seems to be in use, try specifying different address and/or port as a parameter, e.g. localhost:8001')
+		print (f'Port {port} seems to be in use, try specifying different address and/or port as a command line parameter, e.g. localhost:8001')
 
 	except KeyboardInterrupt:
 		sys.exit (0)

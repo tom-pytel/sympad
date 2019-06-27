@@ -1,4 +1,3 @@
-# TODO: _expr_int scrape sum for differential.
 # TODO: redo _expr_diff d or \partial handling
 
 # Builds expression tree from text, nodes are nested AST tuples.
@@ -29,20 +28,30 @@ def _expr_int (ast, from_to = ()): # construct indefinite integral ast
 		return AST ('intg', None, ast, *from_to)
 
 	elif ast.is_div:
+		if ast.denom.is_mul and ast.denom.muls [-1].is_diff_var:
+			return AST ('intg', ('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else \
+					AST ('*', ast.denom.muls [:-1])), ast.denom.muls [-1], *from_to)
+
 		if ast.numer.is_diff_var:
 			return AST ('intg', ('/', ast.One, ast.denom), ast.numer, *from_to)
-		elif ast.denom.is_mul and ast.denom.muls [-1].is_diff_var:
-			return AST ('intg', ('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else AST ('*', ast.denom.muls [:-1])), ast.denom.muls [-1], *from_to)
 
 	elif ast.is_mul and (ast.muls [-1].is_diff_var or ast.muls [-1].is_null_var): # null_var is for autocomplete
 		return AST ('intg', ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1]), ast.muls [-1], *from_to)
 
-	elif ast.is_add and ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_diff_var:
-		return AST ('intg', \
-				AST ('+', ast.adds [:-1] + (AST ('*', ast.adds [-1].muls [:-1]),))
-				if len (ast.adds [-1]) > 3 else \
-				AST ('+', ast.adds [:-1] + (ast.adds [-1].muls [0],)) \
-				, ast.adds [-1].muls [-1], *from_to)
+	elif ast.is_add:
+		if ast.adds [-1].is_diff_var:
+			return AST ('intg', \
+					AST ('+', ast.adds [:-1])
+					if len (ast.adds) > 2 else \
+					ast.adds [0] \
+					, ast.adds [-1], *from_to)
+
+		if ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_diff_var:
+			return AST ('intg', \
+					AST ('+', ast.adds [:-1] + (AST ('*', ast.adds [-1].muls [:-1]),))
+					if len (ast.adds [-1].muls) > 2 else \
+					AST ('+', ast.adds [:-1] + (ast.adds [-1].muls [0],)) \
+					, ast.adds [-1].muls [-1], *from_to)
 
 	elif ast.is_intg and ast.intg is not None:
 		return AST ('intg', _expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to)), ast.var, *from_to)
@@ -175,7 +184,7 @@ class Parser (lalr1.Parser):
 			b'PhlftGhEi5t7mk3dzN5cS1Iso7SL29ilq7hnJyFOwfK346guXlbESamz1IsTdQ3rGyE8K0gEKrLyXdpW2706w4Lq0IkcVLBbNFsUM6zIuxRzdd5xmLf8pLvsgcQO35oXw7qFrrQYxd8G46lv+ZUUma6SeQuZu8b881x+B7r97vZiRrHO8jI8cDKDPx7j0Fmy' \
 			b'sRtm49Ton+Thhnlg1W9pTvTWpD80wz7/k/z8WH5pFXE015F1Omotsj809cOwsrWeyM9192ugYbj6KaJY2ePE45NiZVO+wUvvVL+UmS9f1mnbQVqsdMVa5LI6sE+4qSOA5S6Ae1rjMUUxcQ8mkRmn3Q6Rod6HDFbteogMTQ/IdaRw3LN1+P2TrQ8RJN+Gfx1J' \
 			b'8FPzOx6QRK+URJfC1CvlCWrFQe9PGVjVi/EgllnzLq95hXOJ+9d27SsbVXdwL8H3R/4oP6h/gAjUPyiSy86EKmW0kBLVtLdRTe4hHehALd2t1NKqQx2opb+VWjp1qAO1XNfI3kwtozrUgVrGdbXcqhOxVV15zLLyiM2aCDROWZtJdqDG9Y11nraoulGrD+wm' \
-			b'WxstP3istkE8KKE5BiV4dUsHRibVUfWirfz3Qbd6QC0aKxcsUsM/QTjB/zA1yxWEylOFeKBk2/kFl2YQtE6pLH78wfLkGaazWGVB+nqtFTC67hZIoscoNrU1vABDw0n50SzKdD75H6OtnPM='
+			b'WxstP3istkE8KKE5BiV4dUsHRibVUfWirfz3Qbd6QC0aKxcsUsM/QTjB/zA1yxWEylOFeKBk2/kFl2YQtE6pLH78wfLkGaazWGVB+nqtFTC67hZIoscoNrU1vABDw0n50SzKdD75H6OtnPM=' 
 
 	_PARSER_TOP = 'expr'
 
@@ -189,8 +198,8 @@ class Parser (lalr1.Parser):
 	_ONEVARSP   = fr'{_CHAR}|{_GREEK}|{_SPECIAL}'
 	_DSONEVARSP = fr'(\d)|({_SHORT})|({_ONEVARSP})'
 
-	_FUNCPYONLY = '|'.join ('\\?' if s == '?' else s for s in AST.FUNCS_PY_ONLY) # special cased function name '?' for regex
-	_FUNCPYTEX  = '|'.join (AST.FUNCS_PY_AND_TEX)
+	_FUNCPYONLY = '|'.join (reversed (sorted ('\\?' if s == '?' else s for s in AST.FUNCS_PY_ONLY))) # special cased function name '?' for regex
+	_FUNCPYTEX  = '|'.join (reversed (sorted (AST.FUNCS_PY_AND_TEX)))
 
 	TOKENS      = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
@@ -233,9 +242,9 @@ class Parser (lalr1.Parser):
 	])
 
 	_FUNC_AST_REMAP = {
-		'abs'      : lambda expr: _expr_func (1, '|', expr.strip_paren ()),
-		'exp'      : lambda expr: _expr_func (2, '^', ('@', 'e'), expr.strip_paren ()),
-		'factorial': lambda expr: _expr_func (1, '!', expr.strip_paren ()),
+		'abs'      : lambda expr: _expr_func (1, '|', expr), # expr.strip_paren ()),
+		'exp'      : lambda expr: _expr_func (2, '^', ('@', 'e'), expr), # expr.strip_paren ()),
+		'factorial': lambda expr: _expr_func (1, '!', expr), # expr.strip_paren ()),
 		'ln'       : lambda expr: _expr_func (1, 'log', expr),
 	}
 

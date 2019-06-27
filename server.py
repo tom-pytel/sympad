@@ -149,9 +149,9 @@ if __name__ == '__main__':
 
 				first_run = ''
 
-		opts, argv = getopt.getopt (sys.argv [1:], '', ['debug'])
+		opts, argv = getopt.getopt (sys.argv [1:], '', ['debug', 'nobrowser'])
 
-		if opts: # --debug
+		if ('--debug', '') in opts:
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if not argv:
@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
 		log_message (f'Serving on {httpd.server_address [0]}:{httpd.server_address [1]}')
 
-		if os.environ ['SYMPAD_FIRST_RUN']:
+		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
 			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/')
 
 		while 1:

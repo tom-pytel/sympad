@@ -1,15 +1,12 @@
-# TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
-
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
+
+# TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
 
 import re
 import sympy as sp
-sp.numbers = sp.numbers # medication for pylint
+sp.numbers = sp.numbers # medication for hyperactive pylint
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
-
-_FUNCS_PY_AND_TEX           = set (AST.FUNCS_PY_AND_TEX)
-_FUNCS_PY_ALL               = set (AST.FUNCS_PY_ONLY) | _FUNCS_PY_AND_TEX # | {'sin','cos','tan','cot','sec','csc','sinh','cosh','tanh','coth','sech','csch','asin','acos','atan','acot','asec','acsc','asinh','acosh','atanh','acoth','asech','acsch'}
 
 _SYMPY_FLOAT_PRECISION      = None
 
@@ -119,7 +116,7 @@ def _ast2tex_func (ast):
 
 	return \
 			f'\\{ast.func}{_ast2tex_paren (ast.arg)}' \
-			if ast.func in _FUNCS_PY_AND_TEX else \
+			if ast.func in AST.FUNCS_PY_AND_TEX else \
 			f'\\operatorname{{{ast.func}}}{_ast2tex_paren (ast.arg)}'
 
 def _ast2tex_lim (ast):
@@ -262,7 +259,7 @@ def _ast2simple_func (ast):
 
 	return \
 			f'{ast.func}{_ast2simple_paren (ast.arg)}' \
-			if ast.func in _FUNCS_PY_ALL else \
+			if ast.func in AST.FUNCS_PY_ALL else \
 			f'${ast.func}{_ast2simple_paren (ast.arg)}'
 
 def _ast2simple_lim (ast):
@@ -400,7 +397,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.base is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.func}{_ast2py_paren (ast.arg)}',
+	'func': lambda ast: f'{AST.FUNCS_ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -440,10 +437,6 @@ _ast2spt_consts = {
 	'\\infty': sp.oo,
 }
 
-_ast2spt_func_alias = {
-	'?': 'N',
-}
-
 _ast2spt_funcs = {
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 	'@': lambda ast: _ast2spt_consts.get (ast.var, sp.Symbol (ast.var)),
@@ -457,7 +450,7 @@ _ast2spt_funcs = {
 	'^': lambda ast: sp.Pow (ast2spt (ast.base), ast2spt (ast.exp)),
 	'log': lambda ast: sp.log (ast2spt (ast.log)) if ast.base is None else sp.log (ast2spt (ast.log), ast2spt (ast.base)),
 	'sqrt': lambda ast: sp.Pow (ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (ast2spt (ast.rad), sp.Pow (ast2spt (ast.idx), -1)),
-	'func': lambda ast: getattr (sp, _ast2spt_func_alias.get (ast.func, ast.func)) (ast2spt (ast.arg)),
+	'func': lambda ast: getattr (sp, AST.FUNCS_ALIAS.get (ast.func, ast.func)) (ast2spt (ast.arg)),
 	'lim': lambda ast: sp.limit (ast2spt (ast.lim), ast2spt (ast.var), ast2spt (ast.to), dir = '+-' if ast.dir is None else ast [4]),
 	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.var), ast2spt (ast.from_), ast2spt (ast.to))).doit (),
 	'diff': _ast2spt_diff,

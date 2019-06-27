@@ -36,20 +36,24 @@ class AST (tuple):
 	VARS_SPECIAL_LONG  = {'\\pi': 'pi', '\\infty': 'oo'}
 	VARS_SPECIAL_SHORT = {'pi': '\\pi', 'oo': '\\infty'}
 
-	FUNCS_PY_ONLY = list (reversed (sorted ('''
+	FUNCS_ALIAS        = {'?': 'N'}
+
+	FUNCS_PY_ONLY      = set ('''
 		?
 		abs
 		expand
 		factor
 		factorial
 		simplify
-		'''.strip ().split ())))
+		'''.strip ().split ())
 
-	FUNCS_PY_AND_TEX = list (reversed (sorted ('''
+	FUNCS_PY_AND_TEX   = set ('''
 		arg
 		exp
 		ln
-		'''.strip ().split ())))
+		'''.strip ().split ())
+
+	FUNCS_PY_ALL       = FUNCS_PY_ONLY | FUNCS_PY_AND_TEX
 
 	def __new__ (cls, *args):
 		op       = _AST_CLS2OP.get (cls)
