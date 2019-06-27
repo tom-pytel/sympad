@@ -797,7 +797,7 @@ r"""<!DOCTYPE html>
 
 <style>
 	body { margin: 3em 4em; }
-	p { line-height: 135%; }
+	p { margin: 0 0 1em 1em; line-height: 135%; }
 	h3 { margin: 2em 0 1em 0; }
 </style>
 
@@ -914,6 +914,8 @@ if it does not need to be.
 </p>
 
 <h3>Addition and Multiplication</h3>
+
+<p>
 Addition is addition and subtraction is subtraction: "<b>a + b</b>", "<b>a - b</b>". Multiplication is explicit with a "<b>*</b>" operator or implicit
 simply by writing two symbols next to each other so that "<b>a * b</b>" is the same as "<b>ab</b>". There is however a difference between the two in that
 the implicit version has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, derivative or division
@@ -1351,6 +1353,15 @@ class AST (tuple):
 
 		return self
 
+	def strip_minus (self, count = None):
+		count = 999999999 if count is None else count
+
+		while self.op == '-' and count:
+			self   = self.minus
+			count -= 1
+
+		return self
+
 	@staticmethod
 	def is_int_text (text): # >= 0
 		return _rec_num_int.match (text)
@@ -1741,7 +1752,7 @@ class Parser (lalr1.Parser):
 			b'gkuhb2E3jRku5B1m8q63yjuWect/hJJV4Bpfhqh5drGbOUyzebwEg4f05ScIZTxOxmZkWB5D6y/k38hIPhNZ1a6Xm+GXhyk+7O/pKBnZYUaYEp3Mzqr2g5eN7X8kRzeeIyZZx/NNY+HdNCVTovofvNLKsOEbaSX/AmvDP651ZemB37thyUfEhh2JJce+7CNS' \
 			b'47xUevoLwXZedq1GPqY75XZCcUtUqKFCvViJdg5cmh2TuhD13OppJj/pZhlHNGquRyMZE9zVJori+01Z02INA7TG6tZSdyePOi9IqHtLEXrLD/IyA1kv1bje+oFmzkKnrndjz8we1GEOcXxD0ehrqkSvdrdBU3NpJV7Quqi7CxY0i+oqqv7GrY52G9zqNmp1' \
 			b'IAK1OkYisPpxND3stDdiJze59rTBTHczZlq1rw1m+psx06l9bTAz3IyZUe1rg5lxSzPnXyHbGcsdoW026l0OQpoLIbMbTK6v+d25zHaj5jcsBrw0Wn/jfuCCeCiF5iBKwasb2tAROrBmFPcdb3hDueg0lMSjR2wmQo38ul1XQrCeLOIel23HLlwaoNA6pbLy' \
-			b'G0x0cO3ADpdZkBZXWw/oz3cjVtGj35xeOTy3Rf1X+e1RyvTF6n+NqRPu'
+			b'G0x0cO3ADpdZkBZXWw/oz3cjVtGj35xeOTy3Rf1X+e1RyvTF6n+NqRPu' 
 
 	_PARSER_TOP = 'expr'
 
@@ -1914,10 +1925,13 @@ class Parser (lalr1.Parser):
 
 	#...............................................................................................
 	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not expression
-		'CARET1': 'CARET',
-		'SUB1'  : 'SUB',
-		'FRAC2' : 'FRAC',
-		'FRAC1' : 'FRAC',
+		'CARET1'             : 'CARET',
+		'SUB1'               : 'SUB',
+		'FRAC2'              : 'FRAC',
+		'FRAC1'              : 'FRAC',
+		'expr_sub'           : 'SUB',
+		'expr_super'         : 'CARET',
+		'caret_or_doublestar': 'CARET',
 	}
 
 	_AUTOCOMPLETE_CLOSE = {
@@ -2002,7 +2016,7 @@ class Parser (lalr1.Parser):
 				self.autocompleting = False
 
 		else:
-			self.tokens.insert (self.tokidx, lalr1.Token ('VAR', '', self.tok.pos, (None, None, '')))
+			self.tokens.insert (self.tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, (None, None, '')))
 			self._mark_error ()
 
 		return True
@@ -2037,11 +2051,11 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-## DEBUG!
-# if __name__ == '__main__':
-# 	p = Parser ()
-# 	a = p.parse ('\\int \\int x dx') [0]
-# 	print (a)
+# DEBUG!
+if __name__ == '__main__':
+	p = Parser ()
+	a = p.parse ('\\lim') [0]
+	print (a)
 
 # 	print (p.parse ('1') [0])
 # 	print (p.parse ('x') [0])
@@ -2304,8 +2318,9 @@ def _ast2simple_mul (ast, ret_has = False):
 def _ast2simple_div (ast):
 	n, ns = _ast2simple_paren_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff'})
 	d, ds = _ast2simple_paren_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff'})
+	s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
 
-	return f'{n}{" / " if ns or ds else "/"}{d}'
+	return f'{n}{" / " if s else "/"}{d}'
 
 def _ast2simple_pow (ast):
 	b = ast2simple (ast.base)
@@ -2415,7 +2430,7 @@ def _ast2py_div (ast):
 	n = _ast2py_curly (ast.numer)
 	d = _ast2py_curly (ast.denom)
 
-	return f'{n}{" / " if ast.numer.op not in {"#", "@", "-"} or ast.denom.op not in {"#", "@", "-"} else "/"}{d}'
+	return f'{n}{" / " if ast.numer.strip_minus ().op not in {"#", "@"} or ast.denom.strip_minus ().op not in {"#", "@"} else "/"}{d}'
 
 def _ast2py_pow (ast):
 	b = _ast2py_curly (ast.base)
@@ -2470,7 +2485,7 @@ _ast2py_funcs = {
 	'/': _ast2py_div,
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
-	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.base is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
+	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
 	'func': lambda ast: f'{AST.FUNCS_ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
