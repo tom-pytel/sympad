@@ -112,12 +112,34 @@ function resize () {
 
 //...............................................................................................
 function logResize () {
-	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 2)); // 2 is fudge factor
+	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 3)); // +3 is fudge factor
 
 	if (margin < MarginTop) {
 		MarginTop = margin
 		$('body').css ({'margin-top': margin});
 	}
+}
+
+//...............................................................................................
+var LastDocHeight = undefined;
+var LastWinHeight = undefined;
+
+function monitorStuff () {
+	let curDocHeight = $(document).height ();
+	let curWinHeight = $(window).height ();
+
+	if (curDocHeight != LastDocHeight || curWinHeight != LastWinHeight) {
+		copyInputStyle ();
+
+		window.LastDocHeight = curDocHeight;
+		window.LastWinHeight = curWinHeight;
+	}
+
+	if (PreventFocusOut) {
+		JQInput.focus ();
+	}
+
+	setTimeout (monitorStuff, 50);
 }
 
 //...............................................................................................
@@ -480,15 +502,6 @@ function inputKeydown (e) {
 // }
 
 //...............................................................................................
-function keepInputFocus () {
-	if (PreventFocusOut) {
-		JQInput.focus ();
-	}
-
-	setTimeout (keepInputFocus, 50);
-}
-
-//...............................................................................................
 $(function () {
 	window.JQInput = $('#Input');
 
@@ -513,7 +526,7 @@ $(function () {
 	addLogEntry ();
 	logResize ();
 	resize ();
-	keepInputFocus ();
+	monitorStuff ();
 });
 
 
