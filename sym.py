@@ -230,8 +230,9 @@ def _ast2simple_mul (ast, ret_has = False):
 def _ast2simple_div (ast):
 	n, ns = _ast2simple_paren_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff'})
 	d, ds = _ast2simple_paren_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff'})
+	s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
 
-	return f'{n}{" / " if ns or ds else "/"}{d}'
+	return f'{n}{" / " if s else "/"}{d}'
 
 def _ast2simple_pow (ast):
 	b = ast2simple (ast.base)
@@ -341,7 +342,7 @@ def _ast2py_div (ast):
 	n = _ast2py_curly (ast.numer)
 	d = _ast2py_curly (ast.denom)
 
-	return f'{n}{" / " if ast.numer.op not in {"#", "@", "-"} or ast.denom.op not in {"#", "@", "-"} else "/"}{d}'
+	return f'{n}{" / " if ast.numer.strip_minus ().op not in {"#", "@"} or ast.denom.strip_minus ().op not in {"#", "@"} else "/"}{d}'
 
 def _ast2py_pow (ast):
 	b = _ast2py_curly (ast.base)
@@ -396,7 +397,7 @@ _ast2py_funcs = {
 	'/': _ast2py_div,
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
-	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.base is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
+	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
 	'func': lambda ast: f'{AST.FUNCS_ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',

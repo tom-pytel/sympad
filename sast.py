@@ -123,6 +123,15 @@ class AST (tuple):
 
 		return self
 
+	def strip_minus (self, count = None):
+		count = 999999999 if count is None else count
+
+		while self.op == '-' and count:
+			self   = self.minus
+			count -= 1
+
+		return self
+
 	@staticmethod
 	def is_int_text (text): # >= 0
 		return _rec_num_int.match (text)
