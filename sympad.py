@@ -157,88 +157,9 @@ body {
 	left: -1.25em;
 	top: 0.25em;
 	font-size: 0.7em;
-	/* left: -1em;
-	top: 0; */
 	color: red;
 	font-weight: bold;
 }
-
-
-
-
-/* .blinking {
-	animation: blinkingText 1s infinite;
-}
-
-@keyframes blinkingText {
-	0%   { color: #000; }
-	49%  { color: #000; }
-	50%  { color: transparent; }
-	100% { color: transparent; }
-} */
-
-/* .rotator {
-	display: inline-block;
-	animation: rotator 1s infinite;
-}
-
-@keyframes rotator {
-	0%   { rotate: 0deg; }
-	25%  { rotate: 90deg; }
-	50%  { rotate: 180deg; }
-	75%  { rotate: 270deg; }
-	100% { rotate: 360deg; }
-}
- */
-
-/* .spinner1 {
-	position: absolute;
-	animation: spinner1 1s infinite;
-}
-
-@keyframes spinner1 {
-	0%   { color: #000; }
-	25%  { color: transparent; }
-	75%  { color: transparent; }
-	100% { color: #000; }
-}
-
-.spinner2 {
-	position: absolute;
-	animation: spinner2 1s infinite;
-}
-
-@keyframes spinner2 {
-	0%   { color: transparent; }
-	25%  { color: #000; }
-	50%  { color: transparent; }
-	100% { color: transparent; }
-}
-
-.spinner3 {
-	position: absolute;
-	animation: spinner3 1s infinite;
-}
-
-@keyframes spinner3 {
-	0%   { color: transparent; }
-	25%  { color: transparent; }
-	50%  { color: #000; }
-	75%  { color: transparent; }
-	100% { color: transparent; }
-}
-
-.spinner4 {
-	position: absolute;
-	animation: spinner4 1s infinite;
-}
-
-@keyframes spinner4 {
-	0%   { color: transparent; }
-	50%  { color: transparent; }
-	75%  { color: #000; }
-	100% { color: transparent; }
-} */
 """.encode ("utf8"),
 
 	'script.js': # script.js
@@ -935,6 +856,8 @@ simplify (sin x / cos x)<br>
 expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 \arccos\frac{\int_0^\inftyx^4e^{-x}dx}{\sqrt[3]{8}4!}<br>
+d/dx {\sum_{n=0}^oo x**n/n! + \lim_{x \to oo} 1/x + \int xy dx}<br>
+
 </p>
 
 <h3>Usage</h3>
@@ -1655,7 +1578,7 @@ import re
 def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.VARS_SPECIAL_SHORT.get (tok.grp [i + 1], tok.grp [i + 2]))
 
-def _expr_int (ast, from_to = ()): # construct indefinite integral ast
+def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	if ast.is_diff_var or ast.is_null_var: # null_var is for autocomplete
 		return AST ('intg', None, ast, *from_to)
 
@@ -1818,7 +1741,7 @@ class Parser (lalr1.Parser):
 			b'gkuhb2E3jRku5B1m8q63yjuWect/hJJV4Bpfhqh5drGbOUyzebwEg4f05ScIZTxOxmZkWB5D6y/k38hIPhNZ1a6Xm+GXhyk+7O/pKBnZYUaYEp3Mzqr2g5eN7X8kRzeeIyZZx/NNY+HdNCVTovofvNLKsOEbaSX/AmvDP651ZemB37thyUfEhh2JJce+7CNS' \
 			b'47xUevoLwXZedq1GPqY75XZCcUtUqKFCvViJdg5cmh2TuhD13OppJj/pZhlHNGquRyMZE9zVJori+01Z02INA7TG6tZSdyePOi9IqHtLEXrLD/IyA1kv1bje+oFmzkKnrndjz8we1GEOcXxD0ehrqkSvdrdBU3NpJV7Quqi7CxY0i+oqqv7GrY52G9zqNmp1' \
 			b'IAK1OkYisPpxND3stDdiJze59rTBTHczZlq1rw1m+psx06l9bTAz3IyZUe1rg5lxSzPnXyHbGcsdoW026l0OQpoLIbMbTK6v+d25zHaj5jcsBrw0Wn/jfuCCeCiF5iBKwasb2tAROrBmFPcdb3hDueg0lMSjR2wmQo38ul1XQrCeLOIel23HLlwaoNA6pbLy' \
-			b'G0x0cO3ADpdZkBZXWw/oz3cjVtGj35xeOTy3Rf1X+e1RyvTF6n+NqRPu' 
+			b'G0x0cO3ADpdZkBZXWw/oz3cjVtGj35xeOTy3Rf1X+e1RyvTF6n+NqRPu'
 
 	_PARSER_TOP = 'expr'
 
@@ -2119,8 +2042,6 @@ class sparser: # for single script
 # 	p = Parser ()
 # 	a = p.parse ('\\int \\int x dx') [0]
 # 	print (a)
-
-
 
 # 	print (p.parse ('1') [0])
 # 	print (p.parse ('x') [0])
@@ -2732,7 +2653,7 @@ class sym: # for single script
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Exception prevents restart on file date change.
+# TODO: Exception prevents restart on file date change?
 
 import getopt
 import json
