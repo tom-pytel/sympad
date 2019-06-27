@@ -1,31 +1,6 @@
 // TODO: Move last evaluated expression '_' substitution here from the server side.
-// TODO: Stabilize scroll bars appearing and disappearing at start.
 // TODO: Arrow keys in Edge?
 // TODO: Change how error, auto and good text are displayed?
-
-// TODO: Need to copyInputStyle when bottom scroll bar appears.
-
-// Check if body height is higher than window height :)
-// if ($(document).height() > $(window).height()) {
-// 	alert("Vertical Scrollbar! D:");
-// }
-
-// // Check if body width is higher than window width :)
-// if ($(document).width() > $(window).width()) {
-// 	alert("Horizontal Scrollbar! D:<");
-// }
-
-// 	function scrollBars(){
-// 		var body= $('body')[0]
-// 		return {
-// 			vertical:body.scrollHeight>body.clientHeight,
-// 			horizontal:body.scrollWidth>body.clientWidth
-// 		}
-// 	}
-
-// var hasScrollbar = window.innerWidth > document.documentElement.clientWidth
-
-// return this.get(0).scrollHeight > this.height();
 
 var URL              = '/';
 var MJQueue          = null;
