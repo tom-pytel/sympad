@@ -23,7 +23,7 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.VARS_SPECIAL_SHORT.get (tok.grp [i + 1], tok.grp [i + 2]))
 
-def _expr_int (ast, from_to = ()): # construct indefinite integral ast
+def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	if ast.is_diff_var or ast.is_null_var: # null_var is for autocomplete
 		return AST ('intg', None, ast, *from_to)
 
