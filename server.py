@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # python 3.6+
 
+# TODO: Exception prevents restart on file date change.
+
 import json
 import os
 import re

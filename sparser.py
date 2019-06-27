@@ -1,3 +1,4 @@
+# TODO: special case variable 'pi'
 # TODO: redo _expr_diff d or \partial handling
 # TODO: iterated integrals
 
@@ -228,6 +229,7 @@ class Parser (lalr1.Parser):
 
 	_FUNC_AST_REMAP = {
 		'abs'      : lambda expr: _expr_func (1, '|', expr.strip_paren ()),
+		'exp'      : lambda expr: _expr_func (2, '^', ('@', 'e'), expr.strip_paren ()),
 		'factorial': lambda expr: _expr_func (1, '!', expr.strip_paren ()),
 		'ln'       : lambda expr: _expr_func (1, 'log', expr),
 	}

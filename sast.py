@@ -43,6 +43,7 @@ class AST (tuple):
 
 	FUNCS_PY_AND_TEX = list (reversed (sorted ('''
 		arg
+		exp
 		ln
 		'''.strip ().split ())))
 
@@ -103,7 +104,9 @@ class AST (tuple):
 					AST ('#', f'-{self.num}')
 
 	def strip_paren (self, count = None):
-		while self.op == '(' and (count is None or count):
+		count = 999999999 if count is None else count
+
+		while self.op == '(' and count:
 			self   = self.paren
 			count -= 1
 

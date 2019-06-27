@@ -6,31 +6,143 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
 <title>SymPad Help</title>
+<script type="text/x-mathjax-config">
+	MathJax.Hub.Config ({
+		messageStyle: "none",
+		tex2jax: {inlineMath: [["$","$"], ["\\(","\\)"]]}
+	});
+</script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS_CHTML-full"></script>
 
 </head>
 
-<body>
+<body style="margin: 4em">
 
-<h2 align="center">SymPad v0.1</h2>
-<br>
-<p>Type '<b>help</b>' at any time for more information.</p>
-<br><br>
-simplify x, expand x, factor x, ? x
-<br><br>
-? x = N (x): numerically evaluate x
-<br><br>
-d/dx = \frac{d}{dx} = $ \frac{d}{dx} $
-<br>
-d^2/dxdy = \frac{\partial}{\partial x\partial y} = $ \frac{\partial}{\partial x\partial y} $
-<br><br>
-^ and ** are both the power operator but they bind differently, ^ follows latex rules and ** follows python rules
-<br><br>
-sin^{-1}(x) = $ \sin^{-1}(x) $: is interpreted as the inverse sin function arcsin,
-same goes for cos, tan, sec, csc, cot, sinh, cosh, tanh, sech, csch and coth
+<h2 align="center" style="margin: 0">SymPad</h2>
+<h5 align="center" style="margin: 0">v0.1</h5>
+
+<h3>Numbers</h3>
+
+<p>
+Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
+Keep in mind that "e" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together
+as "2e+22" as this will be interpreted to be 2 * 10^22, use spaces and/or explicit multiplication: 2 * e + 22.
+</p>
+
+<h3>Variables</h3>
+
+<p>
+Variable names mostly follow LaTeX convention. With the exception of $i$, the imaginary unit and $e$ which is Euler"s number, variables
+are single letters: $x, y, z, A, B$. Variables may also be greek letters preceded by a backslash such as "\alpha" ($\alpha$),
+"\beta" ($\beta$), etc... again with exception of "\pi", which of course is the mathematical constant $\pi$. There are two special case constants
+which are parsed as two letter constants without a slash since they are commonly used, those are "pi" without the slash, and "oo" which is infinity.
+Infinity may also be entered as "\infty".
+</p><p>
+Variable names may be followed by various primes ' such as " a' " ($a'$) or " \omega'' " ($\omega''$).
+Variables may be subscripted with other variables or numbers "x_1" ($x_1$), "y_z" ($y_z$), "\alpha_\omega" ($\alpha_\omega$).
+This can be extended to silly levels " \gamma_{x_{y_0'}''}''' " ($\gamma_{x_{y_0'}''}'''$).
+</p>
+
+<h3>Parentheses</h3>
+
+<p>
+Explicit '()' or implicit curly '{}' parentheses allow prioritization of lower precedence operations over higher order ones as usual. They may be
+used interchangeably, the only difference being that the implicit version is not drawn if it does not need to be.
+</p>
+
+<h3>Addition and Multiplication</h3>
+Addition is addition and subtraction is subtraction: "a + b", "a - b". Multiplication is explicit with a "*" operator or implicit simply by writing
+two symbols next to each other so that "a * b" is the same as "ab". There is however a difference between the two in that the implicit version
+has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, differential or division expression whereas
+implicit will not, e.g. "1/xy" = $\frac{1}{xy}$ whereas "1/x*y" = $\frac{1}{x} \cdot y$.
+</p><p>
+Division also has two operators, the normal "/" which has a fairly low precedence and the LaTeX "\frac" version which has a very high precedence, even
+higher than exponentiation. So high in fact that parentheses are not needed if using "\frac" as an exponent as in "x^\frac{1}{2}" = $x^\frac{1}{2}$.
+The "\frac" operation also does not need parentheses if using single digit operands or single letter variables (latin or greek) such as "\frac12" =
+$\frac12$, "\frac\alpha\beta" = $\frac\alpha\beta$ or "\fracxy" = $\frac xy$ (although this last version without a space before the x is not legal in
+standard LaTeX).
+</p>
+
+<h3>Exponentiation</h3>
+
+<p>
+There are two power opearators "^" and "**". They have the same precedence and can be used interchangeably but follow slightly different parsing
+rules. The "^" operator follows LaTeX rules which only allow a single positive digit or letter (lating or greek) variable without the use of curly
+braces whereas the "**" follows Python rules which allow negative values or variables or functions. To illustrate the diffference: "x**-2" = $x^{-2}$
+whereas "x^-2" = $x^-2$ (which makes no sense). Also, "e**log(x)" will work as expected ($e^{\log(x)}$) whereas "e^log(x)" = $e^log(x)$.
+</p>
+
+<h3>Logarithms</h3>
+
+<p>
+The natural logarithm of x is specified "lnx", "\ln x", "log x", "\log{x}". A logarithm in a specific base is specified by "\log_b x" ($\log_b x$),
+"log_{10}(x)" ($\log_{10} {x}$), etc...
+</p>
+
+<h3>Roots</h3>
+
+<p>
+The square root of x ($\sqrt{x}$) may be entered in any of these forms "sqrtx", "\sqrt x", "sqrt (x)", "\sqrt{x}", with or without the backslash.
+The cube (or any other) root is similar, ($\sqrt[3]x$) = "sqrt[3]x", "sqrt[3] (x)", "\sqrt[3] {x}".
+</p>
+
+<h3>Functions</h3>
+
+<p>
+Currently several single parameter functions are supported directly, with a mechanism for calling any other existing single parameter SymPy function
+explicitly. The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, with or without leading backslash:
+"sin", "acos", "arctan", "\acosh", etc... In addition these functions accept a special standard syntax for exponentiation or inverses as a convenience.
+For example "sin^2(x)" = $\sin^2(x)$ and "\tan^{-1}x" = $\arctan(x)$.
+</p><p>
+Other SymPy functions are supported directly such as "simplify (sin(x) / cos(x))" = $\tan(x)$, "expand ({x+1}^3)" = $x^3+3x^2+3x+1$ and
+"factor (x^2 + 2x + 1)" = $(x+1)^2$. Functions don't technically REQUIRE explicit or implicit parentheses but for any parameter more complicated
+than another function or variable to a power they will be needed.
+</p><p>
+Three functions have a special separate syntax. The function "abs (x)" is equivalent to the standard bar syntax for absolute value "|x|", the
+"factorial (x)" function is identical to writing "x!" and "exp (x)" is the same as writing "e^x". In fact those functions are translated on the fly.
+</p><p>
+If a function is not supported directly (and most are not) then it can still be called using a special escape characted "\($\)". To call the
+SymPy "sign" function for example simply enter "\($\)sign (-2)".
+</p><p>
+The last special function is "?", this is equivalent to SymPy "N ()" or "evalf ()" and it will ask SymPy to numerically evaluate whatever it can
+in the given expression. This is how you would get the numerical value of $\sqrt 2$ or $\sin(2)$.
+</p>
+
+<h3>Limits</h3>
+
+<p>
+To take the limit of an expression "z" as variable "x" approaches "y" enter "\lim_{x \to y} (z)" ($\lim_{x\to y} (z)$). This will only give the limit
+if it exists and is the same when approaching from both directions, unlike SymPy which defaults to approaching from the positive direction. To specify
+a direction add "^+" or "^-" to the equation as such: "\lim_{x \to y^+} (z)" ($\lim_{x\to y^+} (z)$).
+</p>
+
+<h3>Sums</h3>
+
+<h3>Differentiation</h3>
+
+<h3>Integration</h3>
+
+<h3>Interface</h3>
+
+<p>
+Input history is supported with the up and down arrows.
+</p><p>
+The symbolic expressions can be copied to the clipboard in various formats. Single click for a simple short format meant to be pasted back into the
+input field. A double click copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
+"e" is copied as "e" and not the SymPy "E", "i" is copied as "i" and not "I" or "1j". Simply set "e = E" and "i = I" or "i = 1j" in the Python context
+depending on need. Finally a triple click will copy the expression in LaTeX format. The simple and LaTeX formats should be directly pasteable into
+SymPy whereas the Python representation may or may not be depending on what elements it includes.
+</p><p>
+There is a special use for the "_" character which has the same meaning as in the Python interactive shell in that it represents the last
+expression successfully evaluated. To see this in action type in "1" and hit Enter, then put in "expand ((x+1)*_)" and hit Enter. Repeat this
+several times using the up arrow. This character may not want to follow directly after an alphanumeric character since it is also used to
+subscript variables, in this case simply precede it with a space.
+</p>
+
 <br><br><br>
 <div align="center">
-GitHub: <a href="https://github.com/Pristine-Cat/SymPad" style="color: #0007">https://github.com/Pristine-Cat/SymPad</a>
-<br>
+GitHub: <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')">https://github.com/Pristine-Cat/SymPad</a>
+<br><br>
 Copyright (c) 2019 Tomasz Pytel, All rights reserved.
 </div>
 
