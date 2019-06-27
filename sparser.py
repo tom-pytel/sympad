@@ -359,10 +359,11 @@ class Parser (lalr1.Parser):
 
 	#...............................................................................................
 	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not expression
-		'CARET1': 'CARET',
-		'SUB1'  : 'SUB',
-		'FRAC2' : 'FRAC',
-		'FRAC1' : 'FRAC',
+		'CARET1'    : 'CARET',
+		'SUB1'      : 'SUB',
+		'FRAC2'     : 'FRAC',
+		'FRAC1'     : 'FRAC',
+		'expr_super': 'CARET',
 	}
 
 	_AUTOCOMPLETE_CLOSE = {
@@ -447,7 +448,7 @@ class Parser (lalr1.Parser):
 				self.autocompleting = False
 
 		else:
-			self.tokens.insert (self.tokidx, lalr1.Token ('VAR', '', self.tok.pos, (None, None, '')))
+			self.tokens.insert (self.tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, (None, None, '')))
 			self._mark_error ()
 
 		return True
@@ -482,11 +483,11 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-## DEBUG!
-# if __name__ == '__main__':
-# 	p = Parser ()
-# 	a = p.parse ('\\int \\int x dx') [0]
-# 	print (a)
+# DEBUG!
+if __name__ == '__main__':
+	p = Parser ()
+	a = p.parse ('\\lim') [0]
+	print (a)
 
 # 	print (p.parse ('1') [0])
 # 	print (p.parse ('x') [0])
