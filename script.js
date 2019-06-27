@@ -1,6 +1,7 @@
+// TODO: Move last evaluated expression '_' substitution here from the server side.
+// TODO: Stabilize scroll bars appearing and disappearing at start.
 // TODO: Arrow keys in Edge?
 // TODO: Change how error, auto and good text are displayed?
-// TODO: Stabilize scroll bars appearing and disappearing at start.
 
 // TODO: Need to copyInputStyle when bottom scroll bar appears.
 

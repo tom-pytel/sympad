@@ -33,7 +33,11 @@ _rec_func_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 _rec_func_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 class AST (tuple):
-	FUNCS_PY = list (reversed (sorted ('''
+	VARS_SPECIAL_LONG  = {'\\pi': 'pi', '\\infty': 'oo'}
+	VARS_SPECIAL_SHORT = {'pi': '\\pi', 'oo': '\\infty'}
+
+	FUNCS_PY_ONLY = list (reversed (sorted ('''
+		?
 		abs
 		expand
 		factor
@@ -80,11 +84,14 @@ class AST (tuple):
 
 	def _is_neg (self):
 		return \
-				self.op == '-' or \
-				self.op == '#' and self.num == '-' or \
-				self.op == '*' and self.muls [0].is_neg
+				self.is_minus or \
+				self.is_num and self.num [0] == '-' or \
+				self.is_mul and self.muls [0].is_neg
 
-	def _is_single_unit (self): # is single positive digit or single non-differential non-subscripted variable?
+	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted variable?
+		if self.op == '/':
+			return True
+
 		if self.op == '#':
 			return len (self.num) == 1
 

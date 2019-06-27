@@ -3,6 +3,7 @@
 
 # TODO: Exception prevents restart on file date change.
 
+import getopt
 import json
 import os
 import re
@@ -17,12 +18,12 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
+import sympy as sp
+
 import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
-
-import sympy as sp ## DEBUG!
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -75,14 +76,13 @@ class Handler (SimpleHTTPRequestHandler):
 				simple = sym.ast2simple (ast)
 				py     = sym.ast2py (ast)
 
-				## DEBUG!
-				print ()
-				print ('ast:   ', ast)
-				print ('tex:   ', tex)
-				print ('simple:', simple)
-				print ('py:    ', py)
-				print ()
-				## DEBUG!
+				if os.environ.get ('SYMPAD_DEBUG'):
+					print ()
+					print ('ast:   ', ast)
+					print ('tex:   ', tex)
+					print ('simple:', simple)
+					print ('py:    ', py)
+					print ()
 
 			response = {
 				'tex'         : tex,
@@ -103,12 +103,11 @@ class Handler (SimpleHTTPRequestHandler):
 				ast       = sym.spt2ast (spt)
 				_last_ast = ast
 
-				## DEBUG!
-				print ()
-				print ('spt:        ', repr (spt))
-				print ('sympy latex:', sp.latex (spt))
-				print ()
-				## DEBUG!
+				if os.environ.get ('SYMPAD_DEBUG'):
+					print ()
+					print ('spt:        ', repr (spt))
+					print ('sympy latex:', sp.latex (spt))
+					print ()
 
 				response  = {
 					'tex'   : sym.ast2tex (ast),
@@ -148,10 +147,15 @@ if __name__ == '__main__':
 
 				first_run = ''
 
-		if len (sys.argv) < 2:
+		opts, argv = getopt.getopt (sys.argv [1:], '', ['debug'])
+
+		if opts: # --debug
+			os.environ ['SYMPAD_DEBUG'] = '1'
+
+		if not argv:
 			host, port = 'localhost', 8000
 		else:
-			host, port = (re.split (r'(?<=\]):' if sys.argv [1].startswith ('[') else ':', sys.argv [1]) + ['8000']) [:2]
+			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + ['8000']) [:2]
 			host, port = host.strip ('[]'), int (port)
 
 		watch   = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')

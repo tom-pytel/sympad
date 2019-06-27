@@ -1,4 +1,3 @@
-# TODO: Translate unknown spt nodes to '$func' functions.
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
 
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
@@ -10,12 +9,12 @@ sp.numbers = sp.numbers # medication for pylint
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _FUNCS_PY_AND_TEX           = set (AST.FUNCS_PY_AND_TEX)
-_FUNCS_ALL_PY               = set (AST.FUNCS_PY) | _FUNCS_PY_AND_TEX
+_FUNCS_PY_ALL               = set (AST.FUNCS_PY_ONLY) | _FUNCS_PY_AND_TEX # | {'sin','cos','tan','cot','sec','csc','sinh','cosh','tanh','coth','sech','csch','asin','acos','atan','acot','asec','acsc','asinh','acosh','atanh','acoth','asech','acsch'}
+
+_SYMPY_FLOAT_PRECISION      = None
 
 _rec_var_diff_or_part_start = re.compile (r'^(?:d(?=[^_])|\\partial )')
 _rec_num_deconstructed      = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
-
-_SYMPY_FLOAT_PRECISION      = None
 
 #...............................................................................................
 def set_precision (ast): # recurse through ast to set sympy float precision according to largest string of digits found
@@ -28,7 +27,7 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 		ast = stack.pop ()
 
 		if not isinstance (ast, AST):
-			pass # do nothing
+			pass # nop
 		elif ast.is_num:
 			prec = max (prec, len (ast.num))
 		else:
@@ -44,7 +43,7 @@ def _ast2tex_curly (ast):
 	return f'{ast2tex (ast)}' if ast.is_single_unit else f'{{{ast2tex (ast)}}}'
 
 def _ast2tex_paren (ast):
-	return f'\\left({ast2tex (ast)} \\right)' if not ast.is_paren else ast2tex (ast)
+	return ast2tex (ast) if ast.is_paren else f'\\left({ast2tex (ast)} \\right)'
 
 def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'+'}):
 	if ast.is_mul:
@@ -193,7 +192,7 @@ def _ast2simple_curly (ast):
 	return f'{ast2simple (ast)}' if ast.is_single_unit else f'{{{ast2simple (ast)}}}'
 
 def _ast2simple_paren (ast):
-	return f'({ast2simple (ast)})' if not ast.is_paren else ast2simple (ast)
+	return ast2simple (ast) if ast.is_paren else f'({ast2simple (ast)})'
 
 def _ast2simple_paren_mul_exp (ast, ret_has = False, also = {'+'}):
 	if ast.is_mul:
@@ -220,8 +219,8 @@ def _ast2simple_mul (ast, ret_has = False):
 
 		elif p and (p in {('@', 'd'), ('@', '\\partial')} or \
 				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
-				(n.is_var and _rec_var_diff_or_part_start.match (n.var)) or \
-				(p.is_var and _rec_var_diff_or_part_start.match (p.var))):
+				(n.is_var and (n.var in AST.VARS_SPECIAL_LONG or _rec_var_diff_or_part_start.match (n.var))) or \
+				(p.is_var and (p.var in AST.VARS_SPECIAL_LONG or _rec_var_diff_or_part_start.match (p.var)))):
 			t.append (f' {s}')
 
 		else:
@@ -263,7 +262,7 @@ def _ast2simple_func (ast):
 
 	return \
 			f'{ast.func}{_ast2simple_paren (ast.arg)}' \
-			if ast.func in _FUNCS_ALL_PY else \
+			if ast.func in _FUNCS_PY_ALL else \
 			f'${ast.func}{_ast2simple_paren (ast.arg)}'
 
 def _ast2simple_lim (ast):
@@ -310,7 +309,7 @@ def _ast2simple_intg (ast):
 
 _ast2simple_funcs = {
 	'#': lambda ast: ast.num,
-	'@': lambda ast: ast.var,
+	'@': lambda ast: AST.VARS_SPECIAL_LONG.get (ast.var, ast.var),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
 	'-': lambda ast: f'-{_ast2simple_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2simple (ast.minus)}',
@@ -339,7 +338,7 @@ def _ast2py_curly (ast):
 			ast2py (ast)
 
 def _ast2py_paren (ast):
-	return f'({ast2py (ast)})' if not ast.is_paren else ast2py (ast)
+	return ast2py (ast) if ast.is_paren else f'({ast2py (ast)})'
 
 def _ast2py_div (ast):
 	n = _ast2py_curly (ast.numer)
@@ -390,7 +389,7 @@ _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 
 _ast2py_funcs = {
 	'#': lambda ast: ast.num,
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.var).replace ('\\infty', 'oo').replace ('\\', '').replace ("'", '_prime'),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.VARS_SPECIAL_LONG.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2py (ast.minus)}',
@@ -401,7 +400,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.base is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.func}({ast2py (ast.arg)})',
+	'func': lambda ast: f'{ast.func}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -472,6 +471,12 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 		if func:
 			return func (spt)
+
+		if cls is sp.Function:
+			if len (spt.args) != 1:
+				break
+
+			return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
 
 	raise RuntimeError (f'unexpected class {spt.__class__.__name__!r}')
 
