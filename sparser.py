@@ -186,7 +186,7 @@ class Parser (lalr1.Parser):
 			b'gkuhb2E3jRku5B1m8q63yjuWect/hJJV4Bpfhqh5drGbOUyzebwEg4f05ScIZTxOxmZkWB5D6y/k38hIPhNZ1a6Xm+GXhyk+7O/pKBnZYUaYEp3Mzqr2g5eN7X8kRzeeIyZZx/NNY+HdNCVTovofvNLKsOEbaSX/AmvDP651ZemB37thyUfEhh2JJce+7CNS' \
 			b'47xUevoLwXZedq1GPqY75XZCcUtUqKFCvViJdg5cmh2TuhD13OppJj/pZhlHNGquRyMZE9zVJori+01Z02INA7TG6tZSdyePOi9IqHtLEXrLD/IyA1kv1bje+oFmzkKnrndjz8we1GEOcXxD0ehrqkSvdrdBU3NpJV7Quqi7CxY0i+oqqv7GrY52G9zqNmp1' \
 			b'IAK1OkYisPpxND3stDdiJze59rTBTHczZlq1rw1m+psx06l9bTAz3IyZUe1rg5lxSzPnXyHbGcsdoW026l0OQpoLIbMbTK6v+d25zHaj5jcsBrw0Wn/jfuCCeCiF5iBKwasb2tAROrBmFPcdb3hDueg0lMSjR2wmQo38ul1XQrCeLOIel23HLlwaoNA6pbLy' \
-			b'G0x0cO3ADpdZkBZXWw/oz3cjVtGj35xeOTy3Rf1X+e1RyvTF6n+NqRPu' 
+			b'G0x0cO3ADpdZkBZXWw/oz3cjVtGj35xeOTy3Rf1X+e1RyvTF6n+NqRPu'
 
 	_PARSER_TOP = 'expr'
 
@@ -383,6 +383,7 @@ class Parser (lalr1.Parser):
 		s               = self.stack [-1]
 		self.stack [-1] = (s [0], s [1], AST ('*', (s [2], ('@', ''))))
 		expr_vars       = set ()
+		expr_diffs      = set ()
 
 		if self.autocompleting:
 			stack = [s [2]]
@@ -391,11 +392,12 @@ class Parser (lalr1.Parser):
 				ast = stack.pop ()
 
 				if ast.is_var:
-					expr_vars.add (ast.var)
+					(expr_diffs if ast.is_diff_var else expr_vars).add (ast.var)
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
 		expr_vars -= {'_', 'e', 'i', '\\pi', '\\infty'}
+		expr_vars -= set (var [1:] for var in expr_diffs)
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
@@ -483,6 +485,9 @@ class sparser: # for single script
 ## DEBUG!
 # if __name__ == '__main__':
 # 	p = Parser ()
+# 	a = p.parse ('\\int \\int x dx') [0]
+# 	print (a)
+
 # 	print (p.parse ('1') [0])
 # 	print (p.parse ('x') [0])
 # 	print (p.parse ('x!') [0])
@@ -513,5 +518,3 @@ class sparser: # for single script
 # 	print (p.parse ('\\frac{d}{dx} x') [0])
 # 	print (p.parse ('\\frac{d**2}{dx**2} x') [0])
 # 	print (p.parse ('\\frac{d**2}{dxdy} x') [0])
-# 	a = p.parse ('\\int_0^1x') [0]
-# 	print (a)

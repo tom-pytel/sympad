@@ -67,12 +67,12 @@ def _ast2tex_mul (ast, ret_has = False):
 	for n in ast.muls:
 		s = f'{_ast2tex_paren (n) if n.is_add or (p and n.is_neg) else ast2tex (n)}'
 
-		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or \
+		if p and (n.op in {'!', '#'} or n.is_null_var or p.op in {'lim', 'sum'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {s}')
 			has = True
 
-		elif p and (p in {('@', 'd'), ('@', '\\partial')} or p.is_sqrt or \
+		elif p and (p in {('@', 'd'), ('@', '\\partial')} or p.op in {'sqrt', 'intg'} or \
 				(n.is_var and _rec_var_diff_or_part_start.match (n.var)) or \
 				(p.is_var and _rec_var_diff_or_part_start.match (p.var))):
 			t.append (f'\\ {s}')

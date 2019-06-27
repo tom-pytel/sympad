@@ -74,11 +74,13 @@ function generateBG () {
 	writeRandomData (imgd.data, 0, 0, canv.width, canv.height);
 	ctx.putImageData (imgd, 0, 0);
 
-	canv        = $('#InputBG') [0];
-	ctx         = canv.getContext ('2d');
-	canv.width  = window.innerWidth;
+	if (window.location.pathname == '/') {
+		canv        = $('#InputBG') [0];
+		ctx         = canv.getContext ('2d');
+		canv.width  = window.innerWidth;
 
-	ctx.putImageData (imgd, 0, 0);
+		ctx.putImageData (imgd, 0, 0);
+	}
 }
 
 //...............................................................................................
@@ -488,7 +490,12 @@ function keepInputFocus () {
 
 //...............................................................................................
 $(function () {
-	window.JQInput   = $('#Input');
+	window.JQInput = $('#Input');
+
+	if (window.location.pathname != '/') {
+		generateBG ();
+		return;
+	}
 
 	let margin       = $('body').css ('margin-top');
 	BodyMarginTop    = Number (margin.slice (0, margin.length - 2));

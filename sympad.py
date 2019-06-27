@@ -319,11 +319,13 @@ function generateBG () {
 	writeRandomData (imgd.data, 0, 0, canv.width, canv.height);
 	ctx.putImageData (imgd, 0, 0);
 
-	canv        = $('#InputBG') [0];
-	ctx         = canv.getContext ('2d');
-	canv.width  = window.innerWidth;
+	if (window.location.pathname == '/') {
+		canv        = $('#InputBG') [0];
+		ctx         = canv.getContext ('2d');
+		canv.width  = window.innerWidth;
 
-	ctx.putImageData (imgd, 0, 0);
+		ctx.putImageData (imgd, 0, 0);
+	}
 }
 
 //...............................................................................................
@@ -733,7 +735,12 @@ function keepInputFocus () {
 
 //...............................................................................................
 $(function () {
-	window.JQInput   = $('#Input');
+	window.JQInput = $('#Input');
+
+	if (window.location.pathname != '/') {
+		generateBG ();
+		return;
+	}
 
 	let margin       = $('body').css ('margin-top');
 	BodyMarginTop    = Number (margin.slice (0, margin.length - 2));
@@ -865,6 +872,16 @@ r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
 <title>SymPad Help</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+
+<style>
+	body { margin: 3em 4em; }
+	p { line-height: 135%; }
+	h3 { margin: 2em 0 1em 0; }
+</style>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="script.js"></script>
 <script type="text/x-mathjax-config">
 	MathJax.Hub.Config ({
 		messageStyle: "none",
@@ -875,7 +892,9 @@ r"""<!DOCTYPE html>
 
 </head>
 
-<body style="margin: 3em 4em">
+<body onresize="generateBG ()">
+
+<canvas id="Background"></canvas>
 
 <h2 align="center" style="margin: 0">SymPad</h2>
 <h5 align="center" style="margin: 0">v0.1</h5>
@@ -897,7 +916,9 @@ result symbolically or numerically. The best way to see what it can do is to try
 
 <h3>Quick Start</h3>
 
-<p>Try entering any of the following into SymPad:</p>
+<p>
+Try entering any of the following into SymPad:
+</p><p>
 ? sqrt 2<br>
 sin (3\pi / 2)<br>
 cos^{-1} (-1)<br>
@@ -914,98 +935,96 @@ simplify (sin x / cos x)<br>
 expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 \arccos\frac{\int_0^\inftyx^4e^{-x}dx}{\sqrt[3]{8}4!}<br>
+</p>
 
 <h3>Usage</h3>
 
 <p>
-You enter expresstions and they get evaluated. The expressions may be in normal Pythonic style like "a * (b + sin (x)**2 + 3/4) / 2", LaTeX
-such as "a\frac{b+\sin^2{x}+\frac34}{2}" or a mix "a * (b + \sin**x{2} + \frac34) / 2". The input is displayed symbolically as you type.
-Input history is supported with the up and down arrows.
+You enter expresstions and they get evaluated. The expressions may be in normal Pythonic style like "<b>a * (b + sin (x)**2 + 3/4) / 2</b>",
+LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin**x{2} + \frac34) / 2</b>". The input is displayed symbolically as
+you type. Input history is supported with the up and down arrows.
 </p><p>
 The symbolic expressions can be copied to the clipboard in various formats. Single click for a simple short format meant to be pasted back into the
 input field. A double click copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
-"e" is copied as "e" and not the SymPy "E", "i" is copied as "i" and not "I" or "1j". Simply set "e = E" and "i = I" or "i = 1j" in the Python context
-depending on need. Finally a triple click will copy the expression in LaTeX format. The simple and LaTeX formats should be directly pasteable into
-SymPad whereas the Python representation may or may not be depending on what elements it includes.
+"<b>e</b>" is copied as "<b>e</b>" and not the SymPy "<b>E</b>", "<b>i</b>" is copied as "<b>i</b>" and not "<b>I</b>" or "<b>1j</b>". Simply set
+"<b>e = E</b>" and "<b>i = I</b>" or "<b>i = 1j</b>" in the Python context depending on need. Finally a triple click will copy the expression in
+LaTeX format. The simple and LaTeX formats should be directly pasteable into SymPad whereas the Python representation may or may not be depending
+on what elements it includes.
 </p><p>
-There is a special use for the "_" character which has the same meaning as in the Python interactive shell in that it represents the last
-expression successfully evaluated. To see this in action type in "1" and hit Enter, then type in "expand ((x+1)*_)" and hit Enter. Repeat this
-several times using the up arrow. This character may not want to follow directly after an alphanumeric character since it is also used to
-subscript variables, in this case simply precede it with a space.
+There is a special use for the "<b>_</b>" character which has the same meaning as in the Python interactive shell in that it represents the last
+expression successfully evaluated. To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
+Repeat this several times using the up arrow. This character may not want to follow directly after an alphanumeric character since it is also used
+to subscript variables, in this case simply precede it with a space.
 </p>
 
 <h3>Numbers</h3>
 
 <p>
 Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
-Keep in mind that "e" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together
-as "2e+22" as this will be interpreted to be 2 * 10^22, use spaces and/or explicit multiplication: 2 * e + 22.
+Keep in mind that "<b>e</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together
+as "<b>2e+22</b>" as this will be interpreted to be 2 * 10^22, use spaces and/or explicit multiplication: 2 * e + 22.
 </p>
 
 <h3>Variables</h3>
 
 <p>
-Variable names mostly follow LaTeX convention, they are single latin letters $x, y, z, A, B,$ ... or single greek letters preceded by a backslash
-such as "\alpha" ($\alpha$), "\beta" ($\beta$), \Psi ($\Psi$), etc... The variable names $i$, $e$ and $\pi$ represent their respective mathematical
-constants. There are two special case variables which are parsed as two letter constants without a slash since they are commonly used, those are
-"pi" without the slash and "oo" which represents "\infty" or $\infty$.
+Variable names mostly follow LaTeX convention, they are single latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", ... or
+single greek letters preceded by a backslash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
+"<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. There are two special case variables
+which are parsed as two letter constants without a slash since they are commonly used, those are "<b>pi</b>" without the slash and "<b>oo</b>" which
+represents "<b>\infty</b>" or $\infty$.
 </p><p>
-Variable names mostly follow LaTeX convention. With the exception of $i$ the imaginary unit and $e$ which is Euler"s number, variables
-are single letters: $x, y, z, A, B,$ etc... Variables may also be greek letters preceded by a backslash such as "\alpha" ($\alpha$),
-"\beta" ($\beta$), \Psi ($\Psi$), etc... Again with exception of "\pi" which of course is the mathematical constant $\pi$. There are two special
-case constants which are parsed as two letter constants without a slash since they are commonly used, those are "pi" without the slash, and "oo"
-which is infinity. Infinity may also be entered as "\infty".
+Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
+Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
+This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_{x_{y_0'}''}'''$).
 </p><p>
-Variable names may be followed by various primes ' such as " a' " ($a'$) or " \omega'' " ($\omega''$).
-Variables may be subscripted with other variables or numbers "x_1" ($x_1$), "y_z" ($y_z$), "\alpha_\omega" ($\alpha_\omega$).
-This can be extended to silly levels " \gamma_{x_{y_0'}''}''' " ($\gamma_{x_{y_0'}''}'''$).
-</p><p>
-Differentials entered as "dx", "\partialx" or "\partial x" and are treated as a single variable. If you want to enter "d" * "x" multiplied
-implicitly then put a space between them or two spaces between the "\partial" and the "x".
+Differentials entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable. If you want to enter "<b>d</b>"
+* "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
 </p>
 
 <h3>Parentheses</h3>
 
 <p>
-Explicit '()' or implicit curly '{}' parentheses allow prioritization of lower precedence operations over higher ones as usual and also
-delineate an expression as an input to a function. They may be used interchangeably, the only difference being that the implicit version is not
-drawn if it does not need to be.
+Explicit "<b>()</b>" or implicit curly "<b>{}</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
+delineate an expression as an input to a function. They may be used interchangeably, the only difference being that the implicit version is not drawn
+if it does not need to be.
 </p>
 
 <h3>Addition and Multiplication</h3>
-Addition is addition and subtraction is subtraction: "a + b", "a - b". Multiplication is explicit with a "*" operator or implicit simply by writing
-two symbols next to each other so that "a * b" is the same as "ab". There is however a difference between the two in that the implicit version
-has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, derivative or division "/" expression whereas
-implicit multiplication will not, e.g. "1/xy" = $\frac{1}{xy}$ whereas "1/x*y" = $\frac{1}{x} \cdot y$.
+Addition is addition and subtraction is subtraction: "<b>a + b</b>", "<b>a - b</b>". Multiplication is explicit with a "<b>*</b>" operator or implicit
+simply by writing two symbols next to each other so that "<b>a * b</b>" is the same as "<b>ab</b>". There is however a difference between the two in that
+the implicit version has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, derivative or division
+"<b>/</b>" expression whereas implicit multiplication will not, e.g. "<b>1/xy</b>" = $\frac{1}{xy}$ whereas "<b>1/x*y</b>" = $\frac{1}{x} \cdot y$.
 </p><p>
-Division also has two operators, the normal "/" which has a fairly low precedence and the LaTeX "\frac" version which has a very high precedence, even
-higher than exponentiation. So high in fact that parentheses are not needed if using "\frac" as an exponent as in "x^\frac{1}{2}" = $x^\frac{1}{2}$.
-The "\frac" operation also does not need parentheses if using single digit operands or single letter variables (latin or greek) such as "\frac12" =
-$\frac12$, "\frac\alpha\beta" = $\frac\alpha\beta$ or "\fracxy" = $\frac xy$ (although this last version without a space before the x is not legal in
-LaTeX but convenient for quick typing here).
+Division also has two operators, the normal "<b>/</b>" which has a fairly low precedence and the LaTeX "<b>\frac</b>" version which has a very high
+precedence, even higher than exponentiation. So high in fact that parentheses are not needed if using "<b>\frac</b>" as an exponent as in
+"<b>x^\frac{1}{2}</b>" = $x^\frac{1}{2}$. The "<b>\frac</b>" operation also does not need parentheses if using single digit operands or single letter
+variables (latin or greek) such as "<b>\frac12</b>" = $\frac12$, "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$ or "<b>\fracxy</b>" = $\frac xy$ (although
+this last version without a space before the x is not legal in LaTeX but convenient for quick typing here).
 </p>
 
 <h3>Exponentiation</h3>
 
 <p>
-There are two power opearators "^" and "**". They have the same precedence and can be used interchangeably but follow slightly different parsing
-rules. The "^" operator follows LaTeX rules which only allow a single positive digit or letter variable (lating or greek) without the use of curly
-braces whereas the "**" follows Python rules which allow negative values or variables or functions. To illustrate the diffference: "x**-2" = $x^{-2}$
-whereas "x^-2" = $x^-2$ (which makes no sense). Also, "e**log(x)" will work as expected $e^{\log(x)}$ whereas "e^log(x)" = $e^log(x)$.
+There are two power opearators "<b>^</b>" and "<b>**</b>". They have the same precedence and can be used interchangeably but follow slightly different
+parsing rules. The "<b>^</b>" operator follows LaTeX rules which only allow a single positive digit or letter variable (lating or greek) without the use
+of curly braces whereas the "<b>**</b>" follows Python rules which allow negative values or variables or functions. To illustrate the diffference:
+"<b>x**-2</b>" = $x^{-2}$ whereas "<b>x^-2</b>" = $x^-2$ (which makes no sense). Also, "<b>e**log(x)</b>" will work as expected $e^{\log(x)}$ whereas
+"<b>e^log(x)</b>" = $e^log(x)$.
 </p>
 
 <h3>Logarithms</h3>
 
 <p>
-The natural logarithm of x is specified "lnx", "\ln x", "log x", "\log{x}". A logarithm in a specific base is specified by "\log_b x" = $\log_b x$,
-"log_{10}(x)" = $\log_{10} {x}$, etc...
+The natural logarithm of x is specified by "<b>lnx</b>", "<b>\ln x</b>", "<b>log x</b>", "<b>\log{x}</b>". A logarithm in a specific base is specified
+by "<b>\log_b x</b>" = $\log_b x$, "<b>log_{10}(1000)</b>" = $\log_{10} {1000}$ = 3, etc...
 </p>
 
 <h3>Roots</h3>
 
 <p>
-The square root of x ($\sqrt{x}$) may be entered in any of these forms "sqrtx", "\sqrt x", "sqrt (x)", "\sqrt{x}", with or without the backslash.
-The cube (or any other) root is similar, $\sqrt[3]x$ = "sqrt[3]x", "sqrt[3] (x)" or "\sqrt[3] {x}".
+The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or
+without the backslash. The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
 </p>
 
 <h3>Functions</h3>
@@ -1013,52 +1032,63 @@ The cube (or any other) root is similar, $\sqrt[3]x$ = "sqrt[3]x", "sqrt[3] (x)"
 <p>
 Currently several single parameter functions are supported directly, with a mechanism for calling any other existing single parameter SymPy function
 explicitly. The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, with or without leading backslash:
-"sin", "acos", "arctan", "\acosh", etc... In addition these functions accept a special standard syntax for exponentiation or inverses as a convenience.
-For example "sin^2(x)" = $\sin^2(x)$ and "\tan^{-1}x" = $\arctan(x)$.
+"<b>sin</b>", "<b>acos</b>", "<b>arctan</b>", "<b>\acosh</b>", etc... In addition these functions accept a special commonly used syntax for exponentiation
+or inverses as a convenience. For example "<b>sin^2(x)</b>" = $\sin^2(x)$ and "<b>\tan^{-1}x</b>" = $\arctan(x)$.
 </p><p>
-Other SymPy functions are supported directly such as "simplify (sin(x) / cos(x))" = $\tan(x)$, "expand ({x+1}^3)" = $x^3+3x^2+3x+1$ and
-"factor (x^2 + 2x + 1)" = $(x+1)^2$. Functions don't technically REQUIRE explicit or implicit parentheses but for any parameter more complicated
+Other SymPy functions are supported directly such as "<b>simplify (sin(x) / cos(x))</b>" = $\tan(x)$, "<b>expand ({x+1}^3)</b>" = $x^3+3x^2+3x+1$ and
+"<b>factor (x^2 + 2x + 1)</b>" = $(x+1)^2$. Functions don't technically REQUIRE explicit or implicit parentheses but for any parameter more complicated
 than another function or variable to a power they will be needed.
 </p><p>
-Three functions have a special separate syntax. The function "abs (x)" is equivalent to the standard bar syntax for absolute value "|x|", the
-"factorial (x)" function is identical to writing "x!" and "exp (x)" is the same as writing "e^x". In fact those functions are translated on the fly.
+Three functions have a special separate syntax. The function "<b>abs (x)</b>" is equivalent to the standard bar syntax for absolute value "<b>|x|</b>",
+the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>". In fact those functions
+are translated on the fly.
 </p><p>
-If a function is not supported directly (and most are not) then it can still be called using a special escape characted "\($\)". To call the
-SymPy "sign" function for example simply enter "\($\)sign (-2)".
+If a SymPy function is not supported directly (and most are not) then it can still be called using a special escape characted "<b>\($\)</b>". To call the
+SymPy "<b>sign</b>" function for example simply enter "<b>\($\)sign (-2)</b>".
 </p><p>
-The last special function is "?", this is equivalent to SymPy "N ()" or "evalf ()" and it will ask SymPy to numerically evaluate whatever it can
-in the given expression. This is how you would get the numerical value of $\sqrt 2$ or $\sin(2)$ writing "? sqrt 2" or "? (\sin{2})".
+The last special function is "<b>?</b>", this is equivalent to SymPy "<b>N ()</b>" or "<b>evalf ()</b>" and it will ask SymPy to numerically evaluate
+whatever it can in the given expression. This is how you would get the numerical value of $\sqrt 2$ or $\sin(2)$ writing "<b>? sqrt 2</b>" or
+"<b>? (\sin{2})</b>".
 </p>
 
 <h3>Limits</h3>
 
 <p>
-To take the limit of an expression "z" as variable "x" approaches "y" enter "\lim_{x \to y} (z)" = $\lim_{x\to y} (z)$. This will only give the limit
-if it exists and is the same when approaching from both directions, unlike SymPy which defaults to approaching from the positive direction. To specify
-a direction add "^+" or "^-" to the equation as such: "\lim_{x \to y^+} (z)" = $\lim_{x\to y^+} (z)$.
+To take the limit of an expression "<b>z</b>" as variable "<b>x</b>" approaches "<b>y</b>" enter "<b>\lim_{x \to y} (z)</b>" = $\lim_{x\to y} (z)$.
+This will only give the limit if it exists and is the same when approaching from both directions, unlike SymPy which defaults to approaching from the
+positive direction. To specify a direction add "<b>^+</b>" or "<b>^-</b>" to the equation as such: "<b>\lim_{x \to 0^+} 1/x</b>" = $\lim_{x\to 0^+}
+\frac1x$ = $\infty$ and "<b>\lim_{x \to 0^-} 1/x</b>" = $\lim_{x\to 0^-} \frac1x$ = $-\infty$. Addition and explicit multiplication terminate a limit
+expression.
 </p>
 
 <h3>Sums</h3>
 
 <p>
-The summation (finite or infinite) of expression "z" as variable "n" ranges from "a" to "b" is written ad "\sum_{n=a}^b (z)" = $\sum_{n=a}^b (z)$.
-Iterated sums work as expected, "\sum_{n=1}^3 \sum_{m=1}^n m" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10.
+The summation (finite or infinite) of expression "<b>z</b>" as variable "<b>n</b>" ranges from "<b>a</b>" to "<b>b</b>" is written as "<b>\sum_{n=a}^b (z)</b>"
+= $\sum_{n=a}^b (z)$. Iterated sums work as expected, "<b>\sum_{n=1}^3 \sum_{m=1}^n m</b>" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10. Addition and explicit
+multiplication terminate a sum expression.
 </p>
 
 <h3>Differentiation</h3>
 
 <p>
-The derivative of expression "z" with respect to "x" is entered as "d/dx z" or "\frac{d}{dx} z" = $\frac{d}{dx} z$. The second derivative is
-"d^2/dx^2 (z)" or "\frac{d^2}{dx^2} (z)" = $\frac{d^2}{dx^2} (z)$. Using "\partial" ($\partial$) is allowed but must be consistent within the
-expression. Mixed derivatives are entered as "d^2/dxdy (z)" or "\partial^2 / \partial x\partial y (z)" =
+The derivative of expression "<b>z</b>" with respect to "<b>x</b>" is entered as "<b>d/dx z</b>" or "<b>\frac{d}{dx} z</b>" = $\frac{d}{dx} z$. The
+second derivative is "<b>d^2/dx^2 (z)</b>" or "<b>\frac{d^2}{dx^2} (z)</b>" = $\frac{d^2}{dx^2} (z)$. Using "<b>\partial</b>" ($\partial$) is allowed but
+must be consistent within the expression. Mixed derivatives are entered as "<b>d^2/dxdy (z)</b>" or "<b>\partial^2 / \partial x\partial y (z)</b>" =
 $\frac{\partial^2}{\partial x\partial y} (z)$.
 </p>
 
 <h3>Integration</h3>
 
 <p>
-The anti-derivative of expression "z" with respect to x is written as "\int z dx" = $\int z\ dx$. The definite integral from "a" to "b" is
-"\int_a^b z dx" = $\int_a^b z\ dx$. "\int dx/x" = $\int \frac1x\ dx$. Iterated and improper integrals also work.
+The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b>\int z dx</b>" = $\int z\ dx$. The definite integral from "<b>a</b>" to
+"<b>b</b>" is "<b>\int_a^b z dx</b>" = $\int_a^b z\ dx$. "<b>\int dx/x</b>" = $\int \frac1x\ dx$. Iterated and improper integrals also work.
+</p>
+
+<h3>Caveats</h3>
+
+<p>
+The grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses.
 </p>
 
 <br><br><br>
@@ -1759,34 +1789,36 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 #...............................................................................................
 class Parser (lalr1.Parser):
 	_PARSER_TABLES = \
-			b'eJztnWmP20YShv/MAh4BLYB9k/7mY5IdrGM7k3GAhSAYPhcGYsfwkV0g2P++VfU2yWaLOkejkbKDoUWy2Ud11cPqU/LZ7N7F06t76t6Ti5/o85cX/PnTxdMXv/Ddz5fy6NmP9Hl1efHj3+n8w4unjzjw/Ad+9vDBJX0+f3B5/vQJXVz8+PTZ5fnLRy8un/yT' \
-			b'414+eJROOp0NneUxR38qxf0qefzt3ae37bMuT754SKn+cX7FlywCl/r42YuHT85/uZKEjyjilcj+EJ9c1PMnUoNHj5/JoyymCPLg0dWzy4sHLMPji18vHp/35XDY88uLn845/dUz+jj/+cWDJ3z35tWXd99e/v7l5dvfv7/+7d3Xb6++UOjX76//kIt3//n8' \
-			b'5eXX75/fdTfvv3968/LTu3/1D1/TZRb70/eP7eW3d1+66/dfXr1prz9ToZ/am1evv3bhv/+7i/7qzbe8yPb64/ffXn74+Lm9ffvhj/7y/ftOhly+ToRMyN8+fMxzpItOnLdv28sPn1oR7s3V7GxqvDJ2onDh+EKrqZGzV2e1ahQFGKOaSRsmId3tVAe+svLP' \
-			b'RDV1k/7e9rdTyZvTVpKywoc1FKInRZDNA/mSryw+bHrAcSBvVGeas6n536QLsvltF5XD+MqoM0cVNZP+zlqpqx4E+4W74fOwcGcHITG/I6lF1Xxl0tWZlRu5U2dVKoAzycPS9VTSkxFITq9Y/UFZNoLSpFo/WfZUrBs3iGQHcaaRz07+mboNT/dNf08XXEGN' \
-			b'j7Y66ZKuaqklmKn5gp82CujoQLJUovpq0gbUKgWZPJRy1Km2bRjZVK4cPkhzk3RPdIrSSCrjJV66NVIsIWIyDYRWiax61ItMJ6xQyJnJrITbIsD1JdAzME7VHopLdQ/thRYtBE5AzLPkeFVSCN1S6GQQp3iebulOinVST1QnFdiH6fEwvuvDoRjKnGpCzmFG' \
-			b'ZVJV6I3jdzIqdgY2Klsr2/DLQkITOKQ5b5V3yhnlLJuNrWQUvX+uUo6tyu8UG5IchGOVmyAwOhbCNcpTNOVVUI5u6TMqV4vAFKdmm/hGhUoFrYJRwargVKDoFNOpqOf8grCHsPw5O7PpTvPJa+XNKdSB5DYid5RPSsIWIF8rdUGgbUOdRL0NTdsmKdlCIoeT' \
-			b'T4J5eXwa0ITESZCTR4U8KuQSSxpxtMbJpGpqRHby9OYldRrSGEhj5JbcMXngA3BpwKWxfal4qw5RNszB7qor2ytP8ETl64NIEA6rbLzpnCNI8yBN3qus6kSFr0BFIja0r+AJvYGpAicksoN9OJX4B6nCukQ6OU0dN4oteZ+F9NIHvH4BLifA2gFYBCk+RBVq' \
-			b'FRoVK5YQMaLuWkNTkkNaNvzMS5xtqu8Nco2cwTEaaEYt59GKZqG2oxKpPjKRuG9jUg/DoIdh0MMwEwawkVtvEUkLydww0+lgEsorxa2xyGBEhtNwXyb5LdMcpudikjGN2OtArSj3GlCqP2Cp5E7hlH04iG6pvLi1+0bTwpKgk2HQtzDoR5wKxjPu7ZyKsGce' \
-			b'WvZJy/FkJJfujdmgwxJRtSAvO3dRTNEpmXH3xaDfYqSXGtCPCqmv00jn9SxWXafFTk5BRdyFMugQ2ZFxej0SyrcWtza1cxbtnEU7R6eiMJTUIL63S2JIa2gPNyydcbNrD9fsGtTOoAdgoDYj+mLXix6tAHsAs0e81NB3gAy4SScYWeNRMDhZmDAgdahxkgqN' \
-			b'mZxeAJcQcUDEAREnXSGLp2QFd0irU/7ucG25hwZRdc4ByuVTiEmdeM2CvCCF3yHVeajOQ3X+ZJyvtycjLDPhxUoeVvIwjwPlDtZpWQ4wSIBB6ESygeeAiD5FjEc1Mpmx0BFC8/T4GSYF04jYi7jFONuqGnWtkaxOMevjq1hzbCL5IxOJ7dakKe8qzXlX0spX' \
-			b'ShZKGpaqF0BKJy9psaDZ1gKvL+rCtEQpNysODixqFYkoKppgiyrWqiaFVKrRqjGqodLoltwBF0qKqEgTFalF9MJnqhdXjGvGs088c8zTxjyXawIJzctXVk0DryPxmqhXU19JiKzZyvIUVlRJIVMSa0pqmEZeI5RovBjIq5i87OX5mpfP6JoUnbLmpVaq1DTw' \
-			b'KqKk8by4lhbYeEHO8z+KRScn68gUmbIMHJULjMiIl0M5Z37MebJMzZwb1+31TuhQPUDA7dqA/tEzhogXIGwkm1D+ql6wCYfwxwqb1OmPbVOvtE2KV9im3sU2KHDMNq08c/GOfy0bscuRozSTBMnnCkN1qTmeQaIV1urjFgbjoO0t1pY7arNMtLmspYrd2GNG' \
-			b'WI/9rU3uNHebpeNdbVszMC8JhaWkgZ3rzBVvYPBIwBHD9BoYVVu2fx03QKDiHQbNdijw9BlPnfESMy/X9mjQP3rGq6OO+51BSbvB210oLIAW3mLgWfPsHXlzA3taLR2G9siJ4lT8scoZk+pC+puSbmv2E5WgFTqyPFb56dQsIpbSFnyxoJQ7738gselkk4vg' \
-			b'HR0bQqdRcmJPShknj/XnsP2ECrKtSITElMOtn0vPUngMicU98VfCF3blT5gj7Q+wc3skb+iEatUdTBafeI04D85dkzQhenUbwijlGegeJY02RQMnObk2SumxurSlx6qBlG86AYcYSYRRktqSkhNLqcedWC/9XEbkd9D00DSqOwSaBtDkwTk0DbYRrYemGebR' \
-			b'QtMAmgbQNGmnEXaXFdB0aUtomh6aJGABTbMUmlRSgialHoemPxiacAdNDw1XuT0YGj6lwVYXnEEjsRBpNTR5BhId0Eh2NU5GpU1wKbyApk9bQCNxAU2b4xAaiTAKTVsSoGlTj0KTST+XTVt30PTQyB5aHAKNBjR5cA6NFmj0emiKPFpoNKDRgEYDGkQpoenS' \
-			b'ltDoHpokYAGNXgpNKilBk1KPQ9NLP5c9fnfQ9NB41R0CjQc0eXAOjexylUhroPHDPFpoPKDxgMYDGkQpoenSltD4HpokYAHN0t5xW1KCJqUeh6aXnqFpGBqThmZh28GZX8dStcEQbQOieP59s4HaxoD5AjK9BWirhmpsaavk0/CATa5wGhm0cTBjGfpjMGaL' \
-			b'SIh4K8i0ic48H2dwSoRiBCcnPEieICwSKqENIpeQLhvLtcIXyIalAzpbdcUH0bWgm3IZRzfIgK6vYTamU3/qcJ+HwHW8z8NKMi6dzX8n8l2ATR3jWp7/Gr6xVt0hvhHjvUFwDmGKiHhr3GM9zKaFD0O+NINgMORLASV8XdqSvH7I12ZVsLZ0yNeWlNxjSj3O' \
-			b'WC/9HDu17xrVHpxGdYeAgzHfIDhvVGXMZ9aP+fIMTD/mMxjzGYz5DMZ8KUpJTZe2pKYf87UCFtQsHfO1JSVqUupxavpjjv2D+6FGbw+OOVJ2eM25PZgdi178IDhfOpJevF3di0+tni2ySfhYdOQtOvIWHfk+VrnM1D0oV5r6vnwr5pAgu7Qv35aUVp9S6lGC' \
-			b'sgoIQfaOoAWCrOoOIQjz3YPgnCCsPq5efuTHTJAdZtMShJVJORmcXBarJKh7UBJke4KSmAVBdilBqaREUEo9TlBfgTl2Y94RVBLkVHcIQQ4E5cE5QU4IcqsJciDIDbNpCXIgyIEgB4K6WCVB3YOSINcTlMQsCHJLCUolJYJS6nGCetGEoO3nu0mqbntRvtdi' \
-			b'GUqkV9Lz7kCZjKlwa1g1Cn+MFHpEXUhGk3SGZBzLODUC1DhSjRDV5lE7VQfV94rQKUKfCF2iVFYBUydDxpKunPDUd4og5RCmpT0iFAOSkHCUo/Q3x4bFXbzQxgDtB50duXH7cElRdYe4pAiXlAfnLimKS4rCEJ90g9OIY4pwTHGYWeuYIhxThGOKcExdrNIx' \
-			b'5TmUvin2vinJW/imuHRVRfuuwOSfUg7j/qmXQtjabZb8tthyglc4PGG16g4hDKP9QXBOmAz1LYb6Fu2enEYIq0FYPcysJQxjfosxv8WYv49VEpbnUBKGkX+aaMqkLjhbOv7PSk2YpQzGMetFEcxqGvimnSujU6M9ZnH5LGhsWRrbe5TTstPekzSZ2TGyhA2Z' \
-			b'uMwnK/l3VDBNyXOUq3aV5IhMN5iMdKYDYdWWpNLU19sjYivZJ9JaeYl9p9KjHmwHoZrsxca8L3TPZq7WmNqJFx03OT3nVXL+untnfivbYw6IQe0PQ4KWH+hZTkOrlhEqesepO0La2f2CFKrFjXuDar8OwZyaU2hu0C9o2R6wjW+giLfr/+vmrgmQPtCNNwMk' \
-			b'4XE19dS1jf+P1h6zNJZozZ4tbtdZvFpvdNJkWuje2PS7bjLexO4u2V5fy/4BCPBpPQGhX4LeGYRr7xBeD4GWFakG4g5ZUH8ae5945wVjkvYOinEoDKAwG0FhTgMKjsJQmNVQeP6WUy1faWjEzDVbjjrfpEGePJCpTLqIQWrP85Fhjl9HmNmxNIbpILNLbLK+' \
-			b'TGqQdmfXaoBudqC5QZuz8KWGHDXmab9tz60MNNe3NRo//jldhGoiP5syO2UTL5rVH4NNedrO36BNxyzZ/NUsGY7CkkGJIAe0JBlopquNm/bNW/Stvj+4zEz8HWa2ScAat3wLb30DjMXtnRrd7b8OuOzrWHbQjFKHYKY30PFGL8X1Vduq1W9M9NbK3JMiWYvm' \
-			b'PhlftGhEi5t7mk3dzN5cS1Iso7SL29ilq7hnJyFOwfK346guXlbESamz1IsTdQ3rGyE8K0gEKrLyXdpW2706w4Lq0IkcVLBbNFsUM6zIuxRzdd5xmLf8pLvsgcQO35oXw7qFrrQYxd8G46lv+ZUUma6SeQuZu8b881x+B7r97vZiRrHO8jI8cDKDPx7j0Fmy' \
-			b'sRtm49Ton+Thhnlg1W9pTvTWpD80wz7/k/z8WH5pFXE015F1Omotsj809cOwsrWeyM9192ugYbj6KaJY2ePE45NiZVO+wUvvVL+UmS9f1mnbQVqsdMVa5LI6sE+4qSOA5S6Ae1rjMUUxcQ8mkRmn3Q6Rod6HDFbteogMTQ/IdaRw3LN1+P2TrQ8RJN+Gfx1J' \
-			b'8FPzOx6QRK+URJfC1CvlCWrFQe9PGVjVi/EgllnzLq95hXOJ+9d27SsbVXdwL8H3R/4oP6h/gAjUPyiSy86EKmW0kBLVtLdRTe4hHehALd2t1NKqQx2opb+VWjp1qAO1XNfI3kwtozrUgVrGdbXcqhOxVV15zLLyiM2aCDROWZtJdqDG9Y11nraoulGrD+wm' \
-			b'WxstP3istkE8KKE5BiV4dUsHRibVUfWirfz3Qbd6QC0aKxcsUsM/QTjB/zA1yxWEylOFeKBk2/kFl2YQtE6pLH78wfLkGaazWGVB+nqtFTC67hZIoscoNrU1vABDw0n50SzKdD75H6OtnPM='
+			b'eJztnftv3DYSx/+ZA+IFuID4lvJbHm7PuDRpnaTAYREEeR4CtGmQNL0DDv3fb2a+lCjKkqyN1+vdnrGyHhTJmSE/GvG165PNnR/OHj9/ekfdOXv8jPaPzn6g/dPnsv/pXIKefE/7Z+dn3/+djt89f/yAA0+/43v3753T/sd756ePH3Ee3z9+cn768sHz80f/' \
+			b'5Ljn9x6kg05HQ0e5zdEfi5ifJY+/vfv4tr3X5ckn9ynVP06f8SmrwFIfPnl+/9Hp02eS8AFF5MAfH4kZD89+Pnt4yuEPn3BwivX0+X3sdZtENLr34NmT87N7j7IcPv3x/OyHU87s2RPanf70/N4jvnrz6vO731/+9vnl29++vv7l3ZffX32m0C9fX/8hJ+/+' \
+			b'8+nzyy9fP73rLt5//fjm5cd3/8o3X9NpL/bHr7+2p7+/+9ydv//86k17/omEfmwvXr3+0oX/9u8u+qs3v/dFZnFdjj2Zv3zoQj987NL9+vWXlx9+/dRevv3wRz59/77TN9vCCeik0+zt23R654XanKyNV8auFE4cn2i1NnL06qRWjaIAY1SzasMkpLtc6yCp' \
+			b'5Y/yWNtVvq7y5VqE0H2JHuTPBLWOq+K6yiF0wiIsdtas0uVaQ82oTjTlq2v+W3VBtn/ZReUwPiO9HNmXMpMra8VEXQT7C1fl/XDhyhYhsX9FWksh8JlJZyeVXPBVTVonAZxJPyydrxs+NuqEirhRUuqVsnxQmqrDrSZvS7X6JbGqItJaaz6x8mdieyNd1/l6' \
+			b'LSUc5W+NcpcTOjox0q9wTidcGiRZCNBU5bqSkq9WbUCtUpDph2oNbUnBNoyqVM4cdlRwq3RNTEoJa7KzkXjp0lYSg8Jt3/7QFqKxrVEUp60nspfDU0Wly6oMcFkKYSrFprn6CpUZ0qo7k+ok6ZSEVGD9k+QURNcUvCpjDWO013Qpwp1YnOxKcnMgFdpYGF/l' \
+			b'cJQRZU8GkXfYkFgVFTsBG5WtlW2UM8pZriauFaPocXOVcly8ZDs9pfw4kUXEFRWtt8o7qkp+urhOqeQd40gPuuGHk5VwjfKUg/IqKEeXtI/K1aIwxam5cnyjQqWCVsGoYFVwKlB0iulU1C8YMyr2DVUsl36UPaVjE8hb8ZVFoG1DyQq6PjArLHR1FtZosUro' \
+			b'X4mrg+oaVjq5e6P6Op2KHYpaufRaeXMU0FiT1EeBknw5+FTOXmrjOPgPqQaCHDwM8g72Gdw0Uj3kuunZv3aNSKqBVJulAo19yEZV8nuvk+2Vp/qIytd70SDst7Dh3jhH+AgPHyEI90wnVHzylSgiF1rajwj2ZMARqexQP5xKPLuYcFki3aTYcVFsyfskJJ8c' \
+			b'8PgFuIKA2g7AIoj4EFWoVWhUrFhDxIgpeVTU/jnoMt3QG/7wdbRSkAeqW32ounHzzAj6mo/c9mFND0CvCnpZORaOdcPtH3Oh+enlgdpGhs/NEoNmiUGzxKz4biOXHjdN0seI6OPwhSY5QSPubQ/yEktGimxPr2RugkCq36NUwg0e3oe9lC3Ji1vjjfcUa4IW' \
+			b'i0FDxaBRciwYb7jpdCzKnniUsk+lHI9Gc2krmQWtnwjTgjzs3N4xgxbOhttCBo0gI645wFOH1HBqxGOfxKptAdmRcYN6JJQvLS5temnZg+igb/jFaQ/hxSlvTNLkCIjjN7ZJ71+L96/F+5cOgySI36DavZ2KYQCEwavbIF8jGbLDFmleMN+DdRGuAIgG6ICL' \
+			b'dADMGreCwcHCxoDUocZBDBqxWMBzB/IMkHR3oVlGmjhUrkPlOmlcSag0p9z+mgoeRQ1VOAfUAh9CTOUOvxMEtYFbI1M8TPEwxR+Nb/f2aJRlJrzUkkcteVSPw+PgUDsuOY6ACgmoEDqQbuArIKJPEeNhdsA2rH2E9jwTcIIx6NQz8aJ3OaxEStYwukayOsWs' \
+			b'D9jC5mB184eqG1dpk0bLqzRcXolLrdSGhNPTzLnjiU6q2yS+kzHUUlQkd8uGmWxSdghiNoqD9GDVoxgjNjOIMq6bVe/pDW8ZtYpELdlAQEcVKaRRdaVqrWqjaqKWiI2qqVSjVWNUQ1ZSHZARbAXZUFH5V1wZbC8VV0XhYh6FcfGxbWwcD9rxgDuPtvMQOA8E' \
+			b'c/lzr5d7vDxXwhMPXG48XM9NSW5H8tyPY3/u2FqegLU8G2tlMk9mvbkEKNTwPvDEelBrtj7kbc0TtTwBKLW8DrxzMt+IaXIqmjUVyZrKcB05O3zWVLI1S6hEtjc8pcjhPM9LRnhME9Kh4WlcDuRZU07YtFnwFHtgmSQ98iS+4mlrsm5tWQHRnVpWa88zrWm2' \
+			b'lVcLeP6jWHRwspiAsiD5QSZdWR0Wzn9c46ITZcKSOSLLZLNYC83TqDyTTRJtqxUBsuZw61+o/7p4d81zVFWgY/UnN3KUzHC6WWSviGnBaLM9mlbo3AbNbbCcRVELiLzvsciXPPFXCYt86MHYB1BuIfo0gsiwzRb5MYNWC4Myuw0ImcAheznpLH452nL6xL6q' \
+			b'Qy+lH4dP4tq+mD529V1+fGtzl58CqiQ6mj/lZXoL3xx8RuAzJXwG8BnAZ6bhMwKfmYfP5E3gMyV8Zh6+Luk8fF20LeAzJXxIPwEfHF5PzBL47C18s/AFgS+U8AXAFwBfmIYvCHxhHr6QN4EvlPCFefi6pPPwddG2gC+U8CH9BHwB8GUxS+BzS+C7rpZiuHJj' \
+			b'0U60F92Om4zzhNZCaF0SWoPQGoTWBaEsqt0KWmuhtZ6ntZ/YIe+W1tRelGxT7ohgWqEX6O2ymqe3izbRcpRb4xDXArFESBwn1cY5rsFxFriEY3/L8dU5boTjsr8jC1GxKpMTNyXHTd4KjhvhuJnnuJ/YIe8hxw04bsBxk5ZIytmQ4y6reY67aFMcN5McN+C4' \
+			b'yRwnw8c5bsBxFriE43DL8ZU5NtJXMmVfyaCvZNBXMmVfyVR563Ms0ZB0muMisUPeA44N+k5yQATTCh1ynLOa5ThHm+BYbo1ybNCdMrld0Wo4yrFBj6oncAnH8Zbjq3OshWNdcqzBsQbHuuRY563gWAvHep7jfmKHvIcca3CswbEGx0gx5LjLap7jLtoUx3qS' \
+			b'Yw2OdeY4GT7OsQbHWeASjutbjq/OsReOfcmxB8ceHPuSY5+3gmMvHPt5jvuJHfIecuzBsQfHHhwjxZDjLqt5jrtoUxxPdvKkCKBTy3EyfJxjD46zwCUcN+2MwLeQ7PcEM8+jXjPPeldMc29bsC4HJgwGJgwGJkw5MGFC3vpY81S+jFOY+XGKIr1D9kOyMVYh' \
+			b'B0QwrdwLZEtog8jzcHdCp+AOk3BjBMNg5kBLGz92RTAOOAYyekKXAK6rb/fU++L7KJy1DGaYcjDDYDDDYDDDlIMZjFu7FVQjJCD1DNX99A7ZD6nGeEYahDMYz0gBQ6q7rOaR7qJNIT05nmEwnmHyeEar2jjOGM/oCVyE86L5sNuGxzzLMqBhygENgwENgwEN' \
+			b'Uw5omCZvRcNDBjTM/IBGkdgh7yHIGNAwGNAwGNBIKYYgd1nNg9xFmwJ5ckDDYEDD5AGN1vBxkDGg0RO4CORFc2u7BLm+jGVzpDhb6Q/asj9o0R+06A/asj9odd76OEs0JJ3GuUjskHfCuUe0RZfQokto0SXM6QZQ5xuzUPfSj0NtJ3uFFr1Cm3uFrfmjUFv0' \
+			b'CnsCF0G9aM7uFuolUEsrmvd9qLHGRkJlaVUBtc1bAbUVqO081P3EDnm3UNsMtQXUFlBbQN2lG0Ld3ZiHOqefgNpOQm0Btc1QJ/PHobaAOgtcBPXe5wL/ulA7gdqVUDtAjZVjtlw6ZntbAbWsHbPzi8eKxA55t1C7DDVWkcnBpF+66KUbQt3dmIc6p5+A2k1C' \
+			b'7QC1y1An88ehdoA6C1wE9Q4mBsmi0WWei+iu+Hv238K46WEeDpZ0Le5bl+47LZHUcN+6dN8stt2KOUNx37SPaJbIjwch67HJw34uDkIS8hp+vA6qrjGLCG+u4c01vHlOPZxI7OfcY19Xbmw+MWczMZ846dQ1nLrOTr0tlPH5RDj1nsBF/O9oQvHb4L8i9jtg' \
+			b'3l2Xh4/i4WPp4SM8fISHj6WHj3krPHwUDx8Fej5o5Dvm5/tZOEho/XzMfj7Cz0f4+Qg/36Ub+vl+nvOuPmcx4erjJOoady20a919Kotxdx/h7rPQRbjvaN7x0HAPTDy5sxuGXsYGbTk2aDE2aDE2aMuxQS6zdiugl4FBi4FBi5aNHEag72fhIKGFvs7QY4TQ' \
+			b'YoTQYoQwpxtC389zHvqcRZIHRYfoT44WptQWKrbkJ03HyceAYU/yIvJrtRl840OPLR+N4210prlbKTq2THQO029aFzoBoQDYhw7TLGNfwWDeptZ9rudnUhik/hLPufWdl3+fYstvUvSXdE4wsB702lbyEzS7qWC92zquLqlnJ95/vL55rTTd5x+H6uqeGzdu' \
+			b'3wzU8fox0NKgnEahLZYRJLJ71h0erYseYEJWXK8fqHbrCsyxuYPmGj2ClrVj23gFiniDbr9ubj2/tLGu3fuThgf0eg+qif+PVT1WzVhTYnZc3Xa2uqvFNR56c7vb1vuWX8OdrXSXKl5fqfIDprH4sLz6Obg3YXVVCnbd3NMyt9xAzeGwjrHUvvfyFUV3S8QY' \
+			b'EQZEmK2IMIdNBN9mIsw8Ef6QXgnf/jK48HX8YsihucYXA+e6786fbS57HWj8CP56rPYvfm+edN0cPwMXPUCudK60Y2kM7K4RoP5LVa1RxfEvWcVOX9dz/S11zIO6eu91TM68oVK/S4TF5u66luqu/5rVbQ6quo0ShQ6guhv5dQ9t8G8hpCprriOtPRdbneaQ' \
+			b'6SQGsZungwP3EkiFDb6iOUzUcAuPaliik7D4Av8UYKPdsrZiWNpEXNomvJQX/rElBiFgWpgPlyMQ8pqdrRz6lm22+XoOtmiXUWlKMV9WxotK9+pF2xarX/xYbV2YOypILkVzlypfStHyF+tJee9e4DeuNglyKZjSwJgWBVBpiEa9PPG7WJvuAUnJO3c2zEpK' \
+			b'gkuhb2E3jRku5B1m8q63yjuWect/hJJV4Bpfhqh5drGbOUyzebwEg4f05ScIZTxOxmZkWB5D6y/k38hIPhNZ1a6Xm+GXhyk+7O/pKBnZYUaYEp3Mzqr2g5eN7X8kRzeeIyZZx/NNY+HdNCVTovofvNLKsOEbaSX/AmvDP651ZemB37thyUfEhh2JJce+7CNS' \
+			b'47xUevoLwXZedq1GPqY75XZCcUtUqKFCvViJdg5cmh2TuhD13OppJj/pZhlHNGquRyMZE9zVJori+01Z02INA7TG6tZSdyePOi9IqHtLEXrLD/IyA1kv1bje+oFmzkKnrndjz8we1GEOcXxD0ehrqkSvdrdBU3NpJV7Quqi7CxY0i+oqqv7GrY52G9zqNmp1' \
+			b'IAK1OkYisPpxND3stDdiJze59rTBTHczZlq1rw1m+psx06l9bTAz3IyZUe1rg5lxSzPnXyHbGcsdoW026l0OQpoLIbMbTK6v+d25zHaj5jcsBrw0Wn/jfuCCeCiF5iBKwasb2tAROrBmFPcdb3hDueg0lMSjR2wmQo38ul1XQrCeLOIel23HLlwaoNA6pbLy' \
+			b'G0x0cO3ADpdZkBZXWw/oz3cjVtGj35xeOTy3Rf1X+e1RyvTF6n+NqRPu' 
 
 	_PARSER_TOP = 'expr'
 
@@ -1850,39 +1882,39 @@ class Parser (lalr1.Parser):
 		'ln'       : lambda expr: _expr_func (1, 'log', expr),
 	}
 
-	def expr            (self, expr_int):                      	             return expr_int
-
-	def expr_int_1      (self, INT, expr_sub, expr_super, expr_int):         return _expr_int (expr_int, (expr_sub, expr_super))
-	def expr_int_2      (self, INT, expr_int):                               return _expr_int (expr_int)
-	def expr_int_3      (self, expr_add):                                    return expr_add
+	def expr            (self, expr_add):                      	             return expr_add
 
 	def expr_add_1      (self, expr_add, PLUS, expr_mul_exp):                return AST.flatcat ('+', expr_add, expr_mul_exp)
 	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return AST.flatcat ('+', expr_add, expr_mul_exp.neg (True))
 	def expr_add_3      (self, expr_mul_exp):                                return expr_mul_exp
 
-	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_lim):                return AST.flatcat ('*', expr_mul_exp, expr_lim)
-	def expr_mul_exp_2  (self, expr_mul_exp, STAR, expr_lim):                return AST.flatcat ('*', expr_mul_exp, expr_lim)
-	def expr_mul_exp_3  (self, expr_lim):                                    return expr_lim
+	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_neg):                return AST.flatcat ('*', expr_mul_exp, expr_neg)
+	def expr_mul_exp_2  (self, expr_mul_exp, STAR, expr_neg):                return AST.flatcat ('*', expr_mul_exp, expr_neg)
+	def expr_mul_exp_3  (self, expr_neg):                                    return expr_neg
 
-	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_lim):                              return AST ('lim', expr_lim, expr_var, expr)
-	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_doublestar, PLUS, CURLYR, expr_lim):   return AST ('lim', expr_lim, expr_var, expr, '+')
-	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_doublestar, MINUS, CURLYR, expr_lim):  return AST ('lim', expr_lim, expr_var, expr, '-')
+	def expr_neg_1      (self, MINUS, expr_diff):                            return expr_diff.neg (True)
+	def expr_neg_2      (self, expr_diff):                                   return expr_diff
+
+	def expr_diff       (self, expr_div):                                    return _expr_diff (expr_div)
+
+	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):              return AST ('/', expr_div, expr_mul_imp)
+	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return AST ('/', expr_div, expr_mul_imp.neg (True))
+	def expr_div_3      (self, expr_mul_imp):                                return expr_mul_imp
+
+	def expr_mul_imp_1  (self, expr_mul_imp, expr_int):                      return AST.flatcat ('*', expr_mul_imp, expr_int)
+	def expr_mul_imp_2  (self, expr_int):                                    return expr_int
+
+	def expr_int_1      (self, INT, expr_sub, expr_super, expr_add):         return _expr_int (expr_add, (expr_sub, expr_super))
+	def expr_int_2      (self, INT, expr_add):                               return _expr_int (expr_add)
+	def expr_int_3      (self, expr_lim):                                    return expr_lim
+
+	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                              return AST ('lim', expr_neg, expr_var, expr)
+	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_doublestar, PLUS, CURLYR, expr_neg):   return AST ('lim', expr_neg, expr_var, expr, '+')
+	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_doublestar, MINUS, CURLYR, expr_neg):  return AST ('lim', expr_neg, expr_var, expr, '-')
 	def expr_lim_6      (self, expr_sum):                                                                            return expr_sum
 
-	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, expr_super, expr_lim):              return AST ('sum', expr_lim, expr_var, expr, expr_super)
-	def expr_sum_2      (self, expr_neg):                                                                            return expr_neg
-
-	def expr_neg_1      (self, MINUS, expr_diff):                               return expr_diff.neg (True)
-	def expr_neg_2      (self, expr_diff):                                      return expr_diff
-
-	def expr_diff       (self, expr_div):                                       return _expr_diff (expr_div)
-
-	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):                 return AST ('/', expr_div, expr_mul_imp)
-	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, expr_mul_imp.neg (True))
-	def expr_div_3      (self, expr_mul_imp):                                   return expr_mul_imp
-
-	def expr_mul_imp_1  (self, expr_mul_imp, expr_func):                        return AST.flatcat ('*', expr_mul_imp, expr_func)
-	def expr_mul_imp_2  (self, expr_func):                                      return expr_func
+	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQUALS, expr, CURLYR, expr_super, expr_neg):              return AST ('sum', expr_neg, expr_var, expr, expr_super)
+	def expr_sum_2      (self, expr_func):                                                                           return expr_func
 
 	def expr_func_1     (self, SQRT, expr_func_neg):                            return _expr_func (1, 'sqrt', expr_func_neg)
 	def expr_func_2     (self, SQRT, BRACKETL, expr, BRACKETR, expr_func_neg):  return _expr_func (1, 'sqrt', expr_func_neg, expr)
@@ -1983,6 +2015,7 @@ class Parser (lalr1.Parser):
 		s               = self.stack [-1]
 		self.stack [-1] = (s [0], s [1], AST ('*', (s [2], ('@', ''))))
 		expr_vars       = set ()
+		expr_diffs      = set ()
 
 		if self.autocompleting:
 			stack = [s [2]]
@@ -1991,11 +2024,12 @@ class Parser (lalr1.Parser):
 				ast = stack.pop ()
 
 				if ast.is_var:
-					expr_vars.add (ast.var)
+					(expr_diffs if ast.is_diff_var else expr_vars).add (ast.var)
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
 		expr_vars -= {'_', 'e', 'i', '\\pi', '\\infty'}
+		expr_vars -= set (var [1:] for var in expr_diffs)
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
@@ -2083,6 +2117,11 @@ class sparser: # for single script
 ## DEBUG!
 # if __name__ == '__main__':
 # 	p = Parser ()
+# 	a = p.parse ('\\int \\int x dx') [0]
+# 	print (a)
+
+
+
 # 	print (p.parse ('1') [0])
 # 	print (p.parse ('x') [0])
 # 	print (p.parse ('x!') [0])
@@ -2113,8 +2152,6 @@ class sparser: # for single script
 # 	print (p.parse ('\\frac{d}{dx} x') [0])
 # 	print (p.parse ('\\frac{d**2}{dx**2} x') [0])
 # 	print (p.parse ('\\frac{d**2}{dxdy} x') [0])
-# 	a = p.parse ('\\int_0^1x') [0]
-# 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
@@ -2183,12 +2220,12 @@ def _ast2tex_mul (ast, ret_has = False):
 	for n in ast.muls:
 		s = f'{_ast2tex_paren (n) if n.is_add or (p and n.is_neg) else ast2tex (n)}'
 
-		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or \
+		if p and (n.op in {'!', '#'} or n.is_null_var or p.op in {'lim', 'sum'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {s}')
 			has = True
 
-		elif p and (p in {('@', 'd'), ('@', '\\partial')} or p.is_sqrt or \
+		elif p and (p in {('@', 'd'), ('@', '\\partial')} or p.op in {'sqrt', 'intg'} or \
 				(n.is_var and _rec_var_diff_or_part_start.match (n.var)) or \
 				(p.is_var and _rec_var_diff_or_part_start.match (p.var))):
 			t.append (f'\\ {s}')
@@ -2837,9 +2874,9 @@ if __name__ == '__main__':
 
 				first_run = ''
 
-		opts, argv = getopt.getopt (sys.argv [1:], '', ['debug'])
+		opts, argv = getopt.getopt (sys.argv [1:], '', ['debug', 'nobrowser'])
 
-		if opts: # --debug
+		if ('--debug', '') in opts:
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if not argv:
@@ -2863,7 +2900,7 @@ if __name__ == '__main__':
 
 		log_message (f'Serving on {httpd.server_address [0]}:{httpd.server_address [1]}')
 
-		if os.environ ['SYMPAD_FIRST_RUN']:
+		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
 			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/')
 
 		while 1:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Exception prevents restart on file date change.
+# TODO: Exception prevents restart on file date change?
 
 import getopt
 import json

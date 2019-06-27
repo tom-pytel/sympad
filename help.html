@@ -6,12 +6,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="icon" href="https://www.sympy.org/static/SymPy-Favicon.ico">
 <title>SymPad Help</title>
+<link rel="stylesheet" type="text/css" href="style.css">
 
 <style>
+	body { margin: 3em 4em; }
 	p { line-height: 135%; }
-	h3 { margin-top: 2em; }
+	h3 { margin: 2em 0 1em 0; }
 </style>
 
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+<script type="text/javascript" src="script.js"></script>
 <script type="text/x-mathjax-config">
 	MathJax.Hub.Config ({
 		messageStyle: "none",
@@ -22,7 +26,9 @@
 
 </head>
 
-<body style="margin: 3em 4em">
+<body onresize="generateBG ()">
+
+<canvas id="Background"></canvas>
 
 <h2 align="center" style="margin: 0">SymPad</h2>
 <h5 align="center" style="margin: 0">v0.1</h5>
@@ -63,6 +69,8 @@ simplify (sin x / cos x)<br>
 expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 \arccos\frac{\int_0^\inftyx^4e^{-x}dx}{\sqrt[3]{8}4!}<br>
+d/dx {\sum_{n=0}^oo x**n/n! + \lim_{x \to oo} 1/x + \int xy dx}<br>
+
 </p>
 
 <h3>Usage</h3>
@@ -185,14 +193,16 @@ whatever it can in the given expression. This is how you would get the numerical
 To take the limit of an expression "<b>z</b>" as variable "<b>x</b>" approaches "<b>y</b>" enter "<b>\lim_{x \to y} (z)</b>" = $\lim_{x\to y} (z)$.
 This will only give the limit if it exists and is the same when approaching from both directions, unlike SymPy which defaults to approaching from the
 positive direction. To specify a direction add "<b>^+</b>" or "<b>^-</b>" to the equation as such: "<b>\lim_{x \to 0^+} 1/x</b>" = $\lim_{x\to 0^+}
-\frac1x$ = $\infty$ and "<b>\lim_{x \to 0^-} 1/x</b>" = $\lim_{x\to 0^-} \frac1x$ = $-\infty$.
+\frac1x$ = $\infty$ and "<b>\lim_{x \to 0^-} 1/x</b>" = $\lim_{x\to 0^-} \frac1x$ = $-\infty$. Addition and explicit multiplication terminate a limit
+expression.
 </p>
 
 <h3>Sums</h3>
 
 <p>
 The summation (finite or infinite) of expression "<b>z</b>" as variable "<b>n</b>" ranges from "<b>a</b>" to "<b>b</b>" is written as "<b>\sum_{n=a}^b (z)</b>"
-= $\sum_{n=a}^b (z)$. Iterated sums work as expected, "<b>\sum_{n=1}^3 \sum_{m=1}^n m</b>" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10.
+= $\sum_{n=a}^b (z)$. Iterated sums work as expected, "<b>\sum_{n=1}^3 \sum_{m=1}^n m</b>" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10. Addition and explicit
+multiplication terminate a sum expression.
 </p>
 
 <h3>Differentiation</h3>
@@ -214,7 +224,7 @@ The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b
 <h3>Caveats</h3>
 
 <p>
-The grammar is a little tricky due mostly
+The grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses.
 </p>
 
 <br><br><br>
