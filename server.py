@@ -25,10 +25,12 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+_DEFAULT_ADDRESS          = ('localhost', 8000)
+
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_STATIC_FILES = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_FILES        = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
+_STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_FILES                    = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 #...............................................................................................
 _last_ast = AST.Zero # last evaluated expression for _ usage
@@ -153,9 +155,9 @@ if __name__ == '__main__':
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if not argv:
-			host, port = 'localhost', 8000
+			host, port = _DEFAULT_ADDRESS
 		else:
-			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + ['8000']) [:2]
+			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
 		watch   = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
@@ -187,7 +189,7 @@ if __name__ == '__main__':
 		if e.errno != 98:
 			raise
 
-		print (f'Port {port} seems to be in use, try specifying different address and/or port as a parameter, e.g. localhost:8001')
+		print (f'Port {port} seems to be in use, try specifying different address and/or port as a command line parameter, e.g. localhost:8001')
 
 	except KeyboardInterrupt:
 		sys.exit (0)

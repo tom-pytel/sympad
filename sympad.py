@@ -243,9 +243,10 @@ body {
 
 	'script.js': # script.js
 
-r"""// TODO: Arrow keys in Edge?
-// TODO: Change how error, auto and good text are displayed?
+r"""// TODO: Move last evaluated expression '_' substitution here from the server side.
 // TODO: Stabilize scroll bars appearing and disappearing at start.
+// TODO: Arrow keys in Edge?
+// TODO: Change how error, auto and good text are displayed?
 
 // TODO: Need to copyInputStyle when bottom scroll bar appears.
 
@@ -885,8 +886,8 @@ r"""<!DOCTYPE html>
 <h3>Interface</h3>
 
 <p>
-You enter expresstions and they get evaluated. The expressions may be in normal Pythonic style such as "a * (b + sin (x)**2 + 3/4) / 2", LaTeX
-like "a\frac{b+\sin^2{x}+\frac34}{2}" or a mix "a * (b + \sin**x{2} + \frac34) / 2". The input is displayed symbolically as you type.
+You enter expresstions and they get evaluated. The expressions may be in normal Pythonic style like "a * (b + sin (x)**2 + 3/4) / 2", LaTeX
+such as "a\frac{b+\sin^2{x}+\frac34}{2}" or a mix "a * (b + \sin**x{2} + \frac34) / 2". The input is displayed symbolically as you type.
 Input history is supported with the up and down arrows.
 </p><p>
 The symbolic expressions can be copied to the clipboard in various formats. Single click for a simple short format meant to be pasted back into the

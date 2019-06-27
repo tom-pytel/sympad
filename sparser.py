@@ -1,5 +1,5 @@
+# TODO: _expr_int scrape sum for differential.
 # TODO: redo _expr_diff d or \partial handling
-# TODO: iterated integrals
 
 # Builds expression tree from text, nodes are nested AST tuples.
 #
@@ -43,6 +43,9 @@ def _expr_int (ast, from_to = ()): # construct indefinite integral ast
 				if len (ast.adds [-1]) > 3 else \
 				AST ('+', ast.adds [:-1] + (ast.adds [-1].muls [0],)) \
 				, ast.adds [-1].muls [-1], *from_to)
+
+	elif ast.is_intg and ast.intg is not None:
+		return AST ('intg', _expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to)), ast.var, *from_to)
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -172,7 +175,7 @@ class Parser (lalr1.Parser):
 			b'PhlftGhEi5t7mk3dzN5cS1Iso7SL29ilq7hnJyFOwfK346guXlbESamz1IsTdQ3rGyE8K0gEKrLyXdpW2706w4Lq0IkcVLBbNFsUM6zIuxRzdd5xmLf8pLvsgcQO35oXw7qFrrQYxd8G46lv+ZUUma6SeQuZu8b881x+B7r97vZiRrHO8jI8cDKDPx7j0Fmy' \
 			b'sRtm49Ton+Thhnlg1W9pTvTWpD80wz7/k/z8WH5pFXE015F1Omotsj809cOwsrWeyM9192ugYbj6KaJY2ePE45NiZVO+wUvvVL+UmS9f1mnbQVqsdMVa5LI6sE+4qSOA5S6Ae1rjMUUxcQ8mkRmn3Q6Rod6HDFbteogMTQ/IdaRw3LN1+P2TrQ8RJN+Gfx1J' \
 			b'8FPzOx6QRK+URJfC1CvlCWrFQe9PGVjVi/EgllnzLq95hXOJ+9d27SsbVXdwL8H3R/4oP6h/gAjUPyiSy86EKmW0kBLVtLdRTe4hHehALd2t1NKqQx2opb+VWjp1qAO1XNfI3kwtozrUgVrGdbXcqhOxVV15zLLyiM2aCDROWZtJdqDG9Y11nraoulGrD+wm' \
-			b'WxstP3istkE8KKE5BiV4dUsHRibVUfWirfz3Qbd6QC0aKxcsUsM/QTjB/zA1yxWEylOFeKBk2/kFl2YQtE6pLH78wfLkGaazWGVB+nqtFTC67hZIoscoNrU1vABDw0n50SzKdD75H6OtnPM=' 
+			b'WxstP3istkE8KKE5BiV4dUsHRibVUfWirfz3Qbd6QC0aKxcsUsM/QTjB/zA1yxWEylOFeKBk2/kFl2YQtE6pLH78wfLkGaazWGVB+nqtFTC67hZIoscoNrU1vABDw0n50SzKdD75H6OtnPM='
 
 	_PARSER_TOP = 'expr'
 
