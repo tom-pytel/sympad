@@ -359,11 +359,13 @@ class Parser (lalr1.Parser):
 
 	#...............................................................................................
 	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not expression
-		'CARET1'    : 'CARET',
-		'SUB1'      : 'SUB',
-		'FRAC2'     : 'FRAC',
-		'FRAC1'     : 'FRAC',
-		'expr_super': 'CARET',
+		'CARET1'             : 'CARET',
+		'SUB1'               : 'SUB',
+		'FRAC2'              : 'FRAC',
+		'FRAC1'              : 'FRAC',
+		'expr_sub'           : 'SUB',
+		'expr_super'         : 'CARET',
+		'caret_or_doublestar': 'CARET',
 	}
 
 	_AUTOCOMPLETE_CLOSE = {
