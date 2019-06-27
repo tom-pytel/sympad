@@ -13,7 +13,7 @@ sqrt[3] 27
 \lim_{x \to 0^-} 1/x
 \sum_{n=0}^\infty x**n / n!
 d/dx x**2
-\int_0^1 x dx
+\int_{-\infty}^\infty e**{-x**2} dx
 ```
 
 ## Installation
