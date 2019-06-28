@@ -1,5 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: Order
 # TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
 
 import re
@@ -67,12 +68,12 @@ def _ast2tex_mul (ast, ret_has = False):
 	for n in ast.muls:
 		s = f'{_ast2tex_paren (n) if n.is_add or (p and n.is_neg) else ast2tex (n)}'
 
-		if p and (n.op in {'!', '#'} or n.is_null_var or p.op in {'lim', 'sum'} or \
+		if p and (n.op in {'!', '#'} or n.is_null_var or p.op in {'lim', 'sum', 'intg'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {s}')
 			has = True
 
-		elif p and (p in {('@', 'd'), ('@', '\\partial')} or p.op in {'sqrt', 'intg'} or \
+		elif p and (p in {('@', 'd'), ('@', '\\partial')} or p.op in {'sqrt'} or \
 				(n.is_var and _rec_var_diff_or_part_start.match (n.var)) or \
 				(p.is_var and _rec_var_diff_or_part_start.match (p.var))):
 			t.append (f'\\ {s}')
@@ -164,6 +165,7 @@ def _ast2tex_intg (ast):
 _ast2tex_funcs = {
 	'#': _ast2tex_num,
 	'@': lambda ast: str (ast.var) if ast.var else '{}',
+	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: ','.join (ast2tex (parm) for parm in ast.parms),
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
@@ -309,6 +311,7 @@ def _ast2simple_intg (ast):
 _ast2simple_funcs = {
 	'#': lambda ast: ast.num,
 	'@': lambda ast: AST.VARS_SPECIAL_LONG.get (ast.var, ast.var),
+	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.parms),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
@@ -390,6 +393,7 @@ _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 _ast2py_funcs = {
 	'#': lambda ast: ast.num,
 	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.VARS_SPECIAL_LONG.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
+	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: ','.join (ast2py (parm) for parm in ast.parms),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
@@ -450,6 +454,7 @@ _ast2spt_consts = {
 _ast2spt_funcs = {
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 	'@': lambda ast: _ast2spt_consts.get (ast.var, sp.Symbol (ast.var)),
+	'"': lambda ast: ast.str_,
 	',': lambda ast: tuple (ast2spt (p) for p in ast.parms),
 	'(': lambda ast: ast2spt (ast.paren),
 	'|': lambda ast: sp.Abs (ast2spt (ast.abs)),
