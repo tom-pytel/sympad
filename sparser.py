@@ -1,4 +1,4 @@
-# TODO: redo _expr_diff d or \partial handling
+# TODO: Redo _expr_diff d or \partial handling???
 
 # Builds expression tree from text, nodes are nested AST tuples.
 #
@@ -187,7 +187,7 @@ class Parser (lalr1.Parser):
 			b'b7+d9Q9JSt67tG6trPDk1BbmqfFuTXbcLJvd93LZUhMD2fI/3+SbCBrfRJLfzOtno9suzw/zIh8e+KGEtOdRu1bJb1gZDNJgioaVXck6cL1Joq+FGn6ZmOrD3l/ORJodS8OU+5xMq/IHbyBbf0SsmxaLmfyNwtPESj8TzuSo4QcvOz/6jN9Vx/L/7UgBtxMV' \
 			b'Ar+Ww7KP5B12lzf5kqUfyTrOZ+1cnbs7VwFyYOsf259yc2J0U/RooUe7WBM7UIabKBsV6qhNRU2QbuOnv1nHErW6C1OL/cQuN1EX380r+lbraKA7FkrXFjj8MmeUFTH9cpjBEphiVsyLXEJZwSKrVzba6dTFbuzMHfyuw9T1dEwUkL64CvVqpxv0NedW6Jru' \
 			b'VT1O2dEtqreohhs3W/I2utVv1GxBhM5viMMWxEkRsNZelrXcctvfBmPdpRlr1R43GOsvzVin9rjB2HBpxka1xw3Gxi2NnX/ZbG0y97O22aj7Ogrp4nYSbAPD24t+1y4tAaPmN6xhPTfacOOu5rKoKIvuUMrCq8vb0Ns6vCYYd1Uvf0Pp5AEsHrOitgJa2bzk' \
-			b'RctPEwS+4TUvUerSPSu/EdmXIcqHDOaILo+l+DRgog0awjK13vALiP8fogw0calGLkAqHMTB6EI/hhYDevEmqRr4t3yjfJuGe+bH/wfrivs/' 
+			b'RctPEwS+4TUvUerSPSu/EdmXIcqHDOaILo+l+DRgog0awjK13vALiP8fogw0calGLkAqHMTB6EI/hhYDevEmqRr4t3yjfJuGe+bH/wfrivs/'
 
 	_PARSER_TOP = 'expr'
 
