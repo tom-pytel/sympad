@@ -1,5 +1,6 @@
 import re
 
+# ('=', 'rel', lhs, rhs)        - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
 # ('#', 'num')                  - numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
 # ('"', 'str')                  - string (for function parameters like '+' or '-')
@@ -34,29 +35,8 @@ _rec_var_not_single         = re.compile (r'^(?:d.|\\partial |.+_)')
 _rec_func_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 _rec_func_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
+#...............................................................................................
 class AST (tuple):
-	VARS_SPECIAL_LONG  = {'\\pi': 'pi', '\\infty': 'oo'}
-	VARS_SPECIAL_SHORT = {'pi': '\\pi', 'oo': '\\infty'}
-
-	FUNCS_ALIAS        = {'?': 'N'}
-
-	FUNCS_PY_ONLY      = set ('''
-		?
-		abs
-		expand
-		factor
-		factorial
-		simplify
-		'''.strip ().split ())
-
-	FUNCS_PY_AND_TEX   = set ('''
-		arg
-		exp
-		ln
-		'''.strip ().split ())
-
-	FUNCS_PY_ALL       = FUNCS_PY_ONLY | FUNCS_PY_AND_TEX
-
 	def __new__ (cls, *args):
 		op       = _AST_CLS2OP.get (cls)
 		cls_args = tuple (AST (*arg) if arg.__class__ is tuple else arg for arg in args)
@@ -148,6 +128,22 @@ class AST (tuple):
 			return AST (op, (ast0,) + ast1 [-1])
 		return AST (op, (ast0, ast1))
 
+#...............................................................................................
+class AST_Eq (AST):
+	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
+	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '==': '=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
+
+	def _init (self, rel, lhs, rhs):
+		self.rel = rel # should be short form
+		self.lhs = lhs
+		self.rhs = rhs
+
+	def _is_eq (self):
+		return True
+
+	def _is_eq_eq (self):
+		return self.rel == '='
+
 class AST_Num (AST):
 	def _init (self, num):
 		self.num = num
@@ -165,8 +161,11 @@ class AST_Num (AST):
 		return _rec_num_pos_int.match (self.num)
 
 class AST_Var (AST):
+	SPECIAL_LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo'}
+	SPECIAL_SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty'}
+
 	def _init (self, var):
-		self.var = var
+		self.var = var # should be long form
 
 	def _is_var (self):
 		return True
@@ -174,10 +173,10 @@ class AST_Var (AST):
 	def _is_null_var (self):
 		return not self.var
 
-	def _is_diff_var (self):
+	def _is_differential (self):
 		return _rec_var_diff_start.match (self.var)
 
-	def _is_part_var (self):
+	def _is_partial (self):
 		return _rec_var_part_start.match (self.var)
 
 class AST_Str (AST):
@@ -188,8 +187,8 @@ class AST_Str (AST):
 		return True
 
 class AST_Comma (AST):
-	def _init (self, parms):
-		self.parms = parms
+	def _init (self, commas):
+		self.commas = commas
 
 	def _is_comma (self):
 		return True
@@ -269,6 +268,24 @@ class AST_Sqrt (AST):
 		return True
 
 class AST_Func (AST):
+	PY_ONLY      = set ('''
+		?
+		abs
+		expand
+		factor
+		factorial
+		simplify
+		'''.strip ().split ())
+
+	PY_AND_TEX   = set ('''
+		arg
+		exp
+		ln
+		'''.strip ().split ())
+
+	PY_ALL       = PY_ONLY | PY_AND_TEX
+	ALIAS        = {'?': 'N'}
+
 	def _init (self, func, arg):
 		self.func = func
 		self.arg  = arg
@@ -321,6 +338,7 @@ class AST_Intg (AST):
 		return True
 
 _AST_OP2CLS = {
+	'=': AST_Eq,
 	'#': AST_Num,
 	'@': AST_Var,
 	'"': AST_Str,

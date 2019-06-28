@@ -1253,8 +1253,8 @@ _rec_func_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 _rec_func_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 class AST (tuple):
-	VARS_SPECIAL_LONG  = {'\\pi': 'pi', '\\infty': 'oo'}
-	VARS_SPECIAL_SHORT = {'pi': '\\pi', 'oo': '\\infty'}
+	VARS_SPECIAL_LONG2SHORT  = {'\\pi': 'pi', '\\infty': 'oo'}
+	VARS_SPECIAL_SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty'}
 
 	FUNCS_ALIAS        = {'?': 'N'}
 
@@ -1392,10 +1392,10 @@ class AST_Var (AST):
 	def _is_null_var (self):
 		return not self.var
 
-	def _is_diff_var (self):
+	def _is_differential (self):
 		return _rec_var_diff_start.match (self.var)
 
-	def _is_part_var (self):
+	def _is_partial (self):
 		return _rec_var_part_start.match (self.var)
 
 class AST_Comma (AST):
@@ -1585,32 +1585,32 @@ import re
 
 
 def _ast_from_tok_digit_or_var (tok, i = 0):
-	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.VARS_SPECIAL_SHORT.get (tok.grp [i + 1], tok.grp [i + 2]))
+	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.SPECIAL_SHORT2LONG.get (tok.grp [i + 1], tok.grp [i + 2]))
 
 def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
-	if ast.is_diff_var or ast.is_null_var: # null_var is for autocomplete
+	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
 		return AST ('intg', None, ast, *from_to)
 
 	elif ast.is_div:
-		if ast.denom.is_mul and ast.denom.muls [-1].is_diff_var:
+		if ast.denom.is_mul and ast.denom.muls [-1].is_differential:
 			return AST ('intg', ('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else \
 					AST ('*', ast.denom.muls [:-1])), ast.denom.muls [-1], *from_to)
 
-		if ast.numer.is_diff_var:
+		if ast.numer.is_differential:
 			return AST ('intg', ('/', ast.One, ast.denom), ast.numer, *from_to)
 
-	elif ast.is_mul and (ast.muls [-1].is_diff_var or ast.muls [-1].is_null_var): # null_var is for autocomplete
+	elif ast.is_mul and (ast.muls [-1].is_differential or ast.muls [-1].is_null_var): # null_var is for autocomplete
 		return AST ('intg', ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1]), ast.muls [-1], *from_to)
 
 	elif ast.is_add:
-		if ast.adds [-1].is_diff_var:
+		if ast.adds [-1].is_differential:
 			return AST ('intg', \
 					AST ('+', ast.adds [:-1])
 					if len (ast.adds) > 2 else \
 					ast.adds [0] \
 					, ast.adds [-1], *from_to)
 
-		if ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_diff_var:
+		if ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_differential:
 			return AST ('intg', \
 					AST ('+', ast.adds [:-1] + (AST ('*', ast.adds [-1].muls [:-1]),))
 					if len (ast.adds [-1].muls) > 2 else \
@@ -1637,7 +1637,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		else:
 			return None
 
-		ast_dv_check = (lambda n: n.is_diff_var) if v [0] == 'd' else (lambda n: n.is_part_var)
+		ast_dv_check = (lambda n: n.is_differential) if v [0] == 'd' else (lambda n: n.is_partial)
 
 		ns = ast.denom.muls if ast.denom.is_mul else (ast.denom,)
 		ds = []
@@ -1751,7 +1751,7 @@ class Parser (lalr1.Parser):
 			b'b7+d9Q9JSt67tG6trPDk1BbmqfFuTXbcLJvd93LZUhMD2fI/3+SbCBrfRJLfzOtno9suzw/zIh8e+KGEtOdRu1bJb1gZDNJgioaVXck6cL1Joq+FGn6ZmOrD3l/ORJodS8OU+5xMq/IHbyBbf0SsmxaLmfyNwtPESj8TzuSo4QcvOz/6jN9Vx/L/7UgBtxMV' \
 			b'Ar+Ww7KP5B12lzf5kqUfyTrOZ+1cnbs7VwFyYOsf259yc2J0U/RooUe7WBM7UIabKBsV6qhNRU2QbuOnv1nHErW6C1OL/cQuN1EX380r+lbraKA7FkrXFjj8MmeUFTH9cpjBEphiVsyLXEJZwSKrVzba6dTFbuzMHfyuw9T1dEwUkL64CvVqpxv0NedW6Jru' \
 			b'VT1O2dEtqreohhs3W/I2utVv1GxBhM5viMMWxEkRsNZelrXcctvfBmPdpRlr1R43GOsvzVin9rjB2HBpxka1xw3Gxi2NnX/ZbG0y97O22aj7Ogrp4nYSbAPD24t+1y4tAaPmN6xhPTfacOOu5rKoKIvuUMrCq8vb0Ns6vCYYd1Uvf0Pp5AEsHrOitgJa2bzk' \
-			b'RctPEwS+4TUvUerSPSu/EdmXIcqHDOaILo+l+DRgog0awjK13vALiP8fogw0calGLkAqHMTB6EI/hhYDevEmqRr4t3yjfJuGe+bH/wfrivs/' 
+			b'RctPEwS+4TUvUerSPSu/EdmXIcqHDOaILo+l+DRgog0awjK13vALiP8fogw0calGLkAqHMTB6EI/hhYDevEmqRr4t3yjfJuGe+bH/wfrivs/'
 
 	_PARSER_TOP = 'expr'
 
@@ -1765,8 +1765,8 @@ class Parser (lalr1.Parser):
 	_ONEVARSP   = fr'{_CHAR}|{_GREEK}|{_SPECIAL}'
 	_DSONEVARSP = fr'(\d)|({_SHORT})|({_ONEVARSP})'
 
-	_FUNCPYONLY = '|'.join (reversed (sorted ('\\?' if s == '?' else s for s in AST.FUNCS_PY_ONLY))) # special cased function name '?' for regex
-	_FUNCPYTEX  = '|'.join (reversed (sorted (AST.FUNCS_PY_AND_TEX)))
+	_FUNCPYONLY = '|'.join (reversed (sorted ('\\?' if s == '?' else s for s in AST.Func.PY_ONLY))) # special cased function name '?' for regex
+	_FUNCPYTEX  = '|'.join (reversed (sorted (AST.Func.PY_AND_TEX)))
 
 	TOKENS      = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
@@ -1909,11 +1909,11 @@ class Parser (lalr1.Parser):
 	def expr_var_4      (self, var, subvar):                                 return AST ('@', f'{var}{subvar}')
 	def expr_var_5      (self, var):                                         return AST ('@', var)
 
-	def var             (self, VAR):                                         return f'\\partial {VAR.grp [2]}' if VAR.grp [1] and VAR.grp [1] [0] == '\\' else AST.VARS_SPECIAL_SHORT.get (VAR.grp [0], VAR.text)
+	def var             (self, VAR):                                         return f'\\partial {VAR.grp [2]}' if VAR.grp [1] and VAR.grp [1] [0] == '\\' else AST.Var.SPECIAL_SHORT2LONG.get (VAR.grp [0], VAR.text)
 	def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):               return f'_{{{expr_var [1]}}}'
 	def subvar_2        (self, SUB, CURLYL, NUM, CURLYR):                    return f'_{{{NUM.text}}}'
 	def subvar_3        (self, SUB, CURLYL, NUM, subvar, CURLYR):            return f'_{{{NUM.text}{subvar}}}'
-	def subvar_4        (self, SUB1):                                        return f'_{AST.VARS_SPECIAL_SHORT.get (SUB1.grp [1], SUB1.text [1:])}'
+	def subvar_4        (self, SUB1):                                        return f'_{AST.Var.SPECIAL_SHORT2LONG.get (SUB1.grp [1], SUB1.text [1:])}'
 
 	def expr_sub_1      (self, SUB, expr_frac):                              return expr_frac
 	def expr_sub_2      (self, SUB1):                                        return _ast_from_tok_digit_or_var (SUB1)
@@ -1993,7 +1993,7 @@ class Parser (lalr1.Parser):
 				ast = stack.pop ()
 
 				if ast.is_var:
-					(expr_diffs if ast.is_diff_var else expr_vars).add (ast.var)
+					(expr_diffs if ast.is_differential else expr_vars).add (ast.var)
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
@@ -2241,7 +2241,7 @@ def _ast2tex_func (ast):
 
 	return \
 			f'\\{ast.func}{_ast2tex_paren (ast.arg)}' \
-			if ast.func in AST.FUNCS_PY_AND_TEX else \
+			if ast.func in AST.Func.PY_AND_TEX else \
 			f'\\operatorname{{{ast.func}}}{_ast2tex_paren (ast.arg)}'
 
 def _ast2tex_lim (ast):
@@ -2342,8 +2342,8 @@ def _ast2simple_mul (ast, ret_has = False):
 
 		elif p and (p in {('@', 'd'), ('@', '\\partial')} or \
 				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
-				(n.is_var and (n.var in AST.VARS_SPECIAL_LONG or _rec_var_diff_or_part_start.match (n.var))) or \
-				(p.is_var and (p.var in AST.VARS_SPECIAL_LONG or _rec_var_diff_or_part_start.match (p.var)))):
+				(n.is_var and (n.var in AST.Var.SPECIAL_LONG2SHORT or _rec_var_diff_or_part_start.match (n.var))) or \
+				(p.is_var and (p.var in AST.Var.SPECIAL_LONG2SHORT or _rec_var_diff_or_part_start.match (p.var)))):
 			t.append (f' {s}')
 
 		else:
@@ -2386,7 +2386,7 @@ def _ast2simple_func (ast):
 
 	return \
 			f'{ast.func}{_ast2simple_paren (ast.arg)}' \
-			if ast.func in AST.FUNCS_PY_ALL else \
+			if ast.func in AST.Func.PY_ALL else \
 			f'${ast.func}{_ast2simple_paren (ast.arg)}'
 
 def _ast2simple_lim (ast):
@@ -2433,7 +2433,7 @@ def _ast2simple_intg (ast):
 
 _ast2simple_funcs = {
 	'#': lambda ast: ast.num,
-	'@': lambda ast: AST.VARS_SPECIAL_LONG.get (ast.var, ast.var),
+	'@': lambda ast: AST.Var.SPECIAL_LONG2SHORT.get (ast.var, ast.var),
 	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.parms),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
@@ -2514,7 +2514,7 @@ _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 
 _ast2py_funcs = {
 	'#': lambda ast: ast.num,
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.VARS_SPECIAL_LONG.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.Var.SPECIAL_LONG2SHORT.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
 	',': lambda ast: ','.join (ast2py (parm) for parm in ast.parms),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
@@ -2526,7 +2526,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{AST.FUNCS_ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
+	'func': lambda ast: f'{AST.Func.ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -2538,7 +2538,7 @@ def ast2spt (ast): # abstract syntax tree -> sympy tree (expression)
 	return _ast2spt_funcs [ast.op] (ast)
 
 def _ast2spt_func (ast):
-	f = getattr (sp, AST.FUNCS_ALIAS.get (ast.func, ast.func))
+	f = getattr (sp, AST.Func.ALIAS.get (ast.func, ast.func))
 	p = ast2spt (ast.arg)
 
 	return f (*p) if isinstance (p, tuple) else f (p)

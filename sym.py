@@ -6,6 +6,7 @@
 import re
 import sympy as sp
 sp.numbers = sp.numbers # medication for hyperactive pylint
+sp.boolalg = sp.boolalg
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -117,7 +118,7 @@ def _ast2tex_func (ast):
 
 	return \
 			f'\\{ast.func}{_ast2tex_paren (ast.arg)}' \
-			if ast.func in AST.FUNCS_PY_AND_TEX else \
+			if ast.func in AST.Func.PY_AND_TEX else \
 			f'\\operatorname{{{ast.func}}}{_ast2tex_paren (ast.arg)}'
 
 def _ast2tex_lim (ast):
@@ -163,10 +164,11 @@ def _ast2tex_intg (ast):
 				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {ast2tex (ast.intg)} \\ {ast2tex (ast.var)}'
 
 _ast2tex_funcs = {
+	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
 	'@': lambda ast: str (ast.var) if ast.var else '{}',
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
-	',': lambda ast: ','.join (ast2tex (parm) for parm in ast.parms),
+	',': lambda ast: ','.join (ast2tex (parm) for parm in ast.commas),
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2tex (ast.minus)}',
@@ -219,8 +221,8 @@ def _ast2simple_mul (ast, ret_has = False):
 
 		elif p and (p in {('@', 'd'), ('@', '\\partial')} or \
 				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
-				(n.is_var and (n.var in AST.VARS_SPECIAL_LONG or _rec_var_diff_or_part_start.match (n.var))) or \
-				(p.is_var and (p.var in AST.VARS_SPECIAL_LONG or _rec_var_diff_or_part_start.match (p.var)))):
+				(n.is_var and (n.var in AST.Var.SPECIAL_LONG2SHORT or _rec_var_diff_or_part_start.match (n.var))) or \
+				(p.is_var and (p.var in AST.Var.SPECIAL_LONG2SHORT or _rec_var_diff_or_part_start.match (p.var)))):
 			t.append (f' {s}')
 
 		else:
@@ -263,7 +265,7 @@ def _ast2simple_func (ast):
 
 	return \
 			f'{ast.func}{_ast2simple_paren (ast.arg)}' \
-			if ast.func in AST.FUNCS_PY_ALL else \
+			if ast.func in AST.Func.PY_ALL else \
 			f'${ast.func}{_ast2simple_paren (ast.arg)}'
 
 def _ast2simple_lim (ast):
@@ -309,10 +311,11 @@ def _ast2simple_intg (ast):
 				f'\\int_{_ast2simple_curly (ast.from_)}^{_ast2simple_curly (ast.to)} {ast2simple (ast.intg)} {ast2simple (ast.var)}'
 
 _ast2simple_funcs = {
+	'=': lambda ast: f'{ast2simple (ast.lhs)} {ast.rel} {ast2simple (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: AST.VARS_SPECIAL_LONG.get (ast.var, ast.var),
+	'@': lambda ast: AST.Var.SPECIAL_LONG2SHORT.get (ast.var, ast.var),
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.parms),
+	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.commas),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
 	'-': lambda ast: f'-{_ast2simple_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2simple (ast.minus)}',
@@ -391,10 +394,11 @@ def _ast2py_intg (ast):
 _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 
 _ast2py_funcs = {
+	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.VARS_SPECIAL_LONG.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.Var.SPECIAL_LONG2SHORT.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: ','.join (ast2py (parm) for parm in ast.parms),
+	',': lambda ast: ','.join (ast2py (parm) for parm in ast.commas),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2py (ast.minus)}',
@@ -405,7 +409,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{AST.FUNCS_ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
+	'func': lambda ast: f'{AST.Func.ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -417,7 +421,7 @@ def ast2spt (ast): # abstract syntax tree -> sympy tree (expression)
 	return _ast2spt_funcs [ast.op] (ast)
 
 def _ast2spt_func (ast):
-	f = getattr (sp, AST.FUNCS_ALIAS.get (ast.func, ast.func))
+	f = getattr (sp, AST.Func.ALIAS.get (ast.func, ast.func))
 	p = ast2spt (ast.arg)
 
 	return f (*p) if isinstance (p, tuple) else f (p)
@@ -444,6 +448,15 @@ def _ast2spt_intg (ast):
 				if ast.intg is None else \
 				sp.integrate (ast2spt (ast [1]), (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to)))
 
+_ast2spt_eq = {
+	'=':  sp.Eq,
+	'!=': sp.Ne,
+	'<':  sp.Lt,
+	'<=': sp.Le,
+	'>':  sp.Gt,
+	'>=': sp.Ge,
+}
+
 _ast2spt_consts = {
 	'e': sp.E,
 	'i': sp.I,
@@ -452,10 +465,11 @@ _ast2spt_consts = {
 }
 
 _ast2spt_funcs = {
+	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 	'@': lambda ast: _ast2spt_consts.get (ast.var, sp.Symbol (ast.var)),
 	'"': lambda ast: ast.str_,
-	',': lambda ast: tuple (ast2spt (p) for p in ast.parms),
+	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
 	'(': lambda ast: ast2spt (ast.paren),
 	'|': lambda ast: sp.Abs (ast2spt (ast.abs)),
 	'-': lambda ast: -ast2spt (ast.minus),
@@ -562,6 +576,9 @@ _spt2ast_funcs = {
 	sp.numbers.NegativeInfinity: lambda spt: AST ('-', AST.Infty),
 	sp.numbers.ComplexInfinity: lambda spt: AST.Infty, # not exactly but whatever
 	sp.Symbol: lambda spt: AST ('@', spt.name),
+
+	sp.boolalg.BooleanTrue: lambda spt: AST ('#', '1'),
+	sp.boolalg.BooleanFalse: lambda spt: AST ('#', '0'),
 
 	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
 	sp.Add: lambda spt: AST ('+', tuple (spt2ast (arg) for arg in reversed (spt._sorted_args))),
