@@ -1253,8 +1253,8 @@ _rec_func_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 _rec_func_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 class AST (tuple):
-	VARS_SPECIAL_LONG2SHORT  = {'\\pi': 'pi', '\\infty': 'oo'}
-	VARS_SPECIAL_SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty'}
+	VARS_LONG2SHORT  = {'\\pi': 'pi', '\\infty': 'oo'}
+	VARS_SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty'}
 
 	FUNCS_ALIAS        = {'?': 'N'}
 
@@ -1585,7 +1585,7 @@ import re
 
 
 def _ast_from_tok_digit_or_var (tok, i = 0):
-	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.SPECIAL_SHORT2LONG.get (tok.grp [i + 1], tok.grp [i + 2]))
+	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.SHORT2LONG.get (tok.grp [i + 1], tok.grp [i + 2]))
 
 def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
@@ -1909,11 +1909,11 @@ class Parser (lalr1.Parser):
 	def expr_var_4      (self, var, subvar):                                 return AST ('@', f'{var}{subvar}')
 	def expr_var_5      (self, var):                                         return AST ('@', var)
 
-	def var             (self, VAR):                                         return f'\\partial {VAR.grp [2]}' if VAR.grp [1] and VAR.grp [1] [0] == '\\' else AST.Var.SPECIAL_SHORT2LONG.get (VAR.grp [0], VAR.text)
+	def var             (self, VAR):                                         return f'\\partial {VAR.grp [2]}' if VAR.grp [1] and VAR.grp [1] [0] == '\\' else AST.Var.SHORT2LONG.get (VAR.grp [0], VAR.text)
 	def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):               return f'_{{{expr_var [1]}}}'
 	def subvar_2        (self, SUB, CURLYL, NUM, CURLYR):                    return f'_{{{NUM.text}}}'
 	def subvar_3        (self, SUB, CURLYL, NUM, subvar, CURLYR):            return f'_{{{NUM.text}{subvar}}}'
-	def subvar_4        (self, SUB1):                                        return f'_{AST.Var.SPECIAL_SHORT2LONG.get (SUB1.grp [1], SUB1.text [1:])}'
+	def subvar_4        (self, SUB1):                                        return f'_{AST.Var.SHORT2LONG.get (SUB1.grp [1], SUB1.text [1:])}'
 
 	def expr_sub_1      (self, SUB, expr_frac):                              return expr_frac
 	def expr_sub_2      (self, SUB1):                                        return _ast_from_tok_digit_or_var (SUB1)
@@ -2342,8 +2342,8 @@ def _ast2simple_mul (ast, ret_has = False):
 
 		elif p and (p in {('@', 'd'), ('@', '\\partial')} or \
 				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
-				(n.is_var and (n.var in AST.Var.SPECIAL_LONG2SHORT or _rec_var_diff_or_part_start.match (n.var))) or \
-				(p.is_var and (p.var in AST.Var.SPECIAL_LONG2SHORT or _rec_var_diff_or_part_start.match (p.var)))):
+				(n.is_var and (n.var in AST.Var.LONG2SHORT or _rec_var_diff_or_part_start.match (n.var))) or \
+				(p.is_var and (p.var in AST.Var.LONG2SHORT or _rec_var_diff_or_part_start.match (p.var)))):
 			t.append (f' {s}')
 
 		else:
@@ -2433,7 +2433,7 @@ def _ast2simple_intg (ast):
 
 _ast2simple_funcs = {
 	'#': lambda ast: ast.num,
-	'@': lambda ast: AST.Var.SPECIAL_LONG2SHORT.get (ast.var, ast.var),
+	'@': lambda ast: AST.Var.LONG2SHORT.get (ast.var, ast.var),
 	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.parms),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
@@ -2514,7 +2514,7 @@ _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 
 _ast2py_funcs = {
 	'#': lambda ast: ast.num,
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.Var.SPECIAL_LONG2SHORT.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.Var.LONG2SHORT.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
 	',': lambda ast: ','.join (ast2py (parm) for parm in ast.parms),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',

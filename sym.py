@@ -221,8 +221,8 @@ def _ast2simple_mul (ast, ret_has = False):
 
 		elif p and (p in {('@', 'd'), ('@', '\\partial')} or \
 				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
-				(n.is_var and (n.var in AST.Var.SPECIAL_LONG2SHORT or _rec_var_diff_or_part_start.match (n.var))) or \
-				(p.is_var and (p.var in AST.Var.SPECIAL_LONG2SHORT or _rec_var_diff_or_part_start.match (p.var)))):
+				(n.is_var and (n.var in AST.Var.LONG2SHORT or _rec_var_diff_or_part_start.match (n.var))) or \
+				(p.is_var and (p.var in AST.Var.LONG2SHORT or _rec_var_diff_or_part_start.match (p.var)))):
 			t.append (f' {s}')
 
 		else:
@@ -313,7 +313,7 @@ def _ast2simple_intg (ast):
 _ast2simple_funcs = {
 	'=': lambda ast: f'{ast2simple (ast.lhs)} {ast.rel} {ast2simple (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: AST.Var.SPECIAL_LONG2SHORT.get (ast.var, ast.var),
+	'@': lambda ast: AST.Var.LONG2SHORT.get (ast.var, ast.var),
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.commas),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
@@ -396,7 +396,7 @@ _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 _ast2py_funcs = {
 	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.Var.SPECIAL_LONG2SHORT.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.Var.LONG2SHORT.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: ','.join (ast2py (parm) for parm in ast.commas),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
@@ -458,10 +458,12 @@ _ast2spt_eq = {
 }
 
 _ast2spt_consts = {
-	'e': sp.E,
-	'i': sp.I,
-	'\\pi': sp.pi,
-	'\\infty': sp.oo,
+	'e'            : sp.E,
+	'i'            : sp.I,
+	'\\pi'         : sp.pi,
+	'\\infty'      : sp.oo,
+	'\\text{True}' : sp.boolalg.true,
+	'\\text{False}': sp.boolalg.false,
 }
 
 _ast2spt_funcs = {
@@ -577,8 +579,14 @@ _spt2ast_funcs = {
 	sp.numbers.ComplexInfinity: lambda spt: AST.Infty, # not exactly but whatever
 	sp.Symbol: lambda spt: AST ('@', spt.name),
 
-	sp.boolalg.BooleanTrue: lambda spt: AST ('#', '1'),
-	sp.boolalg.BooleanFalse: lambda spt: AST ('#', '0'),
+	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
+	sp.boolalg.BooleanFalse: lambda spt: AST.False_,
+	sp.Eq: lambda spt: AST ('=', '=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	sp.Ne: lambda spt: AST ('=', '!=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	sp.Lt: lambda spt: AST ('=', '<', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	sp.Le: lambda spt: AST ('=', '<=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	sp.Gt: lambda spt: AST ('=', '>', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 
 	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
 	sp.Add: lambda spt: AST ('+', tuple (spt2ast (arg) for arg in reversed (spt._sorted_args))),

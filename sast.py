@@ -161,8 +161,8 @@ class AST_Num (AST):
 		return _rec_num_pos_int.match (self.num)
 
 class AST_Var (AST):
-	SPECIAL_LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo'}
-	SPECIAL_SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty'}
+	LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False'}
+	SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}'}
 
 	def _init (self, var):
 		self.var = var # should be long form
@@ -337,6 +337,7 @@ class AST_Intg (AST):
 	def _is_intg (self):
 		return True
 
+#...............................................................................................
 _AST_OP2CLS = {
 	'=': AST_Eq,
 	'#': AST_Num,
@@ -372,3 +373,5 @@ AST.I      = AST ('@', 'i')
 AST.E      = AST ('@', 'e')
 AST.Pi     = AST ('@', '\\pi')
 AST.Infty  = AST ('@', '\\infty')
+AST.True_  = AST ('@', AST_Var.SHORT2LONG ['True'])
+AST.False_ = AST ('@', AST_Var.SHORT2LONG ['False'])

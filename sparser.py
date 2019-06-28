@@ -22,7 +22,8 @@ import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 def _ast_from_tok_digit_or_var (tok, i = 0):
-	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.SPECIAL_SHORT2LONG.get (tok.grp [i + 1], tok.grp [i + 2]))
+	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.SHORT2LONG.get (tok.grp [i + 1] or tok.grp [i + 3], tok.grp [i + 2]))
+	# return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.LONG2SHORT.get (tok.grp [i + 1], tok.grp [i + 2]))
 
 def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
@@ -194,14 +195,15 @@ class Parser (lalr1.Parser):
 
 	_PARSER_TOP = 'expr'
 
-	_GREEK      = r'\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\pi|\\rho|' \
+	_GREEK      = r'\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\rho|' \
 			r'\\sigma|\\tau|\\upsilon|\\phi|\\chi|\\psi|\\omega|\\Gamma|\\Delta|\\Theta|\\Lambda|\\Upsilon|\\Xi|\\Phi|\\Pi|\\Psi|\\Sigma|\\Omega'
 
-	_SPECIAL    =  r'\\partial|\\infty'
+	_SPECIAL    =  r'\\partial|\\pi|\\infty'
 	_CHAR       = fr'[a-zA-Z]'
-	_SHORT      =  r'pi|oo'
+	_SHORT      =  r'pi|oo|True|False'
+	_TEXTVAR    =  r'\\text\s*\{\s*(True|False)\s*\}'
 	_ONEVAR     = fr'{_CHAR}|{_GREEK}'
-	_DSONEVARSP = fr'(\d)|({_SHORT})|({_CHAR}|{_GREEK}|{_SPECIAL})'
+	_DSONEVARSP = fr'(?:(\d)|({_SHORT})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
 	_STR        =  r'(?:\'([^\']*)\'|"([^"]*)["])'
 
 	_FUNCPYONLY = '|'.join (reversed (sorted ('\\?' if s == '?' else s for s in AST.Func.PY_ONLY))) # special cased function name '?' for regex
@@ -220,15 +222,15 @@ class Parser (lalr1.Parser):
 		('RIGHT',         r'\\right'),
 		('CDOT',          r'\\cdot'),
 		('TO',            r'\\to'),
-		('FRAC2',        fr'\\frac\s*(?:{_DSONEVARSP})\s*(?:{_DSONEVARSP})'),
-		('FRAC1',        fr'\\frac\s*(?:{_DSONEVARSP})'),
+		('FRAC2',        fr'\\frac\s*{_DSONEVARSP}\s*{_DSONEVARSP}'),
+		('FRAC1',        fr'\\frac\s*{_DSONEVARSP}'),
 		('FRAC',          r'\\frac'),
-		('STR',          fr'{_STR}|\\text\s*\{{\s*{_STR}\s*\}}'),
-		('VAR',          fr'\b_|({_SHORT})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
-		('SUB1',         fr'_(?:{_DSONEVARSP})'),
+		('VAR',          fr'\b_|({_SHORT})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}'),
+		('STR',          fr'{_STR}|\\text\s*\{{\s*{_STR}\s*\}}'),
+		('SUB1',         fr'_{_DSONEVARSP}'),
 		('SUB',           r'_'),
-		('CARET1',       fr'\^(?:{_DSONEVARSP})'),
+		('CARET1',       fr'\^{_DSONEVARSP}'),
 		('CARET',         r'\^'),
 		('DOUBLESTAR',    r'\*\*'),
 		('PRIMES',        r"'+"),
@@ -340,7 +342,7 @@ class Parser (lalr1.Parser):
 
 	def expr_frac_1     (self, FRAC, expr_term1, expr_term2):                return AST ('/', expr_term1, expr_term2)
 	def expr_frac_2     (self, FRAC1, expr_term):                            return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_term)
-	def expr_frac_3     (self, FRAC2):                                       return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
+	def expr_frac_3     (self, FRAC2):                                       return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 4))
 	def expr_frac_4     (self, expr_term):                                   return expr_term
 
 	def expr_term_1     (self, CURLYL, expr_comma, CURLYR):                  return expr_comma
@@ -356,11 +358,16 @@ class Parser (lalr1.Parser):
 	def expr_var_4      (self, var, subvar):                                 return AST ('@', f'{var}{subvar}')
 	def expr_var_5      (self, var):                                         return AST ('@', var)
 
-	def var             (self, VAR):                                         return f'\\partial {VAR.grp [2]}' if VAR.grp [1] and VAR.grp [1] [0] == '\\' else AST.Var.SPECIAL_SHORT2LONG.get (VAR.grp [0], VAR.text)
+	def var             (self, VAR):
+		return \
+				f'\\partial {VAR.grp [2]}' \
+				if VAR.grp [1] and VAR.grp [1] [0] != 'd' else \
+				AST.Var.SHORT2LONG.get (VAR.grp [0] or VAR.grp [3], VAR.text)
+
 	def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):               return f'_{{{expr_var [1]}}}'
 	def subvar_2        (self, SUB, CURLYL, NUM, CURLYR):                    return f'_{{{NUM.text}}}'
 	def subvar_3        (self, SUB, CURLYL, NUM, subvar, CURLYR):            return f'_{{{NUM.text}{subvar}}}'
-	def subvar_4        (self, SUB1):                                        return f'_{AST.Var.SPECIAL_SHORT2LONG.get (SUB1.grp [1], SUB1.text [1:])}'
+	def subvar_4        (self, SUB1):                                        return f'_{AST.Var.SHORT2LONG.get (SUB1.grp [1] or SUB1.grp [3], SUB1.text [1:])}'
 
 	def expr_sub_1      (self, SUB, expr_frac):                              return expr_frac
 	def expr_sub_2      (self, SUB1):                                        return _ast_from_tok_digit_or_var (SUB1)
@@ -408,7 +415,7 @@ class Parser (lalr1.Parser):
 				self.autocompleting = False
 
 		else:
-			self.tokens.insert (self.tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, (None, None, '')))
+			self.tokens.insert (self.tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, (None, None, '', None)))
 			self._mark_error ()
 
 		return True
