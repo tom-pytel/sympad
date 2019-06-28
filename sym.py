@@ -164,7 +164,7 @@ def _ast2tex_intg (ast):
 _ast2tex_funcs = {
 	'#': _ast2tex_num,
 	'@': lambda ast: str (ast.var) if ast.var else '{}',
-	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.parms),
+	',': lambda ast: ','.join (ast2tex (parm) for parm in ast.parms),
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2tex (ast.minus)}',
