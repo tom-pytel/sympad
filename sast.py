@@ -270,10 +270,14 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	PY_ONLY      = set ('''
 		?
+		Abs
+		Integral
+		Piecewise
 		abs
 		expand
 		factor
 		factorial
+		series
 		simplify
 		'''.strip ().split ())
 

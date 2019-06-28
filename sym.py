@@ -1,7 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: Order
-# TODO: \int_0^\infty e^{-st} dt, sp.Piecewise
+# TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
 
 import re
 import sympy as sp
@@ -16,6 +15,12 @@ _rec_var_diff_or_part_start = re.compile (r'^(?:d(?=[^_])|\\partial )')
 _rec_num_deconstructed      = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
 
 #...............................................................................................
+class AST_Unknown: # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
+	op = '???'
+
+	def __init__ (self, tex, py):
+		self.tex, self.py = tex, py
+
 def set_precision (ast): # recurse through ast to set sympy float precision according to largest string of digits found
 	global _SYMPY_FLOAT_PRECISION
 
@@ -184,6 +189,7 @@ _ast2tex_funcs = {
 	'sum': _ast2tex_sum,
 	'diff': _ast2tex_diff,
 	'intg': _ast2tex_intg,
+	'???': lambda ast: ast.tex,
 }
 
 #...............................................................................................
@@ -241,7 +247,7 @@ def _ast2simple_div (ast):
 
 def _ast2simple_pow (ast):
 	b = ast2simple (ast.base)
-	p = f'{ast2simple (ast.exp)}' if ast.exp.op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2simple (ast.exp)
+	p = f'{_ast2simple_paren (ast.exp)}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2simple (ast.exp)
 
 	if ast.base.is_trigh_func_noninv_func and ast.exp.is_single_unit:
 		i = len (ast.base.func)
@@ -331,6 +337,7 @@ _ast2simple_funcs = {
 	'sum': _ast2simple_sum,
 	'diff': _ast2simple_diff,
 	'intg': _ast2simple_intg,
+	'???': lambda ast: '???', # 'SymPad did not know how to process this element natively, try double-click copying the Python code :(',
 }
 
 #...............................................................................................
@@ -340,7 +347,7 @@ def ast2py (ast): # abstract syntax tree -> python code text
 def _ast2py_curly (ast):
 	return \
 			_ast2py_paren (ast) \
-			if ast.op in {'+', '*', '/'} or ast.is_neg_num or (ast.is_log and ast.base is not None) else \
+			if ast.strip_minus ().op in {'+', '*', '/'} or ast.is_neg_num or (ast.is_log and ast.base is not None) else \
 			ast2py (ast)
 
 def _ast2py_paren (ast):
@@ -414,6 +421,7 @@ _ast2py_funcs = {
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
 	'intg': _ast2py_intg,
+	'???': lambda ast: ast.py,
 }
 
 #...............................................................................................
@@ -423,8 +431,12 @@ def ast2spt (ast): # abstract syntax tree -> sympy tree (expression)
 def _ast2spt_func (ast):
 	f = getattr (sp, AST.Func.ALIAS.get (ast.func, ast.func))
 	p = ast2spt (ast.arg)
+	r = f (*p) if isinstance (p, tuple) else f (p)
 
-	return f (*p) if isinstance (p, tuple) else f (p)
+	# if ast.func == 'series' and isinstance (r, sp.Add): # special case series return order
+	# 	r = spProxy (sp.Add, _sorted_args = r._sorted_args [::-1])
+
+	return r
 
 def _ast2spt_diff (ast):
 	args = sum ((
@@ -503,7 +515,8 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 			return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
 
-	raise RuntimeError (f'unexpected class {spt.__class__.__name__!r}')
+	return AST_Unknown (sp.latex (spt), str (spt))
+	# raise RuntimeError (f'unexpected class {spt.__class__.__name__!r}')
 
 def _spt2ast_nan (spt):
 	raise ValueError ('undefined')
@@ -521,6 +534,17 @@ def _spt2ast_num (spt):
 			f'{g [0]}{g [1]}e+{e}'     if e >= 16 else \
 			f'{g [0]}{g [1]}{"0" * e}' if e >= 0 else \
 			f'{g [0]}{g [1]}e{e}')
+
+def _spt2ast_add (spt):
+	args = spt._sorted_args
+
+	for arg in args:
+		if isinstance (arg, sp.Order):
+			break
+	else:
+		args = args [::-1]
+
+	return AST ('+', tuple (spt2ast (arg) for arg in args))
 
 def _spt2ast_mul (spt):
 	if spt.args [0] == -1:
@@ -566,6 +590,9 @@ def _spt2ast_integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
+	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (t) for t in spt))),
+	sp.Tuple: lambda spt: spt2ast (spt.args),
+
 	sp.numbers.NaN: _spt2ast_nan,
 	sp.Integer: _spt2ast_num,
 	sp.Float: _spt2ast_num,
@@ -589,7 +616,7 @@ _spt2ast_funcs = {
 	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 
 	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
-	sp.Add: lambda spt: AST ('+', tuple (spt2ast (arg) for arg in reversed (spt._sorted_args))),
+	sp.Add: _spt2ast_add,
 	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
@@ -602,6 +629,8 @@ _spt2ast_funcs = {
 
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,
+
+	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
 }
 
 class sym: # for single script
@@ -617,3 +646,4 @@ class sym: # for single script
 # 	print (_rec_num_deconstructed.match ('10100.0010100').groups ())
 # 	t = ast2spt (('intg', ('@', 'dx')))
 # 	print (t)
+

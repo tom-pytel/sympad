@@ -1,3 +1,4 @@
+# TODO: Fix variable naming for subscripted stuff and stuff with primes.
 # TODO: 1+1j complex number parsing?
 # TODO: Redo _expr_diff d or \partial handling???
 
@@ -23,7 +24,6 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.SHORT2LONG.get (tok.grp [i + 1] or tok.grp [i + 3], tok.grp [i + 2]))
-	# return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.LONG2SHORT.get (tok.grp [i + 1], tok.grp [i + 2]))
 
 def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
@@ -212,7 +212,7 @@ class Parser (lalr1.Parser):
 	TOKENS      = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
 		('TRIGH',         r'\\?(?:(a)(?:rc)?)?((?:sin|cos|tan|csc|sec|cot)h?)|\\operatorname\s*\{(sech|csch)\s*\}'),
-		('FUNC',         fr'({_FUNCPYONLY})|\\?({_FUNCPYTEX})|\\operatorname\s*\{{\s*({_CHAR}\w+)\s*\}}|\$({_CHAR}\w+)'),
+		('FUNC',         fr'({_FUNCPYONLY})|\\?({_FUNCPYTEX})|\\operatorname\s*\{{\s*({_CHAR}\w*)\s*\}}|\$({_CHAR}\w*)'),
 		('SQRT',          r'\\?sqrt'),
 		('LOG',           r'\\?log'),
 		('LIM',           r'\\lim'),
@@ -226,8 +226,8 @@ class Parser (lalr1.Parser):
 		('FRAC1',        fr'\\frac\s*{_DSONEVARSP}'),
 		('FRAC',          r'\\frac'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
-		('VAR',          fr'\b_|({_SHORT})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}'),
-		('STR',          fr'{_STR}|\\text\s*\{{\s*{_STR}\s*\}}'),
+		('VAR',          fr"(?<!{_CHAR}|['])_|({_SHORT})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}"),
+		('STR',          fr"(?<!{_CHAR}|['}}]){_STR}|\\text\s*\{{\s*{_STR}\s*\}}"),
 		('SUB1',         fr'_{_DSONEVARSP}'),
 		('SUB',           r'_'),
 		('CARET1',       fr'\^{_DSONEVARSP}'),
@@ -270,20 +270,20 @@ class Parser (lalr1.Parser):
 	def expr_ineq_3     (self, expr_add):                                    return expr_add
 
 	def expr_add_1      (self, expr_add, PLUS, expr_mul_exp):                return AST.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return AST.flatcat ('+', expr_add, expr_mul_exp.neg (True))
+	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):               return AST.flatcat ('+', expr_add, expr_mul_exp.neg (stack = True))
 	def expr_add_3      (self, expr_mul_exp):                                return expr_mul_exp
 
 	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_neg):                return AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_2  (self, expr_mul_exp, STAR, expr_neg):                return AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_3  (self, expr_neg):                                    return expr_neg
 
-	def expr_neg_1      (self, MINUS, expr_diff):                            return expr_diff.neg (True)
+	def expr_neg_1      (self, MINUS, expr_diff):                            return expr_diff.neg (stack = True)
 	def expr_neg_2      (self, expr_diff):                                   return expr_diff
 
 	def expr_diff       (self, expr_div):                                    return _expr_diff (expr_div)
 
 	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):              return AST ('/', expr_div, expr_mul_imp)
-	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return AST ('/', expr_div, expr_mul_imp.neg (True))
+	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):       return AST ('/', expr_div, expr_mul_imp.neg (stack = True))
 	def expr_div_3      (self, expr_mul_imp):                                return expr_mul_imp
 
 	def expr_mul_imp_1  (self, expr_mul_imp, expr_int):                      return AST.flatcat ('*', expr_mul_imp, expr_int)
@@ -323,7 +323,7 @@ class Parser (lalr1.Parser):
 	def expr_func_8     (self, expr_fact):                                   return expr_fact
 
 	def expr_func_neg_1 (self, expr_func):                                   return expr_func
-	def expr_func_neg_2 (self, MINUS, expr_func):                            return expr_func.neg (True)
+	def expr_func_neg_2 (self, MINUS, expr_func):                            return expr_func.neg (stack = True)
 
 	def expr_fact_1     (self, expr_fact, FACTORIAL):                        return AST ('!', expr_fact)
 	def expr_fact_2     (self, expr_pow):                                    return expr_pow
@@ -346,7 +346,7 @@ class Parser (lalr1.Parser):
 	def expr_frac_4     (self, expr_term):                                   return expr_term
 
 	def expr_term_1     (self, CURLYL, expr_comma, CURLYR):                  return expr_comma
-	def expr_term_2     (self, STR):                                         return AST ('"', STR.grp [0] or STR.grp [1] or STR.grp [2] or STR.grp [3])
+	def expr_term_2     (self, STR):                                         return AST ('"', STR.grp [0] or STR.grp [1] or STR.grp [2] or STR.grp [3] or '')
 	def expr_term_3     (self, expr_var):                                    return expr_var
 	def expr_term_4     (self, expr_num):                                    return expr_num
 
@@ -361,7 +361,7 @@ class Parser (lalr1.Parser):
 	def var             (self, VAR):
 		return \
 				f'\\partial {VAR.grp [2]}' \
-				if VAR.grp [1] and VAR.grp [1] [0] != 'd' else \
+				if VAR.grp [1] and VAR.grp [1] != 'd' else \
 				AST.Var.SHORT2LONG.get (VAR.grp [0] or VAR.grp [3], VAR.text)
 
 	def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):               return f'_{{{expr_var [1]}}}'
@@ -373,7 +373,7 @@ class Parser (lalr1.Parser):
 	def expr_sub_2      (self, SUB1):                                        return _ast_from_tok_digit_or_var (SUB1)
 
 	def expr_super_1    (self, DOUBLESTAR, expr_func):                       return expr_func
-	def expr_super_2    (self, DOUBLESTAR, MINUS, expr_func):                return expr_func.neg (True)
+	def expr_super_2    (self, DOUBLESTAR, MINUS, expr_func):                return expr_func.neg (stack = True)
 	def expr_super_3    (self, CARET, expr_frac):                            return expr_frac
 	def expr_super_4    (self, CARET1):                                      return _ast_from_tok_digit_or_var (CARET1)
 
@@ -495,22 +495,6 @@ class Parser (lalr1.Parser):
 			return False
 
 		return self._insert_symbol (rule [1] [pos])
-
-		# sym = rule [1] [pos]
-
-		# if sym in self.TOKENS:
-		# 	self.tokens.insert (self.tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.tok.pos))
-
-		# 	if self.autocompleting and sym in self._AUTOCOMPLETE_CLOSE:
-		# 		self.autocomplete.append (self._AUTOCOMPLETE_CLOSE [sym])
-		# 	else:
-		# 		self.autocompleting = False
-
-		# else:
-		# 	self.tokens.insert (self.tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, (None, None, '')))
-		# 	self._mark_error ()
-
-		# return True
 
 	def parse_success (self, reduct):
 		self.parse_results.append ((reduct, self.erridx, self.autocomplete))
