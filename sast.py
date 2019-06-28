@@ -2,6 +2,7 @@ import re
 
 # ('#', 'num')                  - numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
+# (',', (expr1, expr2, ...))    - comma expression (tuple)
 # ('(', expr)                   - explicit parentheses
 # ('|', expr)                   - absolute value
 # ('-', expr)                   - negative of expression, negative numbers are represented with this at least initially
@@ -178,6 +179,13 @@ class AST_Var (AST):
 	def _is_part_var (self):
 		return _rec_var_part_start.match (self.var)
 
+class AST_Comma (AST):
+	def _init (self, parms):
+		self.parms = parms
+
+	def _is_comma (self):
+		return True
+
 class AST_Paren (AST):
 	def _init (self, paren):
 		self.paren = paren
@@ -307,6 +315,7 @@ class AST_Intg (AST):
 _AST_OP2CLS = {
 	'#': AST_Num,
 	'@': AST_Var,
+	',': AST_Comma,
 	'(': AST_Paren,
 	'|': AST_Abs,
 	'-': AST_Minus,

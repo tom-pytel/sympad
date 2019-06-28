@@ -164,6 +164,7 @@ def _ast2tex_intg (ast):
 _ast2tex_funcs = {
 	'#': _ast2tex_num,
 	'@': lambda ast: str (ast.var) if ast.var else '{}',
+	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.parms),
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2tex (ast.minus)}',
@@ -308,6 +309,7 @@ def _ast2simple_intg (ast):
 _ast2simple_funcs = {
 	'#': lambda ast: ast.num,
 	'@': lambda ast: AST.VARS_SPECIAL_LONG.get (ast.var, ast.var),
+	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.parms),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
 	'-': lambda ast: f'-{_ast2simple_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2simple (ast.minus)}',
@@ -388,6 +390,7 @@ _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 _ast2py_funcs = {
 	'#': lambda ast: ast.num,
 	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.VARS_SPECIAL_LONG.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
+	',': lambda ast: ','.join (ast2py (parm) for parm in ast.parms),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2py (ast.minus)}',
@@ -408,6 +411,12 @@ _ast2py_funcs = {
 #...............................................................................................
 def ast2spt (ast): # abstract syntax tree -> sympy tree (expression)
 	return _ast2spt_funcs [ast.op] (ast)
+
+def _ast2spt_func (ast):
+	f = getattr (sp, AST.FUNCS_ALIAS.get (ast.func, ast.func))
+	p = ast2spt (ast.arg)
+
+	return f (*p) if isinstance (p, tuple) else f (p)
 
 def _ast2spt_diff (ast):
 	args = sum ((
@@ -441,6 +450,7 @@ _ast2spt_consts = {
 _ast2spt_funcs = {
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 	'@': lambda ast: _ast2spt_consts.get (ast.var, sp.Symbol (ast.var)),
+	',': lambda ast: tuple (ast2spt (p) for p in ast.parms),
 	'(': lambda ast: ast2spt (ast.paren),
 	'|': lambda ast: sp.Abs (ast2spt (ast.abs)),
 	'-': lambda ast: -ast2spt (ast.minus),
@@ -451,7 +461,7 @@ _ast2spt_funcs = {
 	'^': lambda ast: sp.Pow (ast2spt (ast.base), ast2spt (ast.exp)),
 	'log': lambda ast: sp.log (ast2spt (ast.log)) if ast.base is None else sp.log (ast2spt (ast.log), ast2spt (ast.base)),
 	'sqrt': lambda ast: sp.Pow (ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (ast2spt (ast.rad), sp.Pow (ast2spt (ast.idx), -1)),
-	'func': lambda ast: getattr (sp, AST.FUNCS_ALIAS.get (ast.func, ast.func)) (ast2spt (ast.arg)),
+	'func': _ast2spt_func,
 	'lim': lambda ast: sp.limit (ast2spt (ast.lim), ast2spt (ast.var), ast2spt (ast.to), dir = '+-' if ast.dir is None else ast [4]),
 	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.var), ast2spt (ast.from_), ast2spt (ast.to))).doit (),
 	'diff': _ast2spt_diff,
