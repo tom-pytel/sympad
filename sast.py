@@ -19,13 +19,11 @@ import re
 # ('sqrt', expr, n)             - nth root of expr
 # ('func', 'func', expr)        - sympy or regular python function 'func', will be called with sympy expression
 # ('lim', expr, var, to)        - limit of expr when variable var approaches to from both positive and negative directions
-# ('lim', expr, var, to, dir)   - limit of expr when variable var approaches to from direction dir which may be '+' or '-'
+# ('lim', expr, var, to, dir)   - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('sum', expr, var, from, to)  - summation of expr over variable var from from to to
 # ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
-# ('intg', None, var)           - anti-derivative of 1 with respect to differential var ('dx', 'dy', etc ...)
-# ('intg', expr, var)           - anti-derivative of expr with respect to differential var ('dx', 'dy', etc ...)
-# ('intg', None, var, from, to) - definite integral of 1 with respect to differential var ('dx', 'dy', etc ...)
-# ('intg', expr, var, from, to) - definite integral of expr with respect to differential var ('dx', 'dy', etc ...)
+# ('intg', expr, var)           - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('intg', expr, var, from, to) - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 
 #...............................................................................................
 class AST (tuple):

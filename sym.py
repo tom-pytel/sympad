@@ -76,10 +76,8 @@ def _ast2tex_mul (ast, ret_has = False):
 			t.append (f' \\cdot {s}')
 			has = True
 
-		elif p and (p in {('@', 'd'), ('@', '\\partial')} or p.op in {'sqrt'} or \
-				n.is_diff_or_part or p.is_diff_or_part):
+		elif p and (p.is_diff_or_part_solo or p.op in {'sqrt'} or n.is_diff_or_part or p.is_diff_or_part):
 			t.append (f'\\ {s}')
-
 		else:
 			t.append (f'{"" if not p else " "}{s}')
 
@@ -227,7 +225,7 @@ def _ast2simple_mul (ast, ret_has = False):
 			t.append (f' * {ast2simple (n)}')
 			has = True
 
-		elif p and (p in {('@', 'd'), ('@', '\\partial')} or \
+		elif p and (p.is_diff_or_part_solo or \
 				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
 				n.is_long_var or p.is_long_var or n.is_diff_or_part or p.is_diff_or_part):
 			t.append (f' {s}')
