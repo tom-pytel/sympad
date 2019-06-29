@@ -79,17 +79,16 @@ You enter expresstions and they get evaluated. The expressions may be in normal 
 LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin**x{2} + \frac34) / 2</b>". The input is displayed symbolically as
 you type. Input history is supported with the up and down arrows.
 </p><p>
-The symbolic expressions can be copied to the clipboard in various formats. Single click for a simple short format meant to be pasted back into the
-input field. A double click copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
+The symbolic expressions can be copied to the clipboard in various formats. Single-click for a simple short format meant to be pasted back into the
+input field. A double click-copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
 "<b>e</b>" is copied as "<b>e</b>" and not the SymPy "<b>E</b>", "<b>i</b>" is copied as "<b>i</b>" and not "<b>I</b>" or "<b>1j</b>". Simply set
-"<b>e = E</b>" and "<b>i = I</b>" or "<b>i = 1j</b>" in the Python context depending on need. Finally a triple click will copy the expression in
+"<b>e = E</b>" and "<b>i = I</b>" or "<b>i = 1j</b>" in the Python context depending on need. Finally a triple-click will copy the expression in
 LaTeX format. The simple and LaTeX formats should be directly pasteable into SymPad whereas the Python representation may or may not be depending
 on what elements it includes.
 </p><p>
 There is a special use for the "<b>_</b>" character which has the same meaning as in the Python interactive shell in that it represents the last
 expression successfully evaluated. To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
-Repeat this several times using the up arrow. This character may not want to follow directly after an alphanumeric character since it is also used
-to subscript variables, in this case simply precede it with a space.
+Repeat this several times using the up arrow.
 </p>
 
 <h3>Numbers</h3>
@@ -242,13 +241,13 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 <h3>Notes</h3>
 
 <p>
-Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places, so if something doesn't seem to work as it should try wrapping
+Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping
 it in parentheses or putting a space between the problematic elements.
 </p><p>
 There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the
 SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python string. This may or
 may not allow you to paste the Python string back into SymPad to continue working with the result, you will probably meed to "<b>$</b>" escape function
-and object names. <i>simple copy will let you know</i>
+and object names. A single-click copy of the result will have the element which was not understood replaced with "<b>undefined</b>".
 </p>
 
 <br><br><br>
