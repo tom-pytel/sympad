@@ -182,6 +182,8 @@ function copyToClipboard (e, val_or_eval, idx) {
 
 	writeToClipboard (NumClicks == 1 ? resp.simple : NumClicks == 2 ? resp.py : resp.tex);
 
+	e = e.parentElement;
+
 	e.style.color      = 'transparent';
 	e.style.background = 'black';
 

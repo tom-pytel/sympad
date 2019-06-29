@@ -429,7 +429,7 @@ def ast2spt (ast): # abstract syntax tree -> sympy tree (expression)
 	return _ast2spt_funcs [ast.op] (ast)
 
 def spt_do_top_level (spt):
-	if spt.__class__ in {sp.Limit, sp.Sum, sp.Derivative, sp.Integral}:
+	if spt.__class__ != sp.Piecewise: # in {sp.Limit, sp.Sum, sp.Derivative, sp.Integral}:
 		spt = spt.doit ()
 
 	return spt
