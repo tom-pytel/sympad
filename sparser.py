@@ -60,15 +60,13 @@ def _expr_int (ast, from_to = ()): # find differential for integration if presen
 
 	raise SyntaxError ('integration expecting a differential')
 
-_rec_var_d_or_partial = re.compile (r'^(?:d|\\partial)$')
-
 def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('diff', expr, 'dx')
 	def _interpret_divide (ast):
-		if ast.numer.is_var and _rec_var_d_or_partial.match (ast.numer.var):
+		if ast.numer.is_diff_or_part_solo:
 			p = 1
 			v = ast.numer.var
 
-		elif ast.numer.is_pow and ast.numer.base.is_var and _rec_var_d_or_partial.match (ast.numer.base.var) and ast.numer.exp.is_pos_int:
+		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int:
 			p = int (ast.numer.exp.num)
 			v = ast.numer.base.var
 

@@ -9,10 +9,9 @@ sp.boolalg = sp.boolalg
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SYMPY_FLOAT_PRECISION      = None
+_SYMPY_FLOAT_PRECISION = None
 
-_rec_var_diff_or_part_start = re.compile (r'^(?:d(?=[^_])|\\partial )')
-_rec_num_deconstructed      = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
+_rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
 
 #...............................................................................................
 class AST_Unknown: # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
@@ -59,12 +58,10 @@ def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'+'}):
 
 	return (s, has) if ret_has else s
 
-_rec_ast2tex_num = re.compile (r'^(-?\d*\.?\d*)[eE](?:(-\d+)|\+?(\d+))$')
-
 def _ast2tex_num (ast):
-	m = _rec_ast2tex_num.match (ast.num)
+	m, e = ast.mant_and_exp ()
 
-	return ast.num if not m else f'{m.group (1)} \\cdot 10^{_ast2tex_curly (AST ("#", m.group (2) or m.group (3)))}'
+	return m if e is None else f'{m} \\cdot 10^{_ast2tex_curly (AST ("#", e))}'
 
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
@@ -80,8 +77,7 @@ def _ast2tex_mul (ast, ret_has = False):
 			has = True
 
 		elif p and (p in {('@', 'd'), ('@', '\\partial')} or p.op in {'sqrt'} or \
-				(n.is_var and _rec_var_diff_or_part_start.match (n.var)) or \
-				(p.is_var and _rec_var_diff_or_part_start.match (p.var))):
+				n.is_diff_or_part or p.is_diff_or_part):
 			t.append (f'\\ {s}')
 
 		else:
@@ -144,7 +140,7 @@ def _ast2tex_diff (ast):
 		if n.is_var:
 			ds.add (n.var)
 			p += 1
-		else: # n = ('^', ('@', 'differential'), ('#', 'intg'))
+		else: # n = ('^', ('@', 'differential'), ('#', 'int'))
 			ds.add (n.base.var)
 			p += int (n.exp.num)
 
@@ -227,8 +223,7 @@ def _ast2simple_mul (ast, ret_has = False):
 
 		elif p and (p in {('@', 'd'), ('@', '\\partial')} or \
 				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
-				(n.is_var and (n.var in AST.Var.LONG2SHORT or _rec_var_diff_or_part_start.match (n.var))) or \
-				(p.is_var and (p.var in AST.Var.LONG2SHORT or _rec_var_diff_or_part_start.match (p.var)))):
+				n.is_long_var or p.is_long_var or n.is_diff_or_part or p.is_diff_or_part):
 			t.append (f' {s}')
 
 		else:
@@ -292,7 +287,7 @@ def _ast2simple_diff (ast):
 		if n.is_var:
 			ds.add (n.var)
 			p += 1
-		else: # n = ('^', ('@', 'differential'), ('#', 'intg'))
+		else: # n = ('^', ('@', 'differential'), ('#', 'int'))
 			ds.add (n.base.var)
 			p += int (n.exp.num)
 
@@ -378,9 +373,9 @@ def _ast2py_lim (ast):
 
 def _ast2py_diff (ast):
 	args = sum ((
-			(ast2py (AST ('@', _rec_var_diff_or_part_start.sub ('', n.var))),) \
+			(ast2py (n.diff_subvar ()),) \
 			if n.is_var else \
-			(ast2py (AST ('@', _rec_var_diff_or_part_start.sub ('', n.base.var))), str (n.exp.num)) \
+			(ast2py (n.base.diff_subvar ()), str (n.exp.num)) \
 			for n in ast.vars \
 			), ())
 
@@ -389,14 +384,14 @@ def _ast2py_diff (ast):
 def _ast2py_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'Integral(1, {ast2py (AST ("@", _rec_var_diff_or_part_start.sub ("", ast.var.var)))})' \
+				f'Integral(1, {ast2py (ast.var.diff_subvar ())})' \
 				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, {ast2py (AST ("@", _rec_var_diff_or_part_start.sub ("", ast.var.var)))})'
+				f'Integral({ast2py (ast.intg)}, {ast2py (ast.var.diff_subvar ())})'
 	else:
 		return \
-				f'Integral(1, ({ast2py (AST ("@", _rec_var_diff_or_part_start.sub ("", ast.var.var)))}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
+				f'Integral(1, ({ast2py (ast.var.diff_subvar ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
 				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, ({ast2py (AST ("@", _rec_var_diff_or_part_start.sub ("", ast.var.var)))}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
+				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.var.diff_subvar ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
 
 _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 
@@ -425,12 +420,12 @@ _ast2py_funcs = {
 }
 
 #...............................................................................................
-def ast2spt (ast): # abstract syntax tree -> sympy tree (expression)
-	return _ast2spt_funcs [ast.op] (ast)
+def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)
+	spt = _ast2spt_funcs [ast.op] (ast)
 
-def spt_do_top_level (spt):
-	if spt.__class__ != sp.Piecewise: # in {sp.Limit, sp.Sum, sp.Derivative, sp.Integral}:
-		spt = spt.doit ()
+	if doit:
+		if spt.__class__ != sp.Piecewise: # in {sp.Limit, sp.Sum, sp.Derivative, sp.Integral}:
+			spt = spt.doit ()
 
 	return spt
 
@@ -442,9 +437,9 @@ def _ast2spt_func (ast):
 
 def _ast2spt_diff (ast):
 	args = sum ((
-			(ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', n [1]))),) \
+			(ast2spt (n.diff_subvar ()),) \
 			if n.is_var else \
-			(ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', n [1] [1]))), sp.Integer (n [2] [1])) \
+			(ast2spt (n.base.diff_subvar ()), sp.Integer (n.exp.num)) \
 			for n in ast.vars \
 			), ())
 
@@ -453,14 +448,14 @@ def _ast2spt_diff (ast):
 def _ast2spt_intg (ast):
 	if ast.from_ is None:
 		return \
-				sp.Integral (1, ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var)))) \
+				sp.Integral (1, ast2spt (ast.var.diff_subvar ())) \
 				if ast.intg is None else \
-				sp.Integral (ast2spt (ast.intg), ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))))
+				sp.Integral (ast2spt (ast.intg), ast2spt (ast.var.diff_subvar ()))
 	else:
 		return \
-				sp.Integral (1, (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to))) \
+				sp.Integral (1, (ast2spt (ast.var.diff_subvar ()), ast2spt (ast.from_), ast2spt (ast.to))) \
 				if ast.intg is None else \
-				sp.Integral (ast2spt (ast [1]), (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to)))
+				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.var.diff_subvar ()), ast2spt (ast.from_), ast2spt (ast.to)))
 
 _ast2spt_eq = {
 	'=':  sp.Eq,
@@ -634,13 +629,12 @@ _spt2ast_funcs = {
 
 #...............................................................................................
 class sym: # for single script
-	set_precision    = set_precision
-	ast2tex          = ast2tex
-	ast2simple       = ast2simple
-	ast2py           = ast2py
-	ast2spt          = ast2spt
-	spt_do_top_level = spt_do_top_level
-	spt2ast          = spt2ast
+	set_precision = set_precision
+	ast2tex       = ast2tex
+	ast2simple    = ast2simple
+	ast2py        = ast2py
+	ast2spt       = ast2spt
+	spt2ast       = spt2ast
 
 ## DEBUG!
 # if __name__ == '__main__':

@@ -27,14 +27,6 @@ import re
 # ('intg', None, var, from, to) - definite integral of 1 with respect to differential var ('dx', 'dy', etc ...)
 # ('intg', expr, var, from, to) - definite integral of expr with respect to differential var ('dx', 'dy', etc ...)
 
-_rec_num_int                = re.compile (r'^-?\d+$')
-_rec_num_pos_int            = re.compile (r'^\d+$')
-_rec_var_diff_start         = re.compile (r'^d(?=[^_])')
-_rec_var_part_start         = re.compile (r'^\\partial ')
-_rec_var_not_single         = re.compile (r'^(?:d.|\\partial |.+_)')
-_rec_func_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
-_rec_func_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
-
 #...............................................................................................
 class AST (tuple):
 	def __new__ (cls, *args):
@@ -81,7 +73,7 @@ class AST (tuple):
 		if self.op == '#':
 			return len (self.num) == 1
 
-		return self.op == '@' and not _rec_var_not_single.match (self.var)
+		return self.op == '@' and not AST_Var._rec_not_single.match (self.var)
 
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
@@ -116,7 +108,7 @@ class AST (tuple):
 
 	@staticmethod
 	def is_int_text (text): # >= 0
-		return _rec_num_int.match (text)
+		return AST_Num._rec_int.match (text)
 
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
@@ -131,6 +123,7 @@ class AST (tuple):
 #...............................................................................................
 class AST_Eq (AST):
 	is_eq      = True
+
 	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
 	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '==': '=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
 
@@ -143,7 +136,11 @@ class AST_Eq (AST):
 		return self.rel == '='
 
 class AST_Num (AST):
-	is_num = True
+	is_num           = True
+
+	_rec_int          = re.compile (r'^-?\d+$')
+	_rec_pos_int      = re.compile (r'^\d+$')
+	_rec_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)[eE](?:(-\d+)|\+?(\d+))$')
 
 	def _init (self, num):
 		self.num = num
@@ -155,12 +152,24 @@ class AST_Num (AST):
 		return self.num [0] == '-'
 
 	def _is_pos_int (self):
-		return _rec_num_pos_int.match (self.num)
+		return AST_Num._rec_pos_int.match (self.num)
+
+	def mant_and_exp (self):
+		m = AST_Num._rec_mant_and_exp.match (self.num)
+
+		return (self.num, None) if not m else (m.group (1) , m.group (2) or m.group (3))
 
 class AST_Var (AST):
-	is_var     = True
-	LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False', '\\text{undefined}': 'undefined'}
-	SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}', 'undefined': '\\text{undefined}'}
+	is_var              = True
+
+	LONG2SHORT          = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False', '\\text{undefined}': 'undefined'}
+	SHORT2LONG          = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}', 'undefined': '\\text{undefined}'}
+
+	_rec_diff_start         = re.compile (r'^d(?=[^_])')
+	_rec_part_start         = re.compile (r'^\\partial ')
+	_rec_diff_or_part_start = re.compile (r'^(?:d(?=[^_])|\\partial )')
+	_rec_diff_or_part_solo  = re.compile (r'^(?:d|\\partial)$')
+	_rec_not_single         = re.compile (r'^(?:d.|\\partial |.+_)')
 
 	def _init (self, var):
 		self.var = var # should be long form
@@ -168,11 +177,23 @@ class AST_Var (AST):
 	def _is_null_var (self):
 		return not self.var
 
+	def _is_long_var (self):
+		return self.var in AST_Var.LONG2SHORT
+
 	def _is_differential (self):
-		return _rec_var_diff_start.match (self.var)
+		return AST_Var._rec_diff_start.match (self.var)
 
 	def _is_partial (self):
-		return _rec_var_part_start.match (self.var)
+		return AST_Var._rec_part_start.match (self.var)
+
+	def _is_diff_or_part (self):
+		return AST_Var._rec_diff_or_part_start.match (self.var)
+
+	def _is_diff_or_part_solo (self):
+		return AST.Var._rec_diff_or_part_solo.match (self.var)
+
+	def diff_subvar (self):
+		return AST ('@', AST.Var._rec_diff_or_part_start.sub ('', self.var))
 
 class AST_Str (AST):
 	is_str = True
@@ -253,7 +274,7 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	is_func = True
 
-	PY_ONLY      = set ('''
+	PY_ONLY = set ('''
 		?
 		Abs
 		Integral
@@ -266,24 +287,27 @@ class AST_Func (AST):
 		simplify
 		'''.strip ().split ())
 
-	PY_AND_TEX   = set ('''
+	PY_AND_TEX = set ('''
 		arg
 		exp
 		ln
 		'''.strip ().split ())
 
-	PY_ALL       = PY_ONLY | PY_AND_TEX
-	ALIAS        = {'?': 'N'}
+	PY_ALL = PY_ONLY | PY_AND_TEX
+	ALIAS  = {'?': 'N'}
+
+	_rec_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
+	_rec_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 	def _init (self, func, arg):
 		self.func = func
 		self.arg  = arg
 
 	def _is_trigh_func (self):
-		return _rec_func_trigh.match (self.func)
+		return AST_Func._rec_trigh.match (self.func)
 
 	def _is_trigh_func_noninv_func (self):
-		return _rec_func_trigh_noninv_func.match (self.func)
+		return AST_Func._rec_trigh_noninv_func.match (self.func)
 
 class AST_Lim (AST):
 	is_lim = True

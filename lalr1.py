@@ -16,7 +16,7 @@ class Parser:
 	_PARSER_TOP    = ''
 	TOKENS         = {}
 
-	_SYMBOL_notail_rec = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
+	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
 
 	def __init__ (self):
 		if isinstance (self._PARSER_TABLES, bytes):
@@ -64,10 +64,10 @@ class Parser:
 			obj = getattr (self, name)
 
 			if name [0] != '_' and type (obj) is types.MethodType and obj.__code__.co_argcount >= 2:
-				m = Parser._SYMBOL_notail_rec.match (name)
+				m = Parser._rec_SYMBOL_NUMTAIL.match (name)
 
 				if m:
-					parms = tuple (p if p in self.TOKENS else Parser._SYMBOL_notail_rec.match (p).group (1) \
+					parms = tuple (p if p in self.TOKENS else Parser._rec_SYMBOL_NUMTAIL.match (p).group (1) \
 							for p in obj.__code__.co_varnames [1 : obj.__code__.co_argcount])
 					prods [(m.group (1), parms)] = obj
 
