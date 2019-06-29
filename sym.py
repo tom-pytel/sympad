@@ -129,10 +129,10 @@ def _ast2tex_func (ast):
 def _ast2tex_lim (ast):
 	s = ast2tex (ast.to) if ast.dir is None else (ast2tex (AST ('^', ast.to, AST.Zero)) [:-1] + ast.dir)
 
-	return f'\\lim_{{{ast2tex (ast.var)} \\to {s}}} {_ast2tex_paren_mul_exp (ast.lim)}'
+	return f'\\lim_{{{ast2tex (ast.lvar)} \\to {s}}} {_ast2tex_paren_mul_exp (ast.lim)}'
 
 def _ast2tex_sum (ast):
-	return f'\\sum_{{{ast2tex (ast.var)} = {ast2tex (ast.from_)}}}^{_ast2tex_curly (ast.to)} {_ast2tex_paren_mul_exp (ast.sum)}' \
+	return f'\\sum_{{{ast2tex (ast.svar)} = {ast2tex (ast.from_)}}}^{_ast2tex_curly (ast.to)} {_ast2tex_paren_mul_exp (ast.sum)}' \
 
 _rec_diff_var_single_start = re.compile (r'^d(?=[^_])')
 
@@ -140,7 +140,7 @@ def _ast2tex_diff (ast):
 	ds = set ()
 	p  = 0
 
-	for n in ast.vars:
+	for n in ast.dvs:
 		if n.is_var:
 			p += 1
 
@@ -155,24 +155,24 @@ def _ast2tex_diff (ast):
 		return f'\\frac{{d}}{{}}{_ast2tex_paren (ast.diff)}'
 
 	if len (ds) == 1 and ds.pop () [0] != '\\': # is not '\\partial'
-		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{"".join (ast2tex (n) for n in ast.vars)}}}{_ast2tex_paren (ast.diff)}'
+		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{"".join (ast2tex (n) for n in ast.dvs)}}}{_ast2tex_paren (ast.diff)}'
 
 	else:
-		s = ''.join (_rec_diff_var_single_start.sub ('\\partial ', ast2tex (n)) for n in ast.vars)
+		s = ''.join (_rec_diff_var_single_start.sub ('\\partial ', ast2tex (n)) for n in ast.dvs)
 
 		return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{_ast2tex_paren (ast.diff)}'
 
 def _ast2tex_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'\\int \\ {ast2tex (ast.var)}' \
+				f'\\int \\ {ast2tex (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {ast2tex (ast.intg)} \\ {ast2tex (ast.var)}'
+				f'\\int {ast2tex (ast.intg)} \\ {ast2tex (ast.dv)}'
 	else:
 		return \
-				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} \\ {ast2tex (ast.var)}' \
+				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} \\ {ast2tex (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {ast2tex (ast.intg)} \\ {ast2tex (ast.var)}'
+				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {ast2tex (ast.intg)} \\ {ast2tex (ast.dv)}'
 
 _ast2tex_funcs = {
 	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
@@ -233,7 +233,7 @@ def _ast2simple_mul (ast, ret_has = False):
 
 		elif p and (p.is_diff_or_part_solo or \
 				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
-				n.is_long_var or p.is_long_var or n.is_diff_or_part or p.is_diff_or_part):
+				n.has_short_var or p.has_short_var or n.is_diff_or_part or p.is_diff_or_part):
 			t.append (f' {s}')
 
 		else:
@@ -282,17 +282,17 @@ def _ast2simple_func (ast):
 def _ast2simple_lim (ast):
 	s = ast2simple (ast.to) if ast.dir is None else ast2simple (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
 
-	return f'\\lim_{{{ast2simple (ast.var)} \\to {s}}} {_ast2simple_paren_mul_exp (ast.lim)}'
+	return f'\\lim_{{{ast2simple (ast.lvar)} \\to {s}}} {_ast2simple_paren_mul_exp (ast.lim)}'
 
 def _ast2simple_sum (ast):
-	return f'\\sum_{{{ast2simple (ast.var)}={ast2simple (ast.from_)}}}^{_ast2simple_curly (ast.to)} {_ast2simple_paren_mul_exp (ast.sum)}' \
+	return f'\\sum_{{{ast2simple (ast.svar)}={ast2simple (ast.from_)}}}^{_ast2simple_curly (ast.to)} {_ast2simple_paren_mul_exp (ast.sum)}' \
 
 _ast2simple_diff_single_rec = re.compile ('^d')
 
 def _ast2simple_diff (ast):
 	p = 0
 
-	for n in ast.vars:
+	for n in ast.dvs:
 		if n.is_var:
 			d  = n.diff_or_part_start_text ()
 			p += 1
@@ -300,24 +300,24 @@ def _ast2simple_diff (ast):
 			d  = n.base.diff_or_part_start_text ()
 			p += int (n.exp.num)
 
-	return f'{d}{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.vars)}{_ast2simple_paren (ast.diff)}'
+	return f'{d}{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.dvs)}{_ast2simple_paren (ast.diff)}'
 
 def _ast2simple_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'\\int {ast2simple (ast.var)}' \
+				f'\\int {ast2simple (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {ast2simple (ast.intg)} {ast2simple (ast.var)}'
+				f'\\int {ast2simple (ast.intg)} {ast2simple (ast.dv)}'
 	else:
 		return \
-				f'\\int_{_ast2simple_curly (ast.from_)}^{_ast2simple_curly (ast.to)} {ast2simple (ast.var)}' \
+				f'\\int_{_ast2simple_curly (ast.from_)}^{_ast2simple_curly (ast.to)} {ast2simple (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2simple_curly (ast.from_)}^{_ast2simple_curly (ast.to)} {ast2simple (ast.intg)} {ast2simple (ast.var)}'
+				f'\\int_{_ast2simple_curly (ast.from_)}^{_ast2simple_curly (ast.to)} {ast2simple (ast.intg)} {ast2simple (ast.dv)}'
 
 _ast2simple_funcs = {
 	'=': lambda ast: f'{ast2simple (ast.lhs)} {ast.rel} {ast2simple (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: AST.Var.LONG2SHORT.get (ast.var, ast.var),
+	'@': lambda ast: ast.as_short_var_text (),
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.commas),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
@@ -371,7 +371,7 @@ def _ast2py_log (ast):
 
 def _ast2py_lim (ast):
 	return \
-		f'''Limit({ast2py (ast.lim)}, {ast2py (ast.var)}, {ast2py (ast.to)}''' \
+		f'''Limit({ast2py (ast.lim)}, {ast2py (ast.lvar)}, {ast2py (ast.to)}''' \
 		f'''{", dir='+-'" if ast.dir is None else ", dir='-'" if ast.dir == '-' else ""})'''
 
 def _ast2py_diff (ast):
@@ -379,7 +379,7 @@ def _ast2py_diff (ast):
 			(ast2py (n.as_var ()),) \
 			if n.is_var else \
 			(ast2py (n.base.as_var ()), str (n.exp.num)) \
-			for n in ast.vars \
+			for n in ast.dvs \
 			), ())
 
 	return f'Derivative({ast2py (ast.diff)}, {", ".join (args)})'
@@ -387,21 +387,21 @@ def _ast2py_diff (ast):
 def _ast2py_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'Integral(1, {ast2py (ast.var.as_var ())})' \
+				f'Integral(1, {ast2py (ast.dv.as_var ())})' \
 				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, {ast2py (ast.var.as_var ())})'
+				f'Integral({ast2py (ast.intg)}, {ast2py (ast.dv.as_var ())})'
 	else:
 		return \
-				f'Integral(1, ({ast2py (ast.var.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
+				f'Integral(1, ({ast2py (ast.dv.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
 				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.var.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
+				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.dv.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
 
 _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 
 _ast2py_funcs = {
 	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', AST.Var.LONG2SHORT.get (ast.var, ast.var)).replace ('\\', '').replace ("'", '_prime'),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.as_short_var_text ()).replace ('\\', '').replace ("'", '_prime'),
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: ','.join (ast2py (parm) for parm in ast.commas),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
@@ -416,7 +416,7 @@ _ast2py_funcs = {
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
 	'func': lambda ast: f'{AST.Func.ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
-	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
+	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
 	'intg': _ast2py_intg,
 	'???': lambda ast: ast.py,
@@ -443,7 +443,7 @@ def _ast2spt_diff (ast):
 			(ast2spt (n.as_var ()),) \
 			if n.is_var else \
 			(ast2spt (n.base.as_var ()), sp.Integer (n.exp.num)) \
-			for n in ast.vars \
+			for n in ast.dvs \
 			), ())
 
 	return sp.Derivative (ast2spt (ast [1]), *args)
@@ -451,14 +451,14 @@ def _ast2spt_diff (ast):
 def _ast2spt_intg (ast):
 	if ast.from_ is None:
 		return \
-				sp.Integral (1, ast2spt (ast.var.as_var ())) \
+				sp.Integral (1, ast2spt (ast.dv.as_var ())) \
 				if ast.intg is None else \
-				sp.Integral (ast2spt (ast.intg), ast2spt (ast.var.as_var ()))
+				sp.Integral (ast2spt (ast.intg), ast2spt (ast.dv.as_var ()))
 	else:
 		return \
-				sp.Integral (1, (ast2spt (ast.var.as_var ()), ast2spt (ast.from_), ast2spt (ast.to))) \
+				sp.Integral (1, (ast2spt (ast.dv.as_var ()), ast2spt (ast.from_), ast2spt (ast.to))) \
 				if ast.intg is None else \
-				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.var.as_var ()), ast2spt (ast.from_), ast2spt (ast.to)))
+				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.dv.as_var ()), ast2spt (ast.from_), ast2spt (ast.to)))
 
 _ast2spt_eq = {
 	'=':  sp.Eq,
@@ -496,8 +496,8 @@ _ast2spt_funcs = {
 	'log': lambda ast: sp.log (ast2spt (ast.log)) if ast.base is None else sp.log (ast2spt (ast.log), ast2spt (ast.base)),
 	'sqrt': lambda ast: sp.Pow (ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (ast2spt (ast.rad), sp.Pow (ast2spt (ast.idx), -1)),
 	'func': _ast2spt_func,
-	'lim': lambda ast: (sp.Limit if ast.dir else sp.limit) (ast2spt (ast.lim), ast2spt (ast.var), ast2spt (ast.to), dir = ast.dir or '+-'),
-	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.var), ast2spt (ast.from_), ast2spt (ast.to))),
+	'lim': lambda ast: (sp.Limit if ast.dir else sp.limit) (ast2spt (ast.lim), ast2spt (ast.lvar), ast2spt (ast.to), dir = ast.dir or '+-'),
+	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.svar), ast2spt (ast.from_), ast2spt (ast.to))),
 	'diff': _ast2spt_diff,
 	'intg': _ast2spt_intg,
 }

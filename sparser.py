@@ -1,4 +1,3 @@
-# TODO: Fix variable naming for subscripted stuff and stuff with primes.
 # TODO: 1+1j complex number parsing?
 
 # Builds expression tree from text, nodes are nested AST tuples.
@@ -6,6 +5,7 @@
 # FUTURE: verify vars in expr func remaps
 # FUTURE: vectors and matrices, assumptions, stateful variables, piecewise expressions, long Python variable names, plots
 
+import ast as py_ast
 from collections import OrderedDict
 import os
 import re
@@ -47,7 +47,7 @@ def _expr_int (ast, from_to = ()): # find differential for integration if presen
 					, ast.adds [-1].muls [-1], *from_to)
 
 	elif ast.is_intg and ast.intg is not None:
-		return AST ('intg', _expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to)), ast.var, *from_to)
+		return AST ('intg', _expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to)), ast.dv, *from_to)
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -120,7 +120,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 						tail.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('diff', ast.muls [i + 1] if i == end - 2 else AST ('*', ast [i + 1 : end]), diff.vars))
+						tail.insert (0, AST ('diff', ast.muls [i + 1] if i == end - 2 else AST ('*', ast [i + 1 : end]), diff.dvs))
 
 					else:
 						continue
@@ -151,6 +151,8 @@ def _expr_func_remap (remap_func, ast): # rearrange ast tree for a given functio
 
 	return AST (expr.op, ast, *expr [2:]) if not expr.is_paren else ast
 
+_remap_func_lim_dirs = {'+': '+', '-': '-', '+-': None}
+
 def remap_func_lim (ast): # remap function 'Limit' to native ast representation for pretty rendering
 	if ast.is_null_var:
 		return AST ('lim', ast, AST.VarNull, AST.VarNull)
@@ -165,11 +167,11 @@ def remap_func_lim (ast): # remap function 'Limit' to native ast representation 
 	elif l == 2:
 		ast = AST ('lim', commas [0], commas [1], AST.VarNull)
 	elif l == 3:
-		return AST ('lim', *commas)
+		return AST ('lim', commas [0], commas [1], commas [2], '+')
 	elif commas [3].is_str:
-		return AST ('lim', commas [0], commas [1], commas [2], commas [3].str_ if commas [3].str_ in {'+', '-'} else None)
+		return AST ('lim', commas [0], commas [1], commas [2], _remap_func_lim_dirs.get (commas [3].str_, '+'))
 	elif commas [3].is_eq_eq and commas [3].lhs.as_identifier () == 'dir' and commas [3].rhs.is_str:
-		return AST ('lim', commas [0], commas [1], commas [2], commas [3].rhs.str_ if commas [3].rhs.str_ in {'+', '-'} else None)
+		return AST ('lim', commas [0], commas [1], commas [2], _remap_func_lim_dirs.get (commas [3].rhs.str_, '+'))
 	else:
 		ast = AST ('lim', commas [0], commas [1], commas [2])
 
@@ -294,7 +296,7 @@ class Parser (lalr1.Parser):
 	_TEXTVAR    =  r'\\text\s*\{\s*(True|False|undefined)\s*\}'
 	_ONEVAR     = fr'{_CHAR}|{_GREEK}'
 	_DSONEVARSP = fr'(?:(\d)|({_SHORT})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
-	_STR        =  r'(?:\'([^\']*)\'|"([^"]*)["])'
+	_STR        =  r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
 	_FUNCPYONLY = '|'.join (reversed (sorted ('\\?' if s == '?' else s for s in AST.Func.PY_ONLY))) # special cased function name '?' for regex
 	_FUNCPYTEX  = '|'.join (reversed (sorted (AST.Func.PY_AND_TEX)))
@@ -316,8 +318,8 @@ class Parser (lalr1.Parser):
 		('FRAC1',        fr'\\frac\s*{_DSONEVARSP}'),
 		('FRAC',          r'\\frac'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
-		('VAR',          fr"(?<!{_CHAR}|['])_|({_SHORT})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}"),
-		('STR',          fr"(?<!{_CHAR}|['}}]){_STR}|\\text\s*\{{\s*{_STR}\s*\}}"),
+		('VAR',          fr"(?<!\d|{_CHAR}|['])_|({_SHORT})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}"),
+		('STR',          fr"(?<!\d|{_CHAR}|['}}])({_STR})|\\text\s*\{{\s*({_STR})\s*\}}"),
 		('SUB1',         fr'_{_DSONEVARSP}'),
 		('SUB',           r'_'),
 		('CARET1',       fr'\^{_DSONEVARSP}'),
@@ -441,7 +443,7 @@ class Parser (lalr1.Parser):
 	def expr_frac_4     (self, expr_term):                                   return expr_term
 
 	def expr_term_1     (self, CURLYL, expr, CURLYR):                        return expr
-	def expr_term_2     (self, STR):                                         return AST ('"', STR.grp [0] or STR.grp [1] or STR.grp [2] or STR.grp [3] or '')
+	def expr_term_2     (self, STR):                                         return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1]))
 	def expr_term_3     (self, expr_var):                                    return expr_var
 	def expr_term_4     (self, expr_num):                                    return expr_num
 
@@ -459,7 +461,7 @@ class Parser (lalr1.Parser):
 				if VAR.grp [1] and VAR.grp [1] != 'd' else \
 				AST.Var.SHORT2LONG.get (VAR.grp [0] or VAR.grp [3], VAR.text)
 
-	def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):               return f'_{{{expr_var [1]}}}'
+	def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):               return f'_{expr_var.var}' if expr_var.var and expr_var.is_single_var else f'_{{{expr_var.var}}}'
 	def subvar_2        (self, SUB, CURLYL, NUM, CURLYR):                    return f'_{{{NUM.text}}}'
 	def subvar_3        (self, SUB, CURLYL, NUM, subvar, CURLYR):            return f'_{{{NUM.text}{subvar}}}'
 	def subvar_4        (self, SUB1):                                        return f'_{AST.Var.SHORT2LONG.get (SUB1.grp [1] or SUB1.grp [3], SUB1.text [1:])}'

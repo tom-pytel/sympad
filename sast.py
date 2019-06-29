@@ -169,14 +169,16 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False', '\\text{undefined}': 'undefined'}
-	SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}', 'undefined': '\\text{undefined}'}
+	TEXTVARS   = ('True', 'False', 'undefined')
+	LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo', **dict ((f'\\text{{{v}}}', v) for v in TEXTVARS)}
+	SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty', **dict ((v, f'\\text{{{v}}}') for v in TEXTVARS)}
 
 	_rec_diff_start         = re.compile (r'^d(?=[^_])')
 	_rec_part_start         = re.compile (r'^\\partial ')
 	_rec_diff_or_part_start = re.compile (r'^(d(?=[^_])|\\partial )')
 	_rec_diff_or_part_solo  = re.compile (r'^(?:d|\\partial)$')
 	_rec_not_single         = re.compile (r"^(?:d.|\\partial |.+[_'])")
+	_rec_as_short_split     = re.compile ('(' + '|'.join (v.replace ('\\', '\\\\') for v in LONG2SHORT) + ')')
 
 	def _init (self, var):
 		self.var = var # should be long form
@@ -184,7 +186,7 @@ class AST_Var (AST):
 	def _is_null_var (self):
 		return not self.var
 
-	def _is_long_var (self):
+	def _has_short_var (self):
 		return self.var in AST_Var.LONG2SHORT
 
 	def _is_differential (self):
@@ -215,6 +217,12 @@ class AST_Var (AST):
 		m = AST_Var._rec_diff_or_part_start.match (self.var)
 
 		return m.group (1) if m else ''
+
+	def as_short_var_text (self):
+		vs = AST_Var._rec_as_short_split.split (self.var)
+		vs = [AST_Var.LONG2SHORT.get (v, v) for v in vs]
+
+		return ''.join (vs)
 
 class AST_Str (AST):
 	op, is_str = '"', True
@@ -336,34 +344,34 @@ class AST_Func (AST):
 class AST_Lim (AST):
 	op, is_lim = 'lim', True
 
-	def _init (self, lim, var, to, dir = None):
-		self.lim = lim
-		self.var = var
-		self.to  = to
-		self.dir = dir
+	def _init (self, lim, lvar, to, dir = None):
+		self.lim  = lim
+		self.lvar = lvar
+		self.to   = to
+		self.dir  = dir
 
 class AST_Sum (AST):
 	op, is_sum = 'sum', True
 
-	def _init (self, sum, var, from_, to):
+	def _init (self, sum, svar, from_, to):
 		self.sum   = sum
-		self.var   = var
+		self.svar  = svar
 		self.from_ = from_
 		self.to    = to
 
 class AST_Diff (AST):
 	op, is_diff = 'diff', True
 
-	def _init (self, diff, vars):
+	def _init (self, diff, dvs):
 		self.diff = diff
-		self.vars = vars
+		self.dvs  = dvs
 
 class AST_Intg (AST):
 	op, is_intg = 'intg', True
 
-	def _init (self, intg, var, from_ = None, to = None):
+	def _init (self, intg, dv, from_ = None, to = None):
 		self.intg  = intg
-		self.var   = var
+		self.dv    = dv
 		self.from_ = from_
 		self.to    = to
 

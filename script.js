@@ -370,13 +370,13 @@ function inputKeypress (e) {
 	if (e.which == 13) {
 		s = JQInput.val ().trim ();
 
-		if (s && ErrorIdx === null) {
+		if ((s && ErrorIdx === null) || s === '?') {
 			if (!GreetingFadedOut) {
 				GreetingFadedOut = true;
 				$('#Greeting').fadeOut (3000);
 			}
 
-			if (s === 'help') {
+			if (s === 'help' || s === '?') {
 				window.open (`${URL}help.html`);
 				inputting ('', true);
 
