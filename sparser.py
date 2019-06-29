@@ -13,7 +13,7 @@
 # ) Differentiation and partially integration are dynamically extracted from the tree being built so they have
 #   no specific complete grammar rules.
 #
-# ) Future: vectors and matrices, assumptions, stateful variables, piecewise expressions
+# ) Future: vectors and matrices, assumptions, stateful variables, piecewise expressions, plots
 
 from collections import OrderedDict
 import os
@@ -577,10 +577,10 @@ class sparser: # for single script
 	Parser = Parser
 
 # DEBUG!
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('\\left(1,2')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('\\left(1,2')
+# 	print (a)
 
 # 	print (p.parse ('1') [0])
 # 	print (p.parse ('x') [0])
