@@ -167,15 +167,20 @@ def remap_func_lim (ast): # remap function 'Limit' to native ast representation 
 		raise lalr1.Incomplete (AST ('lim', ast, AST.VarNull, AST.VarNull))
 
 	commas = ast.commas
+	l      = len (commas)
 
-	if len (commas) == 3:
-		return AST ('lim', *commas)
-	elif len (commas) == 2:
-		ast = AST ('lim', commas [0], commas [1], AST.VarNull)
-	elif len (commas) == 1:
+	if l == 1:
 		ast = AST ('lim', commas [0], AST.VarNull, AST.VarNull)
-	elif commas [3].is_str: # len (commas) == 4
+	elif l == 2:
+		ast = AST ('lim', commas [0], commas [1], AST.VarNull)
+	elif l == 3:
+		return AST ('lim', *commas)
+	elif commas [3].is_str:
 		return AST ('lim', commas [0], commas [1], commas [2], commas [3].str_ if commas [3].str_ in {'+', '-'} else None)
+	elif commas [3].is_eq_eq and commas [3].lhs.as_identifier () == 'dir' and commas [3].rhs.is_str:
+		return AST ('lim', commas [0], commas [1], commas [2], commas [3].rhs.str_ if commas [3].rhs.str_ in {'+', '-'} else None)
+	else:
+		ast = AST ('lim', commas [0], commas [1], commas [2])
 
 	if commas [-1].is_null_var:
 		return ast

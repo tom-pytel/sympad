@@ -29,6 +29,8 @@ import re
 class AST (tuple):
 	op = None
 
+	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
+
 	def __new__ (cls, *args):
 		op       = _AST_CLS2OP.get (cls)
 		cls_args = tuple (AST (*arg) if arg.__class__ is tuple else arg for arg in args)
@@ -57,12 +59,6 @@ class AST (tuple):
 		self.__dict__ [name] = val
 
 		return val
-
-	def _is_neg (self):
-		return \
-				self.is_minus or \
-				self.is_num and self.num [0] == '-' or \
-				self.is_mul and self.muls [0].is_neg
 
 	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted variable?
 		if self.op == '/':
@@ -104,6 +100,20 @@ class AST (tuple):
 
 		return self
 
+	def as_identifier (self, top = True):
+		if self.op in {'#', '@', '"'}:
+			name = self [1]
+		elif not self.is_mul:
+			return None
+
+		else:
+			try:
+				name = ''.join (m.as_identifier () for m in self.muls)
+			except TypeError:
+				return None
+
+		return name if AST._rec_identifier.match (name) else None
+
 	@staticmethod
 	def is_int_text (text): # >= 0
 		return AST_Num._rec_int.match (text)
@@ -120,7 +130,7 @@ class AST (tuple):
 
 #...............................................................................................
 class AST_Eq (AST):
-	op, is_eq = '=', True
+	op, is_eq  = '=', True
 
 	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
 	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '==': '=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
@@ -160,8 +170,8 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	LONG2SHORT          = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False', '\\text{undefined}': 'undefined'}
-	SHORT2LONG          = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}', 'undefined': '\\text{undefined}'}
+	LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False', '\\text{undefined}': 'undefined'}
+	SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}', 'undefined': '\\text{undefined}'}
 
 	_rec_diff_start         = re.compile (r'^d(?=[^_])')
 	_rec_part_start         = re.compile (r'^\\partial ')
@@ -190,16 +200,16 @@ class AST_Var (AST):
 	def _is_diff_or_part_solo (self):
 		return AST.Var._rec_diff_or_part_solo.match (self.var)
 
-	def diff_subvar (self):
+	def as_var (self): # 'x', dx', '\\partial x' -> 'x'
 		return AST ('@', AST.Var._rec_diff_or_part_start.sub ('', self.var))
 
-	def as_differential (self): # var or diff or part var to diff var
+	def as_differential (self): # 'x', 'dx', '\\partial x' -> 'dx'
 		return AST ('@', f'd{AST_Var._rec_diff_or_part_start.sub ("", self.var)}') if self.var else self
 
-	def as_partial (self): # var or diff or part var to diff var
+	def as_partial (self): # 'x', 'dx', '\\partial x' -> '\\partial x'
 		return AST ('@', f'\\partial {AST_Var._rec_diff_or_part_start.sub ("", self.var)}') if self.var else self
 
-	def diff_or_part_start_text (self):
+	def diff_or_part_start_text (self): # 'dx' -> 'd', '\\partial x' -> '\\partial '
 		m = AST_Var._rec_diff_or_part_start.match (self.var)
 
 		return m.group (1) if m else ''

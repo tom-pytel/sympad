@@ -1040,7 +1040,7 @@ class Parser:
 	_PARSER_TOP    = ''
 	TOKENS         = {}
 
-	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
+	_SYMBOL_notail_rec = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
 
 	def __init__ (self):
 		if isinstance (self._PARSER_TABLES, bytes):
@@ -1088,10 +1088,10 @@ class Parser:
 			obj = getattr (self, name)
 
 			if name [0] != '_' and type (obj) is types.MethodType and obj.__code__.co_argcount >= 2:
-				m = Parser._rec_SYMBOL_NUMTAIL.match (name)
+				m = Parser._SYMBOL_notail_rec.match (name)
 
 				if m:
-					parms = tuple (p if p in self.TOKENS else Parser._rec_SYMBOL_NUMTAIL.match (p).group (1) \
+					parms = tuple (p if p in self.TOKENS else Parser._SYMBOL_notail_rec.match (p).group (1) \
 							for p in obj.__code__.co_varnames [1 : obj.__code__.co_argcount])
 					prods [(m.group (1), parms)] = obj
 
@@ -2271,7 +2271,7 @@ def _ast2tex_mul (ast, ret_has = False):
 	has = False
 
 	for n in ast.muls:
-		s = f'{_ast2tex_paren (n) if n.is_add or (p and n.is_neg) else ast2tex (n)}'
+		s = f'{_ast2tex_paren (n) if n.is_add or (p and _ast_is_neg (n)) else ast2tex (n)}'
 
 		if p and (n.op in {'!', '#'} or n.is_null_var or p.op in {'lim', 'sum', 'intg'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/', 'diff'})):

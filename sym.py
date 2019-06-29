@@ -20,6 +20,12 @@ class AST_Unknown: # for displaying elements we do not know how to handle, only 
 	def __init__ (self, tex, py):
 		self.tex, self.py = tex, py
 
+def _ast_is_neg (ast):
+	return \
+			ast.is_minus or \
+			ast.is_num and ast.num [0] == '-' or \
+			ast.is_mul and _ast_is_neg (ast.muls [0])
+
 def set_precision (ast): # recurse through ast to set sympy float precision according to largest string of digits found
 	global _SYMPY_FLOAT_PRECISION
 
@@ -69,7 +75,7 @@ def _ast2tex_mul (ast, ret_has = False):
 	has = False
 
 	for n in ast.muls:
-		s = f'{_ast2tex_paren (n) if n.is_add or (p and n.is_neg) else ast2tex (n)}'
+		s = f'{_ast2tex_paren (n) if n.is_add or (p and _ast_is_neg (n)) else ast2tex (n)}'
 
 		if p and (n.op in {'!', '#'} or n.is_null_var or p.op in {'lim', 'sum', 'intg'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/', 'diff'})):
@@ -218,7 +224,7 @@ def _ast2simple_mul (ast, ret_has = False):
 	has = False
 
 	for n in ast.muls:
-		s = f'{_ast2simple_paren (n) if n.is_add or (p and n.is_neg) else ast2simple (n)}'
+		s = f'{_ast2simple_paren (n) if n.is_add or (p and _ast_is_neg (n)) else ast2simple (n)}'
 
 		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or \
 				(n.is_pow and n.base.is_pos_num) or n.op in {'/', 'diff'} or p.op in {'/', 'diff'}):
@@ -370,9 +376,9 @@ def _ast2py_lim (ast):
 
 def _ast2py_diff (ast):
 	args = sum ((
-			(ast2py (n.diff_subvar ()),) \
+			(ast2py (n.as_var ()),) \
 			if n.is_var else \
-			(ast2py (n.base.diff_subvar ()), str (n.exp.num)) \
+			(ast2py (n.base.as_var ()), str (n.exp.num)) \
 			for n in ast.vars \
 			), ())
 
@@ -381,14 +387,14 @@ def _ast2py_diff (ast):
 def _ast2py_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'Integral(1, {ast2py (ast.var.diff_subvar ())})' \
+				f'Integral(1, {ast2py (ast.var.as_var ())})' \
 				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, {ast2py (ast.var.diff_subvar ())})'
+				f'Integral({ast2py (ast.intg)}, {ast2py (ast.var.as_var ())})'
 	else:
 		return \
-				f'Integral(1, ({ast2py (ast.var.diff_subvar ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
+				f'Integral(1, ({ast2py (ast.var.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
 				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.var.diff_subvar ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
+				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.var.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
 
 _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 
@@ -434,9 +440,9 @@ def _ast2spt_func (ast):
 
 def _ast2spt_diff (ast):
 	args = sum ((
-			(ast2spt (n.diff_subvar ()),) \
+			(ast2spt (n.as_var ()),) \
 			if n.is_var else \
-			(ast2spt (n.base.diff_subvar ()), sp.Integer (n.exp.num)) \
+			(ast2spt (n.base.as_var ()), sp.Integer (n.exp.num)) \
 			for n in ast.vars \
 			), ())
 
@@ -445,14 +451,14 @@ def _ast2spt_diff (ast):
 def _ast2spt_intg (ast):
 	if ast.from_ is None:
 		return \
-				sp.Integral (1, ast2spt (ast.var.diff_subvar ())) \
+				sp.Integral (1, ast2spt (ast.var.as_var ())) \
 				if ast.intg is None else \
-				sp.Integral (ast2spt (ast.intg), ast2spt (ast.var.diff_subvar ()))
+				sp.Integral (ast2spt (ast.intg), ast2spt (ast.var.as_var ()))
 	else:
 		return \
-				sp.Integral (1, (ast2spt (ast.var.diff_subvar ()), ast2spt (ast.from_), ast2spt (ast.to))) \
+				sp.Integral (1, (ast2spt (ast.var.as_var ()), ast2spt (ast.from_), ast2spt (ast.to))) \
 				if ast.intg is None else \
-				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.var.diff_subvar ()), ast2spt (ast.from_), ast2spt (ast.to)))
+				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.var.as_var ()), ast2spt (ast.from_), ast2spt (ast.to)))
 
 _ast2spt_eq = {
 	'=':  sp.Eq,
