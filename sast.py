@@ -60,14 +60,13 @@ class AST (tuple):
 
 		return val
 
-	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted variable?
+	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted non-primed variable?
 		if self.op == '/':
 			return True
-
-		if self.op == '#':
+		elif self.op == '#':
 			return len (self.num) == 1
-
-		return self.op == '@' and not AST_Var._rec_not_single.match (self.var)
+		else:
+			return self.is_single_var
 
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
@@ -177,7 +176,7 @@ class AST_Var (AST):
 	_rec_part_start         = re.compile (r'^\\partial ')
 	_rec_diff_or_part_start = re.compile (r'^(d(?=[^_])|\\partial )')
 	_rec_diff_or_part_solo  = re.compile (r'^(?:d|\\partial)$')
-	_rec_not_single         = re.compile (r'^(?:d.|\\partial |.+_)')
+	_rec_not_single         = re.compile (r"^(?:d.|\\partial |.+[_'])")
 
 	def _init (self, var):
 		self.var = var # should be long form
@@ -198,7 +197,10 @@ class AST_Var (AST):
 		return AST_Var._rec_diff_or_part_start.match (self.var)
 
 	def _is_diff_or_part_solo (self):
-		return AST.Var._rec_diff_or_part_solo.match (self.var)
+		return AST_Var._rec_diff_or_part_solo.match (self.var)
+
+	def _is_single_var (self): # is single atomic variable (non-differential, non-subscripted, non-primed)?
+		return not AST_Var._rec_not_single.match (self.var)
 
 	def as_var (self): # 'x', dx', '\\partial x' -> 'x'
 		return AST ('@', AST.Var._rec_diff_or_part_start.sub ('', self.var))

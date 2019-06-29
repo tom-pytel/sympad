@@ -1,19 +1,10 @@
 # TODO: Fix variable naming for subscripted stuff and stuff with primes.
 # TODO: 1+1j complex number parsing?
-# FUTURE: Verify vars in expr func remaps.
 
 # Builds expression tree from text, nodes are nested AST tuples.
-#
-# ) When parsing, explicit and implicit multiplication have different precedence, as well as latex
-#   \frac and regular '/' division operators.
-#
-# ) Explicit multiplication and addition have higher precedence than integration, so they are included in the expression to be integrated,
-#   but lower precedence than limits or sums, so they end those expressions.
-#
-# ) Differentiation and partially integration are dynamically extracted from the tree being built so they have
-#   no specific complete grammar rules.
-#
-# ) Future: vectors and matrices, assumptions, stateful variables, piecewise expressions, long Python variable names, plots
+
+# FUTURE: verify vars in expr func remaps
+# FUTURE: vectors and matrices, assumptions, stateful variables, piecewise expressions, long Python variable names, plots
 
 from collections import OrderedDict
 import os
