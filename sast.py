@@ -167,7 +167,7 @@ class AST_Var (AST):
 
 	_rec_diff_start         = re.compile (r'^d(?=[^_])')
 	_rec_part_start         = re.compile (r'^\\partial ')
-	_rec_diff_or_part_start = re.compile (r'^(?:d(?=[^_])|\\partial )')
+	_rec_diff_or_part_start = re.compile (r'^(d(?=[^_])|\\partial )')
 	_rec_diff_or_part_solo  = re.compile (r'^(?:d|\\partial)$')
 	_rec_not_single         = re.compile (r'^(?:d.|\\partial |.+_)')
 
@@ -194,6 +194,17 @@ class AST_Var (AST):
 
 	def diff_subvar (self):
 		return AST ('@', AST.Var._rec_diff_or_part_start.sub ('', self.var))
+
+	def as_differential (self): # var or diff or part var to diff var
+		return AST ('@', f'd{AST_Var._rec_diff_or_part_start.sub ("", self.var)}') if self.var else self
+
+	def as_partial (self): # var or diff or part var to diff var
+		return AST ('@', f'\\partial {AST_Var._rec_diff_or_part_start.sub ("", self.var)}') if self.var else self
+
+	def diff_or_part_start_text (self):
+		m = AST_Var._rec_diff_or_part_start.match (self.var)
+
+		return m.group (1) if m else ''
 
 class AST_Str (AST):
 	is_str = True
@@ -277,8 +288,11 @@ class AST_Func (AST):
 	PY_ONLY = set ('''
 		?
 		Abs
+		Derivative
 		Integral
+		Limit
 		Piecewise
+		Sum
 		abs
 		expand
 		factor
@@ -375,6 +389,7 @@ for cls in _AST_CLS2OP:
 AST.Zero      = AST ('#', '0')
 AST.One       = AST ('#', '1')
 AST.NegOne    = AST ('#', '-1')
+AST.VarNull   = AST ('@', '')
 AST.I         = AST ('@', 'i')
 AST.E         = AST ('@', 'e')
 AST.Pi        = AST ('@', '\\pi')

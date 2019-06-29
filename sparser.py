@@ -1,6 +1,6 @@
 # TODO: Fix variable naming for subscripted stuff and stuff with primes.
 # TODO: 1+1j complex number parsing?
-# TODO: Redo _expr_diff d or \partial handling???
+# FUTURE: Verify vars in expr func remaps.
 
 # Builds expression tree from text, nodes are nested AST tuples.
 #
@@ -13,7 +13,7 @@
 # ) Differentiation and partially integration are dynamically extracted from the tree being built so they have
 #   no specific complete grammar rules.
 #
-# ) Future: vectors and matrices, assumptions, stateful variables, piecewise expressions, plots
+# ) Future: vectors and matrices, assumptions, stateful variables, piecewise expressions, long Python variable names, plots
 
 from collections import OrderedDict
 import os
@@ -154,53 +154,100 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 
 	return AST (*args)
 
-
-
-# 	vars  = set ()
-# 	stack = [ast]
-
-# 	while stack:
-# 		ast = stack.pop ()
-
-# 		if ast.is_var:
-# 			(diffs if ast.is_differential else vars).add (ast.var)
-# 		else:
-# 			stack.extend (filter (lambda a: isinstance (a, tuple), ast))
-
-# 	vars  = vars - {'_', 'e', 'i'} - set (AST.Var.LONG2SHORT)
-# 	vars -= set (var [1:] for var in diffs)
-
-# 	return vars
-
-
-def _expr_func_intg_remap (ast): # remap function 'Integral' to internal representation for rendering as pretty integral
+def _expr_func_remap (remap_func, ast): # rearrange ast tree for a given function remapping like 'Derivative' or 'Limit'
 	expr = _expr_func (1, '(', ast.strip_paren ())
-	ast  = expr.paren if expr.is_paren else expr [1].paren
+	ast  = remap_func (expr.paren if expr.is_paren else expr [1].paren)
 
-	if ast.is_comma:
+	return AST (expr.op, ast, *expr [2:]) if not expr.is_paren else ast
+
+def remap_func_lim (ast): # remap function 'Limit' to native ast representation for pretty rendering
+	if ast.is_null_var:
+		return AST ('lim', ast, AST.VarNull, AST.VarNull)
+	elif not ast.is_comma:
+		raise lalr1.Incomplete (AST ('lim', ast, AST.VarNull, AST.VarNull))
+
+	commas = ast.commas
+
+	if len (commas) == 3:
+		return AST ('lim', *commas)
+
+	if len (commas) == 2:
+		ast = AST ('lim', commas [0], commas [1], AST.VarNull)
+	else:
+		ast = AST ('lim', commas [0], AST.VarNull, AST.VarNull)
+
+	if commas [-1].is_null_var:
+		return ast
+
+	raise lalr1.Incomplete (ast)
+
+def remap_func_sum (ast): # remap function 'Sum' to native ast representation for pretty rendering
+	if ast.is_null_var:
+		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
+	elif not ast.is_comma:
+		ast = AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
+
+	else:
+		commas = ast.commas
+
+		if len (commas) == 1:
+			ast = AST ('sum', commas [0], AST.VarNull, AST.VarNull, AST.VarNull)
+
+		else:
+			ast2 = commas [1].strip_paren (1)
+
+			if not ast2.is_comma:
+				ast = AST ('sum', commas [0], ast2, AST.VarNull, AST.VarNull)
+			elif len (ast2.commas) == 3:
+				return AST ('sum', commas [0], ast2.commas [0], ast2.commas [1], ast2.commas [2])
+
+			else:
+				commas = ast2.commas
+				ast    = AST (*(('sum', ast.commas [0], *commas) + (AST.VarNull, AST.VarNull, AST.VarNull)) [:5])
+
+		if commas [-1].is_null_var:
+			return ast
+
+	raise lalr1.Incomplete (ast)
+
+def remap_func_diff (ast): # remap function 'Derivative' to native ast representation for pretty rendering
+	if ast.is_null_var:
+		return AST ('diff', ast, (AST.VarNull,))
+	elif not ast.is_comma:
+		raise lalr1.Incomplete (AST ('diff', ast, (AST.VarNull,)))
+	elif len (ast.commas) == 1:
+		raise lalr1.Incomplete (AST ('diff', ast.commas [0], (AST.VarNull,)))
+
+	commas = list (ast.commas [:0:-1])
+	ds     = []
+
+	while commas:
+		d = commas.pop ().as_differential ()
+
+		if commas and commas [-1].is_num:
+			ds.append (AST ('^', d, commas.pop ()))
+		else:
+			ds.append (d)
+
+	return AST ('diff', ast.commas [0], AST (*ds))
+
+def remap_func_intg (ast): # remap function 'Integral' to native ast representation for pretty rendering
+	if not ast.is_comma:
+		return AST ('intg', ast, ast.as_differential () if ast.is_var else AST.VarNull)
+	elif len (ast.commas) == 1:
+		ast = AST ('intg', ast.commas [0], AST.VarNull)
+
+	else:
 		ast2 = ast.commas [1].strip_paren (1)
 
 		if not ast2.is_comma:
-			ast = AST ('intg', ast.commas [0], ('@', f'd{ast.commas [1].var}'))
+			return AST ('intg', ast.commas [0], ast2.as_differential ())
+		elif len (ast2.commas) == 3:
+			return AST ('intg', ast.commas [0], ast2.commas [0].as_differential (), ast2.commas [1], ast2.commas [2])
 		else:
-			print ('ast2:', ast)
-			ast  = AST ('intg', ast.commas [0], ('@', f'd{ast2.commas [0].var}'), ast2.commas [1], ast2.commas [2])
+			ast = AST (*(('intg', ast.commas [0], ast2.commas [0].as_differential ()) + ast2.commas [1:] + (AST.VarNull, AST.VarNull)) [:5])
 
-
-	if not expr.is_paren:
-		ast = AST (expr.op, ast, *expr [2:])
-
-
-	return ast
-
-
-
-	print ()
-	print ('expr:', expr)
-
-	return expr
-
-
+	raise lalr1.Incomplete (ast)
 
 #...............................................................................................
 class Parser (lalr1.Parser):
@@ -299,12 +346,15 @@ class Parser (lalr1.Parser):
 	])
 
 	_FUNC_AST_REMAP = {
-		'Abs'      : lambda expr: _expr_func (1, '|', expr.strip_paren ()),
-		'Integral' : _expr_func_intg_remap,
-		'abs'      : lambda expr: _expr_func (1, '|', expr.strip_paren ()),
-		'exp'      : lambda expr: _expr_func (2, '^', ('@', 'e'), expr.strip_paren ()),
-		'factorial': lambda expr: _expr_func (1, '!', expr.strip_paren ()),
-		'ln'       : lambda expr: _expr_func (1, 'log', expr.strip_paren ()),
+		'Abs'       : lambda expr: _expr_func (1, '|', expr.strip_paren ()),
+		'Derivative': lambda expr: _expr_func_remap (remap_func_diff, expr),
+		'Integral'  : lambda expr: _expr_func_remap (remap_func_intg, expr),
+		'Limit'     : lambda expr: _expr_func_remap (remap_func_lim, expr),
+		'Sum'       : lambda expr: _expr_func_remap (remap_func_sum, expr),
+		'abs'       : lambda expr: _expr_func (1, '|', expr.strip_paren ()),
+		'exp'       : lambda expr: _expr_func (2, '^', ('@', 'e'), expr.strip_paren ()),
+		'factorial' : lambda expr: _expr_func (1, '!', expr.strip_paren ()),
+		'ln'        : lambda expr: _expr_func (1, 'log', expr.strip_paren ()),
 	}
 
 	def expr_comma_1    (self, expr_comma, COMMA, expr):                     return AST.flatcat (',', expr_comma, expr)
@@ -484,7 +534,7 @@ class Parser (lalr1.Parser):
 
 	def _parse_autocomplete_expr_int (self):
 		s               = self.stack [-1]
-		self.stack [-1] = (s [0], s [1], AST ('*', (s [2], ('@', ''))))
+		self.stack [-1] = (s [0], s [1], AST ('*', (s [2], AST.VarNull)))
 		expr_vars       = set ()
 		expr_diffs      = set ()
 

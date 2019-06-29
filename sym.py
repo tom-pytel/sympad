@@ -138,11 +138,17 @@ def _ast2tex_diff (ast):
 
 	for n in ast.vars:
 		if n.is_var:
-			ds.add (n.var)
 			p += 1
-		else: # n = ('^', ('@', 'differential'), ('#', 'int'))
-			ds.add (n.base.var)
+
+			if n.var:
+				ds.add (n.var)
+
+		else: # n = ('^', ('@', 'diff or part'), ('#', 'int'))
 			p += int (n.exp.num)
+			ds.add (n.base.var)
+
+	if not ds:
+		return f'\\frac{{d}}{{}}{_ast2tex_paren (ast.diff)}'
 
 	if len (ds) == 1 and ds.pop () [0] != '\\': # is not '\\partial'
 		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{"".join (ast2tex (n) for n in ast.vars)}}}{_ast2tex_paren (ast.diff)}'
@@ -280,24 +286,17 @@ def _ast2simple_sum (ast):
 _ast2simple_diff_single_rec = re.compile ('^d')
 
 def _ast2simple_diff (ast):
-	ds = set ()
-	p  = 0
+	p = 0
 
 	for n in ast.vars:
 		if n.is_var:
-			ds.add (n.var)
+			d  = n.diff_or_part_start_text ()
 			p += 1
 		else: # n = ('^', ('@', 'differential'), ('#', 'int'))
-			ds.add (n.base.var)
+			d  = n.base.diff_or_part_start_text ()
 			p += int (n.exp.num)
 
-	if len (ds) == 1 and ds.pop () [0] != '\\': # is not '\\partial'
-		return f'd{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.vars)}{_ast2simple_paren (ast.diff)}'
-
-	else:
-		s = ''.join (_ast2simple_diff_single_rec.sub ('\\partial ', ast2simple (n)) for n in ast.vars)
-
-		return f'\\partial{"" if p == 1 else f"^{p}"}/{s}{_ast2simple_paren (ast.diff)}'
+	return f'{d}{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.vars)}{_ast2simple_paren (ast.diff)}'
 
 def _ast2simple_intg (ast):
 	if ast.from_ is None:

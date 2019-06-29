@@ -2,6 +2,10 @@ import re
 import types
 
 #...............................................................................................
+class Incomplete (Exception):
+	def __init__ (self, reduct):
+		self.reduct = reduct
+
 class Token (str):
 	def __new__ (cls, str_, text = None, pos = None, grps = None):
 		self      = str.__new__ (cls, str_)
@@ -143,7 +147,6 @@ class Parser:
 				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok = \
 						tokens, tokidx, cstack, stack, stidx, tok
 
-				# if tok == '$end' and stack [-1] [1] == rules [0] [1]:
 				if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1] [1] == rules [0] [1]:
 					if not has_parse_success:
 						return stack [1] [2]
@@ -191,6 +194,10 @@ class Parser:
 					rederr = e or True
 					continue
 
+				except Incomplete as e:
+					rederr = True
+					reduct = e.reduct
+
 				del stack [rnlen:]
 
 				stidx = nterms [stack [-1] [0]] [prod]
@@ -198,5 +205,6 @@ class Parser:
 				stack.append ((stidx, prod, reduct))
 
 class lalr1: # for single script
-	Token  = Token
-	Parser = Parser
+	Incomplete = Incomplete
+	Token      = Token
+	Parser     = Parser
