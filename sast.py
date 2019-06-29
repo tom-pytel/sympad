@@ -19,7 +19,7 @@ import re
 # ('sqrt', expr, n)             - nth root of expr
 # ('func', 'func', expr)        - sympy or regular python function 'func', will be called with sympy expression
 # ('lim', expr, var, to)        - limit of expr when variable var approaches to from both positive and negative directions
-# ('lim', expr, var, to, dir)   - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
+# ('lim', expr, var, to, 'dir') - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('sum', expr, var, from, to)  - summation of expr over variable var from from to to
 # ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
 # ('intg', expr, var)           - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
@@ -27,6 +27,8 @@ import re
 
 #...............................................................................................
 class AST (tuple):
+	op = None
+
 	def __new__ (cls, *args):
 		op       = _AST_CLS2OP.get (cls)
 		cls_args = tuple (AST (*arg) if arg.__class__ is tuple else arg for arg in args)
@@ -39,14 +41,12 @@ class AST (tuple):
 			cls2 = _AST_OP2CLS.get (args [0])
 
 			if cls2:
-				op       = args [0]
 				cls      = cls2
 				cls_args = cls_args [1:]
 
-		self    = tuple.__new__ (cls, args)
-		self.op = op
+		self = tuple.__new__ (cls, args)
 
-		if op:
+		if self.op:
 			self._init (*cls_args)
 
 		return self
@@ -120,7 +120,7 @@ class AST (tuple):
 
 #...............................................................................................
 class AST_Eq (AST):
-	is_eq      = True
+	op, is_eq = '=', True
 
 	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
 	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '==': '=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
@@ -134,7 +134,7 @@ class AST_Eq (AST):
 		return self.rel == '='
 
 class AST_Num (AST):
-	is_num           = True
+	op, is_num = '#', True
 
 	_rec_int          = re.compile (r'^-?\d+$')
 	_rec_pos_int      = re.compile (r'^\d+$')
@@ -158,7 +158,7 @@ class AST_Num (AST):
 		return (self.num, None) if not m else (m.group (1) , m.group (2) or m.group (3))
 
 class AST_Var (AST):
-	is_var              = True
+	op, is_var = '@', True
 
 	LONG2SHORT          = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False', '\\text{undefined}': 'undefined'}
 	SHORT2LONG          = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}', 'undefined': '\\text{undefined}'}
@@ -205,83 +205,83 @@ class AST_Var (AST):
 		return m.group (1) if m else ''
 
 class AST_Str (AST):
-	is_str = True
+	op, is_str = '"', True
 
 	def _init (self, str_):
 		self.str_ = str_
 
 class AST_Comma (AST):
-	is_comma = True
+	op, is_comma = ',', True
 
 	def _init (self, commas):
 		self.commas = commas
 
 class AST_Paren (AST):
-	is_paren = True
+	op, is_paren = '(', True
 
 	def _init (self, paren):
 		self.paren = paren
 
 class AST_Abs (AST):
-	is_abs = True
+	op, is_abs = '|', True
 
 	def _init (self, abs):
 		self.abs = abs
 
 class AST_Minus (AST):
-	is_minus = True
+	op, is_minus = '-', True
 
 	def _init (self, minus):
 		self.minus = minus
 
 class AST_Fact (AST):
-	is_fact = True
+	op, is_fact = '!', True
 
 	def _init (self, fact):
 		self.fact = fact
 
 class AST_Add (AST):
-	is_add = True
+	op, is_add = '+', True
 
 	def _init (self, adds):
 		self.adds = adds
 
 class AST_Mul (AST):
-	is_mul = True
+	op, is_mul = '*', True
 
 	def _init (self, muls):
 		self.muls = muls
 
 class AST_Div (AST):
-	is_div = True
+	op, is_div = '/', True
 
 	def _init (self, numer, denom):
 		self.numer = numer
 		self.denom = denom
 
 class AST_Pow (AST):
-	is_pow = True
+	op, is_pow = '^', True
 
 	def _init (self, base, exp):
 		self.base = base
 		self.exp  = exp
 
 class AST_Log (AST):
-	is_log = True
+	op, is_log = 'log', True
 
 	def _init (self, log, base = None):
 		self.log  = log
 		self.base = base
 
 class AST_Sqrt (AST):
-	is_sqrt = True
+	op, is_sqrt = 'sqrt', True
 
 	def _init (self, rad, idx = None):
 		self.rad = rad
 		self.idx = idx
 
 class AST_Func (AST):
-	is_func = True
+	op, is_func = 'func', True
 
 	PY_ONLY = set ('''
 		?
@@ -322,7 +322,7 @@ class AST_Func (AST):
 		return AST_Func._rec_trigh_noninv_func.match (self.func)
 
 class AST_Lim (AST):
-	is_lim = True
+	op, is_lim = 'lim', True
 
 	def _init (self, lim, var, to, dir = None):
 		self.lim = lim
@@ -331,7 +331,7 @@ class AST_Lim (AST):
 		self.dir = dir
 
 class AST_Sum (AST):
-	is_sum = True
+	op, is_sum = 'sum', True
 
 	def _init (self, sum, var, from_, to):
 		self.sum   = sum
@@ -340,14 +340,14 @@ class AST_Sum (AST):
 		self.to    = to
 
 class AST_Diff (AST):
-	is_diff = True
+	op, is_diff = 'diff', True
 
 	def _init (self, diff, vars):
 		self.diff = diff
 		self.vars = vars
 
 class AST_Intg (AST):
-	is_intg = True
+	op, is_intg = 'intg', True
 
 	def _init (self, intg, var, from_ = None, to = None):
 		self.intg  = intg

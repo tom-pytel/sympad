@@ -170,11 +170,12 @@ def remap_func_lim (ast): # remap function 'Limit' to native ast representation 
 
 	if len (commas) == 3:
 		return AST ('lim', *commas)
-
-	if len (commas) == 2:
+	elif len (commas) == 2:
 		ast = AST ('lim', commas [0], commas [1], AST.VarNull)
-	else:
+	elif len (commas) == 1:
 		ast = AST ('lim', commas [0], AST.VarNull, AST.VarNull)
+	elif commas [3].is_str: # len (commas) == 4
+		return AST ('lim', commas [0], commas [1], commas [2], commas [3].str_ if commas [3].str_ in {'+', '-'} else None)
 
 	if commas [-1].is_null_var:
 		return ast

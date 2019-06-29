@@ -490,7 +490,7 @@ _ast2spt_funcs = {
 	'log': lambda ast: sp.log (ast2spt (ast.log)) if ast.base is None else sp.log (ast2spt (ast.log), ast2spt (ast.base)),
 	'sqrt': lambda ast: sp.Pow (ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (ast2spt (ast.rad), sp.Pow (ast2spt (ast.idx), -1)),
 	'func': _ast2spt_func,
-	'lim': lambda ast: sp.Limit (ast2spt (ast.lim), ast2spt (ast.var), ast2spt (ast.to), dir = '+-' if ast.dir is None else ast [4]),
+	'lim': lambda ast: (sp.Limit if ast.dir else sp.limit) (ast2spt (ast.lim), ast2spt (ast.var), ast2spt (ast.to), dir = ast.dir or '+-'),
 	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.var), ast2spt (ast.from_), ast2spt (ast.to))),
 	'diff': _ast2spt_diff,
 	'intg': _ast2spt_intg,
