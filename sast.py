@@ -130,6 +130,7 @@ class AST (tuple):
 
 #...............................................................................................
 class AST_Eq (AST):
+	is_eq      = True
 	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
 	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '==': '=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
 
@@ -138,18 +139,14 @@ class AST_Eq (AST):
 		self.lhs = lhs
 		self.rhs = rhs
 
-	def _is_eq (self):
-		return True
-
 	def _is_eq_eq (self):
 		return self.rel == '='
 
 class AST_Num (AST):
+	is_num = True
+
 	def _init (self, num):
 		self.num = num
-
-	def _is_num (self):
-		return True
 
 	def _is_pos_num (self):
 		return self.num [0] != '-'
@@ -161,14 +158,12 @@ class AST_Num (AST):
 		return _rec_num_pos_int.match (self.num)
 
 class AST_Var (AST):
-	LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False'}
-	SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}'}
+	is_var     = True
+	LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo', '\\text{True}': 'True', '\\text{False}': 'False', '\\text{undefined}': 'undefined'}
+	SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty', 'True': '\\text{True}', 'False': '\\text{False}', 'undefined': '\\text{undefined}'}
 
 	def _init (self, var):
 		self.var = var # should be long form
-
-	def _is_var (self):
-		return True
 
 	def _is_null_var (self):
 		return not self.var
@@ -180,94 +175,84 @@ class AST_Var (AST):
 		return _rec_var_part_start.match (self.var)
 
 class AST_Str (AST):
+	is_str = True
+
 	def _init (self, str_):
 		self.str_ = str_
 
-	def _is_str (self):
-		return True
-
 class AST_Comma (AST):
+	is_comma = True
+
 	def _init (self, commas):
 		self.commas = commas
 
-	def _is_comma (self):
-		return True
-
 class AST_Paren (AST):
+	is_paren = True
+
 	def _init (self, paren):
 		self.paren = paren
 
-	def _is_paren (self):
-		return True
-
 class AST_Abs (AST):
+	is_abs = True
+
 	def _init (self, abs):
 		self.abs = abs
 
-	def _is_abs (self):
-		return True
-
 class AST_Minus (AST):
+	is_minus = True
+
 	def _init (self, minus):
 		self.minus = minus
 
-	def _is_minus (self):
-		return True
-
 class AST_Fact (AST):
+	is_fact = True
+
 	def _init (self, fact):
 		self.fact = fact
 
-	def _is_fact (self):
-		return True
-
 class AST_Add (AST):
+	is_add = True
+
 	def _init (self, adds):
 		self.adds = adds
 
-	def _is_add (self):
-		return True
-
 class AST_Mul (AST):
+	is_mul = True
+
 	def _init (self, muls):
 		self.muls = muls
 
-	def _is_mul (self):
-		return True
-
 class AST_Div (AST):
+	is_div = True
+
 	def _init (self, numer, denom):
 		self.numer = numer
 		self.denom = denom
 
-	def _is_div (self):
-		return True
-
 class AST_Pow (AST):
+	is_pow = True
+
 	def _init (self, base, exp):
 		self.base = base
 		self.exp  = exp
 
-	def _is_pow (self):
-		return True
-
 class AST_Log (AST):
+	is_log = True
+
 	def _init (self, log, base = None):
 		self.log  = log
 		self.base = base
 
-	def _is_log (self):
-		return True
-
 class AST_Sqrt (AST):
+	is_sqrt = True
+
 	def _init (self, rad, idx = None):
 		self.rad = rad
 		self.idx = idx
 
-	def _is_sqrt (self):
-		return True
-
 class AST_Func (AST):
+	is_func = True
+
 	PY_ONLY      = set ('''
 		?
 		Abs
@@ -294,9 +279,6 @@ class AST_Func (AST):
 		self.func = func
 		self.arg  = arg
 
-	def _is_func (self):
-		return True
-
 	def _is_trigh_func (self):
 		return _rec_func_trigh.match (self.func)
 
@@ -304,42 +286,38 @@ class AST_Func (AST):
 		return _rec_func_trigh_noninv_func.match (self.func)
 
 class AST_Lim (AST):
+	is_lim = True
+
 	def _init (self, lim, var, to, dir = None):
 		self.lim = lim
 		self.var = var
 		self.to  = to
 		self.dir = dir
 
-	def _is_lim (self):
-		return True
-
 class AST_Sum (AST):
+	is_sum = True
+
 	def _init (self, sum, var, from_, to):
 		self.sum   = sum
 		self.var   = var
 		self.from_ = from_
 		self.to    = to
 
-	def _is_sum (self):
-		return True
-
 class AST_Diff (AST):
+	is_diff = True
+
 	def _init (self, diff, vars):
 		self.diff = diff
 		self.vars = vars
 
-	def _is_diff (self):
-		return True
-
 class AST_Intg (AST):
+	is_intg = True
+
 	def _init (self, intg, var, from_ = None, to = None):
 		self.intg  = intg
 		self.var   = var
 		self.from_ = from_
 		self.to    = to
-
-	def _is_intg (self):
-		return True
 
 #...............................................................................................
 _AST_OP2CLS = {
@@ -370,12 +348,16 @@ _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
 for cls in _AST_CLS2OP:
 	setattr (AST, cls.__name__ [4:], cls)
 
-AST.Zero   = AST ('#', '0')
-AST.One    = AST ('#', '1')
-AST.NegOne = AST ('#', '-1')
-AST.I      = AST ('@', 'i')
-AST.E      = AST ('@', 'e')
-AST.Pi     = AST ('@', '\\pi')
-AST.Infty  = AST ('@', '\\infty')
-AST.True_  = AST ('@', AST_Var.SHORT2LONG ['True'])
-AST.False_ = AST ('@', AST_Var.SHORT2LONG ['False'])
+AST.Zero      = AST ('#', '0')
+AST.One       = AST ('#', '1')
+AST.NegOne    = AST ('#', '-1')
+AST.I         = AST ('@', 'i')
+AST.E         = AST ('@', 'e')
+AST.Pi        = AST ('@', '\\pi')
+AST.Infty     = AST ('@', '\\infty')
+AST.True_     = AST ('@', '\\text{True}')
+AST.False_    = AST ('@', '\\text{False}')
+AST.Undefined = AST ('@', '\\text{undefined}')
+
+if __name__ == '__main__':
+	print (AST_Str ('a').is_str)

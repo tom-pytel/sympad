@@ -12,6 +12,7 @@
 	body { margin: 3em 4em; }
 	h3 { margin: 2em 0 1em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
+	i { color: red; }
 </style>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
@@ -93,6 +94,7 @@ expression successfully evaluated. To see this in action type in "<b>1</b>" and 
 Repeat this several times using the up arrow. This character may not want to follow directly after an alphanumeric character since it is also used
 to subscript variables, in this case simply precede it with a space.
 </p>
+<p><i>New behavior - unknowns</i></p>
 
 <h3>Numbers</h3>
 
@@ -118,13 +120,14 @@ This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_
 Differentials entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable. If you want to enter "<b>d</b>"
 * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
 </p>
+<p><i>New vars: True, False, undefined</i></p>
 
 <h3>Parentheses</h3>
 
 <p>
 Explicit "<b>()</b>" or implicit curly "<b>{}</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
 delineate an expression as an input to a function. They may be used interchangeably, the only difference being that the implicit version is not drawn
-if it does not need to be.
+if it does not need to be. <i>not same, curlys can't be used for comma lists</i>
 </p>
 
 <h3>Addition and Multiplication</h3>
@@ -198,6 +201,7 @@ This will only give the limit if it exists and is the same when approaching from
 positive direction. To specify a direction add "<b>^+</b>" or "<b>^-</b>" to the equation as such: "<b>\lim_{x \to 0^+} 1/x</b>" = $\lim_{x\to 0^+}
 \frac1x$ = $\infty$ and "<b>\lim_{x \to 0^-} 1/x</b>" = $\lim_{x\to 0^-} \frac1x$ = $-\infty$. Addition and explicit multiplication terminate a limit
 expression.
+<i>Limit</i>
 </p>
 
 <h3>Sums</h3>
@@ -206,6 +210,7 @@ expression.
 The summation (finite or infinite) of expression "<b>z</b>" as variable "<b>n</b>" ranges from "<b>a</b>" to "<b>b</b>" is written as "<b>\sum_{n=a}^b (z)</b>"
 = $\sum_{n=a}^b (z)$. Iterated sums work as expected, "<b>\sum_{n=1}^3 \sum_{m=1}^n m</b>" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10. Addition and explicit
 multiplication terminate a sum expression.
+<i>Sum</i>
 </p>
 
 <h3>Differentiation</h3>
@@ -222,6 +227,7 @@ $\frac{\partial^2}{\partial x\partial y} (z)$.
 <p>
 The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b>\int z dx</b>" = $\int z\ dx$. The definite integral from "<b>a</b>" to
 "<b>b</b>" is "<b>\int_a^b z dx</b>" = $\int_a^b z\ dx$. "<b>\int dx/x</b>" = $\int \frac1x\ dx$. Iterated and improper integrals also work.
+<i>Integral</i>
 </p>
 
 <h3>Caveats</h3>

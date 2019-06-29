@@ -102,6 +102,7 @@ class Handler (SimpleHTTPRequestHandler):
 				sym.set_precision (ast)
 
 				spt       = sym.ast2spt (ast)
+				spt       = sym.spt_do_top_level (spt)
 				ast       = sym.spt2ast (spt)
 				_last_ast = ast
 

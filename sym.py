@@ -4,7 +4,7 @@
 
 import re
 import sympy as sp
-sp.numbers = sp.numbers # medication for hyperactive pylint
+sp.numbers = sp.numbers # medication for pylint
 sp.boolalg = sp.boolalg
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -337,7 +337,7 @@ _ast2simple_funcs = {
 	'sum': _ast2simple_sum,
 	'diff': _ast2simple_diff,
 	'intg': _ast2simple_intg,
-	'???': lambda ast: '???', # 'SymPad did not know how to process this element natively, try double-click copying the Python code :(',
+	'???': lambda ast: 'undefined',
 }
 
 #...............................................................................................
@@ -428,15 +428,17 @@ _ast2py_funcs = {
 def ast2spt (ast): # abstract syntax tree -> sympy tree (expression)
 	return _ast2spt_funcs [ast.op] (ast)
 
+def spt_do_top_level (spt):
+	if spt.__class__ in {sp.Limit, sp.Sum, sp.Derivative, sp.Integral}:
+		spt = spt.doit ()
+
+	return spt
+
 def _ast2spt_func (ast):
 	f = getattr (sp, AST.Func.ALIAS.get (ast.func, ast.func))
 	p = ast2spt (ast.arg)
-	r = f (*p) if isinstance (p, tuple) else f (p)
 
-	# if ast.func == 'series' and isinstance (r, sp.Add): # special case series return order
-	# 	r = spProxy (sp.Add, _sorted_args = r._sorted_args [::-1])
-
-	return r
+	return f (*p) if isinstance (p, tuple) else f (p)
 
 def _ast2spt_diff (ast):
 	args = sum ((
@@ -446,19 +448,19 @@ def _ast2spt_diff (ast):
 			for n in ast.vars \
 			), ())
 
-	return sp.diff (ast2spt (ast [1]), *args)
+	return sp.Derivative (ast2spt (ast [1]), *args)
 
 def _ast2spt_intg (ast):
 	if ast.from_ is None:
 		return \
-				sp.integrate (1, ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var)))) \
+				sp.Integral (1, ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var)))) \
 				if ast.intg is None else \
-				sp.integrate (ast2spt (ast.intg), ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))))
+				sp.Integral (ast2spt (ast.intg), ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))))
 	else:
 		return \
-				sp.integrate (1, (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to))) \
+				sp.Integral (1, (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to))) \
 				if ast.intg is None else \
-				sp.integrate (ast2spt (ast [1]), (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to)))
+				sp.Integral (ast2spt (ast [1]), (ast2spt (AST ('@', _rec_var_diff_or_part_start.sub ('', ast.var.var))), ast2spt (ast.from_), ast2spt (ast.to)))
 
 _ast2spt_eq = {
 	'=':  sp.Eq,
@@ -470,12 +472,13 @@ _ast2spt_eq = {
 }
 
 _ast2spt_consts = {
-	'e'            : sp.E,
-	'i'            : sp.I,
-	'\\pi'         : sp.pi,
-	'\\infty'      : sp.oo,
-	'\\text{True}' : sp.boolalg.true,
-	'\\text{False}': sp.boolalg.false,
+	'e'                : sp.E,
+	'i'                : sp.I,
+	'\\pi'             : sp.pi,
+	'\\infty'          : sp.oo,
+	'\\text{True}'     : sp.boolalg.true,
+	'\\text{False}'    : sp.boolalg.false,
+	'\\text{undefined}': sp.nan,
 }
 
 _ast2spt_funcs = {
@@ -495,8 +498,8 @@ _ast2spt_funcs = {
 	'log': lambda ast: sp.log (ast2spt (ast.log)) if ast.base is None else sp.log (ast2spt (ast.log), ast2spt (ast.base)),
 	'sqrt': lambda ast: sp.Pow (ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (ast2spt (ast.rad), sp.Pow (ast2spt (ast.idx), -1)),
 	'func': _ast2spt_func,
-	'lim': lambda ast: sp.limit (ast2spt (ast.lim), ast2spt (ast.var), ast2spt (ast.to), dir = '+-' if ast.dir is None else ast [4]),
-	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.var), ast2spt (ast.from_), ast2spt (ast.to))).doit (),
+	'lim': lambda ast: sp.Limit (ast2spt (ast.lim), ast2spt (ast.var), ast2spt (ast.to), dir = '+-' if ast.dir is None else ast [4]),
+	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.var), ast2spt (ast.from_), ast2spt (ast.to))),
 	'diff': _ast2spt_diff,
 	'intg': _ast2spt_intg,
 }
@@ -516,10 +519,6 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 			return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
 
 	return AST_Unknown (sp.latex (spt), str (spt))
-	# raise RuntimeError (f'unexpected class {spt.__class__.__name__!r}')
-
-def _spt2ast_nan (spt):
-	raise ValueError ('undefined')
 
 def _spt2ast_num (spt):
 	m = _rec_num_deconstructed.match (str (spt))
@@ -593,7 +592,7 @@ _spt2ast_funcs = {
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (t) for t in spt))),
 	sp.Tuple: lambda spt: spt2ast (spt.args),
 
-	sp.numbers.NaN: _spt2ast_nan,
+	sp.numbers.NaN: lambda spt: AST.Undefined,
 	sp.Integer: _spt2ast_num,
 	sp.Float: _spt2ast_num,
 	sp.Rational: lambda spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
@@ -633,13 +632,15 @@ _spt2ast_funcs = {
 	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
 }
 
+#...............................................................................................
 class sym: # for single script
-	set_precision = set_precision
-	ast2tex       = ast2tex
-	ast2simple    = ast2simple
-	ast2py        = ast2py
-	ast2spt       = ast2spt
-	spt2ast       = spt2ast
+	set_precision    = set_precision
+	ast2tex          = ast2tex
+	ast2simple       = ast2simple
+	ast2py           = ast2py
+	ast2spt          = ast2spt
+	spt_do_top_level = spt_do_top_level
+	spt2ast          = spt2ast
 
 ## DEBUG!
 # if __name__ == '__main__':
