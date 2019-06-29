@@ -729,7 +729,7 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.1</h5>
+		<h5>v0.1.5</h5>
 		<br><br>
 		Type '<b>help</b>' at any time for more information.
 		<br>
@@ -758,9 +758,7 @@ r"""<!DOCTYPE html>
 
 	<br><br>
 	<div align="center">
-	GitHub: <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')" style="color: #0007">https://github.com/Pristine-Cat/SymPad</a>
-	<br><br>
-	Copyright (c) 2019 Tomasz Pytel, All rights reserved.
+	Copyright (c) 2019 Tomasz Pytel. <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')" style="color: #0007">SymPad on GitHub</a>
 	</div>
 </div>
 
@@ -809,7 +807,7 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h2 align="center" style="margin: 0">SymPad</h2>
-<h5 align="center" style="margin: 0">v0.1</h5>
+<h5 align="center" style="margin: 0">v0.1.5</h5>
 <br>
 
 <h3>Introduction</h3>
