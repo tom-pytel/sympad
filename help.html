@@ -104,9 +104,9 @@ as "<b>2e+22</b>" as this will be interpreted to be 2 * 10^22, use spaces and/or
 <p>
 Variable names mostly follow LaTeX convention, they are single latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", ... or
 single greek letters preceded by a backslash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
-"<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. There are two special case variables
-which are parsed as two letter constants without a slash since they are commonly used, those are "<b>pi</b>" without the slash and "<b>oo</b>" which
-represents "<b>\infty</b>" or $\infty$.
+"<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. There are a few special case variables
+which are parsed as constants without a slash, those are "<b>pi</b>" without the slash and "<b>oo</b>" which represents "<b>\infty</b>" or $\infty$,
+"<b>True</b>" and "<b>False</b>", as well as "<b>undefined</b>". The last one is what you get if you try to divide 0 by 0.
 </p><p>
 Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
 Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
@@ -114,8 +114,6 @@ This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_
 </p><p>
 Differentials entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable. If you want to enter "<b>d</b>"
 * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
-</p><p>
-Other special variables are "<b>True</b>", "<b>False</b>" and "<b>undefined</b>", the last one is what you get if you try to divide 0 by 0.
 </p>
 
 <h3>Strings</h3>
@@ -128,10 +126,10 @@ supporting escape sequences.
 <h3>Parentheses</h3>
 
 <p>
-Explicit "<b>()</b>" or implicit curly "<b>{}</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
+Explicit "<b>( )</b>" or implicit curly "<b>{ }</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
 delineate an expression as an input to a function. They may be used interchangeably mostly, the only difference being that the implicit version is not
-drawn if it does not need to be. The case where explicit "<b>()</b>" parentheses are needed ... explicitly ... is when calling functions which take
-multiple parameters like "<b>$atan2(-1,-2)</b>".
+drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions in general and
+always when calling functions which take multiple parameters like "<b>$atan2(-1,-2)</b>".
 </p>
 
 <h3>Addition and Multiplication</h3>
@@ -173,33 +171,6 @@ The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx
 without the backslash. The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
 </p>
 
-<h3>Functions</h3>
-
-<p>
-Currently several functions are supported directly, with a mechanism for calling any other existing SymPy function explicitly. The standard trigonometric
-and hyperbolic functions and their inverses can be entered as usual, with or without leading backslash: "<b>sin</b>", "<b>acos</b>", "<b>arctan</b>",
-"<b>\acosh</b>", etc... In addition these functions accept a special commonly used syntax for exponentiation or inverses as a convenience. For example
-"<b>sin^2(x)</b>" = $\sin^2(x)$ and "<b>\tan^{-1}x</b>" = $\arctan(x)$.
-</p><p>
-Other SymPy functions are supported directly such as "<b>simplify (sin(x) / cos(x))</b>" = $\tan(x)$, "<b>expand ({x+1}^3)</b>" = $x^3+3x^2+3x+1$ and
-"<b>factor (x^2 + 2x + 1)</b>" = $(x+1)^2$. Functions don't technically REQUIRE explicit or implicit parentheses but for any parameter more complicated
-than another function or variable to a power they will be needed, as well as if the function takes more than one parameter in which case explicit
-parentheses are needed.
-</p><p>
-Three functions have a special separate syntax. The functions "<b>abs/Abs (x)</b>" are equivalent to the standard bar syntax for absolute value
-"<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>". In fact
-those functions are translated on the fly.
-</p><p>
-If a SymPy function is not supported directly (and most are not) then it can still be called using a special leading escape character "<b>\($\)</b>".
-To call the SymPy "<b>sign</b>" function for example simply enter "<b>\($\)sign (-2)</b>". Functions may take multiple comma-separated arguments with
-optional keyword args as well. The keyword argument identifier implementation is hacked into the grammar so if a keyword name can not be entered directly
-then try entering as a string like "<b>'this_name_has_too__many___underscores' = value</b>".
-</p><p>
-There is a special function "<b>?</b>", this is equivalent to SymPy "<b>N ()</b>" or "<b>evalf ()</b>" and it will ask SymPy to numerically evaluate
-whatever it can in the given expression. This is how you would get the numerical value of $\sqrt 2$ or $\sin(2)$ writing "<b>? sqrt 2</b>" or
-"<b>? (\sin{2})</b>".
-</p>
-
 <h3>Limits</h3>
 
 <p>
@@ -208,7 +179,7 @@ This will only give the limit if it exists and is the same when approaching from
 positive direction. To specify a direction add "<b>^+</b>" or "<b>^-</b>" to the equation as such: "<b>\lim_{x \to 0^+} 1/x</b>" = $\lim_{x\to 0^+}
 \frac1x$ = $\infty$ and "<b>\lim_{x \to 0^-} 1/x</b>" = $\lim_{x\to 0^-} \frac1x$ = $-\infty$. Addition and explicit multiplication terminate a limit
 expression. Limits may also be entered using the standard SymPy syntax "<b>Limit (expression, variable, to)</b>", this defaults to limit from positive
-direction like in SymPy, or you may specify a direction "<b>Limit (expression, variable, to, dir='+-')</b>".
+direction like SymPy, or you may specify a direction "<b>Limit (expression, variable, to, dir='+-')</b>".
 </p>
 
 <h3>Sums</h3>
@@ -238,6 +209,36 @@ The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b
 may also be entered using the standard SymPy syntax "<b>Integral (expression, (variable, from, to))</b>".
 </p>
 
+<h3>Functions</h3>
+
+<p>
+Currently several SymPy functions are supported directly by SymPad, with a mechanism for calling any other existing SymPy function explicitly. For a
+function to be supported directly means that you can type the function name without the "<b>$</b>" escape character and that SymPad understands how the
+function works and what it returns. See notes for list of directly supported functions / objects.
+</p><p>
+The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, with or without leading backslash: "<b>sin</b>",
+"<b>\cos</b>", "<b>arctan</b>", "<b>\acscsh</b>", etc... In addition these functions accept a special commonly used syntax for exponentiation or for
+inverses as a convenience. For example "<b>sin^2(x)</b>" = $\sin^2(x)$ and "<b>\tan^{-1}x</b>" = $\tan^{-1}x$ = $\arctan(x)$.
+</p><p>
+Other SymPy functions are supported directly such as "<b>simplify (sin(x) / cos(x))</b>" = $\tan(x)$, "<b>expand ({x+1}^3)</b>" = $x^3+3x^2+3x+1$ and
+"<b>factor (x^2 + 2x + 1)</b>" = $(x+1)^2$. Functions don't technically REQUIRE explicit or implicit parentheses but for any parameter more complicated
+than another function or variable to a power they will be needed, as well as if the function takes more than one parameter in which case explicit
+parentheses are needed.
+</p><p>
+Three functions have a special separate syntax. The functions "<b>abs/Abs (x)</b>" are equivalent to the standard bar syntax for absolute value
+"<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>". In fact
+those functions are translated on the fly.
+</p><p>
+If a SymPy function is not supported directly (and the vast majority are not) then it can still be called using a special leading escape character
+"<b>\($\)</b>". To call the SymPy "<b>sign</b>" function for example simply enter "<b>\($\)sign (-2)</b>". Functions may take multiple comma-separated
+arguments with optional keyword arguments as well. The keyword argument identifier implementation is hacked into the grammar so if a keyword name can not
+be entered directly then try entering as a string like "<b>'this_name_has_too__many___underscores' = value</b>".
+</p><p>
+There is a special function "<b>?</b>", this is equivalent to SymPy "<b>N ()</b>" or "<b>evalf ()</b>" and it will ask SymPy to numerically evaluate
+whatever it can in the given expression. This is how you would get the numerical value of $\sqrt 2$ or $\sin(2)$ writing "<b>? sqrt 2</b>" or
+"<b>? (\sin{2})</b>".
+</p>
+
 <h3>Notes</h3>
 
 <p>
@@ -245,9 +246,18 @@ Due to mixing operators from Python and LaTeX the grammar may be a little wonky 
 it in parentheses or putting a space between the problematic elements.
 </p><p>
 There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the
-SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python string. This may or
-may not allow you to paste the Python string back into SymPad to continue working with the result, you will probably meed to "<b>$</b>" escape function
+SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python copy string. This may
+or may not allow you to paste the Python string back into SymPad to continue working with the result, you will probably need to "<b>$</b>" escape function
 and object names. A single-click copy of the result will have the element which was not understood replaced with "<b>undefined</b>".
+</p><p>
+Directly supported functions: Abs, Derivative, Integral, Limit, Piecewise, Sum, abs, arg, exp, expand, factor, factorial, ln, series, simplify.
+</p>
+
+<h3>Future</h3>
+
+<p>
+Time and interest permitting: Vectors and matrices, assumptions / hints, stateful variables, piecewise expressions, long Python variable names, plots.
+<p></p>
 </p>
 
 <br><br><br>

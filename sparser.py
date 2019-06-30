@@ -3,7 +3,7 @@
 # Builds expression tree from text, nodes are nested AST tuples.
 
 # FUTURE: verify vars in expr func remaps
-# FUTURE: vectors and matrices, assumptions, stateful variables, piecewise expressions, long Python variable names, plots
+# FUTURE: vectors and matrices, assumptions / hints, stateful variables, piecewise expressions, long Python variable names, plots
 
 import ast as py_ast
 from collections import OrderedDict
@@ -285,7 +285,7 @@ class Parser (lalr1.Parser):
 			b'4Rex5OWHrihsKcvSGugVaMkb2fQXfXdJzoOvuGQ3XLJs8RotH9uw4k/8WZ3mmIIfoyCbyJbTSavr3f4rpIt11/sTL9pP7TtA4oW3X/tdcsM74OL6f8xG3DkbqIFN/piLZh0uUHkVI2Y1L2RJq0Kj6xRqwoezMqvyTRLPKRuxq0uOichyrqlRpz6c3iS4Jddt' \
 			b'EO71/rkHtYcg3Js+9+UGUvm8Br/WOiiP41aKtoLavAm03PiZN3jyW1Syl5PEbfdsjkItqEME/sU2ZtyynKIv2H9tR7WHINzblbW9TJKykoekKiQbrVQacRWBemtt6N3qhaZJ2ajHtnhbl0Uu3Bbp3fVL79TBg8jur192rw4eRPZw/bIHdfAgssdrl51GbIcO' \
 			b'InuznezjXm0bDYDaIjS2n0Lj1A1LkaHOQgdrP05+A404NR7kpZGV2RYDjd/XyyqqWei9XbtqGnXdQTRzxD1Dmmc4liDKgjSzSENnElpSLf+DiE5rogsUjXI1aZoqzPJclEmqd/yRcfRgzqSpPXwuCJBsmr7w/KHBYGnQTLWUkgNrp5vZjEZmYSBxFGk04XhM' \
-			b'gbT+mPwf6zDtTA==' 
+			b'gbT+mPwf6zDtTA=='
 
 	_PARSER_TOP = 'expr'
 
