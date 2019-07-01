@@ -88,12 +88,17 @@ function resize () {
 
 //...............................................................................................
 function logResize () {
+	// let atEnd  = !(document.documentElement.offsetHeight - document.documentElement.scrollTop - window.innerHeight);
 	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 3)); // +3 is fudge factor
 
 	if (margin < MarginTop) {
 		MarginTop = margin
 		$('body').css ({'margin-top': margin});
 	}
+
+	// if (atEnd) {
+	// 	scrollToEnd ();
+	// }
 }
 
 //...............................................................................................

@@ -21,10 +21,7 @@ class AST_Unknown: # for displaying elements we do not know how to handle, only 
 		self.tex, self.py = tex, py
 
 def _ast_is_neg (ast):
-	return \
-			ast.is_minus or \
-			ast.is_num and ast.num [0] == '-' or \
-			ast.is_mul and _ast_is_neg (ast.muls [0])
+	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
 
 def set_precision (ast): # recurse through ast to set sympy float precision according to largest string of digits found
 	global _SYMPY_FLOAT_PRECISION
@@ -124,7 +121,7 @@ def _ast2tex_func (ast):
 	return \
 			f'\\{ast.func}{_ast2tex_paren (ast.arg)}' \
 			if ast.func in AST.Func.PY_AND_TEX else \
-			f'\\operatorname{{{ast.func}}}{_ast2tex_paren (ast.arg)}'
+			'\\operatorname{' + ast.func.replace ('_', '\\_') + f'}}{_ast2tex_paren (ast.arg)}'
 
 def _ast2tex_lim (ast):
 	s = ast2tex (ast.to) if ast.dir is None else (ast2tex (AST ('^', ast.to, AST.Zero)) [:-1] + ast.dir)
@@ -364,7 +361,7 @@ def _ast2py_div (ast):
 	return f'{n}{" / " if ast.numer.strip_minus ().op not in {"#", "@"} or ast.denom.strip_minus ().op not in {"#", "@"} else "/"}{d}'
 
 def _ast2py_pow (ast):
-	b = _ast2py_paren (ast.base) if ast.base.is_minus or ast.base.is_neg_num else _ast2py_curly (ast.base)
+	b = _ast2py_paren (ast.base) if _ast_is_neg (ast.base) else _ast2py_curly (ast.base)
 	e = _ast2py_curly (ast.exp)
 
 	return f'{b}**{e}'
@@ -426,8 +423,8 @@ _ast2py_funcs = {
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
 	'intg': _ast2py_intg,
-	'vec': lambda ast: 'Matrix([' + ','.join (f'[{ast2simple (e)}]' for e in ast.vec) + '])',
-	'mat': lambda ast: 'Matrix([' + ','.join (f'[{",".join (ast2simple (e) for e in row)}]' for row in ast.mat) + '])',
+	'vec': lambda ast: 'Matrix([' + ','.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
+	'mat': lambda ast: 'Matrix([' + ','.join (f'[{",".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
 	'???': lambda ast: ast.py,
 }
 
