@@ -595,8 +595,9 @@ def _spt2ast_integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
-	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (t) for t in spt))),
+	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
 	sp.Tuple: lambda spt: spt2ast (spt.args),
+	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
 
 	sp.numbers.NaN: lambda spt: AST.Undefined,
 	sp.Integer: _spt2ast_num,
@@ -647,9 +648,3 @@ class sym: # for single script
 	ast2py        = ast2py
 	ast2spt       = ast2spt
 	spt2ast       = spt2ast
-
-# DEBUG!
-# if __name__ == '__main__':
-# 	m = sp.Matrix ([[1,2,3]]) + sp.Matrix ([[1,2,3]])
-# 	m = spt2ast (sp.Matrix (m))
-# 	print (m)

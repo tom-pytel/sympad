@@ -1,5 +1,5 @@
-// TODO: Warning messages on evaluate when SymPy object not understood.
-// TODO: Move last evaluated expression '_' substitution here from the server side.
+// TODO: Warning messages on evaluate when SymPy object not understood?
+// TODO: Move last evaluated expression '_' substitution here from the server side?
 // TODO: Arrow keys in Edge?
 // TODO: Change how error, auto and good text are displayed?
 
@@ -252,6 +252,7 @@ function ajaxResponse (resp) {
 					eMath.style.visibility         = '';
 
 					logResize ();
+					scrollToEnd (); // ???
 				}
 			}]);
 

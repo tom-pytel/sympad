@@ -416,6 +416,3 @@ AST.Infty     = AST ('@', '\\infty')
 AST.True_     = AST ('@', '\\text{True}')
 AST.False_    = AST ('@', '\\text{False}')
 AST.Undefined = AST ('@', '\\text{undefined}')
-
-# if __name__ == '__main__':
-# 	print (AST_Str ('a').is_str)
