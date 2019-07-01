@@ -438,10 +438,21 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	return spt
 
 def _ast2spt_func (ast):
-	f = getattr (sp, ast.func)
-	p = ast2spt (ast.arg)
+	f    = getattr (sp, ast.func)
+	args = [] # ast2spt (ast.arg)
+	kw   = {}
 
-	return f (*p) if isinstance (p, tuple) else f (p)
+	for arg in (ast.arg.commas if ast.arg.is_comma else (ast.arg,)):
+		if arg.is_eq_eq and arg.rhs.is_str:
+			name = arg.lhs.as_identifier ()
+
+			if name is not None:
+				kw [name] = ast2spt (arg.rhs)
+				continue
+
+		args.append (ast2spt (arg))
+
+	return f (*args, **kw)
 
 def _ast2spt_diff (ast):
 	args = sum ((
