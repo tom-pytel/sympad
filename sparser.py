@@ -1,3 +1,4 @@
+# TODO: Terminal empy ',' allowed in all sequence types.
 # TODO: 1+1j complex number parsing?
 
 # Builds expression tree from text, nodes are nested AST tuples.
