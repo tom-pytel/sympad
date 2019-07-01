@@ -1029,8 +1029,6 @@ those functions are translated on the fly.
 <h3>Notes</h3>
 
 <p>
-To numerically evaluate an expression like the square root of 2 type in "<b>$N (sqrt 2)</b>".
-</p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping
 it in parentheses or putting a space between the problematic elements.
 </p><p>
