@@ -9,7 +9,7 @@ import sys
 try:
 	import ply
 except ModuleNotFoundError:
-	print ("This program requires the 'ply' python package to be installed.")
+	print ("This script requires the 'ply' python package to be installed.")
 	sys.exit (-1)
 
 import getopt

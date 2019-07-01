@@ -432,9 +432,8 @@ _ast2py_funcs = {
 def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)\left
 	spt = _ast2spt_funcs [ast.op] (ast)
 
-	if doit:
-		if spt.__class__ != sp.Piecewise: # in {sp.Limit, sp.Sum, sp.Derivative, sp.Integral}:
-			spt = spt.doit ()
+	if doit and spt.__class__ != sp.Piecewise and hasattr (spt, 'doit'):
+		spt = spt.doit ()
 
 	return spt
 

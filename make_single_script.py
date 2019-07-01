@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# Collect all source and data files into single sympad.py script file.
+# Collect all source and data files into single stand-alone sympad.py script file.
 
 _PY_FILES    = ('lalr1.py', 'sast.py', 'sparser.py', 'sym.py', 'server.py')
 _OTHER_FILES = ('style.css', 'script.js', 'index.html', 'help.html')

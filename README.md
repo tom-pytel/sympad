@@ -1,19 +1,27 @@
 # SymPad
 
-SymPad is a simple symbolic calculator using SymPy for the math and MathJax for the display in a web browser. It runs as a private web server on your machine and executes the system default browser pointing to itself on startup.
+SymPad is a simple symbolic calculator using SymPy for the math and MathJax for the display in a web browser. It runs as a private http server on your machine and executes the system default browser pointing to itself on startup.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
 Sympad will accept LaTeX math formatting as well as Python expressions (or a mix) and evaluate the result symbolically or numerically. The following are all valid inputs:
 ```
-2*x**2
-2x^2
-sin (x) / cos (y)
-\frac{\sin x}{\cos y}
-sqrt[3] 27
-\tan**{-1} x
-\lim_{x \to 0^-} 1/x
-\sum_{n=0}^\infty x**n / n!
-d/dx x**2
-\int_{-\infty}^\infty e**{-x**2} dx
+sin (3\pi / 2)
+cos**-1 x
+\log_2{8}
+\lim_{x \to \infty} 1/x
+Limit (1/x, x, 0, dir='-')
+\sum_{n=0}^oo x^n / n!
+\sum_{n=1}**10 Sum (\sum_{l=1}^m l, (m, 1, n))
+Derivative (\int dx, x)
+d**6/dxdy**2dz**3 x^3 y^3 z^3
+Integral (e^{-x^2}, (x, 0, \infty))
+\int_0^1 \int_0^x \int_0^y 1 dz dy dx
+\int_0^\infty e^{-st} dt
+{{1,2},{3,4}}**-1
+det({{sin x, -cos x},{cos x, sin x}})
+\begin{matrix} A & B \\ C & D \end{matrix} * {x, y}
+expand {x+1}**2
+factor (x^3 + 3x^2 + 3x + 1)
+series (e^x, x, 1, 9)
 ```
 
 ## Installation

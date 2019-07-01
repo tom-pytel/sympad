@@ -32,7 +32,7 @@
 <canvas id="Background"></canvas>
 
 <h2 align="center" style="margin: 0">SymPad</h2>
-<h5 align="center" style="margin: 0">v0.2</h5>
+<h5 align="center" style="margin: 0">v0.2.8</h5>
 <br>
 
 <h3>Introduction</h3>
@@ -43,7 +43,7 @@ studying some math without having to start a shell every time and import a packa
 that last bit is exactly what happens but the response time is better :) This desire for simplicity led to the single script option "sympad.py"
 which I could plop down on my desktop and execute when needed.
 </p><p>
-As said, SymPad is a symbolic calculator using SymPy for the math and MathJax for the display in a web browser. It runs as a private web server
+As said, SymPad is a symbolic calculator using SymPy for the math and MathJax for the display in a web browser. It runs as a private http server
 on your machine and executes the system default browser pointing to itself on startup. User input is intended to be quick, easy and intuitive and
 is displayed in symbolic form as it is being entered. Sympad will accept LaTeX math formatting as well as Python expressions (or a mix) and
 evaluate the result symbolically or numerically. The best way to see what it can do is to try a few things...
@@ -66,6 +66,9 @@ d**6/dxdy**2dz**3 x^3 y^3 z^3<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^1 \int_0^x \int_0^y 1 dz dy dx<br>
 \int_0^\infty e^{-st} dt<br>
+{{1,2},{3,4}}**-1<br>
+det({{sin x, -cos x}, {cos x, sin x}})<br>
+\<span></span>begin{matrix} A & B \\ C & D \end{matrix} * {x, y}<br>
 expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 1, 9)<br>
@@ -82,12 +85,8 @@ The symbolic expressions can be copied to the clipboard in various formats. Sing
 input field. A double click-copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
 "<b>e</b>" is copied as "<b>e</b>" and not the SymPy "<b>E</b>", "<b>i</b>" is copied as "<b>i</b>" and not "<b>I</b>" or "<b>1j</b>". Simply set
 "<b>e = E</b>" and "<b>i = I</b>" or "<b>i = 1j</b>" in the Python context depending on need. Finally a triple-click will copy the expression in
-LaTeX format. The simple and LaTeX formats should be directly pasteable into SymPad whereas the Python representation may or may not be depending
-on what elements it includes.
-</p><p>
-There is a special use for the "<b>_</b>" character which has the same meaning as in the Python interactive shell in that it represents the last
-expression successfully evaluated. To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
-Repeat this several times using the up arrow.
+LaTeX format. The simple format will always be pasteable back into SymPad whereas the LaTeX and Python formats may or may not be depending on what
+elements are present.
 </p>
 
 <h3>Numbers</h3>
@@ -103,9 +102,10 @@ as "<b>2e+22</b>" as this will be interpreted to be 2 * 10^22, use spaces and/or
 <p>
 Variable names mostly follow LaTeX convention, they are single latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", ... or
 single greek letters preceded by a backslash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
-"<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. There are a few special case variables
-which are parsed as constants without a slash, those are "<b>pi</b>" without the slash and "<b>oo</b>" which represents "<b>\infty</b>" or $\infty$,
-"<b>True</b>" and "<b>False</b>", as well as "<b>undefined</b>". The last one is what you get if you try to divide 0 by 0.
+"<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. The whole top-level namespace of the
+SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$, as
+well as any other variables present at the top level. "<b>True</b>", "<b>False</b>" and "<b>undefined</b>" are also present, the last one is what
+you get if you try to divide 0 by 0 (essentially NaN).
 </p><p>
 Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
 Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
@@ -126,10 +126,22 @@ supporting escape sequences.
 
 <p>
 Explicit "<b>( )</b>" or implicit curly "<b>{ }</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
-delineate an expression as an input to a function. They may be used interchangeably mostly, the only difference being that the implicit version is not
-drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions in general and
-always when calling functions which take multiple parameters like "<b>$atan2(-1,-2)</b>".
-<i>Matrices</i>
+delineate an expression as an input to a function. They may be used interchangeably for single expressions, the only difference being that the implicit
+version is not drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions
+in general and always when calling functions which take multiple parameters like "<b>Max(1,2,3)</b>". Also, the curly braces are used as shorthand to
+enter vectors and matrices, but that is a different syntactic usage.
+</p>
+
+<h3>Vectors and Matrices</h3>
+
+<p>
+These are specified using curly braces with commas. Vectors are passed as a single level of curlys such as "<b>{1, 2}</b>" or "<b>{x, y, z}</b>".
+Matrices are passed as nested rows of curlys. A 2x3 matrix would be specified as  "<b>{{1, 2, 3}, {4, 5, 6}}</b>", a 1x3 would be "<b>{{1, 2, 3},}</b>"
+and a 3x1 would be "<b>{{1,},{2,},{3,}}</b>". Note the trailing commas which are needed for the same reason as in Python for tuples of one element
+(otherwise the curlys would be treated as parenteses instead of vectors / matrices).
+</p><p>
+Currently I haven't figured out the best way to interface with the SymPy vector module so SymPad coerces vectors to single column matrices. This at
+least allows computation with them until I figure out how best to use the vector module.
 </p>
 
 <h3>Addition and Multiplication</h3>
@@ -212,27 +224,23 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 <h3>Functions</h3>
 
 <p>
-Currently several SymPy functions are supported directly by SymPad, with a mechanism for calling any other existing SymPy function explicitly. For a
-function to be supported directly means that you can type the function name without the "<b>$</b>" escape character and that SymPad understands how the
-function works and what it returns. See notes for list of directly supported functions / objects.
+Almost all SymPy functions are available directly just by typing their name, the exceptions being single letter functions like "<b>N</b>" or "<b>S</b>".
+These can be executed using the escape character "<b>$</b>" before the name, so to numerically evaluate the value of sin (2) type in "<b>$N (sin (2))</b>".
+Functions may take multiple comma-separated arguments with optional keyword arguments as well. The keyword argument identifier implementation is hacked
+into the grammar so if a keyword name can not be entered correctly (due to underscores normally) then try entering it as an explicit string such as
+"<b> 'this_name_has_too__many___underscores' = value </b>".
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, with or without leading backslash: "<b>sin</b>",
 "<b>\cos</b>", "<b>arctan</b>", "<b>\acscsh</b>", etc... In addition these functions accept a special commonly used syntax for exponentiation or for
 inverses as a convenience. For example "<b>sin^2(x)</b>" = $\sin^2(x)$ and "<b>\tan^{-1}x</b>" = $\tan^{-1}x$ = $\arctan(x)$.
 </p><p>
-Other SymPy functions are supported directly such as "<b>simplify (sin(x) / cos(x))</b>" = $\tan(x)$, "<b>expand ({x+1}^3)</b>" = $x^3+3x^2+3x+1$ and
-"<b>factor (x^2 + 2x + 1)</b>" = $(x+1)^2$. Functions don't technically REQUIRE explicit or implicit parentheses but for any parameter more complicated
-than another function or variable to a power they will be needed, as well as if the function takes more than one parameter in which case explicit
-parentheses are needed.
+Functions don't technically require explicit or implicit parentheses to allow quick entry like "<b>sqrt2</b>" but for any parameter more complicated
+than another function or variable to a power they will be needed. As well as functions which take more than one parameter, these require explicit
+parentheses.
 </p><p>
 Three functions have a special separate syntax. The functions "<b>abs/Abs (x)</b>" are equivalent to the standard bar syntax for absolute value
 "<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>". In fact
 those functions are translated on the fly.
-</p><p>
-If a SymPy function is not supported directly (and the vast majority are not) then it can still be called using a special leading escape character
-"<b>\($\)</b>". To call the SymPy "<b>sign</b>" function for example simply enter "<b>\($\)sign (-2)</b>". Functions may take multiple comma-separated
-arguments with optional keyword arguments as well. The keyword argument identifier implementation is hacked into the grammar so if a keyword name can not
-be entered directly then try entering as a string like "<b>'this_name_has_too__many___underscores' = value</b>".
 </p>
 
 <h3>Notes</h3>
@@ -241,19 +249,21 @@ be entered directly then try entering as a string like "<b>'this_name_has_too__m
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping
 it in parentheses or putting a space between the problematic elements.
 </p><p>
+There is a special use for the "<b>_</b>" character aside from variable subscripting which is the same as in the Python interactive shell in that
+it represents the last expression successfully evaluated. To see this in action type in "<b>1</b>" and hit Enter, then type in
+"<b>expand ((x+1)*_)</b>" and hit Enter. Repeat this several times using the up arrow.
+</p><p>
 There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the
 SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python copy string. This may
-or may not allow you to paste the Python string back into SymPad to continue working with the result, you will probably need to "<b>$</b>" escape function
-and object names. A single-click copy of the result will have the element which was not understood replaced with "<b>undefined</b>".
-</p><p>
-Directly supported functions: Abs, Derivative, Integral, Limit, Piecewise, Sum, abs, arg, exp, expand, factor, factorial, ln, series, simplify.
+or may not allow you to paste the Python string back into SymPad to continue working with the result. A single-click copy of the result will have the
+element which was not understood replaced with "<b>undefined</b>".
 </p>
 
 <h3>Future</h3>
 
 <p>
-Time and interest permitting: Vectors and matrices, assumptions / hints, stateful variables, piecewise expressions, long Python variable names, plots.
-<p></p>
+Time and interest permitting: Proper implementation of vectors, '.' member referencing, stateful variables, assumptions / hints, piecewise expressions,
+long Python variable names, importing modules to allow external code execution, graphical plots...
 </p>
 
 <br><br><br>
