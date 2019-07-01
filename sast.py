@@ -1,7 +1,7 @@
-import re
-
+# Base classes for abstract math syntax tree, tuple based.
+#
 # ('=', 'rel', lhs, rhs)        - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
-# ('#', 'num')                  - numbers represented as strings to pass on maximum precision to sympy
+# ('#', 'num')                  - real numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
 # ('"', 'str')                  - string (for function parameters like '+' or '-')
 # (',', (expr1, expr2, ...))    - comma expression (tuple)
@@ -17,13 +17,26 @@ import re
 # ('log', expr, base)           - logarithm of expr in base
 # ('sqrt', expr)                - square root of expr
 # ('sqrt', expr, n)             - nth root of expr
-# ('func', 'func', expr)        - sympy or regular python function 'func', will be called with sympy expression
+# ('func', 'func', expr)        - sympy or regular python function 'func', will be called with sympy expression (',' expr gives multiple arguments)
 # ('lim', expr, var, to)        - limit of expr when variable var approaches to from both positive and negative directions
 # ('lim', expr, var, to, 'dir') - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('sum', expr, var, from, to)  - summation of expr over variable var from from to to
 # ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
 # ('intg', expr, var)           - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('intg', expr, var, from, to) - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+#
+# ('vec', (expr1, expr2, ...))                                 - vector
+# ('mat', ((expr11, expr12, ...), (expr21, expr22, ...), ...)) - matrix
+#
+# ('ten', (?((expr111?, ...), ...), ...)?)                     - FUTURE arbitrary order higher than 2 tensor
+
+import re
+import types
+
+import sympy as sp
+
+_SYMPY_OBJECTS = dict ((name, obj) for name, obj in \
+		filter (lambda no: no [0] [0] != '_' and len (no [0]) >= 2 and not isinstance (no [1], types.ModuleType), sp.__dict__.items ()))
 
 #...............................................................................................
 class AST (tuple):
@@ -135,9 +148,7 @@ class AST_Eq (AST):
 	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '==': '=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
 
 	def _init (self, rel, lhs, rhs):
-		self.rel = rel # should be short form
-		self.lhs = lhs
-		self.rhs = rhs
+		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
 
 	def _is_eq_eq (self):
 		return self.rel == '='
@@ -169,9 +180,9 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	TEXTVARS   = ('True', 'False', 'undefined')
-	LONG2SHORT = {'\\pi': 'pi', '\\infty': 'oo', **dict ((f'\\text{{{v}}}', v) for v in TEXTVARS)}
-	SHORT2LONG = {'pi': '\\pi', 'oo': '\\infty', **dict ((v, f'\\text{{{v}}}') for v in TEXTVARS)}
+	PY         = {'True', 'False', 'undefined'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
+	LONG2SHORT = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo'}
+	SHORT2LONG = {**dict ((v, f'\\text{{{v}}}') for v in PY), 'pi': '\\pi', 'oo': '\\infty'}
 
 	_rec_diff_start         = re.compile (r'^d(?=[^_])')
 	_rec_part_start         = re.compile (r'^\\partial ')
@@ -242,6 +253,12 @@ class AST_Paren (AST):
 	def _init (self, paren):
 		self.paren = paren
 
+class AST_Bracket (AST):
+	op, is_bracket = '[', True
+
+	def _init (self, brackets):
+		self.brackets = brackets
+
 class AST_Abs (AST):
 	op, is_abs = '|', True
 
@@ -276,49 +293,30 @@ class AST_Div (AST):
 	op, is_div = '/', True
 
 	def _init (self, numer, denom):
-		self.numer = numer
-		self.denom = denom
+		self.numer, self.denom = numer, denom
 
 class AST_Pow (AST):
 	op, is_pow = '^', True
 
 	def _init (self, base, exp):
-		self.base = base
-		self.exp  = exp
+		self.base, self.exp = base, exp
 
 class AST_Log (AST):
 	op, is_log = 'log', True
 
 	def _init (self, log, base = None):
-		self.log  = log
-		self.base = base
+		self.log, self.base = log, base
 
 class AST_Sqrt (AST):
 	op, is_sqrt = 'sqrt', True
 
 	def _init (self, rad, idx = None):
-		self.rad = rad
-		self.idx = idx
+		self.rad, self.idx = rad, idx
 
 class AST_Func (AST):
 	op, is_func = 'func', True
 
-	PY_ONLY = set ('''
-		?
-		Abs
-		Derivative
-		Integral
-		Limit
-		Piecewise
-		Sum
-		abs
-		expand
-		factor
-		factorial
-		series
-		simplify
-		'''.strip ().split ())
-
+	PY_ONLY    = {'abs'} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
 	PY_AND_TEX = set ('''
 		arg
 		exp
@@ -326,14 +324,12 @@ class AST_Func (AST):
 		'''.strip ().split ())
 
 	PY_ALL = PY_ONLY | PY_AND_TEX
-	ALIAS  = {'?': 'N'}
 
 	_rec_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 	def _init (self, func, arg):
-		self.func = func
-		self.arg  = arg
+		self.func, self.arg = func, arg
 
 	def _is_trigh_func (self):
 		return AST_Func._rec_trigh.match (self.func)
@@ -345,35 +341,37 @@ class AST_Lim (AST):
 	op, is_lim = 'lim', True
 
 	def _init (self, lim, lvar, to, dir = None):
-		self.lim  = lim
-		self.lvar = lvar
-		self.to   = to
-		self.dir  = dir
+		self.lim, self.lvar, self.to, self.dir = lim, lvar, to, dir
 
 class AST_Sum (AST):
 	op, is_sum = 'sum', True
 
 	def _init (self, sum, svar, from_, to):
-		self.sum   = sum
-		self.svar  = svar
-		self.from_ = from_
-		self.to    = to
+		self.sum, self.svar, self.from_, self.to = sum, svar, from_, to
 
 class AST_Diff (AST):
 	op, is_diff = 'diff', True
 
 	def _init (self, diff, dvs):
-		self.diff = diff
-		self.dvs  = dvs
+		self.diff, self.dvs = diff, dvs
 
 class AST_Intg (AST):
 	op, is_intg = 'intg', True
 
 	def _init (self, intg, dv, from_ = None, to = None):
-		self.intg  = intg
-		self.dv    = dv
-		self.from_ = from_
-		self.to    = to
+		self.intg, self.dv, self.from_, self.to = intg, dv, from_, to
+
+class AST_Vec (AST):
+	op, is_vec = 'vec', True
+
+	def _init (self, vec):
+		self.vec = vec
+
+class AST_Mat (AST):
+	op, is_mat = 'mat', True
+
+	def _init (self, mat):
+		self.mat = mat
 
 #...............................................................................................
 _AST_OP2CLS = {
@@ -383,6 +381,7 @@ _AST_OP2CLS = {
 	'"': AST_Str,
 	',': AST_Comma,
 	'(': AST_Paren,
+	'[': AST_Bracket,
 	'|': AST_Abs,
 	'-': AST_Minus,
 	'!': AST_Fact,
@@ -397,6 +396,8 @@ _AST_OP2CLS = {
 	'sum': AST_Sum,
 	'diff': AST_Diff,
 	'intg': AST_Intg,
+	'vec': AST_Vec,
+	'mat': AST_Mat,
 }
 
 _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())

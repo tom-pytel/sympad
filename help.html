@@ -54,7 +54,6 @@ evaluate the result symbolically or numerically. The best way to see what it can
 <p>
 Try entering any of the following into SymPad:
 </p><p>
-? sqrt 2<br>
 sin (3\pi / 2)<br>
 cos**-1 x<br>
 \log_2{8}<br>
@@ -130,6 +129,7 @@ Explicit "<b>( )</b>" or implicit curly "<b>{ }</b>" parentheses allow prioritiz
 delineate an expression as an input to a function. They may be used interchangeably mostly, the only difference being that the implicit version is not
 drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions in general and
 always when calling functions which take multiple parameters like "<b>$atan2(-1,-2)</b>".
+<i>Matrices</i>
 </p>
 
 <h3>Addition and Multiplication</h3>
@@ -233,10 +233,6 @@ If a SymPy function is not supported directly (and the vast majority are not) th
 "<b>\($\)</b>". To call the SymPy "<b>sign</b>" function for example simply enter "<b>\($\)sign (-2)</b>". Functions may take multiple comma-separated
 arguments with optional keyword arguments as well. The keyword argument identifier implementation is hacked into the grammar so if a keyword name can not
 be entered directly then try entering as a string like "<b>'this_name_has_too__many___underscores' = value</b>".
-</p><p>
-There is a special function "<b>?</b>", this is equivalent to SymPy "<b>N ()</b>" or "<b>evalf ()</b>" and it will ask SymPy to numerically evaluate
-whatever it can in the given expression. This is how you would get the numerical value of $\sqrt 2$ or $\sin(2)$ writing "<b>? sqrt 2</b>" or
-"<b>? (\sin{2})</b>".
 </p>
 
 <h3>Notes</h3>

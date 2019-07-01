@@ -77,7 +77,7 @@ def _ast2tex_mul (ast, ret_has = False):
 	for n in ast.muls:
 		s = f'{_ast2tex_paren (n) if n.is_add or (p and _ast_is_neg (n)) else ast2tex (n)}'
 
-		if p and (n.op in {'!', '#'} or n.is_null_var or p.op in {'lim', 'sum', 'intg'} or \
+		if p and (n.op in {'!', '#', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'intg', 'mat'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/', 'diff'})):
 			t.append (f' \\cdot {s}')
 			has = True
@@ -100,7 +100,7 @@ def _ast2tex_pow (ast):
 
 		return f'{b [:i]}^{p}{b [i:]}'
 
-	if ast.base.op in {'(', '|', '@'} or ast.base.is_pos_num:
+	if ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num:
 		return f'{b}^{p}'
 
 	return f'\\left({b} \\right)^{p}'
@@ -181,6 +181,7 @@ _ast2tex_funcs = {
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: ','.join (ast2tex (parm) for parm in ast.commas),
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
+	'[': lambda ast: f'\\left[{",".join (ast2tex (b) for b in ast.brackets)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2tex (ast.minus)}',
 	'!': lambda ast: f'{_ast2tex_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^'} or ast.fact.is_neg_num) else f'{ast2tex (ast.fact)}!',
@@ -195,6 +196,8 @@ _ast2tex_funcs = {
 	'sum': _ast2tex_sum,
 	'diff': _ast2tex_diff,
 	'intg': _ast2tex_intg,
+	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
+	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + ' \\end{bmatrix}',
 	'???': lambda ast: ast.tex,
 }
 
@@ -259,7 +262,7 @@ def _ast2simple_pow (ast):
 
 		return f'{b [:i]}^{p}{b [i:]}'
 
-	if ast.base.op in {'@', '(', '|'} or ast.base.is_pos_num:
+	if ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num:
 		return f'{b}**{p}'
 
 	return f'({b})**{p}'
@@ -321,6 +324,7 @@ _ast2simple_funcs = {
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.commas),
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
+	'[': lambda ast: f'[{",".join (ast2simple (b) for b in ast.brackets)}]',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
 	'-': lambda ast: f'-{_ast2simple_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2simple (ast.minus)}',
 	'!': lambda ast: f'{_ast2simple_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^'} or ast.fact.is_neg_num) else f'{ast2simple (ast.fact)}!',
@@ -335,6 +339,8 @@ _ast2simple_funcs = {
 	'sum': _ast2simple_sum,
 	'diff': _ast2simple_diff,
 	'intg': _ast2simple_intg,
+	'vec': lambda ast: f'{{{",".join (ast2simple (e) for e in ast.vec)}{"," if len (ast.vec) == 1 else ""}}}',
+	'mat': lambda ast: '{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{"," if len (row) == 1 else ""}}}' for row in ast.mat) + f'{"," if len (ast.mat) == 1 else ""}}}',
 	'???': lambda ast: 'undefined',
 }
 
@@ -345,7 +351,7 @@ def ast2py (ast): # abstract syntax tree -> python code text
 def _ast2py_curly (ast):
 	return \
 			_ast2py_paren (ast) \
-			if ast.strip_minus ().op in {'+', '*', '/'} or ast.is_neg_num or (ast.is_log and ast.base is not None) else \
+			if ast.strip_minus ().op in {'+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 			ast2py (ast)
 
 def _ast2py_paren (ast):
@@ -358,7 +364,7 @@ def _ast2py_div (ast):
 	return f'{n}{" / " if ast.numer.strip_minus ().op not in {"#", "@"} or ast.denom.strip_minus ().op not in {"#", "@"} else "/"}{d}'
 
 def _ast2py_pow (ast):
-	b = _ast2py_curly (ast.base)
+	b = _ast2py_paren (ast.base) if ast.base.is_minus or ast.base.is_neg_num else _ast2py_curly (ast.base)
 	e = _ast2py_curly (ast.exp)
 
 	return f'{b}**{e}'
@@ -405,6 +411,7 @@ _ast2py_funcs = {
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: ','.join (ast2py (parm) for parm in ast.commas),
 	'(': lambda ast: f'({ast2py (ast.paren)})',
+	'[': lambda ast: f'[{",".join (ast2py (b) for b in ast.brackets)}]',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2py (ast.minus)}',
 	'!': lambda ast: f'factorial({ast2py (ast.fact)})',
@@ -414,16 +421,18 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad.strip_paren (1))}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{AST.Func.ALIAS.get (ast.func, ast.func)}{_ast2py_paren (ast.arg)}',
+	'func': lambda ast: f'{ast.func}{_ast2py_paren (ast.arg)}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
 	'intg': _ast2py_intg,
+	'vec': lambda ast: 'Matrix([' + ','.join (f'[{ast2simple (e)}]' for e in ast.vec) + '])',
+	'mat': lambda ast: 'Matrix([' + ','.join (f'[{",".join (ast2simple (e) for e in row)}]' for row in ast.mat) + '])',
 	'???': lambda ast: ast.py,
 }
 
 #...............................................................................................
-def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)
+def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)\left
 	spt = _ast2spt_funcs [ast.op] (ast)
 
 	if doit:
@@ -433,7 +442,7 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	return spt
 
 def _ast2spt_func (ast):
-	f = getattr (sp, AST.Func.ALIAS.get (ast.func, ast.func))
+	f = getattr (sp, ast.func)
 	p = ast2spt (ast.arg)
 
 	return f (*p) if isinstance (p, tuple) else f (p)
@@ -486,6 +495,7 @@ _ast2spt_funcs = {
 	'"': lambda ast: ast.str_,
 	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
 	'(': lambda ast: ast2spt (ast.paren),
+	'[': lambda ast: [ast2spt (b) for b in ast.brackets],
 	'|': lambda ast: sp.Abs (ast2spt (ast.abs)),
 	'-': lambda ast: -ast2spt (ast.minus),
 	'!': lambda ast: sp.factorial (ast2spt (ast.fact)),
@@ -500,6 +510,8 @@ _ast2spt_funcs = {
 	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.svar), ast2spt (ast.from_), ast2spt (ast.to))),
 	'diff': _ast2spt_diff,
 	'intg': _ast2spt_intg,
+	'vec': lambda ast: sp.Matrix ([[ast2spt (e)] for e in ast.vec]),
+	'mat': lambda ast: sp.Matrix ([[ast2spt (e) for e in row] for row in ast.mat]),
 }
 
 #...............................................................................................
@@ -627,6 +639,7 @@ _spt2ast_funcs = {
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,
 
+	sp.matrices.MatrixBase: lambda spt: AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) for row in range (spt.rows))) if not (spt.rows == spt.cols == 1) else spt2ast (spt [0]),
 	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
 }
 
@@ -639,9 +652,8 @@ class sym: # for single script
 	ast2spt       = ast2spt
 	spt2ast       = spt2ast
 
-## DEBUG!
+# DEBUG!
 # if __name__ == '__main__':
-# 	print (_rec_num_deconstructed.match ('10100.0010100').groups ())
-# 	t = ast2spt (('intg', ('@', 'dx')))
-# 	print (t)
-
+# 	m = sp.Matrix ([[1,2,3]]) + sp.Matrix ([[1,2,3]])
+# 	m = spt2ast (sp.Matrix (m))
+# 	print (m)
