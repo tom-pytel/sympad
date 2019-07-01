@@ -487,6 +487,7 @@ class Parser (lalr1.Parser):
 	def expr_mat_4      (self, BEG_VMATRIX, expr_mat_rows, END_VMATRIX):                                 return AST ('mat', expr_mat_rows)
 	def expr_mat_5      (self, BEG_PMATRIX, expr_mat_rows, END_PMATRIX):                                 return AST ('mat', expr_mat_rows)
 	def expr_mat_6      (self, expr_curly):                                                              return expr_curly
+
 	def expr_mat_rows_1 (self, expr_mat_rows, DBLSLASH, expr_mat_row):       return expr_mat_rows + (expr_mat_row,)
 	def expr_mat_rows_2 (self, expr_mat_row):                                return (expr_mat_row,)
 	def expr_mat_row_1  (self, expr_mat_row, AMP, expr):                     return expr_mat_row + (expr,)
