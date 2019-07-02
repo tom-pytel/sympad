@@ -438,8 +438,8 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	return spt
 
 def _ast2spt_func (ast):
-	args = []
 	kw   = {}
+	args = []
 	arg  = ast.arg.strip_paren ()
 	f    = getattr (sp, ast.func, __builtins__.get (ast.func)) ## DANGER! Searching __builtins__!!!
 
