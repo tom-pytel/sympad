@@ -28,7 +28,7 @@
 # ('vec', (expr1, expr2, ...))                                 - vector
 # ('mat', ((expr11, expr12, ...), (expr21, expr22, ...), ...)) - matrix
 #
-# ('ten', (?((expr111?, ...), ...), ...)?)                     - FUTURE arbitrary order higher than 2 tensor
+# ('ten', (?((expr111?, ...), ...), ...)?)                     - FUTURE arbitrary order higher than 2 tensor?
 
 import re
 import types
@@ -180,7 +180,7 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	PY         = {'True', 'False', 'undefined'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
+	PY         = {'None', 'True', 'False', 'undefined'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
 	LONG2SHORT = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo'}
 	SHORT2LONG = {**dict ((v, f'\\text{{{v}}}') for v in PY), 'pi': '\\pi', 'oo': '\\infty'}
 
@@ -321,12 +321,14 @@ class AST_Func (AST):
 		arg
 		exp
 		ln
+		max
+		min
 		'''.strip ().split ())
 
 	PY_ALL = PY_ONLY | PY_AND_TEX
 
-	_rec_trigh             = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
-	_rec_trigh_noninv_func = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
+	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
+	_rec_trigh_noninv = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 	def _init (self, func, arg):
 		self.func, self.arg = func, arg
@@ -334,8 +336,8 @@ class AST_Func (AST):
 	def _is_trigh_func (self):
 		return AST_Func._rec_trigh.match (self.func)
 
-	def _is_trigh_func_noninv_func (self):
-		return AST_Func._rec_trigh_noninv_func.match (self.func)
+	def _is_trigh_func_noninv (self):
+		return AST_Func._rec_trigh_noninv.match (self.func)
 
 class AST_Lim (AST):
 	op, is_lim = 'lim', True
@@ -413,6 +415,7 @@ AST.I         = AST ('@', 'i')
 AST.E         = AST ('@', 'e')
 AST.Pi        = AST ('@', '\\pi')
 AST.Infty     = AST ('@', '\\infty')
+AST.None_     = AST ('@', '\\text{None}')
 AST.True_     = AST ('@', '\\text{True}')
 AST.False_    = AST ('@', '\\text{False}')
 AST.Undefined = AST ('@', '\\text{undefined}')

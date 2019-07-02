@@ -104,8 +104,8 @@ Variable names mostly follow LaTeX convention, they are single latin letters "<b
 single greek letters preceded by a backslash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
 "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. The whole top-level namespace of the
 SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$, as
-well as any other variables present at the top level. "<b>True</b>", "<b>False</b>" and "<b>undefined</b>" are also present, the last one is what
-you get if you try to divide 0 by 0 (essentially NaN).
+well as any other variables present at the top level. "<b>None</b>", "<b>True</b>", "<b>False</b>" and "<b>undefined</b>" are also present, the last
+one is what you get if you try to divide 0 by 0 (essentially NaN).
 </p><p>
 Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
 Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
@@ -225,27 +225,35 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 
 <p>
 Almost all SymPy functions are available directly just by typing their name, the exceptions being single letter functions like "<b>N</b>" or "<b>S</b>".
-These can be executed using the escape character "<b>$</b>" before the name, so to numerically evaluate the value of sin (2) type in "<b>$N (sin (2))</b>".
+These can be executed using the escape character "<b>$</b>" before the name. To numerically evaluate the value of sin (2) type in "<b>$N (sin (2))</b>".
 Functions may take multiple comma-separated arguments with optional keyword arguments as well. The keyword argument identifier implementation is hacked
-into the grammar so if a keyword name can not be entered correctly (due to underscores normally) then try entering it as an explicit string such as
-"<b> 'this_name_has_too__many___underscores' = value </b>".
+into the grammar so if a keyword name can not be entered correctly (due to underscores usually) then try entering the identifier name as an explicit
+string such as "<b> 'this_name_has_too__many___underscores' = value </b>".
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, with or without leading backslash: "<b>sin</b>",
-"<b>\cos</b>", "<b>arctan</b>", "<b>\acscsh</b>", etc... In addition these functions accept a special commonly used syntax for exponentiation or for
+"<b>\cos</b>", "<b>\arctan</b>", "<b>acscsh</b>", etc... In addition these functions accept a special commonly used syntax for exponentiation or for
 inverses as a convenience. For example "<b>sin^2(x)</b>" = $\sin^2(x)$ and "<b>\tan^{-1}x</b>" = $\tan^{-1}x$ = $\arctan(x)$.
 </p><p>
-Functions don't technically require explicit or implicit parentheses to allow quick entry like "<b>sqrt2</b>" but for any parameter more complicated
-than another function or variable to a power they will be needed. As well as functions which take more than one parameter, these require explicit
-parentheses.
+Functions don't technically require explicit or implicit parentheses in order to allow quick entry like "<b>sqrt2</b>" but for any parameter more
+complicated than another function or variable to a power they will be needed. As well as functions which take more than one parameter, these require
+explicit parentheses.
 </p><p>
 Three functions have a special separate syntax. The functions "<b>abs/Abs (x)</b>" are equivalent to the standard bar syntax for absolute value
 "<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>". In fact
 those functions are translated on the fly.
+</p><p>
+The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar. Function names accepted by
+default in the grammar are only those specified in the SymPy module and one or two builtins. But when functions are entered using the "<b>$</b>"
+character then the entire __builtins__ module may be accessed. Try entering "<b>$print ('Hello World...')</b>" and have a look at the server window.
+Note that this means that "<b>eval</b>" is available as well.
 </p>
 
 <h3>Notes</h3>
 
 <p>
+WARNING! This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should
+never leave this server open to the internet by serving on an IP visible to the external world.
+</p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping
 it in parentheses or putting a space between the problematic elements.
 </p><p>

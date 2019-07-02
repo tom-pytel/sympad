@@ -1,6 +1,7 @@
 # TODO: Merge trigh into func.
 # TODO: Terminal empty ',' allowed in all sequence types.
-# TODO: Add 'max', 'min'.
+# TODO: Change vars to internal short representation?
+
 # TODO: 1+1j complex number parsing?
 
 # Builds expression tree from text, nodes are nested AST tuples.
@@ -313,7 +314,7 @@ class Parser (lalr1.Parser):
 			b'mj+pXU6Ccze7ngA3z73aQIflWYed/PEyvnrmDiT/CUFuK4JweHxXsmg2OPuXpj3rvndCmd+BMhxr34m+eGzHpaM6RG/XrP9LU7QNKUYTKOZBXlLt75aLwBPRcLM/IT4cgPi+ufGf0N5fg3YXZslvd2SBM+wc+rlYnskv5BNm8XO3XmJuznC7gWl5t+ZaxjkD' \
 			b'L4Fwc5MwW8hcJPhXx8G/ae48gH895r9+i0iUBX6Ia1EiMvzwa0BsfgHI9KUftZjSGWZ2ebEjkZm4JO03ia5rDhYsXr/C5rYymrVtPgtkbo5D53i8ueMA/u1WOreFLEpVW5TLWLmWFIv3cIrQpc8u3W8ZeO2EPLxq2pTQzdVYBwjQnYYAfXNkAdLzpyG9rjmy' \
 			b'AOl1pyG90BxZgPTCSUiP94+OK0B6/X6kt8U0ZQ8ytM3NA2+rjqOY0RuVii2UycT/rid+1xKqbxYDXiu3TcrFoOIu6g4Bwp2sKk5BuLxTfNQBsj34iuVasrXNcQfIdrIyOQnZuua4A2S73arn2GTbNccdINvtFkRHvIvBZrnTCBC4j5ZoNj7TSjV2H538/A9v' \
-			b'Z8AQESXGiRy/VyoE/iyONyEbHyJQubUgd5IX5wvRPhkK46OPIwG/Wcjy2oRfdhbYEE75eCudmyQAdvyCl7LJqWl4r9jkVwcoh+L4pRujlNyInNo2ZVAOWscvQLAhW+HF9sZ2tw7TVT5mrjoxfHWU44fL/we5Ax+S'
+			b'Z8AQESXGiRy/VyoE/iyONyEbHyJQubUgd5IX5wvRPhkK46OPIwG/Wcjy2oRfdhbYEE75eCudmyQAdvyCl7LJqWl4r9jkVwcoh+L4pRujlNyInNo2ZVAOWscvQLAhW+HF9sZ2tw7TVT5mrjoxfHWU44fL/we5Ax+S' 
 
 	_PARSER_TOP = 'expr'
 

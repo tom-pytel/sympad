@@ -1606,7 +1606,7 @@ class AST_Func (AST):
 	def _is_trigh_func (self):
 		return AST_Func._rec_trigh.match (self.func)
 
-	def _is_trigh_func_noninv_func (self):
+	def _is_trigh_func_noninv (self):
 		return AST_Func._rec_trigh_noninv_func.match (self.func)
 
 class AST_Lim (AST):
@@ -2506,7 +2506,7 @@ def _ast2tex_pow (ast):
 	b = ast2tex (ast.base)
 	p = _ast2tex_curly (ast.exp)
 
-	if ast.base.is_trigh_func_noninv_func and ast.exp.is_single_unit:
+	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
 		i = len (ast.base.func) + (15 if ast.base.func in {'sech', 'csch'} else 1)
 
 		return f'{b [:i]}^{p}{b [i:]}'
@@ -2668,7 +2668,7 @@ def _ast2simple_pow (ast):
 	b = ast2simple (ast.base)
 	p = f'{_ast2simple_paren (ast.exp)}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2simple (ast.exp)
 
-	if ast.base.is_trigh_func_noninv_func and ast.exp.is_single_unit:
+	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
 		i = len (ast.base.func)
 
 		return f'{b [:i]}^{p}{b [i:]}'

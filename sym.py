@@ -92,7 +92,7 @@ def _ast2tex_pow (ast):
 	b = ast2tex (ast.base)
 	p = _ast2tex_curly (ast.exp)
 
-	if ast.base.is_trigh_func_noninv_func and ast.exp.is_single_unit:
+	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
 		i = len (ast.base.func) + (15 if ast.base.func in {'sech', 'csch'} else 1)
 
 		return f'{b [:i]}^{p}{b [i:]}'
@@ -254,7 +254,7 @@ def _ast2simple_pow (ast):
 	b = ast2simple (ast.base)
 	p = f'{_ast2simple_paren (ast.exp)}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2simple (ast.exp)
 
-	if ast.base.is_trigh_func_noninv_func and ast.exp.is_single_unit:
+	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
 		i = len (ast.base.func)
 
 		return f'{b [:i]}^{p}{b [i:]}'
@@ -438,11 +438,15 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	return spt
 
 def _ast2spt_func (ast):
-	f    = getattr (sp, ast.func)
-	args = [] # ast2spt (ast.arg)
+	args = []
 	kw   = {}
+	arg  = ast.arg.strip_paren ()
+	f    = getattr (sp, ast.func, __builtins__.get (ast.func)) ## DANGER! Searching __builtins__!!!
 
-	for arg in (ast.arg.commas if ast.arg.is_comma else (ast.arg,)):
+	if f is None:
+		raise NameError (f'name {ast.func!r} is not defined')
+
+	for arg in (arg.commas if arg.is_comma else (arg,)):
 		if arg.is_eq_eq and arg.rhs.is_str:
 			name = arg.lhs.as_identifier ()
 
@@ -452,7 +456,7 @@ def _ast2spt_func (ast):
 
 		args.append (ast2spt (arg))
 
-	return f (*args, **kw)
+	return f (*args, **kw) if len (args) > 1 else f (args [0], **kw)
 
 def _ast2spt_diff (ast):
 	args = sum ((
@@ -490,6 +494,7 @@ _ast2spt_consts = {
 	'i'                : sp.I,
 	'\\pi'             : sp.pi,
 	'\\infty'          : sp.oo,
+	'\\text{None}'     : None,
 	'\\text{True}'     : sp.boolalg.true,
 	'\\text{False}'    : sp.boolalg.false,
 	'\\text{undefined}': sp.nan,
@@ -606,6 +611,7 @@ def _spt2ast_integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
+	None.__class__: lambda spt: AST.None_,
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
 	sp.Tuple: lambda spt: spt2ast (spt.args),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
@@ -632,23 +638,24 @@ _spt2ast_funcs = {
 	sp.Gt: lambda spt: AST ('=', '>', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 
-	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
 	sp.Add: _spt2ast_add,
+	sp.Mul: _spt2ast_mul,
+	sp.Pow: _spt2ast_pow,
+
+	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
 	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Mul: _spt2ast_mul,
-	sp.Pow: _spt2ast_pow,
 	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_func,
 	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_func,
 	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_func,
 	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_func,
+	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
 
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,
 
 	sp.matrices.MatrixBase: lambda spt: AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) for row in range (spt.rows))) if not (spt.rows == spt.cols == 1) else spt2ast (spt [0]),
-	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
 }
 
 #...............................................................................................
