@@ -23,6 +23,9 @@ class AST_Unknown: # for displaying elements we do not know how to handle, only 
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
 
+def _trail_comma (obj):
+	return ',' if len (obj) == 1 else ''
+
 def set_precision (ast): # recurse through ast to set sympy float precision according to largest string of digits found
 	global _SYMPY_FLOAT_PRECISION
 
@@ -176,7 +179,7 @@ _ast2tex_funcs = {
 	'#': _ast2tex_num,
 	'@': lambda ast: str (ast.var) if ast.var else '{}',
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
-	',': lambda ast: ','.join (ast2tex (parm) for parm in ast.commas),
+	',': lambda ast: f'{",".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
 	'[': lambda ast: f'\\left[{",".join (ast2tex (b) for b in ast.brackets)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
@@ -319,7 +322,7 @@ _ast2simple_funcs = {
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.as_short_var_text (),
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: ','.join (ast2simple (parm) for parm in ast.commas),
+	',': lambda ast: f'{",".join (ast2simple (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
 	'[': lambda ast: f'[{",".join (ast2simple (b) for b in ast.brackets)}]',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
@@ -336,8 +339,8 @@ _ast2simple_funcs = {
 	'sum': _ast2simple_sum,
 	'diff': _ast2simple_diff,
 	'intg': _ast2simple_intg,
-	'vec': lambda ast: f'{{{",".join (ast2simple (e) for e in ast.vec)}{"," if len (ast.vec) == 1 else ""}}}',
-	'mat': lambda ast: '{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{"," if len (row) == 1 else ""}}}' for row in ast.mat) + f'{"," if len (ast.mat) == 1 else ""}}}',
+	'vec': lambda ast: f'{{{",".join (ast2simple (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
+	'mat': lambda ast: '{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}',
 	'???': lambda ast: 'undefined',
 }
 
@@ -406,7 +409,7 @@ _ast2py_funcs = {
 	'#': lambda ast: ast.num,
 	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.as_short_var_text ()).replace ('\\', '').replace ("'", '_prime'),
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: ','.join (ast2py (parm) for parm in ast.commas),
+	',': lambda ast: f'{",".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'[': lambda ast: f'[{",".join (ast2py (b) for b in ast.brackets)}]',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
