@@ -12,7 +12,7 @@ Limit (1/x, x, 0, dir='-')
 \sum_{n=0}^oo x^n / n!
 \sum_{n=1}**10 Sum (\sum_{l=1}^m l, (m, 1, n))
 Derivative (\int dx, x)
-d**6 / dxdy**2dz**3 x^3 y^3 z^3
+d**6 / dx dy**2 dz**3 x^3 y^3 z^3
 Integral (e^{-x^2}, (x, 0, \infty))
 \int_0^1 \int_0^x \int_0^y 1 dz dy dx
 \int_0^\infty e^{-st} dt
