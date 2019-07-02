@@ -316,8 +316,9 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
-	PY_ONLY    = {'abs'} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
-	PY_AND_TEX = set ('''
+	TRIGH       = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
+	PY_ONLY     = {'abs'} | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
+	PY_AND_TEX  = TRIGH | set ('''
 		arg
 		exp
 		ln
@@ -325,9 +326,11 @@ class AST_Func (AST):
 		min
 		'''.strip ().split ())
 
-	PY_ALL = PY_ONLY | PY_AND_TEX
+	TEX_ONLY    = {f'arc{f}' for f in TRIGH}
+	PY_ALL      = PY_ONLY | PY_AND_TEX
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
+	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_noninv = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
 	def _init (self, func, arg):
@@ -335,6 +338,9 @@ class AST_Func (AST):
 
 	def _is_trigh_func (self):
 		return AST_Func._rec_trigh.match (self.func)
+
+	def _is_trigh_func_inv (self):
+		return AST_Func._rec_trigh_inv.match (self.func)
 
 	def _is_trigh_func_noninv (self):
 		return AST_Func._rec_trigh_noninv.match (self.func)

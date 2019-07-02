@@ -440,11 +440,13 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 
 	return spt
 
+_ast2spt_func_builtins = {'max': max, 'min': min}
+
 def _ast2spt_func (ast):
 	kw   = {}
 	args = []
 	arg  = ast.arg.strip_paren ()
-	f    = getattr (sp, ast.func, __builtins__.get (ast.func)) ## DANGER! Searching __builtins__!!!
+	f    = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
 	if f is None:
 		raise NameError (f'name {ast.func!r} is not defined')
