@@ -92,7 +92,7 @@ def _ast2tex_mul (ast, ret_has = False):
 	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2tex_pow (ast):
-	b = ast2tex (ast.base)
+	b = _ast2tex_curly (ast.base) if ast.base.is_mat else ast2tex (ast.base)
 	p = _ast2tex_curly (ast.exp)
 
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
@@ -435,7 +435,7 @@ _ast2py_funcs = {
 def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)\left
 	spt = _ast2spt_funcs [ast.op] (ast)
 
-	if doit and spt.__class__ != sp.Piecewise and hasattr (spt, 'doit'):
+	if doit and spt.__class__ != sp.Piecewise and callable (getattr (spt, 'doit', None)):
 		spt = spt.doit ()
 
 	return spt
@@ -646,6 +646,8 @@ _spt2ast_funcs = {
 	sp.Add: _spt2ast_add,
 	sp.Mul: _spt2ast_mul,
 	sp.Pow: _spt2ast_pow,
+
+	sp.MatPow: lambda spt: spt2ast (spt.args [0] ** spt.args [1]),
 
 	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
 	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),

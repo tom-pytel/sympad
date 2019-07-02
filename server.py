@@ -108,6 +108,7 @@ class Handler (SimpleHTTPRequestHandler):
 				if os.environ.get ('SYMPAD_DEBUG'):
 					print ()
 					print ('spt:        ', repr (spt))
+					print ('spt type:   ', type (spt))
 					print ('sympy latex:', sp.latex (spt))
 					print ()
 

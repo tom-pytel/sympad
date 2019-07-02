@@ -141,6 +141,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\left[\\begin{matrix} 1 \\end{matrix}\\right]')), '\\begin{bmatrix} 1 \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}')), '\\begin{bmatrix} 1 & 2 \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}')), '\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}')
+		self.assertEqual (ast2tex (p ('{{0,1},{1,0}}**x')), '{\\begin{bmatrix} 0 & 1 \\\\ 1 & 0 \\end{bmatrix}}^x')
 
 	def test_ast2simple (self):
 		self.assertEqual (ast2simple (p ('1')), '1')
@@ -193,6 +194,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2simple (p ('\\left[\\begin{matrix} 1 \\end{matrix}\\right]')), '{{1,},}')
 		self.assertEqual (ast2simple (p ('\\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}')), '{{1,2},}')
 		self.assertEqual (ast2simple (p ('\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}')), '{{1,2},{3,4}}')
+		self.assertEqual (ast2simple (p ('{{0,1},{1,0}}**x')), '{{0,1},{1,0}}**x')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -245,6 +247,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\left[\\begin{matrix} 1 \\end{matrix}\\right]')), 'Matrix([[1]])')
 		self.assertEqual (ast2py (p ('\\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}')), 'Matrix([[1,2]])')
 		self.assertEqual (ast2py (p ('\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}')), 'Matrix([[1,2],[3,4]])')
+		self.assertEqual (ast2py (p ('{{0,1},{1,0}}**x')), 'Matrix([[0,1],[1,0]])**x')
 
 	# def test_ast2spt (self):
 	# 	self.assertEqual (ast2spt (p ('1')), r'')
@@ -349,6 +352,7 @@ d^3/dx^2dy x^2y**2z
 \\left[\\begin{matrix} 1 \\end{matrix}\\right]
 \\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}
 \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}
+{{0,1},{1,0}}**x
 """
 
 if __name__ == '__main__':

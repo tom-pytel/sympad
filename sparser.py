@@ -596,20 +596,36 @@ class Parser (lalr1.Parser):
 
 		if self.stack [idx] [1] == 'CURLYL':
 			if idx == -2:
-				if self.stack [-1] [-1].is_vec:
-					return self._insert_symbol (('COMMA', 'CURLYR'))
-				elif self.stack [-1] [-1].is_mat:
-					pass
-				else:
+				if self.stack [-1] [-1].is_vec or \
+						(self.stack [-1] [1] == 'expr' and self.stack [-2] [-1] == 'CURLYL' and self.stack [-3] [-1] == 'COMMA' and \
+						self.stack [-4] [-1].is_vec and self.stack [-5] [-1] == 'CURLYL'):
 					return self._insert_symbol (('COMMA', 'CURLYR'))
 
-			# elif idx == -4: # examine stack for matrix or two vectors started with curly
-			# 	if self.stack [-1] [-1].is_vec and self.stack [-2] [-1] == 'COMMA' and self.stack [-3] [-1].is_vec and \
-			# 			self.tokens [self.tokidx - 1] == 'CURLYR' and self.tokens [self.tokidx - 2] == 'COMMA' and \
-			# 			len (self.stack [-1] [-1].vec) < len (self.stack [-3] [-1].vec):
-			# 		del self.tokens [-3 : -1]
-			# 		self.tokidx -= 2
-			# 		return self._insert_symbol (('COMMA', 'expr') * (len (self.stack [-3] [-1].vec) - len (self.stack [-1] [-1].vec)))
+				else:
+					return self._insert_symbol ('CURLYR')
+
+			elif idx == -4: # examine stack for two vectors started with curly or vector and comma list of vectors
+				if (self.stack [-1] [-1].is_vec or self.stack [-1] [1] == 'expr') and self.stack [-2] [-1] == 'COMMA':
+					vlen = len (self.stack [-1] [-1].vec) if self.stack [-1] [-1].is_vec else 1
+					cols = None
+
+					if self.stack [-3] [-1].is_vec and self.tokens [self.tokidx - 1] == 'CURLYR' and vlen < len (self.stack [-3] [-1].vec):
+						cols = len (self.stack [-3] [-1].vec)
+
+					elif self.stack [-3] [-1].is_comma and not sum (not c.is_vec for c in self.stack [-3] [-1].commas) and \
+							not sum (len (c.vec) != len (self.stack [-3] [-1].commas [0].vec) for c in self.stack [-3] [-1].commas) and \
+							vlen < len (self.stack [-3] [-1].commas [0].vec):
+
+						cols = len (self.stack [-3] [-1].commas [0].vec)
+
+					if cols is not None:
+						vec               = self.stack [-1] [-1].vec if self.stack [-1] [-1].is_vec else (self.stack [-1] [-1],)
+						self.stack [-1]   = self.stack [-1] [:-1] + (AST ('vec', vec + (AST.VarNull,) * (cols - vlen)),)
+						self.autocomplete = []
+
+						self._mark_error ()
+
+						return True
 
 			return self._insert_symbol ('CURLYR')
 
@@ -716,5 +732,5 @@ class sparser: # for single script
 
 if __name__ == '__main__':
 	p = Parser ()
-	a = p.parse ('{{1,2,3},{1')
+	a = p.parse ('{{1,2,3},{4,5,6},{7')
 	print (a)
