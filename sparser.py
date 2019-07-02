@@ -1,4 +1,3 @@
-# TODO: autocomplete vectors, matrices show input
 # TODO: Change vars to internal short representation?
 # TODO: 1+1j complex number parsing?
 
@@ -322,7 +321,7 @@ class Parser (lalr1.Parser):
 	_SPECIAL     =  r'\\partial|\\pi|\\infty'
 	_CHAR        = fr'[a-zA-Z]'
 	_PYVAR       = '|'.join (reversed (sorted (AST.Var.PY)))
-	_TEXTVAR     =  r'\\text\s*\{\s*(' + _PYVAR + r')\s*\}'
+	_TEXTVAR     = fr'\\text\s*\{{\s*({_PYVAR})\s*\}}'
 	_ONEVAR      = fr'{_CHAR}|{_GREEK}'
 	_DSONEVARSP  = fr'(?:(\d)|({_PYVAR})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
 	_STR         =  r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'

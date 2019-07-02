@@ -856,6 +856,7 @@ det({{sin x, -cos x}, {cos x, sin x}})<br>
 expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 1, 9)<br>
+<i>{{0,1},{1,0}}**x</i><br>
 </p>
 
 <h3>Usage</h3>
@@ -2030,7 +2031,7 @@ class Parser (lalr1.Parser):
 	_SPECIAL     =  r'\\partial|\\pi|\\infty'
 	_CHAR        = fr'[a-zA-Z]'
 	_PYVAR       = '|'.join (reversed (sorted (AST.Var.PY)))
-	_TEXTVAR     =  r'\\text\s*\{\s*(' + _PYVAR + r')\s*\}'
+	_TEXTVAR     = fr'\\text\s*\{{\s*({_PYVAR})\s*\}}'
 	_ONEVAR      = fr'{_CHAR}|{_GREEK}'
 	_DSONEVARSP  = fr'(?:(\d)|({_PYVAR})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
 	_STR         =  r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
