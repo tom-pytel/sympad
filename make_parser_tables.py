@@ -47,7 +47,7 @@ def parse_rules ():
 
 		assert int (num) == len (rules)
 
-		rules.append ((prod, tuple (subs.split ())))
+		rules.append ((prod, tuple (subs.split ()) if subs != '<empty>\n' else ()))
 
 	for _ in range (2):
 		skipspace ()
@@ -131,7 +131,7 @@ def parse_rules ():
 	symbols = lterms + list (reversed (lnterms))
 	rules   = [(-1 - lnterms.index (r [0]), tuple ((-1 - lnterms.index (s)) if s in nterms else lterms.index (s) \
 			for s in r [1])) for r in rules [1:]]
-	rules   = [r if len (r [1]) > 1 else (r [0], r [1] [0]) for r in rules]
+	rules   = [r if len (r [1]) != 1 else (r [0], r [1] [0]) for r in rules]
 	strules = [sr if len (sr) > 1 else sr [0] for sr in strules]
 	terms   = [(lterms.index (s),) + t if t [2] else (lterms.index (s),) + t [:2] for s, t in terms.items ()]
 	nterms  = [(-1 - lnterms.index (s),) + t for s, t in nterms.items ()]
@@ -159,7 +159,7 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 			pc_funcs = {} # {'prod': [('name', func, ('parm', ...)), ...], ...} - 'self' stripped from parms
 
 			for name, obj in pc_obj.__dict__.items ():
-				if name [0] != '_' and type (obj) is types.FunctionType and obj.__code__.co_argcount >= 2:
+				if name [0] != '_' and type (obj) is types.FunctionType and obj.__code__.co_argcount >= 1: # 2: allow empty productions
 					name_sym = Parser._rec_SYMBOL_NUMTAIL.match (name).group (1)
 
 					pc_funcs.setdefault (name_sym, []).append ((name, obj, obj.__code__.co_varnames [1 : obj.__code__.co_argcount]))

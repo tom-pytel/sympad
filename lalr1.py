@@ -67,7 +67,7 @@ class Parser:
 		for name in dir (self):
 			obj = getattr (self, name)
 
-			if name [0] != '_' and type (obj) is types.MethodType and obj.__code__.co_argcount >= 2:
+			if name [0] != '_' and type (obj) is types.MethodType and obj.__code__.co_argcount >= 1: # 2: allow empty productions
 				m = Parser._rec_SYMBOL_NUMTAIL.match (name)
 
 				if m:
@@ -188,7 +188,7 @@ class Parser:
 				prod  = rule [0]
 
 				try:
-					reduct = rfuncs [-act] (*(t [-1] for t in stack [rnlen:]))
+					reduct = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
 
 				except SyntaxError as e:
 					rederr = e or True
@@ -198,7 +198,8 @@ class Parser:
 					rederr = True
 					reduct = e.reduct
 
-				del stack [rnlen:]
+				if rnlen:
+					del stack [rnlen:]
 
 				stidx = nterms [stack [-1] [0]] [prod]
 
