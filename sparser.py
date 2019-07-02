@@ -1,6 +1,7 @@
 # TODO: Merge trigh into func.
 # TODO: Change vars to internal short representation?
 # TODO: 1+1j complex number parsing?
+# TODO: empty sequences
 
 # Builds expression tree from text, nodes are nested AST tuples.
 
@@ -143,7 +144,7 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 
 	elif args [iparm].is_pow:
 		if args [iparm].base.is_paren:
-			return AST ('^', AST (*(args [:iparm] + (args [iparm].base.paren,) + args [iparm + 1:])), args [iparm].exp)
+			return AST ('^', AST (*(args [:iparm] + (args [iparm].base,) + args [iparm + 1:])), args [iparm].exp)
 
 	return AST (*args)
 
@@ -153,7 +154,7 @@ def _expr_func_remap (remap_func, ast): # rearrange ast tree for a given functio
 
 	return AST (expr.op, ast, *expr [2:]) if not expr.is_paren else ast
 
-_remap_func_lim_dirs = {'+': '+', '-': '-', '+-': None}
+_remap_func_lim_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 def remap_func_lim (ast): # remap function 'Limit' to native ast representation for pretty rendering
 	if ast.is_null_var:
@@ -171,9 +172,9 @@ def remap_func_lim (ast): # remap function 'Limit' to native ast representation 
 	elif l == 3:
 		return AST ('lim', commas [0], commas [1], commas [2], '+')
 	elif commas [3].is_str:
-		return AST ('lim', commas [0], commas [1], commas [2], _remap_func_lim_dirs.get (commas [3].str_, '+'))
+		return AST ('lim', *(commas [:3] + _remap_func_lim_dirs.get (commas [3].str_, ('+',))))
 	elif commas [3].is_eq_eq and commas [3].lhs.as_identifier () == 'dir' and commas [3].rhs.is_str:
-		return AST ('lim', commas [0], commas [1], commas [2], _remap_func_lim_dirs.get (commas [3].rhs.str_, '+'))
+		return AST ('lim', *(commas [:3] + _remap_func_lim_dirs.get (commas [3].rhs.str_, ('+',))))
 	else:
 		ast = AST ('lim', commas [0], commas [1], commas [2])
 
@@ -333,9 +334,9 @@ class Parser (lalr1.Parser):
 	TOKENS      = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
 		('TRIGH',         r'\\?(?:(a)(?:rc)?)?((?:sin|cos|tan|csc|sec|cot)h?)|\\operatorname\s*\{(sech|csch)\s*\}'),
-		('FUNC',         fr'({_FUNCPYONLY})|\\?({_FUNCPYTEX})|\$({_CHAR}\w*)|\\operatorname\s*\{{\s*({_CHAR}(?:\w|\\_)*)\s*\}}'),
 		('SQRT',          r'\\?sqrt'),
 		('LOG',           r'\\?log'),
+		('FUNC',         fr'({_FUNCPYONLY})|\\?({_FUNCPYTEX})|\$({_CHAR}\w*)|\\operatorname\s*\{{\s*({_CHAR}(?:\w|\\_)*)\s*\}}'),
 		('LIM',           r'\\lim'),
 		('SUM',           r'\\sum'),
 		('INT',           r'\\int(?:\s*\\limits)?'),
@@ -643,9 +644,6 @@ class Parser (lalr1.Parser):
 			irule, pos = self.strules [self.stidx] [0]
 
 		rule = self.rules [irule]
-
-		# if rule [0] == 'expr_comma' and pos == 1: # force (expr . COMMA) to (expr .)
-		# 	rule = self.rules [self.strules [self.stidx] [1] [0]]
 
 		if pos >= len (rule [1]): # special error raised by rule reduction function or end of comma expression
 			if rule [0] == 'expr_comma':

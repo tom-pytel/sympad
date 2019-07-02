@@ -158,7 +158,7 @@ def _ast2tex_diff (ast):
 		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{"".join (ast2tex (n) for n in ast.dvs)}}}{_ast2tex_paren (ast.diff)}'
 
 	else:
-		s = ''.join (_rec_diff_var_single_start.sub ('\\partial ', ast2tex (n)) for n in ast.dvs)
+		s = ''.join (_rec_diff_var_single_start.sub (r'\\partial ', ast2tex (n)) for n in ast.dvs)
 
 		return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{_ast2tex_paren (ast.diff)}'
 
@@ -179,9 +179,9 @@ _ast2tex_funcs = {
 	'#': _ast2tex_num,
 	'@': lambda ast: str (ast.var) if ast.var else '{}',
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
-	',': lambda ast: f'{",".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
-	'[': lambda ast: f'\\left[{",".join (ast2tex (b) for b in ast.brackets)} \\right]',
+	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.brackets)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2tex (ast.minus)}',
 	'!': lambda ast: f'{_ast2tex_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^'} or ast.fact.is_neg_num) else f'{ast2tex (ast.fact)}!',
@@ -322,9 +322,9 @@ _ast2simple_funcs = {
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.as_short_var_text (),
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{",".join (ast2simple (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (ast2simple (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
-	'[': lambda ast: f'[{",".join (ast2simple (b) for b in ast.brackets)}]',
+	'[': lambda ast: f'[{", ".join (ast2simple (b) for b in ast.brackets)}]',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
 	'-': lambda ast: f'-{_ast2simple_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2simple (ast.minus)}',
 	'!': lambda ast: f'{_ast2simple_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^'} or ast.fact.is_neg_num) else f'{ast2simple (ast.fact)}!',
@@ -409,9 +409,9 @@ _ast2py_funcs = {
 	'#': lambda ast: ast.num,
 	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.as_short_var_text ()).replace ('\\', '').replace ("'", '_prime'),
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{",".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2py (ast.paren)})',
-	'[': lambda ast: f'[{",".join (ast2py (b) for b in ast.brackets)}]',
+	'[': lambda ast: f'[{", ".join (ast2py (b) for b in ast.brackets)}]',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2py (ast.minus)}',
 	'!': lambda ast: f'factorial({ast2py (ast.fact)})',
