@@ -3162,6 +3162,7 @@ class sym: # for single script
 #!/usr/bin/env python
 # python 3.6+
 
+# TODO: Remove slow includes from first run.
 # TODO: Exception prevents restart on file date change?
 
 import getopt
@@ -3179,8 +3180,8 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-import sympy as sp
-
+if 'SYMPAD_RUNNED_AS_WATCHED' in os.environ:
+	import sympy as sp
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 

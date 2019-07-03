@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # python 3.6+
 
+# TODO: Remove slow includes from first run.
 # TODO: Exception prevents restart on file date change?
 
 import getopt
@@ -18,12 +19,13 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-import sympy as sp
+if 'SYMPAD_RUNNED_AS_WATCHED' in os.environ: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
+	import sympy as sp
+	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
+	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
+	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
-from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
-import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
-import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
+	_last_ast = AST.Zero # last evaluated expression for _ usage
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 
@@ -33,8 +35,6 @@ _STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/
 _FILES                    = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 #...............................................................................................
-_last_ast = AST.Zero # last evaluated expression for _ usage
-
 def _ast_replace (ast, src, dst):
 	return \
 			ast if not isinstance (ast, AST) else \
