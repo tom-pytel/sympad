@@ -180,7 +180,7 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	PY         = {'None', 'True', 'False', 'undefined'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
+	PY         = {'None', 'True', 'False'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
 	LONG2SHORT = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo'}
 	SHORT2LONG = {**dict ((v, f'\\text{{{v}}}') for v in PY), 'pi': '\\pi', 'oo': '\\infty'}
 
@@ -317,7 +317,7 @@ class AST_Func (AST):
 	op, is_func = 'func', True
 
 	TRIGH       = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
-	PY_ONLY     = {'abs'} | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
+	PY_ONLY     = {'abs', 'pow'} | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
 	PY_AND_TEX  = TRIGH | set ('''
 		arg
 		exp
@@ -413,15 +413,15 @@ _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
 for cls in _AST_CLS2OP:
 	setattr (AST, cls.__name__ [4:], cls)
 
-AST.Zero      = AST ('#', '0')
-AST.One       = AST ('#', '1')
-AST.NegOne    = AST ('#', '-1')
-AST.VarNull   = AST ('@', '')
-AST.I         = AST ('@', 'i')
-AST.E         = AST ('@', 'e')
-AST.Pi        = AST ('@', '\\pi')
-AST.Infty     = AST ('@', '\\infty')
-AST.None_     = AST ('@', '\\text{None}')
-AST.True_     = AST ('@', '\\text{True}')
-AST.False_    = AST ('@', '\\text{False}')
-AST.Undefined = AST ('@', '\\text{undefined}')
+AST.Zero    = AST ('#', '0')
+AST.One     = AST ('#', '1')
+AST.NegOne  = AST ('#', '-1')
+AST.VarNull = AST ('@', '')
+AST.I       = AST ('@', 'i')
+AST.E       = AST ('@', 'e')
+AST.Pi      = AST ('@', '\\pi')
+AST.Infty   = AST ('@', '\\infty')
+AST.None_   = AST ('@', '\\text{None}')
+AST.True_   = AST ('@', '\\text{True}')
+AST.False_  = AST ('@', '\\text{False}')
+AST.NaN     = AST ('@', '\\text{nan}')

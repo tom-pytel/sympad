@@ -1,3 +1,8 @@
+# TODO: how to handle empty {}
+# TODO: remap Matrix
+# TODO: remap \begin{matrix} \end{matrix}
+
+# TODO: Change '$' to be more generic function OR variable name escape.
 # TODO: Change vars to internal short representation?
 # TODO: 1+1j complex number parsing?
 
@@ -146,15 +151,15 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 
 	return AST (*args)
 
-def _expr_func_remap (remap_func, ast): # rearrange ast tree for a given function remapping like 'Derivative' or 'Limit'
+def _expr_func_remap (_remap_func, ast): # rearrange ast tree for a given function remapping like 'Derivative' or 'Limit'
 	expr = _expr_func (1, '(', ast)
-	ast  = remap_func (expr.paren if expr.is_paren else expr [1].paren)
+	ast  = _remap_func (expr.paren if expr.is_paren else expr [1].paren)
 
 	return AST (expr.op, ast, *expr [2:]) if not expr.is_paren else ast
 
 _remap_func_lim_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
-def remap_func_lim (ast): # remap function 'Limit' to native ast representation for pretty rendering
+def _remap_func_lim (ast): # remap function 'Limit' to native ast representation for pretty rendering
 	if ast.is_null_var:
 		return AST ('lim', ast, AST.VarNull, AST.VarNull)
 	elif not ast.is_comma:
@@ -181,7 +186,7 @@ def remap_func_lim (ast): # remap function 'Limit' to native ast representation 
 
 	raise lalr1.Incomplete (ast)
 
-def remap_func_sum (ast): # remap function 'Sum' to native ast representation for pretty rendering
+def _remap_func_sum (ast): # remap function 'Sum' to native ast representation for pretty rendering
 	if ast.is_null_var:
 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
 	elif not ast.is_comma:
@@ -210,7 +215,7 @@ def remap_func_sum (ast): # remap function 'Sum' to native ast representation fo
 
 	raise lalr1.Incomplete (ast)
 
-def remap_func_diff (ast): # remap function 'Derivative' to native ast representation for pretty rendering
+def _remap_func_diff (ast): # remap function 'Derivative' to native ast representation for pretty rendering
 	if ast.is_null_var:
 		return AST ('diff', ast, (AST.VarNull,))
 	elif not ast.is_comma:
@@ -231,7 +236,7 @@ def remap_func_diff (ast): # remap function 'Derivative' to native ast represent
 
 	return AST ('diff', ast.commas [0], AST (*ds))
 
-def remap_func_intg (ast): # remap function 'Integral' to native ast representation for pretty rendering
+def _remap_func_intg (ast): # remap function 'Integral' to native ast representation for pretty rendering
 	if not ast.is_comma:
 		return AST ('intg', ast, ast.as_differential () if ast.is_var else AST.VarNull)
 	elif len (ast.commas) == 1:
@@ -249,9 +254,19 @@ def remap_func_intg (ast): # remap function 'Integral' to native ast representat
 
 	raise lalr1.Incomplete (ast)
 
-def _expr_curly (ast):
+def _remap_func_pow (ast):
+	if not ast.is_comma:
+		return AST ('^', ast, AST.VarNull)
+	elif len (ast.commas) == 2:
+		return AST ('^', ast.commas [0], ast.commas [1])
+
+	raise SyntaxError ('too many parameters')
+
+def _expr_curly (ast): # convert curly expression to vector or matrix if appropriate
 	if ast.op != ',':
 		return ast
+	elif not ast.commas: # empty {}?
+		return AST.None_
 
 	c = sum (bool (c.is_vec) for c in ast.commas)
 
@@ -385,13 +400,15 @@ class Parser (lalr1.Parser):
 	_FUNC_AST_REMAP = {
 		'Abs'       : lambda expr: _expr_func (1, '|', expr),
 		'abs'       : lambda expr: _expr_func (1, '|', expr),
-		'Derivative': lambda expr: _expr_func_remap (remap_func_diff, expr),
+		'Derivative': lambda expr: _expr_func_remap (_remap_func_diff, expr),
 		'exp'       : lambda expr: _expr_func (2, '^', ('@', 'e'), expr),
 		'factorial' : lambda expr: _expr_func (1, '!', expr),
-		'Integral'  : lambda expr: _expr_func_remap (remap_func_intg, expr),
-		'Limit'     : lambda expr: _expr_func_remap (remap_func_lim, expr),
+		'Integral'  : lambda expr: _expr_func_remap (_remap_func_intg, expr),
+		'Limit'     : lambda expr: _expr_func_remap (_remap_func_lim, expr),
 		'ln'        : lambda expr: _expr_func (1, 'log', expr),
-		'Sum'       : lambda expr: _expr_func_remap (remap_func_sum, expr),
+		'pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
+		'Pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
+		'Sum'       : lambda expr: _expr_func_remap (_remap_func_sum, expr),
 	}
 
 	def expr_commas_1   (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
@@ -654,8 +671,7 @@ class Parser (lalr1.Parser):
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
-		expr_vars  = expr_vars - {'_', 'e', 'i'} - set (AST.Var.LONG2SHORT)
-		expr_vars -= set (var [1:] for var in expr_diffs)
+		expr_vars = expr_vars - {'_', 'e', 'i'} - set (AST.Var.LONG2SHORT) - set (var [1:] for var in expr_diffs)
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
@@ -729,7 +745,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('{{1,2,3},{4,5,6},{7')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('{{1,2,3},{4,5,6},{7')
+# 	print (a)

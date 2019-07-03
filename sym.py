@@ -341,7 +341,7 @@ _ast2simple_funcs = {
 	'intg': _ast2simple_intg,
 	'vec': lambda ast: f'{{{",".join (ast2simple (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: '{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}',
-	'???': lambda ast: 'undefined',
+	'???': lambda ast: 'nan',
 }
 
 #...............................................................................................
@@ -440,7 +440,10 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 
 	return spt
 
-_ast2spt_func_builtins = {'max': max, 'min': min}
+_ast2spt_func_builtins_NOALLOW = { 'eval', 'exec', 'globals', 'locals', 'vars', 'hasattr', 'getattr', 'setattr', 'delattr',
+		'copyright', 'credits', 'exit', 'help', 'input', 'license', 'open', 'quit', '__import__'}
+_ast2spt_func_builtins         = dict (no for no in filter ( \
+		lambda no: callable (no [1]) and no [0] [0].islower () and no [0] not in _ast2spt_func_builtins_NOALLOW, __builtins__.items ()))
 
 def _ast2spt_func (ast):
 	kw   = {}
@@ -461,7 +464,7 @@ def _ast2spt_func (ast):
 
 		args.append (ast2spt (arg))
 
-	return f (*args, **kw) if len (args) > 1 else f (args [0], **kw)
+	return f (*args, **kw) if len (args) != 1 else f (args [0], **kw)
 
 def _ast2spt_diff (ast):
 	args = sum ((
@@ -495,14 +498,13 @@ _ast2spt_eq = {
 }
 
 _ast2spt_consts = {
-	'e'                : sp.E,
-	'i'                : sp.I,
-	'\\pi'             : sp.pi,
-	'\\infty'          : sp.oo,
-	'\\text{None}'     : None,
-	'\\text{True}'     : sp.boolalg.true,
-	'\\text{False}'    : sp.boolalg.false,
-	'\\text{undefined}': sp.nan,
+	'e'            : sp.E,
+	'i'            : sp.I,
+	'\\pi'         : sp.pi,
+	'\\infty'      : sp.oo,
+	'\\text{None}' : None,
+	'\\text{True}' : sp.boolalg.true,
+	'\\text{False}': sp.boolalg.false,
 }
 
 _ast2spt_funcs = {
@@ -621,7 +623,7 @@ _spt2ast_funcs = {
 	sp.Tuple: lambda spt: spt2ast (spt.args),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
 
-	sp.numbers.NaN: lambda spt: AST.Undefined,
+	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Integer: _spt2ast_num,
 	sp.Float: _spt2ast_num,
 	sp.Rational: lambda spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
