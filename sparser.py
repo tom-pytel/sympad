@@ -606,20 +606,25 @@ class Parser (lalr1.Parser):
 
 			tokidx += 1
 
-		return True
+		return True # for convenience
 
 	def _parse_autocomplete_expr_comma (self, rule): # also deals with curly vectors and matrices
 		idx = -1 -len (rule [1])
 
 		if self.stack [idx] [1] == 'CURLYL':
 			if idx == -2:
-				if self.stack [-1] [-1].is_vec or \
+				if self.stack [-1] [-1].is_vec or self.stack [-3] [-1] == 'CURLYL' or \
 						(self.stack [-1] [1] == 'expr' and self.stack [-2] [-1] == 'CURLYL' and self.stack [-3] [-1] == 'COMMA' and \
 						self.stack [-4] [-1].is_vec and self.stack [-5] [-1] == 'CURLYL'):
 					return self._insert_symbol (('COMMA', 'CURLYR'))
-
 				else:
 					return self._insert_symbol ('CURLYR')
+
+			elif idx == -3:
+				if self.stack [-2] [-1].is_comma:
+					self._mark_error ()
+
+					return False
 
 			elif idx == -4: # examine stack for two vectors started with curly or vector and comma list of vectors
 				if (self.stack [-1] [-1].is_vec or self.stack [-1] [1] == 'expr') and self.stack [-2] [-1] == 'COMMA':
@@ -706,10 +711,9 @@ class Parser (lalr1.Parser):
 		rule = self.rules [irule]
 
 		if pos >= len (rule [1]): # special error raised by rule reduction function or end of comma expression
-			if rule [0] == 'expr_comma':
+			if rule [0] in {'expr_comma', 'expr_commas'}:
 				return self._parse_autocomplete_expr_comma (rule)
-
-			if rule [0] == 'expr_int':
+			elif rule [0] == 'expr_int':
 				return self._parse_autocomplete_expr_int ()
 
 			return False
@@ -746,7 +750,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__':
-# 	p = Parser ()
-# 	a = p.parse ('{{1,2,3},{4,5,6},{7')
-# 	print (a)
+if __name__ == '__main__':
+	p = Parser ()
+	a = p.parse ('Matrix ([[1')
+	print (a)

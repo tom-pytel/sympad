@@ -1,7 +1,7 @@
+// TODO: Change how left/right arrows interact with autocomplete.
 // TODO: Warning messages on evaluate when SymPy object not understood?
 // TODO: Move last evaluated expression '_' substitution here from the server side?
 // TODO: Arrow keys in Edge?
-// TODO: Change how error, auto and good text are displayed?
 
 var URL              = '/';
 var MJQueue          = null;

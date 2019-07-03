@@ -1,3 +1,5 @@
+# TODO: add State class with member names for easier to understand code
+
 import re
 import types
 

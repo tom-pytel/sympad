@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Remove slow includes from first run.
 # TODO: Exception prevents restart on file date change?
 
 import getopt
@@ -190,7 +189,7 @@ if __name__ == '__main__':
 		if e.errno != 98:
 			raise
 
-		print (f'Port {port} seems to be in use, try specifying different address and/or port as a command line parameter, e.g. localhost:8001')
+		print (f'Port {port} seems to be in use, try specifying different port as a command line parameter, e.g. localhost:8001')
 
 	except KeyboardInterrupt:
 		sys.exit (0)

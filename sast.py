@@ -66,7 +66,7 @@ class AST (tuple):
 
 		return self
 
-	def __getattr__ (self, name): # calculate value for nonexistent self.name by calling self._name ()
+	def __getattr__ (self, name): # calculate value for nonexistent self.name by calling self._name () and store
 		func                 = getattr (self, f'_{name}') if name [0] != '_' else None
 		val                  = func and func ()
 		self.__dict__ [name] = val
@@ -86,7 +86,6 @@ class AST (tuple):
 			return \
 					AST ('-', self)            if not self.is_pos_num else \
 					AST ('#', f'-{self.num}')
-
 		else:
 			return \
 					self.minus                 if self.is_minus else \
@@ -327,8 +326,8 @@ class AST_Func (AST):
 		min
 		'''.strip ().split ())
 
-	TEX_ONLY    = {f'arc{f}' for f in TRIGH}
 	PY_ALL      = PY_ONLY | PY_AND_TEX
+	TEX_ONLY    = {f'arc{f}' for f in TRIGH}
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -381,6 +380,12 @@ class AST_Mat (AST):
 
 	def _init (self, mat):
 		self.mat = mat
+
+	# def _rows (self):
+	# 	return len (self.mat)
+
+	# def _cols (self):
+	# 	return len (self.mat [0]) if self.mat else 0
 
 #...............................................................................................
 _AST_OP2CLS = {
