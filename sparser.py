@@ -1,4 +1,3 @@
-# TODO: how to handle empty {}
 # TODO: remap Matrix
 # TODO: remap \begin{matrix} \end{matrix}
 
@@ -9,7 +8,6 @@
 # Builds expression tree from text, nodes are nested AST tuples.
 
 # FUTURE: verify vars in expr func remaps
-# FUTURE: vectors and matrices, Python long variable names, Python '.' members, assumptions / hints, stateful variables, piecewise expressions, plots
 
 import ast as py_ast
 from collections import OrderedDict
@@ -387,7 +385,7 @@ class Parser (lalr1.Parser):
 		('PLUS',          r'\+'),
 		('MINUS',         r'-'),
 		('STAR',          r'\*'),
-		('INEQ',          r'==|!=|\\neq?|<=|\\le|<|>=|\\ge|>'),
+		('INEQ',          r'==|!=|\\neq?|<=|\\le|<|\\lt|>=|\\ge|>|\\gt'),
 		('EQ',            r'='),
 		('DIVIDE',        r'/'),
 		('EXCL',          r'!'),
@@ -401,10 +399,13 @@ class Parser (lalr1.Parser):
 		'Abs'       : lambda expr: _expr_func (1, '|', expr),
 		'abs'       : lambda expr: _expr_func (1, '|', expr),
 		'Derivative': lambda expr: _expr_func_remap (_remap_func_diff, expr),
+		'diff'      : lambda expr: _expr_func_remap (_remap_func_diff, expr),
 		'exp'       : lambda expr: _expr_func (2, '^', ('@', 'e'), expr),
 		'factorial' : lambda expr: _expr_func (1, '!', expr),
 		'Integral'  : lambda expr: _expr_func_remap (_remap_func_intg, expr),
+		'integrate' : lambda expr: _expr_func_remap (_remap_func_intg, expr),
 		'Limit'     : lambda expr: _expr_func_remap (_remap_func_lim, expr),
+		'limit'     : lambda expr: _expr_func_remap (_remap_func_lim, expr),
 		'ln'        : lambda expr: _expr_func (1, 'log', expr),
 		'pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
 		'Pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),

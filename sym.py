@@ -440,10 +440,12 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 
 	return spt
 
-_ast2spt_func_builtins_NOALLOW = { 'eval', 'exec', 'globals', 'locals', 'vars', 'hasattr', 'getattr', 'setattr', 'delattr',
-		'copyright', 'credits', 'exit', 'help', 'input', 'license', 'open', 'quit', '__import__'}
-_ast2spt_func_builtins         = dict (no for no in filter ( \
-		lambda no: callable (no [1]) and no [0] [0].islower () and no [0] not in _ast2spt_func_builtins_NOALLOW, __builtins__.items ()))
+# Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
+_ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'compile', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
+		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool', 'memoryview',
+		'bytearray', 'bytes', 'classmethod', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
+		'reversed', 'set', 'slice', 'staticmethod', 'str', 'super', 'tuple', 'type', 'zip']
+_ast2spt_func_builtins         = dict (no for no in filter (lambda no: no [1], ((n, __builtins__.get (n)) for n in _ast2spt_func_builtins_names)))
 
 def _ast2spt_func (ast):
 	kw   = {}

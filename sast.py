@@ -316,8 +316,9 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
+	BUILTINS    = {'abs', 'pow', 'sum'}
 	TRIGH       = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
-	PY_ONLY     = {'abs', 'pow'} | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
+	PY_ONLY     = BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
 	PY_AND_TEX  = TRIGH | set ('''
 		arg
 		exp
