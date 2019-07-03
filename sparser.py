@@ -652,8 +652,8 @@ class Parser (lalr1.Parser):
 			return self._insert_symbol ('PARENR')
 		elif self.stack [idx] [1] == 'BRACKETL':
 			return self._insert_symbol ('BRACKETR')
-		else:
-			return False
+
+		return False
 
 	def _parse_autocomplete_expr_int (self):
 		s               = self.stack [-1]

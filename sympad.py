@@ -1730,8 +1730,7 @@ AST.Infty   = AST ('@', '\\infty')
 AST.None_   = AST ('@', '\\text{None}')
 AST.True_   = AST ('@', '\\text{True}')
 AST.False_  = AST ('@', '\\text{False}')
-AST.NaN     = AST ('@', '\\text{nan}')# TODO: how to handle empty {}
-# TODO: remap Matrix
+AST.NaN     = AST ('@', '\\text{nan}')# TODO: remap Matrix
 # TODO: remap \begin{matrix} \end{matrix}
 
 # TODO: Change '$' to be more generic function OR variable name escape.
@@ -1741,7 +1740,6 @@ AST.NaN     = AST ('@', '\\text{nan}')# TODO: how to handle empty {}
 # Builds expression tree from text, nodes are nested AST tuples.
 
 # FUTURE: verify vars in expr func remaps
-# FUTURE: vectors and matrices, Python long variable names, Python '.' members, assumptions / hints, stateful variables, piecewise expressions, plots
 
 import ast as py_ast
 from collections import OrderedDict
@@ -2056,7 +2054,7 @@ class Parser (lalr1.Parser):
 			b'Nv6lCdmWHIPpEvMgr4Ztb5eLwHPOcL0/IT4cgHjq/677J7R3V6Cd+qcp8td7ssAF9g7dVCrP22fKCbP4hchWUq7PcPXuhAHTTNFmxrkAr3Zwc50wWclUIvhXx8G/aW49gH895L98lwcEgd+QmhWHjD38Mg6bX8MxfvtGLSPT9O/VkHdolPJK78YI2+Tmm8ME' \
 			b'i0W9HSSznk0XgbTNcWgbjzK3HMC/nde2HQRRKtmsUIZqNadSbKUpgk+fvk7fHnithDK8StqW0XYTj6sDROdOQHSuOaYAubUnILe2OaYAufkTkJtvjilAbuH45cZ2oSMKkFu3gNx2mIIsID3TXDOwhXSYRFxer1YYRkbT+Vudzl1JnK7ZHvDKttlsuwQVzaF7' \
 			b'BIh1tEo4erGyvfd4A6R62LXHlaRqmiMOkOpojXH8UrXNEQdIdYeVy7FJtW2OOECqOyxqjtj6wF6XEwgQdRu9xWxcJ0lFtfby2zckcwPXQRQXe5Etv9mJvam6PFaEYmFzMdeMAsrw21JUbFu0EkmXS4Toe+wdi210t/ALLSyvSfhNZZ5d2/xjHAqtF8ABv1+g' \
-			b'1A5qRbYFazlK7Rt57XesTk/mNE0RkNGMMrJicGbblEE5qDEfdrQ+O+DFCccOOI+5LZ8zU148YJ6dauf/D2QS+zM=' 
+			b'1A5qRbYFazlK7Rt57XesTk/mNE0RkNGMMrJicGbblEE5qDEfdrQ+O+DFCccOOI+5LZ8zU148YJ6dauf/D2QS+zM='
 
 	_PARSER_TOP  = 'expr'
 
@@ -2384,8 +2382,8 @@ class Parser (lalr1.Parser):
 			return self._insert_symbol ('PARENR')
 		elif self.stack [idx] [1] == 'BRACKETL':
 			return self._insert_symbol ('BRACKETR')
-		else:
-			return False
+
+		return False
 
 	def _parse_autocomplete_expr_int (self):
 		s               = self.stack [-1]
@@ -2924,11 +2922,12 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	return spt
 
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
+_builtins_dict = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
 _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'compile', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
 		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool', 'memoryview',
 		'bytearray', 'bytes', 'classmethod', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
 		'reversed', 'set', 'slice', 'staticmethod', 'str', 'super', 'tuple', 'type', 'zip']
-_ast2spt_func_builtins         = dict (no for no in filter (lambda no: no [1], ((n, __builtins__.get (n)) for n in _ast2spt_func_builtins_names)))
+_ast2spt_func_builtins         = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
 def _ast2spt_func (ast):
 	kw   = {}
