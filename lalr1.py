@@ -1,12 +1,10 @@
-# TODO: add State class with member names for easier to understand code
-
 import re
 import types
 
 #...............................................................................................
 class Incomplete (Exception):
-	def __init__ (self, reduct):
-		self.reduct = reduct
+	def __init__ (self, red):
+		self.red = red
 
 class Token (str):
 	def __new__ (cls, str_, text = None, pos = None, grps = None):
@@ -16,6 +14,16 @@ class Token (str):
 		self.grp  = () if not grps else grps
 
 		return self
+
+class State (tuple): # easier on the eyes
+	def __new__ (cls, *args):
+		return tuple.__new__ (cls, args)
+
+	def __init__ (self, *args): # idx = state index, sym = symbol (TOKEN or 'expression'), red = reduction (if present)
+		if len (self) == 2:
+			self.idx, self.sym = self
+		else: # must be 3
+			self.idx, self.sym, self.red = self
 
 class Parser:
 	_PARSER_TABLES = '' # placeholders so pylint doesn't have a fit
@@ -122,7 +130,7 @@ class Parser:
 	def parse_error (self):
 		return False # True if state fixed to continue parsing, False to fail
 
-	def parse_success (self, reduct):
+	def parse_success (self, red):
 		'NO PARSE_SUCCESS'
 		return None # True to contunue checking conflict backtracks, False to stop and return
 
@@ -134,7 +142,7 @@ class Parser:
 		tokens = self.tokenize (src)
 		tokidx = 0
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
-		stack  = [(0, None, None)] # [(stidx, symbol, reduction) or (stidx, token), ...]
+		stack  = [State (0, None, None)] # [(stidx, symbol, reduction) or (stidx, token), ...]
 		stidx  = 0
 		rederr = None # reduction function raised SyntaxError
 
@@ -151,9 +159,9 @@ class Parser:
 
 				if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1] [1] == rules [0] [1]:
 					if not has_parse_success:
-						return stack [1] [2]
+						return stack [1].red
 
-					if not self.parse_success (stack [1] [2]) or not cstack:
+					if not self.parse_success (stack [1].red) or not cstack:
 						return None
 
 				elif self.parse_error ():
@@ -182,7 +190,7 @@ class Parser:
 				tokidx += 1
 				stidx   = act
 
-				stack.append ((stidx, tok))
+				stack.append (State (stidx, tok))
 
 			else:
 				rule  = rules [-act]
@@ -190,7 +198,7 @@ class Parser:
 				prod  = rule [0]
 
 				try:
-					reduct = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
+					red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
 
 				except SyntaxError as e:
 					rederr = e or True
@@ -198,16 +206,17 @@ class Parser:
 
 				except Incomplete as e:
 					rederr = True
-					reduct = e.reduct
+					red    = e.red
 
 				if rnlen:
 					del stack [rnlen:]
 
-				stidx = nterms [stack [-1] [0]] [prod]
+				stidx = nterms [stack [-1].idx] [prod]
 
-				stack.append ((stidx, prod, reduct))
+				stack.append (State (stidx, prod, red))
 
 class lalr1: # for single script
 	Incomplete = Incomplete
 	Token      = Token
+	State      = State
 	Parser     = Parser

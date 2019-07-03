@@ -608,41 +608,41 @@ class Parser (lalr1.Parser):
 
 		return True # for convenience
 
-	def _parse_autocomplete_expr_comma (self, rule): # also deals with curly vectors and matrices
-		idx = -1 -len (rule [1])
+	def _parse_autocomplete_expr_comma (self, rule):
+		idx = -1 - len (rule [1])
 
-		if self.stack [idx] [1] == 'CURLYL':
-			if idx == -2:
-				if self.stack [-1] [-1].is_vec or self.stack [-3] [-1] == 'CURLYL' or \
-						(self.stack [-1] [1] == 'expr' and self.stack [-2] [-1] == 'CURLYL' and self.stack [-3] [-1] == 'COMMA' and \
-						self.stack [-4] [-1].is_vec and self.stack [-5] [-1] == 'CURLYL'):
+		if self.stack [idx].sym == 'CURLYL': # vector or matrix potentially being entered
+			if idx == -2: # { something
+				if self.stack [-1].red.is_vec or self.stack [-3].sym == 'CURLYL' or \
+						(self.stack [-1].sym == 'expr' and self.stack [-2].sym == 'CURLYL' and self.stack [-3].sym == 'COMMA' and \
+						self.stack [-4].red.is_vec and self.stack [-5].sym == 'CURLYL'):
 					return self._insert_symbol (('COMMA', 'CURLYR'))
 				else:
 					return self._insert_symbol ('CURLYR')
 
-			elif idx == -3:
-				if self.stack [-2] [-1].is_comma:
+			elif idx == -3: # { something ,
+				if self.stack [-2].red.is_comma:
 					self._mark_error ()
 
 					return False
 
-			elif idx == -4: # examine stack for two vectors started with curly or vector and comma list of vectors
-				if (self.stack [-1] [-1].is_vec or self.stack [-1] [1] == 'expr') and self.stack [-2] [-1] == 'COMMA':
-					vlen = len (self.stack [-1] [-1].vec) if self.stack [-1] [-1].is_vec else 1
+			elif idx == -4: # { expr_comma , something
+				if (self.stack [-1].red.is_vec or self.stack [-1].sym == 'expr') and self.stack [-2].sym == 'COMMA':
+					vlen = len (self.stack [-1].red.vec) if self.stack [-1].red.is_vec else 1
 					cols = None
 
-					if self.stack [-3] [-1].is_vec and self.tokens [self.tokidx - 1] == 'CURLYR' and vlen < len (self.stack [-3] [-1].vec):
-						cols = len (self.stack [-3] [-1].vec)
+					if self.stack [-3].red.is_vec and self.tokens [self.tokidx - 1] == 'CURLYR' and vlen < len (self.stack [-3].red.vec):
+						cols = len (self.stack [-3].red.vec)
 
-					elif self.stack [-3] [-1].is_comma and not sum (not c.is_vec for c in self.stack [-3] [-1].commas) and \
-							not sum (len (c.vec) != len (self.stack [-3] [-1].commas [0].vec) for c in self.stack [-3] [-1].commas) and \
-							vlen < len (self.stack [-3] [-1].commas [0].vec):
+					elif self.stack [-3].red.is_comma and not sum (not c.is_vec for c in self.stack [-3].red.commas) and \
+							not sum (len (c.vec) != len (self.stack [-3].red.commas [0].vec) for c in self.stack [-3].red.commas) and \
+							vlen < len (self.stack [-3].red.commas [0].vec):
 
-						cols = len (self.stack [-3] [-1].commas [0].vec)
+						cols = len (self.stack [-3].red.commas [0].vec)
 
 					if cols is not None:
-						vec               = self.stack [-1] [-1].vec if self.stack [-1] [-1].is_vec else (self.stack [-1] [-1],)
-						self.stack [-1]   = self.stack [-1] [:-1] + (AST ('vec', vec + (AST.VarNull,) * (cols - vlen)),)
+						vec               = self.stack [-1].red.vec if self.stack [-1].red.is_vec else (self.stack [-1].sym,)
+						self.stack [-1]   = lalr1.State (self.stack [-1].idx, self.stack [-1].sym, AST ('vec', vec + (AST.VarNull,) * (cols - vlen)))
 						self.autocomplete = []
 
 						self._mark_error ()
@@ -651,18 +651,18 @@ class Parser (lalr1.Parser):
 
 			return self._insert_symbol ('CURLYR')
 
-		elif self.stack [idx - 1] [1] == 'LEFT':
+		elif self.stack [idx - 1].sym == 'LEFT':
 			return self._insert_symbol ('RIGHT')
-		elif self.stack [idx] [1] == 'PARENL':
+		elif self.stack [idx].sym == 'PARENL':
 			return self._insert_symbol ('PARENR')
-		elif self.stack [idx] [1] == 'BRACKETL':
+		elif self.stack [idx].sym == 'BRACKETL':
 			return self._insert_symbol ('BRACKETR')
 
 		return False
 
 	def _parse_autocomplete_expr_int (self):
 		s               = self.stack [-1]
-		self.stack [-1] = (s [0], s [1], AST ('*', (s [2], AST.VarNull)))
+		self.stack [-1] = lalr1.State (s.idx, s.sym, AST ('*', (s.red, AST.VarNull)))
 		expr_vars       = set ()
 		expr_diffs      = set ()
 
@@ -720,8 +720,8 @@ class Parser (lalr1.Parser):
 
 		return self._insert_symbol (rule [1] [pos])
 
-	def parse_success (self, reduct):
-		self.parse_results.append ((reduct, self.erridx, self.autocomplete))
+	def parse_success (self, red):
+		self.parse_results.append ((red, self.erridx, self.autocomplete))
 
 		return True # continue parsing if conflict branches remain to find best resolution
 

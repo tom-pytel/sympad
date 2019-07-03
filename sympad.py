@@ -164,10 +164,10 @@ body {
 
 	'script.js': # script.js
 
-r"""// TODO: Warning messages on evaluate when SymPy object not understood?
+r"""// TODO: Change how left/right arrows interact with autocomplete.
+// TODO: Warning messages on evaluate when SymPy object not understood?
 // TODO: Move last evaluated expression '_' substitution here from the server side?
 // TODO: Arrow keys in Edge?
-// TODO: Change how error, auto and good text are displayed?
 
 var URL              = '/';
 var MJQueue          = null;
@@ -1092,6 +1092,8 @@ SymPad on GitHub: <a href="javascript:window.open ('https://github.com/Pristine-
 </html>""".encode ("utf8"),
 }
 
+# TODO: add State class with member names for easier to understand code
+
 import re
 import types
 
@@ -1371,7 +1373,7 @@ class AST (tuple):
 
 		return self
 
-	def __getattr__ (self, name): # calculate value for nonexistent self.name by calling self._name ()
+	def __getattr__ (self, name): # calculate value for nonexistent self.name by calling self._name () and store
 		func                 = getattr (self, f'_{name}') if name [0] != '_' else None
 		val                  = func and func ()
 		self.__dict__ [name] = val
@@ -1391,7 +1393,6 @@ class AST (tuple):
 			return \
 					AST ('-', self)            if not self.is_pos_num else \
 					AST ('#', f'-{self.num}')
-
 		else:
 			return \
 					self.minus                 if self.is_minus else \
@@ -1632,8 +1633,8 @@ class AST_Func (AST):
 		min
 		'''.strip ().split ())
 
-	TEX_ONLY    = {f'arc{f}' for f in TRIGH}
 	PY_ALL      = PY_ONLY | PY_AND_TEX
+	TEX_ONLY    = {f'arc{f}' for f in TRIGH}
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -1686,6 +1687,12 @@ class AST_Mat (AST):
 
 	def _init (self, mat):
 		self.mat = mat
+
+	# def _rows (self):
+	# 	return len (self.mat)
+
+	# def _cols (self):
+	# 	return len (self.mat [0]) if self.mat else 0
 
 #...............................................................................................
 _AST_OP2CLS = {
@@ -2336,20 +2343,25 @@ class Parser (lalr1.Parser):
 
 			tokidx += 1
 
-		return True
+		return True # for convenience
 
 	def _parse_autocomplete_expr_comma (self, rule): # also deals with curly vectors and matrices
 		idx = -1 -len (rule [1])
 
 		if self.stack [idx] [1] == 'CURLYL':
 			if idx == -2:
-				if self.stack [-1] [-1].is_vec or \
+				if self.stack [-1] [-1].is_vec or self.stack [-3] [-1] == 'CURLYL' or \
 						(self.stack [-1] [1] == 'expr' and self.stack [-2] [-1] == 'CURLYL' and self.stack [-3] [-1] == 'COMMA' and \
 						self.stack [-4] [-1].is_vec and self.stack [-5] [-1] == 'CURLYL'):
 					return self._insert_symbol (('COMMA', 'CURLYR'))
-
 				else:
 					return self._insert_symbol ('CURLYR')
+
+			elif idx == -3:
+				if self.stack [-2] [-1].is_comma:
+					self._mark_error ()
+
+					return False
 
 			elif idx == -4: # examine stack for two vectors started with curly or vector and comma list of vectors
 				if (self.stack [-1] [-1].is_vec or self.stack [-1] [1] == 'expr') and self.stack [-2] [-1] == 'COMMA':
@@ -2436,10 +2448,9 @@ class Parser (lalr1.Parser):
 		rule = self.rules [irule]
 
 		if pos >= len (rule [1]): # special error raised by rule reduction function or end of comma expression
-			if rule [0] == 'expr_comma':
+			if rule [0] in {'expr_comma', 'expr_commas'}:
 				return self._parse_autocomplete_expr_comma (rule)
-
-			if rule [0] == 'expr_int':
+			elif rule [0] == 'expr_int':
 				return self._parse_autocomplete_expr_int ()
 
 			return False
@@ -2476,10 +2487,10 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__':
-# 	p = Parser ()
-# 	a = p.parse ('{{1,2,3},{4,5,6},{7')
-# 	print (a)
+if __name__ == '__main__':
+	p = Parser ()
+	a = p.parse ('Matrix ([[1')
+	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
@@ -3162,7 +3173,6 @@ class sym: # for single script
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Remove slow includes from first run.
 # TODO: Exception prevents restart on file date change?
 
 import getopt
@@ -3180,8 +3190,10 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-if 'SYMPAD_RUNNED_AS_WATCHED' in os.environ:
+if 'SYMPAD_RUNNED_AS_WATCHED' in os.environ: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	import sympy as sp
+
+	_last_ast = AST.Zero # last evaluated expression for _ usage
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 
@@ -3189,8 +3201,6 @@ _DEFAULT_ADDRESS          = ('localhost', 8000)
 _STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
 
 #...............................................................................................
-_last_ast = AST.Zero # last evaluated expression for _ usage
-
 def _ast_replace (ast, src, dst):
 	return \
 			ast if not isinstance (ast, AST) else \
@@ -3346,7 +3356,7 @@ if __name__ == '__main__':
 		if e.errno != 98:
 			raise
 
-		print (f'Port {port} seems to be in use, try specifying different address and/or port as a command line parameter, e.g. localhost:8001')
+		print (f'Port {port} seems to be in use, try specifying different port as a command line parameter, e.g. localhost:8001')
 
 	except KeyboardInterrupt:
 		sys.exit (0)
