@@ -346,7 +346,7 @@ _ast2simple_funcs = {
 }
 
 #...............................................................................................
-def ast2py (ast): # abstract syntax tree -> python code text
+def ast2py (ast): # abstract syntax tree -> Python code text
 	return _ast2py_funcs [ast.op] (ast)
 
 def _ast2py_curly (ast):
@@ -433,7 +433,7 @@ _ast2py_funcs = {
 }
 
 #...............................................................................................
-def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)\left
+def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)
 	spt = _ast2spt_funcs [ast.op] (ast)
 
 	if doit and spt.__class__ != sp.Piecewise and callable (getattr (spt, 'doit', None)):
@@ -442,12 +442,13 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	return spt
 
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
-_builtins_dict = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
+_builtins_dict               = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
 _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'compile', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
 		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool', 'memoryview',
 		'bytearray', 'bytes', 'classmethod', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
 		'reversed', 'set', 'slice', 'staticmethod', 'str', 'super', 'tuple', 'type', 'zip']
-_ast2spt_func_builtins         = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
+
+_ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
 def _ast2spt_func (ast):
 	kw   = {}
@@ -623,21 +624,22 @@ def _spt2ast_integral (spt):
 
 _spt2ast_funcs = {
 	None.__class__: lambda spt: AST.None_,
+	True.__class__: lambda spt: AST.True_,
+	False.__class__: lambda spt: AST.False_,
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
-	sp.Tuple: lambda spt: spt2ast (spt.args),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
+	sp.Tuple: lambda spt: spt2ast (spt.args),
 
-	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Integer: _spt2ast_num,
 	sp.Float: _spt2ast_num,
 	sp.Rational: lambda spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
 	sp.numbers.ImaginaryUnit: lambda ast: AST.I,
 	sp.numbers.Pi: lambda spt: AST.Pi,
 	sp.numbers.Exp1: lambda spt: AST.E,
-	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.numbers.Infinity: lambda spt: AST.Infty,
 	sp.numbers.NegativeInfinity: lambda spt: AST ('-', AST.Infty),
 	sp.numbers.ComplexInfinity: lambda spt: AST.Infty, # not exactly but whatever
+	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Symbol: lambda spt: AST ('@', spt.name),
 
 	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
@@ -652,11 +654,11 @@ _spt2ast_funcs = {
 	sp.Add: _spt2ast_add,
 	sp.Mul: _spt2ast_mul,
 	sp.Pow: _spt2ast_pow,
-
-	sp.MatPow: lambda spt: spt2ast (spt.args [0] ** spt.args [1]),
+	sp.MatPow: lambda spt: spt2ast (spt.args [0] ** spt.args [1]), # for some reason MatPow won't doit () for [[0,1],[1,0]]**x
 
 	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
 	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),
+	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_func,
@@ -668,7 +670,8 @@ _spt2ast_funcs = {
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,
 
-	sp.matrices.MatrixBase: lambda spt: AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) for row in range (spt.rows))) if not (spt.rows == spt.cols == 1) else spt2ast (spt [0]),
+	sp.matrices.MatrixBase: lambda spt: AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) \
+			for row in range (spt.rows))) if not (spt.rows == spt.cols == 1) else spt2ast (spt [0]),
 }
 
 #...............................................................................................
