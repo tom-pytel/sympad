@@ -1060,7 +1060,7 @@ Note that only the non-dangerous __builtin__ functions are specifically included
 <h2>Notes</h2>
 
 <p>
-WARNING! This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should
+<b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should
 never leave this server open to the internet by serving on an IP visible to the external world.
 </p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping
@@ -2112,7 +2112,7 @@ class Parser (lalr1.Parser):
 			b'Qlm7B2XYg74XfXFjtk37dIheapI3/qUB2ZYUg+ES8yCfj21vl4vAY85wvT8hPtwB8dT+XfdPaO+uQDu1T1Pkr/dkgTPsHbqpWB63z+QTZvErkq3EXJ/h6vsKA6aZos2Mcwae7eDiOmGykKlI8K8Og3/T3HoA/3rIf/m9DwgCP/00Kw7pe/iDHTZ/qmP8hY5a' \
 			b'Rqbpv70h39ko5ZW+nxG2yc03dxMsJvV2EM16Np0F0jaHoW3cy9xyAP92Xtt2EESpZLNCGarVnEqxlaYIPh19Hb898FwJeXiWtC2h7SZeVweIzh2B6FxzSAFya49Abm1zSAFy80cgN98cUoDcwuHLje1CBxQgt24Bue0wBFlAeqa5ZmAL6TCKuLxeqTCMjIbz' \
 			b'tzqcu5I4XbM94LNus8l2CSqaQ/cIEOtolnDwYmV77+EGSPVu5x5XkqppDjhAqqM5xuFL1TYHHCDVHWYuhybVtjngAKnuMKk5YOsDe12OIEDUbfQWs3GdJBXV2svv45DMDVwHUVzsRbb89afg+VhsK0K2sDmba0YBefiLKirWLWqJpMs5QvQ99o7FNrpb+KMX' \
-			b'luck/DUzz65tysSmcq69AA74GwSldlAtsi1Yy+Zqz1sBlYvF6cmUpikCEppRQlYMTmybMigHNeY9j9ZnB7w44dgB5zG25X1myosHzFOO78//H7otCHQ='
+			b'luck/DUzz65tysSmcq69AA74GwSldlAtsi1Yy+Zqz1sBlYvF6cmUpikCEppRQlYMTmybMigHNeY9j9ZnB7w44dgB5zG25X1myosHzFOO78//H7otCHQ=' 
 
 	_PARSER_TOP  = 'expr'
 
