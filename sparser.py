@@ -1,13 +1,13 @@
-# TODO: sin ((x)**2), Matrix (([1,2,3])**2)
 # TODO: remap \begin{matrix} \end{matrix}
+# TODO: empty \begin{matrix} \end{matrix}?
 
 # TODO: Change '$' to be more generic function OR variable name escape.
 # TODO: Change vars to internal short representation?
 # TODO: 1+1j complex number parsing?
 
-# Builds expression tree from text, nodes are nested AST tuples.
-
 # FUTURE: verify vars in expr func remaps
+
+# Builds expression tree from text, nodes are nested AST tuples.
 
 import ast as py_ast
 from collections import OrderedDict
@@ -141,7 +141,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	if args [iparm].is_fact:
 		if args [iparm].fact.is_paren:
-			return AST ('!', AST (*(args [:iparm] + (args [iparm].fact.paren,) + args [iparm + 1:])))
+			return AST ('!', AST (*(args [:iparm] + (args [iparm].fact,) + args [iparm + 1:])))
 
 	elif args [iparm].is_pow:
 		if args [iparm].base.is_paren:
@@ -150,10 +150,10 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 	return AST (*args)
 
 def _expr_func_remap (_remap_func, ast): # rearrange ast tree for a given function remapping like 'Derivative' or 'Limit'
-	expr = _expr_func (1, '(', ast)
-	ast  = _remap_func (expr.paren if expr.is_paren else expr [1].strip_paren ())
+	expr = _expr_func (1, None, ast)
+	ast  = _remap_func (expr [1].strip_paren () if expr.op is None else expr [1] [1].strip_paren ())
 
-	return AST (expr.op, ast, *expr [2:]) if not expr.is_paren else ast
+	return ast if expr.op is None else AST (expr.op, ast, *expr [2:])
 
 _remap_func_lim_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
@@ -263,7 +263,6 @@ def _remap_func_pow (ast):
 def _remap_func_mat (ast):
 	if ast.is_bracket and ast.brackets:
 		if not ast.brackets [0].is_bracket: # single layer or brackets, column matrix?
-			print(tuple ((e,) for e in ast.brackets))
 			return AST ('mat', tuple ((e,) for e in ast.brackets))
 
 		elif ast.brackets [0].brackets:
@@ -490,13 +489,11 @@ class Parser (lalr1.Parser):
 	def expr_func_3     (self, LOG, expr_func_arg):                             return _expr_func (1, 'log', expr_func_arg)
 	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func (1, 'log', expr_func_arg, expr_sub)
 	def expr_func_5     (self, FUNC, expr_func_arg):
-		print ('...', expr_func_arg)
 		func  = f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
 				FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
-		args  = expr_func_arg.strip_paren ()
 		remap = self._FUNC_AST_REMAP.get (func)
 
-		return remap (args) if remap else _expr_func (2, 'func', func, args)
+		return remap (expr_func_arg) if remap else _expr_func (2, 'func', func, expr_func_arg)
 
 	def expr_func_6     (self, FUNC, expr_super, expr_func_arg):
 		ast = self.expr_func_5 (FUNC, expr_func_arg)
@@ -553,7 +550,7 @@ class Parser (lalr1.Parser):
 	def expr_bracket_3  (self, expr_term):                                      return expr_term
 
 	def expr_term_1     (self, STR):                                            return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1]))
-	def expr_term_2     (self, SUB):                                            return AST ('@', '_')
+	def expr_term_2     (self, SUB):                                            return AST ('@', '_') # for last expression variable
 	def expr_term_3     (self, expr_var):                                       return expr_var
 	def expr_term_4     (self, expr_num):                                       return expr_num
 
@@ -593,7 +590,7 @@ class Parser (lalr1.Parser):
 		'SUB1'               : 'SUB',
 		'FRAC2'              : 'FRAC',
 		'FRAC1'              : 'FRAC',
-		'expr_sub'           : 'SUB',
+		# 'expr_sub'           : 'SUB',
 		'expr_super'         : 'CARET',
 		'caret_or_doublestar': 'CARET',
 	}
@@ -756,7 +753,7 @@ class Parser (lalr1.Parser):
 		return True # continue parsing if conflict branches remain to find best resolution
 
 	def parse (self, text):
-		self.parse_results  = [] # [(reduct, erridx, autocomplete), ...]
+		self.parse_results  = [] # [(reduction, erridx, autocomplete), ...]
 		self.autocomplete   = []
 		self.autocompleting = True
 		self.erridx         = None
@@ -780,7 +777,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('Matrix ([[1,2],[3,4]])**2')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('\\int')
+# 	print (a)

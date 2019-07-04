@@ -381,11 +381,11 @@ class AST_Mat (AST):
 	def _init (self, mat):
 		self.mat = mat
 
-	# def _rows (self):
-	# 	return len (self.mat)
+	def _rows (self):
+		return len (self.mat)
 
-	# def _cols (self):
-	# 	return len (self.mat [0]) if self.mat else 0
+	def _cols (self):
+		return len (self.mat [0]) if self.mat else 0
 
 #...............................................................................................
 _AST_OP2CLS = {

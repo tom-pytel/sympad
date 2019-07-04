@@ -53,7 +53,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('sqrt[3] (x)'), AST ('sqrt', ('(', ('@', 'x')), ('#', '3')))
 		self.assertEqual (p ('sin x'), AST ('func', 'sin', ('@', 'x')))
 		self.assertEqual (p ('sin^2 x'), AST ('^', ('func', 'sin', ('@', 'x')), ('#', '2')))
-		self.assertEqual (p ('sin (x)'), AST ('func', 'sin', ('@', 'x')))
+		self.assertEqual (p ('sin (x)'), AST ('func', 'sin', ('(', ('@', 'x'))))
 		self.assertEqual (p ('sin (x)^2'), AST ('^', ('func', 'sin', ('(', ('@', 'x'))), ('#', '2')))
 		self.assertEqual (p ('{sin x}^2'), AST ('^', ('func', 'sin', ('@', 'x')), ('#', '2')))
 		self.assertEqual (p ('sin**2 x'), AST ('^', ('func', 'sin', ('@', 'x')), ('#', '2')))
@@ -121,6 +121,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('sin^2 x')), '\\sin^2\\left(x \\right)')
 		self.assertEqual (ast2tex (p ('sin (x)')), '\\sin\\left(x \\right)')
 		self.assertEqual (ast2tex (p ('sin (x)^2')), '\\sin^2\\left(x \\right)')
+		self.assertEqual (ast2tex (p ('sin ((x)^2)')), '\\sin\\left(\\left(x \\right)^2 \\right)')
 		self.assertEqual (ast2tex (p ('sin**-1 x')), '\\sin^{-1}\\left(x \\right)')
 		self.assertEqual (ast2tex (p ('\\lim_{x\\to0} 1/x')), '\\lim_{x \\to 0} \\frac{1}{x}')
 		self.assertEqual (ast2tex (p ('\\lim_{x\\to0^+} 1/x')), '\\lim_{x \\to 0^+} \\frac{1}{x}')
@@ -141,7 +142,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\left[\\begin{matrix} 1 \\end{matrix}\\right]')), '\\begin{bmatrix} 1 \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}')), '\\begin{bmatrix} 1 & 2 \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}')), '\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}')
-		self.assertEqual (ast2tex (p ('{{0,1},{1,0}}**x')), '{\\begin{bmatrix} 0 & 1 \\\\ 1 & 0 \\end{bmatrix}}^x')
+		self.assertEqual (ast2tex (p ('-1**x')), '-1^x')
+		self.assertEqual (ast2tex (p ('{-1}**x')), '\\left(-1 \\right)^x')
+		self.assertEqual (ast2tex (p ('-{-1}**x')), '-\\left(-1 \\right)^x')
+		self.assertEqual (ast2tex (p ('(-1)**x')), '\\left(-1 \\right)^x')
+		self.assertEqual (ast2tex (p ('-(-1)**x')), '-\\left(-1 \\right)^x')
+		self.assertEqual (ast2tex (p ('{{1,2},{3,4}}**x')), '{\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}}^x')
 
 	def test_ast2simple (self):
 		self.assertEqual (ast2simple (p ('1')), '1')
@@ -174,6 +180,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2simple (p ('sin^2 x')), 'sin^2(x)')
 		self.assertEqual (ast2simple (p ('sin (x)')), 'sin(x)')
 		self.assertEqual (ast2simple (p ('sin (x)^2')), 'sin^2(x)')
+		self.assertEqual (ast2simple (p ('sin ((x)^2)')), 'sin((x)**2)')
 		self.assertEqual (ast2simple (p ('sin**-1 x')), 'asin(x)')
 		self.assertEqual (ast2simple (p ('\\lim_{x\\to0} 1/x')), '\\lim_{x \\to 0} 1/x')
 		self.assertEqual (ast2simple (p ('\\lim_{x\\to0^+} 1/x')), '\\lim_{x \\to 0**+} 1/x')
@@ -194,7 +201,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2simple (p ('\\left[\\begin{matrix} 1 \\end{matrix}\\right]')), '{{1,},}')
 		self.assertEqual (ast2simple (p ('\\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}')), '{{1,2},}')
 		self.assertEqual (ast2simple (p ('\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}')), '{{1,2},{3,4}}')
-		self.assertEqual (ast2simple (p ('{{0,1},{1,0}}**x')), '{{0,1},{1,0}}**x')
+		self.assertEqual (ast2simple (p ('-1**x')), '-1**x')
+		self.assertEqual (ast2simple (p ('{-1}**x')), '(-1)**x')
+		self.assertEqual (ast2simple (p ('-{-1}**x')), '-(-1)**x')
+		self.assertEqual (ast2simple (p ('(-1)**x')), '(-1)**x')
+		self.assertEqual (ast2simple (p ('-(-1)**x')), '-(-1)**x')
+		self.assertEqual (ast2simple (p ('{{1,2},{3,4}}**x')), '{{1,2},{3,4}}**x')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -227,6 +239,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('sin^2 x')), 'sin(x)**2')
 		self.assertEqual (ast2py (p ('sin (x)')), 'sin(x)')
 		self.assertEqual (ast2py (p ('sin (x)^2')), 'sin(x)**2')
+		self.assertEqual (ast2py (p ('sin ((x)^2)')), 'sin((x)**2)')
 		self.assertEqual (ast2py (p ('sin**-1 x')), 'asin(x)')
 		self.assertEqual (ast2py (p ('\\lim_{x\\to0} 1/x')), "Limit(1/x, x, 0, dir='+-')")
 		self.assertEqual (ast2py (p ('\\lim_{x\\to0^+} 1/x')), 'Limit(1/x, x, 0)')
@@ -247,7 +260,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\left[\\begin{matrix} 1 \\end{matrix}\\right]')), 'Matrix([[1]])')
 		self.assertEqual (ast2py (p ('\\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}')), 'Matrix([[1,2]])')
 		self.assertEqual (ast2py (p ('\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}')), 'Matrix([[1,2],[3,4]])')
-		self.assertEqual (ast2py (p ('{{0,1},{1,0}}**x')), 'Matrix([[0,1],[1,0]])**x')
+		self.assertEqual (ast2py (p ('-1**x')), '-1**x')
+		self.assertEqual (ast2py (p ('{-1}**x')), '(-1)**x')
+		self.assertEqual (ast2py (p ('-{-1}**x')), '-(-1)**x')
+		self.assertEqual (ast2py (p ('(-1)**x')), '(-1)**x')
+		self.assertEqual (ast2py (p ('-(-1)**x')), '-(-1)**x')
+		self.assertEqual (ast2py (p ('{{1,2},{3,4}}**x')), 'Matrix([[1,2],[3,4]])**x')
 
 	# def test_ast2spt (self):
 	# 	self.assertEqual (ast2spt (p ('1')), r'')
@@ -332,6 +350,7 @@ sin x
 sin^2 x
 sin (x)
 sin (x)^2
+sin ((x)^2)
 sin**-1 x
 \\lim_{x\\to0} 1/x
 \\lim_{x\\to0^+} 1/x
@@ -352,7 +371,12 @@ d^3/dx^2dy x^2y**2z
 \\left[\\begin{matrix} 1 \\end{matrix}\\right]
 \\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}
 \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}
-{{0,1},{1,0}}**x
+-1**x
+{-1}**x
+-{-1}**x
+(-1)**x
+-(-1)**x
+{{1,2},{3,4}}**x
 """
 
 if __name__ == '__main__':
