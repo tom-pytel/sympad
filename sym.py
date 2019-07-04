@@ -304,7 +304,7 @@ def _ast2simple_diff (ast):
 			d  = n.base.diff_or_part_start_text ()
 			p += int (n.exp.num)
 
-	return f'{d}{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.dvs)}{_ast2simple_paren (ast.diff)}'
+	return f'{d.strip ()}{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.dvs)}{_ast2simple_paren (ast.diff)}'
 
 def _ast2simple_intg (ast):
 	if ast.from_ is None:
