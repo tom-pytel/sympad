@@ -2,6 +2,7 @@
 
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
 # TODO: fix nested identical Piecewise returned from SymPy like for Sum (x**n/x, (n, 0, oo)).doit ()
+# TODO: sequence(factorial(k), (k,1,oo))
 
 import re
 import sympy as sp
@@ -39,7 +40,7 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 		if not isinstance (ast, AST):
 			pass # nop
 		elif ast.is_num:
-			prec = max (prec, len (ast.num))
+			prec = max (prec, len (ast.num)) # will be a little more than number of digits to compensate for falling precision with some calculations
 		else:
 			stack.extend (ast [1:])
 

@@ -195,7 +195,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2simple (p ('d/dx x**2y**2z')), 'd/dx(x**2y**2z)')
 		self.assertEqual (ast2simple (p ('d^2/dx^2 x^2y**2z')), 'd^2/dx**2(x**2y**2z)')
 		self.assertEqual (ast2simple (p ('d^3/dx^2dy x^2y**2z')), 'd^3/dx**2dy(x**2y**2z)')
-		self.assertEqual (ast2simple (p ('\\partial^4/\\partialx^2\\partial y\\partialz x^2y**2z')), '\\partial ^4/\\partial x**2\\partial y\\partial z(x**2y**2z)')
+		self.assertEqual (ast2simple (p ('\\partial^4/\\partialx^2\\partial y\\partialz x^2y**2z')), '\\partial^4/\\partial x**2\\partial y\\partial z(x**2y**2z)')
 		self.assertEqual (ast2simple (p ('\\int dx')), '\\int dx')
 		self.assertEqual (ast2simple (p ('\\int x dx')), '\\int x dx')
 		self.assertEqual (ast2simple (p ('\\int_0^1 x dx')), '\\int_0^1 x dx')

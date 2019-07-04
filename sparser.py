@@ -1,3 +1,4 @@
+# TODO: Greek variable names also without slash.
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: Change '$' to be more generic function OR variable name escape.
