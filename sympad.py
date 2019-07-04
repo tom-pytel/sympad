@@ -885,17 +885,17 @@ Numbers take the standard integer or floating point form or exponential form suc
 The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits.
 Keep in mind that "<b>e</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be 2 * 10^22.
 Instead, use spaces and/or explicit multiplication: 2 * e + 22.
-Imaginary numbers are entered using the imaginary constant "<b>i</b>" as "<b>1 + 2i</b>", no Pythonic "<b>1+1j</b>".
+Imaginary numbers are entered using the imaginary constant "<b>i</b>" as "<b>1 + 2i</b>", no Pythonic "<b>1 + 1j</b>".
 </p>
 
 <h4>Variables</h4>
 
 <p>
-Variable names mostly follow LaTeX convention, they are single latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", ... or
-single greek letters preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
-"<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. The whole top-level namespace of the
-SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$, as
-well as any other variables present at the top level. Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
+Variable names mostly follow LaTeX convention, they are single Latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", etc... or
+single Greek letters preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>\epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$). The
+variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. The whole top-level
+namespace of the SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$
+and $\infty$, as well as any other variables present at the top level. Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 </p><p>
 Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
 Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
@@ -944,7 +944,7 @@ the implicit version has a higher precedence than the explicit, which means that
 Division also has two operators, the normal "<b>/</b>" which has a fairly low precedence and the LaTeX "<b>\frac</b>" version which has a very high
 precedence, even higher than exponentiation. So high in fact that parentheses are not needed if using "<b>\frac</b>" as an exponent as in
 "<b>x^\frac{1}{2}</b>" = $x^\frac{1}{2}$. The "<b>\frac</b>" operation also does not need parentheses if using single digit operands or single letter
-variables (latin or greek) such as "<b>\frac12</b>" = $\frac12$, "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$ or "<b>\fracxy</b>" = $\frac xy$ (although
+variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$, "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$ or "<b>\fracxy</b>" = $\frac xy$ (although
 this last version without a space before the x is not legal in LaTeX but convenient for quick typing here).
 </p>
 
@@ -952,7 +952,7 @@ this last version without a space before the x is not legal in LaTeX but conveni
 
 <p>
 There are two power opearators "<b>^</b>" and "<b>**</b>". They have the same precedence and can be used interchangeably but follow slightly different
-parsing rules. The "<b>^</b>" operator follows LaTeX rules which only allow a single positive digit or letter variable (lating or greek) without the use
+parsing rules. The "<b>^</b>" operator follows LaTeX rules which only allow a single positive digit or letter variable (Lating or Greek) without the use
 of curly braces whereas the "<b>**</b>" follows Python rules which allow negative values or variables or functions. To illustrate the diffference:
 "<b>x**-2</b>" = $x^{-2}$ whereas "<b>x^-2</b>" = $x^-2$ (which makes no sense). Also, "<b>e**log(x)</b>" will work as expected $e^{\log(x)}$ whereas
 "<b>e^log(x)</b>" = $e^log(x)$.
@@ -1499,13 +1499,12 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	GREEK      = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'omnicron', 'rho', \
-			'sigma', 'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Upsilon', 'Xi', 'Phi', 'Pi', 'Psi', 'Sigma', 'Omega'}
-	PY         = {'None', 'True', 'False'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
-	# LONG2SHORT = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo'}
-	# SHORT2LONG = {**dict ((v, f'\\text{{{v}}}') for v in PY), 'pi': '\\pi', 'oo': '\\infty'}
-	LONG2SHORT = {**dict ((f'\\text{{{v}}}', v) for v in PY), **dict ((f'\\{g}', g) for g in GREEK), '\\infty': 'oo'}
-	SHORT2LONG = {**dict ((v, f'\\text{{{v}}}') for v in PY), **dict ((g, f'\\{g}') for g in GREEK), 'oo': '\\infty'}
+	GREEK        = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'rho', 'sigma', \
+			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Upsilon', 'Xi', 'Phi', 'Pi', 'Psi', 'Sigma', 'Omega'}
+	PY           = {'None', 'True', 'False'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
+	SHORT2LONG   = {**dict ((v, f'\\text{{{v}}}') for v in PY), 'pi': '\\pi', 'oo': '\\infty', **dict ((f'_{g}', f'\\{g}') for g in GREEK)}
+	LONG2SHORT   = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo'}
+	LONG2SHORTPY = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo', **dict ((f'\\{g}', f'_{g}') for g in GREEK)}
 
 	_rec_diff_start         = re.compile (r'^d(?=[^_])')
 	_rec_part_start         = re.compile (r'^\\partial ')
@@ -1555,6 +1554,12 @@ class AST_Var (AST):
 	def as_short_var_text (self):
 		vs = AST_Var._rec_as_short_split.split (self.var)
 		vs = [AST_Var.LONG2SHORT.get (v, v) for v in vs]
+
+		return ''.join (vs)
+
+	def as_shortpy_var_text (self):
+		vs = AST_Var._rec_as_short_split.split (self.var)
+		vs = [AST_Var.LONG2SHORTPY.get (v, v) for v in vs]
 
 		return ''.join (vs)
 
@@ -1755,7 +1760,6 @@ AST.None_   = AST ('@', '\\text{None}')
 AST.True_   = AST ('@', '\\text{True}')
 AST.False_  = AST ('@', '\\text{False}')
 AST.NaN     = AST ('@', '\\text{nan}')
-# TODO: Greek variable names also without slash.
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: Change '$' to be more generic function OR variable name escape.
@@ -2121,13 +2125,10 @@ class Parser (lalr1.Parser):
 
 	_PARSER_TOP  = 'expr'
 
-	# _GREEK       = r'\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\rho|' \
-	# 		r'\\sigma|\\tau|\\upsilon|\\phi|\\chi|\\psi|\\omega|\\Gamma|\\Delta|\\Theta|\\Lambda|\\Upsilon|\\Xi|\\Phi|\\Pi|\\Psi|\\Sigma|\\Omega'
-
-	_GREEK       = '|'.join (reversed (sorted (f'\\{g}' for g in AST.Var.GREEK)))
-	_SPECIAL     =  r'\\partial|\\infty'
+	_GREEK       = '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK)))
+	_SPECIAL     =  r'\\partial|\\pi|\\infty'
 	_CHAR        = fr'[a-zA-Z]'
-	_PYVAR       = '|'.join (reversed (sorted (AST.Var.PY | AST.Var.GREEK)))
+	_PYVAR       = '|'.join (reversed (sorted (AST.Var.PY | {f'_{g}' for g in AST.Var.GREEK})))
 	_TEXTVAR     = fr'\\text\s*\{{\s*({_PYVAR})\s*\}}'
 	_ONEVAR      = fr'{_CHAR}|{_GREEK}'
 	_DSONEVARSP  = fr'(?:(\d)|({_PYVAR})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
@@ -2163,12 +2164,12 @@ class Parser (lalr1.Parser):
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
 		('VAR',          fr"({_PYVAR})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}"),
 		('STR',          fr"(?<!\d|{_CHAR}|['}}])({_STR})|\\text\s*\{{\s*({_STR})\s*\}}"),
+		('PRIMES',        r"'+|(?:_prime)+"),
 		('SUB1',         fr'_{_DSONEVARSP}'),
 		('SUB',           r'_'),
 		('CARET1',       fr'\^{_DSONEVARSP}'),
 		('CARET',         r'\^'),
 		('DBLSTAR',       r'\*\*'),
-		('PRIMES',        r"'+"),
 		('PARENL',        r'\('),
 		('PARENR',        r'\)'),
 		('CURLYL',        r'{'),
@@ -2325,13 +2326,13 @@ class Parser (lalr1.Parser):
 
 	def expr_num        (self, NUM):                                            return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
 
-	def expr_var_1      (self, var, PRIMES, subvar):                            return AST ('@', f'{var}{subvar}{PRIMES.text}')
-	def expr_var_2      (self, var, subvar, PRIMES):                            return AST ('@', f'{var}{subvar}{PRIMES.text}')
-	def expr_var_3      (self, var, PRIMES):                                    return AST ('@', f'{var}{PRIMES.text}')
+	def expr_var_1      (self, var, PRIMES, subvar):                            return AST ('@', f'''{var}{subvar}{PRIMES.text.replace ("_prime", "'")}''')
+	def expr_var_2      (self, var, subvar, PRIMES):                            return AST ('@', f'''{var}{subvar}{PRIMES.text.replace ("_prime", "'")}''')
+	def expr_var_3      (self, var, PRIMES):                                    return AST ('@', f'''{var}{PRIMES.text.replace ("_prime", "'")}''')
 	def expr_var_4      (self, var, subvar):                                    return AST ('@', f'{var}{subvar}')
 	def expr_var_5      (self, var):                                            return AST ('@', var)
 
-	def var             (self, VAR):
+	def var_2           (self, VAR):
 		return \
 				f'\\partial {VAR.grp [2]}' \
 				if VAR.grp [1] and VAR.grp [1] != 'd' else \
@@ -2552,7 +2553,7 @@ class sparser: # for single script
 
 # if __name__ == '__main__':
 # 	p = Parser ()
-# 	a = p.parse ('pow (x,')
+# 	a = p.parse ('pi')
 # 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
@@ -2964,7 +2965,7 @@ _rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
 _ast2py_funcs = {
 	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.as_short_var_text ()).replace ('\\', '').replace ("'", '_prime'),
+	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.as_shortpy_var_text ()).replace ('\\', '_').replace ("'", '_prime'),
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2py (ast.paren)})',

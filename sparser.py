@@ -368,7 +368,7 @@ class Parser (lalr1.Parser):
 	_GREEK       = '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK)))
 	_SPECIAL     =  r'\\partial|\\pi|\\infty'
 	_CHAR        = fr'[a-zA-Z]'
-	_PYVAR       = '|'.join (reversed (sorted (AST.Var.PY | AST.Var.GREEK)))
+	_PYVAR       = '|'.join (reversed (sorted (AST.Var.PY | {f'_{g}' for g in AST.Var.GREEK})))
 	_TEXTVAR     = fr'\\text\s*\{{\s*({_PYVAR})\s*\}}'
 	_ONEVAR      = fr'{_CHAR}|{_GREEK}'
 	_DSONEVARSP  = fr'(?:(\d)|({_PYVAR})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
@@ -404,12 +404,12 @@ class Parser (lalr1.Parser):
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
 		('VAR',          fr"({_PYVAR})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}"),
 		('STR',          fr"(?<!\d|{_CHAR}|['}}])({_STR})|\\text\s*\{{\s*({_STR})\s*\}}"),
+		('PRIMES',        r"'+|(?:_prime)+"),
 		('SUB1',         fr'_{_DSONEVARSP}'),
 		('SUB',           r'_'),
 		('CARET1',       fr'\^{_DSONEVARSP}'),
 		('CARET',         r'\^'),
 		('DBLSTAR',       r'\*\*'),
-		('PRIMES',        r"'+"),
 		('PARENL',        r'\('),
 		('PARENR',        r'\)'),
 		('CURLYL',        r'{'),
@@ -566,9 +566,9 @@ class Parser (lalr1.Parser):
 
 	def expr_num        (self, NUM):                                            return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
 
-	def expr_var_1      (self, var, PRIMES, subvar):                            return AST ('@', f'{var}{subvar}{PRIMES.text}')
-	def expr_var_2      (self, var, subvar, PRIMES):                            return AST ('@', f'{var}{subvar}{PRIMES.text}')
-	def expr_var_3      (self, var, PRIMES):                                    return AST ('@', f'{var}{PRIMES.text}')
+	def expr_var_1      (self, var, PRIMES, subvar):                            return AST ('@', f'''{var}{subvar}{PRIMES.text.replace ("_prime", "'")}''')
+	def expr_var_2      (self, var, subvar, PRIMES):                            return AST ('@', f'''{var}{subvar}{PRIMES.text.replace ("_prime", "'")}''')
+	def expr_var_3      (self, var, PRIMES):                                    return AST ('@', f'''{var}{PRIMES.text.replace ("_prime", "'")}''')
 	def expr_var_4      (self, var, subvar):                                    return AST ('@', f'{var}{subvar}')
 	def expr_var_5      (self, var):                                            return AST ('@', var)
 
@@ -791,7 +791,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('pi')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('pi')
+# 	print (a)

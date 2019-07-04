@@ -179,11 +179,12 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	GREEK      = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'rho', 'sigma', \
+	GREEK        = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'rho', 'sigma', \
 			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Upsilon', 'Xi', 'Phi', 'Pi', 'Psi', 'Sigma', 'Omega'}
-	PY         = {'None', 'True', 'False'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
-	LONG2SHORT = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo'} #, **dict ((f'\\{g}', g) for g in GREEK)}
-	SHORT2LONG = {**dict ((v, f'\\text{{{v}}}') for v in PY), 'pi': '\\pi', 'oo': '\\infty'} #, **dict ((g, f'\\{g}') for g in GREEK)}
+	PY           = {'None', 'True', 'False'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
+	SHORT2LONG   = {**dict ((v, f'\\text{{{v}}}') for v in PY), 'pi': '\\pi', 'oo': '\\infty', **dict ((f'_{g}', f'\\{g}') for g in GREEK)}
+	LONG2SHORT   = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo'}
+	LONG2SHORTPY = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo', **dict ((f'\\{g}', f'_{g}') for g in GREEK)}
 
 	_rec_diff_start         = re.compile (r'^d(?=[^_])')
 	_rec_part_start         = re.compile (r'^\\partial ')
@@ -233,6 +234,12 @@ class AST_Var (AST):
 	def as_short_var_text (self):
 		vs = AST_Var._rec_as_short_split.split (self.var)
 		vs = [AST_Var.LONG2SHORT.get (v, v) for v in vs]
+
+		return ''.join (vs)
+
+	def as_shortpy_var_text (self):
+		vs = AST_Var._rec_as_short_split.split (self.var)
+		vs = [AST_Var.LONG2SHORTPY.get (v, v) for v in vs]
 
 		return ''.join (vs)
 
