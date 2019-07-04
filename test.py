@@ -277,7 +277,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('{1,2}!')), 'factorial(Matrix([[1],[2]]))')
 		self.assertEqual (ast2py (p ('{{1,2},{3,4}}**x')), 'Matrix([[1,2],[3,4]])**x')
 		self.assertEqual (ast2py (p ('{{1,2},{3,4}}!')), 'factorial(Matrix([[1,2],[3,4]]))')
-		self.assertEqual (ast2py (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')), 'Theta*Lambda*xi*Omega*alpha*theta*Phi*gamma*nu*Gamma*delta*rho*lambda*iota*chi*psi*Psi*Xi*tau*mu*sigma*omega*kappa*upsilon*eta*Pi*epsilon*Delta*Upsilon*zeta*beta*phi*Sigma')
+		self.assertEqual (ast2py (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')), '_Theta*_Lambda*_xi*_Omega*_alpha*_theta*_Phi*_gamma*_nu*_Gamma*_delta*_rho*_lambda*_iota*_chi*_psi*_Psi*_Xi*_tau*_mu*_sigma*_omega*_kappa*_upsilon*_eta*_Pi*_epsilon*_Delta*_Upsilon*_zeta*_beta*_phi*_Sigma')
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
