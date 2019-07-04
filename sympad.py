@@ -797,7 +797,6 @@ r"""<!DOCTYPE html>
 <style>
 	body { margin: 3em 4em; }
 	h2 { margin: 2em 0 1em 0; }
-	h3 { margin: 2em 0 1em 0; }
 	h4 { margin: 1.5em 0 0.5em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
 	i { color: red; }
@@ -827,7 +826,7 @@ r"""<!DOCTYPE html>
 
 <p>
 Sympad is a simple symbolic calculator. It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while
-studying some math without having to start a shell every time and import a packaged or fire up a browser and navigate to a site (technincally
+studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally
 that last bit is exactly what happens but the response time is better :) This desire for simplicity led to the single script option "sympad.py"
 which I could plop down on my desktop and execute when needed.
 </p><p>
@@ -882,10 +881,11 @@ elements are present.
 <h4>Numbers</h4>
 
 <p>
-Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22. Keep in mind that
-"<b>e</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>"
-as this will be interpreted to be 2 * 10^22, use spaces and/or explicit multiplication: 2 * e + 22. Imaginary numbers are entered using the imaginary
-constant "<b>i</b>" as "<b>1 + 2i</b>".
+Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
+The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits.
+Keep in mind that "<b>e</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be 2 * 10^22.
+Instead, use spaces and/or explicit multiplication: 2 * e + 22.
+Imaginary numbers are entered using the imaginary constant "<b>i</b>" as "<b>1 + 2i</b>", no Pythonic "<b>1+1j</b>".
 </p>
 
 <h4>Variables</h4>
@@ -1751,6 +1751,7 @@ AST.None_   = AST ('@', '\\text{None}')
 AST.True_   = AST ('@', '\\text{True}')
 AST.False_  = AST ('@', '\\text{False}')
 AST.NaN     = AST ('@', '\\text{nan}')
+# TODO: Greek variable names also without slash.
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: Change '$' to be more generic function OR variable name escape.
@@ -2112,7 +2113,7 @@ class Parser (lalr1.Parser):
 			b'Qlm7B2XYg74XfXFjtk37dIheapI3/qUB2ZYUg+ES8yCfj21vl4vAY85wvT8hPtwB8dT+XfdPaO+uQDu1T1Pkr/dkgTPsHbqpWB63z+QTZvErkq3EXJ/h6vsKA6aZos2Mcwae7eDiOmGykKlI8K8Og3/T3HoA/3rIf/m9DwgCP/00Kw7pe/iDHTZ/qmP8hY5a' \
 			b'Rqbpv70h39ko5ZW+nxG2yc03dxMsJvV2EM16Np0F0jaHoW3cy9xyAP92Xtt2EESpZLNCGarVnEqxlaYIPh19Hb898FwJeXiWtC2h7SZeVweIzh2B6FxzSAFya49Abm1zSAFy80cgN98cUoDcwuHLje1CBxQgt24Bue0wBFlAeqa5ZmAL6TCKuLxeqTCMjIbz' \
 			b'tzqcu5I4XbM94LNus8l2CSqaQ/cIEOtolnDwYmV77+EGSPVu5x5XkqppDjhAqqM5xuFL1TYHHCDVHWYuhybVtjngAKnuMKk5YOsDe12OIEDUbfQWs3GdJBXV2svv45DMDVwHUVzsRbb89afg+VhsK0K2sDmba0YBefiLKirWLWqJpMs5QvQ99o7FNrpb+KMX' \
-			b'luck/DUzz65tysSmcq69AA74GwSldlAtsi1Yy+Zqz1sBlYvF6cmUpikCEppRQlYMTmybMigHNeY9j9ZnB7w44dgB5zG25X1myosHzFOO78//H7otCHQ=' 
+			b'luck/DUzz65tysSmcq69AA74GwSldlAtsi1Yy+Zqz1sBlYvF6cmUpikCEppRQlYMTmybMigHNeY9j9ZnB7w44dgB5zG25X1myosHzFOO78//H7otCHQ='
 
 	_PARSER_TOP  = 'expr'
 
@@ -2375,8 +2376,7 @@ class Parser (lalr1.Parser):
 		self.autocompleting = False
 
 		if self.erridx is None:
-			self.erridx = self.tokens [self.tokidx].pos ## DEBUG!
-			# self.erridx = self.tokens [self.tokidx - 1].pos
+			self.erridx = self.tokens [self.tokidx].pos
 
 	def _insert_symbol (self, sym):
 		tokidx = self.tokidx
@@ -2553,6 +2553,7 @@ class sparser: # for single script
 
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
 # TODO: fix nested identical Piecewise returned from SymPy like for Sum (x**n/x, (n, 0, oo)).doit ()
+# TODO: sequence(factorial(k), (k,1,oo))
 
 import re
 import sympy as sp
@@ -2589,7 +2590,7 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 		if not isinstance (ast, AST):
 			pass # nop
 		elif ast.is_num:
-			prec = max (prec, len (ast.num))
+			prec = max (prec, len (ast.num)) # will be a little more than number of digits to compensate for falling precision with some calculations
 		else:
 			stack.extend (ast [1:])
 
@@ -2854,7 +2855,7 @@ def _ast2simple_diff (ast):
 			d  = n.base.diff_or_part_start_text ()
 			p += int (n.exp.num)
 
-	return f'{d}{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.dvs)}{_ast2simple_paren (ast.diff)}'
+	return f'{d.strip ()}{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.dvs)}{_ast2simple_paren (ast.diff)}'
 
 def _ast2simple_intg (ast):
 	if ast.from_ is None:
@@ -2896,7 +2897,7 @@ _ast2simple_funcs = {
 }
 
 #...............................................................................................
-def ast2py (ast): # abstract syntax tree -> python code text
+def ast2py (ast): # abstract syntax tree -> Python code text
 	return _ast2py_funcs [ast.op] (ast)
 
 def _ast2py_curly (ast):
@@ -2983,7 +2984,7 @@ _ast2py_funcs = {
 }
 
 #...............................................................................................
-def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)\left
+def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)
 	spt = _ast2spt_funcs [ast.op] (ast)
 
 	if doit and spt.__class__ != sp.Piecewise and callable (getattr (spt, 'doit', None)):
@@ -2992,12 +2993,13 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	return spt
 
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
-_builtins_dict = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
+_builtins_dict               = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
 _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'compile', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
 		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool', 'memoryview',
 		'bytearray', 'bytes', 'classmethod', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
 		'reversed', 'set', 'slice', 'staticmethod', 'str', 'super', 'tuple', 'type', 'zip']
-_ast2spt_func_builtins         = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
+
+_ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
 def _ast2spt_func (ast):
 	kw   = {}
@@ -3173,21 +3175,22 @@ def _spt2ast_integral (spt):
 
 _spt2ast_funcs = {
 	None.__class__: lambda spt: AST.None_,
+	True.__class__: lambda spt: AST.True_,
+	False.__class__: lambda spt: AST.False_,
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
-	sp.Tuple: lambda spt: spt2ast (spt.args),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
+	sp.Tuple: lambda spt: spt2ast (spt.args),
 
-	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Integer: _spt2ast_num,
 	sp.Float: _spt2ast_num,
 	sp.Rational: lambda spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
 	sp.numbers.ImaginaryUnit: lambda ast: AST.I,
 	sp.numbers.Pi: lambda spt: AST.Pi,
 	sp.numbers.Exp1: lambda spt: AST.E,
-	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.numbers.Infinity: lambda spt: AST.Infty,
 	sp.numbers.NegativeInfinity: lambda spt: AST ('-', AST.Infty),
 	sp.numbers.ComplexInfinity: lambda spt: AST.Infty, # not exactly but whatever
+	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Symbol: lambda spt: AST ('@', spt.name),
 
 	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
@@ -3202,11 +3205,11 @@ _spt2ast_funcs = {
 	sp.Add: _spt2ast_add,
 	sp.Mul: _spt2ast_mul,
 	sp.Pow: _spt2ast_pow,
-
-	sp.MatPow: lambda spt: spt2ast (spt.args [0] ** spt.args [1]),
+	sp.MatPow: lambda spt: spt2ast (spt.args [0] ** spt.args [1]), # for some reason MatPow won't doit () for [[0,1],[1,0]]**x
 
 	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
 	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),
+	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_func,
@@ -3218,7 +3221,8 @@ _spt2ast_funcs = {
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,
 
-	sp.matrices.MatrixBase: lambda spt: AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) for row in range (spt.rows))) if not (spt.rows == spt.cols == 1) else spt2ast (spt [0]),
+	sp.matrices.MatrixBase: lambda spt: AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) \
+			for row in range (spt.rows))) if not (spt.rows == spt.cols == 1) else spt2ast (spt [0]),
 }
 
 #...............................................................................................
