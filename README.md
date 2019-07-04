@@ -2,7 +2,8 @@
 
 SymPad is a simple symbolic calculator using SymPy for the math and MathJax for the display in a web browser. It runs as a private http server on your machine and executes the system default browser pointing to itself on startup.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
-Sympad will accept LaTeX math formatting as well as Python expressions, or a mix, and evaluate the result symbolically or numerically. The following are all valid inputs:
+Sympad will accept LaTeX math formatting as well as Python expressions, or a mix, and evaluate the result symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats.
+The following are all valid inputs to SymPad:
 ```
 sin (3\pi / 2)
 cos**-1 x
