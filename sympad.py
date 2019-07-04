@@ -769,7 +769,7 @@ r"""<!DOCTYPE html>
 
 	<br><br>
 	<div align="center">
-	Copyright (c) 2019 Tomasz Pytel. <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')" style="color: #0007">SymPad on GitHub</a>
+	Copyright (c) 2019 Tomasz Pytel. <a href="https://github.com/Pristine-Cat/SymPad" target="_blank" style="color: #0007">SymPad on GitHub</a>
 	</div>
 </div>
 
@@ -1086,7 +1086,7 @@ Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}<
 <div align="center">
 Copyright (c) 2019 Tomasz Pytel, All rights reserved.
 <br><br>
-SymPad on GitHub: <a href="javascript:window.open ('https://github.com/Pristine-Cat/SymPad')">https://github.com/Pristine-Cat/SymPad</a>
+SymPad on GitHub: <a target="_blank" href="https://github.com/Pristine-Cat/SymPad">https://github.com/Pristine-Cat/SymPad</a>
 </div>
 
 </body>
