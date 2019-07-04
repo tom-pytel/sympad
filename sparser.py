@@ -1,11 +1,8 @@
-# TODO: remap \begin{matrix} \end{matrix}
-
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: Change '$' to be more generic function OR variable name escape.
-
-# TODO: 1+1j complex number parsing?
-# TODO: SymPy E and I optional instead of e and i?
+# TODO: SymPy E and I optional instead of e and i? Optional allow Python 1+1j complex?
+# TODO: remap \begin{matrix} \end{matrix}?
 
 # Builds expression tree from text, nodes are nested AST tuples.
 
