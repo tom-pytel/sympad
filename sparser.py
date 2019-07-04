@@ -1,4 +1,3 @@
-# TODO: Greek variable names also without slash.
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: Change '$' to be more generic function OR variable name escape.
@@ -366,12 +365,10 @@ class Parser (lalr1.Parser):
 
 	_PARSER_TOP  = 'expr'
 
-	_GREEK       = r'\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\zeta|\\eta|\\theta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omnicron|\\rho|' \
-			r'\\sigma|\\tau|\\upsilon|\\phi|\\chi|\\psi|\\omega|\\Gamma|\\Delta|\\Theta|\\Lambda|\\Upsilon|\\Xi|\\Phi|\\Pi|\\Psi|\\Sigma|\\Omega'
-
+	_GREEK       = '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK)))
 	_SPECIAL     =  r'\\partial|\\pi|\\infty'
 	_CHAR        = fr'[a-zA-Z]'
-	_PYVAR       = '|'.join (reversed (sorted (AST.Var.PY)))
+	_PYVAR       = '|'.join (reversed (sorted (AST.Var.PY | AST.Var.GREEK)))
 	_TEXTVAR     = fr'\\text\s*\{{\s*({_PYVAR})\s*\}}'
 	_ONEVAR      = fr'{_CHAR}|{_GREEK}'
 	_DSONEVARSP  = fr'(?:(\d)|({_PYVAR})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
@@ -575,7 +572,7 @@ class Parser (lalr1.Parser):
 	def expr_var_4      (self, var, subvar):                                    return AST ('@', f'{var}{subvar}')
 	def expr_var_5      (self, var):                                            return AST ('@', var)
 
-	def var             (self, VAR):
+	def var_2           (self, VAR):
 		return \
 				f'\\partial {VAR.grp [2]}' \
 				if VAR.grp [1] and VAR.grp [1] != 'd' else \
@@ -794,7 +791,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__':
-# 	p = Parser ()
-# 	a = p.parse ('pow (x,')
-# 	print (a)
+if __name__ == '__main__':
+	p = Parser ()
+	a = p.parse ('pi')
+	print (a)

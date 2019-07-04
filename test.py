@@ -154,6 +154,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{1,2}!')), '\\begin{bmatrix} 1 \\\\ 2 \\end{bmatrix}!')
 		self.assertEqual (ast2tex (p ('{{1,2},{3,4}}**x')), '{\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}}^x')
 		self.assertEqual (ast2tex (p ('{{1,2},{3,4}}!')), '\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}!')
+		self.assertEqual (ast2tex (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')), '\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')
 
 	def test_ast2simple (self):
 		self.assertEqual (ast2simple (p ('1')), '1')
@@ -214,8 +215,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2simple (p ('-(-1)**x')), '-(-1)**x')
 		self.assertEqual (ast2simple (p ('{{1,2},{3,4}}**x')), '{{1,2},{3,4}}**x')
 		self.assertEqual (ast2simple (p ('{1,2}!')), '{1,2}!')
-		self.assertEqual (ast2simple (p ('{{1,2},{3,4}}**x')), '{{1,2},{3,4}}**x')
-		self.assertEqual (ast2simple (p ('{{1,2},{3,4}}!')), '{{1,2},{3,4}}!')
+		self.assertEqual (ast2simple (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')), '\\Theta\\Lambda\\xi\\Omega\\alpha\\theta\\Phi\\gamma\\nu\\Gamma\\delta\\rho\\lambda\\iota\\chi\\psi\\Psi\\Xi\\tau\\mu\\sigma\\omega\\kappa\\upsilon\\eta\\Pi\\epsilon\\Delta\\Upsilon\\zeta\\beta\\phi\\Sigma')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -277,6 +277,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('{1,2}!')), 'factorial(Matrix([[1],[2]]))')
 		self.assertEqual (ast2py (p ('{{1,2},{3,4}}**x')), 'Matrix([[1,2],[3,4]])**x')
 		self.assertEqual (ast2py (p ('{{1,2},{3,4}}!')), 'factorial(Matrix([[1,2],[3,4]]))')
+		self.assertEqual (ast2py (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')), 'Theta*Lambda*xi*Omega*alpha*theta*Phi*gamma*nu*Gamma*delta*rho*lambda*iota*chi*psi*Psi*Xi*tau*mu*sigma*omega*kappa*upsilon*eta*Pi*epsilon*Delta*Upsilon*zeta*beta*phi*Sigma')
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -338,6 +339,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('{1,2}!')), ('!', ('mat', ((('#', '1'),), (('#', '2'),)))))
 		self.assertEqual (ast2spt2ast (p ('{{0,1},{1,0}}**x')), ('mat', ((('+', (('*', (('/', ('#', '1'), ('#', '2')), ('^', ('#', '-1'), ('@', 'x')))), ('/', ('#', '1'), ('#', '2')))), ('+', (('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('^', ('#', '-1'), ('@', 'x')))), ('/', ('#', '1'), ('#', '2'))))), (('+', (('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('^', ('#', '-1'), ('@', 'x')))), ('/', ('#', '1'), ('#', '2')))), ('+', (('*', (('/', ('#', '1'), ('#', '2')), ('^', ('#', '-1'), ('@', 'x')))), ('/', ('#', '1'), ('#', '2'))))))))
 		self.assertEqual (ast2spt2ast (p ('{{1,2},{3,4}}!')), ('!', ('mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2spt2ast (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')), ('*', (('@', '\\Delta'), ('@', '\\Gamma'), ('@', '\\Lambda'), ('@', '\\Omega'), ('@', '\\Phi'), ('@', '\\Pi'), ('@', '\\Psi'), ('@', '\\Sigma'), ('@', '\\Theta'), ('@', '\\Upsilon'), ('@', '\\Xi'), ('@', '\\alpha'), ('@', '\\beta'), ('@', '\\chi'), ('@', '\\delta'), ('@', '\\epsilon'), ('@', '\\eta'), ('@', '\\gamma'), ('@', '\\iota'), ('@', '\\kappa'), ('@', '\\lambda'), ('@', '\\mu'), ('@', '\\nu'), ('@', '\\omega'), ('@', '\\phi'), ('@', '\\psi'), ('@', '\\rho'), ('@', '\\sigma'), ('@', '\\tau'), ('@', '\\theta'), ('@', '\\upsilon'), ('@', '\\xi'), ('@', '\\zeta'))))
 
 _EXPRESSIONS = """
 1
@@ -399,6 +401,7 @@ d^3/dx^2dy x^2y**2z
 {1,2}!
 {{0,1},{1,0}}**x
 {{1,2},{3,4}}!
+\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma
 """
 
 if __name__ == '__main__':
