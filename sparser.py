@@ -7,8 +7,6 @@
 # TODO: 1+1j complex number parsing?
 # TODO: SymPy E and I optional instead of e and i?
 
-# FUTURE: verify vars in expr func remaps
-
 # Builds expression tree from text, nodes are nested AST tuples.
 
 import ast as py_ast
@@ -140,22 +138,24 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 	return ast
 
-def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
+def _expr_func (iparm, *args, strip_paren = 0): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	if args [iparm].is_fact:
 		if args [iparm].fact.is_paren:
-			return AST ('!', AST (*(args [:iparm] + (args [iparm].fact,) + args [iparm + 1:])))
+			return AST ('!', args [:iparm] + (args [iparm].fact.strip_paren (strip_paren),) + args [iparm + 1:])
 
 	elif args [iparm].is_pow:
 		if args [iparm].base.is_paren:
-			return AST ('^', AST (*(args [:iparm] + (args [iparm].base,) + args [iparm + 1:])), args [iparm].exp)
+			return AST ('^', args [:iparm] + (args [iparm].base.strip_paren (strip_paren),) + args [iparm + 1:], args [iparm].exp)
 
-	return AST (*args)
+	return AST (*(args [:iparm] + (args [iparm].strip_paren (strip_paren),) + args [iparm + 1:]))
 
 def _expr_func_remap (_remap_func, ast): # rearrange ast tree for a given function remapping like 'Derivative' or 'Limit'
-	expr = _expr_func (1, None, ast)
-	ast  = _remap_func (expr [1].strip_paren () if expr.op is None else expr [1] [1].strip_paren ())
+	expr = _expr_func (1, None, ast, strip_paren = None) # strip all parentheses
 
-	return ast if expr.op is None else AST (expr.op, ast, *expr [2:])
+	if expr.op is None:
+		return _remap_func (expr [1])
+	else:
+		return AST (expr.op, _remap_func (expr [1] [1]), *expr [2:])
 
 _remap_func_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
@@ -436,12 +436,12 @@ class Parser (lalr1.Parser):
 	])
 
 	_FUNC_AST_REMAP = {
-		'Abs'       : lambda expr: _expr_func (1, '|', expr),
-		'abs'       : lambda expr: _expr_func (1, '|', expr),
+		'Abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
+		'abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
 		'Derivative': lambda expr: _expr_func_remap (_remap_func_Derivative, expr),
 		'diff'      : lambda expr: _expr_func_remap (_remap_func_Derivative, expr),
-		'exp'       : lambda expr: _expr_func (2, '^', ('@', 'e'), expr),
-		'factorial' : lambda expr: _expr_func (1, '!', expr),
+		'exp'       : lambda expr: _expr_func (2, '^', ('@', 'e'), expr, strip_paren = 1),
+		'factorial' : lambda expr: _expr_func (1, '!', expr, strip_paren = 1),
 		'Integral'  : lambda expr: _expr_func_remap (_remap_func_Integral, expr),
 		'integrate' : lambda expr: _expr_func_remap (_remap_func_Integral, expr),
 		'Limit'     : lambda expr: _expr_func_remap (_remap_func_Limit, expr),
@@ -797,7 +797,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('pow (x,')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('pow (x,')
+# 	print (a)

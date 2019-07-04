@@ -9,6 +9,9 @@ from sym import *
 parser = Parser ()
 p      = lambda s: parser.parse (s) [0]
 
+def ast2spt2ast (ast):
+	return spt2ast (ast2spt (ast, doit = True))
+
 class Test (unittest.TestCase):
 	def test_sparser (self):
 		self.assertEqual (p ('1'), AST ('#', '1'))
@@ -148,6 +151,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('(-1)**x')), '\\left(-1 \\right)^x')
 		self.assertEqual (ast2tex (p ('-(-1)**x')), '-\\left(-1 \\right)^x')
 		self.assertEqual (ast2tex (p ('{{1,2},{3,4}}**x')), '{\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}}^x')
+		self.assertEqual (ast2tex (p ('{1,2}!')), '\\begin{bmatrix} 1 \\\\ 2 \\end{bmatrix}!')
+		self.assertEqual (ast2tex (p ('{{1,2},{3,4}}**x')), '{\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}}^x')
+		self.assertEqual (ast2tex (p ('{{1,2},{3,4}}!')), '\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}!')
 
 	def test_ast2simple (self):
 		self.assertEqual (ast2simple (p ('1')), '1')
@@ -207,6 +213,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2simple (p ('(-1)**x')), '(-1)**x')
 		self.assertEqual (ast2simple (p ('-(-1)**x')), '-(-1)**x')
 		self.assertEqual (ast2simple (p ('{{1,2},{3,4}}**x')), '{{1,2},{3,4}}**x')
+		self.assertEqual (ast2simple (p ('{1,2}!')), '{1,2}!')
+		self.assertEqual (ast2simple (p ('{{1,2},{3,4}}**x')), '{{1,2},{3,4}}**x')
+		self.assertEqual (ast2simple (p ('{{1,2},{3,4}}!')), '{{1,2},{3,4}}!')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -265,59 +274,70 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('-{-1}**x')), '-(-1)**x')
 		self.assertEqual (ast2py (p ('(-1)**x')), '(-1)**x')
 		self.assertEqual (ast2py (p ('-(-1)**x')), '-(-1)**x')
+		self.assertEqual (ast2py (p ('{1,2}!')), 'factorial(Matrix([[1],[2]]))')
 		self.assertEqual (ast2py (p ('{{1,2},{3,4}}**x')), 'Matrix([[1,2],[3,4]])**x')
+		self.assertEqual (ast2py (p ('{{1,2},{3,4}}!')), 'factorial(Matrix([[1,2],[3,4]]))')
 
-	# def test_ast2spt (self):
-	# 	self.assertEqual (ast2spt (p ('1')), r'')
-	# 	self.assertEqual (ast2spt (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), r'')
-	# 	self.assertEqual (ast2spt (p ('x')), r'')
-	# 	self.assertEqual (ast2spt (p ('-1')), r'')
-	# 	self.assertEqual (ast2spt (p ('-x')), r'')
-	# 	self.assertEqual (ast2spt (p ('(x)')), r'')
-	# 	self.assertEqual (ast2spt (p ('(x,)')), r'')
-	# 	self.assertEqual (ast2spt (p ('(x,y)')), r'')
-	# 	self.assertEqual (ast2spt (p ('[x]')), r'')
-	# 	self.assertEqual (ast2spt (p ('[x,y]')), r'')
-	# 	self.assertEqual (ast2spt (p ('"x\\x20\\n"')), r'')
-	# 	self.assertEqual (ast2spt (p ('|x|')), r'')
-	# 	self.assertEqual (ast2spt (p ('x!')), r'')
-	# 	self.assertEqual (ast2spt (p ('x+y')), r'')
-	# 	self.assertEqual (ast2spt (p ('x-y')), r'')
-	# 	self.assertEqual (ast2spt (p ('x*y')), r'')
-	# 	self.assertEqual (ast2spt (p ('x/y')), r'')
-	# 	self.assertEqual (ast2spt (p ('x^y')), r'')
-	# 	self.assertEqual (ast2spt (p ('log x')), r'')
-	# 	self.assertEqual (ast2spt (p ('log (x)')), r'')
-	# 	self.assertEqual (ast2spt (p ('log_2 x')), r'')
-	# 	self.assertEqual (ast2spt (p ('log_2 (x)')), r'')
-	# 	self.assertEqual (ast2spt (p ('sqrt x')), r'')
-	# 	self.assertEqual (ast2spt (p ('sqrt (x)')), r'')
-	# 	self.assertEqual (ast2spt (p ('sqrt[3] x')), r'')
-	# 	self.assertEqual (ast2spt (p ('sqrt[3] (x)')), r'')
-	# 	self.assertEqual (ast2spt (p ('sin x')), r'')
-	# 	self.assertEqual (ast2spt (p ('sin^2 x')), r'')
-	# 	self.assertEqual (ast2spt (p ('sin (x)')), r'')
-	# 	self.assertEqual (ast2spt (p ('sin (x)^2')), r'')
-	# 	self.assertEqual (ast2spt (p ('sin**-1 x')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\lim_{x\\to0} 1/x')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\lim_{x\\to0^+} 1/x')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\lim_{x\\to0**-} 1/x')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\sum_{n=0}^\\infty x^n/n!')), r'')
-	# 	self.assertEqual (ast2spt (p ('d/dx x**2y**2z')), r'')
-	# 	self.assertEqual (ast2spt (p ('d^2/dx^2 x^2y**2z')), r'')
-	# 	self.assertEqual (ast2spt (p ('d^3/dx^2dy x^2y**2z')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\partial^4/\\partialx^2\\partial y\\partialz x^2y**2z')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\int dx')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\int x dx')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\int_0^1 x dx')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\int_0^1 \\int y dy dx')), r'')
-	# 	self.assertEqual (ast2spt (p ('{1,}')), r'')
-	# 	self.assertEqual (ast2spt (p ('{1,2}')), r'')
-	# 	self.assertEqual (ast2spt (p ('{{1,},}')), r'')
-	# 	self.assertEqual (ast2spt (p ('{{1,},{2,}}')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\left[\\begin{matrix} 1 \\end{matrix}\\right]')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}')), r'')
-	# 	self.assertEqual (ast2spt (p ('\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}')), r'')
+	def test_ast2spt2ast (self):
+		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
+		self.assertEqual (ast2spt2ast (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
+		self.assertEqual (ast2spt2ast (p ('x')), ('@', 'x'))
+		self.assertEqual (ast2spt2ast (p ('-1')), ('#', '-1'))
+		self.assertEqual (ast2spt2ast (p ('-x')), ('-', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('(x)')), ('@', 'x'))
+		self.assertEqual (ast2spt2ast (p ('(x,)')), ('(', (',', (('@', 'x'),))))
+		self.assertEqual (ast2spt2ast (p ('(x,y)')), ('(', (',', (('@', 'x'), ('@', 'y')))))
+		self.assertEqual (ast2spt2ast (p ('[x]')), ('[', (('@', 'x'),)))
+		self.assertEqual (ast2spt2ast (p ('[x,y]')), ('[', (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('"x\\x20\\n"')), ('x \n', 'x \n'))
+		self.assertEqual (ast2spt2ast (p ('|x|')), ('|', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('x!')), ('!', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('x+y')), ('+', (('@', 'y'), ('@', 'x'))))
+		self.assertEqual (ast2spt2ast (p ('x-y')), ('+', (('-', ('@', 'y')), ('@', 'x'))))
+		self.assertEqual (ast2spt2ast (p ('x*y')), ('*', (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('x/y')), ('/', ('@', 'x'), ('@', 'y')))
+		self.assertEqual (ast2spt2ast (p ('x^y')), ('^', ('@', 'x'), ('@', 'y')))
+		self.assertEqual (ast2spt2ast (p ('log x')), ('log', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('log (x)')), ('log', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('log_2 x')), ('/', ('log', ('@', 'x')), ('log', ('#', '2'))))
+		self.assertEqual (ast2spt2ast (p ('log_2 (x)')), ('/', ('log', ('@', 'x')), ('log', ('#', '2'))))
+		self.assertEqual (ast2spt2ast (p ('sqrt x')), ('sqrt', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('sqrt (x)')), ('sqrt', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('sqrt[3] x')), ('^', ('@', 'x'), ('/', ('#', '1'), ('#', '3'))))
+		self.assertEqual (ast2spt2ast (p ('sqrt[3] (x)')), ('^', ('@', 'x'), ('/', ('#', '1'), ('#', '3'))))
+		self.assertEqual (ast2spt2ast (p ('sin x')), ('func', 'sin', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('sin^2 x')), ('^', ('func', 'sin', ('@', 'x')), ('#', '2')))
+		self.assertEqual (ast2spt2ast (p ('sin (x)')), ('func', 'sin', ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('sin (x)^2')), ('^', ('func', 'sin', ('@', 'x')), ('#', '2')))
+		self.assertEqual (ast2spt2ast (p ('sin ((x)^2)')), ('func', 'sin', ('^', ('@', 'x'), ('#', '2'))))
+		self.assertEqual (ast2spt2ast (p ('sin**-1 x')), ('func', 'asin', ('@', 'x')))
+		self.assertRaises (ValueError, ast2spt2ast, p ('\\lim_{x\\to0} 1/x'))
+		self.assertEqual (ast2spt2ast (p ('\\lim_{x\\to0^+} 1/x')), ('@', '\\infty'))
+		self.assertEqual (ast2spt2ast (p ('\\lim_{x\\to0**-} 1/x')), ('-', ('@', '\\infty')))
+		self.assertEqual (ast2spt2ast (p ('\\sum_{n=0}^\\infty x^n/n!')), ('^', ('@', 'e'), ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('d/dx x**2y**2z')), ('*', (('#', '2'), ('@', 'x'), ('@', 'z'), ('^', ('@', 'y'), ('#', '2')))))
+		self.assertEqual (ast2spt2ast (p ('d^2/dx^2 x^2y**2z')), ('*', (('#', '2'), ('@', 'z'), ('^', ('@', 'y'), ('#', '2')))))
+		self.assertEqual (ast2spt2ast (p ('d^3/dx^2dy x^2y**2z')), ('*', (('#', '4'), ('@', 'y'), ('@', 'z'))))
+		self.assertEqual (ast2spt2ast (p ('\\partial^4/\\partialx^2\\partial y\\partialz x^2y**2z')), ('*', (('#', '4'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('\\int dx')), ('@', 'x'))
+		self.assertEqual (ast2spt2ast (p ('\\int x dx')), ('*', (('/', ('#', '1'), ('#', '2')), ('^', ('@', 'x'), ('#', '2')))))
+		self.assertEqual (ast2spt2ast (p ('\\int_0^1 x dx')), ('/', ('#', '1'), ('#', '2')))
+		self.assertEqual (ast2spt2ast (p ('\\int_0^1 \\int y dy dx')), ('*', (('/', ('#', '1'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')))))
+		self.assertEqual (ast2spt2ast (p ('{1,}')), ('#', '1'))
+		self.assertEqual (ast2spt2ast (p ('{1,2}')), ('mat', ((('#', '1'),), (('#', '2'),))))
+		self.assertEqual (ast2spt2ast (p ('{{1,},}')), ('#', '1'))
+		self.assertEqual (ast2spt2ast (p ('{{1,},{2,}}')), ('mat', ((('#', '1'),), (('#', '2'),))))
+		self.assertEqual (ast2spt2ast (p ('\\left[\\begin{matrix} 1 \\end{matrix}\\right]')), ('#', '1'))
+		self.assertEqual (ast2spt2ast (p ('\\begin{vmatrix} 1 & 2 \\\\ \\end{vmatrix}')), ('mat', ((('#', '1'), ('#', '2')),)))
+		self.assertEqual (ast2spt2ast (p ('\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}')), ('mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4')))))
+		self.assertEqual (ast2spt2ast (p ('-1**x')), ('#', '-1'))
+		self.assertEqual (ast2spt2ast (p ('{-1}**x')), ('^', ('#', '-1'), ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('-{-1}**x')), ('-', ('^', ('#', '-1'), ('@', 'x'))))
+		self.assertEqual (ast2spt2ast (p ('(-1)**x')), ('^', ('#', '-1'), ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('-(-1)**x')), ('-', ('^', ('#', '-1'), ('@', 'x'))))
+		self.assertEqual (ast2spt2ast (p ('{1,2}!')), ('!', ('mat', ((('#', '1'),), (('#', '2'),)))))
+		self.assertEqual (ast2spt2ast (p ('{{0,1},{1,0}}**x')), ('mat', ((('+', (('*', (('/', ('#', '1'), ('#', '2')), ('^', ('#', '-1'), ('@', 'x')))), ('/', ('#', '1'), ('#', '2')))), ('+', (('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('^', ('#', '-1'), ('@', 'x')))), ('/', ('#', '1'), ('#', '2'))))), (('+', (('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('^', ('#', '-1'), ('@', 'x')))), ('/', ('#', '1'), ('#', '2')))), ('+', (('*', (('/', ('#', '1'), ('#', '2')), ('^', ('#', '-1'), ('@', 'x')))), ('/', ('#', '1'), ('#', '2'))))))))
+		self.assertEqual (ast2spt2ast (p ('{{1,2},{3,4}}!')), ('!', ('mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4'))))))
 
 _EXPRESSIONS = """
 1
@@ -376,7 +396,9 @@ d^3/dx^2dy x^2y**2z
 -{-1}**x
 (-1)**x
 -(-1)**x
-{{1,2},{3,4}}**x
+{1,2}!
+{{0,1},{1,0}}**x
+{{1,2},{3,4}}!
 """
 
 if __name__ == '__main__':
@@ -385,15 +407,18 @@ if __name__ == '__main__':
 	import sys
 
 	if len (sys.argv) == 1:
-		subprocess.run ([sys.executable, '-m', 'unittest', os.path.basename (sys.argv [0])])
+		subprocess.run ([sys.executable, '-m', 'unittest', '-v', os.path.basename (sys.argv [0])])
 		sys.exit (0)
 
 	elif sys.argv [1] == '--print':
 		exprs = [s.strip () for s in _EXPRESSIONS.strip ().split ('\n')]
 
-		for func in (ast2tex, ast2simple, ast2py):
+		for func in (ast2tex, ast2simple, ast2py, ast2spt2ast):
 			print ()
 			print (f'def test_{func.__name__} (self):')
 
 			for expr in exprs:
-				print (f'self.assertEqual ({func.__name__} (p ({expr!r})), {func (p (expr))!r})')
+				try:
+					print (f'self.assertEqual ({func.__name__} (p ({expr!r})),', repr (func (p (expr))).replace ('\n', '') + ')')
+				except Exception as e:
+					print (f'self.assertRaises ({e.__class__.__name__}, {func.__name__}, p ({expr!r}))')

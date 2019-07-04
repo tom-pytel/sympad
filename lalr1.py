@@ -144,7 +144,7 @@ class Parser:
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
 		stack  = [State (0, None, None)] # [(stidx, symbol, reduction) or (stidx, token), ...]
 		stidx  = 0
-		rederr = None # reduction function raised SyntaxError
+		rederr = None # reduction function raised exception (SyntaxError or Incomplete)
 
 		while 1:
 			if not rederr:
@@ -166,12 +166,14 @@ class Parser:
 
 				elif self.parse_error ():
 					tokidx, stidx = self.tokidx, self.stidx
+
 					continue
 
 				elif not cstack:
 					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
+					# TODO: re-raise exception from rederr if present
 					raise SyntaxError ( \
 						'unexpected end of input' if tok == '$end' else \
 						f'invalid token {tok.text!r}' if tok == '$err' else \
@@ -201,7 +203,8 @@ class Parser:
 					red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
 
 				except SyntaxError as e:
-					rederr = e or True
+					rederr = e or True # why did I do this?
+
 					continue
 
 				except Incomplete as e:
