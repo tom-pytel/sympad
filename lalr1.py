@@ -152,10 +152,10 @@ class Parser:
 				act, conf = terms [stidx].get (tok, (None, None))
 
 			if rederr or act is None:
-				rederr = None
+				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr = \
+						tokens, tokidx, cstack, stack, stidx, tok, rederr
 
-				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok = \
-						tokens, tokidx, cstack, stack, stidx, tok
+				rederr = None
 
 				if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1] [1] == rules [0] [1]:
 					if not has_parse_success:
@@ -205,7 +205,7 @@ class Parser:
 					continue
 
 				except Incomplete as e:
-					rederr = True
+					rederr = e
 					red    = e.red
 
 				if rnlen:
