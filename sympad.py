@@ -164,7 +164,9 @@ body {
 
 	'script.js': # script.js
 
-r"""// TODO: Change how left/right arrows interact with autocomplete.
+r"""// TODO: Multiple spaces screw up overlay text position.
+// TODO: Change how left/right arrows interact with autocomplete.
+
 // TODO: Warning messages on evaluate when SymPy object not understood?
 // TODO: Move last evaluated expression '_' substitution here from the server side?
 // TODO: Arrow keys in Edge?
@@ -623,7 +625,7 @@ function inputKeydown (e) {
 		if (JQInput.get (0).selectionStart === JQInput.val ().length && Autocomplete.length) {
 			let text = JQInput.val ();
 
-			if (Autocomplete [0] === '\\left' || Autocomplete [0] === '\\right') {
+			if (Autocomplete [0] === ' \\right') {
 				text         = text + Autocomplete.slice (0, 2).join ('');
 				Autocomplete = Autocomplete.slice (2);
 
@@ -890,7 +892,7 @@ constant "<b>i</b>" as "<b>1 + 2i</b>".
 
 <p>
 Variable names mostly follow LaTeX convention, they are single latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", ... or
-single greek letters preceded by a backslash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
+single greek letters preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
 "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. The whole top-level namespace of the
 SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$, as
 well as any other variables present at the top level. Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
@@ -931,16 +933,6 @@ Standard Python bracket enclosed potentially nested lists which like strings exi
 
 <h2>Operations</h2>
 
-<h4>Parentheses</h4>
-
-<p>
-Explicit "<b>( )</b>" or implicit curly "<b>{ }</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
-delineate an expression as an input to a function. They may be used interchangeably for single expressions, the only difference being that the implicit
-version is not drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions
-in general and always when calling functions which take multiple parameters like "<b>max(1,2,3)</b>". The curly braces are used as shorthand for vectors
-and matrices if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
-</p>
-
 <h4>Addition and Multiplication</h4>
 
 <p>
@@ -976,8 +968,8 @@ by "<b>\log_b x</b>" = $\log_b x$, "<b>log_{10}(1000)</b>" = $\log_{10} {1000}$ 
 <h4>Roots</h4>
 
 <p>
-The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or
-without the backslash. The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
+The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or without the slash.
+The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
 </p>
 
 <h4>Limits</h4>
@@ -1021,26 +1013,35 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 <h4>(In)equalities</h4>
 
 <p>
-Are parsed from the standard Python "<b> =, ==, !=, &lt;, &lt;=, &gt;, &gt;= </b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" specifiers.
+Are parsed from the standard Python "<b>=, ==, !=, &lt;, &lt;=, &gt;, &gt;=</b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" symbols.
 Currently only a single comparison is allowed so an expression like "<b>0 &lt;= x &lt;= 2</b>" is not valid.
 Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent and mapped to the same SymPy "<b>Eq</b>" object but the single "<b>=</b>" operator has a higher precedence than the others.
+</p>
+
+<h4>Parentheses</h4>
+
+<p>
+Explicit "<b>( )</b>" or implicit curly "<b>{ }</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
+delineate an expression as an input to a function. They may be used interchangeably for single expressions, the only difference being that the implicit
+version is not drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions
+in general and always when calling functions which take multiple parameters like "<b>max(1,2,3)</b>". The curly braces are used as shorthand for vectors
+and matrices if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
 </p>
 
 <h2>Functions</h2>
 
 <p>
 Almost all SymPy functions are available directly just by typing their name, the exceptions being single letter functions like "<b>N</b>" or "<b>S</b>".
-These can be executed using the escape character "<b>$</b>" before the name. To numerically evaluate the value of "<b>sin (2)</b>" type in
-"<b>$N (sin (2))</b>". Functions may take multiple comma-separated arguments with optional keyword arguments as well. The keyword argument identifier
-implementation is hacked into the grammar so if a keyword name can not be entered correctly (due to underscores usually) then try entering the identifier
-name as an explicit string such as "<b> 'this_name_has_too__many___underscores' = value </b>".
+These can be executed using the escape character "<b>$</b>" before the name.
+To numerically evaluate the value of "<b>sin (2)</b>" type in "<b>$N (sin (2))</b>".
+Functions may take multiple comma-separated arguments with optional keyword arguments as well. The keyword argument identifier
+implementation is hacked into the grammar so if a keyword name can not be entered correctly (due to underscores) then try entering the identifier name as an explicit string such as "<b> 'this_name_has_too__many___underscores' = value </b>".
 </p><p>
-The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading backslash:
-"<b>sin</b>", "<b>\coth</b>". The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions
-take a slash and and are spelled out "<b>\arctan</b>". The inverses may also be specified using the common mathematical syntax "<b>\tan^{-1}x</b>" or
-"<b>cos**-1 x</b>".
+The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
+The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
+The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
 </p><p>
-This form of exponentiation is extended as an input shortcut to all functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
+This last form of exponentiating a function is extended as an input shortcut to all functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
 Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
 Functions don't technically require explicit parentheses in order to allow quick entry like "<b>sqrt2</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
@@ -1048,12 +1049,12 @@ Functions which take more than one parameter always require explicit parentheses
 </p><p>
 Most functions which have an explicit mathematical display syntax are translated on the fly for correct rendering.
 These include the functions "<b>abs/Abs (x)</b>" which are translated to the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>".
-Other functions which are translated: "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>ln</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>".
+Other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>".
 </p><p>
 The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar. Function names specifically recognized by the grammar are only those specified in the SymPy module and a few builtins.
-When functions are entered using the "<b>$</b>" character then many more __builtins__ functions may be accessed, for whatever reason, whether useful or not.
-Try entering "<b>$print ('Hello World...')</b>" and have a look at the server window.
-Note that only the non-dangerous __builtins__ functions are specifically included in this list, functions like "<b>eval</b>" or "<b>exec</b>" and many more have been left out.
+When functions are entered using the "<b>$</b>" character then many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
+Try entering "<b>$print ('Hello World...')</b>" and have a look at the server output.
+Note that only the non-dangerous __builtin__ functions are specifically included in this list, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
 </p>
 
 <h2>Notes</h2>
@@ -1072,13 +1073,13 @@ it represents the last expression successfully evaluated. To see this in action 
 There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the
 SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python copy string. This may
 or may not allow you to paste the Python string back into SymPad to continue working with the result. A single-click copy of the result will have the
-element which was not understood replaced with "<b>nan</b>".
+element(s) which was/were not understood replaced with "<b>nan</b>".
 </p>
 
 <h4>Future</h4>
 
 <p>
-Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, stateful variables, assumptions / hints, piecewise expressions, long Python variable names, importing modules to allow personal code execution, graphical plots...
+Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, stateful variables, importing modules to allow custom code execution, assumptions / hints, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)...
 </p>
 
 <br><br><br>
@@ -1697,11 +1698,11 @@ class AST_Mat (AST):
 	def _init (self, mat):
 		self.mat = mat
 
-	# def _rows (self):
-	# 	return len (self.mat)
+	def _rows (self):
+		return len (self.mat)
 
-	# def _cols (self):
-	# 	return len (self.mat [0]) if self.mat else 0
+	def _cols (self):
+		return len (self.mat [0]) if self.mat else 0
 
 #...............................................................................................
 _AST_OP2CLS = {
@@ -1746,16 +1747,17 @@ AST.Infty   = AST ('@', '\\infty')
 AST.None_   = AST ('@', '\\text{None}')
 AST.True_   = AST ('@', '\\text{True}')
 AST.False_  = AST ('@', '\\text{False}')
-AST.NaN     = AST ('@', '\\text{nan}')# TODO: remap Matrix
+AST.NaN     = AST ('@', '\\text{nan}')
 # TODO: remap \begin{matrix} \end{matrix}
+# TODO: empty \begin{matrix} \end{matrix}?
 
 # TODO: Change '$' to be more generic function OR variable name escape.
 # TODO: Change vars to internal short representation?
 # TODO: 1+1j complex number parsing?
 
-# Builds expression tree from text, nodes are nested AST tuples.
-
 # FUTURE: verify vars in expr func remaps
+
+# Builds expression tree from text, nodes are nested AST tuples.
 
 import ast as py_ast
 from collections import OrderedDict
@@ -1887,7 +1889,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	if args [iparm].is_fact:
 		if args [iparm].fact.is_paren:
-			return AST ('!', AST (*(args [:iparm] + (args [iparm].fact.paren,) + args [iparm + 1:])))
+			return AST ('!', AST (*(args [:iparm] + (args [iparm].fact,) + args [iparm + 1:])))
 
 	elif args [iparm].is_pow:
 		if args [iparm].base.is_paren:
@@ -1896,10 +1898,10 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 	return AST (*args)
 
 def _expr_func_remap (_remap_func, ast): # rearrange ast tree for a given function remapping like 'Derivative' or 'Limit'
-	expr = _expr_func (1, '(', ast)
-	ast  = _remap_func (expr.paren if expr.is_paren else expr [1].paren)
+	expr = _expr_func (1, None, ast)
+	ast  = _remap_func (expr [1].strip_paren () if expr.op is None else expr [1] [1].strip_paren ())
 
-	return AST (expr.op, ast, *expr [2:]) if not expr.is_paren else ast
+	return ast if expr.op is None else AST (expr.op, ast, *expr [2:])
 
 _remap_func_lim_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
@@ -2006,11 +2008,37 @@ def _remap_func_pow (ast):
 
 	raise SyntaxError ('too many parameters')
 
+def _remap_func_mat (ast):
+	if ast.is_bracket and ast.brackets:
+		if not ast.brackets [0].is_bracket: # single layer or brackets, column matrix?
+			return AST ('mat', tuple ((e,) for e in ast.brackets))
+
+		elif ast.brackets [0].brackets:
+			rows = [ast.brackets [0].brackets]
+			cols = len (rows [0])
+
+			for row in ast.brackets [1 : -1]:
+				if len (row.brackets) != cols:
+					break
+
+				rows.append (row.brackets)
+
+			else:
+				l = len (ast.brackets [-1].brackets)
+
+				if l <= cols:
+					if len (ast.brackets) > 1:
+						rows.append (ast.brackets [-1].brackets + (AST.VarNull,) * (cols - l))
+
+					return AST ('mat', tuple (rows))
+
+	return AST ('func', 'Matrix', ast)
+
 def _expr_curly (ast): # convert curly expression to vector or matrix if appropriate
 	if ast.op != ',':
 		return ast
 	elif not ast.commas: # empty {}?
-		return AST.None_
+		return AST.VarNull
 
 	c = sum (bool (c.is_vec) for c in ast.commas)
 
@@ -2152,9 +2180,10 @@ class Parser (lalr1.Parser):
 		'integrate' : lambda expr: _expr_func_remap (_remap_func_intg, expr),
 		'Limit'     : lambda expr: _expr_func_remap (_remap_func_lim, expr),
 		'limit'     : lambda expr: _expr_func_remap (_remap_func_lim, expr),
+		'Matrix'    : lambda expr: _expr_func_remap (_remap_func_mat, expr),
 		'ln'        : lambda expr: _expr_func (1, 'log', expr),
-		'pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
 		'Pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
+		'pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
 		'Sum'       : lambda expr: _expr_func_remap (_remap_func_sum, expr),
 	}
 
@@ -2210,10 +2239,9 @@ class Parser (lalr1.Parser):
 	def expr_func_5     (self, FUNC, expr_func_arg):
 		func  = f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
 				FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
-		args  = expr_func_arg.strip_paren ()
 		remap = self._FUNC_AST_REMAP.get (func)
 
-		return remap (args) if remap else _expr_func (2, 'func', func, args)
+		return remap (expr_func_arg) if remap else _expr_func (2, 'func', func, expr_func_arg)
 
 	def expr_func_6     (self, FUNC, expr_super, expr_func_arg):
 		ast = self.expr_func_5 (FUNC, expr_func_arg)
@@ -2270,7 +2298,7 @@ class Parser (lalr1.Parser):
 	def expr_bracket_3  (self, expr_term):                                      return expr_term
 
 	def expr_term_1     (self, STR):                                            return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1]))
-	def expr_term_2     (self, SUB):                                            return AST ('@', '_')
+	def expr_term_2     (self, SUB):                                            return AST ('@', '_') # for last expression variable
 	def expr_term_3     (self, expr_var):                                       return expr_var
 	def expr_term_4     (self, expr_num):                                       return expr_num
 
@@ -2310,13 +2338,13 @@ class Parser (lalr1.Parser):
 		'SUB1'               : 'SUB',
 		'FRAC2'              : 'FRAC',
 		'FRAC1'              : 'FRAC',
-		'expr_sub'           : 'SUB',
+		# 'expr_sub'           : 'SUB',
 		'expr_super'         : 'CARET',
 		'caret_or_doublestar': 'CARET',
 	}
 
 	_AUTOCOMPLETE_CONTINUE = {
-		'RIGHT'      : '\\right',
+		'RIGHT'      : ' \\right',
 		'COMMA'      : ',',
 		'PARENR'     : ')',
 		'CURLYR'     : '}',
@@ -2343,6 +2371,7 @@ class Parser (lalr1.Parser):
 
 				if self.autocompleting and sym in self._AUTOCOMPLETE_CONTINUE:
 					self.autocomplete.append (self._AUTOCOMPLETE_CONTINUE [sym])
+					print (self.autocomplete)
 				else:
 					self.autocompleting = False
 
@@ -2472,7 +2501,7 @@ class Parser (lalr1.Parser):
 		return True # continue parsing if conflict branches remain to find best resolution
 
 	def parse (self, text):
-		self.parse_results  = [] # [(reduct, erridx, autocomplete), ...]
+		self.parse_results  = [] # [(reduction, erridx, autocomplete), ...]
 		self.autocomplete   = []
 		self.autocompleting = True
 		self.erridx         = None
@@ -2498,7 +2527,7 @@ class sparser: # for single script
 
 # if __name__ == '__main__':
 # 	p = Parser ()
-# 	a = p.parse ('Matrix (([[1')
+# 	a = p.parse ('\\int')
 # 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
@@ -2698,7 +2727,7 @@ _ast2tex_funcs = {
 	'diff': _ast2tex_diff,
 	'intg': _ast2tex_intg,
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
-	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + ' \\end{bmatrix}',
+	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 	'???': lambda ast: ast.tex,
 }
 
@@ -2841,7 +2870,7 @@ _ast2simple_funcs = {
 	'diff': _ast2simple_diff,
 	'intg': _ast2simple_intg,
 	'vec': lambda ast: f'{{{",".join (ast2simple (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
-	'mat': lambda ast: '{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}',
+	'mat': lambda ast: ('{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
 	'???': lambda ast: 'nan',
 }
 

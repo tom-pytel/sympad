@@ -1,6 +1,7 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
+# TODO: fix nested identical Piecewise returned from SymPy like for Sum (x**n/x, (n, 0, oo)).doit ()
 
 import re
 import sympy as sp
@@ -14,10 +15,10 @@ _SYMPY_FLOAT_PRECISION = None
 _rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
 
 #...............................................................................................
-class AST_Unknown: # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
+class AST_Unknown (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = '???'
 
-	def __init__ (self, tex, py):
+	def _init (self, tex, py):
 		self.tex, self.py = tex, py
 
 def _ast_is_neg (ast):
