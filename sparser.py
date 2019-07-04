@@ -1,4 +1,4 @@
-# TODO: remap Matrix
+# TODO: sin ((x)**2), Matrix (([1,2,3])**2)
 # TODO: remap \begin{matrix} \end{matrix}
 
 # TODO: Change '$' to be more generic function OR variable name escape.
@@ -151,7 +151,7 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 
 def _expr_func_remap (_remap_func, ast): # rearrange ast tree for a given function remapping like 'Derivative' or 'Limit'
 	expr = _expr_func (1, '(', ast)
-	ast  = _remap_func (expr.paren if expr.is_paren else expr [1].paren)
+	ast  = _remap_func (expr.paren if expr.is_paren else expr [1].strip_paren ())
 
 	return AST (expr.op, ast, *expr [2:]) if not expr.is_paren else ast
 
@@ -260,21 +260,48 @@ def _remap_func_pow (ast):
 
 	raise SyntaxError ('too many parameters')
 
+def _remap_func_mat (ast):
+	if ast.is_bracket and ast.brackets:
+		if not ast.brackets [0].is_bracket: # single layer or brackets, column matrix?
+			print(tuple ((e,) for e in ast.brackets))
+			return AST ('mat', tuple ((e,) for e in ast.brackets))
+
+		elif ast.brackets [0].brackets:
+			rows = [ast.brackets [0].brackets]
+			cols = len (rows [0])
+
+			for row in ast.brackets [1 : -1]:
+				if len (row.brackets) != cols:
+					break
+
+				rows.append (row.brackets)
+
+			else:
+				l = len (ast.brackets [-1].brackets)
+
+				if l <= cols:
+					if len (ast.brackets) > 1:
+						rows.append (ast.brackets [-1].brackets + (AST.VarNull,) * (cols - l))
+
+					return AST ('mat', tuple (rows))
+
+	return AST ('func', 'Matrix', ast)
+
 def _expr_curly (ast): # convert curly expression to vector or matrix if appropriate
 	if ast.op != ',':
 		return ast
 	elif not ast.commas: # empty {}?
-		return AST.None_
+		return AST.VarNull
 
 	c = sum (bool (c.is_vec) for c in ast.commas)
 
 	if not c:
 		return AST ('vec', ast.commas)
 
-	if c != len (ast.commas) or len (set (len (c.vec) for c in ast.commas)) != 1:
-		raise SyntaxError ('invalid matrix syntax')
+	if c == len (ast.commas) and len (set (len (c.vec) for c in ast.commas)) == 1:
+		return AST ('mat', tuple (c.vec for c in ast.commas))
 
-	return AST ('mat', tuple (c.vec for c in ast.commas))
+	raise SyntaxError ('invalid matrix syntax')
 
 #...............................................................................................
 class Parser (lalr1.Parser):
@@ -406,9 +433,10 @@ class Parser (lalr1.Parser):
 		'integrate' : lambda expr: _expr_func_remap (_remap_func_intg, expr),
 		'Limit'     : lambda expr: _expr_func_remap (_remap_func_lim, expr),
 		'limit'     : lambda expr: _expr_func_remap (_remap_func_lim, expr),
+		'Matrix'    : lambda expr: _expr_func_remap (_remap_func_mat, expr),
 		'ln'        : lambda expr: _expr_func (1, 'log', expr),
-		'pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
 		'Pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
+		'pow'       : lambda expr: _expr_func_remap (_remap_func_pow, expr),
 		'Sum'       : lambda expr: _expr_func_remap (_remap_func_sum, expr),
 	}
 
@@ -462,6 +490,7 @@ class Parser (lalr1.Parser):
 	def expr_func_3     (self, LOG, expr_func_arg):                             return _expr_func (1, 'log', expr_func_arg)
 	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func (1, 'log', expr_func_arg, expr_sub)
 	def expr_func_5     (self, FUNC, expr_func_arg):
+		print ('...', expr_func_arg)
 		func  = f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
 				FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
 		args  = expr_func_arg.strip_paren ()
@@ -570,7 +599,7 @@ class Parser (lalr1.Parser):
 	}
 
 	_AUTOCOMPLETE_CONTINUE = {
-		'RIGHT'      : '\\right',
+		'RIGHT'      : ' \\right',
 		'COMMA'      : ',',
 		'PARENR'     : ')',
 		'CURLYR'     : '}',
@@ -597,6 +626,7 @@ class Parser (lalr1.Parser):
 
 				if self.autocompleting and sym in self._AUTOCOMPLETE_CONTINUE:
 					self.autocomplete.append (self._AUTOCOMPLETE_CONTINUE [sym])
+					print (self.autocomplete)
 				else:
 					self.autocompleting = False
 
@@ -626,7 +656,7 @@ class Parser (lalr1.Parser):
 
 					return False
 
-			elif idx == -4: # { expr_comma , something
+			elif idx == -4: # { expr_comma(s) , something
 				if (self.stack [-1].red.is_vec or self.stack [-1].sym == 'expr') and self.stack [-2].sym == 'COMMA':
 					vlen = len (self.stack [-1].red.vec) if self.stack [-1].red.is_vec else 1
 					cols = None
@@ -752,5 +782,5 @@ class sparser: # for single script
 
 if __name__ == '__main__':
 	p = Parser ()
-	a = p.parse ('Matrix ([[1')
+	a = p.parse ('Matrix ([[1,2],[3,4]])**2')
 	print (a)

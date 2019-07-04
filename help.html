@@ -106,7 +106,7 @@ constant "<b>i</b>" as "<b>1 + 2i</b>".
 
 <p>
 Variable names mostly follow LaTeX convention, they are single latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", ... or
-single greek letters preceded by a backslash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
+single greek letters preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>\beta</b>" ($\beta$), \Psi ($\Psi$), etc... The variable names
 "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. The whole top-level namespace of the
 SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$, as
 well as any other variables present at the top level. Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
@@ -192,8 +192,8 @@ by "<b>\log_b x</b>" = $\log_b x$, "<b>log_{10}(1000)</b>" = $\log_{10} {1000}$ 
 <h4>Roots</h4>
 
 <p>
-The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or
-without the backslash. The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
+The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or without the slash.
+The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
 </p>
 
 <h4>Limits</h4>
@@ -237,7 +237,7 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 <h4>(In)equalities</h4>
 
 <p>
-Are parsed from the standard Python "<b> =, ==, !=, &lt;, &lt;=, &gt;, &gt;= </b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" specifiers.
+Are parsed from the standard Python "<b>=, ==, !=, &lt;, &lt;=, &gt;, &gt;=</b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" symbols.
 Currently only a single comparison is allowed so an expression like "<b>0 &lt;= x &lt;= 2</b>" is not valid.
 Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent and mapped to the same SymPy "<b>Eq</b>" object but the single "<b>=</b>" operator has a higher precedence than the others.
 </p>
@@ -246,17 +246,16 @@ Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent and mapped to 
 
 <p>
 Almost all SymPy functions are available directly just by typing their name, the exceptions being single letter functions like "<b>N</b>" or "<b>S</b>".
-These can be executed using the escape character "<b>$</b>" before the name. To numerically evaluate the value of "<b>sin (2)</b>" type in
-"<b>$N (sin (2))</b>". Functions may take multiple comma-separated arguments with optional keyword arguments as well. The keyword argument identifier
-implementation is hacked into the grammar so if a keyword name can not be entered correctly (due to underscores usually) then try entering the identifier
-name as an explicit string such as "<b> 'this_name_has_too__many___underscores' = value </b>".
+These can be executed using the escape character "<b>$</b>" before the name.
+To numerically evaluate the value of "<b>sin (2)</b>" type in "<b>$N (sin (2))</b>".
+Functions may take multiple comma-separated arguments with optional keyword arguments as well. The keyword argument identifier
+implementation is hacked into the grammar so if a keyword name can not be entered correctly (due to underscores) then try entering the identifier name as an explicit string such as "<b> 'this_name_has_too__many___underscores' = value </b>".
 </p><p>
-The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading backslash:
-"<b>sin</b>", "<b>\coth</b>". The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions
-take a slash and and are spelled out "<b>\arctan</b>". The inverses may also be specified using the common mathematical syntax "<b>\tan^{-1}x</b>" or
-"<b>cos**-1 x</b>".
+The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
+The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
+The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
 </p><p>
-This form of exponentiation is extended as an input shortcut to all functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
+This last form of exponentiating a function is extended as an input shortcut to all functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
 Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
 Functions don't technically require explicit parentheses in order to allow quick entry like "<b>sqrt2</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
@@ -264,12 +263,11 @@ Functions which take more than one parameter always require explicit parentheses
 </p><p>
 Most functions which have an explicit mathematical display syntax are translated on the fly for correct rendering.
 These include the functions "<b>abs/Abs (x)</b>" which are translated to the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>".
-Other functions which are translated: "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>ln</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>".
+Other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>".
 </p><p>
 The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar. Function names specifically recognized by the grammar are only those specified in the SymPy module and a few builtins.
-When functions are entered using the "<b>$</b>" character then many more __builtins__ functions may be accessed, for whatever reason, whether useful or not.
-Try entering "<b>$print ('Hello World...')</b>" and have a look at the server window.
-Note that only the non-dangerous __builtins__ functions are specifically included in this list, functions like "<b>eval</b>" or "<b>exec</b>" and many more have been left out.
+When functions are entered using the "<b>$</b>" character then many more __builtin__ functions may be accessed, for whatever reason, whether useful or not, try entering "<b>$print ('Hello World...')</b>" and have a look at the server window.
+Note that only the non-dangerous __builtin__ functions are specifically included in this list, functions like "<b>eval</b>" or "<b>exec</b>" and many more have been left out and are not accessible.
 </p>
 
 <h2>Notes</h2>
@@ -288,13 +286,13 @@ it represents the last expression successfully evaluated. To see this in action 
 There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the
 SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python copy string. This may
 or may not allow you to paste the Python string back into SymPad to continue working with the result. A single-click copy of the result will have the
-element which was not understood replaced with "<b>nan</b>".
+element(s) which was/were not understood replaced with "<b>nan</b>".
 </p>
 
 <h4>Future</h4>
 
 <p>
-Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, stateful variables, assumptions / hints, piecewise expressions, long Python variable names, importing modules to allow personal code execution, graphical plots...
+Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, stateful variables, importing modules to allow custom code execution, assumptions / hints, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)...
 </p>
 
 <br><br><br>
