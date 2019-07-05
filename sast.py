@@ -443,3 +443,10 @@ AST.None_   = AST ('@', '\\text{None}')
 AST.True_   = AST ('@', '\\text{True}')
 AST.False_  = AST ('@', '\\text{False}')
 AST.NaN     = AST ('@', '\\text{nan}')
+
+def sympyEI (yes = True):
+	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
+
+class sast: # for single script
+	AST     = AST
+	sympyEI = sympyEI

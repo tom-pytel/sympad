@@ -33,7 +33,7 @@
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.3</h4>
+<h4 align="center" style="margin: 0">v0.3.4</h4>
 <br>
 
 <h2>Introduction</h2>
@@ -82,12 +82,11 @@ You enter expresstions and they get evaluated. The expressions may be in normal 
 LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin**x{2} + \frac34) / 2</b>". The input is displayed symbolically as
 you type. Input history is supported with the up and down arrows.
 </p><p>
-The symbolic expressions can be copied to the clipboard in various formats. Single-click for a simple short format meant to be pasted back into the
-input field. A double click-copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
-"<b>e</b>" is copied as "<b>e</b>" and not the SymPy "<b>E</b>", "<b>i</b>" is copied as "<b>i</b>" and not "<b>I</b>" or "<b>1j</b>". Simply set
-"<b>e = E</b>" and "<b>i = I</b>" or "<b>i = 1j</b>" in the Python context depending on need. Finally a triple-click will copy the expression in
-LaTeX format. The single-click simple format will always be pasteable back into SymPad whereas the Python and LaTeX formats may or may not be
-depending on what elements are present.
+The symbolic expressions can be copied to the clipboard in various formats.
+Single-click for a simple short format meant to be pasted back into the input field.
+A double click-copies the expression in Python format suitable for pasting into a Python shell or source file.
+Finally, a triple-click will copy the expression in LaTeX format.
+The single-click simple format will always be pasteable back into SymPad whereas the Python and LaTeX formats may or may not be depending on what elements are present.
 </p>
 
 <h2>Types</h2>
@@ -97,9 +96,10 @@ depending on what elements are present.
 <p>
 Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
 The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits.
-Keep in mind that "<b>e</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be 2 * 10^22.
-Instead, use spaces and/or explicit multiplication: 2 * e + 22.
-Imaginary numbers are entered using the imaginary constant "<b>i</b>" as "<b>1 + 2i</b>", no Pythonic "<b>1 + 1j</b>".
+</p><p>
+Keep in mind that "<b>e</b>" or "<b>E</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be "<b>2 * 10^22</b>".
+Instead, use spaces and/or explicit multiplication: "<b>2 * e + 22</b>".
+Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" depending on preference, no Pythonic "<b>j</b>" option at the moment.
 </p>
 
 <h4>Variables</h4>
@@ -111,6 +111,10 @@ variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respectiv
 namespace of the SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$
 and $\infty$, as well as any other variables present at the top level. Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 </p><p>
+By default lower case "<b>e</b>" and "<b>i</b>" are used to represent Euler's number and the imaginary unit instead of the default SymPy upper case "<b>E</b>" and "<b>I</b>".
+This is objectively prettier, but can be changed via the "<b>$sympyEI (True)</b>" and "<b>$sympyEI (False)</b>" function.
+The SymPy constant usage can also be activated via the command line switch "<b>--sympyEI</b>".
+</p><p>
 Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
 Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
 This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_{x_{y_0'}''}'''$).
@@ -120,6 +124,10 @@ Differentials are entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</
 </p><p>
 Variables may be assigned values or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 </p>
+
+
+
+
 
 <h4>Vectors and Matrices</h4>
 
@@ -309,7 +317,7 @@ A single-click copy of the result will have the element(s) which was / were not 
 <h4>Future</h4>
 
 <p>
-Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, importing modules to allow custom code execution, assumptions / hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)... Too much to list...
+Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, sympy function / variable module prefix, importing modules to allow custom code execution, assumptions / hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)... Too much to list...
 </p>
 
 <br><br><br>

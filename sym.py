@@ -504,9 +504,7 @@ _ast2spt_eq = {
 	'>=': sp.Ge,
 }
 
-_ast2spt_consts = {
-	'e'            : sp.E,
-	'i'            : sp.I,
+_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
 	'\\pi'         : sp.pi,
 	'\\infty'      : sp.oo,
 	'\\text{None}' : None,
@@ -518,7 +516,7 @@ _ast2spt_consts = {
 _ast2spt_funcs = {
 	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-	'@': lambda ast: _ast2spt_consts.get (ast.var, sp.Symbol (ast.var)),
+	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, sp.Symbol (ast.var)),
 	'"': lambda ast: ast.str_,
 	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
 	'(': lambda ast: ast2spt (ast.paren),

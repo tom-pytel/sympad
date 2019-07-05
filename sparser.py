@@ -1,7 +1,6 @@
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: Change '$' to be more generic function OR variable name escape.
-# TODO: SymPy E and I optional instead of e and i? Optional allow Python 1+1j complex?
 # TODO: remap \begin{matrix} \end{matrix}?
 
 # Builds expression tree from text, nodes are nested AST tuples.
@@ -440,7 +439,7 @@ class Parser (lalr1.Parser):
 		'abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
 		'Derivative': lambda expr: _expr_func_remap (_remap_func_Derivative, expr),
 		'diff'      : lambda expr: _expr_func_remap (_remap_func_Derivative, expr),
-		'exp'       : lambda expr: _expr_func (2, '^', ('@', 'e'), expr, strip_paren = 1),
+		'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip_paren = 1),
 		'factorial' : lambda expr: _expr_func (1, '!', expr, strip_paren = 1),
 		'Integral'  : lambda expr: _expr_func_remap (_remap_func_Integral, expr),
 		'integrate' : lambda expr: _expr_func_remap (_remap_func_Integral, expr),
@@ -718,7 +717,7 @@ class Parser (lalr1.Parser):
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
-		expr_vars = expr_vars - {'_', 'e', 'i'} - set (AST.Var.LONG2SHORT) - set (var [1:] for var in expr_diffs)
+		expr_vars = expr_vars - {'_', AST.E.var, AST.I.var} - set (AST.Var.LONG2SHORT) - set (var [1:] for var in expr_diffs)
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')

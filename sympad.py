@@ -739,9 +739,9 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.3.3</h5>
+		<h5>v0.3.4</h5>
 		<br><br>
-		Type '<b>help</b>' at any time for more information.
+		Type '<b>help</b>' or '<b>?</b>' at any time for more information.
 		<br>
 		- or -
 		<br>
@@ -820,7 +820,7 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.3</h4>
+<h4 align="center" style="margin: 0">v0.3.4</h4>
 <br>
 
 <h2>Introduction</h2>
@@ -869,12 +869,11 @@ You enter expresstions and they get evaluated. The expressions may be in normal 
 LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin**x{2} + \frac34) / 2</b>". The input is displayed symbolically as
 you type. Input history is supported with the up and down arrows.
 </p><p>
-The symbolic expressions can be copied to the clipboard in various formats. Single-click for a simple short format meant to be pasted back into the
-input field. A double click-copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
-"<b>e</b>" is copied as "<b>e</b>" and not the SymPy "<b>E</b>", "<b>i</b>" is copied as "<b>i</b>" and not "<b>I</b>" or "<b>1j</b>". Simply set
-"<b>e = E</b>" and "<b>i = I</b>" or "<b>i = 1j</b>" in the Python context depending on need. Finally a triple-click will copy the expression in
-LaTeX format. The single-click simple format will always be pasteable back into SymPad whereas the Python and LaTeX formats may or may not be
-depending on what elements are present.
+The symbolic expressions can be copied to the clipboard in various formats.
+Single-click for a simple short format meant to be pasted back into the input field.
+A double click-copies the expression in Python format suitable for pasting into a Python shell or source file.
+Finally, a triple-click will copy the expression in LaTeX format.
+The single-click simple format will always be pasteable back into SymPad whereas the Python and LaTeX formats may or may not be depending on what elements are present.
 </p>
 
 <h2>Types</h2>
@@ -884,9 +883,10 @@ depending on what elements are present.
 <p>
 Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
 The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits.
-Keep in mind that "<b>e</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be 2 * 10^22.
-Instead, use spaces and/or explicit multiplication: 2 * e + 22.
-Imaginary numbers are entered using the imaginary constant "<b>i</b>" as "<b>1 + 2i</b>", no Pythonic "<b>1 + 1j</b>".
+</p><p>
+Keep in mind that "<b>e</b>" or "<b>E</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be "<b>2 * 10^22</b>".
+Instead, use spaces and/or explicit multiplication: "<b>2 * e + 22</b>".
+Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" depending on preference, no Pythonic "<b>j</b>" option at the moment.
 </p>
 
 <h4>Variables</h4>
@@ -898,6 +898,10 @@ variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respectiv
 namespace of the SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$
 and $\infty$, as well as any other variables present at the top level. Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 </p><p>
+By default lower case "<b>e</b>" and "<b>i</b>" are used to represent Euler's number and the imaginary unit instead of the default SymPy upper case "<b>E</b>" and "<b>I</b>".
+This is objectively prettier, but can be changed via the "<b>$sympyEI (True)</b>" and "<b>$sympyEI (False)</b>" function.
+The SymPy constant usage can also be activated via the command line switch "<b>--sympyEI</b>".
+</p><p>
 Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
 Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
 This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_{x_{y_0'}''}'''$).
@@ -907,6 +911,10 @@ Differentials are entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</
 </p><p>
 Variables may be assigned values or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 </p>
+
+
+
+
 
 <h4>Vectors and Matrices</h4>
 
@@ -1096,7 +1104,7 @@ A single-click copy of the result will have the element(s) which was / were not 
 <h4>Future</h4>
 
 <p>
-Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, importing modules to allow custom code execution, assumptions / hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)... Too much to list...
+Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, sympy function / variable module prefix, importing modules to allow custom code execution, assumptions / hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)... Too much to list...
 </p>
 
 <br><br><br>
@@ -1780,10 +1788,16 @@ AST.None_   = AST ('@', '\\text{None}')
 AST.True_   = AST ('@', '\\text{True}')
 AST.False_  = AST ('@', '\\text{False}')
 AST.NaN     = AST ('@', '\\text{nan}')
+
+def sympyEI (yes = True):
+	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
+
+class sast: # for single script
+	AST     = AST
+	sympyEI = sympyEI
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: Change '$' to be more generic function OR variable name escape.
-# TODO: SymPy E and I optional instead of e and i? Optional allow Python 1+1j complex?
 # TODO: remap \begin{matrix} \end{matrix}?
 
 # Builds expression tree from text, nodes are nested AST tuples.
@@ -2220,7 +2234,7 @@ class Parser (lalr1.Parser):
 		'abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
 		'Derivative': lambda expr: _expr_func_remap (_remap_func_Derivative, expr),
 		'diff'      : lambda expr: _expr_func_remap (_remap_func_Derivative, expr),
-		'exp'       : lambda expr: _expr_func (2, '^', ('@', 'e'), expr, strip_paren = 1),
+		'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip_paren = 1),
 		'factorial' : lambda expr: _expr_func (1, '!', expr, strip_paren = 1),
 		'Integral'  : lambda expr: _expr_func_remap (_remap_func_Integral, expr),
 		'integrate' : lambda expr: _expr_func_remap (_remap_func_Integral, expr),
@@ -2498,7 +2512,7 @@ class Parser (lalr1.Parser):
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
-		expr_vars = expr_vars - {'_', 'e', 'i'} - set (AST.Var.LONG2SHORT) - set (var [1:] for var in expr_diffs)
+		expr_vars = expr_vars - {'_', AST.E.var, AST.I.var} - set (AST.Var.LONG2SHORT) - set (var [1:] for var in expr_diffs)
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
@@ -3089,9 +3103,7 @@ _ast2spt_eq = {
 	'>=': sp.Ge,
 }
 
-_ast2spt_consts = {
-	'e'            : sp.E,
-	'i'            : sp.I,
+_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
 	'\\pi'         : sp.pi,
 	'\\infty'      : sp.oo,
 	'\\text{None}' : None,
@@ -3103,7 +3115,7 @@ _ast2spt_consts = {
 _ast2spt_funcs = {
 	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-	'@': lambda ast: _ast2spt_consts.get (ast.var, sp.Symbol (ast.var)),
+	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, sp.Symbol (ast.var)),
 	'"': lambda ast: ast.str_,
 	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
 	'(': lambda ast: ast2spt (ast.paren),
@@ -3291,18 +3303,27 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-if 'SYMPAD_RUNNED_AS_WATCHED' in os.environ: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
+
+_SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
+_SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
+
+if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	import sympy as sp
 
 	_var_last = AST ('@', '_')
-	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this!
+	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 
-
 _STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
 
+_HELP = f"""
+usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sympyEI] [host:port]
+"""
 #...............................................................................................
+# class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
+# 	pass
+
 def _ast_remap (ast, map_):
 	return \
 			ast if not isinstance (ast, AST) else \
@@ -3310,6 +3331,138 @@ def _ast_remap (ast, map_):
 			AST (*(_ast_remap (a, map_) for a in ast))
 
 class Handler (SimpleHTTPRequestHandler):
+	def admin_vars (self, ast):
+		if len (_vars) == 1:
+			return sym.AST_Text ('\\text{no variables defined}', '', '')
+		else:
+			return AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
+
+	def admin_del (self, ast):
+		try:
+			ast = ast.arg.strip_paren ()
+			del _vars [ast]
+
+		except KeyError:
+			raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
+
+		return ast
+
+	def admin_delall (self, ast):
+		global _vars
+
+		_vars = {_var_last: _vars [_var_last]}
+		ast   = sym.AST_Text ('\\text{all variables cleared}', '', '')
+
+		return ast
+
+	def admin_sympyEI (self, ast):
+		arg = ast.arg.strip_paren ()
+		arg = \
+			bool (sym.ast2spt (arg))            if not arg.is_comma else \
+			True                                if not len (arg.commas) else \
+			bool (sym.ast2spt (arg.commas [0]))
+
+		sast.sympyEI (arg)
+
+		return ast
+
+	def evaluate (self, request):
+		global _vars
+
+		try:
+			ast, _, _ = self.parser.parse (request ['text'])
+
+			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
+				ast = getattr (self, f'admin_{ast.func}') (ast)
+
+			else: # not admin function, normal evaluation
+				if ast.is_ass and ast.lhs.is_var: # assignment?
+					ast = _ast_remap (ast, {_var_last: _vars [_var_last]}) # only remap last evaluated _ for assignment
+				else:
+					ast = _ast_remap (ast, _vars)
+
+				sym.set_precision (ast)
+
+				spt = sym.ast2spt (ast, doit = True)
+				ast = sym.spt2ast (spt)
+
+				if not (ast.is_ass and ast.lhs.is_var):
+					_vars [_var_last] = ast
+
+				else: # assignment, check for circular references
+					new_vars = {**_vars, ast.lhs: ast.rhs}
+
+					try:
+						_ast_remap (ast.lhs, new_vars)
+					except RecursionError:
+						raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
+
+					_vars = new_vars
+
+				if os.environ.get ('SYMPAD_DEBUG'):
+					print ()
+					print ('spt:        ', repr (spt))
+					print ('spt type:   ', type (spt))
+					print ('sympy latex:', sp.latex (spt))
+					print ()
+
+			return {
+				'tex'   : sym.ast2tex (ast),
+				'simple': sym.ast2simple (ast),
+				'py'    : sym.ast2py (ast),
+			}
+
+		except Exception:
+			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
+
+	def validate (self, request):
+		ast, erridx, autocomplete = self.parser.parse (request ['text'])
+		tex = simple = py         = None
+
+		if ast is not None:
+			ast    = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
+			tex    = sym.ast2tex (ast)
+			simple = sym.ast2simple (ast)
+			py     = sym.ast2py (ast)
+
+			if os.environ.get ('SYMPAD_DEBUG'):
+				print ()
+				print ('ast:   ', ast)
+				print ('tex:   ', tex)
+				print ('simple:', simple)
+				print ('py:    ', py)
+				print ()
+
+		return {
+			'tex'         : tex,
+			'simple'      : simple,
+			'py'          : py,
+			'erridx'      : erridx,
+			'autocomplete': autocomplete,
+		}
+
+	def do_POST (self):
+		self.parser = sparser.Parser ()
+		request     = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
+
+		for key, val in list (request.items ()):
+			if len (val) == 1:
+				request [key] = val [0]
+
+		if request ['mode'] == 'validate':
+			response = self.validate (request)
+		else: # request ['mode'] == 'evaluate':
+			response = self.evaluate (request)
+
+		response ['mode'] = request ['mode']
+		response ['idx']  = request ['idx']
+		response ['text'] = request ['text']
+
+		self.send_response (200)
+		self.send_header ("Content-type", "application/json")
+		self.end_headers ()
+		self.wfile.write (json.dumps (response).encode ('utf8'))
+
 	def do_GET (self):
 		if self.path == '/':
 			self.path = '/index.html'
@@ -3326,136 +3479,33 @@ class Handler (SimpleHTTPRequestHandler):
 			self.end_headers ()
 			self.wfile.write (_FILES [self.path [1:]])
 
-	def do_POST (self):
-		global _vars
-
-		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
-		parser  = sparser.Parser ()
-
-		for key, val in list (request.items ()):
-			if len (val) == 1:
-				request [key] = val [0]
-
-		if request ['mode'] == 'validate':
-			ast, erridx, autocomplete = parser.parse (request ['text'])
-			tex = simple = py         = None
-
-			if ast is not None:
-				ast    = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
-				tex    = sym.ast2tex (ast)
-				simple = sym.ast2simple (ast)
-				py     = sym.ast2py (ast)
-
-				if os.environ.get ('SYMPAD_DEBUG'):
-					print ()
-					print ('ast:   ', ast)
-					print ('tex:   ', tex)
-					print ('simple:', simple)
-					print ('py:    ', py)
-					print ()
-
-			response = {
-				'tex'         : tex,
-				'simple'      : simple,
-				'py'          : py,
-				'erridx'      : erridx,
-				'autocomplete': autocomplete,
-			}
-
-		else: # mode = 'evaluate'
-			try:
-				ast, _, _ = parser.parse (request ['text'])
-
-				if ast.is_func and ast.func in {'vars', 'del', 'delall'}: # special admin function?
-					if ast.func == 'vars':
-						if len (_vars) == 1:
-							ast = sym.AST_Text ('\\text{no variables defined}', '', '')
-						else:
-							ast = AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
-
-					elif ast.func == 'del':
-						try:
-							ast = ast.arg.strip_paren ()
-							del _vars [ast]
-						except KeyError:
-							raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
-
-					else: # ast.func == 'delall':
-						_vars = {_var_last: _vars [_var_last]}
-						ast   = sym.AST_Text ('\\text{all variables cleared}', '', '')
-
-				else:
-					if ast.is_ass and ast.lhs.is_var: # assignment?
-						ast = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
-					else:
-						ast = _ast_remap (ast, _vars)
-
-					sym.set_precision (ast)
-
-					spt = sym.ast2spt (ast, doit = True)
-					ast = sym.spt2ast (spt)
-
-					if not (ast.is_ass and ast.lhs.is_var):
-						_vars [_var_last] = ast
-
-					else: # assignment, check for circular references
-						new_vars = {**_vars, ast.lhs: ast.rhs}
-
-						try:
-							_ast_remap (ast.lhs, new_vars)
-						except RecursionError:
-							raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
-
-						_vars = new_vars
-
-					if os.environ.get ('SYMPAD_DEBUG'):
-						print ()
-						print ('spt:        ', repr (spt))
-						print ('spt type:   ', type (spt))
-						print ('sympy latex:', sp.latex (spt))
-						print ()
-
-				response  = {
-					'tex'   : sym.ast2tex (ast),
-					'simple': sym.ast2simple (ast),
-					'py'    : sym.ast2py (ast),
-				}
-
-			except Exception:
-				response = {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
-
-		response ['mode'] = request ['mode']
-		response ['idx']  = request ['idx']
-		response ['text'] = request ['text']
-
-		self.send_response (200)
-		self.send_header ("Content-type", "application/json")
-		self.end_headers ()
-		self.wfile.write (json.dumps (response).encode ('utf8'))
-
-# class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
-# 	pass
-
 #...............................................................................................
 _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 
 if __name__ == '__main__':
 	try:
-		if 'SYMPAD_RUNNED_AS_WATCHED' not in os.environ:
+		opts, argv = getopt.getopt (sys.argv [1:], '', ['help', 'debug', 'nobrowser', 'sympyEI'])
+
+		if ('--help', '') in opts:
+			print (_HELP.strip ())
+			sys.exit (0)
+
+		if not _SYMPAD_CHILD:
 			args      = [sys.executable] + sys.argv
 			first_run = '1'
 
 			while 1:
-				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_CHILD': '1', 'SYMPAD_FIRST_RUN': first_run})
 				first_run = ''
 
 				if ret.returncode != 0:
 					sys.exit (0)
 
-		opts, argv = getopt.getopt (sys.argv [1:], '', ['debug', 'nobrowser'])
-
 		if ('--debug', '') in opts:
 			os.environ ['SYMPAD_DEBUG'] = '1'
+
+		if ('--sympyEI', '') in opts:
+			sast.sympyEI ()
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS
@@ -3476,7 +3526,9 @@ if __name__ == '__main__':
 			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _month_name [m], y, hh, mm, ss)}] {msg}\n')
 
-		print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
+		if _SYMPAD_FIRST_RUN:
+			print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
+
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
 		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
