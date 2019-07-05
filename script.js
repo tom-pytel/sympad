@@ -221,7 +221,7 @@ function updateOverlay (text, erridx, autocomplete) {
 function ajaxResponse (resp) {
 	if (resp.mode == 'validate') {
 		if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
-			return; // ignore out of order responses
+			return; // ignore out of order responses (which should never happen with single threaded server)
 		}
 
 		if (resp.tex !== null) {
@@ -303,7 +303,7 @@ function ajaxResponse (resp) {
 
 		} else { // no error
 			let idLogEvalMath = 'LogEvalMath' + resp.idx;
-			$(eLogEval).append (`<span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</span>`);
+			$(eLogEval).append (`<div id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</div>`);
 			let eLogEvalMath  = document.getElementById (idLogEvalMath);
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {

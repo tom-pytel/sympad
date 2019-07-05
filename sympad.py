@@ -387,7 +387,7 @@ function updateOverlay (text, erridx, autocomplete) {
 function ajaxResponse (resp) {
 	if (resp.mode == 'validate') {
 		if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
-			return; // ignore out of order responses
+			return; // ignore out of order responses (which should never happen with single threaded server)
 		}
 
 		if (resp.tex !== null) {
@@ -469,7 +469,7 @@ function ajaxResponse (resp) {
 
 		} else { // no error
 			let idLogEvalMath = 'LogEvalMath' + resp.idx;
-			$(eLogEval).append (`<span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</span>`);
+			$(eLogEval).append (`<div id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</div>`);
 			let eLogEvalMath  = document.getElementById (idLogEvalMath);
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
@@ -826,7 +826,7 @@ r"""<!DOCTYPE html>
 <h2>Introduction</h2>
 
 <p>
-Sympad is a simple symbolic calculator/scratch pad. It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while
+Sympad is a simple symbolic calculator / scratch pad. It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while
 studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally
 that last bit is exactly what happens but the response time is better :) This desire for simplicity led to the single script option "sympad.py"
 which I could plop down on my desktop and execute when needed.
@@ -873,8 +873,8 @@ The symbolic expressions can be copied to the clipboard in various formats. Sing
 input field. A double click-copies the expression in Python format suitable for pasting into a Python shell or source file. Note in this case that
 "<b>e</b>" is copied as "<b>e</b>" and not the SymPy "<b>E</b>", "<b>i</b>" is copied as "<b>i</b>" and not "<b>I</b>" or "<b>1j</b>". Simply set
 "<b>e = E</b>" and "<b>i = I</b>" or "<b>i = 1j</b>" in the Python context depending on need. Finally a triple-click will copy the expression in
-LaTeX format. The simple format will always be pasteable back into SymPad whereas the LaTeX and Python formats may or may not be depending on what
-elements are present.
+LaTeX format. The single-click simple format will always be pasteable back into SymPad whereas the Python and LaTeX formats may or may not be
+depending on what elements are present.
 </p>
 
 <h2>Types</h2>
@@ -902,7 +902,7 @@ Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) 
 Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
 This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_{x_{y_0'}''}'''$).
 </p><p>
-Differentials entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable. If you want to enter "<b>d</b>"
+Differentials are entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable. If you want to enter "<b>d</b>"
 * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
 </p><p>
 Variables may be assigned values or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
@@ -942,7 +942,7 @@ Standard Python bracket enclosed potentially nested lists which like strings exi
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
 Any valid mathematical expression can be assigned to any valid variable, but not Python objects like strings or lists.
-To delete an assignment use the "<b>$del var</b>" function, to delete all assignments do "<b>$delall</b>" and to see what variables are currently assigned to use the "<b>$vars</b>" function.
+To delete an assignment use the "<b>$del var</b>" function, to delete all assignments do "<b>$delall</b>" and to see what variables are currently assigned to, use the "<b>$vars</b>" function.
 </p><p>
 </p>
 
@@ -983,6 +983,12 @@ by "<b>\log_b x</b>" = $\log_b x$, "<b>log_{10}(1000)</b>" = $\log_{10} {1000}$ 
 <p>
 The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or without the slash.
 The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
+</p>
+
+<h4>Factorial</h4>
+
+<p>
+"<b>4!</b>" = "<b>24</b>", "<b>x!</b>" = "<b>factorial(x)</b>", "<b>(-0.5)!</b>" = "<b>1.77245385090552</b>" and "<b>simplify(x!/x)</b>" = "<b>gamma(x)</b>".
 </p>
 
 <h4>Limits</h4>
@@ -1048,7 +1054,7 @@ Almost all SymPy functions are available directly just by typing their name, the
 These can be executed using the escape character "<b>$</b>" before the name.
 To numerically evaluate the value of "<b>sin (2)</b>" type in "<b>$N (sin (2))</b>".
 Functions may take multiple comma-separated arguments with optional keyword arguments as well. The keyword argument identifier
-implementation is hacked into the grammar so if a keyword name can not be entered correctly (due to underscores) then try entering the identifier name as an explicit string such as "<b> 'this_name_has_too__many___underscores' = value </b>".
+implementation is hacked into the grammar so if a keyword name can not be entered correctly (due to underscores) then try entering the identifier name as an explicit string such as "<b> 'this_identifier_has_too__many___underscores' = value </b>".
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
 The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
@@ -1073,20 +1079,18 @@ Note that only the non-dangerous __builtin__ functions are specifically included
 <h2>Notes</h2>
 
 <p>
-<b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should
-never leave this server open to the internet by serving on an IP visible to the external world.
+<b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should never leave this server open to the internet by serving on an IP address visible to the external world.
 </p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping
 it in parentheses or putting a space between the problematic elements.
 </p><p>
-There is a special use for the "<b>_</b>" character aside from variable subscripting which is the same as in the Python interactive shell in that
-it represents the last expression successfully evaluated. To see this in action type in "<b>1</b>" and hit Enter, then type in
-"<b>expand ((x+1)*_)</b>" and hit Enter. Repeat this several times using the up arrow.
+There is a special use for the "<b>_</b>" underscore character aside from variable subscripting which is the same as in the Python interactive shell in that it represents the last expression successfully evaluated.
+To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
+Repeat this several times using the up arrow.
 </p><p>
-There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the
-SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python copy string. This may
-or may not allow you to paste the Python string back into SymPad to continue working with the result. A single-click copy of the result will have the
-element(s) which was/were not understood replaced with "<b>nan</b>".
+There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python copy string.
+This may or may not allow you to paste the Python string back into SymPad to continue working with the result.
+A single-click copy of the result will have the element(s) which was / were not understood replaced with "<b>nan</b>".
 </p>
 
 <h4>Future</h4>
@@ -3093,6 +3097,7 @@ _ast2spt_consts = {
 	'\\text{None}' : None,
 	'\\text{True}' : sp.boolalg.true,
 	'\\text{False}': sp.boolalg.false,
+	'\\text{nan}'  : sp.nan,
 }
 
 _ast2spt_funcs = {
@@ -3259,6 +3264,7 @@ _spt2ast_funcs = {
 
 #...............................................................................................
 class sym: # for single script
+	AST_Text      = AST_Text
 	set_precision = set_precision
 	ast2tex       = ast2tex
 	ast2simple    = ast2simple
@@ -3372,7 +3378,7 @@ class Handler (SimpleHTTPRequestHandler):
 							ast = ast.arg.strip_paren ()
 							del _vars [ast]
 						except KeyError:
-							raise NameError (f'variable {sym.ast2simple (ast)!r} is not defined')
+							raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
 
 					else: # ast.func == 'delall':
 						_vars = {_var_last: _vars [_var_last]}
@@ -3398,7 +3404,7 @@ class Handler (SimpleHTTPRequestHandler):
 						try:
 							_ast_remap (ast.lhs, new_vars)
 						except RecursionError:
-							raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)")
+							raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
 
 						_vars = new_vars
 
@@ -3470,7 +3476,8 @@ if __name__ == '__main__':
 			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _month_name [m], y, hh, mm, ss)}] {msg}\n')
 
-		log_message (f'Serving on {httpd.server_address [0]}:{httpd.server_address [1]}')
+		print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
+		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
 		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
 			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/')

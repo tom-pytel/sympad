@@ -110,7 +110,7 @@ class Handler (SimpleHTTPRequestHandler):
 							ast = ast.arg.strip_paren ()
 							del _vars [ast]
 						except KeyError:
-							raise NameError (f'variable {sym.ast2simple (ast)!r} is not defined')
+							raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
 
 					else: # ast.func == 'delall':
 						_vars = {_var_last: _vars [_var_last]}
@@ -136,7 +136,7 @@ class Handler (SimpleHTTPRequestHandler):
 						try:
 							_ast_remap (ast.lhs, new_vars)
 						except RecursionError:
-							raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)")
+							raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
 
 						_vars = new_vars
 
@@ -208,7 +208,8 @@ if __name__ == '__main__':
 			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _month_name [m], y, hh, mm, ss)}] {msg}\n')
 
-		log_message (f'Serving on {httpd.server_address [0]}:{httpd.server_address [1]}')
+		print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
+		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
 		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
 			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/')

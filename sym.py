@@ -679,6 +679,7 @@ _spt2ast_funcs = {
 
 #...............................................................................................
 class sym: # for single script
+	AST_Text      = AST_Text
 	set_precision = set_precision
 	ast2tex       = ast2tex
 	ast2simple    = ast2simple
