@@ -14,8 +14,13 @@ import re
 import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+def _FUNC_name (FUNC):
+	return f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
+			FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
+
 def _ast_from_tok_digit_or_var (tok, i = 0):
-	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.SHORT2LONG.get (tok.grp [i + 1] or tok.grp [i + 3], tok.grp [i + 2]))
+	return AST ('#', tok.grp [i]) if tok.grp [i] else \
+			AST ('@', AST.Var.SHORT2LONG.get (tok.grp [i + 1] or tok.grp [i + 3], tok.grp [i + 2]))
 
 def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
@@ -361,7 +366,7 @@ class Parser (lalr1.Parser):
 			b'Qlm7B2XYg74XfXFjtk37dIheapI3/qUB2ZYUg+ES8yCfj21vl4vAY85wvT8hPtwB8dT+XfdPaO+uQDu1T1Pkr/dkgTPsHbqpWB63z+QTZvErkq3EXJ/h6vsKA6aZos2Mcwae7eDiOmGykKlI8K8Og3/T3HoA/3rIf/m9DwgCP/00Kw7pe/iDHTZ/qmP8hY5a' \
 			b'Rqbpv70h39ko5ZW+nxG2yc03dxMsJvV2EM16Np0F0jaHoW3cy9xyAP92Xtt2EESpZLNCGarVnEqxlaYIPh19Hb898FwJeXiWtC2h7SZeVweIzh2B6FxzSAFya49Abm1zSAFy80cgN98cUoDcwuHLje1CBxQgt24Bue0wBFlAeqa5ZmAL6TCKuLxeqTCMjIbz' \
 			b'tzqcu5I4XbM94LNus8l2CSqaQ/cIEOtolnDwYmV77+EGSPVu5x5XkqppDjhAqqM5xuFL1TYHHCDVHWYuhybVtjngAKnuMKk5YOsDe12OIEDUbfQWs3GdJBXV2svv45DMDVwHUVzsRbb89afg+VhsK0K2sDmba0YBefiLKirWLWqJpMs5QvQ99o7FNrpb+KMX' \
-			b'luck/DUzz65tysSmcq69AA74GwSldlAtsi1Yy+Zqz1sBlYvF6cmUpikCEppRQlYMTmybMigHNeY9j9ZnB7w44dgB5zG25X1myosHzFOO78//H7otCHQ=' 
+			b'luck/DUzz65tysSmcq69AA74GwSldlAtsi1Yy+Zqz1sBlYvF6cmUpikCEppRQlYMTmybMigHNeY9j9ZnB7w44dgB5zG25X1myosHzFOO78//H7otCHQ='
 
 	_PARSER_TOP  = 'expr'
 
@@ -498,8 +503,7 @@ class Parser (lalr1.Parser):
 	def expr_func_3     (self, LOG, expr_func_arg):                             return _expr_func (1, 'log', expr_func_arg)
 	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func (1, 'log', expr_func_arg, expr_sub)
 	def expr_func_5     (self, FUNC, expr_func_arg):
-		func  = f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
-				FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
+		func  = _FUNC_name (FUNC)
 		remap = self._FUNC_AST_REMAP.get (func)
 
 		return remap (expr_func_arg) if remap else _expr_func (2, 'func', func, expr_func_arg)
@@ -608,6 +612,7 @@ class Parser (lalr1.Parser):
 	_AUTOCOMPLETE_CONTINUE = {
 		'RIGHT'      : ' \\right',
 		'COMMA'      : ',',
+		'PARENL'     : '(',
 		'PARENR'     : ')',
 		'CURLYR'     : '}',
 		'BRACKETR'   : ']',
@@ -751,10 +756,14 @@ class Parser (lalr1.Parser):
 
 		rule = self.rules [irule]
 
-		if pos >= len (rule [1]): # exception raised by rule reduction function or end of comma expression
-			if rule [0] in {'expr_comma', 'expr_commas'}:
+		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')) and \
+				_FUNC_name (self.stack [-1].sym) not in AST.Func.PY_ALL:
+			return self._insert_symbol (('PARENL', 'PARENR'))
+
+		if pos >= len (rule [1]):
+			if rule [0] in {'expr_comma', 'expr_commas'}: # end of comma expression?
 				return self._parse_autocomplete_expr_comma (rule)
-			elif rule [0] == 'expr_int':
+			elif rule [0] == 'expr_int': # exception raised by rule reduction function?
 				return self._parse_autocomplete_expr_int ()
 
 			return False
@@ -791,7 +800,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__':
-# 	p = Parser ()
-# 	a = p.parse ('pi')
-# 	print (a)
+if __name__ == '__main__':
+	p = Parser ()
+	a = p.parse ('$vars')
+	print (a)

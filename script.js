@@ -1,5 +1,6 @@
 // TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.
+// TODO: Stupid scrollbars...
 
 // TODO: Warning messages on evaluate when SymPy object not understood?
 // TODO: Move last evaluated expression '_' substitution here from the server side?

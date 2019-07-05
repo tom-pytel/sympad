@@ -144,12 +144,15 @@ class AST_Eq (AST):
 	op, is_eq  = '=', True
 
 	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
-	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '==': '=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
+	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
 
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
 
 	def _is_eq_eq (self):
+		return self.rel in {'=', '=='}
+
+	def _is_ass (self):
 		return self.rel == '='
 
 class AST_Num (AST):

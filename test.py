@@ -290,7 +290,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('(x,y)')), ('(', (',', (('@', 'x'), ('@', 'y')))))
 		self.assertEqual (ast2spt2ast (p ('[x]')), ('[', (('@', 'x'),)))
 		self.assertEqual (ast2spt2ast (p ('[x,y]')), ('[', (('@', 'x'), ('@', 'y'))))
-		self.assertEqual (ast2spt2ast (p ('"x\\x20\\n"')), ('x \n', 'x \n'))
+		self.assertEqual (ast2spt2ast (p ('"x\\x20\\n"')), ('x \n', 'nan', 'x \n'))
 		self.assertEqual (ast2spt2ast (p ('|x|')), ('|', ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('x!')), ('!', ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('x+y')), ('+', (('@', 'y'), ('@', 'x'))))

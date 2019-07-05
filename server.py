@@ -24,7 +24,8 @@ if 'SYMPAD_RUNNED_AS_WATCHED' in os.environ: # sympy slow to import if not preco
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-	_last_ast = AST.Zero # last evaluated expression for _ usage
+	_var_last = AST ('@', '_')
+	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this!
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 
@@ -34,11 +35,11 @@ _STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/
 _FILES                    = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 #...............................................................................................
-def _ast_replace (ast, src, dst):
+def _ast_remap (ast, map_):
 	return \
 			ast if not isinstance (ast, AST) else \
-			dst if ast == src else \
-			AST (*(_ast_replace (s, src, dst) for s in ast))
+			_ast_remap (map_ [ast], map_) if ast in map_ else \
+			AST (*(_ast_remap (a, map_) for a in ast))
 
 class Handler (SimpleHTTPRequestHandler):
 	def do_GET (self):
@@ -58,7 +59,7 @@ class Handler (SimpleHTTPRequestHandler):
 			self.wfile.write (_FILES [self.path [1:]])
 
 	def do_POST (self):
-		global _last_ast
+		global _vars
 
 		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
 		parser  = sparser.Parser ()
@@ -72,7 +73,7 @@ class Handler (SimpleHTTPRequestHandler):
 			tex = simple = py         = None
 
 			if ast is not None:
-				ast    = _ast_replace (ast, ('@', '_'), _last_ast)
+				ast    = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
 				tex    = sym.ast2tex (ast)
 				simple = sym.ast2simple (ast)
 				py     = sym.ast2py (ast)
@@ -96,20 +97,55 @@ class Handler (SimpleHTTPRequestHandler):
 		else: # mode = 'evaluate'
 			try:
 				ast, _, _ = parser.parse (request ['text'])
-				ast       = _ast_replace (ast, ('@', '_'), _last_ast)
 
-				sym.set_precision (ast)
+				if ast.is_func and ast.func in {'vars', 'del', 'delall'}: # special admin function?
+					if ast.func == 'vars':
+						if len (_vars) == 1:
+							ast = sym.AST_Text ('\\text{no variables defined}', '', '')
+						else:
+							ast = AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
 
-				spt       = sym.ast2spt (ast, doit = True)
-				ast       = sym.spt2ast (spt)
-				_last_ast = ast
+					elif ast.func == 'del':
+						try:
+							ast = ast.arg.strip_paren ()
+							del _vars [ast]
+						except KeyError:
+							raise NameError (f'variable {sym.ast2simple (ast)!r} is not defined')
 
-				if os.environ.get ('SYMPAD_DEBUG'):
-					print ()
-					print ('spt:        ', repr (spt))
-					print ('spt type:   ', type (spt))
-					print ('sympy latex:', sp.latex (spt))
-					print ()
+					else: # ast.func == 'delall':
+						_vars = {_var_last: _vars [_var_last]}
+						ast   = sym.AST_Text ('\\text{all variables cleared}', '', '')
+
+				else:
+					if ast.is_ass and ast.lhs.is_var: # assignment?
+						ast = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
+					else:
+						ast = _ast_remap (ast, _vars)
+
+					sym.set_precision (ast)
+
+					spt = sym.ast2spt (ast, doit = True)
+					ast = sym.spt2ast (spt)
+
+					if not (ast.is_ass and ast.lhs.is_var):
+						_vars [_var_last] = ast
+
+					else: # assignment, check for circular references
+						new_vars = {**_vars, ast.lhs: ast.rhs}
+
+						try:
+							_ast_remap (ast.lhs, new_vars)
+						except RecursionError:
+							raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)")
+
+						_vars = new_vars
+
+					if os.environ.get ('SYMPAD_DEBUG'):
+						print ()
+						print ('spt:        ', repr (spt))
+						print ('spt type:   ', type (spt))
+						print ('sympy latex:', sp.latex (spt))
+						print ()
 
 				response  = {
 					'tex'   : sym.ast2tex (ast),
@@ -142,12 +178,11 @@ if __name__ == '__main__':
 			first_run = '1'
 
 			while 1:
-				ret = subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+				first_run = ''
 
 				if ret.returncode != 0:
 					sys.exit (0)
-
-				first_run = ''
 
 		opts, argv = getopt.getopt (sys.argv [1:], '', ['debug', 'nobrowser'])
 

@@ -16,11 +16,11 @@ _SYMPY_FLOAT_PRECISION = None
 _rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
 
 #...............................................................................................
-class AST_Unknown (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
-	op = '???'
+class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
+	op = 'text'
 
-	def _init (self, tex, py):
-		self.tex, self.py = tex, py
+	def _init (self, tex, simple, py):
+		self.tex, self.simple, self.py = tex, simple, py
 
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
@@ -200,7 +200,7 @@ _ast2tex_funcs = {
 	'intg': _ast2tex_intg,
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
-	'???': lambda ast: ast.tex,
+	'text': lambda ast: ast.tex,
 }
 
 #...............................................................................................
@@ -343,7 +343,7 @@ _ast2simple_funcs = {
 	'intg': _ast2simple_intg,
 	'vec': lambda ast: f'{{{",".join (ast2simple (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: ('{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
-	'???': lambda ast: 'nan',
+	'text': lambda ast: ast.simple,
 }
 
 #...............................................................................................
@@ -430,7 +430,7 @@ _ast2py_funcs = {
 	'intg': _ast2py_intg,
 	'vec': lambda ast: 'Matrix([' + ','.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
 	'mat': lambda ast: 'Matrix([' + ','.join (f'[{",".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
-	'???': lambda ast: ast.py,
+	'text': lambda ast: ast.py,
 }
 
 #...............................................................................................
@@ -461,7 +461,7 @@ def _ast2spt_func (ast):
 		raise NameError (f'name {ast.func!r} is not defined')
 
 	for arg in (arg.commas if arg.is_comma else (arg,)):
-		if arg.is_eq_eq and arg.rhs.is_str:
+		if arg.is_ass and arg.rhs.is_str:
 			name = arg.lhs.as_identifier ()
 
 			if name is not None:
@@ -496,6 +496,7 @@ def _ast2spt_intg (ast):
 
 _ast2spt_eq = {
 	'=':  sp.Eq,
+	'==': sp.Eq,
 	'!=': sp.Ne,
 	'<':  sp.Lt,
 	'<=': sp.Le,
@@ -553,7 +554,7 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 			return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
 
-	return AST_Unknown (sp.latex (spt), str (spt))
+	return AST_Text (sp.latex (spt), 'nan', str (spt))
 
 def _spt2ast_num (spt):
 	m = _rec_num_deconstructed.match (str (spt))

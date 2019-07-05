@@ -33,7 +33,7 @@
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.2</h4>
+<h4 align="center" style="margin: 0">v0.3.3</h4>
 <br>
 
 <h2>Introduction</h2>
@@ -117,6 +117,8 @@ This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_
 </p><p>
 Differentials entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable. If you want to enter "<b>d</b>"
 * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
+</p><p>
+Variables may be assigned values or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 </p>
 
 <h4>Vectors and Matrices</h4>
@@ -146,6 +148,16 @@ Standard Python bracket enclosed potentially nested lists which like strings exi
 </p>
 
 <h2>Operations</h2>
+
+<h4>Variable Assignment</h4>
+
+<p>
+Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
+For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
+Any valid mathematical expression can be assigned to any valid variable, but not Python objects like strings or lists.
+To delete an assignment use the "<b>$del var</b>" function, to delete all assignments do "<b>$delall</b>" and to see what variables are currently assigned to use the "<b>$vars</b>" function.
+</p><p>
+</p>
 
 <h4>Addition and Multiplication</h4>
 
@@ -229,7 +241,7 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 <p>
 Are parsed from the standard Python "<b>=, ==, !=, &lt;, &lt;=, &gt;, &gt;=</b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" symbols.
 Currently only a single comparison is allowed so an expression like "<b>0 &lt;= x &lt;= 2</b>" is not valid.
-Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent and mapped to the same SymPy "<b>Eq</b>" object but the single "<b>=</b>" operator has a higher precedence than the others.
+Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a higher precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
 </p>
 
 <h4>Parentheses</h4>
@@ -293,7 +305,7 @@ element(s) which was/were not understood replaced with "<b>nan</b>".
 <h4>Future</h4>
 
 <p>
-Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, stateful variables, importing modules to allow custom code execution, assumptions / hints, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)...
+Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, importing modules to allow custom code execution, assumptions / hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)... Too much to list...
 </p>
 
 <br><br><br>
