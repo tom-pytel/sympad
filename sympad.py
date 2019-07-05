@@ -166,6 +166,7 @@ body {
 
 r"""// TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.
+// TODO: Stupid scrollbars...
 
 // TODO: Warning messages on evaluate when SymPy object not understood?
 // TODO: Move last evaluated expression '_' substitution here from the server side?
@@ -738,7 +739,7 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.3.1</h5>
+		<h5>v0.3.3</h5>
 		<br><br>
 		Type '<b>help</b>' at any time for more information.
 		<br>
@@ -819,7 +820,7 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.1</h4>
+<h4 align="center" style="margin: 0">v0.3.3</h4>
 <br>
 
 <h2>Introduction</h2>
@@ -903,6 +904,8 @@ This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_
 </p><p>
 Differentials entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable. If you want to enter "<b>d</b>"
 * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
+</p><p>
+Variables may be assigned values or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 </p>
 
 <h4>Vectors and Matrices</h4>
@@ -932,6 +935,16 @@ Standard Python bracket enclosed potentially nested lists which like strings exi
 </p>
 
 <h2>Operations</h2>
+
+<h4>Variable Assignment</h4>
+
+<p>
+Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
+For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
+Any valid mathematical expression can be assigned to any valid variable, but not Python objects like strings or lists.
+To delete an assignment use the "<b>$del var</b>" function, to delete all assignments do "<b>$delall</b>" and to see what variables are currently assigned to use the "<b>$vars</b>" function.
+</p><p>
+</p>
 
 <h4>Addition and Multiplication</h4>
 
@@ -1015,7 +1028,7 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 <p>
 Are parsed from the standard Python "<b>=, ==, !=, &lt;, &lt;=, &gt;, &gt;=</b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" symbols.
 Currently only a single comparison is allowed so an expression like "<b>0 &lt;= x &lt;= 2</b>" is not valid.
-Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent and mapped to the same SymPy "<b>Eq</b>" object but the single "<b>=</b>" operator has a higher precedence than the others.
+Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a higher precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
 </p>
 
 <h4>Parentheses</h4>
@@ -1079,7 +1092,7 @@ element(s) which was/were not understood replaced with "<b>nan</b>".
 <h4>Future</h4>
 
 <p>
-Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, stateful variables, importing modules to allow custom code execution, assumptions / hints, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)...
+Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, '.' member referencing, importing modules to allow custom code execution, assumptions / hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)... Too much to list...
 </p>
 
 <br><br><br>
@@ -1464,12 +1477,15 @@ class AST_Eq (AST):
 	op, is_eq  = '=', True
 
 	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
-	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '==': '=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
+	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
 
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
 
 	def _is_eq_eq (self):
+		return self.rel in {'=', '=='}
+
+	def _is_ass (self):
 		return self.rel == '='
 
 class AST_Num (AST):
@@ -1774,8 +1790,13 @@ import os
 import re
 
 
+def _FUNC_name (FUNC):
+	return f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
+			FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
+
 def _ast_from_tok_digit_or_var (tok, i = 0):
-	return AST ('#', tok.grp [i]) if tok.grp [i] else AST ('@', AST.Var.SHORT2LONG.get (tok.grp [i + 1] or tok.grp [i + 3], tok.grp [i + 2]))
+	return AST ('#', tok.grp [i]) if tok.grp [i] else \
+			AST ('@', AST.Var.SHORT2LONG.get (tok.grp [i + 1] or tok.grp [i + 3], tok.grp [i + 2]))
 
 def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
@@ -2121,7 +2142,7 @@ class Parser (lalr1.Parser):
 			b'Qlm7B2XYg74XfXFjtk37dIheapI3/qUB2ZYUg+ES8yCfj21vl4vAY85wvT8hPtwB8dT+XfdPaO+uQDu1T1Pkr/dkgTPsHbqpWB63z+QTZvErkq3EXJ/h6vsKA6aZos2Mcwae7eDiOmGykKlI8K8Og3/T3HoA/3rIf/m9DwgCP/00Kw7pe/iDHTZ/qmP8hY5a' \
 			b'Rqbpv70h39ko5ZW+nxG2yc03dxMsJvV2EM16Np0F0jaHoW3cy9xyAP92Xtt2EESpZLNCGarVnEqxlaYIPh19Hb898FwJeXiWtC2h7SZeVweIzh2B6FxzSAFya49Abm1zSAFy80cgN98cUoDcwuHLje1CBxQgt24Bue0wBFlAeqa5ZmAL6TCKuLxeqTCMjIbz' \
 			b'tzqcu5I4XbM94LNus8l2CSqaQ/cIEOtolnDwYmV77+EGSPVu5x5XkqppDjhAqqM5xuFL1TYHHCDVHWYuhybVtjngAKnuMKk5YOsDe12OIEDUbfQWs3GdJBXV2svv45DMDVwHUVzsRbb89afg+VhsK0K2sDmba0YBefiLKirWLWqJpMs5QvQ99o7FNrpb+KMX' \
-			b'luck/DUzz65tysSmcq69AA74GwSldlAtsi1Yy+Zqz1sBlYvF6cmUpikCEppRQlYMTmybMigHNeY9j9ZnB7w44dgB5zG25X1myosHzFOO78//H7otCHQ=' 
+			b'luck/DUzz65tysSmcq69AA74GwSldlAtsi1Yy+Zqz1sBlYvF6cmUpikCEppRQlYMTmybMigHNeY9j9ZnB7w44dgB5zG25X1myosHzFOO78//H7otCHQ='
 
 	_PARSER_TOP  = 'expr'
 
@@ -2258,8 +2279,7 @@ class Parser (lalr1.Parser):
 	def expr_func_3     (self, LOG, expr_func_arg):                             return _expr_func (1, 'log', expr_func_arg)
 	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func (1, 'log', expr_func_arg, expr_sub)
 	def expr_func_5     (self, FUNC, expr_func_arg):
-		func  = f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
-				FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
+		func  = _FUNC_name (FUNC)
 		remap = self._FUNC_AST_REMAP.get (func)
 
 		return remap (expr_func_arg) if remap else _expr_func (2, 'func', func, expr_func_arg)
@@ -2368,6 +2388,7 @@ class Parser (lalr1.Parser):
 	_AUTOCOMPLETE_CONTINUE = {
 		'RIGHT'      : ' \\right',
 		'COMMA'      : ',',
+		'PARENL'     : '(',
 		'PARENR'     : ')',
 		'CURLYR'     : '}',
 		'BRACKETR'   : ']',
@@ -2511,10 +2532,14 @@ class Parser (lalr1.Parser):
 
 		rule = self.rules [irule]
 
-		if pos >= len (rule [1]): # exception raised by rule reduction function or end of comma expression
-			if rule [0] in {'expr_comma', 'expr_commas'}:
+		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')) and \
+				_FUNC_name (self.stack [-1].sym) not in AST.Func.PY_ALL:
+			return self._insert_symbol (('PARENL', 'PARENR'))
+
+		if pos >= len (rule [1]):
+			if rule [0] in {'expr_comma', 'expr_commas'}: # end of comma expression?
 				return self._parse_autocomplete_expr_comma (rule)
-			elif rule [0] == 'expr_int':
+			elif rule [0] == 'expr_int': # exception raised by rule reduction function?
 				return self._parse_autocomplete_expr_int ()
 
 			return False
@@ -2551,10 +2576,10 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__':
-# 	p = Parser ()
-# 	a = p.parse ('pi')
-# 	print (a)
+if __name__ == '__main__':
+	p = Parser ()
+	a = p.parse ('$vars')
+	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
@@ -2572,11 +2597,11 @@ _SYMPY_FLOAT_PRECISION = None
 _rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
 
 #...............................................................................................
-class AST_Unknown (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
-	op = '???'
+class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
+	op = 'text'
 
-	def _init (self, tex, py):
-		self.tex, self.py = tex, py
+	def _init (self, tex, simple, py):
+		self.tex, self.simple, self.py = tex, simple, py
 
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
@@ -2756,7 +2781,7 @@ _ast2tex_funcs = {
 	'intg': _ast2tex_intg,
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
-	'???': lambda ast: ast.tex,
+	'text': lambda ast: ast.tex,
 }
 
 #...............................................................................................
@@ -2899,7 +2924,7 @@ _ast2simple_funcs = {
 	'intg': _ast2simple_intg,
 	'vec': lambda ast: f'{{{",".join (ast2simple (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: ('{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
-	'???': lambda ast: 'nan',
+	'text': lambda ast: ast.simple,
 }
 
 #...............................................................................................
@@ -2986,7 +3011,7 @@ _ast2py_funcs = {
 	'intg': _ast2py_intg,
 	'vec': lambda ast: 'Matrix([' + ','.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
 	'mat': lambda ast: 'Matrix([' + ','.join (f'[{",".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
-	'???': lambda ast: ast.py,
+	'text': lambda ast: ast.py,
 }
 
 #...............................................................................................
@@ -3017,7 +3042,7 @@ def _ast2spt_func (ast):
 		raise NameError (f'name {ast.func!r} is not defined')
 
 	for arg in (arg.commas if arg.is_comma else (arg,)):
-		if arg.is_eq_eq and arg.rhs.is_str:
+		if arg.is_ass and arg.rhs.is_str:
 			name = arg.lhs.as_identifier ()
 
 			if name is not None:
@@ -3052,6 +3077,7 @@ def _ast2spt_intg (ast):
 
 _ast2spt_eq = {
 	'=':  sp.Eq,
+	'==': sp.Eq,
 	'!=': sp.Ne,
 	'<':  sp.Lt,
 	'<=': sp.Le,
@@ -3109,7 +3135,7 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 			return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
 
-	return AST_Unknown (sp.latex (spt), str (spt))
+	return AST_Text (sp.latex (spt), 'nan', str (spt))
 
 def _spt2ast_num (spt):
 	m = _rec_num_deconstructed.match (str (spt))
@@ -3262,7 +3288,8 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 if 'SYMPAD_RUNNED_AS_WATCHED' in os.environ: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	import sympy as sp
 
-	_last_ast = AST.Zero # last evaluated expression for _ usage
+	_var_last = AST ('@', '_')
+	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this!
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 
@@ -3270,11 +3297,11 @@ _DEFAULT_ADDRESS          = ('localhost', 8000)
 _STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
 
 #...............................................................................................
-def _ast_replace (ast, src, dst):
+def _ast_remap (ast, map_):
 	return \
 			ast if not isinstance (ast, AST) else \
-			dst if ast == src else \
-			AST (*(_ast_replace (s, src, dst) for s in ast))
+			_ast_remap (map_ [ast], map_) if ast in map_ else \
+			AST (*(_ast_remap (a, map_) for a in ast))
 
 class Handler (SimpleHTTPRequestHandler):
 	def do_GET (self):
@@ -3294,7 +3321,7 @@ class Handler (SimpleHTTPRequestHandler):
 			self.wfile.write (_FILES [self.path [1:]])
 
 	def do_POST (self):
-		global _last_ast
+		global _vars
 
 		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
 		parser  = sparser.Parser ()
@@ -3308,7 +3335,7 @@ class Handler (SimpleHTTPRequestHandler):
 			tex = simple = py         = None
 
 			if ast is not None:
-				ast    = _ast_replace (ast, ('@', '_'), _last_ast)
+				ast    = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
 				tex    = sym.ast2tex (ast)
 				simple = sym.ast2simple (ast)
 				py     = sym.ast2py (ast)
@@ -3332,20 +3359,55 @@ class Handler (SimpleHTTPRequestHandler):
 		else: # mode = 'evaluate'
 			try:
 				ast, _, _ = parser.parse (request ['text'])
-				ast       = _ast_replace (ast, ('@', '_'), _last_ast)
 
-				sym.set_precision (ast)
+				if ast.is_func and ast.func in {'vars', 'del', 'delall'}: # special admin function?
+					if ast.func == 'vars':
+						if len (_vars) == 1:
+							ast = sym.AST_Text ('\\text{no variables defined}', '', '')
+						else:
+							ast = AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
 
-				spt       = sym.ast2spt (ast, doit = True)
-				ast       = sym.spt2ast (spt)
-				_last_ast = ast
+					elif ast.func == 'del':
+						try:
+							ast = ast.arg.strip_paren ()
+							del _vars [ast]
+						except KeyError:
+							raise NameError (f'variable {sym.ast2simple (ast)!r} is not defined')
 
-				if os.environ.get ('SYMPAD_DEBUG'):
-					print ()
-					print ('spt:        ', repr (spt))
-					print ('spt type:   ', type (spt))
-					print ('sympy latex:', sp.latex (spt))
-					print ()
+					else: # ast.func == 'delall':
+						_vars = {_var_last: _vars [_var_last]}
+						ast   = sym.AST_Text ('\\text{all variables cleared}', '', '')
+
+				else:
+					if ast.is_ass and ast.lhs.is_var: # assignment?
+						ast = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
+					else:
+						ast = _ast_remap (ast, _vars)
+
+					sym.set_precision (ast)
+
+					spt = sym.ast2spt (ast, doit = True)
+					ast = sym.spt2ast (spt)
+
+					if not (ast.is_ass and ast.lhs.is_var):
+						_vars [_var_last] = ast
+
+					else: # assignment, check for circular references
+						new_vars = {**_vars, ast.lhs: ast.rhs}
+
+						try:
+							_ast_remap (ast.lhs, new_vars)
+						except RecursionError:
+							raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)")
+
+						_vars = new_vars
+
+					if os.environ.get ('SYMPAD_DEBUG'):
+						print ()
+						print ('spt:        ', repr (spt))
+						print ('spt type:   ', type (spt))
+						print ('sympy latex:', sp.latex (spt))
+						print ()
 
 				response  = {
 					'tex'   : sym.ast2tex (ast),
@@ -3378,12 +3440,11 @@ if __name__ == '__main__':
 			first_run = '1'
 
 			while 1:
-				ret = subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_RUNNED_AS_WATCHED': '1', 'SYMPAD_FIRST_RUN': first_run})
+				first_run = ''
 
 				if ret.returncode != 0:
 					sys.exit (0)
-
-				first_run = ''
 
 		opts, argv = getopt.getopt (sys.argv [1:], '', ['debug', 'nobrowser'])
 
