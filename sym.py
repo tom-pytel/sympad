@@ -512,6 +512,7 @@ _ast2spt_consts = {
 	'\\text{None}' : None,
 	'\\text{True}' : sp.boolalg.true,
 	'\\text{False}': sp.boolalg.false,
+	'\\text{nan}'  : sp.nan,
 }
 
 _ast2spt_funcs = {
