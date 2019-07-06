@@ -371,6 +371,7 @@ class Parser (lalr1.Parser):
 			b'P4fNvME=' 
 
 	_PARSER_TOP  = 'expr'
+	_PARSER_CONFLICT_REDUCE = {'BAR'}
 
 	_GREEK       = '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK)))
 	_SPECIAL     =  r'\\partial|\\pi|\\infty'
@@ -810,7 +811,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('|a|b|c|')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('|a|b|c|')
+# 	print (a)

@@ -217,7 +217,7 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 	exec ('lex.lex ()', ply_dict)
 	exec (f'yacc.yacc (outputdir = {os.getcwd ()!r})', ply_dict)
 
-	qpdata = parse_rules ({'BAR'}) # generalize BAR specification
+	qpdata = parse_rules (getattr (pc_obj, '_PARSER_CONFLICT_REDUCE', {}))
 	text   = repr (qpdata).replace (' ', '')
 
 	if not nodelete:
