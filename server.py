@@ -41,6 +41,7 @@ _FILES                    = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _HELP = f"""
 usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sympyEI] [host:port]
 """
+
 #...............................................................................................
 # class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
 # 	pass
@@ -59,22 +60,21 @@ class Handler (SimpleHTTPRequestHandler):
 			return AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
 
 	def admin_del (self, ast):
-		try:
-			ast = ast.arg.strip_paren ()
-			del _vars [ast]
+		ast = ast.arg.strip_paren ()
 
+		try:
+			del _vars [ast]
 		except KeyError:
 			raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
 
-		return ast
+		return sym.AST_Text (f'\\text{{variable {ast.var!r} deleted}}', '', '')
 
 	def admin_delall (self, ast):
 		global _vars
 
 		_vars = {_var_last: _vars [_var_last]}
-		ast   = sym.AST_Text ('\\text{all variables cleared}', '', '')
 
-		return ast
+		return sym.AST_Text ('\\text{all variables deleted}', '', '')
 
 	def admin_sympyEI (self, ast):
 		arg = ast.arg.strip_paren ()
@@ -85,7 +85,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 		sast.sympyEI (arg)
 
-		return ast
+		return sym.AST_Text (f'\\text{{constant representation set to {AST.E.var!r} and {AST.I.var!r}}}', '', '')
 
 	def evaluate (self, request):
 		global _vars

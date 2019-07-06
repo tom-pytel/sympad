@@ -22,7 +22,7 @@ import types
 from lalr1 import Parser
 
 #...............................................................................................
-def parse_rules ():
+def parse_rules (conflict_reduce_first = ()): # conflict_reduce_first = {'TOKEN', 'TOKEN', ...}
 	def skipspace ():
 		while lines and not lines [-1].strip ():
 			lines.pop ()
@@ -104,8 +104,14 @@ def parse_rules ():
 
 		if lines [-1].split () [0] == '!':
 			while lines and lines [-1].strip ():
-				t                         = lines.pop ().split ()
-				terms [t [1]] [2] [state] = int (t [-2]) if t [3] == 'shift' else -int (t [6])
+				t   = lines.pop ().split ()
+				act = int (t [-2]) if t [3] == 'shift' else -int (t [6])
+
+				if t [1] in conflict_reduce_first:
+					terms [t [1]] [2] [state] = terms [t [1]] [1] [-1]
+					terms [t [1]] [1] [-1]    = act
+				else:
+					terms [t [1]] [2] [state] = act
 
 			if skipspace ():
 				break
@@ -211,7 +217,7 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 	exec ('lex.lex ()', ply_dict)
 	exec (f'yacc.yacc (outputdir = {os.getcwd ()!r})', ply_dict)
 
-	qpdata = parse_rules ()
+	qpdata = parse_rules ({'BAR'}) # generalize BAR specification
 	text   = repr (qpdata).replace (' ', '')
 
 	if not nodelete:
