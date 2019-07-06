@@ -181,7 +181,7 @@ _ast2tex_funcs = {
 	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
 	'@': lambda ast: str (ast.var) if ast.var else '{}',
-	'.': lambda ast: f'{ast2tex (ast.obj)}.\\text{{{ast.dot}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
+	'.': lambda ast: f'{ast2tex (ast.obj)}.\\text{{{ast.attr}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
@@ -325,7 +325,7 @@ _ast2simple_funcs = {
 	'=': lambda ast: f'{ast2simple (ast.lhs)} {ast.rel} {ast2simple (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.as_short_var_text (),
-	'.': lambda ast: f'{ast2simple (ast.obj)}.{ast.dot}' if ast.arg is None else f'{ast2simple (ast.obj)}.{ast.dot}{_ast2simple_paren (ast.arg)}',
+	'.': lambda ast: f'{ast2simple (ast.obj)}.{ast.attr}' if ast.arg is None else f'{ast2simple (ast.obj)}.{ast.attr}{_ast2simple_paren (ast.arg)}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2simple (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
@@ -413,7 +413,7 @@ _ast2py_funcs = {
 	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.as_shortpy_var_text ()).replace ('\\', '_').replace ("'", '_prime'),
-	'.': lambda ast: f'{ast2py (ast.obj)}.{ast.dot}' if ast.arg is None else f'{ast2py (ast.obj)}.{ast.dot}{_ast2py_paren (ast.arg)}',
+	'.': lambda ast: f'{ast2py (ast.obj)}.{ast.attr}' if ast.arg is None else f'{ast2py (ast.obj)}.{ast.attr}{_ast2py_paren (ast.arg)}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2py (ast.paren)})',
@@ -463,9 +463,9 @@ def _ast2spt_call_func (func, arg):
 
 	return func (*args, **kw) if len (args) != 1 else func (args [0], **kw)
 
-def _ast2spt_dot (ast):
+def _ast2spt_attr (ast):
 	obj = ast2spt (ast.obj)
-	mbr = getattr (obj, ast.dot)
+	mbr = getattr (obj, ast.attr)
 
 	return mbr if ast.arg is None else _ast2spt_call_func (mbr, ast.arg)
 
@@ -479,27 +479,12 @@ _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable',
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
 def _ast2spt_func (ast):
-	# kw   = {}
-	# args = []
-	# arg  = ast.arg.strip_paren ()
 	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
 	if func is None:
 		raise NameError (f'name {ast.func!r} is not defined')
 
 	return _ast2spt_call_func (func, ast.arg)
-
-	# for arg in (arg.commas if arg.is_comma else (arg,)):
-	# 	if arg.is_ass and arg.rhs.is_str:
-	# 		name = arg.lhs.as_identifier ()
-
-	# 		if name is not None:
-	# 			kw [name] = ast2spt (arg.rhs)
-	# 			continue
-
-	# 	args.append (ast2spt (arg))
-
-	# return f (*args, **kw) if len (args) != 1 else f (args [0], **kw)
 
 def _ast2spt_diff (ast):
 	args = sum ((
@@ -546,7 +531,7 @@ _ast2spt_funcs = {
 	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, sp.Symbol (ast.var)),
-	'.': _ast2spt_dot,
+	'.': _ast2spt_attr,
 	'"': lambda ast: ast.str_,
 	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
 	'(': lambda ast: ast2spt (ast.paren),

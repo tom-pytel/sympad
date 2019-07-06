@@ -3,8 +3,8 @@
 # ('=', 'rel', lhs, rhs)        - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
 # ('#', 'num')                  - real numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
-# ('.', expr, 'dot')            - data member named 'dot' reference
-# ('.', expr, 'dot', arg)       - method member named 'dot' call
+# ('.', expr, 'name')           - data member reference
+# ('.', expr, 'name', arg)      - method member call
 # ('"', 'str')                  - string (for function parameters like '+' or '-')
 # (',', (expr1, expr2, ...))    - comma expression (tuple)
 # ('(', expr)                   - explicit parentheses
@@ -248,11 +248,11 @@ class AST_Var (AST):
 
 		return ''.join (vs)
 
-class AST_Dot (AST):
-	op, is_dot = '.', True
+class AST_Attr (AST):
+	op, is_attr = '.', True
 
-	def _init (self, obj, dot, arg = None):
-		self.obj, self.dot, self.arg = obj, dot, arg
+	def _init (self, obj, attr, arg = None):
+		self.obj, self.attr, self.arg = obj, attr, arg
 
 class AST_Str (AST):
 	op, is_str = '"', True
@@ -412,7 +412,7 @@ _AST_OP2CLS = {
 	'=': AST_Eq,
 	'#': AST_Num,
 	'@': AST_Var,
-	'.': AST_Dot,
+	'.': AST_Attr,
 	'"': AST_Str,
 	',': AST_Comma,
 	'(': AST_Paren,

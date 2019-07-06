@@ -98,8 +98,10 @@ class Handler (SimpleHTTPRequestHandler):
 
 			else: # not admin function, normal evaluation
 				if ast.is_ass and ast.lhs.is_var: # assignment?
-					ast = _ast_remap (ast, {_var_last: _vars [_var_last]}) # only remap last evaluated _ for assignment
+					var = ast.lhs
+					ast = _ast_remap (ast.rhs, {_var_last: _vars [_var_last]}) # only remap last evaluated _ for assignment
 				else:
+					var = None
 					ast = _ast_remap (ast, _vars)
 
 				sym.set_precision (ast)
@@ -107,14 +109,14 @@ class Handler (SimpleHTTPRequestHandler):
 				spt = sym.ast2spt (ast, doit = True)
 				ast = sym.spt2ast (spt)
 
-				if not (ast.is_ass and ast.lhs.is_var):
+				if not var:
 					_vars [_var_last] = ast
 
 				else: # assignment, check for circular references
-					new_vars = {**_vars, ast.lhs: ast.rhs}
+					new_vars = {**_vars, var: ast}
 
 					try:
-						_ast_remap (ast.lhs, new_vars)
+						_ast_remap (var, new_vars)
 					except RecursionError:
 						raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
 

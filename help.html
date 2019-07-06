@@ -33,7 +33,7 @@
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.4</h4>
+<h4 align="center" style="margin: 0">v0.3.5</h4>
 <br>
 
 <h2>Introduction</h2>
@@ -70,6 +70,7 @@ Integral (e^{-x^2}, (x, 0, \infty))<br>
 {{1,2},{3,4}}**-1<br>
 det({{sin x, -cos x}, {cos x, sin x}})<br>
 \<span></span>begin{matrix} A & B \\ C & D \end{matrix} * {x, y}<br>
+{{1,2,3},{4,5,6}}.transpose ()
 expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 1, 9)<br>
@@ -99,7 +100,7 @@ The precision for all SymPy Floats used in evaluation is set to the highest prec
 </p><p>
 Keep in mind that "<b>e</b>" or "<b>E</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be "<b>2 * 10^22</b>".
 Instead, use spaces and/or explicit multiplication: "<b>2 * e + 22</b>".
-Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" depending on preference, no Pythonic "<b>j</b>" option at the moment.
+Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" depending on preference, no Pythonic "<b>j</b>" option at the moment but it can be hacked by setting "<b>j = i</b>" in SymPad.
 </p>
 
 <h4>Variables</h4>
@@ -124,10 +125,6 @@ Differentials are entered as "<b>dx</b>", "<b>\partialx</b>" or "<b>\partial x</
 </p><p>
 Variables may be assigned values or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 </p>
-
-
-
-
 
 <h4>Vectors and Matrices</h4>
 
@@ -156,16 +153,6 @@ Standard Python bracket enclosed potentially nested lists which like strings exi
 </p>
 
 <h2>Operations</h2>
-
-<h4>Variable Assignment</h4>
-
-<p>
-Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
-For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
-Any valid mathematical expression can be assigned to any valid variable, but not Python objects like strings or lists.
-To delete an assignment use the "<b>$del var</b>" function, to delete all assignments do "<b>$delall</b>" and to see what variables are currently assigned to, use the "<b>$vars</b>" function.
-</p><p>
-</p>
 
 <h4>Addition and Multiplication</h4>
 
@@ -266,6 +253,23 @@ delineate an expression as an input to a function. They may be used interchangea
 version is not drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions
 in general and always when calling functions which take multiple parameters like "<b>max(1,2,3)</b>". The curly braces are used as shorthand for vectors
 and matrices if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
+</p>
+
+<h4>Member Access</h4>
+
+<p>
+You can access member data or functions of an expression just like in Python with the "<b>.</b>" operator.
+If the attribute name following the dot is followed by a parenthesized expression then it will be treated as a function call, otherwise it is a data member.
+For example, two ways to get the transpose of a matrix are "<b>{{1,2,3},{4,5,6}}.T</b>" and "<b>{{1,2,3},{4,5,6}}.transpose ()</b>".
+</p>
+
+<h4>Variable Assignment</h4>
+
+<p>
+Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
+For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
+Any valid mathematical expression can be assigned to any valid variable, but not Python objects like strings or lists.
+To delete an assignment use the "<b>$del var</b>" function, to delete all assignments do "<b>$delall</b>" and to see what variables are currently assigned to, use the "<b>$vars</b>" function.
 </p>
 
 <h2>Functions</h2>
