@@ -3,6 +3,8 @@
 # ('=', 'rel', lhs, rhs)        - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
 # ('#', 'num')                  - real numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
+# ('.', expr, 'dot')            - data member named 'dot' reference
+# ('.', expr, 'dot', arg)       - method member named 'dot' call
 # ('"', 'str')                  - string (for function parameters like '+' or '-')
 # (',', (expr1, expr2, ...))    - comma expression (tuple)
 # ('(', expr)                   - explicit parentheses
@@ -246,6 +248,12 @@ class AST_Var (AST):
 
 		return ''.join (vs)
 
+class AST_Dot (AST):
+	op, is_dot = '.', True
+
+	def _init (self, obj, dot, arg = None):
+		self.obj, self.dot, self.arg = obj, dot, arg
+
 class AST_Str (AST):
 	op, is_str = '"', True
 
@@ -264,11 +272,11 @@ class AST_Paren (AST):
 	def _init (self, paren):
 		self.paren = paren
 
-class AST_Bracket (AST):
-	op, is_bracket = '[', True
+class AST_Brack (AST):
+	op, is_brack = '[', True
 
-	def _init (self, brackets):
-		self.brackets = brackets
+	def _init (self, bracks):
+		self.bracks = bracks
 
 class AST_Abs (AST):
 	op, is_abs = '|', True
@@ -404,10 +412,11 @@ _AST_OP2CLS = {
 	'=': AST_Eq,
 	'#': AST_Num,
 	'@': AST_Var,
+	'.': AST_Dot,
 	'"': AST_Str,
 	',': AST_Comma,
 	'(': AST_Paren,
-	'[': AST_Bracket,
+	'[': AST_Brack,
 	'|': AST_Abs,
 	'-': AST_Minus,
 	'!': AST_Fact,

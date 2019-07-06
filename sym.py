@@ -1,5 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: {{1,2,3},{4,5,6}}.transpose displays as $$ in LaTeX -> HTML escape <>
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
 # TODO: fix nested identical Piecewise returned from SymPy like for Sum (x**n/x, (n, 0, oo)).doit ()
 # TODO: sequence(factorial(k), (k,1,oo))
@@ -180,10 +181,11 @@ _ast2tex_funcs = {
 	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
 	'@': lambda ast: str (ast.var) if ast.var else '{}',
+	'.': lambda ast: f'{ast2tex (ast.obj)}.\\text{{{ast.dot}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
-	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.brackets)} \\right]',
+	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.bracks)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2tex (ast.minus)}',
 	'!': lambda ast: f'{_ast2tex_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2tex (ast.fact)}!',
@@ -323,10 +325,11 @@ _ast2simple_funcs = {
 	'=': lambda ast: f'{ast2simple (ast.lhs)} {ast.rel} {ast2simple (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.as_short_var_text (),
+	'.': lambda ast: f'{ast2simple (ast.obj)}.{ast.dot}' if ast.arg is None else f'{ast2simple (ast.obj)}.{ast.dot}{_ast2simple_paren (ast.arg)}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2simple (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2simple (ast.paren)})',
-	'[': lambda ast: f'[{", ".join (ast2simple (b) for b in ast.brackets)}]',
+	'[': lambda ast: f'[{", ".join (ast2simple (b) for b in ast.bracks)}]',
 	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
 	'-': lambda ast: f'-{_ast2simple_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2simple (ast.minus)}',
 	'!': lambda ast: f'{_ast2simple_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2simple (ast.fact)}!',
@@ -410,10 +413,11 @@ _ast2py_funcs = {
 	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.as_shortpy_var_text ()).replace ('\\', '_').replace ("'", '_prime'),
+	'.': lambda ast: f'{ast2py (ast.obj)}.{ast.dot}' if ast.arg is None else f'{ast2py (ast.obj)}.{ast.dot}{_ast2py_paren (ast.arg)}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2py (ast.paren)})',
-	'[': lambda ast: f'[{", ".join (ast2py (b) for b in ast.brackets)}]',
+	'[': lambda ast: f'[{", ".join (ast2py (b) for b in ast.bracks)}]',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2py (ast.minus)}',
 	'!': lambda ast: f'factorial({ast2py (ast.fact)})',
@@ -442,23 +446,10 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 
 	return spt
 
-# Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
-_builtins_dict               = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
-_ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'compile', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
-		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool', 'memoryview',
-		'bytearray', 'bytes', 'classmethod', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
-		'reversed', 'set', 'slice', 'staticmethod', 'str', 'super', 'tuple', 'type', 'zip']
-
-_ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
-
-def _ast2spt_func (ast):
+def _ast2spt_call_func (func, arg):
 	kw   = {}
 	args = []
-	arg  = ast.arg.strip_paren ()
-	f    = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
-
-	if f is None:
-		raise NameError (f'name {ast.func!r} is not defined')
+	arg  = arg.strip_paren ()
 
 	for arg in (arg.commas if arg.is_comma else (arg,)):
 		if arg.is_ass and arg.rhs.is_str:
@@ -470,7 +461,45 @@ def _ast2spt_func (ast):
 
 		args.append (ast2spt (arg))
 
-	return f (*args, **kw) if len (args) != 1 else f (args [0], **kw)
+	return func (*args, **kw) if len (args) != 1 else func (args [0], **kw)
+
+def _ast2spt_dot (ast):
+	obj = ast2spt (ast.obj)
+	mbr = getattr (obj, ast.dot)
+
+	return mbr if ast.arg is None else _ast2spt_call_func (mbr, ast.arg)
+
+# Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
+_builtins_dict               = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
+_ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'compile', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
+		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool', 'memoryview',
+		'bytearray', 'bytes', 'classmethod', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
+		'reversed', 'set', 'slice', 'staticmethod', 'str', 'super', 'tuple', 'type', 'zip']
+
+_ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
+
+def _ast2spt_func (ast):
+	# kw   = {}
+	# args = []
+	# arg  = ast.arg.strip_paren ()
+	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
+
+	if func is None:
+		raise NameError (f'name {ast.func!r} is not defined')
+
+	return _ast2spt_call_func (func, ast.arg)
+
+	# for arg in (arg.commas if arg.is_comma else (arg,)):
+	# 	if arg.is_ass and arg.rhs.is_str:
+	# 		name = arg.lhs.as_identifier ()
+
+	# 		if name is not None:
+	# 			kw [name] = ast2spt (arg.rhs)
+	# 			continue
+
+	# 	args.append (ast2spt (arg))
+
+	# return f (*args, **kw) if len (args) != 1 else f (args [0], **kw)
 
 def _ast2spt_diff (ast):
 	args = sum ((
@@ -517,10 +546,11 @@ _ast2spt_funcs = {
 	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, sp.Symbol (ast.var)),
+	'.': _ast2spt_dot,
 	'"': lambda ast: ast.str_,
 	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
 	'(': lambda ast: ast2spt (ast.paren),
-	'[': lambda ast: [ast2spt (b) for b in ast.brackets],
+	'[': lambda ast: [ast2spt (b) for b in ast.bracks],
 	'|': lambda ast: sp.Abs (ast2spt (ast.abs)),
 	'-': lambda ast: -ast2spt (ast.minus),
 	'!': lambda ast: sp.factorial (ast2spt (ast.fact)),
@@ -553,7 +583,12 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 			return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
 
-	return AST_Text (sp.latex (spt), 'nan', str (spt))
+	tex = sp.latex (spt)
+
+	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something>
+		tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
+
+	return AST_Text (tex, 'nan', str (spt))
 
 def _spt2ast_num (spt):
 	m = _rec_num_deconstructed.match (str (spt))
