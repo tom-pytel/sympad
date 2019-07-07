@@ -418,9 +418,6 @@ class Parser (lalr1.Parser):
 		('FRAC',          r'\\frac'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
 		('VAR',          fr"({_PYVAR})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}"),
-		# ('METHOD_LEFT',  fr'\.(?:({_CHAR}\w*)|\\text\s*{{\s*({_CHAR}\w*)\s*}})\s*\\left\('),
-		# ('METHOD',       fr'\.(?:({_CHAR}\w*)|\\text\s*{{\s*({_CHAR}\w*)\s*}})\s*\('),
-		# ('MEMBER',       fr'\.(?:({_CHAR}\w*)|\\text\s*{{\s*({_CHAR}\w*)\s*}})'),
 		('ATTR',         fr'\.(?:({_CHAR}\w*)|\\text\s*{{\s*({_CHAR}\w*)\s*}})'),
 		('STR',          fr"(?<!\d|{_CHAR}|['}}])({_STR})|\\text\s*\{{\s*({_STR})\s*\}}"),
 		('PRIMES',        r"'+|(?:_prime)+"),
@@ -621,19 +618,18 @@ class Parser (lalr1.Parser):
 		'SUB1'               : 'SUB',
 		'FRAC2'              : 'FRAC',
 		'FRAC1'              : 'FRAC',
-		# 'expr_sub'           : 'SUB',
 		'expr_super'         : 'CARET',
 		'caret_or_doublestar': 'CARET',
 	}
 
 	_AUTOCOMPLETE_CONTINUE = {
-		'RIGHT'      : ' \\right',
-		'COMMA'      : ',',
-		'PARENL'     : '(',
-		'PARENR'     : ')',
-		'CURLYR'     : '}',
-		'BRACKETR'   : ']',
-		'BAR'        : '|',
+		'RIGHT'   : ' \\right',
+		'COMMA'   : ',',
+		'PARENL'  : '(',
+		'PARENR'  : ')',
+		'CURLYR'  : '}',
+		'BRACKETR': ']',
+		'BAR'     : '|',
 	}
 
 	def _mark_error (self):
@@ -813,7 +809,7 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('x.y ().z.w')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('x.y ().z.w')
+# 	print (a)

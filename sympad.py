@@ -752,9 +752,10 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('cos**-1 x', true)">cos**-1 x</a>
 	<a class="GreetingA" href="javascript:inputting ('\\log_2{8}', true)">\log_2{8}</a>
 	<a class="GreetingA" href="javascript:inputting ('\\lim_{x \\to \\infty} 1/x', true)">\lim_{x \to \infty} 1/x</a>
-	<a class="GreetingA" href="javascript:inputting ('Limit (1/x, x, 0, dir=\'-\')', true)">Limit (1/x, x, 0, dir='-')</a>
+	<a class="GreetingA" href="javascript:inputting ('Limit (\\frac1x, x, 0, dir=\'-\')', true)">Limit (\frac1x, x, 0, dir='-')</a>
 	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}^oo x^n / n!', true)">\sum_{n=0}^oo x^n / n!</a>
 	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=1}**10 Sum (\\sum_{l=1}^m l, (m, 1, n))', true)">\sum_{n=1}**10 Sum (\sum_{l=1}^m l, (m, 1, n))</a>
+	<a class="GreetingA" href="javascript:inputting ('d/dx x**2', true)">d/dx x**2</a>
 	<a class="GreetingA" href="javascript:inputting ('Derivative (\\int dx, x)', true)">Derivative (\int dx, x)</a>
 	<a class="GreetingA" href="javascript:inputting ('d**6 / dxdy**2dz**3 x^3 y^3 z^3', true)">d**6 / dxdy**2dz**3 x^3 y^3 z^3</a>
 	<a class="GreetingA" href="javascript:inputting ('Integral (e^{-x^2}, (x, 0, \\infty))', true)">Integral (e^{-x^2}, (x, 0, \infty))</a>
@@ -822,7 +823,7 @@ r"""<!DOCTYPE html>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
 <h4 align="center" style="margin: 0">v0.3.5</h4>
-<br>
+
 
 <h2>Introduction</h2>
 
@@ -847,9 +848,10 @@ sin (3\pi / 2)<br>
 cos**-1 x<br>
 \log_2{8}<br>
 \lim_{x \to \infty} 1/x<br>
-Limit (1/x, x, 0, dir='-')<br>
+Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}^oo x^n / n!<br>
 \sum_{n=1}**10 Sum (\sum_{l=1}^m l, (m, 1, n))<br>
+d/dx x**2<br>
 Derivative (\int dx, x)<br>
 d**6 / dxdy**2dz**3 x^3 y^3 z^3<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
@@ -858,7 +860,7 @@ Integral (e^{-x^2}, (x, 0, \infty))<br>
 {{1,2},{3,4}}**-1<br>
 det({{sin x, -cos x}, {cos x, sin x}})<br>
 \<span></span>begin{matrix} A & B \\ C & D \end{matrix} * {x, y}<br>
-{{1,2,3},{4,5,6}}.transpose ()
+{{1,2,3},{4,5,6}}.transpose ()<br>
 expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 1, 9)<br>
@@ -1112,10 +1114,10 @@ A single-click copy of the result will have the element(s) which was/were not un
 Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, sympy function/variable module prefix, importing modules to allow custom code execution, assumptions/hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)... Too much to list...
 </p>
 
-<br><br><br>
+
 <div align="center">
 Copyright (c) 2019 Tomasz Pytel, All rights reserved.
-<br><br>
+
 SymPad on GitHub: <a target="_blank" href="https://github.com/Pristine-Cat/SymPad">https://github.com/Pristine-Cat/SymPad</a>
 </div>
 
@@ -2227,9 +2229,6 @@ class Parser (lalr1.Parser):
 		('FRAC',          r'\\frac'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
 		('VAR',          fr"({_PYVAR})|(d|\\partial\s?)?({_ONEVAR})|{_SPECIAL}|{_TEXTVAR}"),
-		# ('METHOD_LEFT',  fr'\.(?:({_CHAR}\w*)|\\text\s*{{\s*({_CHAR}\w*)\s*}})\s*\\left\('),
-		# ('METHOD',       fr'\.(?:({_CHAR}\w*)|\\text\s*{{\s*({_CHAR}\w*)\s*}})\s*\('),
-		# ('MEMBER',       fr'\.(?:({_CHAR}\w*)|\\text\s*{{\s*({_CHAR}\w*)\s*}})'),
 		('ATTR',         fr'\.(?:({_CHAR}\w*)|\\text\s*{{\s*({_CHAR}\w*)\s*}})'),
 		('STR',          fr"(?<!\d|{_CHAR}|['}}])({_STR})|\\text\s*\{{\s*({_STR})\s*\}}"),
 		('PRIMES',        r"'+|(?:_prime)+"),
@@ -2430,19 +2429,18 @@ class Parser (lalr1.Parser):
 		'SUB1'               : 'SUB',
 		'FRAC2'              : 'FRAC',
 		'FRAC1'              : 'FRAC',
-		# 'expr_sub'           : 'SUB',
 		'expr_super'         : 'CARET',
 		'caret_or_doublestar': 'CARET',
 	}
 
 	_AUTOCOMPLETE_CONTINUE = {
-		'RIGHT'      : ' \\right',
-		'COMMA'      : ',',
-		'PARENL'     : '(',
-		'PARENR'     : ')',
-		'CURLYR'     : '}',
-		'BRACKETR'   : ']',
-		'BAR'        : '|',
+		'RIGHT'   : ' \\right',
+		'COMMA'   : ',',
+		'PARENL'  : '(',
+		'PARENR'  : ')',
+		'CURLYR'  : '}',
+		'BRACKETR': ']',
+		'BAR'     : '|',
 	}
 
 	def _mark_error (self):
@@ -2622,10 +2620,10 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('x.y ().z.w')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('x.y ().z.w')
+# 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: {{1,2,3},{4,5,6}}.transpose displays as $$ in LaTeX -> HTML escape <>
@@ -2737,7 +2735,7 @@ def _ast2tex_pow (ast):
 
 def _ast2tex_log (ast):
 	return \
-			f'\\log{_ast2tex_paren (ast.log)}' \
+			f'\\ln{_ast2tex_paren (ast.log)}' \
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
@@ -2900,7 +2898,7 @@ def _ast2simple_pow (ast):
 
 def _ast2simple_log (ast):
 	return \
-			f'log{_ast2simple_paren (ast.log)}' \
+			f'ln{_ast2simple_paren (ast.log)}' \
 			if ast.base is None else \
 			f'log_{_ast2simple_curly (ast.base)}{_ast2simple_paren (ast.log)}'
 

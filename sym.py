@@ -110,7 +110,7 @@ def _ast2tex_pow (ast):
 
 def _ast2tex_log (ast):
 	return \
-			f'\\log{_ast2tex_paren (ast.log)}' \
+			f'\\ln{_ast2tex_paren (ast.log)}' \
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
@@ -273,7 +273,7 @@ def _ast2simple_pow (ast):
 
 def _ast2simple_log (ast):
 	return \
-			f'log{_ast2simple_paren (ast.log)}' \
+			f'ln{_ast2simple_paren (ast.log)}' \
 			if ast.base is None else \
 			f'log_{_ast2simple_curly (ast.base)}{_ast2simple_paren (ast.log)}'
 
