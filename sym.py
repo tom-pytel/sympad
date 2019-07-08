@@ -1,6 +1,5 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: {{1,2,3},{4,5,6}}.transpose displays as $$ in LaTeX -> HTML escape <>
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
 # TODO: fix nested identical Piecewise returned from SymPy like for Sum (x**n/x, (n, 0, oo)).doit ()
 # TODO: sequence(factorial(k), (k,1,oo))
@@ -442,7 +441,10 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	spt = _ast2spt_funcs [ast.op] (ast)
 
 	if doit and spt.__class__ != sp.Piecewise and callable (getattr (spt, 'doit', None)):
-		spt = spt.doit ()
+		try:
+			spt = spt.doit ()
+		except TypeError:
+			pass
 
 	return spt
 
@@ -479,6 +481,9 @@ _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable',
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
 def _ast2spt_func (ast):
+	if ast.func == '@': # special reference meta-function
+		return ast2spt (ast.arg)
+
 	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
 	if func is None:
@@ -647,6 +652,7 @@ _spt2ast_funcs = {
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
 	False.__class__: lambda spt: AST.False_,
+	str: lambda spt: AST ('"', spt),
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
 	sp.Tuple: lambda spt: spt2ast (spt.args),

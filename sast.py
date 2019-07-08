@@ -145,8 +145,8 @@ class AST (tuple):
 class AST_Eq (AST):
 	op, is_eq  = '=', True
 
-	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
-	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\neq': '!=', '\\lt': '<', '\\gt': '>'}
+	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'} # , '<': '\\lt', '>': '\\gt'}
+	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!='}
 
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
@@ -335,19 +335,13 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
-	BUILTINS    = {'abs', 'pow', 'sum'}
-	TRIGH       = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
-	PY_ONLY     = BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
-	PY_AND_TEX  = TRIGH | set ('''
-		arg
-		exp
-		ln
-		max
-		min
-		'''.strip ().split ())
-
-	PY_ALL      = PY_ONLY | PY_AND_TEX
-	TEX_ONLY    = {f'arc{f}' for f in TRIGH}
+	SPECIAL    = {'@', 'vars', 'del', 'delall'}
+	BUILTINS   = {'abs', 'pow', 'sum'}
+	TRIGH      = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
+	PY_ONLY    = SPECIAL | BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
+	PY_AND_TEX = TRIGH | {'arg', 'exp', 'ln', 'max', 'min'}
+	PY_ALL     = PY_ONLY | PY_AND_TEX
+	TEX_ONLY   = {f'arc{f}' for f in TRIGH}
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')

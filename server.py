@@ -2,6 +2,7 @@
 # python 3.6+
 
 # TODO: Exception prevents restart on file date change?
+# TODO: Multi-line returns.
 
 import getopt
 import json
@@ -33,10 +34,10 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	_var_last = AST ('@', '_')
 	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 
-_DEFAULT_ADDRESS          = ('localhost', 8000)
+_DEFAULT_ADDRESS = ('localhost', 8000)
 
-_STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_FILES                    = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
+_STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _HELP = f"""
 usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sympyEI] [host:port]
@@ -48,95 +49,137 @@ usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sym
 
 def _ast_remap (ast, map_):
 	return \
-			ast if not isinstance (ast, AST) else \
-			_ast_remap (map_ [ast], map_) if ast in map_ else \
+			ast                                        if not isinstance (ast, AST) or (ast.is_func and ast.func == '@') else \
+			_ast_remap (map_ [ast], map_)              if ast in map_ else \
 			AST (*(_ast_remap (a, map_) for a in ast))
 
+def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
+	vars = None
+
+	if ast.is_ass:
+		if ast.lhs.is_var: # simple assignment?
+			ast, vars = ast.rhs, [ast.lhs]
+
+	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so remap
+		lhss = []
+		itr  = iter (ast.commas)
+
+		for c in itr:
+			if c.is_var:
+				lhss.append (c)
+			elif not c.is_ass or not c.lhs.is_var:
+				break
+
+			else:
+				t    = (c.rhs,) + tuple (itr)
+				ast  = t [0] if len (t) == 1 else AST (',', t)
+				vars = lhss + [c.lhs]
+
+	return _ast_remap (ast, _vars), vars
+
+def _ast_execute_ass (ast, vars): # execute assignment if it was detected
+	global _vars
+
+	if not vars: # no assignment
+		_vars [_var_last] = ast
+
+	else:
+		if len (vars) == 1: # simple assignment
+			new_vars = {**_vars, vars [0]: ast}
+
+			print (repr (ast))
+
+		else: # tuple assignment
+			ast  = ast.strip_paren ()
+			asts = ast.commas if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
+
+			if len (vars) < len (asts):
+				raise ValueError (f'too many values to unpack (expected {len (vars)})')
+			elif len (vars) > len (asts):
+				raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
+			else:
+				new_vars = {**_vars, **dict ((vars [i], asts [i]) for i in range (len (vars)))}
+
+		try: # check for circular references
+			_ast_remap (AST (',', tuple (vars)), new_vars)
+		except RecursionError:
+			raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
+
+		_vars = new_vars
+
+def _admin_vars (ast):
+	if len (_vars) == 1:
+		return sym.AST_Text ('\\text{no variables defined}', '', '')
+	else:
+		return AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
+
+def _admin_del (ast):
+	ast = ast.arg.strip_paren ()
+
+	try:
+		del _vars [ast]
+	except KeyError:
+		raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
+
+	return sym.AST_Text (f'\\text{{variable {ast.var!r} deleted}}', '', '')
+
+def _admin_delall (ast):
+	global _vars
+
+	_vars = {_var_last: _vars [_var_last]}
+
+	return sym.AST_Text ('\\text{all variables deleted}', '', '')
+
+def _admin_sympyEI (ast):
+	arg = ast.arg.strip_paren ()
+	arg = \
+		bool (sym.ast2spt (arg))            if not arg.is_comma else \
+		True                                if not len (arg.commas) else \
+		bool (sym.ast2spt (arg.commas [0]))
+
+	sast.sympyEI (arg)
+
+	return sym.AST_Text (f'\\text{{constant representation set to {AST.E.var!r} and {AST.I.var!r}}}', '', '')
+
+#...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
-	def admin_vars (self, ast):
-		if len (_vars) == 1:
-			return sym.AST_Text ('\\text{no variables defined}', '', '')
+	def do_GET (self):
+		if self.path == '/':
+			self.path = '/index.html'
+
+		if self.path not in _STATIC_FILES:
+			self.send_error (404, f'Invalid path {self.path!r}')
+
+		elif not _RUNNING_AS_SINGLE_SCRIPT:
+			return SimpleHTTPRequestHandler.do_GET (self)
+
 		else:
-			return AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
+			self.send_response (200)
+			self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
+			self.end_headers ()
+			self.wfile.write (_FILES [self.path [1:]])
 
-	def admin_del (self, ast):
-		ast = ast.arg.strip_paren ()
+	def do_POST (self):
+		self.parser = sparser.Parser ()
+		request     = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
 
-		try:
-			del _vars [ast]
-		except KeyError:
-			raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
+		for key, val in list (request.items ()):
+			if len (val) == 1:
+				request [key] = val [0]
 
-		return sym.AST_Text (f'\\text{{variable {ast.var!r} deleted}}', '', '')
+		if request ['mode'] == 'validate':
+			response = self.validate (request)
+		else: # request ['mode'] == 'evaluate':
+			response = self.evaluate (request)
 
-	def admin_delall (self, ast):
-		global _vars
+		response ['mode'] = request ['mode']
+		response ['idx']  = request ['idx']
+		response ['text'] = request ['text']
 
-		_vars = {_var_last: _vars [_var_last]}
-
-		return sym.AST_Text ('\\text{all variables deleted}', '', '')
-
-	def admin_sympyEI (self, ast):
-		arg = ast.arg.strip_paren ()
-		arg = \
-			bool (sym.ast2spt (arg))            if not arg.is_comma else \
-			True                                if not len (arg.commas) else \
-			bool (sym.ast2spt (arg.commas [0]))
-
-		sast.sympyEI (arg)
-
-		return sym.AST_Text (f'\\text{{constant representation set to {AST.E.var!r} and {AST.I.var!r}}}', '', '')
-
-	def evaluate (self, request):
-		global _vars
-
-		try:
-			ast, _, _ = self.parser.parse (request ['text'])
-
-			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
-				ast = getattr (self, f'admin_{ast.func}') (ast)
-
-			else: # not admin function, normal evaluation
-				if ast.is_ass and ast.lhs.is_var: # assignment?
-					var = ast.lhs
-					ast = _ast_remap (ast.rhs, {_var_last: _vars [_var_last]}) # only remap last evaluated _ for assignment
-				else:
-					var = None
-					ast = _ast_remap (ast, _vars)
-
-				sym.set_precision (ast)
-
-				spt = sym.ast2spt (ast, doit = True)
-				ast = sym.spt2ast (spt)
-
-				if not var:
-					_vars [_var_last] = ast
-
-				else: # assignment, check for circular references
-					new_vars = {**_vars, var: ast}
-
-					try:
-						_ast_remap (var, new_vars)
-					except RecursionError:
-						raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
-
-					_vars = new_vars
-
-				if os.environ.get ('SYMPAD_DEBUG'):
-					print ()
-					print ('spt:        ', repr (spt))
-					print ('spt type:   ', type (spt))
-					print ('sympy latex:', sp.latex (spt))
-					print ()
-
-			return {
-				'tex'   : sym.ast2tex (ast),
-				'simple': sym.ast2simple (ast),
-				'py'    : sym.ast2py (ast),
-			}
-
-		except Exception:
-			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
+		self.send_response (200)
+		self.send_header ("Content-type", "application/json")
+		self.end_headers ()
+		self.wfile.write (json.dumps (response).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = self.parser.parse (request ['text'])
@@ -164,43 +207,38 @@ class Handler (SimpleHTTPRequestHandler):
 			'autocomplete': autocomplete,
 		}
 
-	def do_POST (self):
-		self.parser = sparser.Parser ()
-		request     = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
+	def evaluate (self, request):
+		try:
+			ast, _, _ = self.parser.parse (request ['text'])
 
-		for key, val in list (request.items ()):
-			if len (val) == 1:
-				request [key] = val [0]
+			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
+				ast = globals () [f'_admin_{ast.func}'] (ast)
 
-		if request ['mode'] == 'validate':
-			response = self.validate (request)
-		else: # request ['mode'] == 'evaluate':
-			response = self.evaluate (request)
+			else: # not admin function, normal evaluation
+				ast, vars = _ast_prepare_ass (ast)
 
-		response ['mode'] = request ['mode']
-		response ['idx']  = request ['idx']
-		response ['text'] = request ['text']
+				sym.set_precision (ast)
 
-		self.send_response (200)
-		self.send_header ("Content-type", "application/json")
-		self.end_headers ()
-		self.wfile.write (json.dumps (response).encode ('utf8'))
+				spt = sym.ast2spt (ast, doit = True)
+				ast = sym.spt2ast (spt)
 
-	def do_GET (self):
-		if self.path == '/':
-			self.path = '/index.html'
+				_ast_execute_ass (ast, vars)
 
-		if self.path not in _STATIC_FILES:
-			self.send_error (404, f'Invalid path {self.path!r}')
+				if os.environ.get ('SYMPAD_DEBUG'):
+					print ()
+					print ('spt:        ', repr (spt))
+					print ('spt type:   ', type (spt))
+					print ('sympy latex:', sp.latex (spt))
+					print ()
 
-		elif not _RUNNING_AS_SINGLE_SCRIPT:
-			return SimpleHTTPRequestHandler.do_GET (self)
+			return {
+				'tex'   : sym.ast2tex (ast),
+				'simple': sym.ast2simple (ast),
+				'py'    : sym.ast2py (ast),
+			}
 
-		else:
-			self.send_response (200)
-			self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
-			self.end_headers ()
-			self.wfile.write (_FILES [self.path [1:]])
+		except Exception:
+			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
 
 #...............................................................................................
 _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
