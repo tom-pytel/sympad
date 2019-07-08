@@ -1,5 +1,3 @@
-# TODO: IMPORTANT! Fix curly, paren and bracket autocomplete!
-
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: Change '$' to be more generic function OR variable name escape or do another escape character for variable escapes?
@@ -633,23 +631,19 @@ class Parser (lalr1.Parser):
 		'BAR'     : '|',
 	}
 
-	def _mark_error (self):
-		self.autocompleting = False
-
-		if self.erridx is None:
-			self.erridx = self.tokens [self.tokidx].pos
-
-	def _insert_symbol (self, sym):
-		tokidx = self.tokidx
+	def _insert_symbol (self, sym, tokinc = 0):
+		tokidx       = self.tokidx
+		self.tokidx += tokinc
 
 		for sym in ((sym,) if isinstance (sym, str) else sym):
 			if sym in self.TOKENS:
 				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.tok.pos))
 
-				if self.autocompleting and sym in self._AUTOCOMPLETE_CONTINUE:
-					self.autocomplete.append (self._AUTOCOMPLETE_CONTINUE [sym])
-				else:
-					self.autocompleting = False
+				if self.autocompleting:
+					if sym in self._AUTOCOMPLETE_CONTINUE:
+						self.autocomplete.append (self._AUTOCOMPLETE_CONTINUE [sym])
+					else:
+						self.autocompleting = False
 
 			else:
 				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, ('', '', '', '')))
@@ -659,57 +653,60 @@ class Parser (lalr1.Parser):
 
 		return True # for convenience
 
-	def _parse_autocomplete_expr_comma (self, rule):
-		idx = -1 - len (rule [1])
+	def _mark_error (self, sym_ins = None, tokinc = 0, at = None):
+		self.autocompleting = False
 
-		if self.stack [idx].sym == 'CURLYL': # vector or matrix potentially being entered
-			if idx == -2: # { something
-				if self.stack [-1].red.is_vec or self.stack [-3].sym == 'CURLYL' or \
-						(self.stack [-1].sym == 'expr' and self.stack [-2].sym == 'CURLYL' and self.stack [-3].sym == 'COMMA' and \
-						self.stack [-4].red.is_vec and self.stack [-5].sym == 'CURLYL'):
-					return self._insert_symbol (('COMMA', 'CURLYR'))
-				else:
+		if self.erridx is None:
+			self.erridx = self.tokens [self.tokidx].pos if at is None else at
+
+		if sym_ins is not None:
+			return self._insert_symbol (sym_ins, tokinc)
+
+	def _parse_autocomplete_expr_commas (self, rule, pos):
+		idx = -pos + (self.stack [-pos].sym == 'LEFT')
+
+		if self.stack [idx].sym != 'CURLYL':
+			if self.tokens [self.tokidx - 1] == 'COMMA':
+				self._mark_error ()
+
+			if self.stack [idx - 1].sym == 'LEFT':
+				return self._insert_symbol ('RIGHT')
+
+			return self._insert_symbol ('PARENR' if self.stack [idx].sym == 'PARENL' else 'BRACKETR')
+
+		# vector or matrix potentially being entered
+		if self.stack [idx - 1].sym == 'CURLYL':
+			if self.stack [-1].red.is_null_var:
+				return self._mark_error (('CURLYR', 'CURLYR'))
+			elif not self.stack [-1].red.is_comma:
+				return self._insert_symbol (('COMMA', 'CURLYR', 'COMMA', 'CURLYR'), 1)
+			elif len (self.stack [-1].red.commas) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
+				return self._insert_symbol (('CURLYR', 'COMMA', 'CURLYR'))
+			else:
+				return self._mark_error (('CURLYR', 'CURLYR'))
+
+		if self.stack [-3].sym != 'COMMA' or self.stack [-4].sym != 'expr_comma' or self.stack [-5].sym != 'CURLYL':
+			if self.stack [-1].red.is_vec:
+				return self._insert_symbol (('COMMA', 'CURLYR'), 1)
+			elif self.stack [-1].red.is_comma:
+				if len (self.stack [-1].red.commas) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
 					return self._insert_symbol ('CURLYR')
+				else:
+					return self._mark_error ('CURLYR')
 
-			elif idx == -3: # { something ,
-				if self.stack [-2].red.is_comma:
-					self._mark_error ()
+		else:
+			cols = \
+					len (self.stack [-4].red.vec)             if self.stack [-4].red.is_vec else \
+					len (self.stack [-4].red.commas [0].vec)  if self.stack [-4].red.is_comma and self.stack [-4].red.commas [0].is_vec else \
+					None
 
-					return False
+			if cols is not None:
+				vec             = self.stack [-1].red.commas if self.stack [-1].red.is_comma else (self.stack [-1].red,)
+				self.stack [-1] = lalr1.State (self.stack [-1].idx, self.stack [-1].sym, AST (',', vec + (AST.VarNull,) * (cols - len (vec))))
 
-			elif idx == -4: # { expr_comma(s) , something
-				if (self.stack [-1].red.is_vec or self.stack [-1].sym == 'expr') and self.stack [-2].sym == 'COMMA':
-					vlen = len (self.stack [-1].red.vec) if self.stack [-1].red.is_vec else 1
-					cols = None
+				return self._mark_error (('CURLYR', 'CURLYR')) if len (vec) != cols else self._insert_symbol (('CURLYR', 'CURLYR'))
 
-					if self.stack [-3].red.is_vec and self.tokens [self.tokidx - 1] == 'CURLYR' and vlen < len (self.stack [-3].red.vec):
-						cols = len (self.stack [-3].red.vec)
-
-					elif self.stack [-3].red.is_comma and not sum (not c.is_vec for c in self.stack [-3].red.commas) and \
-							not sum (len (c.vec) != len (self.stack [-3].red.commas [0].vec) for c in self.stack [-3].red.commas) and \
-							vlen < len (self.stack [-3].red.commas [0].vec):
-
-						cols = len (self.stack [-3].red.commas [0].vec)
-
-					if cols is not None:
-						vec               = self.stack [-1].red.vec if self.stack [-1].red.is_vec else (self.stack [-1].sym,)
-						self.stack [-1]   = lalr1.State (self.stack [-1].idx, self.stack [-1].sym, AST ('vec', vec + (AST.VarNull,) * (cols - vlen)))
-						self.autocomplete = []
-
-						self._mark_error ()
-
-						return True
-
-			return self._insert_symbol ('CURLYR')
-
-		elif self.stack [idx - 1].sym == 'LEFT':
-			return self._insert_symbol ('RIGHT')
-		elif self.stack [idx].sym == 'PARENL':
-			return self._insert_symbol ('PARENR')
-		elif self.stack [idx].sym == 'BRACKETL':
-			return self._insert_symbol ('BRACKETR')
-
-		return False
+		return self._insert_symbol ('CURLYR')
 
 	def _parse_autocomplete_expr_int (self):
 		s               = self.stack [-1]
@@ -766,17 +763,16 @@ class Parser (lalr1.Parser):
 
 		rule = self.rules [irule]
 
-		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')):# and _FUNC_name (self.stack [-1].sym) not in AST.Func.PY_ALL:
+		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')) and _FUNC_name (self.stack [-1].sym) in AST.Func.NO_PARMS:
 			return self._insert_symbol (('PARENL', 'PARENR'))
 
-		# if pos and rule [1] [pos - 1] in {'expr_comma', 'expr_commas'}:
-		# 	return self._parse_autocomplete_expr_comma (rule, pos)
+		if pos and rule [1] [pos - 1] == 'expr_commas':
+			return self._parse_autocomplete_expr_commas (rule, pos)
 
-		if pos >= len (rule [1]):
-			if rule [0] in {'expr_comma', 'expr_commas'}: # end of comma expression?
-				return self._parse_autocomplete_expr_comma (rule)
+		assert rule [1] [pos - 1] != 'expr_comma'
 
-			if rule [0] == 'expr_int': # exception raised by rule reduction function?
+		if pos >= len (rule [1]): # end of rule
+			if rule [0] == 'expr_int':
 				return self._parse_autocomplete_expr_int ()
 
 			return False
@@ -816,7 +812,13 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__':
-	p = Parser ()
-	a = p.parse ('{{1')
-	print (a)
+# if __name__ == '__main__':
+# 	p = Parser ()
+# 	a = p.parse ('1 + {{1,2,3},{3,4}')
+# 	print (a)
+
+	# for s in ('{', '{{', '{{1', '{{1,', '{{1,2', '{{1,2}', '{{1,2},', '{{1,2},{', '{{1,2},{3', '{{1,2},{3,', '{{1,2},{3,4', '{{1,2},{3,4}',
+	# 		'{{1,2},{3,4},', '{{1,2},{3,4},{', '{{1,2},{3,4},{5', '{{1,2},{3,4},{5,', '{{1,2},{3,4},{5,6', '{{1,2},{3,4},{5,6}',
+	# 		'{{1,2,3},{3,4},{', '{{1,2},{3,4,5},{'):
+	# 	print (f'\n{s}')
+	# 	p.parse (s)

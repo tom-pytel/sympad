@@ -337,13 +337,15 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
-	SPECIAL    = {'@', 'vars', 'del', 'delall'}
-	BUILTINS   = {'abs', 'pow', 'sum'}
-	TRIGH      = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
-	PY_ONLY    = SPECIAL | BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
-	PY_AND_TEX = TRIGH | {'arg', 'exp', 'ln', 'max', 'min'}
-	PY_ALL     = PY_ONLY | PY_AND_TEX
-	TEX_ONLY   = {f'arc{f}' for f in TRIGH}
+	NO_PARMS    = {'vars', 'delall', 'sympyEI'}
+
+	SPECIAL     = {'@', 'vars', 'del', 'delall'}
+	BUILTINS    = {'abs', 'pow', 'sum'}
+	TRIGH       = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
+	PY_ONLY     = SPECIAL | BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
+	PY_AND_TEX  = TRIGH | {'arg', 'exp', 'ln', 'max', 'min'}
+	PY_ALL      = PY_ONLY | PY_AND_TEX
+	TEX_ONLY    = {f'arc{f}' for f in TRIGH}
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')
