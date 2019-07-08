@@ -1,3 +1,5 @@
+# TODO: Add known zero parameter funcs.
+
 # Base classes for abstract math syntax tree, tuple based.
 #
 # ('=', 'rel', lhs, rhs)        - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
@@ -434,18 +436,19 @@ _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
 for cls in _AST_CLS2OP:
 	setattr (AST, cls.__name__ [4:], cls)
 
-AST.Zero    = AST ('#', '0')
-AST.One     = AST ('#', '1')
-AST.NegOne  = AST ('#', '-1')
-AST.VarNull = AST ('@', '')
-AST.I       = AST ('@', 'i')
-AST.E       = AST ('@', 'e')
-AST.Pi      = AST ('@', '\\pi')
-AST.Infty   = AST ('@', '\\infty')
-AST.None_   = AST ('@', '\\text{None}')
-AST.True_   = AST ('@', '\\text{True}')
-AST.False_  = AST ('@', '\\text{False}')
-AST.NaN     = AST ('@', '\\text{nan}')
+AST.Zero     = AST ('#', '0')
+AST.One      = AST ('#', '1')
+AST.NegOne   = AST ('#', '-1')
+AST.VarNull  = AST ('@', '')
+AST.I        = AST ('@', 'i')
+AST.E        = AST ('@', 'e')
+AST.Pi       = AST ('@', '\\pi')
+AST.Infty    = AST ('@', '\\infty')
+AST.None_    = AST ('@', '\\text{None}')
+AST.True_    = AST ('@', '\\text{True}')
+AST.False_   = AST ('@', '\\text{False}')
+AST.NaN      = AST ('@', '\\text{nan}')
+AST.MatEmpty = AST ('func', 'Matrix', ('[', ()))
 
 def sympyEI (yes = True):
 	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
