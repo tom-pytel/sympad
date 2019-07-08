@@ -173,7 +173,9 @@ class Parser:
 					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
-					# TODO: re-raise exception from rederr if present
+					if self.rederr is not None:
+						raise self.rederr # re-raise exception from last reduction function if present
+
 					raise SyntaxError ( \
 						'unexpected end of input' if tok == '$end' else \
 						f'invalid token {tok.text!r}' if tok == '$err' else \

@@ -1,5 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: {{1,2,3},{4,5,6}}.transpose displays as $$ in LaTeX -> HTML escape <>
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
 # TODO: fix nested identical Piecewise returned from SymPy like for Sum (x**n/x, (n, 0, oo)).doit ()
 # TODO: sequence(factorial(k), (k,1,oo))
@@ -440,9 +441,9 @@ _ast2py_funcs = {
 def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)
 	spt = _ast2spt_funcs [ast.op] (ast)
 
-	if doit and spt.__class__ != sp.Piecewise and callable (getattr (spt, 'doit', None)):
+	if doit and callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
 		try:
-			spt = spt.doit ()
+			spt = sp.piecewise_fold (spt.doit ()) # = spt.doit ()
 		except TypeError:
 			pass
 
