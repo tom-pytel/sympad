@@ -2,7 +2,6 @@
 # python 3.6+
 
 # TODO: Exception prevents restart on file date change?
-# TODO: Multi-line returns.
 
 import getopt
 import json
@@ -81,14 +80,14 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	global _vars
 
+	asts = None
+
 	if not vars: # no assignment
 		_vars [_var_last] = ast
 
 	else:
 		if len (vars) == 1: # simple assignment
 			new_vars = {**_vars, vars [0]: ast}
-
-			print (repr (ast))
 
 		else: # tuple assignment
 			ast  = ast.strip_paren ()
@@ -101,6 +100,8 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 			else:
 				new_vars = {**_vars, **dict ((vars [i], asts [i]) for i in range (len (vars)))}
 
+			asts = [AST ('=', '=', vars [i], asts [i]) for i in range (len (vars))]
+
 		try: # check for circular references
 			_ast_remap (AST (',', tuple (vars)), new_vars)
 		except RecursionError:
@@ -108,11 +109,13 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 
 		_vars = new_vars
 
+	return asts or [ast]
+
 def _admin_vars (ast):
 	if len (_vars) == 1:
-		return sym.AST_Text ('\\text{no variables defined}', '', '')
+		return 'No variables defined.'
 	else:
-		return AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
+		return [AST ('=', '=', v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
 
 def _admin_del (ast):
 	ast = ast.arg.strip_paren ()
@@ -122,7 +125,7 @@ def _admin_del (ast):
 	except KeyError:
 		raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
 
-	return f'Variable {ast.var!r} deleted.'
+	return f'Variable {sym.ast2simple (ast)!r} deleted.'
 
 def _admin_delall (ast):
 	global _vars
@@ -134,8 +137,8 @@ def _admin_delall (ast):
 def _admin_sympyEI (ast):
 	arg = ast.arg.strip_paren ()
 	arg = \
-		bool (sym.ast2spt (arg))            if not arg.is_comma else \
-		True                                if not len (arg.commas) else \
+		bool (sym.ast2spt (arg))             if not arg.is_comma else \
+		True                                 if not len (arg.commas) else \
 		bool (sym.ast2spt (arg.commas [0]))
 
 	sast.sympyEI (arg)
@@ -212,10 +215,10 @@ class Handler (SimpleHTTPRequestHandler):
 			ast, _, _ = _parser.parse (request ['text'])
 
 			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
-				ast = globals () [f'_admin_{ast.func}'] (ast)
+				asts = globals () [f'_admin_{ast.func}'] (ast)
 
-				if isinstance (ast, str):
-					return {'msg': ast}
+				if isinstance (asts, str):
+					return {'msg': asts}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _ast_prepare_ass (ast)
@@ -225,8 +228,6 @@ class Handler (SimpleHTTPRequestHandler):
 				spt = sym.ast2spt (ast, doit = True)
 				ast = sym.spt2ast (spt)
 
-				_ast_execute_ass (ast, vars)
-
 				if os.environ.get ('SYMPAD_DEBUG'):
 					print ()
 					print ('spt:        ', repr (spt))
@@ -234,11 +235,13 @@ class Handler (SimpleHTTPRequestHandler):
 					print ('sympy latex:', sp.latex (spt))
 					print ()
 
-			return {
+				asts = _ast_execute_ass (ast, vars)
+
+			return {'math': [{
 				'tex'   : sym.ast2tex (ast),
 				'simple': sym.ast2simple (ast),
 				'py'    : sym.ast2py (ast),
-			}
+			} for ast in asts]}
 
 		except Exception:
 			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}

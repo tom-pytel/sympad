@@ -337,8 +337,6 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
-	NO_PARMS    = {'vars', 'delall', 'sympyEI'}
-
 	SPECIAL     = {'@', 'vars', 'del', 'delall'}
 	BUILTINS    = {'abs', 'pow', 'sum'}
 	TRIGH       = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}

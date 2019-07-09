@@ -173,8 +173,8 @@ class Parser:
 					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
-					if self.rederr is not None:
-						raise self.rederr # re-raise exception from last reduction function if present
+					# if self.rederr is not None: # THIS IS COMMENTED OUT BECAUSE IS NOT USED HERE AND PYLINT DOESN'T LIKE IT!
+					# 	raise self.rederr # re-raise exception from last reduction function if present
 
 					raise SyntaxError ( \
 						'unexpected end of input' if tok == '$end' else \

@@ -175,7 +175,7 @@ function writeToClipboard (text) {
 }
 
 //...............................................................................................
-function copyToClipboard (e, val_or_eval, idx) {
+function copyToClipboard (e, val_or_eval, idx, subidx = 0) {
 	let t = performance.now ();
 
 	if ((t - LastClickTime) > 500) {
@@ -185,7 +185,7 @@ function copyToClipboard (e, val_or_eval, idx) {
 	}
 
 	LastClickTime = t;
-	let resp      = (val_or_eval ? Evaluations : Validations) [idx];
+	let resp      = val_or_eval ? Evaluations [idx].math [subidx] : Validations [idx];
 
 	writeToClipboard (NumClicks == 1 ? resp.simple : NumClicks == 2 ? resp.py : resp.tex);
 
@@ -267,9 +267,9 @@ function ajaxResponse (resp) {
 
 		let eLogEval = document.getElementById ('LogEval' + resp.idx);
 
-		if (resp.err !== undefined) { // error?
-			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+		eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
 
+		if (resp.err !== undefined) { // error?
 			if (resp.err.length > 1) {
 				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
 				$(eLogEval).append (`<div id="${idLogErrorHidden}" style="display: none"></div>`);
@@ -300,28 +300,34 @@ function ajaxResponse (resp) {
 			scrollToEnd ();
 
 		} else if (resp.msg !== undefined) { // message
-			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
-
 			$(eLogEval).append (`<div class="LogMsg">${resp.msg}</div>`);
 
 			logResize ();
 			scrollToEnd ();
 
 		} else { // no error
-			let idLogEvalMath = 'LogEvalMath' + resp.idx;
-			$(eLogEval).append (`<div id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</div>`);
-			let eLogEvalMath  = document.getElementById (idLogEvalMath);
+			for (let subidx in resp.math) {
+				let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
+				let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
 
-			MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-				eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+				$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
+						<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
+						</div>`);
 
-				eLogEvalMath.style.visibility = '';
+				let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
+				let eLogEvalMath  = document.getElementById (idLogEvalMath);
 
-				logResize ();
-				scrollToEnd ();
-			}]);
+				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
+					eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
 
-			reprioritizeMJQueue ();
+					eLogEvalMath.style.visibility = '';
+
+					logResize ();
+					scrollToEnd ();
+				}]);
+
+				reprioritizeMJQueue ();
+			}
 		}
 	}
 }

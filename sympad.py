@@ -345,7 +345,7 @@ function writeToClipboard (text) {
 }
 
 //...............................................................................................
-function copyToClipboard (e, val_or_eval, idx) {
+function copyToClipboard (e, val_or_eval, idx, subidx = 0) {
 	let t = performance.now ();
 
 	if ((t - LastClickTime) > 500) {
@@ -355,7 +355,7 @@ function copyToClipboard (e, val_or_eval, idx) {
 	}
 
 	LastClickTime = t;
-	let resp      = (val_or_eval ? Evaluations : Validations) [idx];
+	let resp      = val_or_eval ? Evaluations [idx].math [subidx] : Validations [idx];
 
 	writeToClipboard (NumClicks == 1 ? resp.simple : NumClicks == 2 ? resp.py : resp.tex);
 
@@ -437,9 +437,9 @@ function ajaxResponse (resp) {
 
 		let eLogEval = document.getElementById ('LogEval' + resp.idx);
 
-		if (resp.err !== undefined) { // error?
-			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+		eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
 
+		if (resp.err !== undefined) { // error?
 			if (resp.err.length > 1) {
 				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
 				$(eLogEval).append (`<div id="${idLogErrorHidden}" style="display: none"></div>`);
@@ -470,28 +470,34 @@ function ajaxResponse (resp) {
 			scrollToEnd ();
 
 		} else if (resp.msg !== undefined) { // message
-			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
-
 			$(eLogEval).append (`<div class="LogMsg">${resp.msg}</div>`);
 
 			logResize ();
 			scrollToEnd ();
 
 		} else { // no error
-			let idLogEvalMath = 'LogEvalMath' + resp.idx;
-			$(eLogEval).append (`<div id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx})">$${resp.tex}$</div>`);
-			let eLogEvalMath  = document.getElementById (idLogEvalMath);
+			for (let subidx in resp.math) {
+				let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
+				let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
 
-			MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-				eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+				$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
+						<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
+						</div>`);
 
-				eLogEvalMath.style.visibility = '';
+				let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
+				let eLogEvalMath  = document.getElementById (idLogEvalMath);
 
-				logResize ();
-				scrollToEnd ();
-			}]);
+				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
+					eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
 
-			reprioritizeMJQueue ();
+					eLogEvalMath.style.visibility = '';
+
+					logResize ();
+					scrollToEnd ();
+				}]);
+
+				reprioritizeMJQueue ();
+			}
 		}
 	}
 }
@@ -749,7 +755,7 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.3.6</h5>
+		<h5>v0.3.7</h5>
 		<br><br>
 		Type '<b>help</b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -832,7 +838,7 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.6</h4>
+<h4 align="center" style="margin: 0">v0.3.7</h4>
 
 
 <h2>Introduction</h2>
@@ -1330,8 +1336,8 @@ class Parser:
 					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
-					if self.rederr is not None:
-						raise self.rederr # re-raise exception from last reduction function if present
+					# if self.rederr is not None: # THIS IS COMMENTED OUT BECAUSE IS NOT USED HERE AND PYLINT DOESN'T LIKE IT!
+					# 	raise self.rederr # re-raise exception from last reduction function if present
 
 					raise SyntaxError ( \
 						'unexpected end of input' if tok == '$end' else \
@@ -1721,8 +1727,6 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
-	NO_PARMS    = {'vars', 'delall', 'sympyEI'}
-
 	SPECIAL     = {'@', 'vars', 'del', 'delall'}
 	BUILTINS    = {'abs', 'pow', 'sum'}
 	TRIGH       = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
@@ -1844,7 +1848,6 @@ class sast: # for single script
 	sympyEI = sympyEI
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
-# TODO: Change '$' to be more generic function OR variable name escape or do another escape character for variable escapes?
 # TODO: remap \begin{matrix} \end{matrix}?
 
 # Builds expression tree from text, nodes are nested AST tuples.
@@ -2217,7 +2220,7 @@ class Parser (lalr1.Parser):
 			b'DTvwpQ7ji1rSEWtmH/Z0dYibCOKB11wksKkjm/oonOppbpmU7Rxz3c9jVTxcx40TmUoWjJu7Z9xVt+vAuB0y3jvII37ZNciZHTvIwUtbxMdw+N4BHOWhG+WpGnyiBmfuBoIycaagd0TVWGBtdTdOZqNDGebCtvchZnfn+sXzRrfqwLhf1K8dJVCo1VZpDBVp' \
 			b'SYl4Kq3nQrqGMnzR8bgL0XjENf0KDQDGeZUOMgsrl1moVuMgsGblAmuq1TgIrF25wGQ6cR0Oo+R63QLjuaS1OAhMrVxgplqNg8BGXe+DBLbYBbum2Hx1fcdz0MMgfXh6EN+oA3+b/dj95dhU8w7H0y2+tovjKd99IkCedzou2FuePHm+Ugdxjvr/6xanr9bq' \
 			b'IM7lUcWqxBmqtTqIc3nAsSpxttVaHcS5PBxZ65wK26fW7iDjNq5VYLMGCwcWKuqms7BF0hAY8cuGhjqaTzu7qMfELp9awWb3hi3pKrDhiyI1UZZNNHxp+S5uV1YkVzYJWN4BLdtJa95Sj1fN5Kuu6jm8aEcvclnxy77qO+ViBCfFkxdliAWRrYceTTbv+1K+' \
-			b'lYPY7feX31/+PyjTlW8='
+			b'lYPY7feX31/+PyjTlW8=' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -2605,7 +2608,7 @@ class Parser (lalr1.Parser):
 
 		rule = self.rules [irule]
 
-		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')) and _FUNC_name (self.stack [-1].sym) in AST.Func.NO_PARMS:
+		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')): # and _FUNC_name (self.stack [-1].sym) in AST.Func.NO_PARMS:
 			return self._insert_symbol (('PARENL', 'PARENR'))
 
 		if pos and rule [1] [pos - 1] == 'expr_commas':
@@ -3373,7 +3376,6 @@ class sym: # for single script
 # python 3.6+
 
 # TODO: Exception prevents restart on file date change?
-# TODO: Multi-line returns.
 
 import getopt
 import json
@@ -3446,14 +3448,14 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	global _vars
 
+	asts = None
+
 	if not vars: # no assignment
 		_vars [_var_last] = ast
 
 	else:
 		if len (vars) == 1: # simple assignment
 			new_vars = {**_vars, vars [0]: ast}
-
-			print (repr (ast))
 
 		else: # tuple assignment
 			ast  = ast.strip_paren ()
@@ -3466,6 +3468,8 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 			else:
 				new_vars = {**_vars, **dict ((vars [i], asts [i]) for i in range (len (vars)))}
 
+			asts = [AST ('=', '=', vars [i], asts [i]) for i in range (len (vars))]
+
 		try: # check for circular references
 			_ast_remap (AST (',', tuple (vars)), new_vars)
 		except RecursionError:
@@ -3473,11 +3477,13 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 
 		_vars = new_vars
 
+	return asts or [ast]
+
 def _admin_vars (ast):
 	if len (_vars) == 1:
-		return sym.AST_Text ('\\text{no variables defined}', '', '')
+		return 'No variables defined.'
 	else:
-		return AST ('mat', tuple ((v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))))
+		return [AST ('=', '=', v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
 
 def _admin_del (ast):
 	ast = ast.arg.strip_paren ()
@@ -3487,7 +3493,7 @@ def _admin_del (ast):
 	except KeyError:
 		raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
 
-	return f'Variable {ast.var!r} deleted.'
+	return f'Variable {sym.ast2simple (ast)!r} deleted.'
 
 def _admin_delall (ast):
 	global _vars
@@ -3499,8 +3505,8 @@ def _admin_delall (ast):
 def _admin_sympyEI (ast):
 	arg = ast.arg.strip_paren ()
 	arg = \
-		bool (sym.ast2spt (arg))            if not arg.is_comma else \
-		True                                if not len (arg.commas) else \
+		bool (sym.ast2spt (arg))             if not arg.is_comma else \
+		True                                 if not len (arg.commas) else \
 		bool (sym.ast2spt (arg.commas [0]))
 
 	sast.sympyEI (arg)
@@ -3577,10 +3583,10 @@ class Handler (SimpleHTTPRequestHandler):
 			ast, _, _ = _parser.parse (request ['text'])
 
 			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
-				ast = globals () [f'_admin_{ast.func}'] (ast)
+				asts = globals () [f'_admin_{ast.func}'] (ast)
 
-				if isinstance (ast, str):
-					return {'msg': ast}
+				if isinstance (asts, str):
+					return {'msg': asts}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _ast_prepare_ass (ast)
@@ -3590,8 +3596,6 @@ class Handler (SimpleHTTPRequestHandler):
 				spt = sym.ast2spt (ast, doit = True)
 				ast = sym.spt2ast (spt)
 
-				_ast_execute_ass (ast, vars)
-
 				if os.environ.get ('SYMPAD_DEBUG'):
 					print ()
 					print ('spt:        ', repr (spt))
@@ -3599,11 +3603,13 @@ class Handler (SimpleHTTPRequestHandler):
 					print ('sympy latex:', sp.latex (spt))
 					print ()
 
-			return {
+				asts = _ast_execute_ass (ast, vars)
+
+			return {'math': [{
 				'tex'   : sym.ast2tex (ast),
 				'simple': sym.ast2simple (ast),
 				'py'    : sym.ast2py (ast),
-			}
+			} for ast in asts]}
 
 		except Exception:
 			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
