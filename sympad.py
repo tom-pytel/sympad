@@ -147,6 +147,10 @@ body {
 	cursor: pointer;
 }
 
+.LogMsg {
+	margin-bottom: 0.25em;
+}
+
 .LogError {
 	margin-bottom: 0.25em;
 	color: red;
@@ -167,9 +171,7 @@ body {
 r"""// TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.
 // TODO: Stupid scrollbars...
-
 // TODO: Warning messages on evaluate when SymPy object not understood?
-// TODO: Move last evaluated expression '_' substitution here from the server side?
 // TODO: Arrow keys in Edge?
 
 var URL              = '/';
@@ -435,7 +437,7 @@ function ajaxResponse (resp) {
 
 		let eLogEval = document.getElementById ('LogEval' + resp.idx);
 
-		if (resp.err !== undefined) {
+		if (resp.err !== undefined) { // error?
 			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
 
 			if (resp.err.length > 1) {
@@ -455,14 +457,22 @@ function ajaxResponse (resp) {
 			$(eLogEval).click (function () {
 				if (eLogErrorHidden.style.display === 'none') {
 					eLogErrorHidden.style.display = 'block';
-					eLogErrorTriangle.innerText   = '\u25bd'; // '\u25bc'; // '-'; // '\u25bc';
+					eLogErrorTriangle.innerText   = '\u25bd';
 				} else {
 					eLogErrorHidden.style.display = 'none';
-					eLogErrorTriangle.innerText   = '\u25b7'; // '\u25e2'; // '+'; // '\u25b6';
+					eLogErrorTriangle.innerText   = '\u25b7';
 				}
 
 				logResize ();
 			});
+
+			logResize ();
+			scrollToEnd ();
+
+		} else if (resp.msg !== undefined) { // message
+			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+
+			$(eLogEval).append (`<div class="LogMsg">${resp.msg}</div>`);
 
 			logResize ();
 			scrollToEnd ();
@@ -2207,7 +2217,7 @@ class Parser (lalr1.Parser):
 			b'DTvwpQ7ji1rSEWtmH/Z0dYibCOKB11wksKkjm/oonOppbpmU7Rxz3c9jVTxcx40TmUoWjJu7Z9xVt+vAuB0y3jvII37ZNciZHTvIwUtbxMdw+N4BHOWhG+WpGnyiBmfuBoIycaagd0TVWGBtdTdOZqNDGebCtvchZnfn+sXzRrfqwLhf1K8dJVCo1VZpDBVp' \
 			b'SYl4Kq3nQrqGMnzR8bgL0XjENf0KDQDGeZUOMgsrl1moVuMgsGblAmuq1TgIrF25wGQ6cR0Oo+R63QLjuaS1OAhMrVxgplqNg8BGXe+DBLbYBbum2Hx1fcdz0MMgfXh6EN+oA3+b/dj95dhU8w7H0y2+tovjKd99IkCedzou2FuePHm+Ugdxjvr/6xanr9bq' \
 			b'IM7lUcWqxBmqtTqIc3nAsSpxttVaHcS5PBxZ65wK26fW7iDjNq5VYLMGCwcWKuqms7BF0hAY8cuGhjqaTzu7qMfELp9awWb3hi3pKrDhiyI1UZZNNHxp+S5uV1YkVzYJWN4BLdtJa95Sj1fN5Kuu6jm8aEcvclnxy77qO+ViBCfFkxdliAWRrYceTTbv+1K+' \
-			b'lYPY7feX31/+PyjTlW8=' 
+			b'lYPY7feX31/+PyjTlW8='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -2648,12 +2658,6 @@ class sparser: # for single script
 # 	p = Parser ()
 # 	a = p.parse ('1 + {{1,2,3},{3,4}')
 # 	print (a)
-
-	# for s in ('{', '{{', '{{1', '{{1,', '{{1,2', '{{1,2}', '{{1,2},', '{{1,2},{', '{{1,2},{3', '{{1,2},{3,', '{{1,2},{3,4', '{{1,2},{3,4}',
-	# 		'{{1,2},{3,4},', '{{1,2},{3,4},{', '{{1,2},{3,4},{5', '{{1,2},{3,4},{5,', '{{1,2},{3,4},{5,6', '{{1,2},{3,4},{5,6}',
-	# 		'{{1,2,3},{3,4},{', '{{1,2},{3,4,5},{'):
-	# 	print (f'\n{s}')
-	# 	p.parse (s)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
@@ -3395,6 +3399,7 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 
 	_var_last = AST ('@', '_')
 	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_parser   = sparser.Parser ()
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -3482,14 +3487,14 @@ def _admin_del (ast):
 	except KeyError:
 		raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
 
-	return sym.AST_Text (f'\\text{{variable {ast.var!r} deleted}}', '', '')
+	return f'Variable {ast.var!r} deleted.'
 
 def _admin_delall (ast):
 	global _vars
 
 	_vars = {_var_last: _vars [_var_last]}
 
-	return sym.AST_Text ('\\text{all variables deleted}', '', '')
+	return 'All variables deleted.'
 
 def _admin_sympyEI (ast):
 	arg = ast.arg.strip_paren ()
@@ -3500,7 +3505,7 @@ def _admin_sympyEI (ast):
 
 	sast.sympyEI (arg)
 
-	return sym.AST_Text (f'\\text{{constant representation set to {AST.E.var!r} and {AST.I.var!r}}}', '', '')
+	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -3521,8 +3526,7 @@ class Handler (SimpleHTTPRequestHandler):
 			self.wfile.write (_FILES [self.path [1:]])
 
 	def do_POST (self):
-		self.parser = sparser.Parser ()
-		request     = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
+		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
 
 		for key, val in list (request.items ()):
 			if len (val) == 1:
@@ -3543,7 +3547,7 @@ class Handler (SimpleHTTPRequestHandler):
 		self.wfile.write (json.dumps (response).encode ('utf8'))
 
 	def validate (self, request):
-		ast, erridx, autocomplete = self.parser.parse (request ['text'])
+		ast, erridx, autocomplete = _parser.parse (request ['text'])
 		tex = simple = py         = None
 
 		if ast is not None:
@@ -3570,10 +3574,13 @@ class Handler (SimpleHTTPRequestHandler):
 
 	def evaluate (self, request):
 		try:
-			ast, _, _ = self.parser.parse (request ['text'])
+			ast, _, _ = _parser.parse (request ['text'])
 
 			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
 				ast = globals () [f'_admin_{ast.func}'] (ast)
+
+				if isinstance (ast, str):
+					return {'msg': ast}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _ast_prepare_ass (ast)

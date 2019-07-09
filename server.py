@@ -33,6 +33,7 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 
 	_var_last = AST ('@', '_')
 	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_parser   = sparser.Parser ()
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -121,14 +122,14 @@ def _admin_del (ast):
 	except KeyError:
 		raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
 
-	return sym.AST_Text (f'\\text{{variable {ast.var!r} deleted}}', '', '')
+	return f'Variable {ast.var!r} deleted.'
 
 def _admin_delall (ast):
 	global _vars
 
 	_vars = {_var_last: _vars [_var_last]}
 
-	return sym.AST_Text ('\\text{all variables deleted}', '', '')
+	return 'All variables deleted.'
 
 def _admin_sympyEI (ast):
 	arg = ast.arg.strip_paren ()
@@ -139,7 +140,7 @@ def _admin_sympyEI (ast):
 
 	sast.sympyEI (arg)
 
-	return sym.AST_Text (f'\\text{{constant representation set to {AST.E.var!r} and {AST.I.var!r}}}', '', '')
+	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -160,8 +161,7 @@ class Handler (SimpleHTTPRequestHandler):
 			self.wfile.write (_FILES [self.path [1:]])
 
 	def do_POST (self):
-		self.parser = sparser.Parser ()
-		request     = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
+		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
 
 		for key, val in list (request.items ()):
 			if len (val) == 1:
@@ -182,7 +182,7 @@ class Handler (SimpleHTTPRequestHandler):
 		self.wfile.write (json.dumps (response).encode ('utf8'))
 
 	def validate (self, request):
-		ast, erridx, autocomplete = self.parser.parse (request ['text'])
+		ast, erridx, autocomplete = _parser.parse (request ['text'])
 		tex = simple = py         = None
 
 		if ast is not None:
@@ -209,10 +209,13 @@ class Handler (SimpleHTTPRequestHandler):
 
 	def evaluate (self, request):
 		try:
-			ast, _, _ = self.parser.parse (request ['text'])
+			ast, _, _ = _parser.parse (request ['text'])
 
 			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
 				ast = globals () [f'_admin_{ast.func}'] (ast)
+
+				if isinstance (ast, str):
+					return {'msg': ast}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _ast_prepare_ass (ast)

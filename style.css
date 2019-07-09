@@ -111,6 +111,10 @@ body {
 	cursor: pointer;
 }
 
+.LogMsg {
+	margin-bottom: 0.25em;
+}
+
 .LogError {
 	margin-bottom: 0.25em;
 	color: red;

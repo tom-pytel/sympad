@@ -1,9 +1,7 @@
 // TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.
 // TODO: Stupid scrollbars...
-
 // TODO: Warning messages on evaluate when SymPy object not understood?
-// TODO: Move last evaluated expression '_' substitution here from the server side?
 // TODO: Arrow keys in Edge?
 
 var URL              = '/';
@@ -269,7 +267,7 @@ function ajaxResponse (resp) {
 
 		let eLogEval = document.getElementById ('LogEval' + resp.idx);
 
-		if (resp.err !== undefined) {
+		if (resp.err !== undefined) { // error?
 			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
 
 			if (resp.err.length > 1) {
@@ -289,14 +287,22 @@ function ajaxResponse (resp) {
 			$(eLogEval).click (function () {
 				if (eLogErrorHidden.style.display === 'none') {
 					eLogErrorHidden.style.display = 'block';
-					eLogErrorTriangle.innerText   = '\u25bd'; // '\u25bc'; // '-'; // '\u25bc';
+					eLogErrorTriangle.innerText   = '\u25bd';
 				} else {
 					eLogErrorHidden.style.display = 'none';
-					eLogErrorTriangle.innerText   = '\u25b7'; // '\u25e2'; // '+'; // '\u25b6';
+					eLogErrorTriangle.innerText   = '\u25b7';
 				}
 
 				logResize ();
 			});
+
+			logResize ();
+			scrollToEnd ();
+
+		} else if (resp.msg !== undefined) { // message
+			eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+
+			$(eLogEval).append (`<div class="LogMsg">${resp.msg}</div>`);
 
 			logResize ();
 			scrollToEnd ();
