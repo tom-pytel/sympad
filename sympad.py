@@ -978,8 +978,7 @@ the implicit version has a higher precedence than the explicit, which means that
 Division also has two operators, the normal "<b>/</b>" which has a fairly low precedence and the LaTeX "<b>\frac</b>" version which has a very high
 precedence, even higher than exponentiation. So high in fact that parentheses are not needed if using "<b>\frac</b>" as an exponent as in
 "<b>x^\frac{1}{2}</b>" = $x^\frac{1}{2}$. The "<b>\frac</b>" operation also does not need parentheses if using single digit operands or single letter
-variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$, "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$ or "<b>\fracxy</b>" = $\frac xy$ (although
-this last version without a space before the x is not legal in LaTeX but convenient for quick typing here).
+variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$ or "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$.
 </p>
 
 <h4>Exponentiation</h4>
@@ -1721,13 +1720,21 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
-	SPECIAL     = {'@', 'vars', 'del', 'delall'}
-	BUILTINS    = {'abs', 'pow', 'sum'}
-	TRIGH       = {'sin', 'cos', 'tan', 'csc', 'sec', 'cot', 'sinh', 'cosh', 'tanh', 'csch', 'sech', 'coth'}
-	PY_ONLY     = SPECIAL | BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
-	PY_AND_TEX  = TRIGH | {'arg', 'exp', 'ln', 'max', 'min'}
-	PY_ALL      = PY_ONLY | PY_AND_TEX
-	TEX_ONLY    = {f'arc{f}' for f in TRIGH}
+	SPECIAL         = {'@', 'vars', 'del', 'delall'}
+	BUILTINS        = {'max', 'min', 'abs', 'pow', 'sum'}
+	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
+
+	PY_TRIGHINV     = {f'a{f}' for f in TRIGH}
+	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
+	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
+
+	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
+	TEX             = {'max', 'min', 'arg', 'exp', 'ln'} | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
+
+	# PY_ONLY     = SPECIAL | BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
+	# PY_AND_TEX  = TRIGH | {'arg', 'exp', 'ln', 'max', 'min'}
+	# PY_ALL      = PY_ONLY | PY_AND_TEX
+	# TEX_ONLY    = {f'arc{f}' for f in TRIGH}
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -1860,8 +1867,8 @@ import re
 
 
 def _FUNC_name (FUNC):
-	return f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
-			FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
+	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
+			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\_', '_') or FUNC.text
 
 def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
@@ -2235,15 +2242,14 @@ class Parser (lalr1.Parser):
 	_DSONEVARSP  = fr'(?:(\d)|({_PYVAR})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
 	_STR         =  r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPYONLY  = '|'.join (reversed (sorted (AST.Func.PY_ONLY)))
-	_FUNCPYTEX   = '|'.join (reversed (sorted (AST.Func.PY_AND_TEX)))
-	_FUNCTEXONLY = '|'.join (reversed (sorted (AST.Func.TEX_ONLY)))
+	_FUNCPY      = '|'.join (reversed (sorted (AST.Func.PY)))
+	_FUNCTEX     = '|'.join (reversed (sorted (AST.Func.TEX)))
 
 	TOKENS       = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
 		('SQRT',          r'\\?sqrt'),
 		('LOG',           r'\\?log'),
-		('FUNC',         fr'({_FUNCPYONLY})|\\?({_FUNCPYTEX})|\\({_FUNCTEXONLY})|\$({_CHAR}\w*)|\\operatorname\s*\{{\s*({_CHAR}(?:\w|\\_)*)\s*\}}'),
+		('FUNC',         fr'({_FUNCPY})\b|\\({_FUNCTEX})\b|\$({_CHAR}\w*)|\\operatorname\s*\{{\s*({_CHAR}(?:\w|\\_)*)\s*\}}'),
 		('LIM',           r'\\lim'),
 		('SUM',           r'\\sum'),
 		('INT',           r'\\int(?:\s*\\limits)?'),
@@ -2788,7 +2794,7 @@ def _ast2tex_func (ast):
 
 	return \
 			f'\\{ast.func}{_ast2tex_paren (ast.arg)}' \
-			if ast.func in AST.Func.PY_AND_TEX else \
+			if ast.func in AST.Func.TEX else \
 			'\\operatorname{' + ast.func.replace ('_', '\\_') + f'}}{_ast2tex_paren (ast.arg)}'
 
 def _ast2tex_lim (ast):
@@ -2945,7 +2951,7 @@ def _ast2nat_func (ast):
 
 	return \
 			f'{ast.func}{_ast2nat_paren (ast.arg)}' \
-			if ast.func in AST.Func.PY_ALL else \
+			if ast.func in AST.Func.PY else \
 			f'${ast.func}{_ast2nat_paren (ast.arg)}'
 
 def _ast2nat_lim (ast):

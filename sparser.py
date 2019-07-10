@@ -20,8 +20,8 @@ import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 def _FUNC_name (FUNC):
-	return f'a{FUNC.grp [2] [3:]}' if FUNC.grp [2] else \
-			FUNC.grp [0] or FUNC.grp [1] or FUNC.grp [3] or FUNC.grp [4].replace ('\\_', '_') or FUNC.text
+	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
+			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\_', '_') or FUNC.text
 
 def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
@@ -395,15 +395,14 @@ class Parser (lalr1.Parser):
 	_DSONEVARSP  = fr'(?:(\d)|({_PYVAR})|({_CHAR}|{_GREEK}|{_SPECIAL})|{_TEXTVAR})'
 	_STR         =  r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPYONLY  = '|'.join (reversed (sorted (AST.Func.PY_ONLY)))
-	_FUNCPYTEX   = '|'.join (reversed (sorted (AST.Func.PY_AND_TEX)))
-	_FUNCTEXONLY = '|'.join (reversed (sorted (AST.Func.TEX_ONLY)))
+	_FUNCPY      = '|'.join (reversed (sorted (AST.Func.PY)))
+	_FUNCTEX     = '|'.join (reversed (sorted (AST.Func.TEX)))
 
 	TOKENS       = OrderedDict ([ # order matters
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
 		('SQRT',          r'\\?sqrt'),
 		('LOG',           r'\\?log'),
-		('FUNC',         fr'({_FUNCPYONLY})|\\?({_FUNCPYTEX})|\\({_FUNCTEXONLY})|\$({_CHAR}\w*)|\\operatorname\s*\{{\s*({_CHAR}(?:\w|\\_)*)\s*\}}'),
+		('FUNC',         fr'({_FUNCPY})\b|\\({_FUNCTEX})\b|\$({_CHAR}\w*)|\\operatorname\s*\{{\s*({_CHAR}(?:\w|\\_)*)\s*\}}'),
 		('LIM',           r'\\lim'),
 		('SUM',           r'\\sum'),
 		('INT',           r'\\int(?:\s*\\limits)?'),

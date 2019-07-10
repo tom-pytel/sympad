@@ -125,7 +125,7 @@ def _ast2tex_func (ast):
 
 	return \
 			f'\\{ast.func}{_ast2tex_paren (ast.arg)}' \
-			if ast.func in AST.Func.PY_AND_TEX else \
+			if ast.func in AST.Func.TEX else \
 			'\\operatorname{' + ast.func.replace ('_', '\\_') + f'}}{_ast2tex_paren (ast.arg)}'
 
 def _ast2tex_lim (ast):
@@ -282,7 +282,7 @@ def _ast2nat_func (ast):
 
 	return \
 			f'{ast.func}{_ast2nat_paren (ast.arg)}' \
-			if ast.func in AST.Func.PY_ALL else \
+			if ast.func in AST.Func.PY else \
 			f'${ast.func}{_ast2nat_paren (ast.arg)}'
 
 def _ast2nat_lim (ast):
