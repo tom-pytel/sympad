@@ -251,11 +251,14 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], '', ['help', 'debug', 'nobrowser', 'sympyEI'])
+		opts, argv = getopt.getopt (sys.argv [1:], '', ['help', 'nobrowser', 'debug', 'sympyEI'])
 
 		if ('--help', '') in opts:
 			print (_HELP.strip ())
 			sys.exit (0)
+
+		if ('--debug', '') in opts:
+			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if not _SYMPAD_CHILD:
 			args      = [sys.executable] + sys.argv
@@ -265,11 +268,8 @@ if __name__ == '__main__':
 				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_CHILD': '1', 'SYMPAD_FIRST_RUN': first_run})
 				first_run = ''
 
-				if ret.returncode != 0:
+				if ret.returncode != 0 and os.environ.get ('SYMPAD_DEBUG'):
 					sys.exit (0)
-
-		if ('--debug', '') in opts:
-			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if ('--sympyEI', '') in opts:
 			sast.sympyEI ()

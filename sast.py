@@ -333,6 +333,7 @@ class AST_Func (AST):
 
 	SPECIAL         = {'@', 'vars', 'del', 'delall'}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'sum'}
+	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
 	PY_TRIGHINV     = {f'a{f}' for f in TRIGH}
@@ -340,7 +341,7 @@ class AST_Func (AST):
 	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
 
 	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
-	TEX             = {'max', 'min', 'arg', 'exp', 'ln'} | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
+	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
 	# PY_ONLY     = SPECIAL | BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
 	# PY_AND_TEX  = TRIGH | {'arg', 'exp', 'ln', 'max', 'min'}

@@ -2,11 +2,13 @@
 
 import unittest
 
+import sympy as sp
 from sast import AST
 from sparser import Parser
 from sym import *
 
-parser = Parser ()
+SympifyError = sp.SympifyError
+parser       = Parser ()
 
 def sparser (text):
 	return parser.parse (text) [0]
@@ -39,6 +41,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('x \\partial  y'), ('*', (('@', 'x'), ('@', 'partial'), ('@', 'y'))))
 		self.assertEqual (p ('x dx dy y'), ('*', (('@', 'x'), ('@', 'dx'), ('@', 'dy'), ('@', 'y'))))
 		self.assertEqual (p ('x partialx partialy y'), ('*', (('@', 'x'), ('@', 'partialx'), ('@', 'partialy'), ('@', 'y'))))
+		self.assertEqual (p ("x'"), ('@', 'x_prime'))
+		self.assertEqual (p ("x''"), ('@', 'x_prime_prime'))
+		self.assertEqual (p ("x'''"), ('@', 'x_prime_prime_prime'))
 		self.assertEqual (p ('-1'), ('#', '-1'))
 		self.assertEqual (p ('-x'), ('-', ('@', 'x')))
 		self.assertEqual (p ('{x}'), ('@', 'x'))
@@ -55,6 +60,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('[x,y,]'), ('[', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (p ('"x\\x20\\n"'), ('"', 'x \n'))
 		self.assertEqual (p ("'x\\x20\\n'"), ('"', 'x \n'))
+		self.assertEqual (p ("x''str'"), ('*', (('@', 'x_prime_prime'), ('@', 'str_prime'))))
+		self.assertEqual (p ("x' 'str'"), ('*', (('@', 'x_prime'), ('"', 'str'))))
 		self.assertEqual (p ('|x|'), ('|', ('@', 'x')))
 		self.assertEqual (p ('x!'), ('!', ('@', 'x')))
 		self.assertEqual (p ('x+y'), ('+', (('@', 'x'), ('@', 'y'))))
@@ -143,6 +150,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('x \\partial  y')), 'x\\ \\partial\\ y')
 		self.assertEqual (ast2tex (p ('x dx dy y')), 'x\\ dx\\ dy\\ y')
 		self.assertEqual (ast2tex (p ('x partialx partialy y')), 'x\\ \\partial x\\ \\partial y\\ y')
+		self.assertEqual (ast2tex (p ("x'")), "x'")
+		self.assertEqual (ast2tex (p ("x''")), "x''")
+		self.assertEqual (ast2tex (p ("x'''")), "x'''")
 		self.assertEqual (ast2tex (p ('-1')), '-1')
 		self.assertEqual (ast2tex (p ('-x')), '-x')
 		self.assertEqual (ast2tex (p ('{x}')), 'x')
@@ -159,6 +169,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('[x,y,]')), '\\left[x, y \\right]')
 		self.assertEqual (ast2tex (p ('"x\\x20\\n"')), "\\text{'x \\n'}")
 		self.assertEqual (ast2tex (p ("'x\\x20\\n'")), "\\text{'x \\n'}")
+		self.assertEqual (ast2tex (p ("x''str'")), "x''\\ str'")
+		self.assertEqual (ast2tex (p ("x' 'str'")), "x'\\ \\text{'str'}")
 		self.assertEqual (ast2tex (p ('|x|')), '\\left|x \\right|')
 		self.assertEqual (ast2tex (p ('x!')), 'x!')
 		self.assertEqual (ast2tex (p ('x+y')), 'x + y')
@@ -247,6 +259,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('x \\partial  y')), 'x partial y')
 		self.assertEqual (ast2nat (p ('x dx dy y')), 'x dx dy y')
 		self.assertEqual (ast2nat (p ('x partialx partialy y')), 'x partialx partialy y')
+		self.assertEqual (ast2nat (p ("x'")), 'x_prime')
+		self.assertEqual (ast2nat (p ("x''")), 'x_prime_prime')
+		self.assertEqual (ast2nat (p ("x'''")), 'x_prime_prime_prime')
 		self.assertEqual (ast2nat (p ('-1')), '-1')
 		self.assertEqual (ast2nat (p ('-x')), '-x')
 		self.assertEqual (ast2nat (p ('{x}')), 'x')
@@ -263,6 +278,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('[x,y,]')), '[x, y]')
 		self.assertEqual (ast2nat (p ('"x\\x20\\n"')), "'x \\n'")
 		self.assertEqual (ast2nat (p ("'x\\x20\\n'")), "'x \\n'")
+		self.assertEqual (ast2nat (p ("x''str'")), 'x_prime_prime str_prime')
+		self.assertEqual (ast2nat (p ("x' 'str'")), "x_prime 'str'")
 		self.assertEqual (ast2nat (p ('|x|')), '|x|')
 		self.assertEqual (ast2nat (p ('x!')), 'x!')
 		self.assertEqual (ast2nat (p ('x+y')), 'x + y')
@@ -351,6 +368,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('x \\partial  y')), 'x*partial*y')
 		self.assertEqual (ast2py (p ('x dx dy y')), 'x*dx*dy*y')
 		self.assertEqual (ast2py (p ('x partialx partialy y')), 'x*partialx*partialy*y')
+		self.assertEqual (ast2py (p ("x'")), 'x_prime')
+		self.assertEqual (ast2py (p ("x''")), 'x_prime_prime')
+		self.assertEqual (ast2py (p ("x'''")), 'x_prime_prime_prime')
 		self.assertEqual (ast2py (p ('-1')), '-1')
 		self.assertEqual (ast2py (p ('-x')), '-x')
 		self.assertEqual (ast2py (p ('{x}')), 'x')
@@ -367,6 +387,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('[x,y,]')), '[x, y]')
 		self.assertEqual (ast2py (p ('"x\\x20\\n"')), "'x \\n'")
 		self.assertEqual (ast2py (p ("'x\\x20\\n'")), "'x \\n'")
+		self.assertEqual (ast2py (p ("x''str'")), 'x_prime_prime*str_prime')
+		self.assertEqual (ast2py (p ("x' 'str'")), "x_prime*'str'")
 		self.assertEqual (ast2py (p ('|x|')), 'abs(x)')
 		self.assertEqual (ast2py (p ('x!')), 'factorial(x)')
 		self.assertEqual (ast2py (p ('x+y')), 'x + y')
@@ -455,6 +477,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('x \\partial  y')), ('*', (('@', 'x'), ('@', 'partial'), ('@', 'y'))))
 		self.assertEqual (ast2tex2ast (p ('x dx dy y')), ('*', (('@', 'x'), ('@', 'dx'), ('@', 'dy'), ('@', 'y'))))
 		self.assertEqual (ast2tex2ast (p ('x partialx partialy y')), ('*', (('@', 'x'), ('@', 'partialx'), ('@', 'partialy'), ('@', 'y'))))
+		self.assertEqual (ast2tex2ast (p ("x'")), ('@', 'x_prime'))
+		self.assertEqual (ast2tex2ast (p ("x''")), ('@', 'x_prime_prime'))
+		self.assertEqual (ast2tex2ast (p ("x'''")), ('@', 'x_prime_prime_prime'))
 		self.assertEqual (ast2tex2ast (p ('-1')), ('#', '-1'))
 		self.assertEqual (ast2tex2ast (p ('-x')), ('-', ('@', 'x')))
 		self.assertEqual (ast2tex2ast (p ('{x}')), ('@', 'x'))
@@ -471,6 +496,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('[x,y,]')), ('[', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2tex2ast (p ('"x\\x20\\n"')), ('"', 'x \n'))
 		self.assertEqual (ast2tex2ast (p ("'x\\x20\\n'")), ('"', 'x \n'))
+		self.assertEqual (ast2tex2ast (p ("x''str'")), ('*', (('@', 'x_prime_prime'), ('@', 'str_prime'))))
+		self.assertEqual (ast2tex2ast (p ("x' 'str'")), ('*', (('@', 'x_prime'), ('"', 'str'))))
 		self.assertEqual (ast2tex2ast (p ('|x|')), ('|', ('@', 'x')))
 		self.assertEqual (ast2tex2ast (p ('x!')), ('!', ('@', 'x')))
 		self.assertEqual (ast2tex2ast (p ('x+y')), ('+', (('@', 'x'), ('@', 'y'))))
@@ -559,6 +586,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('x \\partial  y')), ('*', (('@', 'x'), ('@', 'partial'), ('@', 'y'))))
 		self.assertEqual (ast2nat2ast (p ('x dx dy y')), ('*', (('@', 'x'), ('@', 'dx'), ('@', 'dy'), ('@', 'y'))))
 		self.assertEqual (ast2nat2ast (p ('x partialx partialy y')), ('*', (('@', 'x'), ('@', 'partialx'), ('@', 'partialy'), ('@', 'y'))))
+		self.assertEqual (ast2nat2ast (p ("x'")), ('@', 'x_prime'))
+		self.assertEqual (ast2nat2ast (p ("x''")), ('@', 'x_prime_prime'))
+		self.assertEqual (ast2nat2ast (p ("x'''")), ('@', 'x_prime_prime_prime'))
 		self.assertEqual (ast2nat2ast (p ('-1')), ('#', '-1'))
 		self.assertEqual (ast2nat2ast (p ('-x')), ('-', ('@', 'x')))
 		self.assertEqual (ast2nat2ast (p ('{x}')), ('@', 'x'))
@@ -575,6 +605,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('[x,y,]')), ('[', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2nat2ast (p ('"x\\x20\\n"')), ('"', 'x \n'))
 		self.assertEqual (ast2nat2ast (p ("'x\\x20\\n'")), ('"', 'x \n'))
+		self.assertEqual (ast2nat2ast (p ("x''str'")), ('*', (('@', 'x_prime_prime'), ('@', 'str_prime'))))
+		self.assertEqual (ast2nat2ast (p ("x' 'str'")), ('*', (('@', 'x_prime'), ('"', 'str'))))
 		self.assertEqual (ast2nat2ast (p ('|x|')), ('|', ('@', 'x')))
 		self.assertEqual (ast2nat2ast (p ('x!')), ('!', ('@', 'x')))
 		self.assertEqual (ast2nat2ast (p ('x+y')), ('+', (('@', 'x'), ('@', 'y'))))
@@ -663,6 +695,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('x \\partial  y')), ('*', (('@', 'x'), ('@', 'partial'), ('@', 'y'))))
 		self.assertEqual (ast2py2ast (p ('x dx dy y')), ('*', (('@', 'x'), ('@', 'dx'), ('@', 'dy'), ('@', 'y'))))
 		self.assertEqual (ast2py2ast (p ('x partialx partialy y')), ('*', (('@', 'x'), ('@', 'partialx'), ('@', 'partialy'), ('@', 'y'))))
+		self.assertEqual (ast2py2ast (p ("x'")), ('@', 'x_prime'))
+		self.assertEqual (ast2py2ast (p ("x''")), ('@', 'x_prime_prime'))
+		self.assertEqual (ast2py2ast (p ("x'''")), ('@', 'x_prime_prime_prime'))
 		self.assertEqual (ast2py2ast (p ('-1')), ('#', '-1'))
 		self.assertEqual (ast2py2ast (p ('-x')), ('-', ('@', 'x')))
 		self.assertEqual (ast2py2ast (p ('{x}')), ('@', 'x'))
@@ -679,6 +714,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('[x,y,]')), ('[', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2py2ast (p ('"x\\x20\\n"')), ('"', 'x \n'))
 		self.assertEqual (ast2py2ast (p ("'x\\x20\\n'")), ('"', 'x \n'))
+		self.assertEqual (ast2py2ast (p ("x''str'")), ('*', (('@', 'x_prime_prime'), ('@', 'str_prime'))))
+		self.assertEqual (ast2py2ast (p ("x' 'str'")), ('*', (('@', 'x_prime'), ('"', 'str'))))
 		self.assertEqual (ast2py2ast (p ('|x|')), ('|', ('@', 'x')))
 		self.assertEqual (ast2py2ast (p ('x!')), ('!', ('@', 'x')))
 		self.assertEqual (ast2py2ast (p ('x+y')), ('+', (('@', 'x'), ('@', 'y'))))
@@ -767,6 +804,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('x \\partial  y')), ('*', (('@', 'partial'), ('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('x dx dy y')), ('*', (('@', 'dx'), ('@', 'dy'), ('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('x partialx partialy y')), ('*', (('@', 'partialx'), ('@', 'partialy'), ('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ("x'")), ('@', 'x_prime'))
+		self.assertEqual (ast2spt2ast (p ("x''")), ('@', 'x_prime_prime'))
+		self.assertEqual (ast2spt2ast (p ("x'''")), ('@', 'x_prime_prime_prime'))
 		self.assertEqual (ast2spt2ast (p ('-1')), ('#', '-1'))
 		self.assertEqual (ast2spt2ast (p ('-x')), ('-', ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('{x}')), ('@', 'x'))
@@ -783,6 +823,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('[x,y,]')), ('[', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('"x\\x20\\n"')), ('"', 'x \n'))
 		self.assertEqual (ast2spt2ast (p ("'x\\x20\\n'")), ('"', 'x \n'))
+		self.assertEqual (ast2spt2ast (p ("x''str'")), ('*', (('@', 'str_prime'), ('@', 'x_prime_prime'))))
+		self.assertRaises (SympifyError, ast2spt2ast, p ("x' 'str'"))
 		self.assertEqual (ast2spt2ast (p ('|x|')), ('|', ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('x!')), ('!', ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('x+y')), ('+', (('@', 'y'), ('@', 'x'))))
@@ -871,6 +913,9 @@ x partial y
 x \\partial  y
 x dx dy y
 x partialx partialy y
+x'
+x''
+x'''
 -1
 -x
 {x}
@@ -887,6 +932,8 @@ x partialx partialy y
 [x,y,]
 "x\\x20\\n"
 'x\\x20\\n'
+x''str'
+x' 'str'
 |x|
 x!
 x+y

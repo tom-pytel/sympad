@@ -75,15 +75,22 @@ def _ast2tex_var (ast):
 	if not ast.var:
 		return '{}' # Null var
 
-	p = ast.as_var.var.replace ('_', '\\_')
-	t = AST.Var.PY2TEX.get (p)
+	v = ast.as_var.var
+	p = ''
 
-	return \
-		t or p            if not ast.diff_or_part_type else \
-		f'd{t or p}'      if ast.is_diff_any else \
-		'\\partial'       if ast.is_part_solo else \
-		f'\\partial{t}'   if t else \
-		f'\\partial {p}'
+	while v [-6:] == '_prime':
+		v, p = v [:-6], p + "'"
+
+	n = v.replace ('_', '\\_')
+	t = AST.Var.PY2TEX.get (n)
+
+	return ( \
+		t or n            if not ast.diff_or_part_type else
+		f'd{t or n}'      if ast.is_diff_any else
+		'\\partial'       if ast.is_part_solo else
+		f'\\partial{t}'   if t else
+		f'\\partial {n}'
+	) + p
 
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
