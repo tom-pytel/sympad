@@ -186,25 +186,25 @@ class Handler (SimpleHTTPRequestHandler):
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
-		tex = simple = py         = None
+		tex = nat = py            = None
 
 		if ast is not None:
-			ast    = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
-			tex    = sym.ast2tex (ast)
-			simple = sym.ast2nat (ast)
-			py     = sym.ast2py (ast)
+			ast = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
+			tex = sym.ast2tex (ast)
+			nat = sym.ast2nat (ast)
+			py  = sym.ast2py (ast)
 
 			if os.environ.get ('SYMPAD_DEBUG'):
 				print ()
-				print ('ast:   ', ast)
-				print ('tex:   ', tex)
-				print ('simple:', simple)
-				print ('py:    ', py)
+				print ('ast:', ast)
+				print ('tex:', tex)
+				print ('nat:', nat)
+				print ('py: ', py)
 				print ()
 
 		return {
 			'tex'         : tex,
-			'simple'      : simple,
+			'nat'         : nat,
 			'py'          : py,
 			'erridx'      : erridx,
 			'autocomplete': autocomplete,
@@ -238,9 +238,9 @@ class Handler (SimpleHTTPRequestHandler):
 				asts = _ast_execute_ass (ast, vars)
 
 			return {'math': [{
-				'tex'   : sym.ast2tex (ast),
-				'simple': sym.ast2nat (ast),
-				'py'    : sym.ast2py (ast),
+				'tex': sym.ast2tex (ast),
+				'nat': sym.ast2nat (ast),
+				'py' : sym.ast2py (ast),
 			} for ast in asts]}
 
 		except Exception:

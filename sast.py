@@ -186,69 +186,69 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	GREEK        = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'rho', 'sigma', \
-			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Upsilon', 'Xi', 'Phi', 'Pi', 'Psi', 'Sigma', 'Omega'}
-	PY           = {'None', 'True', 'False'} | set (no [0] for no in filter (lambda no: not callable (no [1]), _SYMPY_OBJECTS.items ()))
-	SHORT2LONG   = {**dict ((v, f'\\text{{{v}}}') for v in PY), 'pi': '\\pi', 'oo': '\\infty', **dict ((f'_{g}', f'\\{g}') for g in GREEK)}
-	LONG2SHORT   = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo'}
-	LONG2SHORTPY = {**dict ((f'\\text{{{v}}}', v) for v in PY), '\\pi': 'pi', '\\infty': 'oo', **dict ((f'\\{g}', f'_{g}') for g in GREEK)}
+	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
+			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
 
-	_rec_diff_start         = re.compile (r'^d(?=[^_])')
-	_rec_part_start         = re.compile (r'^\\partial ')
-	_rec_diff_or_part_start = re.compile (r'^(d(?=[^_])|\\partial )')
-	_rec_diff_or_part_solo  = re.compile (r'^(?:d|\\partial)$')
-	_rec_not_single         = re.compile (r"^(?:d.|\\partial |.+[_'])")
-	_rec_as_short_split     = re.compile ('(' + '|'.join (v.replace ('\\', '\\\\') for v in LONG2SHORT) + ')')
+	TEX2PY      = {**dict ((f'\\{g}', g) for g in GREEK), '\\partial': 'partial', '\\infty': 'oo', \
+			'\\overline\\infty': 'zoo', '\\bar\\infty': 'zoo', '\\widetilde\\infty': 'zoo', '\\tilde\\infty': 'zoo'}
+
+	PY2TEX      = {**dict ((g, f'\\{g}') for g in GREEK), 'partial': '\\partial', 'oo': '\\infty', 'zoo': '\\widetilde\\infty'}
+
+	_rec_groups = re.compile (r'^(?:(d(?!elta))|(partial))?(.*)$')
 
 	def _init (self, var):
-		self.var = var # should be long form
+		self.var = var
+
+	def _grp (self):
+		return AST_Var._rec_groups.match (self.var).groups ()
 
 	def _is_null_var (self):
 		return not self.var
 
-	def _has_short_var (self):
-		return self.var in AST_Var.LONG2SHORT
+	def _is_long_var (self):
+		return len (self.var) > 1 and self.var not in AST_Var.PY2TEX
 
 	def _is_differential (self):
-		return AST_Var._rec_diff_start.match (self.var)
+		return self.grp [0] and self.grp [2]
 
 	def _is_partial (self):
-		return AST_Var._rec_part_start.match (self.var)
+		return self.grp [1] and self.grp [2]
 
 	def _is_diff_or_part (self):
-		return AST_Var._rec_diff_or_part_start.match (self.var)
+		return (self.grp [0] or self.grp [1]) and self.grp [2]
+
+	def _is_diff_solo (self):
+		return self.grp [0] and not self.grp [2]
 
 	def _is_diff_or_part_solo (self):
-		return AST_Var._rec_diff_or_part_solo.match (self.var)
+		return (self.grp [0] or self.grp [1]) and not self.grp [2]
 
 	def _is_single_var (self): # is single atomic variable (non-differential, non-subscripted, non-primed)?
-		return not AST_Var._rec_not_single.match (self.var)
+		return len (self.var) == 1 or self.var in AST_Var.PY2TEX
 
-	def as_var (self): # 'x', dx', '\\partial x' -> 'x'
-		return AST ('@', AST.Var._rec_diff_or_part_start.sub ('', self.var))
+	def as_var (self): # 'x', dx', 'partialx' -> 'x'
+		return AST ('@', self.grp [2]) if self.var else self
 
-	def as_differential (self): # 'x', 'dx', '\\partial x' -> 'dx'
-		return AST ('@', f'd{AST_Var._rec_diff_or_part_start.sub ("", self.var)}') if self.var else self
+	def as_differential (self): # 'x', 'dx', 'partialx' -> 'dx'
+		return AST ('@', f'd{self.grp [2]}') if self.var else self
 
-	def as_partial (self): # 'x', 'dx', '\\partial x' -> '\\partial x'
-		return AST ('@', f'\\partial {AST_Var._rec_diff_or_part_start.sub ("", self.var)}') if self.var else self
+	def diff_or_part_type (self): # 'dx' -> 'd', 'partialx' -> 'partial', else false
+		return self.grp [0] or self.grp [1]
 
-	def diff_or_part_start_text (self): # 'dx' -> 'd', '\\partial x' -> '\\partial '
-		m = AST_Var._rec_diff_or_part_start.match (self.var)
+	def _tex (self):
+		p = self.grp [2].replace ('_', '\\_')
+		t = AST_Var.PY2TEX.get (p)
 
-		return m.group (1) if m else ''
+		if not (self.grp [0] or self.grp [1]):
+			return t or p
 
-	def as_short_var_text (self):
-		vs = AST_Var._rec_as_short_split.split (self.var)
-		vs = [AST_Var.LONG2SHORT.get (v, v) for v in vs]
+		if self.grp [1]:
+			return \
+				'\\partial'       if not p else \
+				f'\\partial{t}'   if t else \
+				f'\\partial {p}'
 
-		return ''.join (vs)
-
-	def as_shortpy_var_text (self):
-		vs = AST_Var._rec_as_short_split.split (self.var)
-		vs = [AST_Var.LONG2SHORTPY.get (v, v) for v in vs]
-
-		return ''.join (vs)
+		return f'd{t or p}' if self.grp [0] else t or p
 
 class AST_Attr (AST):
 	op, is_attr = '.', True
@@ -450,12 +450,13 @@ AST.NegOne   = AST ('#', '-1')
 AST.VarNull  = AST ('@', '')
 AST.I        = AST ('@', 'i')
 AST.E        = AST ('@', 'e')
-AST.Pi       = AST ('@', '\\pi')
-AST.Infty    = AST ('@', '\\infty')
-AST.None_    = AST ('@', '\\text{None}')
-AST.True_    = AST ('@', '\\text{True}')
-AST.False_   = AST ('@', '\\text{False}')
-AST.NaN      = AST ('@', '\\text{nan}')
+AST.Pi       = AST ('@', 'pi')
+AST.Infty    = AST ('@', 'oo')
+AST.CInfty   = AST ('@', 'zoo')
+AST.None_    = AST ('@', 'None')
+AST.True_    = AST ('@', 'True')
+AST.False_   = AST ('@', 'False')
+AST.NaN      = AST ('@', 'nan')
 AST.MatEmpty = AST ('func', 'Matrix', ('[', ()))
 
 def sympyEI (yes = True):

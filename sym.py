@@ -84,7 +84,8 @@ def _ast2tex_mul (ast, ret_has = False):
 			t.append (f' \\cdot {s}')
 			has = True
 
-		elif p and (p.is_diff_or_part_solo or p.op in {'sqrt'} or n.is_diff_or_part or p.is_diff_or_part):
+		elif p and (p.op in {'sqrt'} or p.is_diff_or_part_solo or n.is_diff_or_part_solo or \
+				p.is_diff_or_part or n.is_diff_or_part or p.is_long_var or n.is_long_var):
 			t.append (f'\\ {s}')
 		else:
 			t.append (f'{"" if not p else " "}{s}')
@@ -147,17 +148,19 @@ def _ast2tex_diff (ast):
 			p += 1
 
 			if n.var:
-				ds.add (n.var)
+				ds.add (n)
 
 		else: # n = ('^', ('@', 'diff or part'), ('#', 'int'))
 			p += int (n.exp.num)
-			ds.add (n.base.var)
+			ds.add (n.base)
 
 	if not ds:
 		return f'\\frac{{d}}{{}}{_ast2tex_paren (ast.diff)}'
 
-	if len (ds) == 1 and ds.pop () [0] != '\\': # is not '\\partial'
-		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{"".join (ast2tex (n) for n in ast.dvs)}}}{_ast2tex_paren (ast.diff)}'
+	dv = next (iter (ds))
+
+	if len (ds) == 1 and not dv.is_partial:
+		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (ast2tex (n) for n in ast.dvs)}}}{_ast2tex_paren (ast.diff)}'
 
 	else:
 		s = ''.join (_rec_diff_var_single_start.sub (r'\\partial ', ast2tex (n)) for n in ast.dvs)
@@ -179,7 +182,7 @@ def _ast2tex_intg (ast):
 _ast2tex_funcs = {
 	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
-	'@': lambda ast: str (ast.var) if ast.var else '{}',
+	'@': lambda ast: ast.tex if ast.var else '{}',
 	'.': lambda ast: f'{ast2tex (ast.obj)}.\\text{{{ast.attr}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
@@ -209,7 +212,7 @@ def ast2nat (ast): # abstract syntax tree -> simple text
 	return _ast2nat_funcs [ast.op] (ast)
 
 def _ast2nat_curly (ast):
-	return f'{ast2nat (ast)}' if ast.is_single_unit else f'{{{ast2nat (ast)}}}'
+	return f'{ast2nat (ast)}' if ast.is_single_unit and not (ast.is_var and ast.var in AST.Var.PY2TEX) else f'{{{ast2nat (ast)}}}'
 
 def _ast2nat_paren (ast):
 	return ast2nat (ast) if ast.is_paren else f'({ast2nat (ast)})'
@@ -238,8 +241,7 @@ def _ast2nat_mul (ast, ret_has = False):
 			has = True
 
 		elif p and (p.is_diff_or_part_solo or \
-				(n.op not in {'#', '@', '(', '|', '^'} or p.op not in {'#', '@', '(', '|', '^'}) or \
-				n.has_short_var or p.has_short_var or n.is_diff_or_part or p.is_diff_or_part):
+				(n.op not in {'#', '(', '|', '^'} or p.op not in {'#', '(', '|', '^'})):
 			t.append (f' {s}')
 
 		else:
@@ -263,7 +265,7 @@ def _ast2nat_pow (ast):
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
 		i = len (ast.base.func)
 
-		return f'{b [:i]}^{p}{b [i:]}'
+		return f'{b [:i]}**{p}{b [i:]}'
 
 	if ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num:
 		return f'{b}**{p}'
@@ -293,20 +295,18 @@ def _ast2nat_lim (ast):
 def _ast2nat_sum (ast):
 	return f'\\sum_{{{ast2nat (ast.svar)}={ast2nat (ast.from_)}}}^{_ast2nat_curly (ast.to)} {_ast2nat_paren_mul_exp (ast.sum)}' \
 
-_ast2nat_diff_single_rec = re.compile ('^d')
-
 def _ast2nat_diff (ast):
 	p = 0
 
 	for n in ast.dvs:
 		if n.is_var:
-			d  = n.diff_or_part_start_text ()
+			d  = n.diff_or_part_type ()
 			p += 1
 		else: # n = ('^', ('@', 'differential'), ('#', 'int'))
-			d  = n.base.diff_or_part_start_text ()
+			d  = n.base.diff_or_part_type ()
 			p += int (n.exp.num)
 
-	return f'{d.strip ()}{"" if p == 1 else f"^{p}"}/{"".join (ast2nat (n) for n in ast.dvs)}{_ast2nat_paren (ast.diff)}'
+	return f'{d.strip ()}{"" if p == 1 else f"^{p}"} / {" ".join (ast2nat (n) for n in ast.dvs)} {_ast2nat_paren (ast.diff)}'
 
 def _ast2nat_intg (ast):
 	if ast.from_ is None:
@@ -323,7 +323,7 @@ def _ast2nat_intg (ast):
 _ast2nat_funcs = {
 	'=': lambda ast: f'{ast2nat (ast.lhs)} {ast.rel} {ast2nat (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: ast.as_short_var_text (),
+	'@': lambda ast: ast.var,
 	'.': lambda ast: f'{ast2nat (ast.obj)}.{ast.attr}' if ast.arg is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (ast.arg)}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2nat (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
@@ -406,12 +406,10 @@ def _ast2py_intg (ast):
 				if ast.intg is None else \
 				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.dv.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
 
-_rec_ast2py_varname_sanitize = re.compile (r'\{|\}')
-
 _ast2py_funcs = {
 	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
-	'@': lambda ast: _rec_ast2py_varname_sanitize.sub ('_', ast.as_shortpy_var_text ()).replace ('\\', '_').replace ("'", '_prime'),
+	'@': lambda ast: ast.var,
 	'.': lambda ast: f'{ast2py (ast.obj)}.{ast.attr}' if ast.arg is None else f'{ast2py (ast.obj)}.{ast.attr}{_ast2py_paren (ast.arg)}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
@@ -524,12 +522,13 @@ _ast2spt_eq = {
 }
 
 _ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
-	'\\pi'         : sp.pi,
-	'\\infty'      : sp.oo,
-	'\\text{None}' : None,
-	'\\text{True}' : sp.boolalg.true,
-	'\\text{False}': sp.boolalg.false,
-	'\\text{nan}'  : sp.nan,
+	'pi'   : sp.pi,
+	'oo'   : sp.oo,
+	'zoo'  : sp.zoo,
+	'None' : None,
+	'True' : sp.boolalg.true,
+	'False': sp.boolalg.false,
+	'nan'  : sp.nan,
 }
 
 _ast2spt_funcs = {

@@ -187,7 +187,7 @@ function copyToClipboard (e, val_or_eval, idx, subidx = 0) {
 	LastClickTime = t;
 	let resp      = val_or_eval ? Evaluations [idx].math [subidx] : Validations [idx];
 
-	writeToClipboard (NumClicks == 1 ? resp.simple : NumClicks == 2 ? resp.py : resp.tex);
+	writeToClipboard (NumClicks == 1 ? resp.nat : NumClicks == 2 ? resp.py : resp.tex);
 
 	e.style.color      = 'transparent';
 	e.style.background = 'black';
