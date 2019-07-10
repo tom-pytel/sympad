@@ -1522,12 +1522,16 @@ class AST (tuple):
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 		if ast0.op == op:
-			if ast1.op == op:
-				return AST (op, ast0 [-1] + ast1 [-1])
-			return AST (op, ast0 [-1] + (ast1,))
-		elif ast1.op == op:
-			return AST (op, (ast0,) + ast1 [-1])
-		return AST (op, (ast0, ast1))
+			return \
+					AST (op, ast0 [-1] + ast1 [-1]) \
+					if ast1.op == op else \
+					AST (op, ast0 [-1] + (ast1,))
+
+		else: # ast0.op != op
+			return \
+					AST (op, (ast0,) + ast1 [-1]) \
+					if ast1.op == op else \
+					AST (op, (ast0, ast1))
 
 #...............................................................................................
 class AST_Eq (AST):
@@ -1846,7 +1850,6 @@ def sympyEI (yes = True):
 class sast: # for single script
 	AST     = AST
 	sympyEI = sympyEI
-# TODO: Fix! func (x).something. !!!
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: remap \begin{matrix} \end{matrix}?
@@ -2008,6 +2011,10 @@ def _expr_func (iparm, *args, strip_paren = 0): # rearrange ast tree for explici
 	elif args [iparm].is_pow:
 		if args [iparm].base.is_paren:
 			return AST ('^', args [:iparm] + (args [iparm].base.strip_paren (strip_paren),) + args [iparm + 1:], args [iparm].exp)
+
+	elif args [iparm].is_attr:
+		if args [iparm].obj.is_paren:
+			return AST ('.', args [:iparm] + (args [iparm].obj.strip_paren (strip_paren),) + args [iparm + 1:], *args [iparm] [2:])
 
 	return AST (*(args [:iparm] + (args [iparm].strip_paren (strip_paren),) + args [iparm + 1:]))
 

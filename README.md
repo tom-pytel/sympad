@@ -10,17 +10,16 @@ sin (3\pi / 2)
 cos**-1 x
 \log_2{8}
 \lim_{x \to \infty} 1/x
-Limit (1/x, x, 0, dir='-')
-\sum_{n=0}^oo x^n / n!
+Limit (\frac1x, x, 0, dir='-')
 \sum_{n=1}**10 Sum (\sum_{l=1}^m l, (m, 1, n))
 Derivative (\int dx, x)
 d**6 / dx dy**2 dz**3 x^3 y^3 z^3
 Integral (e^{-x^2}, (x, 0, \infty))
 \int_0^1 \int_0^x \int_0^y 1 dz dy dx
-\int_0^\infty e^{-st} dt
 {{1,2},{3,4}}**-1
-det({{sin x, -cos x},{cos x, sin x}})
+det({{sin x, -cos x}, {cos x, sin x}})
 \begin{matrix} A & B \\ C & D \end{matrix} * {x, y}
+{{1,2,3},{4,5,6}}.transpose ()
 expand {x+1}**2
 factor (x^3 + 3x^2 + 3x + 1)
 series (e^x, x, 1, 9)
