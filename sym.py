@@ -274,7 +274,7 @@ def _ast2nat_log (ast):
 	return \
 			f'ln{_ast2nat_paren (ast.log)}' \
 			if ast.base is None else \
-			f'log_{_ast2nat_curly (ast.base)}{_ast2nat_paren (ast.log)}'
+			f'\\log_{_ast2nat_curly (ast.base)}{_ast2nat_paren (ast.log)}'
 
 def _ast2nat_func (ast):
 	if ast.is_trigh_func:
