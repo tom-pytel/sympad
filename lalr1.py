@@ -181,7 +181,6 @@ class Parser:
 						f'invalid token {tok.text!r}' if tok == '$err' else \
 						f'invalid syntax {src [tok.pos : tok.pos + 16]!r}')
 
-			# if act is None:
 				act, tokens, tokidx, stack, stidx, estate = cstack.pop ()
 				tok                                       = tokens [tokidx]
 

@@ -1628,7 +1628,7 @@ class AST_Var (AST):
 	def _as_var (self): # 'x', dx', 'partialx' -> 'x'
 		return AST ('@', self.grp [2]) if self.var else self
 
-	def _as_differential (self): # 'x', 'dx', 'partialx' -> 'dx'
+	def _as_diff (self): # 'x', 'dx', 'partialx' -> 'dx'
 		return AST ('@', f'd{self.grp [2]}') if self.var else self
 
 class AST_Attr (AST):
@@ -2089,7 +2089,7 @@ def _remap_func_Derivative (ast): # remap function 'Derivative' to native ast re
 	ds     = []
 
 	while commas:
-		d = commas.pop ().as_differential
+		d = commas.pop ().as_diff
 
 		if commas and commas [-1].is_num:
 			ds.append (AST ('^', d, commas.pop ()))
@@ -2100,7 +2100,7 @@ def _remap_func_Derivative (ast): # remap function 'Derivative' to native ast re
 
 def _remap_func_Integral (ast): # remap function 'Integral' to native ast representation for pretty rendering
 	if not ast.is_comma:
-		return AST ('intg', ast, ast.as_differential if ast.is_var else AST.VarNull)
+		return AST ('intg', ast, ast.as_diff if ast.is_var else AST.VarNull)
 	elif len (ast.commas) == 1:
 		ast = AST ('intg', ast.commas [0], AST.VarNull)
 
@@ -2108,11 +2108,11 @@ def _remap_func_Integral (ast): # remap function 'Integral' to native ast repres
 		ast2 = ast.commas [1].strip_paren (1)
 
 		if not ast2.is_comma:
-			return AST ('intg', ast.commas [0], ast2.as_differential)
+			return AST ('intg', ast.commas [0], ast2.as_diff)
 		elif len (ast2.commas) == 3:
-			return AST ('intg', ast.commas [0], ast2.commas [0].as_differential, ast2.commas [1], ast2.commas [2])
+			return AST ('intg', ast.commas [0], ast2.commas [0].as_diff, ast2.commas [1], ast2.commas [2])
 		else:
-			ast = AST (*(('intg', ast.commas [0], ast2.commas [0].as_differential) + ast2.commas [1:] + (AST.VarNull, AST.VarNull)) [:5])
+			ast = AST (*(('intg', ast.commas [0], ast2.commas [0].as_diff) + ast2.commas [1:] + (AST.VarNull, AST.VarNull)) [:5])
 
 	raise lalr1.Incomplete (ast)
 
@@ -2224,7 +2224,7 @@ class Parser (lalr1.Parser):
 			b'hd1owhtw21EWXfFHF3yidOiW/tJUa8PdyeSIqZcPL4Wbo5/f+8JM9LqCsIVfNbpJvlR3zQF8qavxRWvphrWwC3u6u0rgGf8kiSfyS4XApo5s6oNw2s9za/wSxzys8zoHF/uEtpK5asG4OT7jrrvZAMbtlPHiTeT4M1W9vHS8hRy8jEX8KrErXiKuXxyu3xJm' \
 			b'gPFgv54R1HpJWEN3nMAfkDBb5YV43dH1ig0NNxrAuL9Ur7aUQKlOm6WxqwKx7aUIvYpHXGwfeLmCYrxQmc9i1UxbdYDM+hOXWd+dTIDAwokLLHQnEyCw4cQFJmau0whYHa9PW2BsczmVAIGpExeY6U4mQGDNlPtKArt06rWn2Hy3f2CT6zSJ9OWq9UF8zcT9' \
 			b'Juevu8sxdMsBn9a5NNs2gS2luxSAPI+6HthZnmxkPtEAcTbz/9MWp+9ONUCcl68qTkqcfXeqAeK8fMFxUuIculMNEGcoNnBZDkjlzxiYKFTIhtjkLEPcBRu3uhyMjfzKOW95hk78vHg3nQrx1zXXIhJkUvIDX+NjIVGymdrwC3BDkFdFLPYv5MXQNqftioCM' \
-			b'psnIT4czu64MKuoPv4alnOwveZr+fX/+/wuNjAU=' 
+			b'psnIT4czu64MKuoPv4alnOwveZr+fX/+/wuNjAU='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}

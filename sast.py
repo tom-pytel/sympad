@@ -241,7 +241,7 @@ class AST_Var (AST):
 	def _as_var (self): # 'x', dx', 'partialx' -> 'x'
 		return AST ('@', self.grp [2]) if self.var else self
 
-	def _as_differential (self): # 'x', 'dx', 'partialx' -> 'dx'
+	def _as_diff (self): # 'x', 'dx', 'partialx' -> 'dx'
 		return AST ('@', f'd{self.grp [2]}') if self.var else self
 
 class AST_Attr (AST):
