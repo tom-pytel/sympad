@@ -71,6 +71,20 @@ def _ast2tex_num (ast):
 
 	return m if e is None else f'{m} \\cdot 10^{_ast2tex_curly (AST ("#", e))}'
 
+def _ast2tex_var (ast):
+	if not ast.var:
+		return '{}' # Null var
+
+	p = ast.as_var.var.replace ('_', '\\_')
+	t = AST.Var.PY2TEX.get (p)
+
+	return \
+		t or p            if not ast.diff_or_part_type else \
+		f'd{t or p}'      if ast.is_diff_any else \
+		'\\partial'       if ast.is_part_solo else \
+		f'\\partial{t}'   if t else \
+		f'\\partial {p}'
+
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
 	p   = None
@@ -160,7 +174,7 @@ def _ast2tex_diff (ast):
 
 	dv = next (iter (ds))
 
-	if len (ds) == 1 and not dv.is_partial:
+	if len (ds) == 1 and not dv.is_part:
 		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (ast2tex (n) for n in ast.dvs)}}}{_ast2tex_paren (ast.diff)}'
 
 	else:
@@ -183,7 +197,7 @@ def _ast2tex_intg (ast):
 _ast2tex_funcs = {
 	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
-	'@': lambda ast: ast.tex if ast.var else '{}',
+	'@': _ast2tex_var,
 	'.': lambda ast: f'{ast2tex (ast.obj)}.\\text{{{ast.attr}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
@@ -301,10 +315,10 @@ def _ast2nat_diff (ast):
 
 	for n in ast.dvs:
 		if n.is_var:
-			d  = n.diff_or_part_type ()
+			d  = n.diff_or_part_type
 			p += 1
 		else: # n = ('^', ('@', 'differential'), ('#', 'int'))
-			d  = n.base.diff_or_part_type ()
+			d  = n.base.diff_or_part_type
 			p += int (n.exp.num)
 
 	return f'{d.strip ()}{"" if p == 1 else f"^{p}"} / {" ".join (ast2nat (n) for n in ast.dvs)} {_ast2nat_paren (ast.diff)}'
@@ -387,9 +401,9 @@ def _ast2py_lim (ast):
 
 def _ast2py_diff (ast):
 	args = sum ((
-			(ast2py (n.as_var ()),) \
+			(ast2py (n.as_var),) \
 			if n.is_var else \
-			(ast2py (n.base.as_var ()), str (n.exp.num)) \
+			(ast2py (n.base.as_var), str (n.exp.num)) \
 			for n in ast.dvs \
 			), ())
 
@@ -398,14 +412,14 @@ def _ast2py_diff (ast):
 def _ast2py_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'Integral(1, {ast2py (ast.dv.as_var ())})' \
+				f'Integral(1, {ast2py (ast.dv.as_var)})' \
 				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, {ast2py (ast.dv.as_var ())})'
+				f'Integral({ast2py (ast.intg)}, {ast2py (ast.dv.as_var)})'
 	else:
 		return \
-				f'Integral(1, ({ast2py (ast.dv.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
+				f'Integral(1, ({ast2py (ast.dv.as_var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
 				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.dv.as_var ())}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
+				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.dv.as_var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
 
 _ast2py_funcs = {
 	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
@@ -492,9 +506,9 @@ def _ast2spt_func (ast):
 
 def _ast2spt_diff (ast):
 	args = sum ((
-			(ast2spt (n.as_var ()),) \
+			(ast2spt (n.as_var),) \
 			if n.is_var else \
-			(ast2spt (n.base.as_var ()), sp.Integer (n.exp.num)) \
+			(ast2spt (n.base.as_var), sp.Integer (n.exp.num)) \
 			for n in ast.dvs \
 			), ())
 
@@ -503,14 +517,14 @@ def _ast2spt_diff (ast):
 def _ast2spt_intg (ast):
 	if ast.from_ is None:
 		return \
-				sp.Integral (1, ast2spt (ast.dv.as_var ())) \
+				sp.Integral (1, ast2spt (ast.dv.as_var)) \
 				if ast.intg is None else \
-				sp.Integral (ast2spt (ast.intg), ast2spt (ast.dv.as_var ()))
+				sp.Integral (ast2spt (ast.intg), ast2spt (ast.dv.as_var))
 	else:
 		return \
-				sp.Integral (1, (ast2spt (ast.dv.as_var ()), ast2spt (ast.from_), ast2spt (ast.to))) \
+				sp.Integral (1, (ast2spt (ast.dv.as_var), ast2spt (ast.from_), ast2spt (ast.to))) \
 				if ast.intg is None else \
-				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.dv.as_var ()), ast2spt (ast.from_), ast2spt (ast.to)))
+				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.dv.as_var), ast2spt (ast.from_), ast2spt (ast.to)))
 
 _ast2spt_eq = {
 	'=':  sp.Eq,

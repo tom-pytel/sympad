@@ -208,47 +208,41 @@ class AST_Var (AST):
 	def _is_long_var (self):
 		return len (self.var) > 1 and self.var not in AST_Var.PY2TEX
 
-	def _is_differential (self):
+	def _is_diff (self):
 		return self.grp [0] and self.grp [2]
-
-	def _is_partial (self):
-		return self.grp [1] and self.grp [2]
-
-	def _is_diff_or_part (self):
-		return (self.grp [0] or self.grp [1]) and self.grp [2]
 
 	def _is_diff_solo (self):
 		return self.grp [0] and not self.grp [2]
 
+	def _is_diff_any (self):
+		return self.grp [0]
+
+	def _is_part (self):
+		return self.grp [1] and self.grp [2]
+
+	def _is_part_solo (self):
+		return self.grp [1] and not self.grp [2]
+
+	def _is_part_any (self):
+		return self.grp [1]
+
+	def _is_diff_or_part (self):
+		return (self.grp [0] or self.grp [1]) and self.grp [2]
+
 	def _is_diff_or_part_solo (self):
 		return (self.grp [0] or self.grp [1]) and not self.grp [2]
+
+	def _diff_or_part_type (self): # 'dx' -> 'd', 'partialx' -> 'partial', else false
+		return self.grp [0] or self.grp [1]
 
 	def _is_single_var (self): # is single atomic variable (non-differential, non-subscripted, non-primed)?
 		return len (self.var) == 1 or self.var in AST_Var.PY2TEX
 
-	def as_var (self): # 'x', dx', 'partialx' -> 'x'
+	def _as_var (self): # 'x', dx', 'partialx' -> 'x'
 		return AST ('@', self.grp [2]) if self.var else self
 
-	def as_differential (self): # 'x', 'dx', 'partialx' -> 'dx'
+	def _as_differential (self): # 'x', 'dx', 'partialx' -> 'dx'
 		return AST ('@', f'd{self.grp [2]}') if self.var else self
-
-	def diff_or_part_type (self): # 'dx' -> 'd', 'partialx' -> 'partial', else false
-		return self.grp [0] or self.grp [1]
-
-	def _tex (self):
-		p = self.grp [2].replace ('_', '\\_')
-		t = AST_Var.PY2TEX.get (p)
-
-		if not (self.grp [0] or self.grp [1]):
-			return t or p
-
-		if self.grp [1]:
-			return \
-				'\\partial'       if not p else \
-				f'\\partial{t}'   if t else \
-				f'\\partial {p}'
-
-		return f'd{t or p}' if self.grp [0] else t or p
 
 class AST_Attr (AST):
 	op, is_attr = '.', True
