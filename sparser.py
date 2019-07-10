@@ -1,4 +1,3 @@
-# TODO: Fix! func (x).something. !!!
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: remap \begin{matrix} \end{matrix}?
@@ -162,6 +161,10 @@ def _expr_func (iparm, *args, strip_paren = 0): # rearrange ast tree for explici
 	elif args [iparm].is_pow:
 		if args [iparm].base.is_paren:
 			return AST ('^', args [:iparm] + (args [iparm].base.strip_paren (strip_paren),) + args [iparm + 1:], args [iparm].exp)
+
+	elif args [iparm].is_attr:
+		if args [iparm].obj.is_paren:
+			return AST ('.', args [:iparm] + (args [iparm].obj.strip_paren (strip_paren),) + args [iparm + 1:], *args [iparm] [2:])
 
 	return AST (*(args [:iparm] + (args [iparm].strip_paren (strip_paren),) + args [iparm + 1:]))
 
@@ -378,7 +381,7 @@ class Parser (lalr1.Parser):
 			b'CZMTg0Q2uubEG460TV9EsSLG/EKFXYIKinXIn2ToZjJ09rA8XTP+4+XaCX/JV874VHYma5KyYe4ynJmiwMvYZOKPJ9XFGwl2/yakhENJwVa/gwmioDv+0vho8qvQ1B5HE7YfHkYZdjfkvXpEadfs+0ujuB1fB+Mupl7O0Gpvjn5qx3jbwTU6YQu/k3WTfKnm' \
 			b'mh34Upfji+gdsXYUe7q5jOPJxMCL5wj7IoFNHdnUS3BabsQtuTXtPo45EE+j8HAVN05kKlkwbm6fcdfcrAPjdsh4sRM8/uJZkE3fB5SDl76I93H7Ygd3vWu73p5NBcO0yBbsQUHx9urdhdU1t+PsFpqp+bAoXnfrcsVLGTfqwLiflasDS6ASp52lcawA8epO' \
 			b'4UK6htp/1vHkBtFUPE1oHIRYHOdVO5RZWHmZhWY1DgXWrrzA2mY1DgXWrbzAZOVsHQ6z4+26C4wXatbiUGBq5QVmmtU4FNhoyH2pApsdel2x2HxzdcfrtUMvbS6dHopvNHC/yfHr8eXYNvsdzjWaDXaI43XVYyKgPG91PnB0efLK9EodinM0/l93cfpmrQ7F' \
-			b'OT+rWFVxhmatDsU5P+FYVXF2zVodinN+OrLGtRRWLa3aoXC7QuHOpQKVFI3PuZSliFFSxCxrFrZRKdlrHR3GW7wrnXXSbSMGfZwcReJzVOXkWIxiZU9xUUlUoKwDsLynUna28SpQpMBMBnVN4RDQjgJyJXFg35RORXHiHVXKtbza5fWr81fn/w8mAqWS' 
+			b'OT+rWFVxhmatDsU5P+FYVXF2zVodinN+OrLGtRRWLa3aoXC7QuHOpQKVFI3PuZSliFFSxCxrFrZRKdlrHR3GW7wrnXXSbSMGfZwcReJzVOXkWIxiZU9xUUlUoKwDsLynUna28SpQpMBMBnVN4RDQjgJyJXFg35RORXHiHVXKtbza5fWr81fn/w8mAqWS'
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}

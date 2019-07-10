@@ -136,12 +136,16 @@ class AST (tuple):
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 		if ast0.op == op:
-			if ast1.op == op:
-				return AST (op, ast0 [-1] + ast1 [-1])
-			return AST (op, ast0 [-1] + (ast1,))
-		elif ast1.op == op:
-			return AST (op, (ast0,) + ast1 [-1])
-		return AST (op, (ast0, ast1))
+			return \
+					AST (op, ast0 [-1] + ast1 [-1]) \
+					if ast1.op == op else \
+					AST (op, ast0 [-1] + (ast1,))
+
+		else: # ast0.op != op
+			return \
+					AST (op, (ast0,) + ast1 [-1]) \
+					if ast1.op == op else \
+					AST (op, (ast0, ast1))
 
 #...............................................................................................
 class AST_Eq (AST):
