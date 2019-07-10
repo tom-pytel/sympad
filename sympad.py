@@ -1144,12 +1144,6 @@ This may or may not allow you to paste the Python string back into SymPad to con
 A single-click copy of the result will have the element(s) which was/were not understood replaced with "<b>nan</b>".
 </p>
 
-<h4>Future</h4>
-
-<p>
-Time and interest permitting: Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables, sympy function/variable module prefix, importing modules to allow custom code execution, assumptions/hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)... Too much to list...
-</p>
-
 
 <div align="center">
 Copyright (c) 2019 Tomasz Pytel, All rights reserved.
@@ -1850,6 +1844,12 @@ class sast: # for single script
 # TODO: Concretize empty variable stuff.
 # TODO: remap \begin{matrix} \end{matrix}?
 
+# Time and interest permitting:
+# Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
+# sympy function/variable module prefix
+# importing modules to allow custom code execution
+# assumptions/hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)...
+
 # Builds expression tree from text, nodes are nested AST tuples.
 
 import ast as py_ast
@@ -2220,7 +2220,7 @@ class Parser (lalr1.Parser):
 			b'DTvwpQ7ji1rSEWtmH/Z0dYibCOKB11wksKkjm/oonOppbpmU7Rxz3c9jVTxcx40TmUoWjJu7Z9xVt+vAuB0y3jvII37ZNciZHTvIwUtbxMdw+N4BHOWhG+WpGnyiBmfuBoIycaagd0TVWGBtdTdOZqNDGebCtvchZnfn+sXzRrfqwLhf1K8dJVCo1VZpDBVp' \
 			b'SYl4Kq3nQrqGMnzR8bgL0XjENf0KDQDGeZUOMgsrl1moVuMgsGblAmuq1TgIrF25wGQ6cR0Oo+R63QLjuaS1OAhMrVxgplqNg8BGXe+DBLbYBbum2Hx1fcdz0MMgfXh6EN+oA3+b/dj95dhU8w7H0y2+tovjKd99IkCedzou2FuePHm+Ugdxjvr/6xanr9bq' \
 			b'IM7lUcWqxBmqtTqIc3nAsSpxttVaHcS5PBxZ65wK26fW7iDjNq5VYLMGCwcWKuqms7BF0hAY8cuGhjqaTzu7qMfELp9awWb3hi3pKrDhiyI1UZZNNHxp+S5uV1YkVzYJWN4BLdtJa95Sj1fN5Kuu6jm8aEcvclnxy77qO+ViBCfFkxdliAWRrYceTTbv+1K+' \
-			b'lYPY7feX31/+PyjTlW8=' 
+			b'lYPY7feX31/+PyjTlW8='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -2690,7 +2690,7 @@ def _ast_is_neg (ast):
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
 
-def set_precision (ast): # recurse through ast to set sympy float precision according to largest string of digits found
+def set_precision (ast): # recurse through ast to set sympy float precision according to longest string of digits found
 	global _SYMPY_FLOAT_PRECISION
 
 	prec  = 15
