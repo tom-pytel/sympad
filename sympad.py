@@ -891,10 +891,10 @@ LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin
 you type. Input history is supported with the up and down arrows.
 </p><p>
 The symbolic expressions can be copied to the clipboard in various formats.
-Single-click for a simple short format meant to be pasted back into the input field.
+Single-click for a simple native format meant to be pasted back into the input field.
 A double click-copies the expression in Python format suitable for pasting into a Python shell or source file.
 Finally, a triple-click will copy the expression in LaTeX format.
-The single-click simple format will always be pasteable back into SymPad whereas the Python and LaTeX formats may or may not be depending on what elements are present.
+The single-click native format will always be pasteable back into SymPad whereas the Python and LaTeX formats may or may not be depending on what elements are present.
 </p>
 
 <h2>Types</h2>
@@ -2867,36 +2867,36 @@ _ast2tex_funcs = {
 }
 
 #...............................................................................................
-def ast2simple (ast): # abstract syntax tree -> simple text
-	return _ast2simple_funcs [ast.op] (ast)
+def ast2nat (ast): # abstract syntax tree -> simple text
+	return _ast2nat_funcs [ast.op] (ast)
 
-def _ast2simple_curly (ast):
-	return f'{ast2simple (ast)}' if ast.is_single_unit else f'{{{ast2simple (ast)}}}'
+def _ast2nat_curly (ast):
+	return f'{ast2nat (ast)}' if ast.is_single_unit else f'{{{ast2nat (ast)}}}'
 
-def _ast2simple_paren (ast):
-	return ast2simple (ast) if ast.is_paren else f'({ast2simple (ast)})'
+def _ast2nat_paren (ast):
+	return ast2nat (ast) if ast.is_paren else f'({ast2nat (ast)})'
 
-def _ast2simple_paren_mul_exp (ast, ret_has = False, also = {'+'}):
+def _ast2nat_paren_mul_exp (ast, ret_has = False, also = {'+'}):
 	if ast.is_mul:
-		s, has = _ast2simple_mul (ast, True)
+		s, has = _ast2nat_mul (ast, True)
 	else:
-		s, has = ast2simple (ast), ast.op in also
+		s, has = ast2nat (ast), ast.op in also
 
 	s = f'({s})' if has else s
 
 	return (s, has) if ret_has else s
 
-def _ast2simple_mul (ast, ret_has = False):
+def _ast2nat_mul (ast, ret_has = False):
 	t   = []
 	p   = None
 	has = False
 
 	for n in ast.muls:
-		s = f'{_ast2simple_paren (n) if n.is_add or (p and _ast_is_neg (n)) else ast2simple (n)}'
+		s = f'{_ast2nat_paren (n) if n.is_add or (p and _ast_is_neg (n)) else ast2nat (n)}'
 
 		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or \
 				(n.is_pow and n.base.is_pos_num) or n.op in {'/', 'diff'} or p.op in {'/', 'diff'}):
-			t.append (f' * {ast2simple (n)}')
+			t.append (f' * {ast2nat (n)}')
 			has = True
 
 		elif p and (p.is_diff_or_part_solo or \
@@ -2911,16 +2911,16 @@ def _ast2simple_mul (ast, ret_has = False):
 
 	return (''.join (t), has) if ret_has else ''.join (t)
 
-def _ast2simple_div (ast):
-	n, ns = _ast2simple_paren_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff'})
-	d, ds = _ast2simple_paren_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff'})
+def _ast2nat_div (ast):
+	n, ns = _ast2nat_paren_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff'})
+	d, ds = _ast2nat_paren_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff'})
 	s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
 
 	return f'{n}{" / " if s else "/"}{d}'
 
-def _ast2simple_pow (ast):
-	b = ast2simple (ast.base)
-	p = f'{_ast2simple_paren (ast.exp)}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2simple (ast.exp)
+def _ast2nat_pow (ast):
+	b = ast2nat (ast.base)
+	p = f'{_ast2nat_paren (ast.exp)}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2nat (ast.exp)
 
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
 		i = len (ast.base.func)
@@ -2932,32 +2932,32 @@ def _ast2simple_pow (ast):
 
 	return f'({b})**{p}'
 
-def _ast2simple_log (ast):
+def _ast2nat_log (ast):
 	return \
-			f'ln{_ast2simple_paren (ast.log)}' \
+			f'ln{_ast2nat_paren (ast.log)}' \
 			if ast.base is None else \
-			f'log_{_ast2simple_curly (ast.base)}{_ast2simple_paren (ast.log)}'
+			f'log_{_ast2nat_curly (ast.base)}{_ast2nat_paren (ast.log)}'
 
-def _ast2simple_func (ast):
+def _ast2nat_func (ast):
 	if ast.is_trigh_func:
-		return f'{ast.func}{_ast2simple_paren (ast.arg)}'
+		return f'{ast.func}{_ast2nat_paren (ast.arg)}'
 
 	return \
-			f'{ast.func}{_ast2simple_paren (ast.arg)}' \
+			f'{ast.func}{_ast2nat_paren (ast.arg)}' \
 			if ast.func in AST.Func.PY_ALL else \
-			f'${ast.func}{_ast2simple_paren (ast.arg)}'
+			f'${ast.func}{_ast2nat_paren (ast.arg)}'
 
-def _ast2simple_lim (ast):
-	s = ast2simple (ast.to) if ast.dir is None else ast2simple (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
+def _ast2nat_lim (ast):
+	s = ast2nat (ast.to) if ast.dir is None else ast2nat (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
 
-	return f'\\lim_{{{ast2simple (ast.lvar)} \\to {s}}} {_ast2simple_paren_mul_exp (ast.lim)}'
+	return f'\\lim_{{{ast2nat (ast.lvar)} \\to {s}}} {_ast2nat_paren_mul_exp (ast.lim)}'
 
-def _ast2simple_sum (ast):
-	return f'\\sum_{{{ast2simple (ast.svar)}={ast2simple (ast.from_)}}}^{_ast2simple_curly (ast.to)} {_ast2simple_paren_mul_exp (ast.sum)}' \
+def _ast2nat_sum (ast):
+	return f'\\sum_{{{ast2nat (ast.svar)}={ast2nat (ast.from_)}}}^{_ast2nat_curly (ast.to)} {_ast2nat_paren_mul_exp (ast.sum)}' \
 
-_ast2simple_diff_single_rec = re.compile ('^d')
+_ast2nat_diff_single_rec = re.compile ('^d')
 
-def _ast2simple_diff (ast):
+def _ast2nat_diff (ast):
 	p = 0
 
 	for n in ast.dvs:
@@ -2968,45 +2968,45 @@ def _ast2simple_diff (ast):
 			d  = n.base.diff_or_part_start_text ()
 			p += int (n.exp.num)
 
-	return f'{d.strip ()}{"" if p == 1 else f"^{p}"}/{"".join (ast2simple (n) for n in ast.dvs)}{_ast2simple_paren (ast.diff)}'
+	return f'{d.strip ()}{"" if p == 1 else f"^{p}"}/{"".join (ast2nat (n) for n in ast.dvs)}{_ast2nat_paren (ast.diff)}'
 
-def _ast2simple_intg (ast):
+def _ast2nat_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'\\int {ast2simple (ast.dv)}' \
+				f'\\int {ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {ast2simple (ast.intg)} {ast2simple (ast.dv)}'
+				f'\\int {ast2nat (ast.intg)} {ast2nat (ast.dv)}'
 	else:
 		return \
-				f'\\int_{_ast2simple_curly (ast.from_)}^{_ast2simple_curly (ast.to)} {ast2simple (ast.dv)}' \
+				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2simple_curly (ast.from_)}^{_ast2simple_curly (ast.to)} {ast2simple (ast.intg)} {ast2simple (ast.dv)}'
+				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {ast2nat (ast.intg)} {ast2nat (ast.dv)}'
 
-_ast2simple_funcs = {
-	'=': lambda ast: f'{ast2simple (ast.lhs)} {ast.rel} {ast2simple (ast.rhs)}',
+_ast2nat_funcs = {
+	'=': lambda ast: f'{ast2nat (ast.lhs)} {ast.rel} {ast2nat (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.as_short_var_text (),
-	'.': lambda ast: f'{ast2simple (ast.obj)}.{ast.attr}' if ast.arg is None else f'{ast2simple (ast.obj)}.{ast.attr}{_ast2simple_paren (ast.arg)}',
+	'.': lambda ast: f'{ast2nat (ast.obj)}.{ast.attr}' if ast.arg is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (ast.arg)}',
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{", ".join (ast2simple (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
-	'(': lambda ast: f'({ast2simple (ast.paren)})',
-	'[': lambda ast: f'[{", ".join (ast2simple (b) for b in ast.bracks)}]',
-	'|': lambda ast: f'|{ast2simple (ast.abs)}|',
-	'-': lambda ast: f'-{_ast2simple_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2simple (ast.minus)}',
-	'!': lambda ast: f'{_ast2simple_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2simple (ast.fact)}!',
-	'+': lambda ast: ' + '.join (ast2simple (n) for n in ast.adds).replace (' + -', ' - '),
-	'*': _ast2simple_mul,
-	'/': _ast2simple_div,
-	'^': _ast2simple_pow,
-	'log': _ast2simple_log,
-	'sqrt': lambda ast: f'\\sqrt{{{ast2simple (ast.rad.strip_paren (1))}}}' if ast.idx is None else f'\\sqrt[{ast2simple (ast.idx)}]{{{ast2simple (ast.rad.strip_paren (1))}}}',
-	'func': _ast2simple_func,
-	'lim': _ast2simple_lim,
-	'sum': _ast2simple_sum,
-	'diff': _ast2simple_diff,
-	'intg': _ast2simple_intg,
-	'vec': lambda ast: f'{{{",".join (ast2simple (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
-	'mat': lambda ast: ('{' + ','.join (f'{{{",".join (ast2simple (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
+	',': lambda ast: f'{", ".join (ast2nat (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
+	'(': lambda ast: f'({ast2nat (ast.paren)})',
+	'[': lambda ast: f'[{", ".join (ast2nat (b) for b in ast.bracks)}]',
+	'|': lambda ast: f'|{ast2nat (ast.abs)}|',
+	'-': lambda ast: f'-{_ast2nat_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2nat (ast.minus)}',
+	'!': lambda ast: f'{_ast2nat_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2nat (ast.fact)}!',
+	'+': lambda ast: ' + '.join (ast2nat (n) for n in ast.adds).replace (' + -', ' - '),
+	'*': _ast2nat_mul,
+	'/': _ast2nat_div,
+	'^': _ast2nat_pow,
+	'log': _ast2nat_log,
+	'sqrt': lambda ast: f'\\sqrt{{{ast2nat (ast.rad.strip_paren (1))}}}' if ast.idx is None else f'\\sqrt[{ast2nat (ast.idx)}]{{{ast2nat (ast.rad.strip_paren (1))}}}',
+	'func': _ast2nat_func,
+	'lim': _ast2nat_lim,
+	'sum': _ast2nat_sum,
+	'diff': _ast2nat_diff,
+	'intg': _ast2nat_intg,
+	'vec': lambda ast: f'{{{",".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
+	'mat': lambda ast: ('{' + ','.join (f'{{{",".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
 	'text': lambda ast: ast.simple,
 }
 
@@ -3368,7 +3368,7 @@ class sym: # for single script
 	AST_Text      = AST_Text
 	set_precision = set_precision
 	ast2tex       = ast2tex
-	ast2simple    = ast2simple
+	ast2nat    = ast2nat
 	ast2py        = ast2py
 	ast2spt       = ast2spt
 	spt2ast       = spt2ast
@@ -3491,9 +3491,9 @@ def _admin_del (ast):
 	try:
 		del _vars [ast]
 	except KeyError:
-		raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
+		raise NameError (f'Variable {sym.ast2nat (ast)!r} is not defined, it can only be attributable to human error.')
 
-	return f'Variable {sym.ast2simple (ast)!r} deleted.'
+	return f'Variable {sym.ast2nat (ast)!r} deleted.'
 
 def _admin_delall (ast):
 	global _vars
@@ -3559,7 +3559,7 @@ class Handler (SimpleHTTPRequestHandler):
 		if ast is not None:
 			ast    = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
 			tex    = sym.ast2tex (ast)
-			simple = sym.ast2simple (ast)
+			simple = sym.ast2nat (ast)
 			py     = sym.ast2py (ast)
 
 			if os.environ.get ('SYMPAD_DEBUG'):
@@ -3607,7 +3607,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 			return {'math': [{
 				'tex'   : sym.ast2tex (ast),
-				'simple': sym.ast2simple (ast),
+				'simple': sym.ast2nat (ast),
 				'py'    : sym.ast2py (ast),
 			} for ast in asts]}
 

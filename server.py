@@ -123,9 +123,9 @@ def _admin_del (ast):
 	try:
 		del _vars [ast]
 	except KeyError:
-		raise NameError (f'Variable {sym.ast2simple (ast)!r} is not defined, it can only be attributable to human error.')
+		raise NameError (f'Variable {sym.ast2nat (ast)!r} is not defined, it can only be attributable to human error.')
 
-	return f'Variable {sym.ast2simple (ast)!r} deleted.'
+	return f'Variable {sym.ast2nat (ast)!r} deleted.'
 
 def _admin_delall (ast):
 	global _vars
@@ -191,7 +191,7 @@ class Handler (SimpleHTTPRequestHandler):
 		if ast is not None:
 			ast    = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
 			tex    = sym.ast2tex (ast)
-			simple = sym.ast2simple (ast)
+			simple = sym.ast2nat (ast)
 			py     = sym.ast2py (ast)
 
 			if os.environ.get ('SYMPAD_DEBUG'):
@@ -239,7 +239,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 			return {'math': [{
 				'tex'   : sym.ast2tex (ast),
-				'simple': sym.ast2simple (ast),
+				'simple': sym.ast2nat (ast),
 				'py'    : sym.ast2py (ast),
 			} for ast in asts]}
 
