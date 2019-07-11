@@ -98,7 +98,7 @@ def _ast2tex_mul (ast, ret_has = False):
 	has = False
 
 	for n in ast.muls:
-		s = f'{_ast2tex_paren (n) if n.is_add or (p and _ast_is_neg (n)) else ast2tex (n)}'
+		s = _ast2tex_paren (n) if n.is_add or (n.is_piece and n is not ast.muls [-1]) or (p and _ast_is_neg (n)) else ast2tex (n)
 
 		if p and (n.op in {'!', '#', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'intg', 'mat'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/', 'diff'})):
@@ -213,7 +213,7 @@ _ast2tex_funcs = {
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2tex (ast.minus)}',
 	'!': lambda ast: f'{_ast2tex_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2tex (ast.fact)}!',
-	'+': lambda ast: ' + '.join (ast2tex (n) for n in ast.adds).replace (' + -', ' - '),
+	'+': lambda ast: ' + '.join (_ast2tex_paren (n) if (n.is_piece and n is not ast.adds [-1]) else ast2tex (n) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
 	'/': lambda ast: f'\\frac{{{ast2tex (ast.numer)}}}{{{ast2tex (ast.denom)}}}',
 	'^': _ast2tex_pow,
@@ -226,7 +226,7 @@ _ast2tex_funcs = {
 	'intg': _ast2tex_intg,
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
-	'pwise': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{ast2tex (p [0])} & \\text{{for}}\\: {ast2tex (p [1])}' if p [1] is not True else f'{ast2tex (p [0])} & \\text{{otherwise}}' for p in ast.pieces) + ' \\end{cases}',
+	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{ast2tex (p [0])} & \\text{{otherwise}}' if p [1] is True else f'{ast2tex (p [0])} & \\text{{for}}\\: {ast2tex (p [1])}' for p in ast.pieces) + ' \\end{cases}',
 
 	'text': lambda ast: ast.tex,
 }
@@ -235,19 +235,23 @@ _ast2tex_funcs = {
 def ast2nat (ast): # abstract syntax tree -> simple text
 	return _ast2nat_funcs [ast.op] (ast)
 
-def _ast2nat_curly (ast):
-	return f'{ast2nat (ast)}' if ast.is_single_unit and not (ast.is_var and ast.var in AST.Var.PY2TEX) else f'{{{ast2nat (ast)}}}'
+def _ast2nat_curly (ast, ops = None):
+	if ops:
+		return f'{{{ast2nat (ast)}}}' if ast.op in ops else ast2nat (ast)
+
+	return f'{{{ast2nat (ast)}}}' if not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX) else ast2nat (ast)
+	# return f'{ast2nat (ast)}' if ast.is_single_unit and not (ast.is_var and ast.var in AST.Var.PY2TEX) else f'{{{ast2nat (ast)}}}'
 
 def _ast2nat_paren (ast):
 	return ast2nat (ast) if ast.is_paren else f'({ast2nat (ast)})'
 
-def _ast2nat_paren_mul_exp (ast, ret_has = False, also = {'+'}):
+def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {'+'}):
 	if ast.is_mul:
 		s, has = _ast2nat_mul (ast, True)
 	else:
 		s, has = ast2nat (ast), ast.op in also
 
-	s = f'({s})' if has else s
+	s = f'{{{s}}}' if has else s
 
 	return (s, has) if ret_has else s
 
@@ -257,7 +261,9 @@ def _ast2nat_mul (ast, ret_has = False):
 	has = False
 
 	for n in ast.muls:
-		s = f'{_ast2nat_paren (n) if n.is_add or (p and _ast_is_neg (n)) else ast2nat (n)}'
+		s = _ast2nat_paren (n)   if n.is_add or (p and _ast_is_neg (n)) or (n.is_piece and n is not ast.muls [-1]) else \
+				f'{{{ast2nat (n)}}}' if n.is_piece else \
+				ast2nat (n)
 
 		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or \
 				(n.is_pow and n.base.is_pos_num) or n.op in {'/', 'diff'} or p.op in {'/', 'diff'}):
@@ -276,15 +282,16 @@ def _ast2nat_mul (ast, ret_has = False):
 	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2nat_div (ast):
-	n, ns = _ast2nat_paren_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff'})
-	d, ds = _ast2nat_paren_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff'})
+	n, ns = _ast2nat_curly_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff', 'piece'})
+	d, ds = _ast2nat_curly_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff', 'piece'})
 	s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
 
 	return f'{n}{" / " if s else "/"}{d}'
 
 def _ast2nat_pow (ast):
 	b = ast2nat (ast.base)
-	p = f'{_ast2nat_paren (ast.exp)}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2nat (ast.exp)
+	p = _ast2nat_curly (ast.exp.strip_minus (), {'+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece'})
+	# p = f'{_ast2nat_paren (ast.exp)}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2nat (ast.exp)
 
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
 		i = len (ast.base.func)
@@ -312,12 +319,12 @@ def _ast2nat_func (ast):
 			f'${ast.func}{_ast2nat_paren (ast.arg)}'
 
 def _ast2nat_lim (ast):
-	s = ast2nat (ast.to) if ast.dir is None else ast2nat (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
+	s = _ast2nat_curly (ast.to, {'piece'}) if ast.dir is None else ast2nat (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
 
-	return f'\\lim_{{{ast2nat (ast.lvar)} \\to {s}}} {_ast2nat_paren_mul_exp (ast.lim)}'
+	return f'\\lim_{{{ast2nat (ast.lvar)} \\to {s}}} {_ast2nat_curly_mul_exp (ast.lim, also = {"+", "piece"})}'
 
 def _ast2nat_sum (ast):
-	return f'\\sum_{{{ast2nat (ast.svar)}={ast2nat (ast.from_)}}}^{_ast2nat_curly (ast.to)} {_ast2nat_paren_mul_exp (ast.sum)}' \
+	return f'\\sum_{{{ast2nat (ast.svar)}={_ast2nat_curly (ast.from_, {"piece"})}}}^{_ast2nat_curly (ast.to)} {_ast2nat_curly_mul_exp (ast.sum, also = {"+", "piece"})}' \
 
 def _ast2nat_diff (ast):
 	p = 0
@@ -337,12 +344,12 @@ def _ast2nat_intg (ast):
 		return \
 				f'\\int {ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {ast2nat (ast.intg)} {ast2nat (ast.dv)}'
+				f'\\int {_ast2nat_curly (ast.intg, {"piece"})} {ast2nat (ast.dv)}'
 	else:
 		return \
 				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {ast2nat (ast.intg)} {ast2nat (ast.dv)}'
+				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_curly (ast.intg, {"piece"})} {ast2nat (ast.dv)}'
 
 _ast2nat_funcs = {
 	'=': lambda ast: f'{ast2nat (ast.lhs)} {ast.rel} {ast2nat (ast.rhs)}',
@@ -354,9 +361,9 @@ _ast2nat_funcs = {
 	'(': lambda ast: f'({ast2nat (ast.paren)})',
 	'[': lambda ast: f'[{", ".join (ast2nat (b) for b in ast.bracks)}]',
 	'|': lambda ast: f'|{ast2nat (ast.abs)}|',
-	'-': lambda ast: f'-{_ast2nat_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2nat (ast.minus)}',
+	'-': lambda ast: f'-{_ast2nat_paren (ast.minus)}' if ast.minus.is_add else f'-{_ast2nat_curly (ast.minus, {"piece"})}',
 	'!': lambda ast: f'{_ast2nat_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2nat (ast.fact)}!',
-	'+': lambda ast: ' + '.join (ast2nat (n) for n in ast.adds).replace (' + -', ' - '),
+	'+': lambda ast: ' + '.join (_ast2nat_curly (n, {'piece'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2nat_mul,
 	'/': _ast2nat_div,
 	'^': _ast2nat_pow,
@@ -369,7 +376,7 @@ _ast2nat_funcs = {
 	'intg': _ast2nat_intg,
 	'vec': lambda ast: f'{{{", ".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
-	'pwise': lambda ast: ' else '.join (f'{ast2nat (p [0])}' if p [1] is True else f'{ast2nat (p [0])} if {ast2nat (p [1])}' for p in ast.pieces),
+	'piece': lambda ast: ' else '.join (f'{ast2nat (p [0])}' if p [1] is True else f'{ast2nat (p [0])} if {ast2nat (p [1])}' for p in ast.pieces),
 
 	'text': lambda ast: ast.simple,
 }
@@ -457,7 +464,7 @@ _ast2py_funcs = {
 	'intg': _ast2py_intg,
 	'vec': lambda ast: 'Matrix([' + ', '.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
 	'mat': lambda ast: 'Matrix([' + ', '.join (f'[{", ".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
-	'pwise': lambda ast: 'Piecewise(' + ', '.join (f'({ast2py (p [0])}, {True if p [1] is True else ast2py (p [1])})' for p in ast.pieces) + ')',
+	'piece': lambda ast: 'Piecewise(' + ', '.join (f'({ast2py (p [0])}, {True if p [1] is True else ast2py (p [1])})' for p in ast.pieces) + ')',
 
 	'text': lambda ast: ast.py,
 }
@@ -584,7 +591,7 @@ _ast2spt_funcs = {
 	'intg': _ast2spt_intg,
 	'vec': lambda ast: sp.Matrix ([[ast2spt (e)] for e in ast.vec]),
 	'mat': lambda ast: sp.Matrix ([[ast2spt (e) for e in row] for row in ast.mat]),
-	'pwise': lambda ast: sp.Piecewise (*tuple ((ast2spt (p [0]), True if p [1] is True else ast2spt (p [1])) for p in ast.pieces)),
+	'piece': lambda ast: sp.Piecewise (*tuple ((ast2spt (p [0]), True if p [1] is True else ast2spt (p [1])) for p in ast.pieces)),
 }
 
 #...............................................................................................
@@ -722,7 +729,7 @@ _spt2ast_funcs = {
 	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_func,
 
 	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
-	sp.Piecewise: lambda spt: AST ('pwise', tuple ((spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else spt2ast (t [1])) for t in spt.args)),
+	sp.Piecewise: lambda spt: AST ('piece', tuple ((spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else spt2ast (t [1])) for t in spt.args)),
 
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,
@@ -736,7 +743,7 @@ class sym: # for single script
 	AST_Text      = AST_Text
 	set_precision = set_precision
 	ast2tex       = ast2tex
-	ast2nat    = ast2nat
+	ast2nat       = ast2nat
 	ast2py        = ast2py
 	ast2spt       = ast2spt
 	spt2ast       = spt2ast

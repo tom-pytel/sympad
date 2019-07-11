@@ -299,7 +299,7 @@ class AST_Func (AST):
 	op, is_func = 'func', True
 
 	SPECIAL         = {'@', 'vars', 'del', 'delall'}
-	BUILTINS        = {'max', 'min', 'abs', 'pow', 'sum'}
+	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
@@ -360,8 +360,8 @@ class AST_Mat (AST):
 	_rows = lambda self: len (self.mat)
 	_cols = lambda self: len (self.mat [0]) if self.mat else 0
 
-class AST_PWise (AST):
-	op, is_pwise = 'pwise', True
+class AST_Piece (AST):
+	op, is_piece = 'piece', True
 
 	def _init (self, pieces):
 		self.pieces = pieces
@@ -392,7 +392,7 @@ _AST_OP2CLS = {
 	'intg': AST_Intg,
 	'vec': AST_Vec,
 	'mat': AST_Mat,
-	'pwise': AST_PWise,
+	'piece': AST_Piece,
 }
 
 _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
