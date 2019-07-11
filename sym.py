@@ -1,7 +1,8 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: '.' paren and curly formatting and copying
+# TODO: Min, Max
 # TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
-# TODO: fix nested identical Piecewise returned from SymPy like for Sum (x**n/x, (n, 0, oo)).doit ()
 # TODO: sequence(factorial(k), (k,1,oo))
 
 import re
@@ -290,8 +291,7 @@ def _ast2nat_div (ast):
 
 def _ast2nat_pow (ast):
 	b = ast2nat (ast.base)
-	p = _ast2nat_curly (ast.exp.strip_minus (), {'+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece'})
-	# p = f'{_ast2nat_paren (ast.exp)}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg'} else ast2nat (ast.exp)
+	p = f'{{{ast2nat (ast.exp)}}}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece'} else ast2nat (ast.exp)
 
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
 		i = len (ast.base.func)
@@ -613,7 +613,7 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something>
 		tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
 
-	return AST_Text (tex, 'nan', str (spt))
+	return AST_Text (tex, str (spt), str (spt))
 
 def _spt2ast_num (spt):
 	m = _rec_num_deconstructed.match (str (spt))

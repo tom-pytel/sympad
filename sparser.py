@@ -1,7 +1,7 @@
-# TODO: NOT BUG: \int_{-x}^{x} but not intuitive
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
 # TODO: remap \begin{matrix} \end{matrix}?
+# TODO: remap \begin{cases} \end{cases}?
 
 # Time and interest permitting:
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
@@ -387,7 +387,7 @@ class Parser (lalr1.Parser):
 			b'FLOp2vTXDkY3XCP8NpfhFy8m2Z1r3YHcvcFDmrFq59COr5dTDEbIXHF8Ur251bobnl6InelmAipubr/itrrZgIrbq1Q8hlHd21fm7F5/V10+8KxykMUTxUXUkINTObg9iiJtFwdzOS8SHuzxVBuRq4cNRU2dgmT8IUomVrcaIJkwlEzxHiyIyOFDpIsFFaWT' \
 			b'puqy7bV7eVX/hVX9N1MxknmIYTZLkofBs9Lkmc3tBRqaiy/fLkSQfzxAzeRFtdsMkEy9VTN3ElFPIWfFdSUVdFUZaL6HX0R2DTydBjFPpKcvCTMlT90RQk1HJ9RUHWqARJujk2hTHWrAosT62CTqsGZ8iAESNUcnUVMdaoBE7dFJ1FeHGiDR0eTlChLdOgTd' \
 			b'o1zral+BbR/DLP7UylULhnxHU6CbH+hfTdBNtTngPbhbL1se2GBxKUoI/ABmVlcSOBuEjiNA3qOZ1LHJO1VHEiDv7fOzA5d3Ux1JgLy3T90OW95sVz6OAHlvn9gduLxtdSQBBubt077jWIlkg/0xBUjfZJeoyAJDLk1z+DHIM4AQjTgpsDuI+IJ0zh4RrRS/' \
-			b'9Yo9hBr2+DGJfQlY8jXkm7DoLK8XYseOBl2JvMJF0loIvyaDRW/FkMgWF9URfidB8ezpIckVVl8OVONlFkGLSdNXu2rwj6ub0dX84IXCV6P/CLnxPkxTe76qpsp8f/7/LT50DQ=='
+			b'9Yo9hBr2+DGJfQlY8jXkm7DoLK8XYseOBl2JvMJF0loIvyaDRW/FkMgWF9URfidB8ezpIckVVl8OVONlFkGLSdNXu2rwj6ub0dX84IXCV6P/CLnxPkxTe76qpsp8f/7/LT50DQ==' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}

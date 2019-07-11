@@ -34,7 +34,7 @@
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.8</h4>
+<h4 align="center" style="margin: 0">v0.3.9</h4>
 
 
 <h2>Introduction</h2>
@@ -146,6 +146,12 @@ and a 3x1 would be "<b>{{1,},{2,},{3,}}</b>". Note the trailing commas which are
 </p><p>
 Currently I haven't figured out the best way to interface with the SymPy vector module so SymPad coerces vectors to single column matrices. This at
 least allows computation with them until I figure out how best to use the vector module.
+</p>
+
+<h4>Piecewise Expressions</h4>
+
+<p>
+<i>This...</i>
 </p>
 
 <h4>Strings</h4>
@@ -337,9 +343,11 @@ Repeat this several times using the up arrow.
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
 </p><p>
+<i>
 There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python copy string.
 This may or may not allow you to paste the Python string back into SymPad to continue working with the result.
 A single-click copy of the result will have the element(s) which was/were not understood replaced with "<b>nan</b>".
+</i>
 </p>
 
 <br><br>

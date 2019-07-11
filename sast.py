@@ -1,5 +1,3 @@
-# TODO: Add known zero parameter funcs.
-
 # Base classes for abstract math syntax tree, tuple based.
 #
 # ('=', 'rel', lhs, rhs)        - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
