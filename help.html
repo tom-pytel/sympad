@@ -33,7 +33,7 @@
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.7</h4>
+<h4 align="center" style="margin: 0">v0.3.8</h4>
 
 
 <h2>Introduction</h2>
@@ -126,8 +126,10 @@ Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$
 This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_{x_{y_0'}''}'''$).
 </del>
 </p><p>
+<i>
 Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable.
 If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
+</i>
 </p><p>
 Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 </p>
@@ -151,17 +153,11 @@ These exist for the sole purpose of passing string arguments to SymPy functions.
 supporting escape sequences. For example "<b>Limit (1/x, x, 0, '-')</b>".
 </p>
 
-<h4>Lists</h4>
+<h4>Lists and Tuples</h4>
 
 <p>
-Standard Python bracket enclosed potentially nested lists which like strings exist for the purpose of passing parameters to functions like
-"<b>Matrix ([[1,2],[3,4]])</b>"
-</p>
-
-<h4>Tuples</h4>
-
-<p>
-Same...
+Standard Python bracket enclosed lists and optionally parentheses enclosed tuples are accepted.
+Like strings these exist for the purpose of passing parameters to functions like "<b>Matrix ([[1,2],[3,4]])</b>".
 </p>
 
 <h2>Operations</h2>
@@ -279,7 +275,7 @@ For example, two ways to get the transpose of a matrix are "<b>{{1,2,3},{4,5,6}}
 <p>
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
-Anything can be assigned to any valid variable, valid mathematical expressions, Python objects like strings or lists or even references to other variables.
+Anything can be assigned to any valid variable like valid mathematical expressions, Python objects like strings or lists or even references to other variables.
 To delete an assignment use the "<b>del var</b>" function, to delete all assignments do "<b>delall</b>" and to see what variables are currently assigned to, use the "<b>vars</b>" function.
 </p><p>
 Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object.
@@ -291,8 +287,8 @@ The value of "<b>y</b>" will be independent of whatever else happens to the vari
 The other kind of assignment is a reference assignment which will map the source variable instead of copying its value to the target.
 This means that if you have a reference set like "<b>y = x</b>" and the value of "<b>x</b>" changes then the value of "<b>y</b>" will reflect this new value.
 The reference assignment happens if you try to assign variables which do not exist, so setting "<b>y = x</b>" before "<b>x</b>" has been created will result in a reference.
-Otherwise you can force a reference by using the "<b>@()</b>" meta-function.
-Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of copying the value.
+Otherwise you can force a reference by using the "<b>@( )</b>" meta-function.
+Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of copying the value if it exists.
 </p>
 
 <h2>Functions</h2>
