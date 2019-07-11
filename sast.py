@@ -157,11 +157,8 @@ class AST_Eq (AST):
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
 
-	def _is_eq_eq (self):
-		return self.rel in {'=', '=='}
-
-	def _is_ass (self):
-		return self.rel == '='
+	_is_eq_eq = lambda self: self.rel in {'=', '=='}
+	_is_ass   = lambda self: self.rel == '='
 
 class AST_Num (AST):
 	op, is_num = '#', True
@@ -173,16 +170,11 @@ class AST_Num (AST):
 	def _init (self, num):
 		self.num = num
 
-	def _is_pos_num (self):
-		return self.num [0] != '-'
+	_is_pos_num = lambda self: self.num [0] != '-'
+	_is_neg_num = lambda self: self.num [0] == '-'
+	_is_pos_int = lambda self: AST_Num._rec_pos_int.match (self.num)
 
-	def _is_neg_num (self):
-		return self.num [0] == '-'
-
-	def _is_pos_int (self):
-		return AST_Num._rec_pos_int.match (self.num)
-
-	def mant_and_exp (self):
+	def _mant_and_exp (self):
 		m = AST_Num._rec_mant_and_exp.match (self.num)
 
 		return (self.num, None) if not m else (m.group (1) , m.group (2) or m.group (3))
@@ -203,50 +195,21 @@ class AST_Var (AST):
 	def _init (self, var):
 		self.var = var
 
-	def _grp (self):
-		return AST_Var._rec_groups.match (self.var).groups ()
-
-	def _is_null_var (self):
-		return not self.var
-
-	def _is_long_var (self):
-		return len (self.var) > 1 and self.var not in AST_Var.PY2TEX
-
-	def _is_diff (self):
-		return self.grp [0] and self.grp [2]
-
-	def _is_diff_solo (self):
-		return self.grp [0] and not self.grp [2]
-
-	def _is_diff_any (self):
-		return self.grp [0]
-
-	def _is_part (self):
-		return self.grp [1] and self.grp [2]
-
-	def _is_part_solo (self):
-		return self.grp [1] and not self.grp [2]
-
-	def _is_part_any (self):
-		return self.grp [1]
-
-	def _is_diff_or_part (self):
-		return (self.grp [0] or self.grp [1]) and self.grp [2]
-
-	def _is_diff_or_part_solo (self):
-		return (self.grp [0] or self.grp [1]) and not self.grp [2]
-
-	def _diff_or_part_type (self): # 'dx' -> 'd', 'partialx' -> 'partial', else false
-		return self.grp [0] or self.grp [1]
-
-	def _is_single_var (self): # is single atomic variable (non-differential, non-subscripted, non-primed)?
-		return len (self.var) == 1 or self.var in AST_Var.PY2TEX
-
-	def _as_var (self): # 'x', dx', 'partialx' -> 'x'
-		return AST ('@', self.grp [2]) if self.var else self
-
-	def _as_diff (self): # 'x', 'dx', 'partialx' -> 'dx'
-		return AST ('@', f'd{self.grp [2]}') if self.var else self
+	_grp                  = lambda self: AST_Var._rec_groups.match (self.var).groups ()
+	_is_null_var          = lambda self: not self.var
+	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
+	_is_diff              = lambda self: self.grp [0] and self.grp [2]
+	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
+	_is_diff_any          = lambda self: self.grp [0]
+	_is_part              = lambda self: self.grp [1] and self.grp [2]
+	_is_part_solo         = lambda self: self.grp [1] and not self.grp [2]
+	_is_part_any          = lambda self: self.grp [1]
+	_is_diff_or_part      = lambda self: (self.grp [0] or self.grp [1]) and self.grp [2]
+	_is_diff_or_part_solo = lambda self: (self.grp [0] or self.grp [1]) and not self.grp [2]
+	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] # 'dx' -> 'd', 'partialx' -> 'partial', else false
+	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted, non-primed)?
+	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
+	_as_diff              = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
 
 class AST_Attr (AST):
 	op, is_attr = '.', True
@@ -347,11 +310,6 @@ class AST_Func (AST):
 	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
 	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
-	# PY_ONLY     = SPECIAL | BUILTINS | {f'a{f}' for f in TRIGH} | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
-	# PY_AND_TEX  = TRIGH | {'arg', 'exp', 'ln', 'max', 'min'}
-	# PY_ALL      = PY_ONLY | PY_AND_TEX
-	# TEX_ONLY    = {f'arc{f}' for f in TRIGH}
-
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_noninv = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -359,14 +317,9 @@ class AST_Func (AST):
 	def _init (self, func, arg):
 		self.func, self.arg = func, arg
 
-	def _is_trigh_func (self):
-		return AST_Func._rec_trigh.match (self.func)
-
-	def _is_trigh_func_inv (self):
-		return AST_Func._rec_trigh_inv.match (self.func)
-
-	def _is_trigh_func_noninv (self):
-		return AST_Func._rec_trigh_noninv.match (self.func)
+	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
+	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
+	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
 
 class AST_Lim (AST):
 	op, is_lim = 'lim', True
@@ -404,11 +357,14 @@ class AST_Mat (AST):
 	def _init (self, mat):
 		self.mat = mat
 
-	def _rows (self):
-		return len (self.mat)
+	_rows = lambda self: len (self.mat)
+	_cols = lambda self: len (self.mat [0]) if self.mat else 0
 
-	def _cols (self):
-		return len (self.mat [0]) if self.mat else 0
+class AST_PWise (AST):
+	op, is_pwise = 'pwise', True
+
+	def _init (self, pieces):
+		self.pieces = pieces
 
 #...............................................................................................
 _AST_OP2CLS = {
@@ -436,6 +392,7 @@ _AST_OP2CLS = {
 	'intg': AST_Intg,
 	'vec': AST_Vec,
 	'mat': AST_Mat,
+	'pwise': AST_PWise,
 }
 
 _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())

@@ -67,7 +67,7 @@ def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'+'}):
 	return (s, has) if ret_has else s
 
 def _ast2tex_num (ast):
-	m, e = ast.mant_and_exp ()
+	m, e = ast.mant_and_exp
 
 	return m if e is None else f'{m} \\cdot 10^{_ast2tex_curly (AST ("#", e))}'
 
@@ -226,6 +226,8 @@ _ast2tex_funcs = {
 	'intg': _ast2tex_intg,
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
+	'pwise': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{ast2tex (p [0])} & \\text{{for}}\\: {ast2tex (p [1])}' if p [1] is not True else f'{ast2tex (p [0])} & \\text{{otherwise}}' for p in ast.pieces) + ' \\end{cases}',
+
 	'text': lambda ast: ast.tex,
 }
 
@@ -365,8 +367,10 @@ _ast2nat_funcs = {
 	'sum': _ast2nat_sum,
 	'diff': _ast2nat_diff,
 	'intg': _ast2nat_intg,
-	'vec': lambda ast: f'{{{",".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
-	'mat': lambda ast: ('{' + ','.join (f'{{{",".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
+	'vec': lambda ast: f'{{{", ".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
+	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
+	'pwise': lambda ast: ' else '.join (f'{ast2nat (p [0])}' if p [1] is True else f'{ast2nat (p [0])} if {ast2nat (p [1])}' for p in ast.pieces),
+
 	'text': lambda ast: ast.simple,
 }
 
@@ -451,8 +455,10 @@ _ast2py_funcs = {
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
 	'intg': _ast2py_intg,
-	'vec': lambda ast: 'Matrix([' + ','.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
-	'mat': lambda ast: 'Matrix([' + ','.join (f'[{",".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
+	'vec': lambda ast: 'Matrix([' + ', '.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
+	'mat': lambda ast: 'Matrix([' + ', '.join (f'[{", ".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
+	'pwise': lambda ast: 'Piecewise(' + ', '.join (f'({ast2py (p [0])}, {True if p [1] is True else ast2py (p [1])})' for p in ast.pieces) + ')',
+
 	'text': lambda ast: ast.py,
 }
 
@@ -578,6 +584,7 @@ _ast2spt_funcs = {
 	'intg': _ast2spt_intg,
 	'vec': lambda ast: sp.Matrix ([[ast2spt (e)] for e in ast.vec]),
 	'mat': lambda ast: sp.Matrix ([[ast2spt (e) for e in row] for row in ast.mat]),
+	'pwise': lambda ast: sp.Piecewise (*tuple ((ast2spt (p [0]), True if p [1] is True else ast2spt (p [1])) for p in ast.pieces)),
 }
 
 #...............................................................................................
@@ -713,7 +720,9 @@ _spt2ast_funcs = {
 	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_func,
 	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_func,
 	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_func,
+
 	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
+	sp.Piecewise: lambda spt: AST ('pwise', tuple ((spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else spt2ast (t [1])) for t in spt.args)),
 
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_integral,

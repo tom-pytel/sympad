@@ -78,29 +78,10 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 	return _ast_remap (ast, _vars), vars
 
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
-	global _vars
+	def _set_vars (vars, ret_asts):
+		global _vars
 
-	asts = None
-
-	if not vars: # no assignment
-		_vars [_var_last] = ast
-
-	else:
-		if len (vars) == 1: # simple assignment
-			new_vars = {**_vars, vars [0]: ast}
-
-		else: # tuple assignment
-			ast  = ast.strip_paren ()
-			asts = ast.commas if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
-
-			if len (vars) < len (asts):
-				raise ValueError (f'too many values to unpack (expected {len (vars)})')
-			elif len (vars) > len (asts):
-				raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
-			else:
-				new_vars = {**_vars, **dict ((vars [i], asts [i]) for i in range (len (vars)))}
-
-			asts = [AST ('=', '=', vars [i], asts [i]) for i in range (len (vars))]
+		new_vars = {**_vars, **vars}
 
 		try: # check for circular references
 			_ast_remap (AST (',', tuple (vars)), new_vars)
@@ -109,7 +90,27 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 
 		_vars = new_vars
 
-	return asts or [ast]
+		return ret_asts
+
+	if not vars: # no assignment
+		_vars [_var_last] = ast
+
+		return [ast]
+
+	if len (vars) == 1: # simple assignment
+		return _set_vars ({vars [0]: ast}, [AST ('=', '=', vars [0], ast)])
+
+	# tuple assignment
+	ast  = ast.strip_paren ()
+	asts = ast.commas if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
+
+	if len (vars) < len (asts):
+		raise ValueError (f'too many values to unpack (expected {len (vars)})')
+	if len (vars) > len (asts):
+		raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
+
+	return _set_vars (dict ((vars [i], asts [i]) for i in range (len (vars))), \
+			[AST ('=', '=', vars [i], asts [i]) for i in range (len (vars))])
 
 def _admin_vars (ast):
 	if len (_vars) == 1:
@@ -268,7 +269,7 @@ if __name__ == '__main__':
 				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_CHILD': '1', 'SYMPAD_FIRST_RUN': first_run})
 				first_run = ''
 
-				if ret.returncode != 0 and os.environ.get ('SYMPAD_DEBUG'):
+				if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
 					sys.exit (0)
 
 		if ('--sympyEI', '') in opts:
