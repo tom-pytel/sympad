@@ -1,7 +1,7 @@
 # TODO: Concretize empty matrix stuff.
 # TODO: Concretize empty variable stuff.
-# TODO: remap \begin{matrix} \end{matrix}?
-# TODO: remap \begin{cases} \end{cases}?
+# TODO: translate \begin{matrix} \end{matrix}?
+# TODO: translate \begin{cases} \end{cases}?
 
 # Time and interest permitting:
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
@@ -169,17 +169,17 @@ def _expr_func (iparm, *args, strip_paren = 0): # rearrange ast tree for explici
 
 	return AST (*(args [:iparm] + (args [iparm].strip_paren (strip_paren),) + args [iparm + 1:]))
 
-def _expr_func_remap (_remap_func, ast): # rearrange ast tree for a given function remapping like 'Derivative' or 'Limit'
+def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function translation like 'Derivative' or 'Limit'
 	expr = _expr_func (1, None, ast, strip_paren = None) # strip all parentheses
 
 	if expr.op is None:
-		return _remap_func (expr [1])
+		return _xlat_func (expr [1])
 	else:
-		return AST (expr.op, _remap_func (expr [1] [1]), *expr [2:])
+		return AST (expr.op, _xlat_func (expr [1] [1]), *expr [2:])
 
-_remap_func_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
+_xlat_func_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
-def _remap_func_Derivative (ast): # remap function 'Derivative' to native ast representation for pretty rendering
+def _xlat_func_Derivative (ast): # translate function 'Derivative' to native ast representation for pretty rendering
 	if ast.is_null_var:
 		return AST ('diff', ast, (AST.VarNull,))
 	elif not ast.is_comma:
@@ -200,7 +200,7 @@ def _remap_func_Derivative (ast): # remap function 'Derivative' to native ast re
 
 	return AST ('diff', ast.commas [0], AST (*ds))
 
-def _remap_func_Integral (ast): # remap function 'Integral' to native ast representation for pretty rendering
+def _xlat_func_Integral (ast): # translate function 'Integral' to native ast representation for pretty rendering
 	if not ast.is_comma:
 		return AST ('intg', ast, ast.as_diff if ast.is_var else AST.VarNull)
 	elif len (ast.commas) == 1:
@@ -218,7 +218,7 @@ def _remap_func_Integral (ast): # remap function 'Integral' to native ast repres
 
 	raise lalr1.Incomplete (ast)
 
-def _remap_func_Limit (ast): # remap function 'Limit' to native ast representation for pretty rendering
+def _xlat_func_Limit (ast): # translate function 'Limit' to native ast representation for pretty rendering
 	if ast.is_null_var:
 		return AST ('lim', ast, AST.VarNull, AST.VarNull)
 	elif not ast.is_comma:
@@ -234,9 +234,9 @@ def _remap_func_Limit (ast): # remap function 'Limit' to native ast representati
 	elif l == 3:
 		return AST ('lim', commas [0], commas [1], commas [2], '+')
 	elif commas [3].is_str:
-		return AST ('lim', *(commas [:3] + _remap_func_Limit_dirs.get (commas [3].str_, ('+',))))
+		return AST ('lim', *(commas [:3] + _xlat_func_Limit_dirs.get (commas [3].str_, ('+',))))
 	elif commas [3].is_eq_eq and commas [3].lhs.as_identifier () == 'dir' and commas [3].rhs.is_str:
-		return AST ('lim', *(commas [:3] + _remap_func_Limit_dirs.get (commas [3].rhs.str_, ('+',))))
+		return AST ('lim', *(commas [:3] + _xlat_func_Limit_dirs.get (commas [3].rhs.str_, ('+',))))
 	else:
 		ast = AST ('lim', commas [0], commas [1], commas [2])
 
@@ -245,7 +245,7 @@ def _remap_func_Limit (ast): # remap function 'Limit' to native ast representati
 
 	raise lalr1.Incomplete (ast)
 
-def _remap_func_Matrix (ast):
+def _xlat_func_Matrix (ast):
 	if ast.is_brack and ast.bracks:
 		if not ast.bracks [0].is_brack: # single layer or brackets, column matrix?
 			return AST ('mat', tuple ((e,) for e in ast.bracks))
@@ -274,7 +274,36 @@ def _remap_func_Matrix (ast):
 
 	return AST ('func', 'Matrix', ast)
 
-def _remap_func_Pow (ast):
+def _xlat_func_Piecewise (ast):
+	pcs = []
+
+	if ast.is_comma and ast.commas and ast.commas [0].strip_paren ().is_comma:
+		for c in ast.commas [:-1]:
+			c = c.strip_paren ()
+
+			if not c.is_comma or len (c.commas) != 2:
+				raise SyntaxError ('expecting tuple of length 2')
+
+			pcs.append (c.commas)
+
+		ast = ast.commas [-1].strip_paren ()
+
+	pcs = tuple (pcs)
+
+	if not ast.is_comma:
+		raise lalr1.Incomplete (AST ('piece', pcs + ((ast, AST.VarNull),)))
+	if len (ast.commas) == 0:
+		raise lalr1.Incomplete (AST ('piece', pcs + ()))
+
+	if not ast.commas [0].strip_paren ().is_comma:
+		if len (ast.commas) == 1:
+			raise lalr1.Incomplete (AST ('piece', pcs + ((ast.commas [0], AST.VarNull),)))
+		if len (ast.commas) == 2:
+			return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1] == AST.True_ else ast.commas [1]),))
+
+		raise SyntaxError ('invalid tuple length')
+
+def _xlat_func_Pow (ast):
 	if not ast.is_comma:
 		raise lalr1.Incomplete (AST ('^', ast, AST.VarNull))
 
@@ -291,7 +320,7 @@ def _remap_func_Pow (ast):
 
 	raise SyntaxError ('too many parameters')
 
-def _remap_func_Sum (ast): # remap function 'Sum' to native ast representation for pretty rendering
+def _xlat_func_Sum (ast): # translate function 'Sum' to native ast representation for pretty rendering
 	if ast.is_null_var:
 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
 	elif not ast.is_comma:
@@ -464,19 +493,20 @@ class Parser (lalr1.Parser):
 	_FUNC_AST_REMAP = {
 		'Abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
 		'abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
-		'Derivative': lambda expr: _expr_func_remap (_remap_func_Derivative, expr),
-		'diff'      : lambda expr: _expr_func_remap (_remap_func_Derivative, expr),
+		'Derivative': lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
+		'diff'      : lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
 		'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip_paren = 1),
 		'factorial' : lambda expr: _expr_func (1, '!', expr, strip_paren = 1),
-		'Integral'  : lambda expr: _expr_func_remap (_remap_func_Integral, expr),
-		'integrate' : lambda expr: _expr_func_remap (_remap_func_Integral, expr),
-		'Limit'     : lambda expr: _expr_func_remap (_remap_func_Limit, expr),
-		'limit'     : lambda expr: _expr_func_remap (_remap_func_Limit, expr),
-		'Matrix'    : lambda expr: _expr_func_remap (_remap_func_Matrix, expr),
+		'Integral'  : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
+		'integrate' : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
+		'Limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
+		'limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
+		'Matrix'    : lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr),
 		'ln'        : lambda expr: _expr_func (1, 'log', expr),
-		'Pow'       : lambda expr: _expr_func_remap (_remap_func_Pow, expr),
-		'pow'       : lambda expr: _expr_func_remap (_remap_func_Pow, expr),
-		'Sum'       : lambda expr: _expr_func_remap (_remap_func_Sum, expr),
+		'Piecewise' : lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr),
+		'Pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
+		'pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
+		'Sum'       : lambda expr: _expr_func_xlat (_xlat_func_Sum, expr),
 	}
 
 	def expr_commas_1   (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
@@ -540,9 +570,9 @@ class Parser (lalr1.Parser):
 	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func (1, 'log', expr_func_arg, expr_sub)
 	def expr_func_5     (self, FUNC, expr_func_arg):
 		func  = _FUNC_name (FUNC)
-		remap = self._FUNC_AST_REMAP.get (func)
+		xlat = self._FUNC_AST_REMAP.get (func)
 
-		return remap (expr_func_arg) if remap else _expr_func (2, 'func', func, expr_func_arg)
+		return xlat (expr_func_arg) if xlat else _expr_func (2, 'func', func, expr_func_arg)
 
 	def expr_func_6     (self, FUNC, expr_super, expr_func_arg):
 		ast = self.expr_func_5 (FUNC, expr_func_arg)
@@ -857,5 +887,5 @@ class sparser: # for single script
 
 # if __name__ == '__main__':
 # 	p = Parser ()
-# 	a = p.parse ('\\frac1x')
+# 	a = p.parse ('Piecewise ((1,x<0),')
 # 	print (a)

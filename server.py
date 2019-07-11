@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # python 3.6+
 
 # TODO: Exception prevents restart on file date change?

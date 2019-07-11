@@ -227,17 +227,23 @@ class AST_Comma (AST):
 	def _init (self, commas):
 		self.commas = commas
 
+	# _len = lambda self: len (self.commas)
+
 class AST_Paren (AST):
 	op, is_paren = '(', True
 
 	def _init (self, paren):
 		self.paren = paren
 
+	# _len = lambda self: len (self.paren)
+
 class AST_Brack (AST):
 	op, is_brack = '[', True
 
 	def _init (self, bracks):
 		self.bracks = bracks
+
+	# _len = lambda self: len (self.bracks)
 
 class AST_Abs (AST):
 	op, is_abs = '|', True
@@ -263,11 +269,15 @@ class AST_Add (AST):
 	def _init (self, adds):
 		self.adds = adds
 
+	# _len = lambda self: len (self.adds)
+
 class AST_Mul (AST):
 	op, is_mul = '*', True
 
 	def _init (self, muls):
 		self.muls = muls
+
+	# _len = lambda self: len (self.muls)
 
 class AST_Div (AST):
 	op, is_div = '/', True
@@ -348,6 +358,8 @@ class AST_Vec (AST):
 
 	def _init (self, vec):
 		self.vec = vec
+
+	# _len = lambda self: len (self.vec)
 
 class AST_Mat (AST):
 	op, is_mat = 'mat', True
