@@ -784,7 +784,7 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**2', true)">expand {x+1}**2</a>
 	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
 	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 1, 9)', true)">series (e^x, x, 1, 9)</a>
-	<a class="GreetingA" href="javascript:inputting ('\\int_a^b {1 if x &lt; 0 else 2} dx', true)">\int_a^b {1 if x &lt; 0 else 2} dx</a>
+	<a class="GreetingA" href="javascript:inputting ('less_than_50 if randprime(1, 100) &lt; 50 else more_than_50', true)">less_than_50 if randprime(1, 100) &lt; 50 else more_than_50</a>
 	<!-- <a class="GreetingA" href="javascript:inputting ('', true)"></a> -->
 
 	<br><br>
@@ -883,7 +883,7 @@ expand {x+1}**2<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 1, 9)<br>
 a, b, c, d = {{1,2},{3,4}}<br>
-\int_a^b {1 if x &lt; 0 else 2} dx<br>
+less_than_50 if randprime(1, 100) &lt; 50 else more_than_50<br>
 </p>
 
 <h4>Usage</h4>
