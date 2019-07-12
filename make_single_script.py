@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # python 3.6+
 
 # Collect all source and data files into single stand-alone sympad.py script file.

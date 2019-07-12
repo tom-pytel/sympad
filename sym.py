@@ -1,8 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: '.' paren and curly formatting and copying
 # TODO: Min, Max
-# TODO: native sp.Piecewise: \int_0^\infty e^{-st} dt
 # TODO: sequence(factorial(k), (k,1,oo))
 
 import re
@@ -54,8 +52,8 @@ def ast2tex (ast): # abstract syntax tree -> LaTeX text
 def _ast2tex_curly (ast):
 	return f'{ast2tex (ast)}' if ast.is_single_unit else f'{{{ast2tex (ast)}}}'
 
-def _ast2tex_paren (ast):
-	return ast2tex (ast) if ast.is_paren else f'\\left({ast2tex (ast)} \\right)'
+def _ast2tex_paren (ast, ops = {}):
+	return ast2tex (ast) if ast.is_paren or (ops and ast.op not in ops) else f'\\left({ast2tex (ast)} \\right)'
 
 def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'+'}):
 	if ast.is_mul:
@@ -206,7 +204,7 @@ _ast2tex_funcs = {
 	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
 	'@': _ast2tex_var,
-	'.': lambda ast: f'{ast2tex (ast.obj)}.\\text{{{ast.attr}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
+	'.': lambda ast: f'{_ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.\\text{{{ast.attr}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
@@ -236,15 +234,15 @@ _ast2tex_funcs = {
 def ast2nat (ast): # abstract syntax tree -> simple text
 	return _ast2nat_funcs [ast.op] (ast)
 
-def _ast2nat_curly (ast, ops = None):
+def _ast2nat_curly (ast, ops = {}):
 	if ops:
 		return f'{{{ast2nat (ast)}}}' if ast.op in ops else ast2nat (ast)
 
 	return f'{{{ast2nat (ast)}}}' if not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX) else ast2nat (ast)
 	# return f'{ast2nat (ast)}' if ast.is_single_unit and not (ast.is_var and ast.var in AST.Var.PY2TEX) else f'{{{ast2nat (ast)}}}'
 
-def _ast2nat_paren (ast):
-	return ast2nat (ast) if ast.is_paren else f'({ast2nat (ast)})'
+def _ast2nat_paren (ast, ops = {}):
+	return ast2nat (ast) if ast.is_paren or (ops and ast.op not in ops) else f'({ast2nat (ast)})'
 
 def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {'+'}):
 	if ast.is_mul:
@@ -355,7 +353,7 @@ _ast2nat_funcs = {
 	'=': lambda ast: f'{ast2nat (ast.lhs)} {ast.rel} {ast2nat (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
-	'.': lambda ast: f'{ast2nat (ast.obj)}.{ast.attr}' if ast.arg is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (ast.arg)}',
+	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{ast.attr}' if ast.arg is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (ast.arg)}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2nat (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2nat (ast.paren)})',
@@ -629,7 +627,7 @@ def _spt2ast_num (spt):
 			f'{g [0]}{g [1]}{"0" * e}' if e >= 0 else \
 			f'{g [0]}{g [1]}e{e}')
 
-def _spt2ast_add (spt):
+def _spt2ast_Add (spt):
 	args = spt._sorted_args
 
 	for arg in args:
@@ -640,7 +638,7 @@ def _spt2ast_add (spt):
 
 	return AST ('+', tuple (spt2ast (arg) for arg in args))
 
-def _spt2ast_mul (spt):
+def _spt2ast_Mul (spt):
 	if spt.args [0] == -1:
 		return AST ('-', spt2ast (sp.Mul (*spt.args [1:])))
 
@@ -665,7 +663,7 @@ def _spt2ast_mul (spt):
 	return AST ('/', AST ('*', tuple (numer)) if len (numer) > 1 else numer [0], \
 			AST ('*', tuple (denom)) if len (denom) > 1 else denom [0])
 
-def _spt2ast_pow (spt):
+def _spt2ast_Pow (spt):
 	if spt.args [1].is_negative:
 		return AST ('/', AST.One, spt2ast (sp.Pow (spt.args [0], -spt.args [1])))
 
@@ -674,10 +672,16 @@ def _spt2ast_pow (spt):
 
 	return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
-def _spt2ast_func (spt):
+def _spt2ast_MatPow (spt):
+	try: # compensate for some MatPow.doit() not using jordan_pow and matrices.common.__pow__() yes
+		return spt2ast (spt.args [0] ** spt.args [1])
+	except:
+		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
+
+def _spt2ast_Function (spt):
 	return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
 
-def _spt2ast_integral (spt):
+def _spt2ast_Integral (spt):
 	return \
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])) \
 			if len (spt.args [1]) == 3 else \
@@ -713,26 +717,26 @@ _spt2ast_funcs = {
 	sp.Gt: lambda spt: AST ('=', '>', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 
-	sp.Add: _spt2ast_add,
-	sp.Mul: _spt2ast_mul,
-	sp.Pow: _spt2ast_pow,
-	sp.MatPow: lambda spt: spt2ast (spt.args [0] ** spt.args [1]), # for some reason MatPow won't doit () for [[0,1],[1,0]]**x
+	sp.Add: _spt2ast_Add,
+	sp.Mul: _spt2ast_Mul,
+	sp.Pow: _spt2ast_Pow,
+	sp.MatPow: _spt2ast_MatPow,
 
 	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
 	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),
 	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_func,
-	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_func,
-	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_func,
-	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_func,
+	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
+	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
+	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
+	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
 
 	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
 	sp.Piecewise: lambda spt: AST ('piece', tuple ((spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else spt2ast (t [1])) for t in spt.args)),
 
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
-	sp.Integral: _spt2ast_integral,
+	sp.Integral: _spt2ast_Integral,
 
 	sp.matrices.MatrixBase: lambda spt: AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) \
 			for row in range (spt.rows))) if not (spt.rows == spt.cols == 1) else spt2ast (spt [0]),

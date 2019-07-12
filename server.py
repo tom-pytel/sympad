@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # python 3.6+
 
 # TODO: Exception prevents restart on file date change?
@@ -196,7 +196,6 @@ class Handler (SimpleHTTPRequestHandler):
 			py  = sym.ast2py (ast)
 
 			if os.environ.get ('SYMPAD_DEBUG'):
-				print ()
 				print ('ast:', ast)
 				print ('tex:', tex)
 				print ('nat:', nat)
@@ -230,7 +229,6 @@ class Handler (SimpleHTTPRequestHandler):
 				ast = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
-					print ()
 					print ('spt:        ', repr (spt))
 					print ('spt type:   ', type (spt))
 					print ('sympy latex:', sp.latex (spt))

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # python 3.6+
 
 # Build parser tables for sparser.py using grammar dynamically generated from
