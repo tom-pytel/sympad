@@ -1,6 +1,3 @@
-# TODO: translate \begin{matrix} \end{matrix}?
-# TODO: translate \begin{cases} \end{cases}?
-
 # Time and interest permitting:
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
 # sympy function/variable module prefix
@@ -616,7 +613,7 @@ class Parser (lalr1.Parser):
 	def expr_frac_3     (self, FRAC2):                                          return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
 	def expr_frac_4     (self, expr_piece):                                     return expr_piece
 
-	def expr_piece_1    (self, BEG_CASES, expr_pieces, END_CASES):              return AST ('piece', expr_pieces)
+	def expr_piece_1    (self, BEG_CASES, expr_pieces, END_CASES):              return AST ('piece', expr_pieces) # translate this on the fly?
 	def expr_piece_2    (self, expr_mat):                                       return expr_mat
 	def expr_pieces_1   (self, expr_piecesp, DBLSLASH):                         return expr_piecesp
 	def expr_pieces_2   (self, expr_piecesp):                                   return expr_piecesp
@@ -625,7 +622,7 @@ class Parser (lalr1.Parser):
 	def expr_piecesc_1  (self, expr1, AMP, expr2):                              return (expr1, expr2)
 	def expr_piecesc_2  (self, expr, AMP):                                      return (expr, True)
 
-	def expr_mat_1      (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty
+	def expr_mat_1      (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty # translate these on the fly?
 	def expr_mat_2      (self, BEG_MAT, expr_mat_rows, END_MAT):                               return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty
 	def expr_mat_3      (self, BEG_BMAT, expr_mat_rows, END_BMAT):                             return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty
 	def expr_mat_4      (self, BEG_VMAT, expr_mat_rows, END_VMAT):                             return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty
@@ -892,7 +889,8 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__':
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
 # 	p = Parser ()
 # 	a = p.parse ('Piecewise ((1,x<0),')
 # 	print (a)

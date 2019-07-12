@@ -1,6 +1,5 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: Min, Max
 # TODO: sequence(factorial(k), (k,1,oo))
 
 import re
@@ -503,11 +502,11 @@ def _ast2spt_attr (ast):
 	return mbr if ast.arg is None else _ast2spt_call_func (mbr, ast.arg)
 
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
-_builtins_dict               = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
-_ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'compile', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
-		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool', 'memoryview',
-		'bytearray', 'bytes', 'classmethod', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
-		'reversed', 'set', 'slice', 'staticmethod', 'str', 'super', 'tuple', 'type', 'zip']
+_builtins_dict               = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
+_ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
+		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
+		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
+		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
@@ -726,11 +725,13 @@ _spt2ast_funcs = {
 	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),
 	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
-	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
 	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
 	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
 	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
+	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	sp.Min: lambda spt: AST ('func', 'Min', spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),
+	sp.Max: lambda spt: AST ('func', 'Max', spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),
 
 	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
 	sp.Piecewise: lambda spt: AST ('piece', tuple ((spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else spt2ast (t [1])) for t in spt.args)),
@@ -751,3 +752,9 @@ class sym: # for single script
 	ast2py        = ast2py
 	ast2spt       = ast2spt
 	spt2ast       = spt2ast
+
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
+# 	x, y = sp.symbols ('x y')
+# 	ast = spt2ast (sp.Min (x, y))
+# 	print (ast)
