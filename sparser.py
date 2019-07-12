@@ -1,5 +1,3 @@
-# TODO: x**y.func()
-# TODO: x!.something
 # TODO: translate \begin{matrix} \end{matrix}?
 # TODO: translate \begin{cases} \end{cases}?
 
@@ -27,12 +25,20 @@ def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
 			AST ('@', AST.Var.TEX2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
-def _expr_mul_imp (expr_mul_imp, expr_int): # convert x.y * (...) -> x.y (...)
-	if expr_mul_imp.is_attr and expr_mul_imp.arg is None:
-		if expr_int.is_paren:
-			return AST ('.', expr_mul_imp.obj, expr_mul_imp.attr, expr_int.strip_paren (1))
-		elif expr_int.is_attr:
-			return AST ('.', _expr_mul_imp (expr_mul_imp, expr_int.obj), expr_int.attr)
+def _expr_mul_imp (expr_mul_imp, expr_int):
+	if expr_mul_imp.is_attr: # x.y * () -> x.y()
+		if expr_mul_imp.arg is None:
+			if expr_int.is_paren:
+				return AST ('.', expr_mul_imp.obj, expr_mul_imp.attr, expr_int.strip_paren (1))
+			elif expr_int.is_attr:
+				return AST ('.', _expr_mul_imp (expr_mul_imp, expr_int.obj), expr_int.attr)
+
+	elif expr_mul_imp.is_pow: # x^y.z * () -> x.{y.z()}
+		if expr_mul_imp.exp.is_attr and expr_mul_imp.exp.arg is None:
+			if expr_int.is_paren:
+				return AST ('^', expr_mul_imp.base, ('.', expr_mul_imp.exp.obj, expr_mul_imp.exp.attr, expr_int.strip_paren (1)))
+			elif expr_int.is_attr:
+				return AST ('^', expr_mul_imp.base, ('.', _expr_mul_imp (expr_mul_imp.exp, expr_int.obj), expr_int.attr))
 
 	return AST.flatcat ('*', expr_mul_imp, expr_int)
 
