@@ -150,6 +150,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('x**y.a.b ()'), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a'), 'b', (',', ()))))
 		self.assertEqual (p ('x**y.a ().b'), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a', (',', ())), 'b')))
 		self.assertEqual (p ('x**y.a ().b ()'), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a', (',', ())), 'b', (',', ()))))
+		self.assertEqual (p ('{1 if x < 0 else 3} if x < 1 else 5'), ('piece', ((('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '3'), True))), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))))
+		self.assertEqual (p ('1 if {True if x < 0 else False} else 5'), ('piece', ((('#', '1'), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '0'))), (('@', 'False'), True)))), (('#', '5'), True))))
+		self.assertEqual (p ('1 if {True if x < 0 else False} else {7 if x < 1 else 5}'), ('piece', ((('#', '1'), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '0'))), (('@', 'False'), True)))), (('piece', ((('#', '7'), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))), True))))
+		self.assertEqual (p ('{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}'), ('piece', ((('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '9'), True))), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '1'))), (('@', 'False'), True)))), (('piece', ((('#', '7'), ('=', '<', ('@', 'x'), ('#', '2'))), (('#', '5'), True))), True))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -250,13 +254,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{1,2}!')), '\\begin{bmatrix} 1 \\\\ 2 \\end{bmatrix}!')
 		self.assertEqual (ast2tex (p ('{{0,1},{1,0}}**x')), '{\\begin{bmatrix} 0 & 1 \\\\ 1 & 0 \\end{bmatrix}}^x')
 		self.assertEqual (ast2tex (p ('{{1,2},{3,4}}!')), '\\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}!')
-		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.T')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\text{T}')
-		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.T.T')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\text{T}.\\text{T}')
-		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.T.T.T')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\text{T}.\\text{T}.\\text{T}')
+		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.T')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.T')
+		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.T.T')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.T.T')
+		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.T.T.T')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.T.T.T')
 		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\text{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\text{transpose}\\left( \\right).\\text{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\text{transpose}\\left( \\right).\\text{transpose}\\left( \\right).\\text{transpose}\\left( \\right)')
-		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().T.T.transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\text{transpose}\\left( \\right).\\text{transpose}\\left( \\right).\\text{T}.\\text{T}.\\text{transpose}\\left( \\right).\\text{transpose}\\left( \\right)')
+		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().T.T.transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\text{transpose}\\left( \\right).\\text{transpose}\\left( \\right).T.T.\\text{transpose}\\left( \\right).\\text{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), '\\begin{bmatrix} A & B \\\\ C & D \\end{bmatrix} \\cdot \\begin{bmatrix} x \\\\ y \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')), '\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\Gamma \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\zeta \\beta \\phi \\Sigma')
 		self.assertEqual (ast2tex (p ('1 if 2')), '\\begin{cases} 1 & \\text{for}\\: 2 \\end{cases}')
@@ -267,12 +271,16 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\begin{cases} 1 & 2 \\\\ 3 & 4 \\\\ 5 & \\\\ \\end{cases}')), '\\begin{cases} 1 & \\text{for}\\: 2 \\\\ 3 & \\text{for}\\: 4 \\\\ 5 & \\text{otherwise} \\end{cases}')
 		self.assertEqual (ast2tex (p ('\\begin{cases} 1 & 2 \\\\ 3 & 4 \\\\ 5 & 6 \\end{cases}')), '\\begin{cases} 1 & \\text{for}\\: 2 \\\\ 3 & \\text{for}\\: 4 \\\\ 5 & \\text{for}\\: 6 \\end{cases}')
 		self.assertEqual (ast2tex (p ('\\begin{cases} 1 & 2 \\\\ 3 & 4 \\\\ 5 & 6 \\\\ \\end{cases}')), '\\begin{cases} 1 & \\text{for}\\: 2 \\\\ 3 & \\text{for}\\: 4 \\\\ 5 & \\text{for}\\: 6 \\end{cases}')
-		self.assertEqual (ast2tex (p ('x**y.a')), 'x^{y.\\text{a}}')
+		self.assertEqual (ast2tex (p ('x**y.a')), 'x^{y.a}')
 		self.assertEqual (ast2tex (p ('x**y.a ()')), 'x^{y.\\text{a}\\left( \\right)}')
-		self.assertEqual (ast2tex (p ('x**y.a.b')), 'x^{y.\\text{a}.\\text{b}}')
-		self.assertEqual (ast2tex (p ('x**y.a.b ()')), 'x^{y.\\text{a}.\\text{b}\\left( \\right)}')
-		self.assertEqual (ast2tex (p ('x**y.a ().b')), 'x^{y.\\text{a}\\left( \\right).\\text{b}}')
+		self.assertEqual (ast2tex (p ('x**y.a.b')), 'x^{y.a.b}')
+		self.assertEqual (ast2tex (p ('x**y.a.b ()')), 'x^{y.a.\\text{b}\\left( \\right)}')
+		self.assertEqual (ast2tex (p ('x**y.a ().b')), 'x^{y.\\text{a}\\left( \\right).b}')
 		self.assertEqual (ast2tex (p ('x**y.a ().b ()')), 'x^{y.\\text{a}\\left( \\right).\\text{b}\\left( \\right)}')
+		self.assertEqual (ast2tex (p ('{1 if x < 0 else 3} if x < 1 else 5')), '\\begin{cases} \\begin{cases} 1 & \\text{for}\\: x < 0 \\\\ 3 & \\text{otherwise} \\end{cases} & \\text{for}\\: x < 1 \\\\ 5 & \\text{otherwise} \\end{cases}')
+		self.assertEqual (ast2tex (p ('1 if {True if x < 0 else False} else 5')), '\\begin{cases} 1 & \\text{for}\\: \\begin{cases} True & \\text{for}\\: x < 0 \\\\ False & \\text{otherwise} \\end{cases} \\\\ 5 & \\text{otherwise} \\end{cases}')
+		self.assertEqual (ast2tex (p ('1 if {True if x < 0 else False} else {7 if x < 1 else 5}')), '\\begin{cases} 1 & \\text{for}\\: \\begin{cases} True & \\text{for}\\: x < 0 \\\\ False & \\text{otherwise} \\end{cases} \\\\ \\begin{cases} 7 & \\text{for}\\: x < 1 \\\\ 5 & \\text{otherwise} \\end{cases} & \\text{otherwise} \\end{cases}')
+		self.assertEqual (ast2tex (p ('{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}')), '\\begin{cases} \\begin{cases} 1 & \\text{for}\\: x < 0 \\\\ 9 & \\text{otherwise} \\end{cases} & \\text{for}\\: \\begin{cases} True & \\text{for}\\: x < 1 \\\\ False & \\text{otherwise} \\end{cases} \\\\ \\begin{cases} 7 & \\text{for}\\: x < 2 \\\\ 5 & \\text{otherwise} \\end{cases} & \\text{otherwise} \\end{cases}')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -396,6 +404,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('x**y.a.b ()')), 'x**y.a.b()')
 		self.assertEqual (ast2nat (p ('x**y.a ().b')), 'x**y.a().b')
 		self.assertEqual (ast2nat (p ('x**y.a ().b ()')), 'x**y.a().b()')
+		self.assertEqual (ast2nat (p ('{1 if x < 0 else 3} if x < 1 else 5')), '{1 if x < 0 else 3} if x < 1 else 5')
+		self.assertEqual (ast2nat (p ('1 if {True if x < 0 else False} else 5')), '1 if {True if x < 0 else False} else 5')
+		self.assertEqual (ast2nat (p ('1 if {True if x < 0 else False} else {7 if x < 1 else 5}')), '1 if {True if x < 0 else False} else {7 if x < 1 else 5}')
+		self.assertEqual (ast2nat (p ('{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}')), '{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -519,6 +531,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('x**y.a.b ()')), 'x**y.a.b()')
 		self.assertEqual (ast2py (p ('x**y.a ().b')), 'x**y.a().b')
 		self.assertEqual (ast2py (p ('x**y.a ().b ()')), 'x**y.a().b()')
+		self.assertEqual (ast2py (p ('{1 if x < 0 else 3} if x < 1 else 5')), 'Piecewise((Piecewise((1, x < 0), (3, True)), x < 1), (5, True))')
+		self.assertEqual (ast2py (p ('1 if {True if x < 0 else False} else 5')), 'Piecewise((1, Piecewise((True, x < 0), (False, True))), (5, True))')
+		self.assertEqual (ast2py (p ('1 if {True if x < 0 else False} else {7 if x < 1 else 5}')), 'Piecewise((1, Piecewise((True, x < 0), (False, True))), (Piecewise((7, x < 1), (5, True)), True))')
+		self.assertEqual (ast2py (p ('{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}')), 'Piecewise((Piecewise((1, x < 0), (9, True)), Piecewise((True, x < 1), (False, True))), (Piecewise((7, x < 2), (5, True)), True))')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -642,6 +658,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('x**y.a.b ()')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a'), 'b', (',', ()))))
 		self.assertEqual (ast2tex2ast (p ('x**y.a ().b')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a', (',', ())), 'b')))
 		self.assertEqual (ast2tex2ast (p ('x**y.a ().b ()')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a', (',', ())), 'b', (',', ()))))
+		self.assertEqual (ast2tex2ast (p ('{1 if x < 0 else 3} if x < 1 else 5')), ('piece', ((('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '3'), True))), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))))
+		self.assertEqual (ast2tex2ast (p ('1 if {True if x < 0 else False} else 5')), ('piece', ((('#', '1'), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '0'))), (('@', 'False'), True)))), (('#', '5'), True))))
+		self.assertEqual (ast2tex2ast (p ('1 if {True if x < 0 else False} else {7 if x < 1 else 5}')), ('piece', ((('#', '1'), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '0'))), (('@', 'False'), True)))), (('piece', ((('#', '7'), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))), True))))
+		self.assertEqual (ast2tex2ast (p ('{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}')), ('piece', ((('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '9'), True))), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '1'))), (('@', 'False'), True)))), (('piece', ((('#', '7'), ('=', '<', ('@', 'x'), ('#', '2'))), (('#', '5'), True))), True))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -765,6 +785,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('x**y.a.b ()')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a'), 'b', (',', ()))))
 		self.assertEqual (ast2nat2ast (p ('x**y.a ().b')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a', (',', ())), 'b')))
 		self.assertEqual (ast2nat2ast (p ('x**y.a ().b ()')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a', (',', ())), 'b', (',', ()))))
+		self.assertEqual (ast2nat2ast (p ('{1 if x < 0 else 3} if x < 1 else 5')), ('piece', ((('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '3'), True))), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))))
+		self.assertEqual (ast2nat2ast (p ('1 if {True if x < 0 else False} else 5')), ('piece', ((('#', '1'), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '0'))), (('@', 'False'), True)))), (('#', '5'), True))))
+		self.assertEqual (ast2nat2ast (p ('1 if {True if x < 0 else False} else {7 if x < 1 else 5}')), ('piece', ((('#', '1'), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '0'))), (('@', 'False'), True)))), (('piece', ((('#', '7'), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))), True))))
+		self.assertEqual (ast2nat2ast (p ('{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}')), ('piece', ((('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '9'), True))), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '1'))), (('@', 'False'), True)))), (('piece', ((('#', '7'), ('=', '<', ('@', 'x'), ('#', '2'))), (('#', '5'), True))), True))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -888,6 +912,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('x**y.a.b ()')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a'), 'b', (',', ()))))
 		self.assertEqual (ast2py2ast (p ('x**y.a ().b')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a', (',', ())), 'b')))
 		self.assertEqual (ast2py2ast (p ('x**y.a ().b ()')), ('^', ('@', 'x'), ('.', ('.', ('@', 'y'), 'a', (',', ())), 'b', (',', ()))))
+		self.assertEqual (ast2py2ast (p ('{1 if x < 0 else 3} if x < 1 else 5')), ('piece', ((('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '3'), True))), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))))
+		self.assertEqual (ast2py2ast (p ('1 if {True if x < 0 else False} else 5')), ('piece', ((('#', '1'), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '0'))), (('@', 'False'), True)))), (('#', '5'), True))))
+		self.assertEqual (ast2py2ast (p ('1 if {True if x < 0 else False} else {7 if x < 1 else 5}')), ('piece', ((('#', '1'), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '0'))), (('@', 'False'), True)))), (('piece', ((('#', '7'), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))), True))))
+		self.assertEqual (ast2py2ast (p ('{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}')), ('piece', ((('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '9'), True))), ('piece', ((('@', 'True'), ('=', '<', ('@', 'x'), ('#', '1'))), (('@', 'False'), True)))), (('piece', ((('#', '7'), ('=', '<', ('@', 'x'), ('#', '2'))), (('#', '5'), True))), True))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1011,6 +1039,10 @@ class Test (unittest.TestCase):
 		self.assertRaises (AttributeError, ast2spt2ast, p ('x**y.a.b ()'))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('x**y.a ().b'))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('x**y.a ().b ()'))
+		self.assertEqual (ast2spt2ast (p ('{1 if x < 0 else 3} if x < 1 else 5')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '3'), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))))
+		self.assertEqual (ast2spt2ast (p ('1 if {True if x < 0 else False} else 5')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '5'), True))))
+		self.assertEqual (ast2spt2ast (p ('1 if {True if x < 0 else False} else {7 if x < 1 else 5}')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '7'), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '5'), True))))
+		self.assertEqual (ast2spt2ast (p ('{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('#', '0'))), (('#', '9'), ('=', '<', ('@', 'x'), ('#', '1'))), (('#', '7'), ('=', '<', ('@', 'x'), ('#', '2'))), (('#', '5'), True))))
 
 _EXPRESSIONS = """
 1
@@ -1134,6 +1166,10 @@ x**y.a.b
 x**y.a.b ()
 x**y.a ().b
 x**y.a ().b ()
+{1 if x < 0 else 3} if x < 1 else 5
+1 if {True if x < 0 else False} else 5
+1 if {True if x < 0 else False} else {7 if x < 1 else 5}
+{1 if x < 0 else 9} if {True if x < 1 else False} else {7 if x < 2 else 5}
 """
 
 if __name__ == '__main__':
