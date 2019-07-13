@@ -90,6 +90,11 @@ def _ast2tex_var (ast):
 		f'\\partial {n}'
 	) + p
 
+def _ast2tex_attr (ast):
+	a = ast.attr if ast.arg is None else f'\\text{{{ast.attr}}}{_ast2tex_paren (ast.arg)}'
+
+	return f'{_ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{a}'
+
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
 	p   = None
@@ -203,7 +208,7 @@ _ast2tex_funcs = {
 	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
 	'@': _ast2tex_var,
-	'.': lambda ast: f'{_ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.\\text{{{ast.attr}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
+	'.': _ast2tex_attr,
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',

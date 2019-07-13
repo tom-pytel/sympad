@@ -1079,9 +1079,9 @@ There are two distinct types of assignment that can occur and you should be awar
 Copy assignment is the standard type of assignment used by default in most computer languages where if you start with "<b>x = 1</b>" and you then enter "<b>y = x</b>" then the value "<b>1</b>" will be copied to the "<b>y</b>" variable.
 The value of "<b>y</b>" will be independent of whatever else happens to the variable "<b>x</b>" after this.
 The other kind of assignment is a reference assignment which will map the source variable instead of copying its value to the target.
-This means that if you have a reference set like "<b>y = x</b>" and the value of "<b>x</b>" changes then the value of "<b>y</b>" will reflect this new value.
+This means that if you have a reference set like "<b>y = x</b>" and the value of "<b>x</b>" changes then the value of "<b>y</b>" will reflect this new value as well.
 The reference assignment happens if you try to assign variables which do not exist, so setting "<b>y = x</b>" before "<b>x</b>" has been created will result in a reference.
-Otherwise you can force a reference by using the "<b>@( )</b>" meta-function.
+Otherwise you can force a reference by using the "<b>@( )</b>" pseudo-function.
 Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of copying the value if it exists.
 </p>
 
@@ -2782,6 +2782,11 @@ def _ast2tex_var (ast):
 		f'\\partial {n}'
 	) + p
 
+def _ast2tex_attr (ast):
+	a = ast.attr if ast.arg is None else f'\\text{{{ast.attr}}}{_ast2tex_paren (ast.arg)}'
+
+	return f'{_ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{a}'
+
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
 	p   = None
@@ -2895,7 +2900,7 @@ _ast2tex_funcs = {
 	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
 	'@': _ast2tex_var,
-	'.': lambda ast: f'{_ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.\\text{{{ast.attr}}}{"" if ast.arg is None else _ast2tex_paren (ast.arg)}',
+	'.': _ast2tex_attr,
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
 	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
