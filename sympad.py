@@ -910,6 +910,7 @@ The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respe
 "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
 Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
+<i>Unicode...</i>
 </p><p>
 </p><p>
 By default lower case "<b>e</b>" and "<b>i</b>" are used to represent Euler's number and the imaginary unit instead of the default SymPy upper case "<b>E</b>" and "<b>I</b>".
@@ -1516,8 +1517,10 @@ class AST (tuple):
 class AST_Eq (AST):
 	op, is_eq  = '=', True
 
-	SHORT2LONG = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'} # , '<': '\\lt', '>': '\\gt'}
-	LONG2SHORT = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!='}
+	TEX2PY = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!='}
+	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>='}
+	ANY2PY = {**UNI2PY, **TEX2PY}
+	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'} # , '<': '\\lt', '>': '\\gt'}
 
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
@@ -1549,10 +1552,13 @@ class AST_Var (AST):
 
 	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
 			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
+	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
+			'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
 
 	TEX2PY      = {**dict ((f'\\{g}', g) for g in GREEK), '\\partial': 'partial', '\\infty': 'oo', \
 			'\\overline\\infty': 'zoo', '\\bar\\infty': 'zoo', '\\widetilde\\infty': 'zoo', '\\tilde\\infty': 'zoo'}
-
+	UNI2PY      = {**dict (zip (GREEKUNI, GREEK)), '\u2202': 'partial', '\u221e': 'oo'}
+	ANY2PY      = {**UNI2PY, **TEX2PY}
 	PY2TEX      = {**dict ((g, f'\\{g}') for g in GREEK), 'partial': '\\partial', 'oo': '\\infty', 'zoo': '\\widetilde\\infty'}
 
 	_rec_groups = re.compile (r'^(?:(d(?!elta))|(partial))?(.*)$')
@@ -1818,7 +1824,7 @@ def _FUNC_name (FUNC):
 
 def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
-			AST ('@', AST.Var.TEX2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
+			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
 def _expr_mul_imp (expr_mul_imp, expr_int):
 	if expr_mul_imp.is_attr: # x.y * () -> x.y()
@@ -2224,11 +2230,13 @@ class Parser (lalr1.Parser):
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
 
 	_TEXGREEK = '(?:' + '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK))) + ')'
+	_PARTUNI  = '\u2202'
 	_LETTER   = fr'[a-zA-Z]'
 	_VARPY    = fr'(?:{_LETTER}(?:\w|\\_)*)'
 	_VARTEX   = fr'(?:{_TEXGREEK}|\\partial|(?:(?:\\overline|\\bar|\\widetilde|\\tilde)\s*)?\\infty)'
 	_VARTEX1  = fr'(?:(\d)|({_LETTER})|({_VARTEX}))'
-	_VAR      = fr'(?:{_VARPY}|{_VARTEX})'
+	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'
+	_VAR      = fr'(?:{_VARPY}|{_VARTEX}|{_VARUNI})'
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
@@ -2263,7 +2271,7 @@ class Parser (lalr1.Parser):
 		('IF',            r'if(?!{_LETTER})'),
 		('ELSE',          r'else(?!{_LETTER})'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
-		('VAR',          fr'(\\partial)\s?({_VAR})|{_VAR}'),
+		('VAR',          fr'(\\partial\s?|{_PARTUNI})({_VAR})|{_VAR}'),
 		('ATTR',         fr'\.(?:({_LETTER}\w*)|\\text\s*{{\s*({_LETTER}\w*)\s*}})'),
 		('STR',          fr"(?<!\d|{_LETTER}|')({_STR})|\\text\s*{{\s*({_STR})\s*}}"),
 		('PRIMES',        r"'+"),
@@ -2282,7 +2290,7 @@ class Parser (lalr1.Parser):
 		('PLUS',          r'\+'),
 		('MINUS',         r'-'),
 		('STAR',          r'\*'),
-		('INEQ',          r'==|!=|\\neq?|<=|\\le|<|\\lt|>=|\\ge|>|\\gt'),
+		('INEQ',         fr'==|!=|\\neq?|<=|\\le|<|\\lt|>=|\\ge|>|\\gt|{"|".join (AST.Eq.UNI2PY)}'),
 		('EQ',            r'='),
 		('DIVIDE',        r'/'),
 		('EXCL',          r'!'),
@@ -2332,7 +2340,7 @@ class Parser (lalr1.Parser):
 	def expr_cond_3     (self, expr_ineq, IF, expr):                            return AST ('piece', ((expr_ineq, expr),))
 	def expr_cond_4     (self, expr_ineq):                                      return expr_ineq
 
-	def expr_ineq_2     (self, expr_add1, INEQ, expr_add2):                     return AST ('=', AST.Eq.LONG2SHORT.get (INEQ.text, INEQ.text), expr_add1, expr_add2)
+	def expr_ineq_2     (self, expr_add1, INEQ, expr_add2):                     return AST ('=', AST.Eq.ANY2PY.get (INEQ.text, INEQ.text), expr_add1, expr_add2)
 	def expr_ineq_3     (self, expr_add):                                       return expr_add
 
 	def expr_add_1      (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, expr_mul_exp)
@@ -2454,9 +2462,9 @@ class Parser (lalr1.Parser):
 	def expr_var_2      (self, var):                                            return AST ('@', var)
 	def var             (self, VAR):
 		return \
-				'partial' + AST.Var.TEX2PY.get (VAR.grp [1], VAR.grp [1].replace ('\\_', '_')) \
+				'partial' + AST.Var.ANY2PY.get (VAR.grp [1], VAR.grp [1].replace ('\\_', '_')) \
 				if VAR.grp [0] else \
-				AST.Var.TEX2PY.get (VAR.text.replace (' ', ''), VAR.text.replace ('\\_', '_'))
+				AST.Var.ANY2PY.get (VAR.text.replace (' ', ''), VAR.text.replace ('\\_', '_'))
 
 	# def expr_var_1      (self, var, PRIMES, subvar):                            return AST ('@', f'''{var}{subvar}{PRIMES.text.replace ("_prime", "'")}''')
 	# def expr_var_2      (self, var, subvar, PRIMES):                            return AST ('@', f'''{var}{subvar}{PRIMES.text.replace ("_prime", "'")}''')
@@ -2899,7 +2907,7 @@ def _ast2tex_intg (ast):
 				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {ast2tex (ast.intg)} \\ {ast2tex (ast.dv)}'
 
 _ast2tex_funcs = {
-	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.SHORT2LONG.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
+	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
 	'@': _ast2tex_var,
 	'.': _ast2tex_attr,
