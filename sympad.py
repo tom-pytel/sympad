@@ -1112,6 +1112,8 @@ The "<b>$</b>" escape character allows you to execute arbitrary functions which 
 When functions are entered using the "<b>$</b>" character then many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
 Try entering "<b>$print ('Hello World...')</b>" and have a look at the server output.
 Note that only the non-dangerous __builtin__ functions are specifically included in this list, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
+</p><p>
+<i>Different font for functions and variables</i>
 </p>
 
 <h2>Notes</h2>
@@ -2703,6 +2705,7 @@ class sparser: # for single script
 # 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: PurePoly(lambda**4 - 11*lambda**3 + 29*lambda**2 + 35*lambda - 150, lambda, domain='ZZ')
 # TODO: sequence(factorial(k), (k,1,oo))
 
 import re
@@ -3191,7 +3194,7 @@ def _ast2spt_call_func (func, arg):
 	arg  = arg.strip_paren ()
 
 	for arg in (arg.commas if arg.is_comma else (arg,)):
-		if arg.is_ass and arg.rhs.is_str:
+		if arg.is_ass and arg.lhs.is_var:
 			name = arg.lhs.as_identifier ()
 
 			if name is not None:
@@ -3273,7 +3276,7 @@ _ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
 _ast2spt_funcs = {
 	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, sp.Symbol (ast.var)),
+	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var))),
 	'.': _ast2spt_attr,
 	'"': lambda ast: ast.str_,
 	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
