@@ -755,7 +755,7 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.3.9</h5>
+		<h5>v0.4</h5>
 		<br><br>
 		Type '<b>help</b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -764,28 +764,22 @@ r"""<!DOCTYPE html>
 		Type or click any of the following to get started:
 	</div>
 	<br><br>
-	<a class="GreetingA" href="javascript:inputting ('sin (3\\pi / 2)', true)">sin (3\pi / 2)</a>
 	<a class="GreetingA" href="javascript:inputting ('cos**-1 x', true)">cos**-1 x</a>
 	<a class="GreetingA" href="javascript:inputting ('\\log_2{8}', true)">\log_2{8}</a>
-	<a class="GreetingA" href="javascript:inputting ('\\lim_{x \\to \\infty} 1/x', true)">\lim_{x \to \infty} 1/x</a>
+	<a class="GreetingA" href="javascript:inputting ('\\lim_{x\\to\\infty} 1/x', true)">\lim_{x\to\infty} 1/x</a>
 	<a class="GreetingA" href="javascript:inputting ('Limit (\\frac1x, x, 0, dir=\'-\')', true)">Limit (\frac1x, x, 0, dir='-')</a>
-	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}^\\infty x^n / n!', true)">\sum_{n=0}^\infty x^n / n!</a>
-	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=1}**10 Sum (\\sum_{l=1}^m l, (m, 1, n))', true)">\sum_{n=1}**10 Sum (\sum_{l=1}^m l, (m, 1, n))</a>
-	<a class="GreetingA" href="javascript:inputting ('d/dx x**2', true)">d/dx x**2</a>
-	<a class="GreetingA" href="javascript:inputting ('Derivative (\\int dx, x)', true)">Derivative (\int dx, x)</a>
+	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}**oo x^n / n!', true)">\sum_{n=0}**oo x^n / n!</a>
 	<a class="GreetingA" href="javascript:inputting ('d**6 / dx dy**2 dz**3 x^3 y^3 z^3', true)">d**6 / dx dy**2 dz**3 x^3 y^3 z^3</a>
+	<a class="GreetingA" href="javascript:inputting ('Derivative (\\int dx, x)', true)">Derivative (\int dx, x)</a>
 	<a class="GreetingA" href="javascript:inputting ('Integral (e^{-x^2}, (x, 0, \\infty))', true)">Integral (e^{-x^2}, (x, 0, \infty))</a>
-	<a class="GreetingA" href="javascript:inputting ('\\int_0^1 \\int_0^x \\int_0^y 1 dz dy dx', true)">\int_0^1 \int_0^x \int_0^y 1 dz dy dx</a>
 	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\infty e^{-s t} dt', true)">\int_0^\infty e^{-s t} dt</a>
-	<a class="GreetingA" href="javascript:inputting ('{{1, 2}, {3, 4}}**-1', true)">{{1, 2}, {3, 4}}**-1</a>
-	<a class="GreetingA" href="javascript:inputting ('det({{sin x, -cos x},{cos x, sin x}})', true)">det({{sin x, -cos x},{cos x, sin x}})</a>
+	<a class="GreetingA" href="javascript:inputting ('{{1,2},{3,4}}**-1', true)">{{1,2},{3,4}}**-1</a>
 	<a class="GreetingA" href="javascript:inputting ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}', true)">\<span></span>begin{matrix} A & B \\ C & D \end{matrix} * {x, y}</a>
 	<a class="GreetingA" href="javascript:inputting ('{{1,2,3},{4,5,6}}.transpose ()', true)">{{1,2,3},{4,5,6}}.transpose ()</a>
-	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**2', true)">expand {x+1}**2</a>
+	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**4', true)">expand {x+1}**4</a>
 	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
-	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 1, 9)', true)">series (e^x, x, 1, 9)</a>
+	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 0, 5)', true)">series (e^x, x, 0, 5)</a>
 	<a class="GreetingA" href="javascript:inputting ('less_than_50 if randprime(1, 100) &lt; 50 else more_than_50', true)">less_than_50 if randprime(1, 100) &lt; 50 else more_than_50</a>
-	<!-- <a class="GreetingA" href="javascript:inputting ('', true)"></a> -->
 
 	<br><br>
 	<div align="center">
@@ -840,7 +834,7 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.3.9</h4>
+<h4 align="center" style="margin: 0">v0.4</h4>
 
 
 <h2>Introduction</h2>
@@ -862,27 +856,21 @@ evaluate the result symbolically or numerically. The best way to see what it can
 <p>
 Try entering any of the following into SymPad:
 </p><p>
-sin (3\pi / 2)<br>
 cos**-1 x<br>
 \log_2{8}<br>
-\lim_{x \to \infty} 1/x<br>
+\lim_{x\to\infty} 1/x<br>
 Limit (\frac1x, x, 0, dir='-')<br>
-\sum_{n=0}^\infty x^n / n!<br>
-\sum_{n=1}**10 Sum (\sum_{l=1}^m l, (m, 1, n))<br>
-d/dx x**2<br>
-Derivative (\int dx, x)<br>
+\sum_{n=0}**oo x^n / n!<br>
 d**6 / dx dy**2 dz**3 x^3 y^3 z^3<br>
+Derivative (\int dx, x)<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
-\int_0^1 \int_0^x \int_0^y 1 dz dy dx<br>
 \int_0^\infty e^{-s t} dt<br>
 {{1,2},{3,4}}**-1<br>
-det({{sin x, -cos x}, {cos x, sin x}})<br>
 \<span></span>begin{matrix} A & B \\ C & D \end{matrix} * {x, y}<br>
 {{1,2,3},{4,5,6}}.transpose ()<br>
-expand {x+1}**2<br>
+expand {x+1}**4<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
-series (e^x, x, 1, 9)<br>
-a, b, c, d = {{1,2},{3,4}}<br>
+series (e^x, x, 0, 5)<br>
 less_than_50 if randprime(1, 100) &lt; 50 else more_than_50<br>
 </p>
 
@@ -916,28 +904,21 @@ Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" 
 <h4>Variables</h4>
 
 <p>
-<i>
-Variable names mostly follow LaTeX convention, they are single Latin letters "<b>x</b>", "<b>y</b>", "<b>z</b>", "<b>A</b>", "<b>B</b>", etc... or
-single Greek letters preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>\epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$). The
-variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$. The whole top-level
-namespace of the SymPy package is made available as functions or variables. This means that "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$
-and $\infty$, as well as any other variables present at the top level. Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
-</i>
+Variable names can be a mix of Python and LaTeX format.
+Standard identifiers are accepted as well as single Greek letters preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>\epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$).
+The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
+"<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
+Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
+Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
+</p><p>
 </p><p>
 By default lower case "<b>e</b>" and "<b>i</b>" are used to represent Euler's number and the imaginary unit instead of the default SymPy upper case "<b>E</b>" and "<b>I</b>".
 This is objectively prettier, but can be changed via the "<b>$sympyEI (True)</b>" and "<b>$sympyEI (False)</b>" function.
 The SymPy constant usage can also be activated via the command line switch "<b>--sympyEI</b>".
 </p><p>
-<del>
-Variable names may be followed by various primes ' such as "<b> a' </b>" ($a'$) or "<b> \omega'' </b>" ($\omega''$).
-Variables may be subscripted with other variables or numbers "<b>x_1</b>" ($x_1$), "<b>y_z</b>" ($y_z$), "<b>\alpha_\omega</b>" ($\alpha_\omega$).
-This can be extended to silly levels "<b> \gamma_{x_{y_0'}''}''' </b>" ($\gamma_{x_{y_0'}''}'''$).
-</del>
-</p><p>
-<i>
 Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable.
 If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
-</i>
+There is nothing special about differential variables other than their use in differentiation and integration.
 </p><p>
 Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 </p>
@@ -945,21 +926,18 @@ Variables may be assigned values, references to other variables or even entire e
 <h4>Vectors and Matrices</h4>
 
 <p>
-These are specified using curly braces with commas. Vectors are passed as a single level of curlys such as "<b>{1, 2}</b>" or "<b>{x, y, z}</b>".
-Matrices are passed as nested rows of curlys. A 2x3 matrix would be specified as  "<b>{{1, 2, 3}, {4, 5, 6}}</b>", a 1x3 would be "<b>{{1, 2, 3},}</b>"
-and a 3x1 would be "<b>{{1,},{2,},{3,}}</b>". Note the trailing commas which are needed for the same reason as in Python for tuples of one element
-(otherwise the curlys would be treated as parenteses instead of vectors / matrices).
-</p><p>
-<i>
-Currently I haven't figured out the best way to interface with the SymPy vector module so SymPad coerces vectors to single column matrices. This at
-least allows computation with them until I figure out how best to use the vector module.
-</i>
+These are specified using curly braces with commas.
+Vectors are passed as a single level of curlys such as "<b>{1, 2}</b>" or "<b>{x, y, z}</b>" and these are interpreted as column matrices.
+Matrices are passed as nested rows of curlys.
+A 2x3 matrix would be specified as  "<b>{{1, 2, 3}, {4, 5, 6}}</b>", a 1x3 would be "<b>{{1, 2, 3},}</b>" and a 3x1 would be "<b>{{1,},{2,},{3,}}</b>" or just "<b>{1,2,3}</b>" since this is equivalent.
+Note the trailing commas which are needed for the same reason as in Python for tuples of one element (otherwise the curlys would be treated as parenteses instead of vectors / matrices).
 </p>
 
 <h4>Piecewise Expressions</h4>
 
 <p>
-<i>This...</i>
+These are supported and can be entered as SymPy "<b>Piecewise</b>" functions, LaTeX "<b>\<span></span>begin{cases} \<span></span>end{cases}</b>" notation or the native Python-like conditional expressions of the form "<b>a if condition else b</b>".
+They may be arbitrarily long "<b>a if condition1 else b if condition2 else ...</b>" and may leave off the last "<b>else</b>" which is equivalent to a SymPy "<b>Piecewise</b>" function without a terminating "<b>True</b>" condition.
 </p>
 
 <h4>Strings</h4>
@@ -1114,9 +1092,6 @@ Almost all SymPy functions are available directly just by typing their name, the
 These can be executed using the escape character "<b>$</b>" before the name.
 To numerically evaluate the value of "<b>sin (2)</b>" type in "<b>$N (sin (2))</b>".
 Functions may take multiple comma-separated arguments with optional keyword arguments as well.
-<i>
-The keyword argument identifier implementation is hacked into the grammar so if a keyword name can not be entered correctly (due to underscores) then try entering the identifier name as an explicit string such as "<b> 'this_identifier_has_too__many___underscores' = value </b>".
-</i>
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
 The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
@@ -1130,7 +1105,7 @@ Functions which take more than one parameter always require explicit parentheses
 </p><p>
 Most functions which have an explicit mathematical display syntax are translated on the fly for correct rendering.
 These include the functions "<b>abs/Abs (x)</b>" which are translated to the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>".
-Other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>".
+Other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>".
 </p><p>
 The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar. Function names specifically recognized by the grammar are only those specified in the SymPy module and a few builtins.
 When functions are entered using the "<b>$</b>" character then many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
@@ -1151,11 +1126,9 @@ Repeat this several times using the up arrow.
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
 </p><p>
-<i>
-There are many SymPy objects which SymPad does not understand natively yet. In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the object will be used as the Python copy string.
-This may or may not allow you to paste the Python string back into SymPad to continue working with the result.
-A single-click copy of the result will have the element(s) which was/were not understood replaced with "<b>nan</b>".
-</i>
+There are many SymPy objects which SymPad does not understand natively yet.
+In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the element will be used in the native representation string.
+This should allow you to continue working with the calculation.
 </p>
 
 <br><br>
@@ -1423,11 +1396,8 @@ class lalr1: # for single script
 # ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
 # ('intg', expr, var)           - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('intg', expr, var, from, to) - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-#
-# ('vec', (expr1, expr2, ...))                                 - vector
-# ('mat', ((expr11, expr12, ...), (expr21, expr22, ...), ...)) - matrix
-#
-# ('ten', (?((expr111?, ...), ...), ...)?)                     - FUTURE arbitrary order higher than 2 tensor?
+# ('vec', (e1, e2, ...))        - vector
+# ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 
 import re
 import types
@@ -1828,9 +1798,6 @@ def sympyEI (yes = True):
 class sast: # for single script
 	AST     = AST
 	sympyEI = sympyEI
-# TODO: translate \begin{matrix} \end{matrix}?
-# TODO: translate \begin{cases} \end{cases}?
-
 # Time and interest permitting:
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
 # sympy function/variable module prefix
@@ -2250,7 +2217,7 @@ class Parser (lalr1.Parser):
 			b'TLuxiRd9XIrZVG36awejG64RfpvL8IsXk+zOte5A7t7gIc1YtXNox9fLKQYjZK44Pqne3GrdDU8vxM50MwEVN7dfcVvdbEDF7VUqHsOo7u0rc3avv6suH3hWOcjiieIiasjBqRzcHkWRtouDuZwXCQ/2eKqNyNXDhqKmTkEy/hAlE6tbDZBMGEqmeA8WROTw' \
 			b'IdLFgorSSVN12fbavbyq/8Kq/pupGMk8xDCbJcnD4Flp8szm9gINzcWXbxciyD8eoGbyotptBkim3qqZO4mop5Cz4rqSCrqqDDTfwy8iuwaeToOYJ9LTl4SZkqfuCKGmoxNqqg41QKLN0Um0qQ41YFFifWwSdVgzPsQAiZqjk6ipDjVAovboJOqrQw2Q6Gjy' \
 			b'cgWJbh2C7lGudbWvwLaPYRZ/auWqBUO+oynQzQ/0ryboptoc8B7crZctD2ywuBQlBH4AM6srCZwNQscRIO/RTOrY5J2qIwmQ9/b52YHLu6mOJEDe26duhy1vtisfR4C8t0/sDlzetjqSAAPz9mnfcaxEssH+mAKkb7JLVGSBIZemOfwY5BlAiEacFNgdRHxB' \
-			b'OmePiFaK33rFHkINe/yYxL4ELPka8k1YdJbXC7FjR4OuRF7hImkthF+TwaK3Ykhki4vqCL+ToHj29JDkCqsvB6rxMougxaTpq101+MfVzehqfvBC4avRf4TceB+mqT1fVVNlvj//fxLTdBM='
+			b'OmePiFaK33rFHkINe/yYxL4ELPka8k1YdJbXC7FjR4OuRF7hImkthF+TwaK3Ykhki4vqCL+ToHj29JDkCqsvB6rxMougxaTpq101+MfVzehqfvBC4avRf4TceB+mqT1fVVNlvj//fxLTdBM=' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -2444,7 +2411,7 @@ class Parser (lalr1.Parser):
 	def expr_frac_3     (self, FRAC2):                                          return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
 	def expr_frac_4     (self, expr_piece):                                     return expr_piece
 
-	def expr_piece_1    (self, BEG_CASES, expr_pieces, END_CASES):              return AST ('piece', expr_pieces)
+	def expr_piece_1    (self, BEG_CASES, expr_pieces, END_CASES):              return AST ('piece', expr_pieces) # translate this on the fly?
 	def expr_piece_2    (self, expr_mat):                                       return expr_mat
 	def expr_pieces_1   (self, expr_piecesp, DBLSLASH):                         return expr_piecesp
 	def expr_pieces_2   (self, expr_piecesp):                                   return expr_piecesp
@@ -2453,7 +2420,7 @@ class Parser (lalr1.Parser):
 	def expr_piecesc_1  (self, expr1, AMP, expr2):                              return (expr1, expr2)
 	def expr_piecesc_2  (self, expr, AMP):                                      return (expr, True)
 
-	def expr_mat_1      (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty
+	def expr_mat_1      (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty # translate these on the fly?
 	def expr_mat_2      (self, BEG_MAT, expr_mat_rows, END_MAT):                               return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty
 	def expr_mat_3      (self, BEG_BMAT, expr_mat_rows, END_BMAT):                             return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty
 	def expr_mat_4      (self, BEG_VMAT, expr_mat_rows, END_VMAT):                             return AST ('mat', expr_mat_rows) if expr_mat_rows else AST.MatEmpty
@@ -2670,7 +2637,7 @@ class Parser (lalr1.Parser):
 
 		rule = self.rules [irule]
 
-		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')): # and _FUNC_name (self.stack [-1].sym) in AST.Func.NO_PARMS:
+		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')):
 			return self._insert_symbol (('PARENL', 'PARENR'))
 
 		if pos and rule [1] [pos - 1] == 'expr_commas':
@@ -2726,7 +2693,6 @@ class sparser: # for single script
 # 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: Min, Max
 # TODO: sequence(factorial(k), (k,1,oo))
 
 import re
@@ -3228,12 +3194,11 @@ def _ast2spt_attr (ast):
 	return mbr if ast.arg is None else _ast2spt_call_func (mbr, ast.arg)
 
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
-print (repr (__builtins__))
-_builtins_dict               = __builtins__.__dict__ if __name__ == '__main__' else __builtins__
-_ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'compile', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
-		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool', 'memoryview',
-		'bytearray', 'bytes', 'classmethod', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
-		'reversed', 'set', 'slice', 'staticmethod', 'str', 'super', 'tuple', 'type', 'zip']
+_builtins_dict               = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
+_ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
+		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
+		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
+		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
@@ -3452,11 +3417,13 @@ _spt2ast_funcs = {
 	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),
 	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
-	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
 	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
 	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
 	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
+	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	sp.Min: lambda spt: AST ('func', 'Min', spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),
+	sp.Max: lambda spt: AST ('func', 'Max', spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),
 
 	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
 	sp.Piecewise: lambda spt: AST ('piece', tuple ((spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else spt2ast (t [1])) for t in spt.args)),
@@ -3478,10 +3445,10 @@ class sym: # for single script
 	ast2spt       = ast2spt
 	spt2ast       = spt2ast
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
-	x, y = sp.symbols ('x y')
-	ast = spt2ast (sp.Min (x, y))
-	print (ast)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
+# 	x, y = sp.symbols ('x y')
+# 	ast = spt2ast (sp.Min (x, y))
+# 	print (ast)
 #!/usr/bin/env python
 # python 3.6+
 

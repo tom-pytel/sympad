@@ -419,7 +419,7 @@ class Parser (lalr1.Parser):
 			b'TLuxiRd9XIrZVG36awejG64RfpvL8IsXk+zOte5A7t7gIc1YtXNox9fLKQYjZK44Pqne3GrdDU8vxM50MwEVN7dfcVvdbEDF7VUqHsOo7u0rc3avv6suH3hWOcjiieIiasjBqRzcHkWRtouDuZwXCQ/2eKqNyNXDhqKmTkEy/hAlE6tbDZBMGEqmeA8WROTw' \
 			b'IdLFgorSSVN12fbavbyq/8Kq/pupGMk8xDCbJcnD4Flp8szm9gINzcWXbxciyD8eoGbyotptBkim3qqZO4mop5Cz4rqSCrqqDDTfwy8iuwaeToOYJ9LTl4SZkqfuCKGmoxNqqg41QKLN0Um0qQ41YFFifWwSdVgzPsQAiZqjk6ipDjVAovboJOqrQw2Q6Gjy' \
 			b'cgWJbh2C7lGudbWvwLaPYRZ/auWqBUO+oynQzQ/0ryboptoc8B7crZctD2ywuBQlBH4AM6srCZwNQscRIO/RTOrY5J2qIwmQ9/b52YHLu6mOJEDe26duhy1vtisfR4C8t0/sDlzetjqSAAPz9mnfcaxEssH+mAKkb7JLVGSBIZemOfwY5BlAiEacFNgdRHxB' \
-			b'OmePiFaK33rFHkINe/yYxL4ELPka8k1YdJbXC7FjR4OuRF7hImkthF+TwaK3Ykhki4vqCL+ToHj29JDkCqsvB6rxMougxaTpq101+MfVzehqfvBC4avRf4TceB+mqT1fVVNlvj//fxLTdBM='
+			b'OmePiFaK33rFHkINe/yYxL4ELPka8k1YdJbXC7FjR4OuRF7hImkthF+TwaK3Ykhki4vqCL+ToHj29JDkCqsvB6rxMougxaTpq101+MfVzehqfvBC4avRf4TceB+mqT1fVVNlvj//fxLTdBM=' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -839,7 +839,7 @@ class Parser (lalr1.Parser):
 
 		rule = self.rules [irule]
 
-		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')): # and _FUNC_name (self.stack [-1].sym) in AST.Func.NO_PARMS:
+		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_func_arg')):
 			return self._insert_symbol (('PARENL', 'PARENR'))
 
 		if pos and rule [1] [pos - 1] == 'expr_commas':

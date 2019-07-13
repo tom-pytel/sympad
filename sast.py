@@ -26,11 +26,8 @@
 # ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
 # ('intg', expr, var)           - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('intg', expr, var, from, to) - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-#
-# ('vec', (expr1, expr2, ...))                                 - vector
-# ('mat', ((expr11, expr12, ...), (expr21, expr22, ...), ...)) - matrix
-#
-# ('ten', (?((expr111?, ...), ...), ...)?)                     - FUTURE arbitrary order higher than 2 tensor?
+# ('vec', (e1, e2, ...))        - vector
+# ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 
 import re
 import types
