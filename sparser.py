@@ -1,8 +1,9 @@
 # Time and interest permitting:
+# assumptions/hints
+# importing modules to allow custom code execution
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
 # sympy function/variable module prefix
-# importing modules to allow custom code execution
-# assumptions/hints, systems of equations, ODEs, piecewise expressions, long Python variable names, graphical plots (using matplotlib?)...
+# systems of equations, ODEs, graphical plots (using matplotlib?)...
 
 # Builds expression tree from text, nodes are nested AST tuples.
 
@@ -435,14 +436,23 @@ class Parser (lalr1.Parser):
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
 
+	_VAR_TEX_XLAT = {
+		r'\mathbb{R}': 'Reals',
+		r'\mathbb{C}': 'Complexes',
+		r'\mathbb{N}': 'Naturals',
+		r'\mathbb{N}_0': 'Naturals0',
+		r'\mathbb{Z}': 'Integers',
+	}
+
 	_UPARTIAL = '\u2202'
 	_USUM     = '\u2211'
 	_UINTG    = '\u222b'
 	_LETTER   = fr'[a-zA-Z]'
 	_LETTERU  = fr'[a-zA-Z_]'
 	_TEXGREEK = '(?:' + '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK))) + ')'
+	_TEXXLAT  = '(?:' + '|'.join (reversed (sorted (x.replace ('\\', '\\\\') for x in _VAR_TEX_XLAT))) + ')'
 	_VARPY    = fr'(?:{_LETTERU}(?:\w|\\_)*)'
-	_VARTEX   = fr'(?:{_TEXGREEK}|\\partial|(?:(?:\\overline|\\bar|\\widetilde|\\tilde)\s*)?\\infty)'
+	_VARTEX   = fr'(?:{_TEXGREEK}|{_TEXXLAT}|\\partial|(?:(?:\\overline|\\bar|\\widetilde|\\tilde)\s*)?\\infty)'
 	_VARTEX1  = fr'(?:(\d)|({_LETTER})|({_VARTEX}))'
 	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'
 	_VAR      = fr'(?:{_VARPY}|{_VARTEX}|{_VARUNI})'
@@ -453,7 +463,6 @@ class Parser (lalr1.Parser):
 	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
 
 	TOKENS    = OrderedDict ([ # order matters
-		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
 		('FUNC',         fr'(@|{_FUNCPY}\b)|\\({_FUNCTEX})\b|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
@@ -506,6 +515,7 @@ class Parser (lalr1.Parser):
 		('AMP',           r'&'),
 		('DBLSLASH',      r'\\\\'),
 		('COMMA',         r','),
+		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
 		('ignore',        r'\\,|\\:|\\?\s+|\\text\s*{\s*[^}]*\s*}'),
 	])
 
@@ -672,6 +682,8 @@ class Parser (lalr1.Parser):
 		return \
 				'partial' + AST.Var.ANY2PY.get (VAR.grp [1], VAR.grp [1].replace ('\\_', '_')) \
 				if VAR.grp [0] else \
+				self._VAR_TEX_XLAT [VAR.text] \
+				if VAR.text in self._VAR_TEX_XLAT else \
 				AST.Var.ANY2PY.get (VAR.text.replace (' ', ''), VAR.text.replace ('\\_', '_'))
 
 	def expr_sub_1      (self, SUB, expr_frac):                                 return expr_frac
