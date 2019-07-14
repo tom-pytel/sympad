@@ -98,7 +98,8 @@ def _ast2tex_var (ast):
 	) + p
 
 def _ast2tex_attr (ast):
-	a = ast.attr if ast.args is None else f'\\text{{{ast.attr}}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+	a = ast.attr.replace ('_', '\\_')
+	a = a if ast.args is None else f'\\operatorname{{{a}}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 	return f'{_ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{a}'
 

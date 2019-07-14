@@ -34,8 +34,9 @@ import types
 
 import sympy as sp
 
-_SYMPY_OBJECTS = dict ((name, obj) for name, obj in \
-		filter (lambda no: no [0] [0] != '_' and len (no [0]) >= 2 and not isinstance (no [1], types.ModuleType), sp.__dict__.items ()))
+# _SYMPY_OBJECTS = dict ((name, obj) for name, obj in \
+# 		filter (lambda no: no [0] [0] != '_' and len (no [0]) >= 2 and not isinstance (no [1], types.ModuleType), sp.__dict__.items ()))
+_SYMPY_OBJECTS = sp.__dict__
 
 #...............................................................................................
 class AST (tuple):
