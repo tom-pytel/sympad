@@ -1,5 +1,7 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: S.Integers, S.Reals, S.Complexes
+# TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
 # TODO: PurePoly(lambda**4 - 11*lambda**3 + 29*lambda**2 + 35*lambda - 150, lambda, domain='ZZ')
 # TODO: sequence(factorial(k), (k,1,oo))
 
@@ -572,7 +574,7 @@ _ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
 _ast2spt_funcs = {
 	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
 	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var))),
+	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var)) if len (ast.var) > 1 else sp.Symbol (ast.var)),
 	'.': _ast2spt_attr,
 	'"': lambda ast: ast.str_,
 	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
@@ -631,6 +633,14 @@ def _spt2ast_num (spt):
 			f'{g [0]}{g [1]}e+{e}'     if e >= 16 else \
 			f'{g [0]}{g [1]}{"0" * e}' if e >= 0 else \
 			f'{g [0]}{g [1]}e{e}')
+
+def _spt2ast_MatrixBase (spt):
+	return \
+			AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) for row in range (spt.rows))) \
+			if spt.cols > 1 else \
+			AST ('vec', tuple (spt2ast (e) for e in spt)) \
+			if spt.rows > 1 else \
+ 			spt2ast (spt [0])
 
 def _spt2ast_Add (spt):
 	args = spt._sorted_args
@@ -712,6 +722,7 @@ _spt2ast_funcs = {
 	sp.numbers.ComplexInfinity: lambda spt: AST.Infty, # not exactly but whatever
 	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Symbol: lambda spt: AST ('@', spt.name),
+	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 
 	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
 	sp.boolalg.BooleanFalse: lambda spt: AST.False_,
@@ -744,9 +755,6 @@ _spt2ast_funcs = {
 
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_Integral,
-
-	sp.matrices.MatrixBase: lambda spt: AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) \
-			for row in range (spt.rows))) if not (spt.rows == spt.cols == 1) else spt2ast (spt [0]),
 }
 
 #...............................................................................................
