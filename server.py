@@ -232,6 +232,7 @@ class Handler (SimpleHTTPRequestHandler):
 					print ('spt:        ', repr (spt))
 					print ('spt type:   ', type (spt))
 					print ('sympy latex:', sp.latex (spt))
+					print ('ast:        ', ast)
 					print ()
 
 				asts = _ast_execute_ass (ast, vars)

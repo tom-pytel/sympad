@@ -22,18 +22,23 @@ def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
+def _ast2tuple_func_args (ast):
+	ast = ast.strip_paren ()
+
+	return ast.commas if ast.is_comma else (ast,)
+
 def _expr_mul_imp (expr_mul_imp, expr_int):
 	if expr_mul_imp.is_attr: # x.y * () -> x.y()
-		if expr_mul_imp.arg is None:
+		if expr_mul_imp.args is None:
 			if expr_int.is_paren:
-				return AST ('.', expr_mul_imp.obj, expr_mul_imp.attr, expr_int.strip_paren (1))
+				return AST ('.', expr_mul_imp.obj, expr_mul_imp.attr, _ast2tuple_func_args (expr_int))
 			elif expr_int.is_attr:
 				return AST ('.', _expr_mul_imp (expr_mul_imp, expr_int.obj), expr_int.attr)
 
 	elif expr_mul_imp.is_pow: # x^y.z * () -> x.{y.z()}
-		if expr_mul_imp.exp.is_attr and expr_mul_imp.exp.arg is None:
+		if expr_mul_imp.exp.is_attr and expr_mul_imp.exp.args is None:
 			if expr_int.is_paren:
-				return AST ('^', expr_mul_imp.base, ('.', expr_mul_imp.exp.obj, expr_mul_imp.exp.attr, expr_int.strip_paren (1)))
+				return AST ('^', expr_mul_imp.base, ('.', expr_mul_imp.exp.obj, expr_mul_imp.exp.attr, _ast2tuple_func_args (expr_int)))
 			elif expr_int.is_attr:
 				return AST ('^', expr_mul_imp.base, ('.', _expr_mul_imp (expr_mul_imp.exp, expr_int.obj), expr_int.attr))
 
@@ -158,19 +163,22 @@ def _expr_int (ast, from_to = ()): # find differential for integration if presen
 	raise SyntaxError ('integration expecting a differential')
 
 def _expr_func (iparm, *args, strip_paren = 0): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
+	def astarg (arg):
+		return (_ast2tuple_func_args (arg) if args [0] == 'func' else arg.strip_paren (strip_paren)),
+
 	if args [iparm].is_fact:
 		if args [iparm].fact.is_paren:
-			return AST ('!', args [:iparm] + (args [iparm].fact.strip_paren (strip_paren),) + args [iparm + 1:])
+			return AST ('!', args [:iparm] + astarg (args [iparm].fact) + args [iparm + 1:])
 
 	elif args [iparm].is_pow:
 		if args [iparm].base.is_paren:
-			return AST ('^', args [:iparm] + (args [iparm].base.strip_paren (strip_paren),) + args [iparm + 1:], args [iparm].exp)
+			return AST ('^', args [:iparm] + astarg (args [iparm].base) + args [iparm + 1:], args [iparm].exp)
 
 	elif args [iparm].is_attr:
 		if args [iparm].obj.is_paren:
-			return AST ('.', args [:iparm] + (args [iparm].obj.strip_paren (strip_paren),) + args [iparm + 1:], *args [iparm] [2:])
+			return AST ('.', args [:iparm] + astarg (args [iparm]) + args [iparm + 1:], *args [iparm] [2:])
 
-	return AST (*(args [:iparm] + (args [iparm].strip_paren (strip_paren),) + args [iparm + 1:]))
+	return AST (*(args [:iparm] + astarg (args [iparm]) + args [iparm + 1:]))
 
 def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function translation like 'Derivative' or 'Limit'
 	expr = _expr_func (1, None, ast, strip_paren = None) # strip all parentheses
@@ -275,7 +283,7 @@ def _xlat_func_Matrix (ast):
 
 					return AST ('mat', tuple (rows))
 
-	return AST ('func', 'Matrix', ast)
+	return AST ('func', 'Matrix', (ast,))
 
 def _xlat_func_Piecewise (ast):
 	pcs = []
@@ -420,7 +428,7 @@ class Parser (lalr1.Parser):
 			b'MDgdBWHMuW0CFIfL4vB7kkh5zNKSVIK5TDKhokOzFfbgNqSz8IgC8ocqoFh9akcBhbGAiuPDKCnHb8BuLy9t2GPUY7/6M7+G53wND/PCiAR9k0sEiq71RqFizPTpnMFBEzIC2JGOxVAfqJ5i7u4TOwooXqqnO0lqoJ6LUru2QrqqdDLQ4S89uzoM20mMAft8' \
 			b'lLCQ8sIbKdvmKGXbVAfsKNj2KAXbVgfsOAuyPkbBOk5aH6ijYM1RCtZUB+woWHuUgvXVATsKdjIEuo5gL+u67lm8sdqXw1rMOMhNgq7kKObJQOr2xwnXl3dbbXY8gfjSaNs7rKRclZhyP4Dx2bXljgWro3EU+2Q8doxib6rjcRT75aO8IxB7Wx2Po9gvHwAe' \
 			b'vtixGH40jmK/fHh4BGK31fE4LolfPng8nilPWBwcmWMhmGzcJZlriAgcYIfS0KKgLI0aWsCoRS1aepOVmCik+w9LpxaWS6aBAR4KIFLMDes3PYvJYhWWzYyecqP36TnOD0EJWLXpwLJPUhUc0VCogJSVxrDpJKXIUz6SbYbup5+J7arRP2O3k9gof6Xw1eSf' \
-			b'5l2wd7kwUc1EGhlZfn/+/1UmTkE=' 
+			b'5l2wd7kwUc1EGhlZfn/+/1UmTkE='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -589,7 +597,7 @@ class Parser (lalr1.Parser):
 		return \
 				AST ('^', ast, expr_super) \
 				if expr_super != AST.NegOne or not ast.is_trigh_func_noninv else \
-				AST ('func', f'a{ast.func}', ast.arg)
+				AST ('func', f'a{ast.func}', ast.args)
 
 	def expr_func_7     (self, expr_attr):                                      return expr_attr
 
@@ -898,5 +906,5 @@ class sparser: # for single script
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
 # 	p = Parser ()
-# 	a = p.parse ('Piecewise ((1,x<0),')
+# 	a = p.parse ('sin**-1 x')
 # 	print (a)

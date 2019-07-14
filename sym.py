@@ -1,5 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: Multiple arguments in
 # TODO: S.Integers, S.Reals, S.Complexes
 # TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
 # TODO: PurePoly(lambda**4 - 11*lambda**3 + 29*lambda**2 + 35*lambda - 150, lambda, domain='ZZ')
@@ -22,6 +23,9 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 	def _init (self, tex, simple, py):
 		self.tex, self.simple, self.py = tex, simple, py
+
+def _tuple2ast_func_args (args):
+	return args [0] if len (args) == 1 else AST (',', args)
 
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
@@ -94,7 +98,7 @@ def _ast2tex_var (ast):
 	) + p
 
 def _ast2tex_attr (ast):
-	a = ast.attr if ast.arg is None else f'\\text{{{ast.attr}}}{_ast2tex_paren (ast.arg)}'
+	a = ast.attr if ast.args is None else f'\\text{{{ast.attr}}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 	return f'{_ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{a}'
 
@@ -150,12 +154,12 @@ def _ast2tex_func (ast):
 				if ast.func [0] == 'a' else \
 				(f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}')
 
-		return f'{n}{_ast2tex_paren (ast.arg)}'
+		return f'{n}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 	return \
-			f'\\{ast.func}{_ast2tex_paren (ast.arg)}' \
+			f'\\{ast.func}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}' \
 			if ast.func in AST.Func.TEX else \
-			'\\operatorname{' + ast.func.replace ('_', '\\_') + f'}}{_ast2tex_paren (ast.arg)}'
+			'\\operatorname{' + ast.func.replace ('_', '\\_') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2tex_lim (ast):
 	s = ast2tex (ast.to) if ast.dir is None else (ast2tex (AST ('^', ast.to, AST.Zero)) [:-1] + ast.dir)
@@ -316,12 +320,12 @@ def _ast2nat_log (ast):
 
 def _ast2nat_func (ast):
 	if ast.is_trigh_func:
-		return f'{ast.func}{_ast2nat_paren (ast.arg)}'
+		return f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
 
 	return \
-			f'{ast.func}{_ast2nat_paren (ast.arg)}' \
+			f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}' \
 			if ast.func in AST.Func.PY else \
-			f'${ast.func}{_ast2nat_paren (ast.arg)}'
+			f'${ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2nat_lim (ast):
 	s = _ast2nat_curly (ast.to, {'piece'}) if ast.dir is None else ast2nat (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
@@ -360,7 +364,7 @@ _ast2nat_funcs = {
 	'=': lambda ast: f'{ast2nat (ast.lhs)} {ast.rel} {ast2nat (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
-	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{ast.attr}' if ast.arg is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (ast.arg)}',
+	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{ast.attr}' if ast.args is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2nat (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2nat (ast.paren)})',
@@ -448,7 +452,7 @@ _ast2py_funcs = {
 	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
-	'.': lambda ast: f'{ast2py (ast.obj)}.{ast.attr}' if ast.arg is None else f'{ast2py (ast.obj)}.{ast.attr}{_ast2py_paren (ast.arg)}',
+	'.': lambda ast: f'{ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{ast2py (ast.obj)}.{ast.attr}{_ast2py_paren (_tuple2ast_func_args (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2py (ast.paren)})',
@@ -462,7 +466,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad)}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.func}{_ast2py_paren (ast.arg)}',
+	'func': lambda ast: f'{ast.func}{_ast2py_paren (_tuple2ast_func_args (ast.args))}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -486,12 +490,11 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 
 	return spt
 
-def _ast2spt_call_func (func, arg):
-	kw   = {}
-	args = []
-	arg  = arg.strip_paren ()
+def _ast2spt_call_func (func, args):
+	kw     = {}
+	pyargs = []
 
-	for arg in (arg.commas if arg.is_comma else (arg,)):
+	for arg in args:
 		if arg.is_ass and arg.lhs.is_var:
 			name = arg.lhs.as_identifier ()
 
@@ -499,15 +502,15 @@ def _ast2spt_call_func (func, arg):
 				kw [name] = ast2spt (arg.rhs)
 				continue
 
-		args.append (ast2spt (arg))
+		pyargs.append (ast2spt (arg))
 
-	return func (*args, **kw) if len (args) != 1 else func (args [0], **kw)
+	return func (*pyargs, **kw)
 
 def _ast2spt_attr (ast):
 	obj = ast2spt (ast.obj)
 	mbr = getattr (obj, ast.attr)
 
-	return mbr if ast.arg is None else _ast2spt_call_func (mbr, ast.arg)
+	return mbr if ast.args is None else _ast2spt_call_func (mbr, ast.args)
 
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict               = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
@@ -520,14 +523,14 @@ _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n
 
 def _ast2spt_func (ast):
 	if ast.func == '@': # special reference meta-function
-		return ast2spt (ast.arg)
+		return ast2spt (ast.args [0])
 
 	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
 	if func is None:
 		raise NameError (f'name {ast.func!r} is not defined')
 
-	return _ast2spt_call_func (func, ast.arg)
+	return _ast2spt_call_func (func, ast.args)
 
 def _ast2spt_diff (ast):
 	args = sum ((
@@ -608,10 +611,10 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 			return func (spt)
 
 		if cls is sp.Function:
-			if len (spt.args) != 1:
-				break
+			if len (spt.args) == 1:
+				return _spt2ast_Function1 (spt)
 
-			return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
+			break
 
 	tex = sp.latex (spt)
 
@@ -688,13 +691,13 @@ def _spt2ast_Pow (spt):
 	return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
 def _spt2ast_MatPow (spt):
-	try: # compensate for some MatPow.doit() not using jordan_pow and matrices.common.__pow__() yes
+	try: # compensate for some MatPow.doit() != mat**pow
 		return spt2ast (spt.args [0] ** spt.args [1])
 	except:
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
-def _spt2ast_Function (spt):
-	return AST ('func', spt.__class__.__name__, spt2ast (spt.args [0]))
+def _spt2ast_Function1 (spt):
+	return AST ('func', spt.__class__.__name__, (spt2ast (spt.args [0]),)) ## TODO: Multiple arguments?!?
 
 def _spt2ast_Integral (spt):
 	return \
@@ -739,18 +742,19 @@ _spt2ast_funcs = {
 	sp.MatPow: _spt2ast_MatPow,
 
 	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
-	sp.arg: lambda spt: AST ('func', 'arg', spt2ast (spt.args [0])),
+	sp.arg: lambda spt: AST ('func', 'arg', (spt2ast (spt.args [0]),)),
 	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
-	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
-	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
-	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
-	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
+	sp.Function: _spt2ast_Function1,
+	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function1,
+	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function1,
+	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function1,
+	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function1,
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Min: lambda spt: AST ('func', 'Min', spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),
-	sp.Max: lambda spt: AST ('func', 'Max', spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),
+	sp.Min: lambda spt: AST ('func', 'Min', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
+	sp.Max: lambda spt: AST ('func', 'Max', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
 
-	sp.Order: lambda spt: AST ('func', 'O', spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),
+	sp.Order: lambda spt: AST ('func', 'O', ((spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),)),
 	sp.Piecewise: lambda spt: AST ('piece', tuple ((spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else spt2ast (t [1])) for t in spt.args)),
 
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
@@ -769,6 +773,5 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
-# 	x, y = sp.symbols ('x y')
-# 	ast = spt2ast (sp.Min (x, y))
-# 	print (ast)
+# 	spt = ast2spt (AST ('func', 'acos', (('@', 'x'),)))
+# 	print (spt)

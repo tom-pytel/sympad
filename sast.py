@@ -1,32 +1,32 @@
 # Base classes for abstract math syntax tree, tuple based.
 #
-# ('=', 'rel', lhs, rhs)        - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
-# ('#', 'num')                  - real numbers represented as strings to pass on maximum precision to sympy
-# ('@', 'var')                  - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
-# ('.', expr, 'name')           - data member reference
-# ('.', expr, 'name', arg)      - method member call
-# ('"', 'str')                  - string (for function parameters like '+' or '-')
-# (',', (expr1, expr2, ...))    - comma expression (tuple)
-# ('(', expr)                   - explicit parentheses
-# ('|', expr)                   - absolute value
-# ('-', expr)                   - negative of expression, negative numbers are represented with this at least initially
-# ('!', expr)                   - factorial
-# ('+', (expr1, expr2, ...))    - addition
-# ('*', (expr1, expr2, ...))    - multiplication
-# ('/', numer, denom)           - fraction numer(ator) / denom(inator)
-# ('^', base, exp)              - power base ^ exp(onent)
-# ('log', expr)                 - natural logarithm of expr
-# ('log', expr, base)           - logarithm of expr in base
-# ('sqrt', expr)                - square root of expr
-# ('sqrt', expr, n)             - nth root of expr
-# ('func', 'func', expr)        - sympy or regular python function 'func', will be called with sympy expression (',' expr gives multiple arguments)
-# ('lim', expr, var, to)        - limit of expr when variable var approaches to from both positive and negative directions
-# ('lim', expr, var, to, 'dir') - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
-# ('sum', expr, var, from, to)  - summation of expr over variable var from from to to
-# ('diff', expr, (var1, ...))   - differentiation of expr with respect to var1 and optional other vars
-# ('intg', expr, var)           - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-# ('intg', expr, var, from, to) - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-# ('vec', (e1, e2, ...))        - vector
+# ('=', 'rel', lhs, rhs)             - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
+# ('#', 'num')                       - real numbers represented as strings to pass on maximum precision to sympy
+# ('@', 'var')                       - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
+# ('.', expr, 'name')                - data member reference
+# ('.', expr, 'name', (a1, a2, ...)) - method member call
+# ('"', 'str')                       - string (for function parameters like '+' or '-')
+# (',', (expr1, expr2, ...))         - comma expression (tuple)
+# ('(', expr)                        - explicit parentheses
+# ('|', expr)                        - absolute value
+# ('-', expr)                        - negative of expression, negative numbers are represented with this at least initially
+# ('!', expr)                        - factorial
+# ('+', (expr1, expr2, ...))         - addition
+# ('*', (expr1, expr2, ...))         - multiplication
+# ('/', numer, denom)                - fraction numer(ator) / denom(inator)
+# ('^', base, exp)                   - power base ^ exp(onent)
+# ('log', expr)                      - natural logarithm of expr
+# ('log', expr, base)                - logarithm of expr in base
+# ('sqrt', expr)                     - square root of expr
+# ('sqrt', expr, n)                  - nth root of expr
+# ('func', 'func', (a1, a2, ...))    - sympy or regular python function 'func', will be called with sympy expression (',' expr gives multiple arguments)
+# ('lim', expr, var, to)             - limit of expr when variable var approaches to from both positive and negative directions
+# ('lim', expr, var, to, 'dir')      - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
+# ('sum', expr, var, from, to)       - summation of expr over variable var from from to to
+# ('diff', expr, (var1, ...))        - differentiation of expr with respect to var1 and optional other vars
+# ('intg', expr, var)                - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('intg', expr, var, from, to)      - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('vec', (e1, e2, ...))             - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 
 import re
@@ -214,8 +214,12 @@ class AST_Var (AST):
 class AST_Attr (AST):
 	op, is_attr = '.', True
 
-	def _init (self, obj, attr, arg = None):
-		self.obj, self.attr, self.arg = obj, attr, arg
+	def _init (self, obj, attr, args = None):
+		self.obj, self.attr, self.args = obj, attr, args
+
+	@property
+	def arg (self): ## TODO: DELETE WHEN FUNCS WORKING!
+		raise RuntimeError
 
 class AST_Str (AST):
 	op, is_str = '"', True
@@ -324,12 +328,16 @@ class AST_Func (AST):
 	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_noninv = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
 
-	def _init (self, func, arg):
-		self.func, self.arg = func, arg
+	def _init (self, func, args):
+		self.func, self.args = func, args
 
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
 	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
+
+	@property
+	def arg (self): ## TODO: DELETE WHEN FUNCS WORKING!
+		raise RuntimeError
 
 class AST_Lim (AST):
 	op, is_lim = 'lim', True
