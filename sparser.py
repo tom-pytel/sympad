@@ -6,6 +6,7 @@
 
 # Builds expression tree from text, nodes are nested AST tuples.
 
+# TODO: eye() and zeros()
 # TODO: _xlat_func_Integral multiple integrals
 
 import ast as py_ast
@@ -660,7 +661,6 @@ class Parser (lalr1.Parser):
 	def expr_bracket_3  (self, expr_term):                                      return expr_term
 
 	def expr_term_1     (self, STR):                                            return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1]))
-	# def expr_term_2     (self, SUB):                                            return AST ('@', '_') # for last expression variable
 	def expr_term_3     (self, expr_num):                                       return expr_num
 	def expr_term_4     (self, expr_var):                                       return expr_var
 
@@ -673,23 +673,6 @@ class Parser (lalr1.Parser):
 				'partial' + AST.Var.ANY2PY.get (VAR.grp [1], VAR.grp [1].replace ('\\_', '_')) \
 				if VAR.grp [0] else \
 				AST.Var.ANY2PY.get (VAR.text.replace (' ', ''), VAR.text.replace ('\\_', '_'))
-
-	# def expr_var_1      (self, var, PRIMES, subvar):                            return AST ('@', f'''{var}{subvar}{PRIMES.text.replace ("_prime", "'")}''')
-	# def expr_var_2      (self, var, subvar, PRIMES):                            return AST ('@', f'''{var}{subvar}{PRIMES.text.replace ("_prime", "'")}''')
-	# def expr_var_3      (self, var, PRIMES):                                    return AST ('@', f'''{var}{PRIMES.text.replace ("_prime", "'")}''')
-	# def expr_var_4      (self, var, subvar):                                    return AST ('@', f'{var}{subvar}')
-	# def expr_var_5      (self, var):                                            return AST ('@', var)
-
-	# def var_2           (self, VAR):
-	# 	return \
-	# 			f'\\partial {VAR.grp [2]}' \
-	# 			if VAR.grp [1] and VAR.grp [1] != 'd' else \
-	# 			AST.Var.SHORT2LONG.get (VAR.grp [0] or VAR.grp [3], VAR.text)
-
-	# def subvar_1        (self, SUB, CURLYL, expr_var, CURLYR):                  return f'_{expr_var.var}' if expr_var.var and expr_var.is_single_var else f'_{{{expr_var.var}}}'
-	# def subvar_2        (self, SUB, CURLYL, NUM, CURLYR):                       return f'_{{{NUM.text}}}'
-	# def subvar_3        (self, SUB, CURLYL, NUM, subvar, CURLYR):               return f'_{{{NUM.text}{subvar}}}'
-	# def subvar_4        (self, SUB1):                                           return f'_{AST.Var.SHORT2LONG.get (SUB1.grp [1] or SUB1.grp [3], SUB1.text [1:])}'
 
 	def expr_sub_1      (self, SUB, expr_frac):                                 return expr_frac
 	def expr_sub_2      (self, SUB1):                                           return _ast_from_tok_digit_or_var (SUB1)

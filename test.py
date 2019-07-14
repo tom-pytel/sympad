@@ -4,8 +4,8 @@ import unittest
 
 import sympy as sp
 from sast import AST
-from sparser import Parser
 from sym import *
+from sparser import Parser
 
 SympifyError = sp.SympifyError
 parser       = Parser ()

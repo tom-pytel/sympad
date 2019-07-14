@@ -251,7 +251,6 @@ def _ast2nat_curly (ast, ops = {}):
 		return f'{{{ast2nat (ast)}}}' if ast.op in ops else ast2nat (ast)
 
 	return f'{{{ast2nat (ast)}}}' if not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX) else ast2nat (ast)
-	# return f'{ast2nat (ast)}' if ast.is_single_unit and not (ast.is_var and ast.var in AST.Var.PY2TEX) else f'{{{ast2nat (ast)}}}'
 
 def _ast2nat_paren (ast, ops = {}):
 	return ast2nat (ast) if ast.is_paren or (ops and ast.op not in ops) else f'({ast2nat (ast)})'

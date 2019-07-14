@@ -27,8 +27,8 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sympy as sp
 	import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
-	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
+	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 	_var_last = AST ('@', '_')
 	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
