@@ -1,4 +1,5 @@
 # Time and interest permitting:
+# sets
 # assumptions/hints
 # importing modules to allow custom code execution
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
@@ -199,6 +200,8 @@ def _xlat_func_Derivative (ast): # translate function 'Derivative' to native ast
 		return AST ('diff', ast, (AST.VarNull,))
 	elif not ast.is_comma:
 		raise lalr1.Incomplete (AST ('diff', ast, (AST.VarNull,)))
+	elif len (ast.commas) == 0:
+		raise lalr1.Incomplete (AST ('diff', AST.VarNull, (AST.VarNull,)))
 	elif len (ast.commas) == 1:
 		raise lalr1.Incomplete (AST ('diff', ast.commas [0], (AST.VarNull,)))
 
@@ -218,6 +221,8 @@ def _xlat_func_Derivative (ast): # translate function 'Derivative' to native ast
 def _xlat_func_Integral (ast): # translate function 'Integral' to native ast representation for pretty rendering
 	if not ast.is_comma:
 		return AST ('intg', ast, ast.as_diff if ast.is_var else AST.VarNull)
+	elif len (ast.commas) == 0:
+		ast = AST ('intg', AST.VarNull, AST.VarNull)
 	elif len (ast.commas) == 1:
 		ast = AST ('intg', ast.commas [0], AST.VarNull)
 
@@ -242,7 +247,9 @@ def _xlat_func_Limit (ast): # translate function 'Limit' to native ast represent
 	commas = ast.commas
 	l      = len (commas)
 
-	if l == 1:
+	if l == 0:
+		ast = AST ('lim', AST.VarNull, AST.VarNull, AST.VarNull)
+	elif l == 1:
 		ast = AST ('lim', commas [0], AST.VarNull, AST.VarNull)
 	elif l == 2:
 		ast = AST ('lim', commas [0], commas [1], AST.VarNull)
@@ -255,7 +262,7 @@ def _xlat_func_Limit (ast): # translate function 'Limit' to native ast represent
 	else:
 		ast = AST ('lim', commas [0], commas [1], commas [2])
 
-	if commas [-1].is_null_var:
+	if l and commas [-1].is_null_var:
 		return ast
 
 	raise lalr1.Incomplete (ast)
@@ -321,11 +328,12 @@ def _xlat_func_Piecewise (ast):
 def _xlat_func_Pow (ast):
 	if not ast.is_comma:
 		raise lalr1.Incomplete (AST ('^', ast, AST.VarNull))
-
-	if len (ast.commas) == 1:
+	elif len (ast.commas) == 0:
+		raise lalr1.Incomplete (AST ('^', AST.VarNull, AST.VarNull))
+	elif len (ast.commas) == 1:
 		raise lalr1.Incomplete (AST ('^', ast.commas [0], AST.VarNull))
 
-	if len (ast.commas) == 2:
+	elif len (ast.commas) == 2:
 		ast = AST ('^', ast.commas [0], ast.commas [1])
 
 		if ast.exp.is_null_var:
@@ -339,28 +347,29 @@ def _xlat_func_Sum (ast): # translate function 'Sum' to native ast representatio
 	if ast.is_null_var:
 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
 	elif not ast.is_comma:
-		ast = AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
+		raise lalr1.Incomplete (AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull))
+
+	commas = ast.commas
+
+	if len (commas) == 0:
+		raise lalr1.Incomplete (AST ('sum', AST.VarNull, AST.VarNull, AST.VarNull, AST.VarNull))
+	elif len (commas) == 1:
+		ast = AST ('sum', commas [0], AST.VarNull, AST.VarNull, AST.VarNull)
 
 	else:
-		commas = ast.commas
+		ast2 = commas [1].strip_paren (1)
 
-		if len (commas) == 1:
-			ast = AST ('sum', commas [0], AST.VarNull, AST.VarNull, AST.VarNull)
+		if not ast2.is_comma:
+			ast = AST ('sum', commas [0], ast2, AST.VarNull, AST.VarNull)
+		elif len (ast2.commas) == 3:
+			return AST ('sum', commas [0], ast2.commas [0], ast2.commas [1], ast2.commas [2])
 
 		else:
-			ast2 = commas [1].strip_paren (1)
+			commas = ast2.commas
+			ast    = AST (*(('sum', ast.commas [0], *commas) + (AST.VarNull, AST.VarNull, AST.VarNull)) [:5])
 
-			if not ast2.is_comma:
-				ast = AST ('sum', commas [0], ast2, AST.VarNull, AST.VarNull)
-			elif len (ast2.commas) == 3:
-				return AST ('sum', commas [0], ast2.commas [0], ast2.commas [1], ast2.commas [2])
-
-			else:
-				commas = ast2.commas
-				ast    = AST (*(('sum', ast.commas [0], *commas) + (AST.VarNull, AST.VarNull, AST.VarNull)) [:5])
-
-		if commas [-1].is_null_var:
-			return ast
+	if commas [-1].is_null_var:
+		return ast
 
 	raise lalr1.Incomplete (ast)
 
@@ -451,7 +460,7 @@ class Parser (lalr1.Parser):
 	_LETTERU  = fr'[a-zA-Z_]'
 	_TEXGREEK = '(?:' + '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK))) + ')'
 	_TEXXLAT  = '(?:' + '|'.join (reversed (sorted (x.replace ('\\', '\\\\') for x in _VAR_TEX_XLAT))) + ')'
-	_VARPY    = fr'(?:{_LETTERU}(?:\w|\\_)*)'
+	_VARPY    = fr'(?:{_LETTER}(?:\w|\\_)*)'
 	_VARTEX   = fr'(?:{_TEXGREEK}|{_TEXXLAT}|\\partial|(?:(?:\\overline|\\bar|\\widetilde|\\tilde)\s*)?\\infty)'
 	_VARTEX1  = fr'(?:(\d)|({_LETTER})|({_VARTEX}))'
 	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'

@@ -375,7 +375,7 @@ def _ast2nat_diff (ast):
 			d  = n.base.diff_or_part_type
 			p += int (n.exp.num)
 
-	return f'{d.strip ()}{"" if p == 1 else f"^{p}"} / {" ".join (ast2nat (n) for n in ast.dvs)} {_ast2nat_paren (ast.diff)}'
+	return f'{d.strip () if d else "d"}{"" if p == 1 else f"^{p}"} / {" ".join (ast2nat (n) for n in ast.dvs)} {_ast2nat_paren (ast.diff)}'
 
 def _ast2nat_intg (ast):
 	if ast.from_ is None:
