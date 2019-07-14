@@ -6,7 +6,6 @@
 
 # Builds expression tree from text, nodes are nested AST tuples.
 
-# TODO: eye() and zeros()
 # TODO: _xlat_func_Integral multiple integrals
 
 import ast as py_ast
@@ -16,6 +15,7 @@ import re
 
 import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
+import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
@@ -509,7 +509,7 @@ class Parser (lalr1.Parser):
 		('ignore',        r'\\,|\\:|\\?\s+|\\text\s*{\s*[^}]*\s*}'),
 	])
 
-	_FUNC_AST_REMAP = {
+	_FUNC_AST_XLAT = {
 		'Abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
 		'abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
 		'Derivative': lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
@@ -590,7 +590,7 @@ class Parser (lalr1.Parser):
 	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func (1, 'log', expr_func_arg, expr_sub)
 	def expr_func_5     (self, FUNC, expr_func_arg):
 		func  = _FUNC_name (FUNC)
-		xlat = self._FUNC_AST_REMAP.get (func)
+		xlat = self._FUNC_AST_XLAT.get (func)
 
 		return xlat (expr_func_arg) if xlat else _expr_func (2, 'func', func, expr_func_arg)
 

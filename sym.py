@@ -30,6 +30,22 @@ def _tuple2ast_func_args (args):
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
 
+def _ast_func_call (func, args):
+	kw     = {}
+	pyargs = []
+
+	for arg in args:
+		if arg.is_ass and arg.lhs.is_var:
+			name = arg.lhs.as_identifier ()
+
+			if name is not None:
+				kw [name] = ast2spt (arg.rhs)
+				continue
+
+		pyargs.append (ast2spt (arg))
+
+	return func (*pyargs, **kw)
+
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
 
@@ -76,9 +92,14 @@ def _ast2tex_num (ast):
 
 	return m if e is None else f'{m} \\cdot 10^{_ast2tex_curly (AST ("#", e))}'
 
+_ast2tex_var_xlat = {'Naturals', 'Naturals0', 'Integers', 'Reals', 'Complexes', }
+
 def _ast2tex_var (ast):
 	if not ast.var:
 		return '{}' # Null var
+
+	if ast.var in _ast2tex_var_xlat:
+		return sp.latex (getattr (sp, ast.var))
 
 	v = ast.as_var.var
 	p = ''
@@ -147,7 +168,15 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
+_ast2tex_func_xlat = {'diag', 'eye', 'ones', 'zeros', }
+
 def _ast2tex_func (ast):
+	if ast.func in _ast2tex_func_xlat:
+		try:
+			return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+		except:
+			pass
+
 	if ast.is_trigh_func:
 		n = (f'\\operatorname{{{ast.func [1:]}}}^{{-1}}' \
 				if ast.func in {'asech', 'acsch'} else \
@@ -490,27 +519,10 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 
 	return spt
 
-def _ast2spt_call_func (func, args):
-	kw     = {}
-	pyargs = []
-
-	for arg in args:
-		if arg.is_ass and arg.lhs.is_var:
-			name = arg.lhs.as_identifier ()
-
-			if name is not None:
-				kw [name] = ast2spt (arg.rhs)
-				continue
-
-		pyargs.append (ast2spt (arg))
-
-	return func (*pyargs, **kw)
-
 def _ast2spt_attr (ast):
-	obj = ast2spt (ast.obj)
-	mbr = getattr (obj, ast.attr)
+	mbr = getattr (ast2spt (ast.obj), ast.attr)
 
-	return mbr if ast.args is None else _ast2spt_call_func (mbr, ast.args)
+	return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
 
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict               = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
@@ -530,7 +542,7 @@ def _ast2spt_func (ast):
 	if func is None:
 		raise NameError (f'name {ast.func!r} is not defined')
 
-	return _ast2spt_call_func (func, ast.args)
+	return _ast_func_call (func, ast.args)
 
 def _ast2spt_diff (ast):
 	args = sum ((
