@@ -27,28 +27,29 @@ def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
-def _ast2tuple_func_args (ast):
+def _ast_func_tuple_args (ast):
 	ast = ast.strip_paren ()
 
 	return ast.commas if ast.is_comma else (ast,)
 
 def _expr_mul_imp (expr_mul_imp, expr_int):
-	last = expr_mul_imp.muls [-1] if expr_mul_imp.is_mul else expr_mul_imp
-	ast  = None
+	last       = expr_mul_imp.muls [-1] if expr_mul_imp.is_mul else expr_mul_imp
+	arg, reord = _expr_func_reorderer (expr_int)
+	ast        = None
 
-	if last.is_attr: # x.y * () -> x.y()
+	if last.is_attr: # {x.y} * () -> x.y(), x.{y.z} -> {x.y}.z
 		if last.args is None:
-			if expr_int.is_paren:
-				ast = AST ('.', last.obj, last.attr, _ast2tuple_func_args (expr_int))
-			elif expr_int.is_attr:
-				ast = AST ('.', _expr_mul_imp (last, expr_int.obj), expr_int.attr)
+			if arg.is_paren:
+				ast = reord (AST ('.', last.obj, last.attr, _ast_func_tuple_args (arg)))
+			elif arg.is_attr:
+				ast = AST ('.', _expr_mul_imp (last, arg.obj), arg.attr)
 
-	elif last.is_pow: # x^y.z * () -> x.{y.z()}
+	elif last.is_pow: # {x^y.z} * () -> x^{y.z()}
 		if last.exp.is_attr and last.exp.args is None:
-			if expr_int.is_paren:
-				ast = AST ('^', last.base, ('.', last.exp.obj, last.exp.attr, _ast2tuple_func_args (expr_int)))
+			if arg.is_paren:
+				ast = AST ('^', last.base, reord (AST ('.', last.exp.obj, last.exp.attr, _ast_func_tuple_args (arg))))
 			elif expr_int.is_attr:
-				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, expr_int.obj), expr_int.attr))
+				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, arg.obj), arg.attr))
 
 	if ast:
 		return AST ('*', expr_mul_imp.muls [:-1] + (ast,)) if expr_mul_imp.is_mul else ast
@@ -172,32 +173,6 @@ def _expr_int (ast, from_to = ()): # find differential for integration if presen
 		return AST ('intg', _expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to)), ast.dv, *from_to)
 
 	raise SyntaxError ('integration expecting a differential')
-
-def _expr_func (iparm, *args, strip_paren = 0): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
-	def astarg (arg):
-		return (_ast2tuple_func_args (arg) if args [0] == 'func' else arg.strip_paren (strip_paren)),
-
-	if args [iparm].is_fact:
-		if args [iparm].fact.is_paren:
-			return AST ('!', args [:iparm] + astarg (args [iparm].fact) + args [iparm + 1:])
-
-	elif args [iparm].is_pow:
-		if args [iparm].base.is_paren:
-			return AST ('^', args [:iparm] + astarg (args [iparm].base) + args [iparm + 1:], args [iparm].exp)
-
-	elif args [iparm].is_attr:
-		if args [iparm].obj.is_paren:
-			return AST ('.', args [:iparm] + astarg (args [iparm]) + args [iparm + 1:], *args [iparm] [2:])
-
-	return AST (*(args [:iparm] + astarg (args [iparm]) + args [iparm + 1:]))
-
-def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function translation like 'Derivative' or 'Limit'
-	expr = _expr_func (1, None, ast, strip_paren = None) # strip all parentheses
-
-	if expr.op is None:
-		return _xlat_func (expr [1])
-	else:
-		return AST (expr.op, _xlat_func (expr [1] [1]), *expr [2:])
 
 _xlat_func_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
@@ -379,6 +354,68 @@ def _xlat_func_Sum (ast): # translate function 'Sum' to native ast representatio
 
 	raise lalr1.Incomplete (ast)
 
+def _expr_func_reorder (iparm, *args, strip_paren = 0): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
+	def astarg (arg):
+		return (_ast_func_tuple_args (arg) if args [0] == 'func' else arg.strip_paren (strip_paren)),
+
+	if args [iparm].is_fact:
+		if args [iparm].fact.is_paren:
+			return AST ('!', args [:iparm] + astarg (args [iparm].fact) + args [iparm + 1:])
+
+	elif args [iparm].is_pow:
+		if args [iparm].base.is_paren:
+			return AST ('^', args [:iparm] + astarg (args [iparm].base) + args [iparm + 1:], args [iparm].exp)
+
+	elif args [iparm].is_attr:
+		if args [iparm].obj.is_paren:
+			return AST ('.', args [:iparm] + astarg (args [iparm]) + args [iparm + 1:], *args [iparm] [2:])
+
+	return AST (*(args [:iparm] + astarg (args [iparm]) + args [iparm + 1:]))
+
+def _expr_func_reorderer (ast):
+	ast = _expr_func_reorder (1, None, ast, strip_paren = 0)
+
+	return \
+			(ast [1], lambda a: a) \
+			if ast.op is None else \
+			(ast [1] [1], lambda a: AST (ast.op, a, *ast [2:]))
+
+def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function translation like 'Derivative' or 'Limit'
+	ast, reord = _expr_func_reorderer (ast)
+
+	return reord (_xlat_func (ast))
+	# ast = _expr_func_reorder (1, None, ast, strip_paren = None) # strip all parentheses
+
+	# if ast.op is None:
+	# 	return _xlat_func (ast [1])
+	# else:
+	# 	return AST (ast.op, _xlat_func (ast [1] [1]), *ast [2:])
+
+_FUNC_AST_XLAT = {
+	'Abs'       : lambda expr: _expr_func_reorder (1, '|', expr, strip_paren = 1),
+	'abs'       : lambda expr: _expr_func_reorder (1, '|', expr, strip_paren = 1),
+	'Derivative': lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
+	'diff'      : lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
+	'exp'       : lambda expr: _expr_func_reorder (2, '^', AST.E, expr, strip_paren = 1),
+	'factorial' : lambda expr: _expr_func_reorder (1, '!', expr, strip_paren = 1),
+	'Integral'  : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
+	'integrate' : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
+	'Limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
+	'limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
+	'Matrix'    : lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr),
+	'ln'        : lambda expr: _expr_func_reorder (1, 'log', expr),
+	'Piecewise' : lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr),
+	'Pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
+	'pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
+	'Sum'       : lambda expr: _expr_func_xlat (_xlat_func_Sum, expr),
+}
+
+def _expr_func (FUNC, expr_func_arg):
+		func = _FUNC_name (FUNC)
+		xlat = _FUNC_AST_XLAT.get (func)
+
+		return xlat (expr_func_arg) if xlat else _expr_func_reorder (2, 'func', func, expr_func_arg)
+
 def _expr_curly (ast): # convert curly expression to vector or matrix if appropriate
 	if ast.op != ',':
 		return ast
@@ -536,32 +573,6 @@ class Parser (lalr1.Parser):
 		('ignore',        r'\\,|\\:|\\?\s+|\\text\s*{\s*[^}]*\s*}'),
 	])
 
-	_FUNC_AST_XLAT = {
-		'Abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
-		'abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
-		'Derivative': lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
-		'diff'      : lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
-		'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip_paren = 1),
-		'factorial' : lambda expr: _expr_func (1, '!', expr, strip_paren = 1),
-		'Integral'  : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
-		'integrate' : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
-		'Limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
-		'limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
-		'Matrix'    : lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr),
-		'ln'        : lambda expr: _expr_func (1, 'log', expr),
-		'Piecewise' : lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr),
-		'Pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
-		'pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
-		'Sum'       : lambda expr: _expr_func_xlat (_xlat_func_Sum, expr),
-	}
-
-	def _func_ast_xlat (self, FUNC, expr_func_arg):
-			func = _FUNC_name (FUNC)
-			xlat = self._FUNC_AST_XLAT.get (func)
-
-			return xlat (expr_func_arg) if xlat else _expr_func (2, 'func', func, expr_func_arg)
-
-#...............................................................................................
 	def expr_commas_1   (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
 	def expr_commas_2   (self, expr_comma):                                     return expr_comma
 	def expr_commas_3   (self):                                                 return AST (',', ())
@@ -618,13 +629,13 @@ class Parser (lalr1.Parser):
 	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQ, expr, CURLYR, expr_super, expr_neg):               return AST ('sum', expr_neg, expr_var, expr, expr_super)
 	def expr_sum_2      (self, expr_func):                                                                        return expr_func
 
-	def expr_func_1     (self, SQRT, expr_func_arg):                            return _expr_func (1, 'sqrt', expr_func_arg)
-	def expr_func_2     (self, SQRT, BRACKL, expr, BRACKR, expr_func_arg):      return _expr_func (1, 'sqrt', expr_func_arg, expr)
-	def expr_func_3     (self, LOG, expr_func_arg):                             return _expr_func (1, 'log', expr_func_arg)
-	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func (1, 'log', expr_func_arg, expr_sub)
-	def expr_func_5     (self, FUNC, expr_func_arg):                            return self._func_ast_xlat (FUNC, expr_func_arg)
+	def expr_func_1     (self, SQRT, expr_func_arg):                            return _expr_func_reorder (1, 'sqrt', expr_func_arg)
+	def expr_func_2     (self, SQRT, BRACKL, expr, BRACKR, expr_func_arg):      return _expr_func_reorder (1, 'sqrt', expr_func_arg, expr)
+	def expr_func_3     (self, LOG, expr_func_arg):                             return _expr_func_reorder (1, 'log', expr_func_arg)
+	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func_reorder (1, 'log', expr_func_arg, expr_sub)
+	def expr_func_5     (self, FUNC, expr_func_arg):                            return _expr_func (FUNC, expr_func_arg)
 	def expr_func_6     (self, FUNC, expr_super, expr_func_arg):
-		ast = self._func_ast_xlat (FUNC, expr_func_arg)
+		ast = _expr_func (FUNC, expr_func_arg)
 
 		return \
 				AST ('^', ast, expr_super) \
@@ -920,8 +931,8 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
-# 	p = Parser ()
-# 	a = p.parse ('sin**-1 x')
-# 	print (a)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
+	p = Parser ()
+	a = p.parse ('x.y().z')
+	print (a)
