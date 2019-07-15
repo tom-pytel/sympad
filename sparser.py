@@ -34,7 +34,7 @@ def _ast_func_tuple_args (ast):
 
 def _expr_mul_imp (expr_mul_imp, expr_int, var_funcs = {}):
 	last      = expr_mul_imp.muls [-1] if expr_mul_imp.is_mul else expr_mul_imp
-	arg, wrap = _expr_func_wraper (expr_int, strip_paren = 0)
+	arg, wrap = _expr_func_reorder (expr_int, strip_paren = 0)
 	ast       = None
 
 	if last.is_attr: # {x.y} * () -> x.y(), x.{y.z} -> {x.y}.z
@@ -377,7 +377,7 @@ def _expr_func (iparm, *args, strip_paren = 0): # rearrange ast tree for explici
 
 	return AST (*(args [:iparm] + astarg (args [iparm]) + args [iparm + 1:]))
 
-def _expr_func_wraper (ast, strip_paren):
+def _expr_func_reorder (ast, strip_paren):
 	ast = _expr_func (1, None, ast, strip_paren = strip_paren)
 
 	return \
@@ -386,7 +386,7 @@ def _expr_func_wraper (ast, strip_paren):
 			(ast [1] [1], lambda a: AST (ast.op, a, *ast [2:]))
 
 def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function translation like 'Derivative' or 'Limit'
-	ast, wrap = _expr_func_wraper (ast, strip_paren = None) # strip all parentheses
+	ast, wrap = _expr_func_reorder (ast, strip_paren = None) # strip all parentheses
 
 	return wrap (_xlat_func (ast))
 
