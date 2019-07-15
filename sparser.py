@@ -392,6 +392,7 @@ _FUNC_AST_XLAT = {
 	'diff'      : lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
 	'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip_paren = 1),
 	'factorial' : lambda expr: _expr_func (1, '!', expr, strip_paren = 1),
+	'Gamma'     : lambda expr: _expr_func (2, 'func', 'gamma', expr, strip_paren = 1),
 	'Integral'  : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
 	'integrate' : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
 	'Limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
@@ -512,7 +513,7 @@ class Parser (lalr1.Parser):
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|{_FUNCPY}\b)|\\({_FUNCTEX})\b|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
+		('FUNC',         fr'(@|{_FUNCPY}\b)|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
@@ -635,7 +636,8 @@ class Parser (lalr1.Parser):
 				if expr_super != AST.NegOne or not ast.is_trigh_func_noninv else \
 				AST ('func', f'a{ast.func}', ast.args)
 
-	def expr_func_7     (self, expr_pow):                                       return expr_pow
+	# def expr_func_7     (self, FUNC):                                           return AST ('@', _FUNC_name (FUNC))
+	def expr_func_8     (self, expr_pow):                                       return expr_pow
 
 	def expr_func_arg_1 (self, expr_func):                                      return expr_func
 	def expr_func_arg_2 (self, MINUS, expr_func):                               return expr_func.neg (stack = True)

@@ -168,12 +168,25 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
-_ast2tex_func_xlat = {'diag', 'eye', 'ones', 'zeros'}
+_ast2tex_func_xlat = {
+	'diag': True,
+	'eye': True,
+	'gamma': '\\Gamma',
+	'ones': True,
+	'zeros': True,
+	'zeta': '\\zeta',
+}
 
 def _ast2tex_func (ast):
-	if ast.func in _ast2tex_func_xlat:
+	act = _ast2tex_func_xlat.get (ast.func)
+
+	if act is not None:
 		try:
-			return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+			if act is True:
+				return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+
+			return f'{act}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+
 		except:
 			pass
 

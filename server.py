@@ -125,9 +125,9 @@ def _admin_del (ast):
 	return f'Variable {sym.ast2nat (ast)!r} deleted.'
 
 def _admin_delall (ast):
+	last_var = _vars [_var_last]
 	_vars.clear ()
-
-	_vars [_var_last] = _vars [_var_last]
+	_vars [_var_last] = last_var
 
 	return 'All variables deleted.'
 
