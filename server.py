@@ -79,16 +79,12 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars, ret_asts):
-		global _vars
-
-		new_vars = {**_vars, **vars}
-
 		try: # check for circular references
-			_ast_remap (AST (',', tuple (vars)), new_vars)
+			_ast_remap (AST (',', tuple (vars)), {**_vars, **vars})
 		except RecursionError:
 			raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
 
-		_vars = new_vars
+		_vars.update (vars)
 
 		return ret_asts
 
@@ -129,9 +125,9 @@ def _admin_del (ast):
 	return f'Variable {sym.ast2nat (ast)!r} deleted.'
 
 def _admin_delall (ast):
-	global _vars
+	_vars.clear ()
 
-	_vars = {_var_last: _vars [_var_last]}
+	_vars [_var_last] = _vars [_var_last]
 
 	return 'All variables deleted.'
 

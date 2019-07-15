@@ -92,7 +92,7 @@ def _ast2tex_num (ast):
 
 	return m if e is None else f'{m} \\cdot 10^{_ast2tex_curly (AST ("#", e))}'
 
-_ast2tex_var_xlat = {'Naturals', 'Naturals0', 'Integers', 'Reals', 'Complexes' }
+_ast2tex_var_xlat = {'Naturals', 'Naturals0', 'Integers', 'Reals', 'Complexes'}
 
 def _ast2tex_var (ast):
 	if not ast.var:
@@ -168,7 +168,7 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
-_ast2tex_func_xlat = {'diag', 'eye', 'ones', 'zeros' }
+_ast2tex_func_xlat = {'diag', 'eye', 'ones', 'zeros'}
 
 def _ast2tex_func (ast):
 	if ast.func in _ast2tex_func_xlat:

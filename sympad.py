@@ -1824,6 +1824,8 @@ def sympyEI (yes = True):
 class sast: # for single script
 	AST     = AST
 	sympyEI = sympyEI
+# Builds expression tree from text, nodes are nested AST tuples.
+#
 # Time and interest permitting:
 # sets
 # assumptions/hints
@@ -1831,8 +1833,6 @@ class sast: # for single script
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
-
-# Builds expression tree from text, nodes are nested AST tuples.
 
 # TODO: _xlat_func_Integral multiple integrals
 
@@ -1856,19 +1856,25 @@ def _ast2tuple_func_args (ast):
 	return ast.commas if ast.is_comma else (ast,)
 
 def _expr_mul_imp (expr_mul_imp, expr_int):
-	if expr_mul_imp.is_attr: # x.y * () -> x.y()
-		if expr_mul_imp.args is None:
-			if expr_int.is_paren:
-				return AST ('.', expr_mul_imp.obj, expr_mul_imp.attr, _ast2tuple_func_args (expr_int))
-			elif expr_int.is_attr:
-				return AST ('.', _expr_mul_imp (expr_mul_imp, expr_int.obj), expr_int.attr)
+	last = expr_mul_imp.muls [-1] if expr_mul_imp.is_mul else expr_mul_imp
+	ast  = None
 
-	elif expr_mul_imp.is_pow: # x^y.z * () -> x.{y.z()}
-		if expr_mul_imp.exp.is_attr and expr_mul_imp.exp.args is None:
+	if last.is_attr: # x.y * () -> x.y()
+		if last.args is None:
 			if expr_int.is_paren:
-				return AST ('^', expr_mul_imp.base, ('.', expr_mul_imp.exp.obj, expr_mul_imp.exp.attr, _ast2tuple_func_args (expr_int)))
+				ast = AST ('.', last.obj, last.attr, _ast2tuple_func_args (expr_int))
 			elif expr_int.is_attr:
-				return AST ('^', expr_mul_imp.base, ('.', _expr_mul_imp (expr_mul_imp.exp, expr_int.obj), expr_int.attr))
+				ast = AST ('.', _expr_mul_imp (last, expr_int.obj), expr_int.attr)
+
+	elif last.is_pow: # x^y.z * () -> x.{y.z()}
+		if last.exp.is_attr and last.exp.args is None:
+			if expr_int.is_paren:
+				ast = AST ('^', last.base, ('.', last.exp.obj, last.exp.attr, _ast2tuple_func_args (expr_int)))
+			elif expr_int.is_attr:
+				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, expr_int.obj), expr_int.attr))
+
+	if ast:
+		return AST ('*', expr_mul_imp.muls [:-1] + (ast,)) if expr_mul_imp.is_mul else ast
 
 	return AST.flatcat ('*', expr_mul_imp, expr_int)
 
@@ -2264,7 +2270,7 @@ class Parser (lalr1.Parser):
 			b'MDgdBWHMuW0CFIfL4vB7kkh5zNKSVIK5TDKhokOzFfbgNqSz8IgC8ocqoFh9akcBhbGAiuPDKCnHb8BuLy9t2GPUY7/6M7+G53wND/PCiAR9k0sEiq71RqFizPTpnMFBEzIC2JGOxVAfqJ5i7u4TOwooXqqnO0lqoJ6LUru2QrqqdDLQ4S89uzoM20mMAft8' \
 			b'lLCQ8sIbKdvmKGXbVAfsKNj2KAXbVgfsOAuyPkbBOk5aH6ijYM1RCtZUB+woWHuUgvXVATsKdjIEuo5gL+u67lm8sdqXw1rMOMhNgq7kKObJQOr2xwnXl3dbbXY8gfjSaNs7rKRclZhyP4Dx2bXljgWro3EU+2Q8doxib6rjcRT75aO8IxB7Wx2Po9gvHwAe' \
 			b'vtixGH40jmK/fHh4BGK31fE4LolfPng8nilPWBwcmWMhmGzcJZlriAgcYIfS0KKgLI0aWsCoRS1aepOVmCik+w9LpxaWS6aBAR4KIFLMDes3PYvJYhWWzYyecqP36TnOD0EJWLXpwLJPUhUc0VCogJSVxrDpJKXIUz6SbYbup5+J7arRP2O3k9gof6Xw1eSf' \
-			b'5l2wd7kwUc1EGhlZfn/+/1UmTkE=' 
+			b'5l2wd7kwUc1EGhlZfn/+/1UmTkE='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -2282,6 +2288,7 @@ class Parser (lalr1.Parser):
 	_UINTG    = '\u222b'
 	_LETTER   = fr'[a-zA-Z]'
 	_LETTERU  = fr'[a-zA-Z_]'
+
 	_TEXGREEK = '(?:' + '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK))) + ')'
 	_TEXXLAT  = '(?:' + '|'.join (reversed (sorted (x.replace ('\\', '\\\\') for x in _VAR_TEX_XLAT))) + ')'
 	_VARPY    = fr'(?:{_LETTER}(?:\w|\\_)*)'
@@ -2371,6 +2378,13 @@ class Parser (lalr1.Parser):
 		'Sum'       : lambda expr: _expr_func_xlat (_xlat_func_Sum, expr),
 	}
 
+	def _func_ast_xlat (self, FUNC, expr_func_arg):
+			func = _FUNC_name (FUNC)
+			xlat = self._FUNC_AST_XLAT.get (func)
+
+			return xlat (expr_func_arg) if xlat else _expr_func (2, 'func', func, expr_func_arg)
+
+#...............................................................................................
 	def expr_commas_1   (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
 	def expr_commas_2   (self, expr_comma):                                     return expr_comma
 	def expr_commas_3   (self):                                                 return AST (',', ())
@@ -2431,14 +2445,9 @@ class Parser (lalr1.Parser):
 	def expr_func_2     (self, SQRT, BRACKL, expr, BRACKR, expr_func_arg):      return _expr_func (1, 'sqrt', expr_func_arg, expr)
 	def expr_func_3     (self, LOG, expr_func_arg):                             return _expr_func (1, 'log', expr_func_arg)
 	def expr_func_4     (self, LOG, expr_sub, expr_func_arg):                   return _expr_func (1, 'log', expr_func_arg, expr_sub)
-	def expr_func_5     (self, FUNC, expr_func_arg):
-		func  = _FUNC_name (FUNC)
-		xlat = self._FUNC_AST_XLAT.get (func)
-
-		return xlat (expr_func_arg) if xlat else _expr_func (2, 'func', func, expr_func_arg)
-
+	def expr_func_5     (self, FUNC, expr_func_arg):                            return self._func_ast_xlat (FUNC, expr_func_arg)
 	def expr_func_6     (self, FUNC, expr_super, expr_func_arg):
-		ast = self.expr_func_5 (FUNC, expr_func_arg)
+		ast = self._func_ast_xlat (FUNC, expr_func_arg)
 
 		return \
 				AST ('^', ast, expr_super) \
@@ -2831,7 +2840,7 @@ def _ast2tex_num (ast):
 
 	return m if e is None else f'{m} \\cdot 10^{_ast2tex_curly (AST ("#", e))}'
 
-_ast2tex_var_xlat = {'Naturals', 'Naturals0', 'Integers', 'Reals', 'Complexes' }
+_ast2tex_var_xlat = {'Naturals', 'Naturals0', 'Integers', 'Reals', 'Complexes'}
 
 def _ast2tex_var (ast):
 	if not ast.var:
@@ -2907,7 +2916,7 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
-_ast2tex_func_xlat = {'diag', 'eye', 'ones', 'zeros' }
+_ast2tex_func_xlat = {'diag', 'eye', 'ones', 'zeros'}
 
 def _ast2tex_func (ast):
 	if ast.func in _ast2tex_func_xlat:
@@ -3599,16 +3608,12 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars, ret_asts):
-		global _vars
-
-		new_vars = {**_vars, **vars}
-
 		try: # check for circular references
-			_ast_remap (AST (',', tuple (vars)), new_vars)
+			_ast_remap (AST (',', tuple (vars)), {**_vars, **vars})
 		except RecursionError:
 			raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
 
-		_vars = new_vars
+		_vars.update (vars)
 
 		return ret_asts
 
@@ -3649,9 +3654,9 @@ def _admin_del (ast):
 	return f'Variable {sym.ast2nat (ast)!r} deleted.'
 
 def _admin_delall (ast):
-	global _vars
+	_vars.clear ()
 
-	_vars = {_var_last: _vars [_var_last]}
+	_vars [_var_last] = _vars [_var_last]
 
 	return 'All variables deleted.'
 
