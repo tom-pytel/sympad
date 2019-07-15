@@ -774,7 +774,7 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('Integral (e^{-x^2}, (x, 0, \\infty))', true)">Integral (e^{-x^2}, (x, 0, \infty))</a>
 	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\infty e^{-s t} dt', true)">\int_0^\infty e^{-s t} dt</a>
 	<a class="GreetingA" href="javascript:inputting ('{{1,2},{3,4}}**-1', true)">{{1,2},{3,4}}**-1</a>
-	<a class="GreetingA" href="javascript:inputting ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}', true)">\<span></span>begin{matrix} A & B \\ C & D \end{matrix} * {x, y}</a>
+	<a class="GreetingA" href="javascript:inputting ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}', true)">\<span></span>begin{matrix} A & B \\ C & D \<span></span>end{matrix} * {x, y}</a>
 	<a class="GreetingA" href="javascript:inputting ('{{1,2,3},{4,5,6}}.transpose ()', true)">{{1,2,3},{4,5,6}}.transpose ()</a>
 	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**4', true)">expand {x+1}**4</a>
 	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
@@ -813,7 +813,7 @@ r"""<!DOCTYPE html>
 	h2 { margin: 2em 0 1em 0; }
 	h4 { margin: 1.5em 0 0.5em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
-	i { color: red; }
+	i { color: #0008; }
 	del { color: red; }
 </style>
 
@@ -866,12 +866,31 @@ Derivative (\int dx, x)<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\infty e^{-s t} dt<br>
 {{1,2},{3,4}}**-1<br>
-\<span></span>begin{matrix} A & B \\ C & D \end{matrix} * {x, y}<br>
+\<span></span>begin{matrix} A & B \\ C & D \<span></span>end{matrix} * {x, y}<br>
 {{1,2,3},{4,5,6}}.transpose ()<br>
 expand {x+1}**4<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 0, 5)<br>
 x if 1 &lt; 2 else y<br>
+</p>
+
+<h4>Multiline examples</h4>
+
+<p>
+Enter the lines that follow one by one to see the effect:
+</p><p>
+1<br>
+expand (_(x+1))<br>
+expand (_(x+1))<i>&emsp;**(or press the up arrow)</i><br>
+expand (_(x+1))<br>
+</p><p>
+Or the following:
+</p><p>
+a, b = 1, 1<br>
+a, b = b, a + b<br>
+a, b = b, a + b<i>&emsp;**(or press the up arrow)</i><br>
+a, b = b, a + b<br>
+a, b = b, a + b<br>
 </p>
 
 <h4>Usage</h4>
@@ -906,26 +925,25 @@ Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" 
 <h4>Variables</h4>
 
 <p>
-Variable names can be a mix of Python and LaTeX format.
+Variable names can be a mix of Python and LaTeX format, they can be multi-character but cannot start with an underscore "<b>_</b>" or a number though they may contain those.
 Standard identifiers are accepted as well as single Greek letters optionally preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$).
-The Greek letters which are accepted with a slash and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters.
+The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters.
 Those Greek letters are accepted in unicode as well along with a few mathematical symbols (∞, ≠, ≤, ≥, ∂, ∑, ∫).
 </p><p>
 The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
 "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
 Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
-</p><p>
-</p><p>
-By default, the lower case "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy upper case "<b>E</b>" and "<b>I</b>".
+By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
 This is objectively prettier, but can be changed via the "<b>$sympyEI (True)</b>" and "<b>$sympyEI (False)</b>" function.
 The SymPy constant usage can also be activated via the command line switch "<b>--sympyEI</b>".
 </p><p>
-Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable.
+Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>", "<b>\partial x</b>" or "<b>∂x</b>" and are treated as a single variable.
 If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
 There is nothing special about differential variables other than their specific use in differentiation and integration.
 </p><p>
 Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
+They may also be assigned a user function which allows you to use them as macro expression functions, that is covered in the section on functions.
 </p>
 
 <h4>Vectors and Matrices</h4>
@@ -934,8 +952,9 @@ Variables may be assigned values, references to other variables or even entire e
 These are specified using curly braces with commas.
 Vectors are passed as a single level of curlys such as "<b>{1, 2}</b>" or "<b>{x, y, z}</b>" and these are interpreted as column matrices.
 Matrices are passed as nested rows of curlys.
-A 2x3 matrix would be specified as  "<b>{{1, 2, 3}, {4, 5, 6}}</b>", a 1x3 would be "<b>{{1, 2, 3},}</b>" and a 3x1 would be "<b>{{1,},{2,},{3,}}</b>" or just "<b>{1,2,3}</b>" since this is equivalent.
+A 2x3 matrix would be specified as  "<b>{{1, 2, 3}, {4, 5, 6}}</b>", a 1x3 would be "<b>{{1, 2, 3},}</b>" and a 3x1 would be either "<b>{{1,}, {2,}, {3,}}</b>" or just "<b>{1, 2, 3}</b>" since this is equivalent.
 Note the trailing commas which are needed for the same reason as in Python for tuples of one element (otherwise the curlys would be treated as parenteses instead of vectors / matrices).
+These can also be entered using LaTeX "<b>\<span></span>begin{(v|b|p|)matrix} \<span></span>end{(v|b|p|)matrix}</b>" format.
 </p>
 
 <h4>Piecewise Expressions</h4>
@@ -948,7 +967,7 @@ They may be arbitrarily long - "<b>a if condition1 else b if condition2 else ...
 <h4>Strings</h4>
 
 <p>
-These exist for the sole purpose of passing string arguments to SymPy functions. They work as expected being enclosed by single or double quotes and
+These exist for the sole purpose of passing string hints or other arguments to SymPy functions. They work as expected being enclosed by single or double quotes and
 supporting escape sequences. For example "<b>Limit (1/x, x, 0, '-')</b>".
 </p>
 
@@ -981,15 +1000,15 @@ variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$ or "<b>\frac\alp
 There are two power opearators "<b>^</b>" and "<b>**</b>". They have the same precedence and can be used interchangeably but follow slightly different
 parsing rules. The "<b>^</b>" operator follows LaTeX rules which only allow a single positive digit or letter variable (Lating or Greek) without the use
 of curly braces whereas the "<b>**</b>" follows Python rules which allow negative values or variables or functions. To illustrate the diffference:
-"<b>x**-2</b>" = $x^{-2}$ whereas "<b>x^-2</b>" = $x^-2$ (which makes no sense). Also, "<b>e**log(x)</b>" will work as expected $e^{\log(x)}$ whereas
-"<b>e^log(x)</b>" = $e^log(x)$.
+"<b>x**-2</b>" = $x^{-2}$ whereas "<b>x^-2</b>" = $x^-2$ (which makes no sense). Also, "<b>e**ln(x)</b>" will work as expected $e^{\ln(x)}$ whereas
+"<b>e^ln(x)</b>" = $e^ln(x)$.
 </p>
 
 <h4>Logarithms</h4>
 
 <p>
 The natural logarithm of x is specified by "<b>lnx</b>", "<b>\ln x</b>", "<b>log x</b>", "<b>\log{x}</b>". A logarithm in a specific base is specified
-by "<b>\log_b x</b>" = $\log_b x$, "<b>log_{10}(1000)</b>" = $\log_{10} {1000}$ = 3, etc...
+by "<b>\log_b x</b>" = $\log_b x$, "<b>\log_{10}(1000)</b>" = $\log_{10} {1000}$ = 3, etc...
 </p>
 
 <h4>Roots</h4>
@@ -1048,7 +1067,7 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 <p>
 Are parsed from the standard Python "<b>=, ==, !=, &lt;, &lt;=, &gt;, &gt;=</b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" symbols.
 Currently only a single comparison is allowed so an expression like "<b>0 &lt;= x &lt;= 2</b>" is not valid.
-Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a higher precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
+Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a lower precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
 </p>
 
 <h4>Parentheses</h4>
@@ -1077,8 +1096,8 @@ For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give 
 Anything can be assigned to any valid variable like valid mathematical expressions, Python objects like strings or lists or even references to other variables.
 To delete an assignment use the "<b>del var</b>" function, to delete all assignments do "<b>delall</b>" and to see what variables are currently assigned to, use the "<b>vars</b>" function.
 </p><p>
-Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object.
-An impractical example of this would be setting "<b> a, b, c = 'str' </b>" which would give you "<b> a = 's' </b>", "<b> b = 't' </b>" and "<b> c = 'r' </b>".
+Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object like "<b>x, y = 1, 2</b>".
+A useless example of iterable assignment would be setting "<b> a, b, c = 'str' </b>" which would give you "<b> a = 's' </b>", "<b> b = 't' </b>" and "<b> c = 'r' </b>".
 </p><p>
 There are two distinct types of assignment that can occur and you should be aware of the difference between them.
 Copy assignment is the standard type of assignment used by default in most computer languages where if you start with "<b>x = 1</b>" and you then enter "<b>y = x</b>" then the value "<b>1</b>" will be copied to the "<b>y</b>" variable.
@@ -1089,12 +1108,11 @@ This means that if you have a reference set like "<b>y = x</b>" and the value of
 The reference assignment happens if you try to assign variables which do not exist, so setting "<b>y = x</b>" before "<b>x</b>" has been created will result in a reference.
 Otherwise you can force a reference by using the "<b>@()</b>" pseudo-function.
 Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of copying the value if it exists.
-</p><p>
 The "<b>@(expr)</b>" function technically prevents variable remapping for the expression it encompasses, so if you have the variable "<b>x = 2</b>" set and you do "<b>@(x)</b>" then you will get "<b>x</b>" and not "<b>2</b>".
 </p>
 
 <h2>Functions</h2>
-
+<div style="color: red">
 <p>
 All SymPy functions are available directly just by typing their name.
 To numerically evaluate the value of "<b>sin (2)</b>" type in "<b>N (sin (2))</b>".
@@ -1121,19 +1139,21 @@ Only the non-dangerous __builtin__ functions are specifically included in this l
 </p><p>
 You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different between the two types of identifiers. Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
 </p>
-
+</div>
 <h2>Notes</h2>
 
 <p>
 <b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should never leave this server open to the internet by serving on an IP address visible to the external world.
 </p><p>
-There is a special use for the "<b>_</b>" underscore character aside from variable subscripting which is the same as in the Python interactive shell in that it represents the last expression successfully evaluated.
+There is a special use for the "<b>_</b>" underscore character which is the same as in the Python interactive shell in that it represents the last expression successfully evaluated.
 To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
 Repeat this several times using the up arrow.
 </p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
-Currently the use of the Greek letters "<b>beta</b>", "<b>gamma</b>", "<b>zeta</b>" and "<b>Lambda</b>" is problematic as they share names with SymPy functions.
+There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions by those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
+This has been resolved in favor of variable names for "<b>beta</b>" and "<b>Lambda</b>", which means that in order to access those functions in SymPy you have to use "<b>$beta()</b>" or "<b>$Lambda()</b>", and in favor of function names for "<b>zeta</b>" and "<b>Gamma</b>".
+This means that the LaTeX expression "<b>\zeta x</b>" means the Riemann zeta function of "<b>x</b>" and "<b>\Gamma x</b>" means "<b>gamma (x)</b>".
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
 </p><p>
@@ -1410,6 +1430,8 @@ class lalr1: # for single script
 # ('vec', (e1, e2, ...))             - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 
+# TODO: Add zeta and Gamma unicode character functions.
+
 import re
 import types
 
@@ -1418,7 +1440,7 @@ import sympy as sp
 # _SYMPY_OBJECTS = dict ((name, obj) for name, obj in \
 # 		filter (lambda no: no [0] [0] != '_' and len (no [0]) >= 2 and not isinstance (no [1], types.ModuleType), sp.__dict__.items ()))
 _SYMPY_OBJECTS = dict ((name, obj) for name, obj in filter (lambda no: no [0] [0] != '_', sp.__dict__.items ()))
-# _SYMPY_OBJECTS = sp.__dict__
+_SYMPY_FUNCS   = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and callable (no [1]), _SYMPY_OBJECTS.items ()))
 
 #...............................................................................................
 class AST (tuple):
@@ -1562,10 +1584,10 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
-			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
-	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
-			'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
+	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
+			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
+	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
+			'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
 
 	TEX2PY      = {**dict ((f'\\{g}', g) for g in GREEK), '\\partial': 'partial', '\\infty': 'oo', \
 			'\\overline\\infty': 'zoo', '\\bar\\infty': 'zoo', '\\widetilde\\infty': 'zoo', '\\tilde\\infty': 'zoo'}
@@ -1695,16 +1717,21 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
+	# GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
+	# 		'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
+	# GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
+	# 		'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
+
 	SPECIAL         = {'@', 'vars', 'del', 'delall'}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
-	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
+	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln', 'zeta', 'Gamma'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
 	PY_TRIGHINV     = {f'a{f}' for f in TRIGH}
 	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
 	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
 
-	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | set (no [0] for no in filter (lambda no: callable (no [1]), _SYMPY_OBJECTS.items ()))
+	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'beta', 'Lambda'}
 	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -1855,24 +1882,29 @@ def _ast_func_tuple_args (ast):
 
 	return ast.commas if ast.is_comma else (ast,)
 
-def _expr_mul_imp (expr_mul_imp, expr_int):
-	last       = expr_mul_imp.muls [-1] if expr_mul_imp.is_mul else expr_mul_imp
-	arg, reord = _expr_func_reorder (expr_int, strip_paren = 0)
-	ast        = None
+def _expr_mul_imp (expr_mul_imp, expr_int, var_funcs = {}):
+	last      = expr_mul_imp.muls [-1] if expr_mul_imp.is_mul else expr_mul_imp
+	arg, wrap = _expr_func_reorder (expr_int, strip_paren = 0)
+	ast       = None
 
 	if last.is_attr: # {x.y} * () -> x.y(), x.{y.z} -> {x.y}.z
 		if last.args is None:
 			if arg.is_paren:
-				ast = reord (AST ('.', last.obj, last.attr, _ast_func_tuple_args (arg)))
+				ast = wrap (AST ('.', last.obj, last.attr, _ast_func_tuple_args (arg)))
 			elif expr_int.is_attr:
 				ast = AST ('.', _expr_mul_imp (last, expr_int.obj), expr_int.attr)
 
 	elif last.is_pow: # {x^y.z} * () -> x^{y.z()}
 		if last.exp.is_attr and last.exp.args is None:
 			if arg.is_paren:
-				ast = AST ('^', last.base, reord (AST ('.', last.exp.obj, last.exp.attr, _ast_func_tuple_args (arg))))
+				ast = AST ('^', last.base, wrap (AST ('.', last.exp.obj, last.exp.attr, _ast_func_tuple_args (arg))))
 			elif expr_int.is_attr:
 				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, expr_int.obj), expr_int.attr))
+
+	elif last.is_var:
+		if last.var in var_funcs:
+			if arg.is_paren:
+				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
 
 	if ast:
 		return AST ('*', expr_mul_imp.muls [:-1] + (ast,)) if expr_mul_imp.is_mul else ast
@@ -2204,9 +2236,9 @@ def _expr_func_reorder (ast, strip_paren):
 			(ast [1] [1], lambda a: AST (ast.op, a, *ast [2:]))
 
 def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function translation like 'Derivative' or 'Limit'
-	ast, reord = _expr_func_reorder (ast, strip_paren = None) # strip all parentheses
+	ast, wrap = _expr_func_reorder (ast, strip_paren = None) # strip all parentheses
 
-	return reord (_xlat_func (ast))
+	return wrap (_xlat_func (ast))
 
 _FUNC_AST_XLAT = {
 	'Abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
@@ -2215,6 +2247,7 @@ _FUNC_AST_XLAT = {
 	'diff'      : lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
 	'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip_paren = 1),
 	'factorial' : lambda expr: _expr_func (1, '!', expr, strip_paren = 1),
+	'Gamma'     : lambda expr: _expr_func (2, 'func', 'gamma', expr, strip_paren = 1),
 	'Integral'  : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
 	'integrate' : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
 	'Limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
@@ -2251,6 +2284,11 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 
 #...............................................................................................
 class Parser (lalr1.Parser):
+	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
+
+	def set_user_funcs  (self, user_funcs):
+		self._USER_FUNCS = set (user_funcs)
+
 	_PARSER_TABLES = \
 			b'eJztXWuP3LaS/TMLZAZQA03xJfmb4zi5xtpOru0EuxgEhuP4XgSb19rO3V0E+e9bpw4lUq+e7pmecfdMYzgtimJRxWIdPovU2cVn//bu1x8/qz579uT5ty/l+uT5q6/k8vTJM/l9+a3+/v3FKwR9jQdffvv8EW4ef4mwzx++kN9vHr54/PwpiL96/vWLx68f' \
 			b'ffvi6X8i7ouHj9LFpGsNosdfvX708OXjl8n/7OGr5Ps8e7/L3m/o1VTxls8lnX+H5+WrF8rk5/L7XFn9Tvl59PWzZw87ihcdRc8pPC+efPU3JPrw2Tfy+8XnT18+ffjyb+J9/PyLxBB8n2fvd9mbGHr89OVjXP6egrs8IbVXZEReh5hPvlTJasxvnqqcv3jy' \
@@ -2335,7 +2373,7 @@ class Parser (lalr1.Parser):
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|{_FUNCPY}\b)|\\({_FUNCTEX})\b|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
+		('FUNC',         fr'(@|{_FUNCPY}\b)|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
@@ -2430,11 +2468,11 @@ class Parser (lalr1.Parser):
 	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, expr_mul_imp.neg (stack = True))
 	def expr_div_3      (self, expr_mul_imp):                                   return expr_mul_imp
 
-	def expr_mul_imp_1  (self, expr_mul_imp, expr_int):                         return _expr_mul_imp (expr_mul_imp, expr_int)
+	def expr_mul_imp_1  (self, expr_mul_imp, expr_int):                         return _expr_mul_imp (expr_mul_imp, expr_int, self._USER_FUNCS)
 	def expr_mul_imp_2  (self, expr_int):                                       return expr_int
 
-	def expr_int_1      (self, INTG, expr_sub, expr_super, expr_add):            return _expr_int (expr_add, (expr_sub, expr_super))
-	def expr_int_2      (self, INTG, expr_add):                                  return _expr_int (expr_add)
+	def expr_int_1      (self, INTG, expr_sub, expr_super, expr_add):           return _expr_int (expr_add, (expr_sub, expr_super))
+	def expr_int_2      (self, INTG, expr_add):                                 return _expr_int (expr_add)
 	def expr_int_3      (self, expr_lim):                                       return expr_lim
 
 	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                           return AST ('lim', expr_neg, expr_var, expr)
@@ -2458,7 +2496,8 @@ class Parser (lalr1.Parser):
 				if expr_super != AST.NegOne or not ast.is_trigh_func_noninv else \
 				AST ('func', f'a{ast.func}', ast.args)
 
-	def expr_func_7     (self, expr_pow):                                       return expr_pow
+	# def expr_func_7     (self, FUNC):                                           return AST ('@', _FUNC_name (FUNC))
+	def expr_func_8     (self, expr_pow):                                       return expr_pow
 
 	def expr_func_arg_1 (self, expr_func):                                      return expr_func
 	def expr_func_arg_2 (self, MINUS, expr_func):                               return expr_func.neg (stack = True)
@@ -2766,8 +2805,7 @@ sp.boolalg = sp.boolalg
 
 
 _SYMPY_FLOAT_PRECISION = None
-
-_rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
+_USER_FUNCS            = set () # set or dict of user function names
 
 #...............................................................................................
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
@@ -2818,6 +2856,11 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 			stack.extend (ast [1:])
 
 	_SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
+
+def set_user_funcs (user_funcs):
+	global _USER_FUNCS
+
+	_USER_FUNCS = set (user_funcs)
 
 #...............................................................................................
 def ast2tex (ast): # abstract syntax tree -> LaTeX text
@@ -2920,12 +2963,25 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
-_ast2tex_func_xlat = {'diag', 'eye', 'ones', 'zeros'}
+_ast2tex_func_xlat = {
+	'diag': True,
+	'eye': True,
+	'gamma': '\\Gamma',
+	'ones': True,
+	'zeros': True,
+	'zeta': '\\zeta',
+}
 
 def _ast2tex_func (ast):
-	if ast.func in _ast2tex_func_xlat:
+	act = _ast2tex_func_xlat.get (ast.func)
+
+	if act is not None:
 		try:
-			return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+			if act is True:
+				return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+
+			return f'{act}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+
 		except:
 			pass
 
@@ -3387,6 +3443,8 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 	return AST_Text (tex, str (spt), str (spt))
 
+_rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
+
 def _spt2ast_num (spt):
 	m = _rec_num_deconstructed.match (str (spt))
 	g = [g or '' for g in m.groups ()]
@@ -3527,13 +3585,14 @@ _spt2ast_funcs = {
 
 #...............................................................................................
 class sym: # for single script
-	AST_Text      = AST_Text
-	set_precision = set_precision
-	ast2tex       = ast2tex
-	ast2nat       = ast2nat
-	ast2py        = ast2py
-	ast2spt       = ast2spt
-	spt2ast       = spt2ast
+	AST_Text       = AST_Text
+	set_precision  = set_precision
+	set_user_funcs = set_user_funcs
+	ast2tex        = ast2tex
+	ast2nat        = ast2nat
+	ast2py         = ast2py
+	ast2spt        = ast2spt
+	spt2ast        = spt2ast
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
 # 	spt = ast2spt (AST ('func', 'acos', (('@', 'x'),)))
@@ -3658,9 +3717,9 @@ def _admin_del (ast):
 	return f'Variable {sym.ast2nat (ast)!r} deleted.'
 
 def _admin_delall (ast):
+	last_var = _vars [_var_last]
 	_vars.clear ()
-
-	_vars [_var_last] = _vars [_var_last]
+	_vars [_var_last] = last_var
 
 	return 'All variables deleted.'
 
