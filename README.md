@@ -25,9 +25,9 @@ series (e^x, x, 0, 5)
 x if 1 < 2 else y
 ```
 
-And it looks like this:
+And they look like this while typing:
 
-![SymPad image example](https://raw.githubusercontent.com/Pristine-Cat/SymPad/v0.4.2/sympad.png)
+![SymPad image example](https://raw.githubusercontent.com/Pristine-Cat/SymPad/master/sympad.png)
 
 ## Installation
 
