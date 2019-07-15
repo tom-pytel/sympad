@@ -60,7 +60,7 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 		if ast.lhs.is_var: # simple assignment?
 			ast, vars = ast.rhs, [ast.lhs]
 
-	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so remap
+	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so restructure
 		lhss = []
 		itr  = iter (ast.commas)
 
@@ -115,14 +115,14 @@ def _admin_vars (ast):
 		return [AST ('=', '=', v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
 
 def _admin_del (ast):
-	ast = ast.arg.strip_paren ()
+	arg = ast.args [0] if ast.args else AST.None_
 
 	try:
-		del _vars [ast]
+		del _vars [arg]
 	except KeyError:
-		raise NameError (f'Variable {sym.ast2nat (ast)!r} is not defined, it can only be attributable to human error.')
+		raise NameError (f'Variable {sym.ast2nat (arg)!r} is not defined, it can only be attributable to human error.')
 
-	return f'Variable {sym.ast2nat (ast)!r} deleted.'
+	return f'Variable {sym.ast2nat (arg)!r} deleted.'
 
 def _admin_delall (ast):
 	last_var = _vars [_var_last]
@@ -132,13 +132,7 @@ def _admin_delall (ast):
 	return 'All variables deleted.'
 
 def _admin_sympyEI (ast):
-	arg = ast.arg.strip_paren ()
-	arg = \
-		bool (sym.ast2spt (arg))             if not arg.is_comma else \
-		True                                 if not len (arg.commas) else \
-		bool (sym.ast2spt (arg.commas [0]))
-
-	sast.sympyEI (arg)
+	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
 
 	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
 
