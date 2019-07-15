@@ -14,8 +14,7 @@ sp.boolalg = sp.boolalg
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
-
-_rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
+_USER_FUNCS            = set () # set or dict of user function names
 
 #...............................................................................................
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
@@ -66,6 +65,11 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 			stack.extend (ast [1:])
 
 	_SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
+
+def set_user_funcs (user_funcs):
+	global _USER_FUNCS
+
+	_USER_FUNCS = set (user_funcs)
 
 #...............................................................................................
 def ast2tex (ast): # abstract syntax tree -> LaTeX text
@@ -168,12 +172,25 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
-_ast2tex_func_xlat = {'diag', 'eye', 'ones', 'zeros'}
+_ast2tex_func_xlat = {
+	'diag': True,
+	'eye': True,
+	'gamma': '\\Gamma',
+	'ones': True,
+	'zeros': True,
+	'zeta': '\\zeta',
+}
 
 def _ast2tex_func (ast):
-	if ast.func in _ast2tex_func_xlat:
+	act = _ast2tex_func_xlat.get (ast.func)
+
+	if act is not None:
 		try:
-			return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+			if act is True:
+				return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+
+			return f'{act}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+
 		except:
 			pass
 
@@ -635,6 +652,8 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 	return AST_Text (tex, str (spt), str (spt))
 
+_rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
+
 def _spt2ast_num (spt):
 	m = _rec_num_deconstructed.match (str (spt))
 	g = [g or '' for g in m.groups ()]
@@ -775,13 +794,14 @@ _spt2ast_funcs = {
 
 #...............................................................................................
 class sym: # for single script
-	AST_Text      = AST_Text
-	set_precision = set_precision
-	ast2tex       = ast2tex
-	ast2nat       = ast2nat
-	ast2py        = ast2py
-	ast2spt       = ast2spt
-	spt2ast       = spt2ast
+	AST_Text       = AST_Text
+	set_precision  = set_precision
+	set_user_funcs = set_user_funcs
+	ast2tex        = ast2tex
+	ast2nat        = ast2nat
+	ast2py         = ast2py
+	ast2spt        = ast2spt
+	spt2ast        = spt2ast
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:

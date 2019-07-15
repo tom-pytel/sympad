@@ -13,7 +13,7 @@
 	h2 { margin: 2em 0 1em 0; }
 	h4 { margin: 1.5em 0 0.5em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
-	i { color: red; }
+	i { color: #0008; }
 	del { color: red; }
 </style>
 
@@ -66,12 +66,31 @@ Derivative (\int dx, x)<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\infty e^{-s t} dt<br>
 {{1,2},{3,4}}**-1<br>
-\<span></span>begin{matrix} A & B \\ C & D \end{matrix} * {x, y}<br>
+\<span></span>begin{matrix} A & B \\ C & D \<span></span>end{matrix} * {x, y}<br>
 {{1,2,3},{4,5,6}}.transpose ()<br>
 expand {x+1}**4<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 0, 5)<br>
 x if 1 &lt; 2 else y<br>
+</p>
+
+<h4>Multiline examples</h4>
+
+<p>
+Enter the lines that follow one by one to see the effect:
+</p><p>
+1<br>
+expand (_(x+1))<br>
+expand (_(x+1))<i>&emsp;**(or press the up arrow)</i><br>
+expand (_(x+1))<br>
+</p><p>
+Or the following:
+</p><p>
+a, b = 1, 1<br>
+a, b = b, a + b<br>
+a, b = b, a + b<i>&emsp;**(or press the up arrow)</i><br>
+a, b = b, a + b<br>
+a, b = b, a + b<br>
 </p>
 
 <h4>Usage</h4>
@@ -106,26 +125,25 @@ Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" 
 <h4>Variables</h4>
 
 <p>
-Variable names can be a mix of Python and LaTeX format.
+Variable names can be a mix of Python and LaTeX format, they can be multi-character but cannot start with an underscore "<b>_</b>" or a number though they may contain those.
 Standard identifiers are accepted as well as single Greek letters optionally preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$).
-The Greek letters which are accepted with a slash and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters.
+The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters.
 Those Greek letters are accepted in unicode as well along with a few mathematical symbols (∞, ≠, ≤, ≥, ∂, ∑, ∫).
 </p><p>
 The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
 "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
 Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
-</p><p>
-</p><p>
-By default, the lower case "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy upper case "<b>E</b>" and "<b>I</b>".
+By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
 This is objectively prettier, but can be changed via the "<b>$sympyEI (True)</b>" and "<b>$sympyEI (False)</b>" function.
 The SymPy constant usage can also be activated via the command line switch "<b>--sympyEI</b>".
 </p><p>
-Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>" or "<b>\partial x</b>" and are treated as a single variable.
+Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>", "<b>\partial x</b>" or "<b>∂x</b>" and are treated as a single variable.
 If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
 There is nothing special about differential variables other than their specific use in differentiation and integration.
 </p><p>
 Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
+They may also be assigned a user function which allows you to use them as macro expression functions, that is covered in the section on functions.
 </p>
 
 <h4>Vectors and Matrices</h4>
@@ -134,8 +152,9 @@ Variables may be assigned values, references to other variables or even entire e
 These are specified using curly braces with commas.
 Vectors are passed as a single level of curlys such as "<b>{1, 2}</b>" or "<b>{x, y, z}</b>" and these are interpreted as column matrices.
 Matrices are passed as nested rows of curlys.
-A 2x3 matrix would be specified as  "<b>{{1, 2, 3}, {4, 5, 6}}</b>", a 1x3 would be "<b>{{1, 2, 3},}</b>" and a 3x1 would be "<b>{{1,},{2,},{3,}}</b>" or just "<b>{1,2,3}</b>" since this is equivalent.
+A 2x3 matrix would be specified as  "<b>{{1, 2, 3}, {4, 5, 6}}</b>", a 1x3 would be "<b>{{1, 2, 3},}</b>" and a 3x1 would be either "<b>{{1,}, {2,}, {3,}}</b>" or just "<b>{1, 2, 3}</b>" since this is equivalent.
 Note the trailing commas which are needed for the same reason as in Python for tuples of one element (otherwise the curlys would be treated as parenteses instead of vectors / matrices).
+These can also be entered using LaTeX "<b>\<span></span>begin{(v|b|p|)matrix} \<span></span>end{(v|b|p|)matrix}</b>" format.
 </p>
 
 <h4>Piecewise Expressions</h4>
@@ -148,7 +167,7 @@ They may be arbitrarily long - "<b>a if condition1 else b if condition2 else ...
 <h4>Strings</h4>
 
 <p>
-These exist for the sole purpose of passing string arguments to SymPy functions. They work as expected being enclosed by single or double quotes and
+These exist for the sole purpose of passing string hints or other arguments to SymPy functions. They work as expected being enclosed by single or double quotes and
 supporting escape sequences. For example "<b>Limit (1/x, x, 0, '-')</b>".
 </p>
 
@@ -181,15 +200,15 @@ variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$ or "<b>\frac\alp
 There are two power opearators "<b>^</b>" and "<b>**</b>". They have the same precedence and can be used interchangeably but follow slightly different
 parsing rules. The "<b>^</b>" operator follows LaTeX rules which only allow a single positive digit or letter variable (Lating or Greek) without the use
 of curly braces whereas the "<b>**</b>" follows Python rules which allow negative values or variables or functions. To illustrate the diffference:
-"<b>x**-2</b>" = $x^{-2}$ whereas "<b>x^-2</b>" = $x^-2$ (which makes no sense). Also, "<b>e**log(x)</b>" will work as expected $e^{\log(x)}$ whereas
-"<b>e^log(x)</b>" = $e^log(x)$.
+"<b>x**-2</b>" = $x^{-2}$ whereas "<b>x^-2</b>" = $x^-2$ (which makes no sense). Also, "<b>e**ln(x)</b>" will work as expected $e^{\ln(x)}$ whereas
+"<b>e^ln(x)</b>" = $e^ln(x)$.
 </p>
 
 <h4>Logarithms</h4>
 
 <p>
 The natural logarithm of x is specified by "<b>lnx</b>", "<b>\ln x</b>", "<b>log x</b>", "<b>\log{x}</b>". A logarithm in a specific base is specified
-by "<b>\log_b x</b>" = $\log_b x$, "<b>log_{10}(1000)</b>" = $\log_{10} {1000}$ = 3, etc...
+by "<b>\log_b x</b>" = $\log_b x$, "<b>\log_{10}(1000)</b>" = $\log_{10} {1000}$ = 3, etc...
 </p>
 
 <h4>Roots</h4>
@@ -248,7 +267,7 @@ may also be entered using the standard SymPy syntax "<b>Integral (expression, (v
 <p>
 Are parsed from the standard Python "<b>=, ==, !=, &lt;, &lt;=, &gt;, &gt;=</b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" symbols.
 Currently only a single comparison is allowed so an expression like "<b>0 &lt;= x &lt;= 2</b>" is not valid.
-Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a higher precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
+Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a lower precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
 </p>
 
 <h4>Parentheses</h4>
@@ -277,8 +296,8 @@ For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give 
 Anything can be assigned to any valid variable like valid mathematical expressions, Python objects like strings or lists or even references to other variables.
 To delete an assignment use the "<b>del var</b>" function, to delete all assignments do "<b>delall</b>" and to see what variables are currently assigned to, use the "<b>vars</b>" function.
 </p><p>
-Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object.
-An impractical example of this would be setting "<b> a, b, c = 'str' </b>" which would give you "<b> a = 's' </b>", "<b> b = 't' </b>" and "<b> c = 'r' </b>".
+Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object like "<b>x, y = 1, 2</b>".
+A useless example of iterable assignment would be setting "<b> a, b, c = 'str' </b>" which would give you "<b> a = 's' </b>", "<b> b = 't' </b>" and "<b> c = 'r' </b>".
 </p><p>
 There are two distinct types of assignment that can occur and you should be aware of the difference between them.
 Copy assignment is the standard type of assignment used by default in most computer languages where if you start with "<b>x = 1</b>" and you then enter "<b>y = x</b>" then the value "<b>1</b>" will be copied to the "<b>y</b>" variable.
@@ -289,12 +308,11 @@ This means that if you have a reference set like "<b>y = x</b>" and the value of
 The reference assignment happens if you try to assign variables which do not exist, so setting "<b>y = x</b>" before "<b>x</b>" has been created will result in a reference.
 Otherwise you can force a reference by using the "<b>@()</b>" pseudo-function.
 Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of copying the value if it exists.
-</p><p>
 The "<b>@(expr)</b>" function technically prevents variable remapping for the expression it encompasses, so if you have the variable "<b>x = 2</b>" set and you do "<b>@(x)</b>" then you will get "<b>x</b>" and not "<b>2</b>".
 </p>
 
 <h2>Functions</h2>
-
+<div style="color: red">
 <p>
 All SymPy functions are available directly just by typing their name.
 To numerically evaluate the value of "<b>sin (2)</b>" type in "<b>N (sin (2))</b>".
@@ -321,19 +339,21 @@ Only the non-dangerous __builtin__ functions are specifically included in this l
 </p><p>
 You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different between the two types of identifiers. Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
 </p>
-
+</div>
 <h2>Notes</h2>
 
 <p>
 <b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should never leave this server open to the internet by serving on an IP address visible to the external world.
 </p><p>
-There is a special use for the "<b>_</b>" underscore character aside from variable subscripting which is the same as in the Python interactive shell in that it represents the last expression successfully evaluated.
+There is a special use for the "<b>_</b>" underscore character which is the same as in the Python interactive shell in that it represents the last expression successfully evaluated.
 To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
 Repeat this several times using the up arrow.
 </p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
-Currently the use of the Greek letters "<b>beta</b>", "<b>gamma</b>", "<b>zeta</b>" and "<b>Lambda</b>" is problematic as they share names with SymPy functions.
+There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions by those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
+This has been resolved in favor of variable names for "<b>beta</b>" and "<b>Lambda</b>", which means that in order to access those functions in SymPy you have to use "<b>$beta()</b>" or "<b>$Lambda()</b>", and in favor of function names for "<b>zeta</b>" and "<b>Gamma</b>".
+This means that the LaTeX expression "<b>\zeta x</b>" means the Riemann zeta function of "<b>x</b>" and "<b>\Gamma x</b>" means "<b>gamma (x)</b>".
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
 </p><p>

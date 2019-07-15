@@ -32,24 +32,29 @@ def _ast_func_tuple_args (ast):
 
 	return ast.commas if ast.is_comma else (ast,)
 
-def _expr_mul_imp (expr_mul_imp, expr_int):
-	last       = expr_mul_imp.muls [-1] if expr_mul_imp.is_mul else expr_mul_imp
-	arg, reord = _expr_func_reorder (expr_int, strip_paren = 0)
-	ast        = None
+def _expr_mul_imp (expr_mul_imp, expr_int, var_funcs = {}):
+	last      = expr_mul_imp.muls [-1] if expr_mul_imp.is_mul else expr_mul_imp
+	arg, wrap = _expr_func_wraper (expr_int, strip_paren = 0)
+	ast       = None
 
 	if last.is_attr: # {x.y} * () -> x.y(), x.{y.z} -> {x.y}.z
 		if last.args is None:
 			if arg.is_paren:
-				ast = reord (AST ('.', last.obj, last.attr, _ast_func_tuple_args (arg)))
+				ast = wrap (AST ('.', last.obj, last.attr, _ast_func_tuple_args (arg)))
 			elif expr_int.is_attr:
 				ast = AST ('.', _expr_mul_imp (last, expr_int.obj), expr_int.attr)
 
 	elif last.is_pow: # {x^y.z} * () -> x^{y.z()}
 		if last.exp.is_attr and last.exp.args is None:
 			if arg.is_paren:
-				ast = AST ('^', last.base, reord (AST ('.', last.exp.obj, last.exp.attr, _ast_func_tuple_args (arg))))
+				ast = AST ('^', last.base, wrap (AST ('.', last.exp.obj, last.exp.attr, _ast_func_tuple_args (arg))))
 			elif expr_int.is_attr:
 				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, expr_int.obj), expr_int.attr))
+
+	elif last.is_var:
+		if last.var in var_funcs:
+			if arg.is_paren:
+				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
 
 	if ast:
 		return AST ('*', expr_mul_imp.muls [:-1] + (ast,)) if expr_mul_imp.is_mul else ast
@@ -372,7 +377,7 @@ def _expr_func (iparm, *args, strip_paren = 0): # rearrange ast tree for explici
 
 	return AST (*(args [:iparm] + astarg (args [iparm]) + args [iparm + 1:]))
 
-def _expr_func_reorder (ast, strip_paren):
+def _expr_func_wraper (ast, strip_paren):
 	ast = _expr_func (1, None, ast, strip_paren = strip_paren)
 
 	return \
@@ -381,9 +386,9 @@ def _expr_func_reorder (ast, strip_paren):
 			(ast [1] [1], lambda a: AST (ast.op, a, *ast [2:]))
 
 def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function translation like 'Derivative' or 'Limit'
-	ast, reord = _expr_func_reorder (ast, strip_paren = None) # strip all parentheses
+	ast, wrap = _expr_func_wraper (ast, strip_paren = None) # strip all parentheses
 
-	return reord (_xlat_func (ast))
+	return wrap (_xlat_func (ast))
 
 _FUNC_AST_XLAT = {
 	'Abs'       : lambda expr: _expr_func (1, '|', expr, strip_paren = 1),
@@ -392,6 +397,7 @@ _FUNC_AST_XLAT = {
 	'diff'      : lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
 	'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip_paren = 1),
 	'factorial' : lambda expr: _expr_func (1, '!', expr, strip_paren = 1),
+	'Gamma'     : lambda expr: _expr_func (2, 'func', 'gamma', expr, strip_paren = 1),
 	'Integral'  : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
 	'integrate' : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
 	'Limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
@@ -428,6 +434,11 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 
 #...............................................................................................
 class Parser (lalr1.Parser):
+	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
+
+	def set_user_funcs  (self, user_funcs):
+		self._USER_FUNCS = set (user_funcs)
+
 	_PARSER_TABLES = \
 			b'eJztXWuP3LaS/TMLZAZQA03xJfmb4zi5xtpOru0EuxgEhuP4XgSb19rO3V0E+e9bpw4lUq+e7pmecfdMYzgtimJRxWIdPovU2cVn//bu1x8/qz579uT5ty/l+uT5q6/k8vTJM/l9+a3+/v3FKwR9jQdffvv8EW4ef4mwzx++kN9vHr54/PwpiL96/vWLx68f' \
 			b'ffvi6X8i7ouHj9LFpGsNosdfvX708OXjl8n/7OGr5Ps8e7/L3m/o1VTxls8lnX+H5+WrF8rk5/L7XFn9Tvl59PWzZw87ihcdRc8pPC+efPU3JPrw2Tfy+8XnT18+ffjyb+J9/PyLxBB8n2fvd9mbGHr89OVjXP6egrs8IbVXZEReh5hPvlTJasxvnqqcv3jy' \
@@ -477,7 +488,7 @@ class Parser (lalr1.Parser):
 			b'BM9D3MwZDuscMYdzNrZisKl0tr+Z/cMERXEneJ3EUV6bnXjl8SNX5liINvx1/ciNsZTp9gpM88yUq7GeNjy33SZn1E+m2t11/eNd3Kiji+x335BHBfMpRYC6DYMFem7FMf/mMPJvq1t3zH99nfzjSOGxCNbXEYOrru4wVBwFYQS4bQIUh83icHuSSHno0ZJU' \
 			b'vLlMMr6iQ7Pl9+A2pLPwiAJyhyqgWH1qRwH5sYCKw7woKcsvsm4vL23YZXCPReP+BK7hqVvDo7UwVEHf5BKBomu9UagYVX06Z3Dsg4wAdqRjMYQD1VPMpH1iRwHFS/V0J0kN1HNRatdWSFuVTgY6/KVnV4exPIkxip+P4hdSXngjZdscpWyb6oAdBdsepWDb' \
 			b'6oAdZ0HWxyhYyynkA3UUrDlKwZrqgB0FWx+lYF11wI6CnQyBriPYy7quexZvrPblMNc/DrKToCs5inkykLr9ccL15d1Wmx3PA7402vYOyytXJabcD2B8dm25Yz3raBzFPhmPHaPYm+p4HMV++SjvCMTeVsfjKPbLB4CHL3aslR+No9gvHx4egdjr6ngcl8Qv' \
-			b'Hzwez5QnLA6OzLEQTDa1ksw1RASOk0NpaFFQlkYNLWDtoqYuvR1LTBTS/aclDUTUwBwOBRAo5ob1m56MVGMVls2Mnjmj9+k5TvNACdRq04Fln6QqODChUAEpK41Rp3ONIs/cSLYZurt9JratRv+M3U5io/yVwlWTf5oPwfTlwkQ1E2lkZPn9+f8DZVc3jw=='
+			b'Hzwez5QnLA6OzLEQTDa1ksw1RASOk0NpaFFQlkYNLWDtoqYuvR1LTBTS/aclDUTUwBwOBRAo5ob1m56MVGMVls2Mnjmj9+k5TvNACdRq04Fln6QqODChUAEpK41Rp3ONIs/cSLYZurt9JratRv+M3U5io/yVwlWTf5oPwfTlwkQ1E2lkZPn9+f8DZVc3jw==' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -512,7 +523,7 @@ class Parser (lalr1.Parser):
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|{_FUNCPY}\b)|\\({_FUNCTEX})\b|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
+		('FUNC',         fr'(@|{_FUNCPY}\b)|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
@@ -607,11 +618,11 @@ class Parser (lalr1.Parser):
 	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, expr_mul_imp.neg (stack = True))
 	def expr_div_3      (self, expr_mul_imp):                                   return expr_mul_imp
 
-	def expr_mul_imp_1  (self, expr_mul_imp, expr_int):                         return _expr_mul_imp (expr_mul_imp, expr_int)
+	def expr_mul_imp_1  (self, expr_mul_imp, expr_int):                         return _expr_mul_imp (expr_mul_imp, expr_int, self._USER_FUNCS)
 	def expr_mul_imp_2  (self, expr_int):                                       return expr_int
 
-	def expr_int_1      (self, INTG, expr_sub, expr_super, expr_add):            return _expr_int (expr_add, (expr_sub, expr_super))
-	def expr_int_2      (self, INTG, expr_add):                                  return _expr_int (expr_add)
+	def expr_int_1      (self, INTG, expr_sub, expr_super, expr_add):           return _expr_int (expr_add, (expr_sub, expr_super))
+	def expr_int_2      (self, INTG, expr_add):                                 return _expr_int (expr_add)
 	def expr_int_3      (self, expr_lim):                                       return expr_lim
 
 	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                           return AST ('lim', expr_neg, expr_var, expr)
@@ -635,7 +646,8 @@ class Parser (lalr1.Parser):
 				if expr_super != AST.NegOne or not ast.is_trigh_func_noninv else \
 				AST ('func', f'a{ast.func}', ast.args)
 
-	def expr_func_7     (self, expr_pow):                                       return expr_pow
+	# def expr_func_7     (self, FUNC):                                           return AST ('@', _FUNC_name (FUNC))
+	def expr_func_8     (self, expr_pow):                                       return expr_pow
 
 	def expr_func_arg_1 (self, expr_func):                                      return expr_func
 	def expr_func_arg_2 (self, MINUS, expr_func):                               return expr_func.neg (stack = True)
