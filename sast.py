@@ -29,6 +29,8 @@
 # ('vec', (e1, e2, ...))             - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 
+# TODO: Add zeta and Gamma unicode character functions.
+
 import re
 import types
 
