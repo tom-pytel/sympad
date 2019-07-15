@@ -41,15 +41,15 @@ def _expr_mul_imp (expr_mul_imp, expr_int):
 		if last.args is None:
 			if arg.is_paren:
 				ast = reord (AST ('.', last.obj, last.attr, _ast_func_tuple_args (arg)))
-			elif arg.is_attr:
-				ast = AST ('.', _expr_mul_imp (last, arg.obj), arg.attr)
+			elif expr_int.is_attr:
+				ast = AST ('.', _expr_mul_imp (last, expr_int.obj), expr_int.attr)
 
 	elif last.is_pow: # {x^y.z} * () -> x^{y.z()}
 		if last.exp.is_attr and last.exp.args is None:
 			if arg.is_paren:
 				ast = AST ('^', last.base, reord (AST ('.', last.exp.obj, last.exp.attr, _ast_func_tuple_args (arg))))
 			elif expr_int.is_attr:
-				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, arg.obj), arg.attr))
+				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, expr_int.obj), expr_int.attr))
 
 	if ast:
 		return AST ('*', expr_mul_imp.muls [:-1] + (ast,)) if expr_mul_imp.is_mul else ast
@@ -644,7 +644,7 @@ class Parser (lalr1.Parser):
 	def expr_pow_2      (self, expr_fact):                                      return expr_fact
 
 	def expr_fact_1     (self, expr_fact, EXCL):                                return AST ('!', expr_fact)
-	def expr_fact_2     (self, expr_attr):                                       return expr_attr
+	def expr_fact_2     (self, expr_attr):                                      return expr_attr
 
 	def expr_attr_1     (self, expr_attr, ATTR):                                return AST ('.', expr_attr, ATTR.grp [0] or ATTR.grp [1])
 	def expr_attr_2     (self, expr_abs):                                       return expr_abs
@@ -924,8 +924,8 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
-	p = Parser ()
-	a = p.parse ('x.y().z')
-	print (a)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
+# 	p = Parser ()
+# 	a = p.parse ('x**2.z')
+# 	print (a)
