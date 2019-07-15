@@ -1,7 +1,5 @@
 # SymPad
 
-![alt text](https://raw.githubusercontent.com/Pristine-Cat/SymPad/v0.4.2/sympad.png)
-
 SymPad is a simple single script symbolic calculator / scratchpad using SymPy for the math and MathJax for the display in a web browser.
 It runs as a private http server on your machine and executes the system default browser pointing to itself on startup.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
@@ -26,6 +24,8 @@ factor (x^3 + 3x^2 + 3x + 1)
 series (e^x, x, 0, 5)
 x if 1 < 2 else y
 ```
+
+![alt text](https://raw.githubusercontent.com/Pristine-Cat/SymPad/v0.4.2/sympad.png)
 
 ## Installation
 
