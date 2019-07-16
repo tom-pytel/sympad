@@ -2,7 +2,8 @@
 
 SymPad is a simple single script symbolic calculator / scratchpad using SymPy for the math and MathJax for the display in a browser.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
-Sympad will accept Python expressions as well as LaTeX math formatting (or a mix) as input and evaluate those symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
+Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
+The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 
 The following are examples of valid inputs to SymPad:
 ```
