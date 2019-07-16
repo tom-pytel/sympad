@@ -318,23 +318,24 @@ Functions may take multiple comma-separated arguments with optional keyword argu
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
 The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
 The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
-</p><p>
 This last form of exponentiating a function is extended as an input shortcut to all functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
 Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
-Functions don't technically require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
-Functions which take none or more than one parameter always require explicit parentheses.
+Top-level functions don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
+Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" always require explicit parentheses.
 </p><p>
 Many functions which have an explicit mathematical display syntax are translated on the fly for correct rendering.
-These include the functions "<b>abs/Abs (x)</b>" which are translated to the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>".
-Other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>".
+These include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
+Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>", and more...
 </p><p>
-The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar. Function names specifically recognized by the grammar are only those specified in the SymPy module and a few builtins.
-When functions are entered using the "<b>$</b>" character then many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
+The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar.
+Function names specifically recognized by the grammar are only those specified in the SymPy module which do not start with an underscore and are longer than one character (so no "<b>N</b>", "<b>O</b>" or "<b>S</b>") and a few builtins.
+When functions are entered using the "<b>$</b>" character then those as well as many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
 Try entering "<b>$print ('Hello World...')</b>" and have a look at the server output.
 Only the non-dangerous __builtin__ functions are specifically included in this list, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
 </p><p>
-You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different between the two types of identifiers. Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
+You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
+Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
 </p>
 </div>
 <h2>Notes</h2>
@@ -348,7 +349,7 @@ Repeat this several times using the up arrow.
 </p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
-There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions by those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
+There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
 This has been resolved in favor of variable names for "<b>beta</b>" and "<b>Lambda</b>", which means that in order to access those functions in SymPy you have to use "<b>$beta()</b>" or "<b>$Lambda()</b>", and in favor of function names for "<b>zeta</b>" and "<b>Gamma</b>".
 This means that the LaTeX expression "<b>\zeta x</b>" means the Riemann zeta function of "<b>x</b>" and "<b>\Gamma x</b>" means "<b>gamma (x)</b>".
 </p><p>
