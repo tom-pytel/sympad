@@ -43,7 +43,8 @@ _SYMPY_FUNCS   = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and c
 
 #...............................................................................................
 class AST (tuple):
-	op = None
+	op     = None
+	CONSTS = set () # will be filled in after all classes defined
 
 	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
 
@@ -127,6 +128,10 @@ class AST (tuple):
 				return None
 
 		return name if AST._rec_identifier.match (name) else None
+
+	def vars (self): # return set of unique variables found in tree
+		pass ## TODO: This!
+
 
 	@staticmethod
 	def is_int_text (text): # >= 0
@@ -220,10 +225,6 @@ class AST_Attr (AST):
 
 	def _init (self, obj, attr, args = None):
 		self.obj, self.attr, self.args = obj, attr, args
-
-	@property
-	def arg (self): ## TODO: DELETE WHEN FUNCS WORKING!
-		raise RuntimeError
 
 class AST_Str (AST):
 	op, is_str = '"', True
@@ -344,10 +345,6 @@ class AST_Func (AST):
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
 	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
 
-	@property
-	def arg (self): ## TODO: DELETE WHEN FUNCS WORKING!
-		raise RuntimeError
-
 class AST_Lim (AST):
 	op, is_lim = 'lim', True
 
@@ -433,19 +430,21 @@ AST.Zero     = AST ('#', '0')
 AST.One      = AST ('#', '1')
 AST.NegOne   = AST ('#', '-1')
 AST.VarNull  = AST ('@', '')
-AST.I        = AST ('@', 'i')
-AST.E        = AST ('@', 'e')
-AST.Pi       = AST ('@', 'pi')
-AST.Infty    = AST ('@', 'oo')
-AST.CInfty   = AST ('@', 'zoo')
-AST.None_    = AST ('@', 'None')
-AST.True_    = AST ('@', 'True')
-AST.False_   = AST ('@', 'False')
-AST.NaN      = AST ('@', 'nan')
 AST.MatEmpty = AST ('func', 'Matrix', ('[', ()))
 
+_CONSTS      = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
+		('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
+
+for _vp, _vv in _CONSTS:
+	ast = AST ('@', _vv)
+
+	AST.CONSTS.add (ast)
+	setattr (AST, _vp, ast)
+
 def sympyEI (yes = True):
+	AST.CONSTS.difference_update ((AST.E.var, AST.I.var))
 	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
+	AST.CONSTS.update ((AST.E.var, AST.I.var))
 
 class sast: # for single script
 	AST     = AST

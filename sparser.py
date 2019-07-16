@@ -438,7 +438,7 @@ class Parser (lalr1.Parser):
 	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
 
 	def set_user_funcs  (self, user_funcs):
-		self._USER_FUNCS = set (user_funcs)
+		self._USER_FUNCS = user_funcs
 
 	_PARSER_TABLES = \
 			b'eJztXWuP3LaS/TMLZAZQA03xJfmb4zi5xtpOru0EuxgEhuP4XgSb19rO3V0E+e9bpw4lUq+e7pmecfdMYzgtimJRxWIdPovU2cVn//bu1x8/qz579uT5ty/l+uT5q6/k8vTJM/l9+a3+/v3FKwR9jQdffvv8EW4ef4mwzx++kN9vHr54/PwpiL96/vWLx68f' \
@@ -835,8 +835,6 @@ class Parser (lalr1.Parser):
 		s               = self.stack [-1]
 		self.stack [-1] = lalr1.State (s.idx, s.sym, AST ('*', (s.red, AST.VarNull)))
 		expr_vars       = set ()
-		expr_diffs      = set ()
-		expr_parts      = set ()
 
 		if self.autocompleting:
 			stack = [s [2]]
@@ -845,11 +843,12 @@ class Parser (lalr1.Parser):
 				ast = stack.pop ()
 
 				if ast.is_var:
-					(expr_diffs if ast.is_diff else expr_vars if not ast.is_part_any else expr_parts).add (ast.var)
+					if not (ast.is_diff or ast.is_part_any):
+						expr_vars.add (ast.var)
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
-		expr_vars = expr_vars - {'_', AST.E.var, AST.I.var, AST.Pi.var, AST.Infty.var, AST.CInfty.var} - set (var [1:] for var in expr_diffs)
+		expr_vars = expr_vars - {'_'} - {ast.var for ast in AST.CONSTS}
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
@@ -938,7 +937,7 @@ class sparser: # for single script
 	Parser = Parser
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
 # 	a = p.parse ('x**2.z')
 # 	print (a)

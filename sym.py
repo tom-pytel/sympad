@@ -1,6 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: -1/2 * sqrt(33)
+# TODO: Add non-doit pseudo-function.
 # TODO: MatrixSymbol ('A', 2, 2)**n
 # TODO: Multiple arguments in
 # TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
@@ -70,7 +70,7 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 def set_user_funcs (user_funcs):
 	global _USER_FUNCS
 
-	_USER_FUNCS = set (user_funcs)
+	_USER_FUNCS = user_funcs
 
 #...............................................................................................
 def ast2tex (ast): # abstract syntax tree -> LaTeX text
@@ -749,6 +749,7 @@ _spt2ast_funcs = {
 	sp.Integer: _spt2ast_num,
 	sp.Float: _spt2ast_num,
 	sp.Rational: lambda spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
+	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 	sp.numbers.ImaginaryUnit: lambda ast: AST.I,
 	sp.numbers.Pi: lambda spt: AST.Pi,
 	sp.numbers.Exp1: lambda spt: AST.E,
@@ -757,7 +758,6 @@ _spt2ast_funcs = {
 	sp.numbers.ComplexInfinity: lambda spt: AST.Infty, # not exactly but whatever
 	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Symbol: lambda spt: AST ('@', spt.name),
-	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 
 	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
 	sp.boolalg.BooleanFalse: lambda spt: AST.False_,
@@ -767,6 +767,8 @@ _spt2ast_funcs = {
 	sp.Le: lambda spt: AST ('=', '<=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Gt: lambda spt: AST ('=', '>', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+
+	sp.fancysets.Complexes: lambda spt: AST.Complexes,
 
 	sp.Add: _spt2ast_Add,
 	sp.Mul: _spt2ast_Mul,
@@ -804,8 +806,8 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
-	ast = AST ('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('@', 'x')))
-	nat = ast2nat (ast)
-	print (nat)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('@', 'x')))
+# 	nat = ast2nat (ast)
+# 	print (nat)

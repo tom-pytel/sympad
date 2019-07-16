@@ -30,9 +30,10 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+	_parser   = sparser.Parser ()
 	_var_last = AST ('@', '_')
 	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_parser   = sparser.Parser ()
+	#_vars    = {AST ('@', 'var'): ast, 'user_func_name': }
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -48,10 +49,13 @@ usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sym
 # 	pass
 
 def _ast_remap (ast, map_):
-	return \
-			ast                                        if not isinstance (ast, AST) or (ast.is_func and ast.func == '@') else \
-			_ast_remap (map_ [ast], map_)              if ast in map_ else \
-			AST (*(_ast_remap (a, map_) for a in ast))
+	if not isinstance (ast, AST) or (ast.is_func and ast.func == '@'): # non-AST or stop remap
+		return ast
+
+	if ast.is_func and ast.func in map_: # user function
+		pass
+
+	return _ast_remap (map_ [ast], map_) if ast in map_ else AST (*(_ast_remap (a, map_) for a in ast)) # variable?
 
 def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = None
