@@ -1,7 +1,8 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: -1/2 * sqrt(33)
+# TODO: MatrixSymbol ('A', 2, 2)**n
 # TODO: Multiple arguments in
-# TODO: S.Integers, S.Reals, S.Complexes
 # TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
 # TODO: PurePoly(lambda**4 - 11*lambda**3 + 29*lambda**2 + 35*lambda - 150, lambda, domain='ZZ')
 # TODO: sequence(factorial(k), (k,1,oo))
@@ -321,8 +322,8 @@ def _ast2nat_mul (ast, ret_has = False):
 				f'{{{ast2nat (n)}}}' if n.is_piece else \
 				ast2nat (n)
 
-		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or \
-				(n.is_pow and n.base.is_pos_num) or n.op in {'/', 'diff'} or p.op in {'/', 'diff'}):
+		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or (n.is_pow and n.base.is_pos_num) \
+				 or n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'}):
 			t.append (f' * {ast2nat (n)}')
 			has = True
 
@@ -803,7 +804,8 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
-# 	spt = ast2spt (AST ('func', 'acos', (('@', 'x'),)))
-# 	print (spt)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
+	ast = AST ('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('@', 'x')))
+	nat = ast2nat (ast)
+	print (nat)

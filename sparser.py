@@ -8,6 +8,7 @@
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
 
+# TODO: user_func**exp (args...)?
 # TODO: _xlat_func_Integral multiple integrals
 
 import ast as py_ast
