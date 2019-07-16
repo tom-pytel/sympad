@@ -33,7 +33,7 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	_parser   = sparser.Parser ()
 	_var_last = AST ('@', '_')
 	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	#_vars    = {AST ('@', 'var'): ast, 'user_func_name': }
+	#_vars    = {AST ('@', 'var'): ast, 'user_func_name': ... }
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -54,6 +54,8 @@ def _ast_remap (ast, map_):
 
 	if ast.is_func and ast.func in map_: # user function
 		pass
+
+
 
 	return _ast_remap (map_ [ast], map_) if ast in map_ else AST (*(_ast_remap (a, map_) for a in ast)) # variable?
 
