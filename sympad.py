@@ -755,7 +755,7 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.4.2</h5>
+		<h5>v0.4.3</h5>
 		<br><br>
 		Type '<b>help</b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -834,27 +834,24 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.4.2</h4>
+<h4 align="center" style="margin: 0">v0.4.3</h4>
 
 
 <h2>Introduction</h2>
 
 <p>
-Sympad is a simple symbolic calculator / scratch pad. It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while
-studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally
-that last bit is exactly what happens but the response time is better :) This desire for simplicity led to the single script option "sympad.py"
-which I could plop down on my desktop and execute when needed.
-</p><p>
-As said, SymPad is a symbolic calculator using SymPy for the math and MathJax for the display in a web browser. It runs as a private http server
-on your machine and executes the system default browser pointing to itself on startup. User input is intended to be quick, easy and intuitive and
-is displayed in symbolic form as it is being entered. Sympad will accept LaTeX math formatting as well as Python expressions (or a mix) and
-evaluate the result symbolically or numerically. The best way to see what it can do is to try a few things...
+SymPad is a simple single script symbolic calculator / scratchpad using SymPy for the math and MathJax for the display in a browser.
+It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally that last bit is exactly what happens but the response time is better :)
+This desire for simplicity led to the single script option "sympad.py" which I could plop down on my desktop and execute when needed.
+User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
+Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
+The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
 
 <h4>Quick Start</h4>
 
 <p>
-Try entering any of the following into SymPad:
+The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad:
 </p><p>
 cos**-1 x<br>
 \log_2{8}<br>
@@ -1121,23 +1118,24 @@ Functions may take multiple comma-separated arguments with optional keyword argu
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
 The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
 The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
-</p><p>
 This last form of exponentiating a function is extended as an input shortcut to all functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
 Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
-Functions don't technically require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
-Functions which take none or more than one parameter always require explicit parentheses.
+Top-level functions don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
+Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" always require explicit parentheses.
 </p><p>
 Many functions which have an explicit mathematical display syntax are translated on the fly for correct rendering.
-These include the functions "<b>abs/Abs (x)</b>" which are translated to the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function is identical to writing "<b>x!</b>" and "<b>exp (x)</b>" is the same as writing "<b>e^x</b>".
-Other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>".
+These include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
+Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>", and more...
 </p><p>
-The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar. Function names specifically recognized by the grammar are only those specified in the SymPy module and a few builtins.
-When functions are entered using the "<b>$</b>" character then many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
+The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar.
+Function names specifically recognized by the grammar are only those specified in the SymPy module which do not start with an underscore and are longer than one character (so no "<b>N</b>", "<b>O</b>" or "<b>S</b>") and a few builtins.
+When functions are entered using the "<b>$</b>" character then those as well as many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
 Try entering "<b>$print ('Hello World...')</b>" and have a look at the server output.
 Only the non-dangerous __builtin__ functions are specifically included in this list, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
 </p><p>
-You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different between the two types of identifiers. Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
+You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
+Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
 </p>
 </div>
 <h2>Notes</h2>
@@ -1151,7 +1149,7 @@ Repeat this several times using the up arrow.
 </p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
-There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions by those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
+There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
 This has been resolved in favor of variable names for "<b>beta</b>" and "<b>Lambda</b>", which means that in order to access those functions in SymPy you have to use "<b>$beta()</b>" or "<b>$Lambda()</b>", and in favor of function names for "<b>zeta</b>" and "<b>Gamma</b>".
 This means that the LaTeX expression "<b>\zeta x</b>" means the Riemann zeta function of "<b>x</b>" and "<b>\Gamma x</b>" means "<b>gamma (x)</b>".
 </p><p>
@@ -3652,7 +3650,7 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 		if ast.lhs.is_var: # simple assignment?
 			ast, vars = ast.rhs, [ast.lhs]
 
-	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so remap
+	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so restructure
 		lhss = []
 		itr  = iter (ast.commas)
 
@@ -3707,14 +3705,14 @@ def _admin_vars (ast):
 		return [AST ('=', '=', v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
 
 def _admin_del (ast):
-	ast = ast.arg.strip_paren ()
+	arg = ast.args [0] if ast.args else AST.None_
 
 	try:
-		del _vars [ast]
+		del _vars [arg]
 	except KeyError:
-		raise NameError (f'Variable {sym.ast2nat (ast)!r} is not defined, it can only be attributable to human error.')
+		raise NameError (f'Variable {sym.ast2nat (arg)!r} is not defined, it can only be attributable to human error.')
 
-	return f'Variable {sym.ast2nat (ast)!r} deleted.'
+	return f'Variable {sym.ast2nat (arg)!r} deleted.'
 
 def _admin_delall (ast):
 	last_var = _vars [_var_last]
@@ -3724,13 +3722,7 @@ def _admin_delall (ast):
 	return 'All variables deleted.'
 
 def _admin_sympyEI (ast):
-	arg = ast.arg.strip_paren ()
-	arg = \
-		bool (sym.ast2spt (arg))             if not arg.is_comma else \
-		True                                 if not len (arg.commas) else \
-		bool (sym.ast2spt (arg.commas [0]))
-
-	sast.sympyEI (arg)
+	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
 
 	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
 
