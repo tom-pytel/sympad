@@ -836,7 +836,6 @@ r"""<!DOCTYPE html>
 <h1 align="center" style="margin: 0">SymPad</h1>
 <h4 align="center" style="margin: 0">v0.4.3</h4>
 
-
 <h2>Introduction</h2>
 
 <p>
@@ -847,7 +846,7 @@ User input is intended to be quick, easy and intuitive and is displayed in symbo
 Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
-
+<c>yo</c>
 <h4>Quick Start</h4>
 
 <p>
@@ -1136,6 +1135,8 @@ Only the non-dangerous __builtin__ functions are specifically included in this l
 </p><p>
 You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
 Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
+</p><p>
+"<b>@@()</b>" pseudo-function.
 </p>
 </div>
 <h2>Notes</h2>
@@ -1442,7 +1443,8 @@ _SYMPY_FUNCS   = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and c
 
 #...............................................................................................
 class AST (tuple):
-	op = None
+	op     = None
+	CONSTS = set () # will be filled in after all classes defined
 
 	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
 
@@ -1526,6 +1528,10 @@ class AST (tuple):
 				return None
 
 		return name if AST._rec_identifier.match (name) else None
+
+	def vars (self): # return set of unique variables found in tree
+		pass ## TODO: This!
+
 
 	@staticmethod
 	def is_int_text (text): # >= 0
@@ -1619,10 +1625,6 @@ class AST_Attr (AST):
 
 	def _init (self, obj, attr, args = None):
 		self.obj, self.attr, self.args = obj, attr, args
-
-	@property
-	def arg (self): ## TODO: DELETE WHEN FUNCS WORKING!
-		raise RuntimeError
 
 class AST_Str (AST):
 	op, is_str = '"', True
@@ -1720,7 +1722,7 @@ class AST_Func (AST):
 	# GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
 	# 		'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
 
-	SPECIAL         = {'@', 'vars', 'del', 'delall'}
+	SPECIAL         = {'@', '@@', 'vars', 'del', 'delall'}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln', 'zeta', 'Gamma'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
@@ -1742,10 +1744,6 @@ class AST_Func (AST):
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
 	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
-
-	@property
-	def arg (self): ## TODO: DELETE WHEN FUNCS WORKING!
-		raise RuntimeError
 
 class AST_Lim (AST):
 	op, is_lim = 'lim', True
@@ -1832,19 +1830,21 @@ AST.Zero     = AST ('#', '0')
 AST.One      = AST ('#', '1')
 AST.NegOne   = AST ('#', '-1')
 AST.VarNull  = AST ('@', '')
-AST.I        = AST ('@', 'i')
-AST.E        = AST ('@', 'e')
-AST.Pi       = AST ('@', 'pi')
-AST.Infty    = AST ('@', 'oo')
-AST.CInfty   = AST ('@', 'zoo')
-AST.None_    = AST ('@', 'None')
-AST.True_    = AST ('@', 'True')
-AST.False_   = AST ('@', 'False')
-AST.NaN      = AST ('@', 'nan')
 AST.MatEmpty = AST ('func', 'Matrix', ('[', ()))
 
+_CONSTS      = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
+		('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
+
+for _vp, _vv in _CONSTS:
+	ast = AST ('@', _vv)
+
+	AST.CONSTS.add (ast)
+	setattr (AST, _vp, ast)
+
 def sympyEI (yes = True):
+	AST.CONSTS.difference_update ((AST.E.var, AST.I.var))
 	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
+	AST.CONSTS.update ((AST.E.var, AST.I.var))
 
 class sast: # for single script
 	AST     = AST
@@ -1859,6 +1859,7 @@ class sast: # for single script
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
 
+# TODO: user_func**exp (args...)?
 # TODO: _xlat_func_Integral multiple integrals
 
 import ast as py_ast
@@ -2285,7 +2286,7 @@ class Parser (lalr1.Parser):
 	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
 
 	def set_user_funcs  (self, user_funcs):
-		self._USER_FUNCS = set (user_funcs)
+		self._USER_FUNCS = user_funcs
 
 	_PARSER_TABLES = \
 			b'eJztXWuP3LaS/TMLZAZQA03xJfmb4zi5xtpOru0EuxgEhuP4XgSb19rO3V0E+e9bpw4lUq+e7pmecfdMYzgtimJRxWIdPovU2cVn//bu1x8/qz579uT5ty/l+uT5q6/k8vTJM/l9+a3+/v3FKwR9jQdffvv8EW4ef4mwzx++kN9vHr54/PwpiL96/vWLx68f' \
@@ -2365,13 +2366,13 @@ class Parser (lalr1.Parser):
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {'@'})))})"
+	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {'@', '@@'})))})"
 	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
 
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|{_FUNCPY}\b)|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
+		('FUNC',         fr'(@@?|{_FUNCPY}\b)|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}}'),
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
@@ -2682,8 +2683,6 @@ class Parser (lalr1.Parser):
 		s               = self.stack [-1]
 		self.stack [-1] = lalr1.State (s.idx, s.sym, AST ('*', (s.red, AST.VarNull)))
 		expr_vars       = set ()
-		expr_diffs      = set ()
-		expr_parts      = set ()
 
 		if self.autocompleting:
 			stack = [s [2]]
@@ -2692,11 +2691,12 @@ class Parser (lalr1.Parser):
 				ast = stack.pop ()
 
 				if ast.is_var:
-					(expr_diffs if ast.is_diff else expr_vars if not ast.is_part_any else expr_parts).add (ast.var)
+					if not (ast.is_diff or ast.is_part_any):
+						expr_vars.add (ast.var)
 				else:
 					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
 
-		expr_vars = expr_vars - {'_', AST.E.var, AST.I.var, AST.Pi.var, AST.Infty.var, AST.CInfty.var} - set (var [1:] for var in expr_diffs)
+		expr_vars = expr_vars - {'_'} - {ast.var for ast in AST.CONSTS}
 
 		if len (expr_vars) == 1:
 			self.autocomplete.append (f' d{expr_vars.pop ()}')
@@ -2784,28 +2784,34 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
 # 	a = p.parse ('x**2.z')
 # 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: MatrixSymbol ('A', 2, 2)**n
 # TODO: Multiple arguments in
-# TODO: S.Integers, S.Reals, S.Complexes
 # TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
 # TODO: PurePoly(lambda**4 - 11*lambda**3 + 29*lambda**2 + 35*lambda - 150, lambda, domain='ZZ')
 # TODO: sequence(factorial(k), (k,1,oo))
 
 import re
 import sympy as sp
-sp.numbers = sp.numbers # medication for pylint
-sp.boolalg = sp.boolalg
+
+sp.numbers   = sp.numbers # medication for pylint
+sp.boolalg   = sp.boolalg
+sp.fancysets = sp.fancysets
 
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
 
 #...............................................................................................
+class ExprDontDoIt (sp.Expr):
+	def doit (self, *args, **kwargs):
+		return self.args [0]
+
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
 
@@ -2858,7 +2864,7 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 def set_user_funcs (user_funcs):
 	global _USER_FUNCS
 
-	_USER_FUNCS = set (user_funcs)
+	_USER_FUNCS = user_funcs
 
 #...............................................................................................
 def ast2tex (ast): # abstract syntax tree -> LaTeX text
@@ -3110,8 +3116,8 @@ def _ast2nat_mul (ast, ret_has = False):
 				f'{{{ast2nat (n)}}}' if n.is_piece else \
 				ast2nat (n)
 
-		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or \
-				(n.is_pow and n.base.is_pos_num) or n.op in {'/', 'diff'} or p.op in {'/', 'diff'}):
+		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or (n.is_pow and n.base.is_pos_num) \
+				 or n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'}):
 			t.append (f' * {ast2nat (n)}')
 			has = True
 
@@ -3319,7 +3325,8 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 
 	if doit and callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
 		try:
-			spt = sp.piecewise_fold (spt.doit ()) # = spt.doit ()
+			spt = spt.doit ()
+			spt = sp.piecewise_fold (spt)
 		except TypeError:
 			pass
 
@@ -3342,6 +3349,8 @@ _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n
 def _ast2spt_func (ast):
 	if ast.func == '@': # special reference meta-function
 		return ast2spt (ast.args [0])
+	if ast.func == '@@': # special stop evaluation meta-function
+		return ExprDontDoIt (ast2spt (ast.args [0]))
 
 	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
@@ -3526,6 +3535,8 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
+	ExprDontDoIt: lambda spt: AST ('func', '@@', (spt2ast (spt.args [0]),)),
+
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
 	False.__class__: lambda spt: AST.False_,
@@ -3537,6 +3548,7 @@ _spt2ast_funcs = {
 	sp.Integer: _spt2ast_num,
 	sp.Float: _spt2ast_num,
 	sp.Rational: lambda spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
+	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 	sp.numbers.ImaginaryUnit: lambda ast: AST.I,
 	sp.numbers.Pi: lambda spt: AST.Pi,
 	sp.numbers.Exp1: lambda spt: AST.E,
@@ -3545,7 +3557,6 @@ _spt2ast_funcs = {
 	sp.numbers.ComplexInfinity: lambda spt: AST.Infty, # not exactly but whatever
 	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Symbol: lambda spt: AST ('@', spt.name),
-	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 
 	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
 	sp.boolalg.BooleanFalse: lambda spt: AST.False_,
@@ -3555,6 +3566,8 @@ _spt2ast_funcs = {
 	sp.Le: lambda spt: AST ('=', '<=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Gt: lambda spt: AST ('=', '>', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+
+	sp.fancysets.Complexes: lambda spt: AST.Complexes,
 
 	sp.Add: _spt2ast_Add,
 	sp.Mul: _spt2ast_Mul,
@@ -3592,9 +3605,10 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT:
-# 	spt = ast2spt (AST ('func', 'acos', (('@', 'x'),)))
-# 	print (spt)#!/usr/bin/env python
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('@', 'x')))
+# 	nat = ast2nat (ast)
+# 	print (nat)#!/usr/bin/env python
 # python 3.6+
 
 # TODO: Exception prevents restart on file date change?
@@ -3621,9 +3635,10 @@ _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	import sympy as sp
 
-	_var_last = AST ('@', '_')
-	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_parser   = sparser.Parser ()
+	_var_last = '_'
+	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	#_vars    = {AST ('@', 'var'): ast, 'user_func_name': ... }
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -3637,18 +3652,28 @@ usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sym
 # class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
 # 	pass
 
+class RealityRedefinitionError (NameError):	pass
+class CircularReferenceError (RecursionError): pass
+class AE35UnitError (Exception): pass
+
 def _ast_remap (ast, map_):
-	return \
-			ast                                        if not isinstance (ast, AST) or (ast.is_func and ast.func == '@') else \
-			_ast_remap (map_ [ast], map_)              if ast in map_ else \
-			AST (*(_ast_remap (a, map_) for a in ast))
+	if not isinstance (ast, AST) or (ast.is_func and ast.func == '@'): # non-AST or stop remap
+		return ast
+
+	if ast.is_func and ast.func in map_: # user function
+		pass
+
+	if ast.is_var and ast.var in map_:
+		return _ast_remap (map_ [ast.var], map_)
+
+	return AST (*(_ast_remap (a, map_) for a in ast))
 
 def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = None
 
 	if ast.is_ass:
 		if ast.lhs.is_var: # simple assignment?
-			ast, vars = ast.rhs, [ast.lhs]
+			ast, vars = ast.rhs, [ast.lhs.var]
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so restructure
 		lhss = []
@@ -3656,23 +3681,27 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 		for c in itr:
 			if c.is_var:
-				lhss.append (c)
+				lhss.append (c.var)
 			elif not c.is_ass or not c.lhs.is_var:
 				break
 
 			else:
 				t    = (c.rhs,) + tuple (itr)
 				ast  = t [0] if len (t) == 1 else AST (',', t)
-				vars = lhss + [c.lhs]
+				vars = lhss + [c.lhs.var]
+
+	for var in vars: # trying to change a fundemental law of the universe?
+		if AST ('@', var) in AST.CONSTS:
+			raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
 	return _ast_remap (ast, _vars), vars
 
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars, ret_asts):
 		try: # check for circular references
-			_ast_remap (AST (',', tuple (vars)), {**_vars, **vars})
+			_ast_remap (AST (',', tuple (('@', v) for v in vars)), {**_vars, **vars})
 		except RecursionError:
-			raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
+			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
 
 		_vars.update (vars)
 
@@ -3684,7 +3713,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 		return [ast]
 
 	if len (vars) == 1: # simple assignment
-		return _set_vars ({vars [0]: ast}, [AST ('=', '=', vars [0], ast)])
+		return _set_vars ({vars [0]: ast}, [AST ('=', '=', ('@', vars [0]), ast)])
 
 	# tuple assignment
 	ast  = ast.strip_paren ()
@@ -3696,21 +3725,21 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 		raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
 	return _set_vars (dict ((vars [i], asts [i]) for i in range (len (vars))), \
-			[AST ('=', '=', vars [i], asts [i]) for i in range (len (vars))])
+			[AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))])
 
 def _admin_vars (ast):
 	if len (_vars) == 1:
 		return 'No variables defined.'
 	else:
-		return [AST ('=', '=', v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
+		return [AST ('=', '=', ('@', v), e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
 
 def _admin_del (ast):
-	arg = ast.args [0] if ast.args else AST.None_
+	arg = ast.args [0] if ast.args else AST.VarNull
 
 	try:
-		del _vars [arg]
+		del _vars [arg.var]
 	except KeyError:
-		raise NameError (f'Variable {sym.ast2nat (arg)!r} is not defined, it can only be attributable to human error.')
+		raise AE35UnitError (f'Variable {sym.ast2nat (arg)!r} is not defined, it can only be attributable to human error.')
 
 	return f'Variable {sym.ast2nat (arg)!r} deleted.'
 

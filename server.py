@@ -31,7 +31,7 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 	_parser   = sparser.Parser ()
-	_var_last = AST ('@', '_')
+	_var_last = '_'
 	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	#_vars    = {AST ('@', 'var'): ast, 'user_func_name': ... }
 
@@ -48,6 +48,10 @@ usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sym
 # class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
 # 	pass
 
+class RealityRedefinitionError (NameError):	pass
+class CircularReferenceError (RecursionError): pass
+class AE35UnitError (Exception): pass
+
 def _ast_remap (ast, map_):
 	if not isinstance (ast, AST) or (ast.is_func and ast.func == '@'): # non-AST or stop remap
 		return ast
@@ -55,16 +59,17 @@ def _ast_remap (ast, map_):
 	if ast.is_func and ast.func in map_: # user function
 		pass
 
+	if ast.is_var and ast.var in map_:
+		return _ast_remap (map_ [ast.var], map_)
 
-
-	return _ast_remap (map_ [ast], map_) if ast in map_ else AST (*(_ast_remap (a, map_) for a in ast)) # variable?
+	return AST (*(_ast_remap (a, map_) for a in ast))
 
 def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = None
 
 	if ast.is_ass:
 		if ast.lhs.is_var: # simple assignment?
-			ast, vars = ast.rhs, [ast.lhs]
+			ast, vars = ast.rhs, [ast.lhs.var]
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so restructure
 		lhss = []
@@ -72,23 +77,27 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 		for c in itr:
 			if c.is_var:
-				lhss.append (c)
+				lhss.append (c.var)
 			elif not c.is_ass or not c.lhs.is_var:
 				break
 
 			else:
 				t    = (c.rhs,) + tuple (itr)
 				ast  = t [0] if len (t) == 1 else AST (',', t)
-				vars = lhss + [c.lhs]
+				vars = lhss + [c.lhs.var]
+
+	for var in vars: # trying to change a fundemental law of the universe?
+		if AST ('@', var) in AST.CONSTS:
+			raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
 	return _ast_remap (ast, _vars), vars
 
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars, ret_asts):
 		try: # check for circular references
-			_ast_remap (AST (',', tuple (vars)), {**_vars, **vars})
+			_ast_remap (AST (',', tuple (('@', v) for v in vars)), {**_vars, **vars})
 		except RecursionError:
-			raise RecursionError ("I'm sorry, Dave. I'm afraid I can't do that. (circular reference detected)") from None
+			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
 
 		_vars.update (vars)
 
@@ -100,7 +109,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 		return [ast]
 
 	if len (vars) == 1: # simple assignment
-		return _set_vars ({vars [0]: ast}, [AST ('=', '=', vars [0], ast)])
+		return _set_vars ({vars [0]: ast}, [AST ('=', '=', ('@', vars [0]), ast)])
 
 	# tuple assignment
 	ast  = ast.strip_paren ()
@@ -112,21 +121,21 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 		raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
 	return _set_vars (dict ((vars [i], asts [i]) for i in range (len (vars))), \
-			[AST ('=', '=', vars [i], asts [i]) for i in range (len (vars))])
+			[AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))])
 
 def _admin_vars (ast):
 	if len (_vars) == 1:
 		return 'No variables defined.'
 	else:
-		return [AST ('=', '=', v, e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
+		return [AST ('=', '=', ('@', v), e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
 
 def _admin_del (ast):
-	arg = ast.args [0] if ast.args else AST.None_
+	arg = ast.args [0] if ast.args else AST.VarNull
 
 	try:
-		del _vars [arg]
+		del _vars [arg.var]
 	except KeyError:
-		raise NameError (f'Variable {sym.ast2nat (arg)!r} is not defined, it can only be attributable to human error.')
+		raise AE35UnitError (f'Variable {sym.ast2nat (arg)!r} is not defined, it can only be attributable to human error.')
 
 	return f'Variable {sym.ast2nat (arg)!r} deleted.'
 
