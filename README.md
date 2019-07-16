@@ -26,7 +26,7 @@ x if 1 < 2 else y
 
 And they look like this while typing:
 
-![SymPad image example](https://raw.githubusercontent.com/Pristine-Cat/SymPad/master/sympad.png)
+![SymPad image example](https://raw.githubusercontent.com/Pristine-Cat/SymPad/master/sympad.png#1)
 
 ## Installation
 
