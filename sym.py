@@ -1,6 +1,5 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: Add non-doit pseudo-function.
 # TODO: MatrixSymbol ('A', 2, 2)**n
 # TODO: Multiple arguments in
 # TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
@@ -9,8 +8,10 @@
 
 import re
 import sympy as sp
-sp.numbers = sp.numbers # medication for pylint
-sp.boolalg = sp.boolalg
+
+sp.numbers   = sp.numbers # medication for pylint
+sp.boolalg   = sp.boolalg
+sp.fancysets = sp.fancysets
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -18,6 +19,10 @@ _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
 
 #...............................................................................................
+class ExprDontDoIt (sp.Expr):
+	def doit (self, *args, **kwargs):
+		return self.args [0]
+
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
 
@@ -531,7 +536,8 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 
 	if doit and callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
 		try:
-			spt = sp.piecewise_fold (spt.doit ()) # = spt.doit ()
+			spt = spt.doit ()
+			spt = sp.piecewise_fold (spt)
 		except TypeError:
 			pass
 
@@ -554,6 +560,8 @@ _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n
 def _ast2spt_func (ast):
 	if ast.func == '@': # special reference meta-function
 		return ast2spt (ast.args [0])
+	if ast.func == '@@': # special stop evaluation meta-function
+		return ExprDontDoIt (ast2spt (ast.args [0]))
 
 	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
@@ -738,6 +746,8 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
+	ExprDontDoIt: lambda spt: AST ('func', '@@', (spt2ast (spt.args [0]),)),
+
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
 	False.__class__: lambda spt: AST.False_,
