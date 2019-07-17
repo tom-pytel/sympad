@@ -572,6 +572,7 @@ class Parser (lalr1.Parser):
 		('DIVIDE',        r'/'),
 		('EXCL',          r'!'),
 		('AMP',           r'&'),
+		('COLON',         r':'),
 		('DBLSLASH',      r'\\\\'),
 		('COMMA',         r','),
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),

@@ -28,6 +28,8 @@
 # ('intg', expr, var, from, to)      - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('vec', (e1, e2, ...))             - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
+# ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression
+# ('lambda', expr, (v1, v2, ...))    - lambda expression
 
 # TODO: Add zeta and Gamma unicode character functions.
 
@@ -392,6 +394,12 @@ class AST_Piece (AST):
 	def _init (self, pieces):
 		self.pieces = pieces
 
+class AST_Lambda (AST):
+	op, is_lambda = 'lambda', True
+
+	def _init (self, expr, vars):
+		self.expr, self.vars = expr, vars
+
 #...............................................................................................
 _AST_OP2CLS = {
 	'=': AST_Eq,
@@ -419,6 +427,7 @@ _AST_OP2CLS = {
 	'vec': AST_Vec,
 	'mat': AST_Mat,
 	'piece': AST_Piece,
+	'lambda': AST_Lambda, # not to be confused with the Greek variable
 }
 
 _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())

@@ -376,7 +376,7 @@ def _ast2nat_func (ast):
 
 	return \
 			f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}' \
-			if ast.func in AST.Func.PY else \
+			if ast.func in AST.Func.PY or ast.func in _USER_FUNCS else \
 			f'${ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2nat_lim (ast):

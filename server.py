@@ -23,6 +23,8 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
 _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 
+_VAR_LAST = '_'
+
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	import sympy as sp
 	import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -30,10 +32,13 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-	_parser   = sparser.Parser ()
-	_var_last = '_'
-	_vars     = {_var_last: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	#_vars    = {'var': ... }
+	_parser = sparser.Parser ()
+	_vars   = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	#_vars  = {'var': AST, 'func': (AST, ('var1', 'var2', ...))}
+
+	# _vars   = {_VAR_LAST: AST.Zero, 'f': (AST ('^', ('+', (('@', 'x'), ('@', 'y'))), ('@', '2')), ('x', 'y'))} ## TODO: DELETEME!
+	# sym.set_user_funcs ({'f'})
+	# _parser.set_user_funcs ({'f'})
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -56,18 +61,17 @@ def _ast_remap (ast, map_):
 	if not isinstance (ast, AST) or (ast.is_func and ast.func == '@'): # non-AST or stop remap
 		return ast
 
+	if ast.is_var and ast.var in map_: # variable
+		return _ast_remap (map_ [ast.var], map_)
+
 	if ast.is_func and ast.func in map_: # user function
-		## TODO: This!
+#		ast = _ast_remap (, )
 		pass
 
 
 
 
 
-
-
-	if ast.is_var and ast.var in map_: # variable
-		return _ast_remap (map_ [ast.var], map_)
 
 	return AST (*(_ast_remap (a, map_) for a in ast))
 
@@ -111,7 +115,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 		return ret_asts
 
 	if not vars: # no assignment
-		_vars [_var_last] = ast
+		_vars [_VAR_LAST] = ast
 
 		return [ast]
 
@@ -133,8 +137,18 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 def _admin_vars (ast):
 	if len (_vars) == 1:
 		return 'No variables defined.'
-	else:
-		return [AST ('=', '=', ('@', v), e) for v, e in filter (lambda ve: ve [0] != _var_last, sorted (_vars.items ()))]
+
+	asts = []
+
+	for v, e in sorted (_vars.items ()):
+		if v != _VAR_LAST:
+			if isinstance (e, AST):
+				asts.append (AST ('=', '=', ('@', v), e))
+			else:
+				asts.append (AST ('=', '=', ('func', v, tuple (('@', a) for a in e [1])), e [0]))
+				pass
+
+	return asts
 
 def _admin_del (ast):
 	arg = ast.args [0] if ast.args else AST.VarNull
@@ -147,9 +161,9 @@ def _admin_del (ast):
 	return f'Variable {sym.ast2nat (arg)!r} deleted.'
 
 def _admin_delall (ast):
-	last_var = _vars [_var_last]
+	last_var = _vars [_VAR_LAST]
 	_vars.clear ()
-	_vars [_var_last] = last_var
+	_vars [_VAR_LAST] = last_var
 
 	return 'All variables deleted.'
 
@@ -202,7 +216,7 @@ class Handler (SimpleHTTPRequestHandler):
 		tex = nat = py            = None
 
 		if ast is not None:
-			ast = _ast_remap (ast, {_var_last: _vars [_var_last]}) # just remap last evaluated _
+			ast = _ast_remap (ast, {_VAR_LAST: _vars [_VAR_LAST]}) # just remap last evaluated _
 			tex = sym.ast2tex (ast)
 			nat = sym.ast2nat (ast)
 			py  = sym.ast2py (ast)
