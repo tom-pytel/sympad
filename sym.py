@@ -265,7 +265,7 @@ def _ast2tex_intg (ast):
 				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {ast2tex (ast.intg)} \\ {ast2tex (ast.dv)}'
 
 _ast2tex_funcs = {
-	'=': lambda ast: f'{ast2tex (ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
+	'=': lambda ast: f'{_ast2tex_paren (ast.lhs, {"lamb"})} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {ast2tex (ast.rhs)}',
 	'#': _ast2tex_num,
 	'@': _ast2tex_var,
 	'.': _ast2tex_attr,
@@ -275,7 +275,7 @@ _ast2tex_funcs = {
 	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.bracks)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2tex (ast.minus)}',
-	'!': lambda ast: f'{_ast2tex_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2tex (ast.fact)}!',
+	'!': lambda ast: f'{_ast2tex_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat', 'lamb'} or ast.fact.is_neg_num) else f'{ast2tex (ast.fact)}!',
 	'+': lambda ast: ' + '.join (_ast2tex_paren (n) if (n.is_piece and n is not ast.adds [-1]) else ast2tex (n) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
 	'/': lambda ast: f'\\frac{{{ast2tex (ast.numer)}}}{{{ast2tex (ast.denom)}}}',
@@ -290,13 +290,10 @@ _ast2tex_funcs = {
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{ast2tex (p [0])} & \\text{{otherwise}}' if p [1] is True else f'{ast2tex (p [0])} & \\text{{for}}\\: {ast2tex (p [1])}' for p in ast.pieces) + ' \\end{cases}',
-	'lamb': lambda ast: f'\\left({ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {ast2tex (ast.lamb)}\\right)',
+	'lamb': lambda ast: f'{ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {ast2tex (ast.lamb)}',
 
 	'text': lambda ast: ast.tex,
 }
-
-# \left( \left( x, \  y\right) \mapsto \left(x + y\right)^{2} \right)
-# \left( x \mapsto \left(x + y\right)^{2} \right)
 
 #...............................................................................................
 def ast2nat (ast): # abstract syntax tree -> simple text
@@ -417,16 +414,17 @@ def _ast2nat_intg (ast):
 				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_curly (ast.intg, {"piece"})} {ast2nat (ast.dv)}'
 
 _ast2nat_funcs = {
-	'=': lambda ast: f'{ast2nat (ast.lhs)} {ast.rel} {ast2nat (ast.rhs)}',
+	'=': lambda ast: f'{_ast2nat_paren (ast.lhs, {"lamb"})} {ast.rel} {ast2nat (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
-	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{ast.attr}' if ast.args is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}',
+	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb"})}.{ast.attr}' \
+			if ast.args is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
 	',': lambda ast: f'{", ".join (ast2nat (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2nat (ast.paren)})',
 	'[': lambda ast: f'[{", ".join (ast2nat (b) for b in ast.bracks)}]',
 	'|': lambda ast: f'|{ast2nat (ast.abs)}|',
-	'-': lambda ast: f'-{_ast2nat_paren (ast.minus)}' if ast.minus.is_add else f'-{_ast2nat_curly (ast.minus, {"piece"})}',
+	'-': lambda ast: f'-{_ast2nat_paren (ast.minus)}' if ast.minus.is_add else f'-{_ast2nat_curly (ast.minus, {"piece", "lamb"})}',
 	'!': lambda ast: f'{_ast2nat_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2nat (ast.fact)}!',
 	'+': lambda ast: ' + '.join (_ast2nat_curly (n, {'piece'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2nat_mul,

@@ -165,8 +165,7 @@ class AST_Eq (AST):
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
 
-	_is_eq_eq = lambda self: self.rel in {'=', '=='}
-	_is_ass   = lambda self: self.rel == '='
+	_is_ass = lambda self: self.rel == '='
 
 class AST_Num (AST):
 	op, is_num = '#', True
