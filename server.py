@@ -68,7 +68,7 @@ def _ast_remap (ast, map_):
 
 			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
 
-	if ast.is_lamb:
+	if ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
 		lvars = {v.var for v in ast.vars}
 		map_  = {v: a for v, a in filter (lambda va: va [0] not in lvars, map_.items ())}
 
