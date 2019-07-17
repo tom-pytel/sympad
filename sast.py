@@ -28,8 +28,8 @@
 # ('intg', expr, var, from, to)      - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('vec', (e1, e2, ...))             - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
-# ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression
-# ('lambda', expr, (v1, v2, ...))    - lambda expression
+# ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST
+# ('lamb', expr, (v1, v2, ...))      - lambda expression: v = ('@', 'var')
 
 # TODO: Add zeta and Gamma unicode character functions.
 
@@ -206,6 +206,9 @@ class AST_Var (AST):
 	def _init (self, var):
 		self.var = var
 
+		if AST._rec_identifier.match (var):
+			self.__dict__ [f'is_var_{var}'] = True
+
 	_grp                  = lambda self: AST_Var._rec_groups.match (self.var).groups ()
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
@@ -343,6 +346,9 @@ class AST_Func (AST):
 	def _init (self, func, args):
 		self.func, self.args = func, args
 
+		if AST._rec_identifier.match (func):
+			self.__dict__ [f'is_func_{func}'] = True
+
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
 	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
@@ -394,11 +400,11 @@ class AST_Piece (AST):
 	def _init (self, pieces):
 		self.pieces = pieces
 
-class AST_Lambda (AST):
-	op, is_lambda = 'lambda', True
+class AST_Lamb (AST):
+	op, is_lamb = 'lamb', True
 
-	def _init (self, expr, vars):
-		self.expr, self.vars = expr, vars
+	def _init (self, lamb, vars):
+		self.lamb, self.vars = lamb, vars
 
 #...............................................................................................
 _AST_OP2CLS = {
@@ -427,7 +433,7 @@ _AST_OP2CLS = {
 	'vec': AST_Vec,
 	'mat': AST_Mat,
 	'piece': AST_Piece,
-	'lambda': AST_Lambda, # not to be confused with the Greek variable
+	'lamb': AST_Lamb, # not to be confused with the Greek variable lambda
 }
 
 _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())

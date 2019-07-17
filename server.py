@@ -34,11 +34,6 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 
 	_parser = sparser.Parser ()
 	_vars   = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	#_vars  = {'var': AST, 'func': (AST, ('var1', 'var2', ...))}
-
-	# _vars   = {_VAR_LAST: AST.Zero, 'f': (AST ('^', ('+', (('@', 'x'), ('@', 'y'))), ('@', '2')), ('x', 'y'))} ## TODO: DELETEME!
-	# sym.set_user_funcs ({'f'})
-	# _parser.set_user_funcs ({'f'})
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -65,13 +60,19 @@ def _ast_remap (ast, map_):
 		return _ast_remap (map_ [ast.var], map_)
 
 	if ast.is_func and ast.func in map_: # user function
-#		ast = _ast_remap (, )
-		pass
+		lamb = map_ [ast.func]
 
+		if lamb.is_lamb:
+			if len (ast.args) != len (lamb.vars):
+				raise TypeError (f"'{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
+			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
 
+	if ast.is_lamb:
+		lvars = {v.var for v in ast.vars}
+		map_  = {v: a for v, a in filter (lambda va: va [0] not in lvars, map_.items ())}
 
-
+		return AST (*(_ast_remap (a, map_) if a not in ast.vars else a for a in ast))
 
 	return AST (*(_ast_remap (a, map_) for a in ast))
 
@@ -97,14 +98,15 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 				ast  = t [0] if len (t) == 1 else AST (',', t)
 				vars = lhss + [c.lhs.var]
 
-	for var in vars: # trying to change a fundemental law of the universe?
-		if AST ('@', var) in AST.CONSTS:
-			raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
+	if vars:
+		for var in vars: # trying to change a fundemental law of the universe?
+			if AST ('@', var) in AST.CONSTS:
+				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
 	return _ast_remap (ast, _vars), vars
 
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
-	def _set_vars (vars, ret_asts):
+	def _set_vars (vars):
 		try: # check for circular references
 			_ast_remap (AST (',', tuple (('@', v) for v in vars)), {**_vars, **vars})
 		except RecursionError:
@@ -112,27 +114,35 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 
 		_vars.update (vars)
 
-		return ret_asts
-
 	if not vars: # no assignment
 		_vars [_VAR_LAST] = ast
 
 		return [ast]
 
 	if len (vars) == 1: # simple assignment
-		return _set_vars ({vars [0]: ast}, [AST ('=', '=', ('@', vars [0]), ast)])
+		_set_vars ({vars [0]: ast})
 
-	# tuple assignment
-	ast  = ast.strip_paren ()
-	asts = ast.commas if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
+		asts = [AST ('=', '=', ('@', vars [0]), ast)]
 
-	if len (vars) < len (asts):
-		raise ValueError (f'too many values to unpack (expected {len (vars)})')
-	if len (vars) > len (asts):
-		raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
+	else: # tuple assignment
+		ast  = ast.strip_paren ()
+		asts = ast.commas if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
 
-	return _set_vars (dict ((vars [i], asts [i]) for i in range (len (vars))), \
-			[AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))])
+		if len (vars) < len (asts):
+			raise ValueError (f'too many values to unpack (expected {len (vars)})')
+		if len (vars) > len (asts):
+			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
+
+		_set_vars (dict ((vars [i], asts [i]) for i in range (len (vars))))
+
+		asts = [AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
+
+	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb, _vars.items ())}
+
+	sym.set_user_funcs (user_funcs)
+	_parser.set_user_funcs (user_funcs)
+
+	return asts
 
 def _admin_vars (ast):
 	if len (_vars) == 1:
@@ -142,11 +152,12 @@ def _admin_vars (ast):
 
 	for v, e in sorted (_vars.items ()):
 		if v != _VAR_LAST:
-			if isinstance (e, AST):
-				asts.append (AST ('=', '=', ('@', v), e))
-			else:
-				asts.append (AST ('=', '=', ('func', v, tuple (('@', a) for a in e [1])), e [0]))
-				pass
+			asts.append (AST ('=', '=', ('@', v), e))
+			# if isinstance (e, AST):
+			# 	asts.append (AST ('=', '=', ('@', v), e))
+			# else:
+			# 	asts.append (AST ('=', '=', ('func', v, tuple (('@', a) for a in e [1])), e [0]))
+			# 	pass
 
 	return asts
 
