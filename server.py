@@ -133,7 +133,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 		if len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
-		_set_vars (dict ((vars [i], asts [i]) for i in range (len (vars))))
+		_set_vars (dict (zip (vars, asts)))
 
 		asts = [AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
 
@@ -153,11 +153,10 @@ def _admin_vars (ast):
 	for v, e in sorted (_vars.items ()):
 		if v != _VAR_LAST:
 			asts.append (AST ('=', '=', ('@', v), e))
-			# if isinstance (e, AST):
-			# 	asts.append (AST ('=', '=', ('@', v), e))
+			# if e.is_lamb:
+			# 	asts.append (AST ('=', '=', ('func', v, e.vars), e.lamb))
 			# else:
-			# 	asts.append (AST ('=', '=', ('func', v, tuple (('@', a) for a in e [1])), e [0]))
-			# 	pass
+			# 	asts.append (AST ('=', '=', ('@', v), e))
 
 	return asts
 
