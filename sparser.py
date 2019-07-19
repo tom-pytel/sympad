@@ -196,51 +196,53 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 	return ast
 
 def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
-	ast, apply = ast.strip_minus (ret_apply = True)
+	ast, negate = ast.strip_minus (retneg = True)
 
 	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
-		return apply (AST ('intg', None, ast, *from_to))
+		return negate (AST ('intg', None, ast, *from_to))
 
 	elif ast.is_diff:
 		if ast.diff.is_mul and ast.diff.muls [-1].is_differential:
-			return AST ('intg', apply ( \
+			return AST ('intg', negate ( \
 					AST ('diff', ('*', ast.diff.muls [:-1]) if len (ast.diff.muls) > 2 else ast.diff.muls [0], ast.dvs) \
 					), ast.diff.muls [-1], *from_to)
 
 	elif ast.is_mul:
 		if ast.muls [-1].is_differential or ast.muls [-1].is_null_var: # null_var is for autocomplete
-			return AST ('intg', apply (ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1])), ast.muls [-1], *from_to)
+			return AST ('intg', negate (ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1])), ast.muls [-1], *from_to)
 
 		if ast.muls [-1].is_diff and ast.muls [-1].diff.is_mul and ast.muls [-1].diff.muls [-1].is_differential:
-			return AST ('intg', apply (AST ('*', ast.muls [:-1] + \
+			return AST ('intg', negate (AST ('*', ast.muls [:-1] + \
 					(('diff', ('*', ast.muls [-1].diff.muls [:-1]) if len (ast.muls [-1].diff.muls) > 2 else ast.muls [-1].diff.muls [0], ast.muls [-1].dvs),) \
 					)), ast.muls [-1].diff.muls [-1], *from_to)
 
 	elif ast.is_div:
 		if ast.denom.is_mul and ast.denom.muls [-1].is_differential:
-			return AST ('intg', apply (('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else \
+			return AST ('intg', negate (('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else \
 					AST ('*', ast.denom.muls [:-1]))), ast.denom.muls [-1], *from_to)
 
 		if ast.numer.is_differential:
-			return AST ('intg', apply (('/', ast.One, ast.denom)), ast.numer, *from_to)
+			return AST ('intg', negate (('/', ast.One, ast.denom)), ast.numer, *from_to)
 
 	elif ast.is_add:
-		if ast.adds [-1].is_differential:
-			return AST ('intg', apply ( \
-					AST ('+', ast.adds [:-1])
-					if len (ast.adds) > 2 else \
-					ast.adds [0] \
-					), ast.adds [-1], *from_to)
+		ast2, negate2 = ast.adds [-1].strip_minus (retneg = True)
 
-		if ast.adds [-1].is_mul and ast.adds [-1].muls [-1].is_differential:
-			return AST ('intg', apply ( \
-					AST ('+', ast.adds [:-1] + (AST ('*', ast.adds [-1].muls [:-1]),))
-					if len (ast.adds [-1].muls) > 2 else \
-					AST ('+', ast.adds [:-1] + (ast.adds [-1].muls [0],)) \
-					), ast.adds [-1].muls [-1], *from_to)
+		if ast2.is_differential:
+			return AST ('intg', negate ( \
+					AST ('+', negate2 (ast.adds [:-1]))
+					if len (ast.adds) > 2 else \
+					negate2 (ast.adds [0]) \
+					), ast2, *from_to)
+
+		if ast2.is_mul and ast2.muls [-1].is_differential:
+			return AST ('intg', negate ( \
+					AST ('+', ast.adds [:-1] + (AST ('*', ast2.muls [:-1]),))
+					if len (ast2.muls) > 2 else \
+					AST ('+', ast.adds [:-1] + (ast2.muls [0],)) \
+					), ast2.muls [-1], *from_to)
 
 	elif ast.is_intg and ast.intg is not None:
-		return AST ('intg', apply (_expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to))), ast.dv, *from_to)
+		return AST ('intg', negate (_expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to))), ast.dv, *from_to)
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -1035,5 +1037,5 @@ class sparser: # for single script
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 	p = Parser ()
-	a = p.parse (r'\int \frac{d}{dx} x dy')
+	a = p.parse (r'\int x - x dx')
 	print (a)

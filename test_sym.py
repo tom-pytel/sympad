@@ -168,8 +168,6 @@ def expr (depth = None):
 
 	return expr
 
-_DEPTH = 4
-
 def remove_paren (ast):
 	if not isinstance (ast, AST):
 		return ast
@@ -190,11 +188,14 @@ def flatten (ast):
 
 	return AST (*t)
 
+#...............................................................................................
+_DEPTH = 4
+
 def test ():
-	opts, argv = getopt (sys.argv [1:], '', ['dump', 'show'])
+	opts, argv = getopt (sys.argv [1:], '', ['tex', 'nat', 'py', 'print', 'show'])
 	parser     = sparser.Parser ()
 
-	if ('--dump', '') in opts:
+	if ('--print', '') in opts:
 		global DEPTH
 
 		DEPTH = 0
@@ -203,6 +204,10 @@ def test ():
 			print (e ())
 
 		sys.exit (0)
+
+	dotex = ('--tex', '') in opts
+	donat = ('--nat', '') in opts
+	dopy  = ('--py', '') in opts
 
 	try:
 		while 1:
@@ -214,9 +219,9 @@ def test ():
 				continue
 
 			ast = flatten (ast)
-			tex = sym.ast2tex (ast)
-			nat = sym.ast2nat (ast)
-			py  = sym.ast2py (ast)
+			tex = dotex and sym.ast2tex (ast)
+			nat = donat and sym.ast2nat (ast)
+			py  = dopy and sym.ast2py (ast)
 
 			if ('--show', '') in opts:
 				print ()
@@ -226,30 +231,29 @@ def test ():
 				print ('nat: ', nat)
 				print ('py:  ', py)
 
-			ast_tex = parser.parse (tex) [0]
-			# ast_nat = parser.parse (nat) [0]
-			# ast_py  = parser.parse (py) [0]
+			ast_tex = dotex and parser.parse (tex) [0]
+			ast_nat = donat and parser.parse (nat) [0]
+			ast_py  = dopy and parser.parse (py) [0]
 			ast_srp = remove_paren (ast)
-			ast_tex = remove_paren (ast_tex)
-			# ast_nat = remove_paren (ast_nat)
-			# ast_py  = remove_paren (ast_py)
+			ast_tex = dotex and remove_paren (ast_tex)
+			ast_nat = donat and remove_paren (ast_nat)
+			ast_py  = dopy and remove_paren (ast_py)
 
-			# if ast_tex != ast_srp or ast_nat != ast_srp or ast_py != ast_py:
-			if ast_tex != ast_srp:
+			if (dotex and ast_tex != ast_srp) or (donat and ast_nat != ast_srp) or (dopy and ast_py != ast_py):
 				print ()
 				print ('text:', text)
 				print ('ast: ', ast)
 
-				if ast_tex != ast_srp:
+				if dotex and ast_tex != ast_srp:
 					print ('tex: ', ast_tex)
 
-				# if ast_nat != ast_srp:
-				# 	print ('nat: ', ast_nat)
+				if donat and ast_nat != ast_srp:
+					print ('nat: ', ast_nat)
 
-				# if ast_py != ast_py:
-				# 	print ('py:  ', ast_py)
+				if dopy and ast_py != ast_py:
+					print ('py:  ', ast_py)
 
-					input ('>')
+					sys.exit (0)
 
 	except Exception as e:
 		print ()
@@ -257,8 +261,8 @@ def test ():
 		print ('ast: ', ast)
 		print ('srp: ', ast_srp)
 		print ('tex: ', ast_tex)
-		# print ('nat: ', ast_nat)
-		# print ('py:  ', ast_py)
+		print ('nat: ', ast_nat)
+		print ('py:  ', ast_py)
 		print ()
 
 		if not isinstance (e, KeyboardInterrupt):

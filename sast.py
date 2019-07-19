@@ -139,7 +139,7 @@ class AST (tuple):
 
 		return self
 
-	def strip_minus (self, count = None, ret_apply = False):
+	def strip_minus (self, count = None, retneg = False):
 		count = 999999999 if count is None else count
 		apply = lambda ast: ast
 
@@ -148,7 +148,7 @@ class AST (tuple):
 			apply  = lambda ast, apply = apply: apply (ast.neg (stack = True))
 			count -= 1
 
-		return (self, apply) if ret_apply else self
+		return (self, apply) if retneg else self
 
 	def as_identifier (self, top = True):
 		if self.op in {'#', '@', '"'}:

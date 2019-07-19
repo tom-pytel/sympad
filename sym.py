@@ -262,12 +262,12 @@ def _ast2tex_intg (ast):
 		return \
 				f'\\int \\ {ast2tex (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {_ast2tex_wrap (ast.intg, {"=", "+", "diff"}, {"lamb"})} \\ {ast2tex (ast.dv)}'
+				f'\\int {_ast2tex_wrap (ast.intg, {"=", "diff"}, {"lamb"})} \\ {ast2tex (ast.dv)}'
 	else:
 		return \
 				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} \\ {ast2tex (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {_ast2tex_wrap (ast.intg, {"=", "+", "diff"}, {"lamb"})} \\ {ast2tex (ast.dv)}'
+				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {_ast2tex_wrap (ast.intg, {"=", "diff"}, {"lamb"})} \\ {ast2tex (ast.dv)}'
 
 _ast2tex_funcs = {
 	'=': lambda ast: f'{_ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2tex_eq_hs (ast, ast.rhs)}',
@@ -339,14 +339,27 @@ _ast2tex_funcs = {
 def ast2nat (ast): # abstract syntax tree -> simple text
 	return _ast2nat_funcs [ast.op] (ast)
 
-def _ast2nat_curly (ast, ops = {}):
-	if ops:
-		return f'{{{ast2nat (ast)}}}' if ast.op in ops else ast2nat (ast)
+def _ast2nat_wrap (obj, curly = None, paren = None):
+	s = ast2nat (obj) if isinstance (obj, AST) else str (obj)
 
-	return f'{{{ast2nat (ast)}}}' if not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX) else ast2nat (ast)
+	if (obj.op in paren) if isinstance (paren, set) else paren:
+		return f'({s})'
+
+	if (obj.op in curly) if isinstance (curly, set) else curly:
+		return f'{{{s}}}'
+
+	return s
+
+def _ast2nat_curly (ast, ops = {}):
+	return _ast2nat_wrap (ast, ops if ops else (not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX)))
+	# if ops:
+	# 	return f'{{{ast2nat (ast)}}}' if ast.op in ops else ast2nat (ast)
+
+	# return f'{{{ast2nat (ast)}}}' if not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX) else ast2nat (ast)
 
 def _ast2nat_paren (ast, ops = {}):
-	return ast2nat (ast) if ast.is_paren or (ops and ast.op not in ops) else f'({ast2nat (ast)})'
+	return _ast2nat_wrap (ast, 0, not (ast.is_paren or (ops and ast.op not in ops)))
+	# return ast2nat (ast) if ast.is_paren or (ops and ast.op not in ops) else f'({ast2nat (ast)})'
 
 def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {'+'}):
 	if ast.is_mul:
@@ -364,9 +377,10 @@ def _ast2nat_mul (ast, ret_has = False):
 	has = False
 
 	for n in ast.muls:
-		s = _ast2nat_paren (n)   if n.is_add or (p and _ast_is_neg (n)) or (n.is_piece and n is not ast.muls [-1]) else \
-				f'{{{ast2nat (n)}}}' if n.is_piece else \
-				ast2nat (n)
+		# s = _ast2nat_paren (n)   if n.is_add or (p and _ast_is_neg (n)) or (n.is_piece and n is not ast.muls [-1]) else \
+		# 		f'{{{ast2nat (n)}}}' if n.is_piece else \
+		# 		ast2nat (n)
+		s = _ast2nat_wrap (n, 0,(n.op in {'piece', 'lamb'} and n is not ast.muls [-1]) or n.is_add or (p and _ast_is_neg (n)))
 
 		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or (n.is_pow and n.base.is_pos_num) \
 				 or n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'}):
@@ -385,8 +399,8 @@ def _ast2nat_mul (ast, ret_has = False):
 	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2nat_div (ast):
-	n, ns = _ast2nat_curly_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff', 'piece'})
-	d, ds = _ast2nat_curly_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff', 'piece'})
+	n, ns = _ast2nat_curly_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff', 'piece', 'lamb'})
+	d, ds = _ast2nat_curly_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff', 'piece', 'lamb'})
 	s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
 
 	return f'{n}{" / " if s else "/"}{d}'
@@ -421,7 +435,7 @@ def _ast2nat_func (ast):
 			f'${ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2nat_lim (ast):
-	s = _ast2nat_curly (ast.to, {'piece'}) if ast.dir is None else ast2nat (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
+	s = _ast2nat_wrap (ast.to, {'piece'}) if ast.dir is None else ast2nat (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
 
 	return f'\\lim_{{{ast2nat (ast.lvar)} \\to {s}}} {_ast2nat_curly_mul_exp (ast.lim, also = {"+", "piece"})}'
 
@@ -446,12 +460,12 @@ def _ast2nat_intg (ast):
 		return \
 				f'\\int {ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {_ast2nat_curly (ast.intg, {"piece"})} {ast2nat (ast.dv)}'
+				f'\\int {_ast2nat_wrap (ast.intg, 0, {"piece", "lamb"})} {ast2nat (ast.dv)}'
 	else:
 		return \
 				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_curly (ast.intg, {"piece"})} {ast2nat (ast.dv)}'
+				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, 0, {"piece", "lamb"})} {ast2nat (ast.dv)}'
 
 _ast2nat_funcs = {
 	'=': lambda ast: f'{_ast2nat_paren (ast.lhs, {"lamb"})} {ast.rel} {ast2nat (ast.rhs)}',
@@ -484,6 +498,9 @@ _ast2nat_funcs = {
 
 	'text': lambda ast: ast.nat,
 }
+
+# \lim_{x \to \frac{lambda x, y, z: {-{0}}}{partial^{5} / partialz^{2} partialz^{1} partialx^{2} {Limit (a', x, 1)}}} {\arctan()}
+# {{{|{{0}**{1.0}}|} / {lambda x, y: {\int_{a'}^{a'} {0} dx}}},{\int_{\sqrt{()}}^{lambda x, y, z: {Sum (partial, (x, a, partial))}} {lambda x, y: {{{1}*{a'}}}} dx},}
 
 #...............................................................................................
 def ast2py (ast): # abstract syntax tree -> Python code text
