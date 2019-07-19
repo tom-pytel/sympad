@@ -7,7 +7,9 @@
 # ('.', expr, 'name', (a1, a2, ...)) - method member call
 # ('"', 'str')                       - string (for function parameters like '+' or '-')
 # (',', (expr1, expr2, ...))         - comma expression (tuple)
+# ('{', expr)                        - invilible parentheses for grouping
 # ('(', expr)                        - explicit parentheses
+# ('[', expr)                        - brackets
 # ('|', expr)                        - absolute value
 # ('-', expr)                        - negative of expression, negative numbers are represented with this at least initially
 # ('!', expr)                        - factorial
@@ -99,6 +101,21 @@ class AST (tuple):
 					AST ('#', self.num [1:])   if self.num [0] == '-' else \
 					AST ('#', f'-{self.num}')
 
+	def strip_curlys (self, count = None):
+		count = 999999999 if count is None else count
+
+		while self.op == '{' and count:
+			self   = self.curly
+			count -= 1
+
+		return self
+
+	def remove_curlys (self):
+		return \
+				self.curly.remove_curlys () \
+				if self.is_curly else \
+				AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
+
 	def strip_paren (self, count = None):
 		count = 999999999 if count is None else count
 
@@ -108,14 +125,30 @@ class AST (tuple):
 
 		return self
 
-	def strip_minus (self, count = None):
+	def strip_paren_noncomma (self, count = None):
+		new = self.strip_paren (count)
+
+		return new if not new.is_comma or not self.is_paren else AST ('(', new)
+
+	def strip (self, count = None):
 		count = 999999999 if count is None else count
 
-		while self.op == '-' and count:
-			self   = self.minus
+		while self.op in {'{', '('} and count:
+			self   = self [1]
 			count -= 1
 
 		return self
+
+	def strip_minus (self, count = None, ret_apply = False):
+		count = 999999999 if count is None else count
+		apply = lambda ast: ast
+
+		while self.op == '-' and count:
+			self   = self.minus
+			apply  = lambda ast, apply = apply: apply (ast.neg (stack = True))
+			count -= 1
+
+		return (self, apply) if ret_apply else self
 
 	def as_identifier (self, top = True):
 		if self.op in {'#', '@', '"'}:
@@ -211,10 +244,10 @@ class AST_Var (AST):
 	_grp                  = lambda self: AST_Var._rec_groups.match (self.var).groups ()
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
-	_is_diff              = lambda self: self.grp [0] and self.grp [2]
+	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]
-	_is_part              = lambda self: self.grp [1] and self.grp [2]
+	_is_partial           = lambda self: self.grp [1] and self.grp [2]
 	_is_part_solo         = lambda self: self.grp [1] and not self.grp [2]
 	_is_part_any          = lambda self: self.grp [1]
 	_is_diff_or_part      = lambda self: (self.grp [0] or self.grp [1]) and self.grp [2]
@@ -243,6 +276,14 @@ class AST_Comma (AST):
 		self.commas = commas
 
 	# _len = lambda self: len (self.commas)
+
+class AST_Curly (AST):
+	op, is_curly = '{', True
+
+	def _init (self, curly):
+		self.curly = curly
+
+	# _len = lambda self: len (self.paren)
 
 class AST_Paren (AST):
 	op, is_paren = '(', True
@@ -413,6 +454,7 @@ _AST_OP2CLS = {
 	'.': AST_Attr,
 	'"': AST_Str,
 	',': AST_Comma,
+	'{': AST_Curly,
 	'(': AST_Paren,
 	'[': AST_Brack,
 	'|': AST_Abs,
@@ -440,6 +482,7 @@ _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
 for cls in _AST_CLS2OP:
 	setattr (AST, cls.__name__ [4:], cls)
 
+AST.OPS      = set (_AST_OP2CLS)
 AST.Zero     = AST ('#', '0')
 AST.One      = AST ('#', '1')
 AST.NegOne   = AST ('#', '-1')

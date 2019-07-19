@@ -1987,7 +1987,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		else:
 			return None
 
-		ast_dv_check = (lambda n: n.is_diff) if v.is_diff_solo else (lambda n: n.is_part)
+		ast_dv_check = (lambda n: n.is_diff) if v.is_diff_solo else (lambda n: n.is_partial)
 
 		ns = ast.denom.muls if ast.denom.is_mul else (ast.denom,)
 		ds = []
@@ -2407,7 +2407,7 @@ class Parser (lalr1.Parser):
 			b'pjqaY1qa/ptFptmRnnqOJBw5dj1ZthLXNlX2r3PTIGhV8+8Khc2NKJRj3Pal01X7u6R5ro0h1JoDUCuH1u1Ds54nkY92Aw9CdVOXdO/VMcZaNHOm7/pxcOmJMCdW4rAVKd6+E864U+RMW92pE874w3KGtKwJc5p9GYSHh3OY1yrvMV+1KqowKpSMwozdUXhV' \
 			b'b+cXyryVZ5hHTC52VXl7ELeU5kK4sC6eB+tMdUpOWNdOWTc46TXyua72Zpw0fNhQxye0puNZ84msc/xNp636LbzGqanb+e2r03ENd09hp0hSQ915CHeoTsnJjEp9vXDfjIelTC/z80ZC3FYj16bfdvJoD4epTkkLk5wzz+NcrIWshevN+XMdM83n4YTl5h6w' \
 			b'3FVn4oTl9h6wXEx1Z+CE5e4esDxUZ+KE5f4esLytzsQJy2f0wEOyfHEsfnDGwz57NAcz7TjIT4J2dFIBM9rkCahEN6sKU2136dsY1764h4PF/AbxpVJOU0+9WaWE6jyd1MiMXnruNYJVJGfpxDC/Qt09uxox1Xk6qZEVqvDZ1YitztNJjazQlM+uRnx1nk5q' \
-			b'ZIUifa4z0FjYdsZO6scVa31rYqCEkmKIWuIqEqYSO/BK0EWWee1kp8gjvUbWcLa1LoZETYhxk9gmL+EYPM9LUDT3NgfoGzg+CfXCCwmxyLeVYTsfL1PIB9Uqr/5o9LzGIKd5BbG28WEeM2+bavQvb5vJ25AGjmGryX+rsSxMjIGNZljBePX/iqIbLg==' 
+			b'ZIUifa4z0FjYdsZO6scVa31rYqCEkmKIWuIqEqYSO/BK0EWWee1kp8gjvUbWcLa1LoZETYhxk9gmL+EYPM9LUDT3NgfoGzg+CfXCCwmxyLeVYTsfL1PIB9Uqr/5o9LzGIKd5BbG28WEeM2+bavQvb5vJ25AGjmGryX+rsSxMjIGNZljBePX/iqIbLg=='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -3114,7 +3114,7 @@ def _ast2tex_diff (ast):
 
 	dv = next (iter (ds))
 
-	if len (ds) == 1 and not dv.is_part:
+	if len (ds) == 1 and not dv.is_partial:
 		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (ast2tex (n) for n in ast.dvs)}}}{_ast2tex_paren (ast.diff)}'
 
 	else:
