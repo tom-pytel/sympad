@@ -374,7 +374,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ("'x\\x20\\n'")), "'x \\n'")
 		self.assertEqual (ast2nat (p ("x''string'")), 'x_prime_prime string_prime')
 		self.assertEqual (ast2nat (p ("x' 'string'")), "x_prime 'string'")
-		self.assertEqual (ast2nat (p ('|x|')), '|x|')
+		self.assertEqual (ast2nat (p ('|x|')), '{|x|}')
 		self.assertEqual (ast2nat (p ('x!')), 'x!')
 		self.assertEqual (ast2nat (p ('x+y')), 'x + y')
 		self.assertEqual (ast2nat (p ('x-y')), 'x - y')
@@ -412,11 +412,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('Limit (1/x, x, 0, dir="+-")')), '\\lim_{x \\to 0} 1/x')
 		self.assertEqual (ast2nat (p ('\\sum_{n=0}^\\infty x^n/n!')), '\\sum_{n=0}^{oo} x**n / n!')
 		self.assertEqual (ast2nat (p ('Sum (x^n/n!, (n, 0, oo))')), '\\sum_{n=0}^{oo} x**n / n!')
-		self.assertEqual (ast2nat (p ('d/dx x**2y**2z')), 'd / dx (x**2y**2 z)')
-		self.assertEqual (ast2nat (p ('d^2/dx^2 x^2y**2z')), 'd^2 / dx**2 (x**2y**2 z)')
-		self.assertEqual (ast2nat (p ('d^3/dx^2dy x^2y**2z')), 'd^3 / dx**2 dy (x**2y**2 z)')
-		self.assertEqual (ast2nat (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), 'partial^4 / partialx**2 partialy partialz (x**2y**2 z)')
-		self.assertEqual (ast2nat (p ('Derivative (x^2y**2z, x, 2, y, z)')), 'd^4 / dx**2 dy dz (x**2y**2 z)')
+		self.assertEqual (ast2nat (p ('d/dx x**2y**2z')), 'd / dx (x**2 y**2 z)')
+		self.assertEqual (ast2nat (p ('d^2/dx^2 x^2y**2z')), 'd^2 / dx**2 (x**2 y**2 z)')
+		self.assertEqual (ast2nat (p ('d^3/dx^2dy x^2y**2z')), 'd^3 / dx**2 dy (x**2 y**2 z)')
+		self.assertEqual (ast2nat (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), 'partial^4 / partialx**2 partialy partialz (x**2 y**2 z)')
+		self.assertEqual (ast2nat (p ('Derivative (x^2y**2z, x, 2, y, z)')), 'd^4 / dx**2 dy dz (x**2 y**2 z)')
 		self.assertEqual (ast2nat (p ('\\int dx')), '\\int dx')
 		self.assertEqual (ast2nat (p ('\\int x dx')), '\\int x dx')
 		self.assertEqual (ast2nat (p ('\\int_0^1 x dx')), '\\int_0^1 x dx')
@@ -479,18 +479,18 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('lambda: x')), 'lambda: x')
 		self.assertEqual (ast2nat (p ('lambda x: x**2')), 'lambda x: x**2')
 		self.assertEqual (ast2nat (p ('lambda x, y: x + y')), 'lambda x, y: x + y')
-		self.assertEqual (ast2nat (p ('a lambda: x')), 'a lambda: x')
-		self.assertEqual (ast2nat (p ('a lambda x: x**2')), 'a lambda x: x**2')
-		self.assertEqual (ast2nat (p ('a lambda x, y: x + y')), 'a lambda x, y: x + y')
+		self.assertEqual (ast2nat (p ('a lambda: x')), 'a (lambda: x)')
+		self.assertEqual (ast2nat (p ('a lambda x: x**2')), 'a (lambda x: x**2)')
+		self.assertEqual (ast2nat (p ('a lambda x, y: x + y')), 'a (lambda x, y: x + y)')
 		self.assertEqual (ast2nat (p ('1, lambda: x')), '1, lambda: x')
 		self.assertEqual (ast2nat (p ('1, lambda x: x**2')), '1, lambda x: x**2')
 		self.assertEqual (ast2nat (p ('1, lambda x, y: x + y')), '1, lambda x, y: x + y')
-		self.assertEqual (ast2nat (p ('1, a lambda: x')), '1, a lambda: x')
-		self.assertEqual (ast2nat (p ('1, a lambda x: x**2')), '1, a lambda x: x**2')
-		self.assertEqual (ast2nat (p ('1, a lambda x, y: x + y')), '1, a lambda x, y: x + y')
-		self.assertEqual (ast2nat (p ('1, a lambda: x, 2')), '1, a lambda: x, 2')
-		self.assertEqual (ast2nat (p ('1, a lambda x: x**2, 2')), '1, a lambda x: x**2, 2')
-		self.assertEqual (ast2nat (p ('1, a lambda x, y: x + y, 2')), '1, a lambda x, y: x + y, 2')
+		self.assertEqual (ast2nat (p ('1, a lambda: x')), '1, a (lambda: x)')
+		self.assertEqual (ast2nat (p ('1, a lambda x: x**2')), '1, a (lambda x: x**2)')
+		self.assertEqual (ast2nat (p ('1, a lambda x, y: x + y')), '1, a (lambda x, y: x + y)')
+		self.assertEqual (ast2nat (p ('1, a lambda: x, 2')), '1, a (lambda: x), 2')
+		self.assertEqual (ast2nat (p ('1, a lambda x: x**2, 2')), '1, a (lambda x: x**2), 2')
+		self.assertEqual (ast2nat (p ('1, a lambda x, y: x + y, 2')), '1, a (lambda x, y: x + y), 2')
 		self.assertEqual (ast2nat (p ('\\left(\\left(\\right) \\mapsto x \\right)')), '(lambda: x)')
 		self.assertEqual (ast2nat (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), '(lambda x: x**2)')
 		self.assertEqual (ast2nat (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), '(lambda x, y: x + y)')
@@ -947,18 +947,18 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('lambda: x')), ('lamb', ('@', 'x'), ()))
 		self.assertEqual (ast2nat2ast (p ('lambda x: x**2')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (ast2nat2ast (p ('lambda x, y: x + y')), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))
-		self.assertEqual (ast2nat2ast (p ('a lambda: x')), ('*', (('@', 'a'), ('lamb', ('@', 'x'), ()))))
-		self.assertEqual (ast2nat2ast (p ('a lambda x: x**2')), ('*', (('@', 'a'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))))
-		self.assertEqual (ast2nat2ast (p ('a lambda x, y: x + y')), ('*', (('@', 'a'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (ast2nat2ast (p ('a lambda: x')), ('*', (('@', 'a'), ('(', ('lamb', ('@', 'x'), ())))))
+		self.assertEqual (ast2nat2ast (p ('a lambda x: x**2')), ('*', (('@', 'a'), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))))
+		self.assertEqual (ast2nat2ast (p ('a lambda x, y: x + y')), ('*', (('@', 'a'), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))))
 		self.assertEqual (ast2nat2ast (p ('1, lambda: x')), (',', (('#', '1'), ('lamb', ('@', 'x'), ()))))
 		self.assertEqual (ast2nat2ast (p ('1, lambda x: x**2')), (',', (('#', '1'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))))
 		self.assertEqual (ast2nat2ast (p ('1, lambda x, y: x + y')), (',', (('#', '1'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))))
-		self.assertEqual (ast2nat2ast (p ('1, a lambda: x')), (',', (('#', '1'), ('*', (('@', 'a'), ('lamb', ('@', 'x'), ()))))))
-		self.assertEqual (ast2nat2ast (p ('1, a lambda x: x**2')), (',', (('#', '1'), ('*', (('@', 'a'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))))))
-		self.assertEqual (ast2nat2ast (p ('1, a lambda x, y: x + y')), (',', (('#', '1'), ('*', (('@', 'a'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))))))
-		self.assertEqual (ast2nat2ast (p ('1, a lambda: x, 2')), (',', (('#', '1'), ('*', (('@', 'a'), ('lamb', ('@', 'x'), ()))), ('#', '2'))))
-		self.assertEqual (ast2nat2ast (p ('1, a lambda x: x**2, 2')), (',', (('#', '1'), ('*', (('@', 'a'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))), ('#', '2'))))
-		self.assertEqual (ast2nat2ast (p ('1, a lambda x, y: x + y, 2')), (',', (('#', '1'), ('*', (('@', 'a'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))), ('#', '2'))))
+		self.assertEqual (ast2nat2ast (p ('1, a lambda: x')), (',', (('#', '1'), ('*', (('@', 'a'), ('(', ('lamb', ('@', 'x'), ())))))))
+		self.assertEqual (ast2nat2ast (p ('1, a lambda x: x**2')), (',', (('#', '1'), ('*', (('@', 'a'), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))))))
+		self.assertEqual (ast2nat2ast (p ('1, a lambda x, y: x + y')), (',', (('#', '1'), ('*', (('@', 'a'), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))))))
+		self.assertEqual (ast2nat2ast (p ('1, a lambda: x, 2')), (',', (('#', '1'), ('*', (('@', 'a'), ('(', ('lamb', ('@', 'x'), ())))), ('#', '2'))))
+		self.assertEqual (ast2nat2ast (p ('1, a lambda x: x**2, 2')), (',', (('#', '1'), ('*', (('@', 'a'), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))), ('#', '2'))))
+		self.assertEqual (ast2nat2ast (p ('1, a lambda x, y: x + y, 2')), (',', (('#', '1'), ('*', (('@', 'a'), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))), ('#', '2'))))
 		self.assertEqual (ast2nat2ast (p ('\\left(\\left(\\right) \\mapsto x \\right)')), ('(', ('lamb', ('@', 'x'), ())))
 		self.assertEqual (ast2nat2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2nat2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
@@ -1495,3 +1495,41 @@ if __name__ == '__main__':
 # \int d / dx x dx
 # \int_{{partial^{4} / partialx^{1} partialy^{3} {partial}}**{\sqrt[{oo}]{0}}}^{{{{-1} == {0}}*{({partial},{'str'},{a'})}*{{1} / {1}}}} {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
 # \int {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
+# \lim_{x \to \frac{lambda x, y, z: {-{0}}}{partial^{5} / partialz^{2} partialz^{1} partialx^{2} {Limit (a', x, 1)}}} {\arctan()}
+# {{{|{{0}**{1.0}}|} / {lambda x, y: {\int_{a'}^{a'} {0} dx}}},{\int_{\sqrt{()}}^{lambda x, y, z: {Sum (partial, (x, a, partial))}} {lambda x, y: {{{1}*{a'}}}} dx},}
+# -{{{{{{partialx},{partial},{oo},},{{dx},{-1.0},{a},},}}**{StrictGreaterThan({1.0})}} > {partial^{4} / partialz^{1} partialx^{2} partialy^{1} {{1.0}^{1}}}}
+# -{{{{{\sum_{x = 0}^{-1.0} {oo}} \cdot {({0})}}},}}
+# \int {{{{d}+{partialx}+{1}}} if {lambda x, y, z: {a}} else {{1} / {partialx}}} dx
+# |{\log_{partial^{1} / partialy^{1} {{{0}*{'str'}}}}{[{{-1.0} / {'str'}}]}}|
+# |{Limit ({\frac{1}{-1.0}}!, x, ({{{{-1.0},},{{1},},}},{{{'str'} \cdot {1} \cdot {dx}}},{-{1}}))}|
+# ('|', ('lim', ('!', ('/', ('#', '1'), ('#', '-1.0'))), ('@', 'x'), ('(', (',', (('vec', (('#', '-1.0'), ('#', '1'))), ('*', (('"', 'str'), ('#', '1'), ('@', 'dx'))), ('-', ('#', '1'))))), '+'))
+# {\lim_{x \to -1.0} {dx}} > {{oo} if {-1.0} else {d} if {d} else {1}}
+# \frac{{-1.0} > {oo}}{\ln{-1.0}}
+# {{{{{{0},},}},{|{d}|},},{{({1.0},{1})},{[{oo}]},},}
+# 1/2 * {a+b} lambda: {d}
+# {{{'str'} < {1.0}} \cdot {({a'})} \cdot {{1} if {a'}}}
+# -{1.0 if partial else d if 1 else oo if 1.0 else 'str'}
+# {partial^{5} / partialy^{2} partialy^{2} partialy^{1} {partial}}^{{-1.0} > {d}}
+# {lambda x: {a}} if {{{'str'}*{a}*{1}}}
+# \int_{{-1.0} <= {1}}^{-{1}} {{-1.0} <= {1.0}} dx
+# {{({{{a'},},{{1.0},},})}+{{a}!}+{{d} if {1} else {dx}}}
+# \int_{{{a}+{a}+{0}}}^{{'str'} / {a}} {\int {1} dx} dx
+# lambda x: {lambda x, y: {oo}}
+# \sqrt[3]{({oo},{a'})}
+# Limit (\sum_{x = oo}^{partial} {-1.0}, x, \sec({-1.0},{-1},{partialx}))
+# {{a} = {partial}} if {{{oo}+{0}+{-1}}} else {\int {a} dx}
+# \sum_{x = {{1}*{d}*{oo}}}^{\exp({a'},{1})} {\log_{1.0}{a}}
+# lambda x: {{a} = {dx}}
+# {{{d}^{oo}}*{{a}^{d}}}
+# {{oo} if {oo}} = {is_mersenne_prime({'str'})}
+# \lim_{x \to 0} {sqrt(dx) lambda x, y: -1.0}
+# {{\frac{\int_{a}^{1} {dx} dx}{{{oo} \cdot {d} \cdot {dx}}}}}
+# \frac{{{lambda x, y: {({{1},{partial},})}}*{lambda: {-{1}}}}}{\sum_{x = {({{d},})} / {{partialx} if {0} else {dx} if {partialx} else {d} if {partial}}}^{{{{1} = {partial}}  {\sum_{x = partial}^{-1} {oo}}}} {-{{{'str'}  {1}}}}}
+# \int d/dx dx
+# (((-1)**partial)**({a_prime, oo, 'str'}))**-{-{0}}
+# Limit ({{{0}^{'str'}}  {\left|{a}\right|}  {({a},{a'})}}, x, lambda x: {{1}!})
+# \left(\left(\text{'str'} \right)! \le \left(\left(x, y \right) \mapsto -1.0 \right) \right) == \int_{\left[-1.0, \partial, -1 \right]}^{\log_{-1.0}\left(-1 \right)} \begin{cases} 1 & \text{for}\: \infty \\ 1.0 & \text{for}\: 1.0 \end{cases} \ dx
+# x^{-{{1} / {1.0}}}
+# cofactors( 1 , {lambda x: 1 = lambda: 2} )
+# ({{{-{cse()}},{{{{partial} != {-1}}*{{{-1.0}  {1.0}}}}},{lambda: {{-1.0} == {dx}}},},{{\lim_{x \to \log_{0}{d}} {[{-1.0}]}},{partial^{7} / partialx^{3} partialy^{1} partialx^{3} {{partialx} if {a'} else {-1.0} if {a} else {d} if {1.0} else {partialx}}},{{lambda x, y, z: {oo}} = {\tanh()}},},{{partial^{3} / partialz^{3} {{oo} / {'str'}}},{({{{\left|{dx}\right|},{{a} if {d}},},{{-{oo}},{({{-1.0},{oo},{-1.0},})},},})},{partial^{5} / partialx^{1} partialy^{1} partialz^{3} {{-1}!}},},})
+# {\left|{a}\right|} if {\int {'str'} dx} else {({-1},{-1},{a})} if {\left|{1.0}\right|}

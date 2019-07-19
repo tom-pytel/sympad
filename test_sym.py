@@ -39,7 +39,7 @@ def expr_brack ():
 	return '[' + ','.join (f'{{{expr ()}}}' for i in range (randrange (4))) + ']'
 
 def expr_abs ():
-	return f'|{{{expr ()}}}|'
+	return f'\\left|{{{expr ()}}}\\right|'
 
 def expr_minus ():
 	return f'-{{{expr ()}}}'
@@ -130,12 +130,12 @@ def expr_intg ():
 			f'\\int {{{expr ()}}} dx'
 
 def expr_vec ():
-	return '{' + ','.join (f'{{{expr ()}}}' for i in range (randrange (1, 4))) + ',}'
+	return '({' + ','.join (f'{{{expr ()}}}' for i in range (randrange (1, 4))) + ',})'
 
 def expr_mat ():
 	cols = randrange (1, 4)
 
-	return '{' + ','.join ('{' + ','.join (f'{{{expr ()}}}' for j in range (cols)) + ',}' for i in range (randrange (1, 4))) + ',}'
+	return '({' + ','.join ('{' + ','.join (f'{{{expr ()}}}' for j in range (cols)) + ',}' for i in range (randrange (1, 4))) + ',})'
 
 def expr_piece ():
 	p = [f'{{{expr ()}}} if {{{expr ()}}}']
@@ -189,7 +189,7 @@ def flatten (ast):
 	return AST (*t)
 
 #...............................................................................................
-_DEPTH = 4
+_DEPTH = 3
 
 def test ():
 	opts, argv = getopt (sys.argv [1:], '', ['tex', 'nat', 'py', 'print', 'show'])
@@ -253,7 +253,7 @@ def test ():
 				if dopy and ast_py != ast_py:
 					print ('py:  ', ast_py)
 
-					sys.exit (0)
+				sys.exit (0)
 
 	except Exception as e:
 		print ()

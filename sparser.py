@@ -195,54 +195,80 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 	return ast
 
-def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
-	ast, negate = ast.strip_minus (retneg = True)
-
+def _ast_strip_tail_differential (ast):
 	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
-		return negate (AST ('intg', None, ast, *from_to))
+		return None, ast
+
+	if ast.is_intg:
+		if ast.intg is not None:
+			ast2, neg = ast.intg.strip_minus (retneg = True)
+			ast2, dv  = _ast_strip_tail_differential (ast2)
+
+			if dv:
+				return \
+						(AST ('intg', neg (ast2), dv, *ast [3:]), ast.dv) \
+						if ast2 else \
+						(AST ('intg', neg (AST.One), dv, *ast [3:]), ast.dv) \
+						if neg.has_neg else \
+						(AST ('intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
-		if ast.diff.is_mul and ast.diff.muls [-1].is_differential:
-			return AST ('intg', negate ( \
-					AST ('diff', ('*', ast.diff.muls [:-1]) if len (ast.diff.muls) > 2 else ast.diff.muls [0], ast.dvs) \
-					), ast.diff.muls [-1], *from_to)
+		ast2, neg = ast.diff.strip_minus (retneg = True)
+		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-	elif ast.is_mul:
-		if ast.muls [-1].is_differential or ast.muls [-1].is_null_var: # null_var is for autocomplete
-			return AST ('intg', negate (ast.muls [0] if len (ast.muls) == 2 else AST ('*', ast.muls [:-1])), ast.muls [-1], *from_to)
-
-		if ast.muls [-1].is_diff and ast.muls [-1].diff.is_mul and ast.muls [-1].diff.muls [-1].is_differential:
-			return AST ('intg', negate (AST ('*', ast.muls [:-1] + \
-					(('diff', ('*', ast.muls [-1].diff.muls [:-1]) if len (ast.muls [-1].diff.muls) > 2 else ast.muls [-1].diff.muls [0], ast.muls [-1].dvs),) \
-					)), ast.muls [-1].diff.muls [-1], *from_to)
+		if dv:
+			return \
+					(AST ('diff', neg (ast2), ast.dvs), dv) \
+					if ast2 else \
+					(neg (AST ('/', ('@', ast.diff_or_part_type or 'd'), ast.dvs [0])), dv) \
+					if len (ast.dvs) == 1 else \
+					(neg (AST ('/', ('@', ast.diff_or_part_type or 'd'), ('*', ast.dvs))), dv)
+			# raise NotImplementedError ('changing differential to ordinary fraction')
 
 	elif ast.is_div:
-		if ast.denom.is_mul and ast.denom.muls [-1].is_differential:
-			return AST ('intg', negate (('/', ast.numer, ast.denom.muls [0] if len (ast.denom.muls) == 2 else \
-					AST ('*', ast.denom.muls [:-1]))), ast.denom.muls [-1], *from_to)
+		ast2, neg = ast.denom.strip_minus (retneg = True)
+		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if ast.numer.is_differential:
-			return AST ('intg', negate (('/', ast.One, ast.denom)), ast.numer, *from_to)
+		if dv and ast2:
+			return AST ('/', ast.numer, neg (ast2)), dv
+
+		ast2, neg = ast.numer.strip_minus (retneg = True)
+
+		if dv:
+			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
+
+	elif ast.is_mul:
+		ast2, neg = ast.muls [-1].strip_minus (retneg = True)
+		ast2, dv  = _ast_strip_tail_differential (ast2)
+
+		if dv:
+			return \
+					(AST ('*', ast.muls [:-1] + (neg (ast2),)), dv) \
+					if ast2 else \
+					(AST ('*', neg (ast.muls [:-1])), dv) \
+					if len (ast.muls) > 2 else \
+					(neg (ast.muls [0]), dv)
 
 	elif ast.is_add:
-		ast2, negate2 = ast.adds [-1].strip_minus (retneg = True)
+		ast2, neg = ast.adds [-1].strip_minus (retneg = True)
+		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if ast2.is_differential:
-			return AST ('intg', negate ( \
-					AST ('+', negate2 (ast.adds [:-1]))
-					if len (ast.adds) > 2 else \
-					negate2 (ast.adds [0]) \
-					), ast2, *from_to)
+		if dv and ast2:
+			return AST ('+', ast.adds [:-1] + (neg (ast2),)), dv
 
-		if ast2.is_mul and ast2.muls [-1].is_differential:
-			return AST ('intg', negate ( \
-					AST ('+', ast.adds [:-1] + (AST ('*', ast2.muls [:-1]),))
-					if len (ast2.muls) > 2 else \
-					AST ('+', ast.adds [:-1] + (ast2.muls [0],)) \
-					), ast2.muls [-1], *from_to)
+	return ast, None
 
-	elif ast.is_intg and ast.intg is not None:
-		return AST ('intg', negate (_expr_int (ast.intg, () if ast.from_ is None else (ast.from_, ast.to))), ast.dv, *from_to)
+def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
+	ast, neg = ast.strip_minus (retneg = True)
+	ast, dv  = _ast_strip_tail_differential (ast)
+
+	if dv:
+		return \
+				AST ('intg', neg (ast), dv, *from_to) \
+				if ast else \
+				AST ('intg', neg (AST.One), dv, *from_to) \
+				if neg.has_neg else \
+				neg (AST ('intg', None, dv, *from_to))
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -370,7 +396,7 @@ def _xlat_func_Piecewise (ast):
 	if len (ast.commas) == 0:
 		raise lalr1.Incomplete (AST ('piece', pcs + ()))
 
-	if not ast.commas [0].strip_paren ().is_comma:
+	if not ast.commas [0].is_comma:
 		if len (ast.commas) == 1:
 			raise lalr1.Incomplete (AST ('piece', pcs + ((ast.commas [0], AST.VarNull),)))
 		if len (ast.commas) == 2:
@@ -378,6 +404,8 @@ def _xlat_func_Piecewise (ast):
 			# return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1].stip_curlys ().strip_paren () == AST.True_ else ast.commas [1]),))
 
 		raise SyntaxError ('invalid tuple length')
+
+	raise RuntimeError ()
 
 def _xlat_func_Pow (ast):
 	if not ast.is_comma:
@@ -506,14 +534,13 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 
 	c = sum (bool (c.is_vec) for c in ast.commas)
 
-	if not c:
-		return AST ('vec', ast.commas)
-
 	if c == len (ast.commas) and len (set (len (c.vec) for c in ast.commas)) == 1:
 		return \
 				AST ('mat', tuple (c.vec for c in ast.commas)) \
 				if len (ast.commas [0].vec) > 1 else \
 				AST ('vec', tuple (c.vec [0] for c in ast.commas))
+
+	return AST ('vec', ast.commas)
 
 	raise SyntaxError ('invalid matrix syntax')
 
@@ -986,10 +1013,8 @@ class Parser (lalr1.Parser):
 		if pos and rule [1] [pos - 1] == 'expr_commas':
 			return self._parse_autocomplete_expr_commas (rule, pos)
 
-		assert rule [1] [pos - 1] != 'expr_comma'
-
 		if pos >= len (rule [1]): # end of rule
-			if rule [0] == 'expr_int':
+			if rule [0] == 'expr_int': # TODO: Fix this!
 				return self._parse_autocomplete_expr_int ()
 
 			return False
@@ -1034,8 +1059,8 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r'\int x - x dx')
-	print (a)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	a = p.parse (r"Piecewise(((1, 2), a), ((3, 4), b))")
+# 	print (a)

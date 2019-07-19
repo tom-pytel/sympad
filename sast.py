@@ -140,15 +140,17 @@ class AST (tuple):
 		return self
 
 	def strip_minus (self, count = None, retneg = False):
-		count = 999999999 if count is None else count
-		apply = lambda ast: ast
+		count       = 999999999 if count is None else count
+		neg         = lambda ast: ast
+		neg.has_neg = False
 
 		while self.op == '-' and count:
-			self   = self.minus
-			apply  = lambda ast, apply = apply: apply (ast.neg (stack = True))
-			count -= 1
+			self         = self.minus
+			count       -= 1
+			neg          = lambda ast, neg = neg: neg (ast.neg (stack = True))
+			neg.has_neg  = True
 
-		return (self, apply) if retneg else self
+		return (self, neg) if retneg else self
 
 	def as_identifier (self, top = True):
 		if self.op in {'#', '@', '"'}:
@@ -252,7 +254,7 @@ class AST_Var (AST):
 	_is_part_any          = lambda self: self.grp [1]
 	_is_diff_or_part      = lambda self: (self.grp [0] or self.grp [1]) and self.grp [2]
 	_is_diff_or_part_solo = lambda self: (self.grp [0] or self.grp [1]) and not self.grp [2]
-	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] # 'dx' -> 'd', 'partialx' -> 'partial', else false
+	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] or '' # 'dx' -> 'd', 'partialx' -> 'partial', else ''
 	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted, non-primed)?
 	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
 	_as_diff              = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
@@ -333,6 +335,11 @@ class AST_Mul (AST):
 	def _init (self, muls):
 		self.muls = muls
 
+	def _is_mul_has_abs (self):
+		for m in self.muls:
+			if m.is_abs:
+				return True
+
 	# _len = lambda self: len (self.muls)
 
 class AST_Div (AST):
@@ -410,6 +417,8 @@ class AST_Diff (AST):
 
 	def _init (self, diff, dvs):
 		self.diff, self.dvs = diff, dvs
+
+	_diff_or_part_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
 
 class AST_Intg (AST):
 	op, is_intg = 'intg', True

@@ -1,5 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO: 'str'**x, 'str'!
 # TODO: MatrixSymbol ('A', 2, 2)**n
 # TODO: Multiple arguments in
 # TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
@@ -92,8 +93,8 @@ def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'=', '+', 'lamb'}):
 
 	return (s, has) if ret_has else s
 
-def _ast2tex_eq_hs (ast, hs):
-	return _ast2tex_wrap (hs, 0, hs.is_ass if ast.is_ass else {'=', 'piece', 'lamb'})
+def _ast2tex_eq_hs (ast, hs, lhs = True):
+	return _ast2tex_wrap (hs, 0, (hs.is_lamb or hs.is_ass or (lhs and hs.is_piece)) if ast.is_ass else {'=', 'piece', 'lamb'})
 
 def _ast2tex_num (ast):
 	m, e = ast.mant_and_exp
@@ -160,7 +161,7 @@ def _ast2tex_mul (ast, ret_has = False):
 
 	return (''.join (t), has) if ret_has else ''.join (t)
 
-def _ast2tex_pow (ast, trighpow=True):
+def _ast2tex_pow (ast, trighpow = True):
 	# b = _ast2tex_curly (ast.base) if ast.base.is_mat else ast2tex (ast.base) # TODO: REMOVE
 	b = _ast2tex_wrap (ast.base, {'mat'}, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat'} or ast.base.is_pos_num))
 	p = _ast2tex_curly (ast.exp)
@@ -220,7 +221,7 @@ def _ast2tex_func (ast):
 			'\\operatorname{' + ast.func.replace ('_', '\\_') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2tex_lim (ast):
-	s = ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow=False) [:-1] + ast.dir)
+	s = ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
 
 	return f'\\lim_{{{ast2tex (ast.lvar)} \\to {s}}} {_ast2tex_paren_mul_exp (ast.lim)}'
 
@@ -262,26 +263,26 @@ def _ast2tex_intg (ast):
 		return \
 				f'\\int \\ {ast2tex (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {_ast2tex_wrap (ast.intg, {"=", "diff"}, {"lamb"})} \\ {ast2tex (ast.dv)}'
+				f'\\int {_ast2tex_wrap (ast.intg, {"diff"}, {"=", "lamb"})} \\ {ast2tex (ast.dv)}'
 	else:
 		return \
 				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} \\ {ast2tex (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {_ast2tex_wrap (ast.intg, {"=", "diff"}, {"lamb"})} \\ {ast2tex (ast.dv)}'
+				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {_ast2tex_wrap (ast.intg, {"diff"}, {"=", "lamb"})} \\ {ast2tex (ast.dv)}'
 
 _ast2tex_funcs = {
-	'=': lambda ast: f'{_ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2tex_eq_hs (ast, ast.rhs)}',
+	'=': lambda ast: f'{_ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2tex_eq_hs (ast, ast.rhs, lhs = False)}',
 	'#': _ast2tex_num,
 	'@': _ast2tex_var,
 	'.': _ast2tex_attr,
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
-	',': lambda ast: f'{", ".join (ast2tex (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (_ast2tex_wrap (c, 0, c.is_ass) for c in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
 	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.bracks)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
-	'-': lambda ast: f'-{_ast2tex_wrap (ast.minus, {"#", "*"}, {"=", "+", "lamb"})}',
+	'-': lambda ast: f'-{_ast2tex_wrap (ast.minus, {"#", "-", "*"}, {"=", "+", "lamb"})}',
 	'!': lambda ast: f'{_ast2tex_wrap (ast.fact, {"^"}, (ast.fact.op not in {"#", "@", "(", "|", "!", "^", "vec", "mat"} or ast.fact.is_neg_num))}!',
-	'+': lambda ast: ' + '.join (_ast2tex_wrap (n, {"intg"}, (n.op in ("piece", "lamb") and n is not ast.adds [-1]) or n.op in {"=", "lamb"}) for n in ast.adds).replace (' + -', ' - '),
+	'+': lambda ast: ' + '.join (_ast2tex_wrap (n, {"intg"}, (n.op in ("piece", "lamb") and n is not ast.adds [-1]) or n.op in {'=', 'lamb'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
 	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, ast.numer.base.is_diff_or_part_solo if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{ast2tex (ast.denom)}}}',
 	'^': _ast2tex_pow,
@@ -300,41 +301,6 @@ _ast2tex_funcs = {
 	'text': lambda ast: ast.tex,
 }
 
-# \sqrt[{{1} / {1.0}}]{({oo},{partial})}
-# sqrt{{-1.0}**{0}}
-# {{\frac{1.0}{dx}} \cdot {{partial} / {partialx}} \cdot {{d} >= {oo}}}
-# \frac{{partial}**{1}}{{{partialx}*{dx}*{1.0}}}
-# {{\frac{1.0}{partialx}} \cdot {\exp({0},{a})} \cdot {{{d}+{oo}}}}
-# {\arcsin({-1.0},{dx},{oo})}^{{d} <= {-1}}
-# @({{d}**{1}},{\arcsech({partial},{partial})})
-# Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
-# {{d}^{1}} / {{{dx}  {oo}}}
-# {{{d}*{1}}} / {d^{5} / dy^{1} dy^{2} dz^{2} {oo}}
-# {{{0}!} \cdot {partial^{1} / partialx^{1} {dx}} \cdot {{d}**{d}}}
-# {{partial^{4} / partialy^{3} partialy^{1} {a}} \cdot {{'str'}^{d}}}
-# {\int {-1} dx} / {\int {1} dx}
-# {\int_{dx}^{a'} {-1} dx}!
-# \int {partial^{3} / partialy^{3} {a'}} dx
-# {{\int {partial} dx}  {partial^{4} / partialy^{1} partialz^{1} partialz^{2} {a}}}
-# \int_{[{-1.0}]}^{\int {partialx} dx} {{{oo}+{-1}}} dx
-# \int_{partial^{6} / partialy^{2} partialx^{2} partialz^{2} {partialx}}^{partial^{4} / partialz^{1} partialz^{2} partialx^{1} {0}} {{a} != {'str'}} dx
-# {{{oo}**{'str'}}+{\int {oo} dx}+{partial^{7} / partialz^{3} partialx^{2} partialx^{2} {0}}}
-# [{{{-1} \cdot {oo}}},{{{dx},{1.0},{oo}}},{partial^{8} / partialx^{3} partialx^{2} partialz^{3} {oo}}]
-# -{lambda x, y, z: {dx}}
-# ('-', ('lamb', ('@', 'dx'), (('@', 'x'), ('@', 'y'), ('@', 'z'))))
-# {{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'str'}}}
-# {{lambda: {-1}} \cdot {\frac{partialx}{oo}} \cdot {{1.0} if {1} else {a'} if {0}}}
-# {{{a'} / {-1}} {\lim_{x \to partial} {-1}} {lambda x, y, z: {partialx}}}
-# {{{{d}*{0}}}+{{'str'}**{d}}+{lambda x, y: {partialx}}}
-# \int_{\sqrt[{a}]{1.0}}^{[]} {lambda x: {partialx}} dx
-# lambda x: {{dx} = {dx}}
-# {{\lim_{x \to {{oo},}} {\frac{d}{d}}}  {{{{{partialx} \cdot {a'}}} \cdot {{{a'}*{'str'}}}}}}
-# \int {{{{a} / {dx}}  {partial^{2} / partialz^{2} {partialx}}}} dx
-# \int \frac{d}{dx} x dx
-# \int d / dx x dx
-# \int_{{partial^{4} / partialx^{1} partialy^{3} {partial}}**{\sqrt[{oo}]{0}}}^{{{{-1} == {0}}*{({partial},{'str'},{a'})}*{{1} / {1}}}} {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
-# \int {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
-
 #...............................................................................................
 def ast2nat (ast): # abstract syntax tree -> simple text
 	return _ast2nat_funcs [ast.op] (ast)
@@ -351,7 +317,7 @@ def _ast2nat_wrap (obj, curly = None, paren = None):
 	return s
 
 def _ast2nat_curly (ast, ops = {}):
-	return _ast2nat_wrap (ast, ops if ops else (not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX)))
+	return _ast2nat_wrap (ast, ops if ops else (ast.is_div or not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX)))
 	# if ops:
 	# 	return f'{{{ast2nat (ast)}}}' if ast.op in ops else ast2nat (ast)
 
@@ -361,15 +327,22 @@ def _ast2nat_paren (ast, ops = {}):
 	return _ast2nat_wrap (ast, 0, not (ast.is_paren or (ops and ast.op not in ops)))
 	# return ast2nat (ast) if ast.is_paren or (ops and ast.op not in ops) else f'({ast2nat (ast)})'
 
-def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {'+'}):
+def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {}):
 	if ast.is_mul:
 		s, has = _ast2nat_mul (ast, True)
 	else:
-		s, has = ast2nat (ast), ast.op in also
+		s, has = ast2nat (ast), False
 
-	s = f'{{{s}}}' if has else s
+	has = has or ((ast.op in also) if isinstance (also, set) else also)
+	s   = _ast2nat_wrap (s, has)
 
 	return (s, has) if ret_has else s
+	# s = f'{{{s}}}' if has else s
+
+	# return (s, has) if ret_has else s
+
+def _ast2nat_eq_hs (ast, hs, lhs = True):
+	return _ast2nat_wrap (hs, 0, (hs.is_ass or lhs and hs.is_piece) if ast.is_ass else {'=', 'piece', 'lamb'})
 
 def _ast2nat_mul (ast, ret_has = False):
 	t   = []
@@ -380,17 +353,36 @@ def _ast2nat_mul (ast, ret_has = False):
 		# s = _ast2nat_paren (n)   if n.is_add or (p and _ast_is_neg (n)) or (n.is_piece and n is not ast.muls [-1]) else \
 		# 		f'{{{ast2nat (n)}}}' if n.is_piece else \
 		# 		ast2nat (n)
-		s = _ast2nat_wrap (n, 0,(n.op in {'piece', 'lamb'} and n is not ast.muls [-1]) or n.is_add or (p and _ast_is_neg (n)))
 
-		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or (n.is_pow and n.base.is_pos_num) \
-				 or n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'}):
-			t.append (f' * {ast2nat (n)}')
+		# s = _ast2tex_wrap (n, \
+		# 		_ast_is_neg (n) or (n.is_intg and n is not ast.muls [-1]), \
+		# 		n.op in {'=', '+', "lamb"} or (n.is_piece and n is not ast.muls [-1]))
+		s = _ast2nat_wrap (n, \
+				_ast_is_neg (n) or n.is_piece or (n.is_intg and n is not ast.muls [-1]), \
+				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.muls [-1]))
+#				(n.op in {'piece', 'lamb'} and n is not ast.muls [-1]) or n.is_add or (p and _ast_is_neg (n)))
+
+		# if p and (n.op in {'!', '#', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
+		# 		(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/'}) or _ast_is_neg (n) or \
+		# 		(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo)))):
+		# 	t.append (f' \\cdot {s}')
+		# 	has = True
+		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
+				(n.is_pow and n.base.is_pos_num) or \
+				n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'}):
+			t.append (f' * {s}')
 			has = True
 
+		# elif p and (p.op in {'sqrt'} or \
+		# 		p.is_diff_or_part_solo or n.is_diff_or_part_solo or p.is_diff_or_part or n.is_diff_or_part or \
+		# 		(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
+		# 	t.append (f'\\ {s}')
 		elif p and (p.is_diff_or_part_solo or \
-				(n.op not in {'#', '(', '|', '^'} or p.op not in {'#', '(', '|', '^'})):
+				(n.op not in {'#', '(', '|', '^'} or p.op not in {'#', '(', '|'})):
 			t.append (f' {s}')
 
+		# else:
+		# 	t.append (f'{"" if not p else " "}{s}')
 		else:
 			t.append (s)
 
@@ -399,25 +391,47 @@ def _ast2nat_mul (ast, ret_has = False):
 	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2nat_div (ast):
-	n, ns = _ast2nat_curly_mul_exp (ast.numer, True, {'+', '/', 'lim', 'sum', 'diff', 'piece', 'lamb'})
-	d, ds = _ast2nat_curly_mul_exp (ast.denom, True, {'+', '/', 'lim', 'sum', 'diff', 'piece', 'lamb'})
+	n, ns = (_ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else _ast2nat_curly_mul_exp (ast.numer, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
+	d, ds = (_ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else _ast2nat_curly_mul_exp (ast.denom, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
 	s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
 
 	return f'{n}{" / " if s else "/"}{d}'
 
-def _ast2nat_pow (ast):
-	b = ast2nat (ast.base)
-	p = f'{{{ast2nat (ast.exp)}}}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece'} else ast2nat (ast.exp)
+def _ast2nat_pow (ast, trighpow = True):
+	# b = _ast2tex_curly (ast.base) if ast.base.is_mat else ast2tex (ast.base) # TODO: REMOVE
 
-	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit:
+		# b = _ast2tex_wrap (ast.base, {'mat'}, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat'} or ast.base.is_pos_num))
+		# p = _ast2tex_curly (ast.exp)
+
+		# if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
+		# 	i = len (ast.base.func) + (15 if ast.base.func in {'sech', 'csch'} else 1)
+
+		# 	return f'{b [:i]}^{p}{b [i:]}'
+
+		# return f'{b}^{p}'
+
+	# if ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num: # TODO: REMOVE
+	# 	return f'{b}^{p}'
+
+	# return f'\\left({b} \\right)^{p}'
+
+
+	# b = ast2nat (ast.base)
+	# p = f'{{{ast2nat (ast.exp)}}}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece'} else ast2nat (ast.exp)
+	b = _ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num))
+	p = _ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'}, {","})
+
+	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
 		i = len (ast.base.func)
 
-		return f'{b [:i]}**{p}{b [i:]}'
+		return f'{b [1 : i + 1]}**{p}{b [i + 1 : -1]}'
 
-	if ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num:
-		return f'{b}**{p}'
+	return f'{b}**{p}'
 
-	return f'({b})**{p}'
+	# if ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num:
+	# 	return f'{b}**{p}'
+
+	# return f'({b})**{p}'
 
 def _ast2nat_log (ast):
 	return \
@@ -435,12 +449,13 @@ def _ast2nat_func (ast):
 			f'${ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2nat_lim (ast):
-	s = _ast2nat_wrap (ast.to, {'piece'}) if ast.dir is None else ast2nat (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
+	# s = _ast2nat_wrap (ast.to, {'piece'}) if ast.dir is None else ast2nat (AST ('^', ast [3], AST.Zero)) [:-1] + ast [4]
+	s = _ast2nat_wrap (ast.to, {'piece'}) if ast.dir is None else (_ast2nat_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
 
-	return f'\\lim_{{{ast2nat (ast.lvar)} \\to {s}}} {_ast2nat_curly_mul_exp (ast.lim, also = {"+", "piece"})}'
+	return f'\\lim_{{{ast2nat (ast.lvar)} \\to {s}}} {_ast2nat_curly_mul_exp (ast.lim, False, ast.lim.op in {"=", "+", "piece", "lamb"} or ast.lim.is_mul_has_abs)}'
 
 def _ast2nat_sum (ast):
-	return f'\\sum_{{{ast2nat (ast.svar)}={_ast2nat_curly (ast.from_, {"piece"})}}}^{_ast2nat_curly (ast.to)} {_ast2nat_curly_mul_exp (ast.sum, also = {"+", "piece"})}' \
+	return f'\\sum_{{{ast2nat (ast.svar)}={_ast2nat_curly (ast.from_, {"piece"})}}}^{_ast2nat_curly (ast.to)} {_ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "+", "piece", "lamb"} or ast.sum.is_mul_has_abs)}' \
 
 def _ast2nat_diff (ast):
 	p = 0
@@ -460,32 +475,34 @@ def _ast2nat_intg (ast):
 		return \
 				f'\\int {ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {_ast2nat_wrap (ast.intg, 0, {"piece", "lamb"})} {ast2nat (ast.dv)}'
+				f'\\int {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {ast2nat (ast.dv)}'
 	else:
 		return \
 				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, 0, {"piece", "lamb"})} {ast2nat (ast.dv)}'
+				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {ast2nat (ast.dv)}'
 
 _ast2nat_funcs = {
-	'=': lambda ast: f'{_ast2nat_paren (ast.lhs, {"lamb"})} {ast.rel} {ast2nat (ast.rhs)}',
+	'=': lambda ast: f'{_ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2nat_eq_hs (ast, ast.rhs, lhs = False)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
 	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb"})}.{ast.attr}' \
 			if ast.args is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{", ".join (ast2nat (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (_ast2nat_wrap (c, 0, c.is_ass) for c in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2nat (ast.paren)})',
 	'[': lambda ast: f'[{", ".join (ast2nat (b) for b in ast.bracks)}]',
-	'|': lambda ast: f'|{ast2nat (ast.abs)}|',
-	'-': lambda ast: f'-{_ast2nat_paren (ast.minus)}' if ast.minus.is_add else f'-{_ast2nat_curly (ast.minus, {"piece", "lamb"})}',
-	'!': lambda ast: f'{_ast2nat_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2nat (ast.fact)}!',
-	'+': lambda ast: ' + '.join (_ast2nat_curly (n, {'piece'}) for n in ast.adds).replace (' + -', ' - '),
+	'|': lambda ast: f'{{|{ast2nat (ast.abs)}|}}',
+	'-': lambda ast: f'-{_ast2nat_wrap (ast.minus, {"#", "-", "*", "piece"}, {"=", "+", "lamb"})}',
+	# '!': lambda ast: f'{_ast2nat_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2nat (ast.fact)}!',
+	'!': lambda ast: f'{_ast2nat_wrap (ast.fact, {"^"}, ast.fact.op not in {"#", "@", "(", "|", "!", "^", "vec", "mat"} or ast.fact.is_neg_num)}!',
+	'+': lambda ast: ' + '.join (_ast2nat_wrap (n, {'intg', 'piece'}, (n.op in ('piece', 'lamb') and n is not ast.adds [-1]) or n.op in {'=', 'lamb'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2nat_mul,
 	'/': _ast2nat_div,
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
-	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{ast2nat (ast.idx)}]{{{ast2nat (ast.rad.strip_paren (1))}}}',
+	# 'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{ast2nat (ast.idx)}]{{{ast2nat (ast.rad.strip_paren (1))}}}',
+	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{ast2tex (ast.idx)}]{{{ast2tex (ast.rad.strip_paren_noncomma (1))}}}',
 	'func': _ast2nat_func,
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,
@@ -493,14 +510,11 @@ _ast2nat_funcs = {
 	'intg': _ast2nat_intg,
 	'vec': lambda ast: f'{{{", ".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
-	'piece': lambda ast: ' else '.join (f'{_ast2nat_curly (p [0], {"piece"})}' if p [1] is True else f'{_ast2nat_curly (p [0], {"piece"})} if {_ast2nat_curly (p [1], {"piece"})}' for p in ast.pieces),
-	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {ast2nat (ast.lamb)}',
+	'piece': lambda ast: ' else '.join (f'{_ast2nat_curly (p [0], {"=", "piece", "lamb"})}' if p [1] is True else f'{_ast2nat_curly (p [0], {"=", "piece", "lamb"})} if {_ast2nat_curly (p [1], {"piece", "lamb"})}' for p in ast.pieces),
+	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {_ast2nat_wrap (ast.lamb, 0, {"=", "lamb"})}',
 
 	'text': lambda ast: ast.nat,
 }
-
-# \lim_{x \to \frac{lambda x, y, z: {-{0}}}{partial^{5} / partialz^{2} partialz^{1} partialx^{2} {Limit (a', x, 1)}}} {\arctan()}
-# {{{|{{0}**{1.0}}|} / {lambda x, y: {\int_{a'}^{a'} {0} dx}}},{\int_{\sqrt{()}}^{lambda x, y, z: {Sum (partial, (x, a, partial))}} {lambda x, y: {{{1}*{a'}}}} dx},}
 
 #...............................................................................................
 def ast2py (ast): # abstract syntax tree -> Python code text
@@ -903,8 +917,8 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('=', '!=', ('#', '1'), ('#', '1'))
-	res = ast2tex (ast)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('^', ('@', 'x'), ('-', ('/', ('#', '1'), ('#', '1.0'))))
+# 	res = ast2nat (ast)
+# 	print (res)
