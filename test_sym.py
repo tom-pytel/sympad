@@ -28,9 +28,86 @@ TERMS = [
 	"'str'",
 ]
 
-_EQS = ["=", "==", "!=", "<", "<=", ">", ">="]
+_EXPRESSIONS = r"""
+\sqrt[{{1} / {1.0}}]{({oo},{partial})}
+sqrt{{-1.0}**{0}}
+{{\frac{1.0}{dx}} \cdot {{partial} / {partialx}} \cdot {{d} >= {oo}}}
+\frac{{partial}**{1}}{{{partialx}*{dx}*{1.0}}}
+{{\frac{1.0}{partialx}} \cdot {\exp({0},{a})} \cdot {{{d}+{oo}}}}
+{\arcsin({-1.0},{dx},{oo})}^{{d} <= {-1}}
+@({{d}**{1}},{\arcsech({partial},{partial})})
+Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
+{{d}^{1}} / {{{dx}  {oo}}}
+{{{d}*{1}}} / {partial^{5} / partialy^{1} partialy^{2} partialz^{2} {oo}}
+{{{0}!} \cdot {partial^{1} / partialx^{1} {dx}} \cdot {{d}**{d}}}
+{{partial^{4} / partialy^{3} partialy^{1} {a}} \cdot {{'str'}^{d}}}
+{\int {-1} dx} / {\int {1} dx}
+{\int_{dx}^{a'} {-1} dx}!
+\int {partial^{3} / partialy^{3} {a'}} dx
+{{\int {partial} dx}  {partial^{4} / partialy^{1} partialz^{1} partialz^{2} {a}}}
+\int_{[{-1.0}]}^{\int {partialx} dx} {{{oo}+{-1}}} dx
+\int_{partial^{6} / partialy^{2} partialx^{2} partialz^{2} {partialx}}^{partial^{4} / partialz^{1} partialz^{2} partialx^{1} {0}} {{a} != {'str'}} dx
+{{{oo}**{'str'}}+{\int {oo} dx}+{partial^{7} / partialz^{3} partialx^{2} partialx^{2} {0}}}
+[{{{-1} \cdot {oo}}},{{{dx},{1.0},{oo}}},{partial^{8} / partialx^{3} partialx^{2} partialz^{3} {oo}}]
+-{lambda x, y, z: {dx}}
+('-', ('lamb', ('@', 'dx'), (('@', 'x'), ('@', 'y'), ('@', 'z'))))
+{{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'str'}}}
+{{lambda: {-1}} \cdot {\frac{partialx}{oo}} \cdot {{1.0} if {1} else {a'} if {0}}}
+{{{a'} / {-1}} {\lim_{x \to partial} {-1}} {lambda x, y, z: {partialx}}}
+{{{{d}*{0}}}+{{'str'}**{d}}+{lambda x, y: {partialx}}}
+\int_{\sqrt[{a}]{1.0}}^{[]} {lambda x: {partialx}} dx
+lambda x: {{dx} = {dx}}
+{{\lim_{x \to {{oo},}} {\frac{d}{d}}}  {{{{{partialx} \cdot {a'}}} \cdot {{{a'}*{'str'}}}}}}
+\int {{{{a} / {dx}}  {partial^{2} / partialz^{2} {partialx}}}} dx
+\int \frac{d}{dx} x dx
+\int d / dx x dx
+\int_{{partial^{4} / partialx^{1} partialy^{3} {partial}}**{\sqrt[{oo}]{0}}}^{{{{-1} == {0}}*{({partial},{'str'},{a'})}*{{1} / {1}}}} {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
+\int {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
+\lim_{x \to \frac{lambda x, y, z: {-{0}}}{partial^{5} / partialz^{2} partialz^{1} partialx^{2} {Limit (a', x, 1)}}} {\arctan()}
+{{{|{{0}**{1.0}}|} / {lambda x, y: {\int_{a'}^{a'} {0} dx}}},{\int_{\sqrt{()}}^{lambda x, y, z: {Sum (partial, (x, a, partial))}} {lambda x, y: {{{1}*{a'}}}} dx},}
+-{{{{{{partialx},{partial},{oo},},{{dx},{-1.0},{a},},}}**{StrictGreaterThan({1.0})}} > {partial^{4} / partialz^{1} partialx^{2} partialy^{1} {{1.0}^{1}}}}
+-{{{{{\sum_{x = 0}^{-1.0} {oo}} \cdot {({0})}}},}}
+\int {{{{d}+{partialx}+{1}}} if {lambda x, y, z: {a}} else {{1} / {partialx}}} dx
+|{\log_{partial^{1} / partialy^{1} {{{0}*{'str'}}}}{[{{-1.0} / {'str'}}]}}|
+|{Limit ({\frac{1}{-1.0}}!, x, ({{{{-1.0},},{{1},},}},{{{'str'} \cdot {1} \cdot {dx}}},{-{1}}))}|
+('|', ('lim', ('!', ('/', ('#', '1'), ('#', '-1.0'))), ('@', 'x'), ('(', (',', (('vec', (('#', '-1.0'), ('#', '1'))), ('*', (('"', 'str'), ('#', '1'), ('@', 'dx'))), ('-', ('#', '1'))))), '+'))
+{\lim_{x \to -1.0} {dx}} > {{oo} if {-1.0} else {d} if {d} else {1}}
+\frac{{-1.0} > {oo}}{\ln{-1.0}}
+{{{{{{0},},}},{|{d}|},},{{({1.0},{1})},{[{oo}]},},}
+1/2 * {a+b} lambda: {d}
+{{{'str'} < {1.0}} \cdot {({a'})} \cdot {{1} if {a'}}}
+-{1.0 if partial else d if 1 else oo if 1.0 else 'str'}
+{partial^{5} / partialy^{2} partialy^{2} partialy^{1} {partial}}^{{-1.0} > {d}}
+{lambda x: {a}} if {{{'str'}*{a}*{1}}}
+\int_{{-1.0} <= {1}}^{-{1}} {{-1.0} <= {1.0}} dx
+{{({{{a'},},{{1.0},},})}+{{a}!}+{{d} if {1} else {dx}}}
+\int_{{{a}+{a}+{0}}}^{{'str'} / {a}} {\int {1} dx} dx
+lambda x: {lambda x, y: {oo}}
+\sqrt[3]{({oo},{a'})}
+Limit (\sum_{x = oo}^{partial} {-1.0}, x, \sec({-1.0},{-1},{partialx}))
+{{a} = {partial}} if {{{oo}+{0}+{-1}}} else {\int {a} dx}
+\sum_{x = {{1}*{d}*{oo}}}^{\exp({a'},{1})} {\log_{1.0}{a}}
+lambda x: {{a} = {dx}}
+{{{d}^{oo}}*{{a}^{d}}}
+{{oo} if {oo}} = {is_mersenne_prime({'str'})}
+\lim_{x \to 0} {sqrt(dx) lambda x, y: -1.0}
+{{\frac{\int_{a}^{1} {dx} dx}{{{oo} \cdot {d} \cdot {dx}}}}}
+\frac{{{lambda x, y: {({{1},{partial},})}}*{lambda: {-{1}}}}}{\sum_{x = {({{d},})} / {{partialx} if {0} else {dx} if {partialx} else {d} if {partial}}}^{{{{1} = {partial}}  {\sum_{x = partial}^{-1} {oo}}}} {-{{{'str'}  {1}}}}}
+\int d/dx dx
+(((-1)**partial)**({a_prime, oo, 'str'}))**-{-{0}}
+Limit ({{{0}^{'str'}}  {\left|{a}\right|}  {({a},{a'})}}, x, lambda x: {{1}!})
+\left(\left(\text{'str'} \right)! \le \left(\left(x, y \right) \mapsto -1.0 \right) \right) == \int_{\left[-1.0, \partial, -1 \right]}^{\log_{-1.0}\left(-1 \right)} \begin{cases} 1 & \text{for}\: \infty \\ 1.0 & \text{for}\: 1.0 \end{cases} \ dx
+x^{-{{1} / {1.0}}}
+cofactors( 1 , {lambda x: 1 = lambda: 2} )
+({{{-{cse()}},{{{{partial} != {-1}}*{{{-1.0}  {1.0}}}}},{lambda: {{-1.0} == {dx}}},},{{\lim_{x \to \log_{0}{d}} {[{-1.0}]}},{partial^{7} / partialx^{3} partialy^{1} partialx^{3} {{partialx} if {a'} else {-1.0} if {a} else {d} if {1.0} else {partialx}}},{{lambda x, y, z: {oo}} = {\tanh()}},},{{partial^{3} / partialz^{3} {{oo} / {'str'}}},{({{{\left|{dx}\right|},{{a} if {d}},},{{-{oo}},{({{-1.0},{oo},{-1.0},})},},})},{partial^{5} / partialx^{1} partialy^{1} partialz^{3} {{-1}!}},},})
+{\left|{a}\right|} if {\int {'str'} dx} else {({-1},{-1},{a})} if {\left|{1.0}\right|}
+{lambda x: {{1.0} if {oo} else {1.0} if {oo}}} = {{{{partial} \cdot {partialx}}}**{{a}!}}
+{Sum (\int {1} dx, (x, 0, 1))} dx
+{{\sum_{x = \left|{0}\right|}^{\tan({-1.0})} {\int_{partialx}^{oo} {d} dx}}+{{{\lim_{x \to 1} {d}} \cdot {{{a'}+{-1}+{dx}}}}}+{{{{a} = {a'}}+{({{{dx},},{{0},},{{d},},})}+{{{dx}*{dx}*{a'}}}}}}
+""".strip ().split ('\n')
+
 def expr_eq (): ## BROKEN!
-	return f'{{{expr ()}}} {choice (_EQS)} {{{expr ()}}}'
+	return f'{{{expr ()}}} {choice (["=", "==", "!=", "<", "<=", ">", ">="])} {{{expr ()}}}'
 
 def expr_paren ():
 	return '(' + ','.join (f'{{{expr ()}}}' for i in range (randrange (4))) + ')'
@@ -112,7 +189,7 @@ def expr_diff ():
 	p  = 0
 	dv = []
 
-	for i in range (randrange (1, 4)):
+	for _ in range (randrange (1, 4)):
 		n  = randrange (1, 4)
 		p += n
 
@@ -140,7 +217,7 @@ def expr_mat ():
 def expr_piece ():
 	p = [f'{{{expr ()}}} if {{{expr ()}}}']
 
-	for i in range (randrange (3)):
+	for _ in range (randrange (3)):
 		p.append (f'else {{{expr ()}}} if {{{expr ()}}}')
 
 	if random () >= 0.5:
@@ -192,10 +269,10 @@ def flatten (ast):
 _DEPTH = 3
 
 def test ():
-	opts, argv = getopt (sys.argv [1:], '', ['tex', 'nat', 'py', 'print', 'show'])
-	parser     = sparser.Parser ()
+	opts, _ = getopt (sys.argv [1:], 'tnpi', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite'])
+	parser  = sparser.Parser ()
 
-	if ('--print', '') in opts:
+	if ('--dump', '') in opts:
 		global DEPTH
 
 		DEPTH = 0
@@ -205,13 +282,18 @@ def test ():
 
 		sys.exit (0)
 
-	dotex = ('--tex', '') in opts
-	donat = ('--nat', '') in opts
-	dopy  = ('--py', '') in opts
+	dotex = ('--tex', '') in opts or ('-t', '') in opts
+	donat = ('--nat', '') in opts or ('-n', '') in opts
+	dopy  = ('--py', '') in opts or ('-p', '') in opts
+
+	if ('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts:
+		expr_func = lambda: expr (_DEPTH)
+	else:
+		expr_func = iter (_EXPRESSIONS).__next__
 
 	try:
 		while 1:
-			text              = expr (_DEPTH)
+			text              = expr_func ()
 			ast, erridx, auto = parser.parse (text)
 
 			if erridx or auto:
@@ -225,10 +307,15 @@ def test ():
 
 			if ('--show', '') in opts:
 				print ()
+				print ('-' * 78)
 				print ('text:', text)
+				print ()
 				print ('ast: ', ast)
+				print ()
 				print ('tex: ', tex)
+				print ()
 				print ('nat: ', nat)
+				print ()
 				print ('py:  ', py)
 
 			ast_tex = dotex and parser.parse (tex) [0]
@@ -241,21 +328,29 @@ def test ():
 
 			if (dotex and ast_tex != ast_srp) or (donat and ast_nat != ast_srp) or (dopy and ast_py != ast_py):
 				print ()
+				print ('!' * 78)
 				print ('text:', text)
+				print ()
 				print ('ast: ', ast)
 
 				if dotex and ast_tex != ast_srp:
+					print ()
 					print ('tex: ', ast_tex)
 
 				if donat and ast_nat != ast_srp:
+					print ()
 					print ('nat: ', ast_nat)
 
 				if dopy and ast_py != ast_py:
+					print ()
 					print ('py:  ', ast_py)
+
+				print ()
+				print ('FOUND ONE!')
 
 				sys.exit (0)
 
-	except Exception as e:
+	except (Exception, KeyboardInterrupt) as e:
 		print ()
 		print ('text:', text)
 		print ('ast: ', ast)
@@ -265,7 +360,9 @@ def test ():
 		print ('py:  ', ast_py)
 		print ()
 
-		if not isinstance (e, KeyboardInterrupt):
+		if isinstance (e, StopIteration):
+			print ("ALL GOOD...")
+		elif not isinstance (e, KeyboardInterrupt):
 			raise
 
 if __name__ == '__main__':

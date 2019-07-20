@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Exception prevents restart on file date change?
+# TODO: Working directory.
+# TODO: Exception prevents restart on file date change or too much time?
 
 import getopt
 import json
@@ -64,7 +65,7 @@ def _ast_remap (ast, map_):
 
 		if lamb.is_lamb:
 			if len (ast.args) != len (lamb.vars):
-				raise TypeError (f"'{ast.func}()' takes {len (lamb.vars)} argument(s)")
+				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
 			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
 

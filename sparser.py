@@ -8,7 +8,7 @@
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
 
-# TODO: eye(2).is_diagonal
+# TODO: multiple vector weirdness
 # TODO: user_func**exp (args...)?
 # TODO: _xlat_func_Integral multiple integrals
 
@@ -540,9 +540,8 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 				if len (ast.commas [0].vec) > 1 else \
 				AST ('vec', tuple (c.vec [0] for c in ast.commas))
 
-	return AST ('vec', ast.commas)
+	return AST ('vec', ast.commas) # raise SyntaxError ('invalid matrix syntax')
 
-	raise SyntaxError ('invalid matrix syntax')
 
 #...............................................................................................
 class Parser (lalr1.Parser):
@@ -604,7 +603,7 @@ class Parser (lalr1.Parser):
 			b'fUsEdtB27JjypB3HDqDfgcjgyTW3JDWuY8eH58yPX+6wI3z9WFY6LoO1vRPeKmw9QlfKEHIvlyMc5bUd7d+21uGIoPb10Zezo09JpHA8dkyOi2Btb20biWJWby9XOGa9hgsDzbWhOGv2pKRr6o7KcRG4DR2M7QWMub2lmDX4h0qS4GC4nj4uckG5sSFUoaIg' \
 			b'ZvhTkkfUOB2T4yIYD0ceVXcbjtkwnZQk6u6oHKuZ+sORRNPdhmM2nNSgApuFY3JcBOoIimA+JHTrohi7Q3MDjjOBLWtDcZHoHVcOQeXWZLPbpo6Yuh06LNqGr1v5BXPFnKKg4tTK8TkuELud+nBnkmpzaUXeruar6tY4PIR2bYAtXRpPK07m06ZR0K3yyXYH' \
 			b'4JhPW8463A6ffHcAjvm0aRRz0LMzeOr0JseWB/y/Tfjyc6tiFNauDudNkmD1npm95zmS/TIb7TwO2vEE96bB0GHz2HSH7ZjHw1Hz2HaH7ZjH6qh57LrDdsxjGBsptPnywnMTnuW9xWdkCfphyy7hoBOWFgXwDafPHe0+N+CeRgObQaFhVyuk7xLHAccqIBYB' \
-			b'Bh671A1OPpgSCym0q2Nv3Ihhlom5bD3aYbEZnpjgBZO5kbuVuNqdV25REdKcHQmF5oKfxBwHhHIYkRvDCMPLVxf/D9aa5bw='
+			b'Bh671A1OPpgSCym0q2Nv3Ihhlom5bD3aYbEZnpjgBZO5kbuVuNqdV25REdKcHQmF5oKfxBwHhHIYkRvDCMPLVxf/D9aa5bw=' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
