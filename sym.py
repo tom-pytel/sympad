@@ -1,5 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+# TODO:
 # TODO: 'str'**x, 'str'!
 # TODO: MatrixSymbol ('A', 2, 2)**n
 # TODO: Multiple arguments in
@@ -218,7 +219,7 @@ def _ast2tex_func (ast):
 	return \
 			f'\\{ast.func}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}' \
 			if ast.func in AST.Func.TEX else \
-			'\\operatorname{' + ast.func.replace ('_', '\\_') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+			'\\operatorname{' + ast.func.replace ('_', '\\_').replace ('%', '\\%') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2tex_lim (ast):
 	s = ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -281,7 +282,7 @@ _ast2tex_funcs = {
 	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.bracks)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_wrap (ast.minus, {"#", "-", "*"}, {"=", "+", "lamb"})}',
-	'!': lambda ast: f'{_ast2tex_wrap (ast.fact, {"^"}, (ast.fact.op not in {"#", "@", "(", "|", "!", "^", "vec", "mat"} or ast.fact.is_neg_num))}!',
+	'!': lambda ast: _ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
 	'+': lambda ast: ' + '.join (_ast2tex_wrap (n, n.strip_lim_sum ().is_intg and n is not ast.adds [-1], \
 			(n.op in ("piece", "lamb") and n is not ast.adds [-1]) or n.op in {'=', 'lamb'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
@@ -422,7 +423,7 @@ def _ast2nat_pow (ast, trighpow = True):
 
 	# b = ast2nat (ast.base)
 	# p = f'{{{ast2nat (ast.exp)}}}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece'} else ast2nat (ast.exp)
-	b = _ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num))
+	b = _ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '|', 'mat'} or ast.base.is_pos_num))
 	p = _ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'}, {","})
 
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -499,7 +500,7 @@ _ast2nat_funcs = {
 	'|': lambda ast: f'{{|{ast2nat (ast.abs)}|}}',
 	'-': lambda ast: f'-{_ast2nat_wrap (ast.minus, {"#", "-", "*", "piece"}, {"=", "+", "lamb"})}',
 	# '!': lambda ast: f'{_ast2nat_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2nat (ast.fact)}!',
-	'!': lambda ast: f'{_ast2nat_wrap (ast.fact, {"^"}, ast.fact.op not in {"#", "@", "(", "|", "!", "^", "vec", "mat"} or ast.fact.is_neg_num)}!',
+	'!': lambda ast: _ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) + '!',
 	'+': lambda ast: ' + '.join (_ast2nat_wrap (n, n.op in {'intg', 'piece'} or (n.strip_lim_sum ().is_intg and n is not ast.adds [-1]), \
 			(n.op in ('piece', 'lamb') and n is not ast.adds [-1]) or n.op in {'=', 'lamb'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2nat_mul,
@@ -528,7 +529,7 @@ def ast2py (ast): # abstract syntax tree -> Python code text
 def _ast2py_curly (ast):
 	return \
 			_ast2py_paren (ast) \
-			if ast.strip_minus ().op in {'+', '*', '/'} or (ast.is_log and ast.base is not None) else \
+			if ast.strip_minus ().op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 			ast2py (ast)
 
 def _ast2py_paren (ast):
