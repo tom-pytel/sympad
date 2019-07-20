@@ -411,3 +411,6 @@ if __name__ == '__main__':
 	# ast = flatten (ast)
 	# print (ast)
 	test ()
+
+# (Matrix([[Derivative(a, y, 3, x, 2, x, 2) <= oo*1.0, Piecewise((oo, 0), (partialx = lambda: oo, lambda x, y, z: a_prime / {1.0 * {-1.0} d}, True))]]))
+# x, y = lambda: 1, lambda: 2
