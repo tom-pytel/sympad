@@ -120,11 +120,11 @@ def _ast2tex_var (ast):
 	t = AST.Var.PY2TEX.get (n)
 
 	return ( \
-		t or n            if not ast.diff_or_part_type else
-		f'd{t or n}'      if ast.is_diff_any else
-		'\\partial'       if ast.is_part_solo else
-		f'\\partial{t}'   if t else
-		f'\\partial {n}'
+			t or n            if not ast.diff_or_part_type else
+			f'd{t or n}'			if ast.is_diff_any else
+			'\\partial'       if ast.is_part_solo else
+			f'\\partial{t}'   if t else
+			f'\\partial {n}'
 	) + p
 
 def _ast2tex_attr (ast):
@@ -580,7 +580,7 @@ def _ast2py_intg (ast):
 				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.dv.as_var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
 
 _ast2py_funcs = {
-	'=': lambda ast: f'{ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
+	'=': lambda ast: f'{_ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
 	'.': lambda ast: f'{ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{ast2py (ast.obj)}.{ast.attr}{_ast2py_paren (_tuple2ast_func_args (ast.args))}',

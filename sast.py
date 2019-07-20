@@ -244,7 +244,7 @@ class AST_Var (AST):
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 	PY2TEX      = {**dict ((g, f'\\{g}') for g in GREEK), 'partial': '\\partial', 'oo': '\\infty', 'zoo': '\\widetilde\\infty'}
 
-	_rec_groups = re.compile (r'^(?:(d(?!elta))|(partial))?(.*)$')
+	_rec_groups = re.compile (r'^(?:(d(?!elta|partial))|(partial))?(.*)$')
 
 	def _init (self, var):
 		self.var = var
@@ -427,7 +427,7 @@ class AST_Diff (AST):
 	def _init (self, diff, dvs):
 		self.diff, self.dvs = diff, dvs
 
-	_diff_or_part_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
+	_diff_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
 
 class AST_Intg (AST):
 	op, is_intg = 'intg', True
