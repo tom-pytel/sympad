@@ -276,7 +276,7 @@ function ajaxResponse (resp) {
 				var eLogErrorHidden  = document.getElementById (idLogErrorHidden);
 
 				for (let i = 0; i < resp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i]}</div>`);
+					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i].replace (/  /g, '&emsp;')}</div>`);
 				}
 			}
 
@@ -299,34 +299,39 @@ function ajaxResponse (resp) {
 			logResize ();
 			scrollToEnd ();
 
-		} else if (resp.msg !== undefined) { // message
-			$(eLogEval).append (`<div class="LogMsg">${resp.msg}</div>`);
-
-			logResize ();
-			scrollToEnd ();
-
 		} else { // no error
-			for (let subidx in resp.math) {
-				let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
-				let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
+			if (resp.math !== undefined && resp.math.length) { // math results present?
+				for (let subidx in resp.math) {
+					let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
+					let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
 
-				$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
-						<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
-						</div>`);
+					$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
+							<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
+							</div>`);
 
-				let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
-				let eLogEvalMath  = document.getElementById (idLogEvalMath);
+					let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
+					let eLogEvalMath  = document.getElementById (idLogEvalMath);
 
-				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-					eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
+					MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
+						eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
 
-					eLogEvalMath.style.visibility = '';
+						eLogEvalMath.style.visibility = '';
 
-					logResize ();
-					scrollToEnd ();
-				}]);
+						logResize ();
+						scrollToEnd ();
+					}]);
 
-				reprioritizeMJQueue ();
+					reprioritizeMJQueue ();
+				}
+			}
+
+			if (resp.msg !== undefined && resp.msg.length) { // message present?
+				for (let msg of resp.msg) {
+					$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
+				}
+
+				logResize ();
+				scrollToEnd ();
 			}
 		}
 	}

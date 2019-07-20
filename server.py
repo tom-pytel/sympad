@@ -5,6 +5,7 @@
 # TODO: Exception prevents restart on file date change or too much time?
 
 import getopt
+import io
 import json
 import os
 import re
@@ -33,8 +34,9 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-	_parser = sparser.Parser ()
-	_vars   = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_sys_stdout = sys.stdout
+	_parser     = sparser.Parser ()
+	_vars       = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -205,7 +207,7 @@ class Handler (SimpleHTTPRequestHandler):
 		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
 
 		for key, val in list (request.items ()):
-			if len (val) == 1:
+			if isinstance (val, list) and len (val) == 1:
 				request [key] = val [0]
 
 		if request ['mode'] == 'validate':
@@ -213,14 +215,10 @@ class Handler (SimpleHTTPRequestHandler):
 		else: # request ['mode'] == 'evaluate':
 			response = self.evaluate (request)
 
-		response ['mode'] = request ['mode']
-		response ['idx']  = request ['idx']
-		response ['text'] = request ['text']
-
 		self.send_response (200)
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
-		self.wfile.write (json.dumps (response).encode ('utf8'))
+		self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
@@ -233,11 +231,11 @@ class Handler (SimpleHTTPRequestHandler):
 			py  = sym.ast2py (ast)
 
 			if os.environ.get ('SYMPAD_DEBUG'):
-				print ('ast:', ast)
-				print ('tex:', tex)
-				print ('nat:', nat)
-				print ('py: ', py)
-				print ()
+				print ('ast:', ast, file = sys.stderr)
+				print ('tex:', tex, file = sys.stderr)
+				print ('nat:', nat, file = sys.stderr)
+				print ('py: ', py, file = sys.stderr)
+				print (file = sys.stderr)
 
 		return {
 			'tex'         : tex,
@@ -248,6 +246,8 @@ class Handler (SimpleHTTPRequestHandler):
 		}
 
 	def evaluate (self, request):
+		sys.stdout = io.StringIO ()
+
 		try:
 			ast, _, _ = _parser.parse (request ['text'])
 
@@ -255,7 +255,7 @@ class Handler (SimpleHTTPRequestHandler):
 				asts = globals () [f'_admin_{ast.func}'] (ast)
 
 				if isinstance (asts, str):
-					return {'msg': asts}
+					return {'msg': [asts]}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _ast_prepare_ass (ast)
@@ -266,22 +266,35 @@ class Handler (SimpleHTTPRequestHandler):
 				ast = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
-					print ('spt:        ', repr (spt))
-					print ('spt type:   ', type (spt))
-					print ('sympy latex:', sp.latex (spt))
-					print ('ast:        ', ast)
-					print ()
+					print ('spt:        ', repr (spt), file = sys.stderr)
+					print ('spt type:   ', type (spt), file = sys.stderr)
+					print ('sympy latex:', sp.latex (spt), file = sys.stderr)
+					print ('ast:        ', ast, file = sys.stderr)
+					print (file = sys.stderr)
 
 				asts = _ast_execute_ass (ast, vars)
 
-			return {'math': [{
-				'tex': sym.ast2tex (ast),
-				'nat': sym.ast2nat (ast),
-				'py' : sym.ast2py (ast),
-			} for ast in asts]}
+			response = {}
+
+			if asts and asts [0] is not AST.None_:
+				response.update ({'math': [{
+					'tex': sym.ast2tex (ast),
+					'nat': sym.ast2nat (ast),
+					'py' : sym.ast2py (ast),
+				} for ast in asts]})
+
+			if sys.stdout.tell ():
+				sys.stdout.seek (0)
+
+				response ['msg'] = sys.stdout.read ().strip ().split ('\n')
+
+			return response
 
 		except Exception:
-			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
+			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')}
+
+		finally:
+			sys.stdout = _sys_stdout
 
 #...............................................................................................
 _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
