@@ -23,7 +23,7 @@ def ast2py2ast (ast):
 	return sparser (ast2py (ast))
 
 def ast2spt2ast (ast):
-	return spt2ast (ast2spt (ast, doit = True))
+	return spt2ast (ast2spt (ast))
 
 p = sparser
 

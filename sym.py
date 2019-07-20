@@ -611,23 +611,6 @@ _ast2py_funcs = {
 }
 
 #...............................................................................................
-def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)
-	spt = _ast2spt_funcs [ast.op] (ast)
-
-	if doit and callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
-		try:
-			spt = spt.doit ()
-			spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
-		except TypeError:
-			pass
-
-	return spt
-
-def _ast2spt_attr (ast):
-	mbr = getattr (ast2spt (ast.obj), ast.attr)
-
-	return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
-
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict               = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
 _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
@@ -637,89 +620,116 @@ _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable',
 
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
-def _ast2spt_func (ast):
-	if ast.func == '@': # special reference meta-function
-		return ast2spt (ast.args [0])
-	if ast.func == '#': # special stop evaluation meta-function
-		return ExprDontDoIt (ast2spt (ast.args [0]))
+class ast2spt:
+	def __new__ (cls, ast):
+		self    = super ().__new__ (cls)
+		self.kw = {}
 
-	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
+		spt     = self._ast2spt (ast)
 
-	if func is None:
-		raise NameError (f'function {ast.func!r} is not defined')
+		if callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
+			try:
+				spt = spt.doit ()
+				spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
+			except TypeError:
+				pass
 
-	return _ast_func_call (func, ast.args)
+		return spt
 
-def _ast2spt_diff (ast):
-	args = sum ((
-			(ast2spt (n.as_var),) \
-			if n.is_var else \
-			(ast2spt (n.base.as_var), sp.Integer (n.exp.num)) \
-			for n in ast.dvs \
-			), ())
+	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
+		return self._ast2spt_funcs [ast.op] (self, ast)
 
-	return sp.Derivative (ast2spt (ast [1]), *args)
+	def _ast2spt_attr (self, ast):
+		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
-def _ast2spt_intg (ast):
-	if ast.from_ is None:
-		return \
-				sp.Integral (1, ast2spt (ast.dv.as_var)) \
-				if ast.intg is None else \
-				sp.Integral (ast2spt (ast.intg), ast2spt (ast.dv.as_var))
-	else:
-		return \
-				sp.Integral (1, (ast2spt (ast.dv.as_var), ast2spt (ast.from_), ast2spt (ast.to))) \
-				if ast.intg is None else \
-				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.dv.as_var), ast2spt (ast.from_), ast2spt (ast.to)))
+		return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
 
-_ast2spt_eq = {
-	'=':  sp.Eq,
-	'==': sp.Eq,
-	'!=': sp.Ne,
-	'<':  sp.Lt,
-	'<=': sp.Le,
-	'>':  sp.Gt,
-	'>=': sp.Ge,
-}
+	def _ast2spt_func (self, ast):
+		if ast.func == '@': # special reference meta-function
+			return self._ast2spt (ast.args [0])
 
-_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
-	'pi'   : sp.pi,
-	'oo'   : sp.oo,
-	'zoo'  : sp.zoo,
-	'None' : None,
-	'True' : sp.boolalg.true,
-	'False': sp.boolalg.false,
-	'nan'  : sp.nan,
-}
+		if ast.func == '%': # special stop evaluation meta-function
+			self.kw ['evaluate'] = False
 
-_ast2spt_funcs = {
-	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
-	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var)) if len (ast.var) > 1 else sp.Symbol (ast.var)),
-	'.': _ast2spt_attr,
-	'"': lambda ast: ast.str_,
-	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
-	'(': lambda ast: ast2spt (ast.paren),
-	'[': lambda ast: [ast2spt (b) for b in ast.bracks],
-	'|': lambda ast: sp.Abs (ast2spt (ast.abs)),
-	'-': lambda ast: -ast2spt (ast.minus),
-	'!': lambda ast: sp.factorial (ast2spt (ast.fact)),
-	'+': lambda ast: sp.Add (*(ast2spt (n) for n in ast.adds)),
-	'*': lambda ast: sp.Mul (*(ast2spt (n) for n in ast.muls)),
-	'/': lambda ast: sp.Mul (ast2spt (ast.numer), sp.Pow (ast2spt (ast.denom), -1)),
-	'^': lambda ast: sp.Pow (ast2spt (ast.base), ast2spt (ast.exp)),
-	'log': lambda ast: sp.log (ast2spt (ast.log)) if ast.base is None else sp.log (ast2spt (ast.log), ast2spt (ast.base)),
-	'sqrt': lambda ast: sp.Pow (ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (ast2spt (ast.rad), sp.Pow (ast2spt (ast.idx), -1)),
-	'func': _ast2spt_func,
-	'lim': lambda ast: (sp.Limit if ast.dir else sp.limit) (ast2spt (ast.lim), ast2spt (ast.lvar), ast2spt (ast.to), dir = ast.dir or '+-'),
-	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.svar), ast2spt (ast.from_), ast2spt (ast.to))),
-	'diff': _ast2spt_diff,
-	'intg': _ast2spt_intg,
-	'vec': lambda ast: sp.Matrix ([[ast2spt (e)] for e in ast.vec]),
-	'mat': lambda ast: sp.Matrix ([[ast2spt (e) for e in row] for row in ast.mat]),
-	'piece': lambda ast: sp.Piecewise (*tuple ((ast2spt (p [0]), True if p [1] is True else ast2spt (p [1])) for p in ast.pieces)),
-	'lamb': lambda ast: sp.Lambda (tuple (ast2spt (v) for v in ast.vars), ast2spt (ast.lamb)),
-}
+			return ExprDontDoIt (self._ast2spt (ast.args [0]))
+
+		func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
+
+		if func is None:
+			raise NameError (f'function {ast.func!r} is not defined')
+
+		return _ast_func_call (func, ast.args)
+
+	def _ast2spt_diff (self, ast):
+		args = sum ((
+				(self._ast2spt (n.as_var),) \
+				if n.is_var else \
+				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.num)) \
+				for n in ast.dvs \
+				), ())
+
+		return sp.Derivative (self._ast2spt (ast [1]), *args, **self.kw)
+
+	def _ast2spt_intg (self, ast):
+		if ast.from_ is None:
+			return \
+					sp.Integral (1, self._ast2spt (ast.dv.as_var)) \
+					if ast.intg is None else \
+					sp.Integral (self._ast2spt (ast.intg), self._ast2spt (ast.dv.as_var))
+		else:
+			return \
+					sp.Integral (1, (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to))) \
+					if ast.intg is None else \
+					sp.Integral (self._ast2spt (ast [1]), (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+
+	_ast2spt_eq = {
+		'=':  sp.Eq,
+		'==': sp.Eq,
+		'!=': sp.Ne,
+		'<':  sp.Lt,
+		'<=': sp.Le,
+		'>':  sp.Gt,
+		'>=': sp.Ge,
+	}
+
+	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
+		'pi'   : sp.pi,
+		'oo'   : sp.oo,
+		'zoo'  : sp.zoo,
+		'None' : None,
+		'True' : sp.boolalg.true,
+		'False': sp.boolalg.false,
+		'nan'  : sp.nan,
+	}
+
+	_ast2spt_funcs = {
+		'=': lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
+		'#': lambda self, ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
+		'@': lambda self, ast: {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var, **self.kw)) if len (ast.var) > 1 else sp.Symbol (ast.var, **self.kw)),
+		'.': _ast2spt_attr,
+		'"': lambda self, ast: ast.str_,
+		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.commas),
+		'(': lambda self, ast: self._ast2spt (ast.paren),
+		'[': lambda self, ast: [self._ast2spt (b) for b in ast.bracks],
+		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), **self.kw),
+		'-': lambda self, ast: -self._ast2spt (ast.minus),
+		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), **self.kw),
+		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.adds), **self.kw),
+		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.muls), **self.kw),
+		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), sp.Pow (self._ast2spt (ast.denom), -1), **self.kw),
+		'^': lambda self, ast: sp.Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), **self.kw),
+		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), **self.kw) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), **self.kw),
+		'sqrt': lambda self, ast: sp.Pow (self._ast2spt (ast.rad), sp.Pow (2, -1), **self.kw) if ast.idx is None else sp.Pow (self._ast2spt (ast.rad), sp.Pow (self._ast2spt (ast.idx), -1, **self.kw), **self.kw),
+		'func': _ast2spt_func,
+		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
+		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
+		'diff': _ast2spt_diff,
+		'intg': _ast2spt_intg,
+		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], **self.kw),
+		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], **self.kw),
+		'piece': lambda self, ast: sp.Piecewise (*tuple ((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.pieces), **self.kw),
+		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
+	}
 
 #...............................................................................................
 def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
@@ -922,8 +932,8 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('^', ('@', 'x'), ('-', ('/', ('#', '1'), ('#', '1.0'))))
-# 	res = ast2nat (ast)
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	ast = AST ('+', (('@', '1'), ('@', '2')))
+	res = ast2spt (ast)
+	print (res)

@@ -107,6 +107,7 @@ cofactors( 1 , {lambda x: 1 = lambda: 2} )
 log(partialx*'str'*partialx) / log(Derivative(a, z, 3, y, 2))
 abs(e**sqrt1, abs(-1.0))
 dpartial
+a, lambda: b = 1
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!

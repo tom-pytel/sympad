@@ -262,7 +262,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 				sym.set_precision (ast)
 
-				spt = sym.ast2spt (ast, doit = True)
+				spt = sym.ast2spt (ast)
 				ast = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
