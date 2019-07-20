@@ -46,7 +46,6 @@ User input is intended to be quick, easy and intuitive and is displayed in symbo
 Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
-<c>yo</c>
 <h4>Quick Start</h4>
 
 <p>
@@ -78,15 +77,14 @@ Enter the lines that follow one by one to see the effect:
 1<br>
 expand (_(x+1))<br>
 expand (_(x+1))<i>&emsp;**(or press the up arrow)</i><br>
-expand (_(x+1))<br>
+expand (_(x+1))<i>&emsp;...</i><br>
 </p><p>
 Or the following:
 </p><p>
 a, b = 1, 1<br>
 a, b = b, a + b<br>
 a, b = b, a + b<i>&emsp;**(or press the up arrow)</i><br>
-a, b = b, a + b<br>
-a, b = b, a + b<br>
+a, b = b, a + b<i>&emsp;...</i><br>
 </p>
 
 <h4>Usage</h4>
@@ -289,7 +287,7 @@ For example, two ways to get the transpose of a matrix are "<b>{{1,2,3},{4,5,6}}
 <p>
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
-Anything can be assigned to any valid variable like valid mathematical expressions, Python objects like strings or lists or even references to other variables.
+Anything can be assigned to any valid variable like mathematical expressions, Python objects like strings or lists, user lambda functions or even references to other variables.
 To delete an assignment use the "<b>del var</b>" function, to delete all assignments do "<b>delall</b>" and to see what variables are currently assigned to, use the "<b>vars</b>" function.
 </p><p>
 Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object like "<b>x, y = 1, 2</b>".
@@ -307,38 +305,60 @@ Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of co
 The "<b>@(expr)</b>" function technically prevents variable remapping for the expression it encompasses, so if you have the variable "<b>x = 2</b>" set and you do "<b>@(x)</b>" then you will get "<b>x</b>" and not "<b>2</b>".
 </p>
 
-<h2>Functions</h2>
 <div style="color: red">
+</div>
+<h2>Functions</h2>
 <p>
-All SymPy functions are available directly just by typing their name.
-To numerically evaluate the value of "<b>sin (2)</b>" type in "<b>N (sin (2))</b>".
-Functions may take multiple comma-separated arguments with optional keyword arguments as well.
+There are two types of functions made available in SymPad - all the SymPy functions are available directly just by typing their name, as well as user created lambda functions assigned to variables.
+In addition, member functions of objects are supported an callable like "<b>Matrix ([1,2,3]).transpose ()</b>".
+All functions may take multiple comma-separated arguments and the SymPy functions also optionally take keyword arguments.
+</p>
+
+<h4>SymPy Functions</h4>
+
+<p>
+Almost all SymPy function and objects from the top level of the SymPy module are made available directly for calling with their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
+This means no "<b>N()</b>", "<b>S()</b>" or "<b>O()</b>" directly, though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$print ('Hello World...')</b>".
+Only the "non-dangerous" __builtin__ functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
+To numerically evaluate the value of "<b>sin (2)</b>" you use the "<b>$</b>" escape character with the "<b>N()</b>" function like "<b>$N (sin (2))</b>", or just use the member function "<b>sin (2).evalf ()</b>".
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
 The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
 The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
-This last form of exponentiating a function is extended as an input shortcut to all functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
+</p><p>
+This last form of exponentiating a function is extended as an input shortcut to all top-level functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
+This does not apply to member functions or user created lambda functions.
 Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
-Top-level functions don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
-Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" always require explicit parentheses.
-</p><p>
-Many functions which have an explicit mathematical display syntax are translated on the fly for correct rendering.
+Top-level functions also don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
+Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" and lambdas always require explicit parentheses.
+cMany functions which have a common mathematical display style are translated on the fly for rendering in that style.
 These include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
 Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>", and more...
+</p>
+
+<h4>Lambda Functions</h4>
+
+<p>
+User created lambda functions are supported and are specified the same way as Python lambdas - "<b>lambda x, y: (x+y)**2</b>".
+In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
+Lambda recursion is currently not supported.
+</p>
+
+<h4>Pseudo-Functions</h4>
+<p>
+They are called pseudo-functions because they don't actually evaluate anything but rather affect how evaluation proceeds.
+The "<b>@()</b>" pseudo-function prevents variable mapping for any expression it encapsulates.
+This means that when you assign one variable to another as "<b>x = @(y)</b>" then from now on "<b>x</b>" will take on the value of "<b>y</b>" whatever that may be at any time instead of just on assignment.
 </p><p>
-The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar.
-Function names specifically recognized by the grammar are only those specified in the SymPy module which do not start with an underscore and are longer than one character (so no "<b>N</b>", "<b>O</b>" or "<b>S</b>") and a few builtins.
-When functions are entered using the "<b>$</b>" character then those as well as many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
-Try entering "<b>$print ('Hello World...')</b>" and have a look at the server output.
-Only the non-dangerous __builtin__ functions are specifically included in this list, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
-</p><p>
-You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
-Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
-</p><p>
+The "<b>%()</b>" pseudo-function ...
+This means no global variable remapping so if you have a lambda defined as "<b>f = lambda x: x + @(y) + @(z)</b>" and a global variable "<b>z = 3</b>" and you call the lambda as "<b>f(1,2)</b>" then you will
+T
 "<b>@@()</b>" pseudo-function.
 </p>
-</div>
+
+<h4>Implicit Multiplication, Functions and Parentheses</h4>
+
 <h2>Notes</h2>
 
 <p>
@@ -353,6 +373,9 @@ Due to mixing operators from Python and LaTeX the grammar may be a little wonky 
 There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
 This has been resolved in favor of variable names for "<b>beta</b>" and "<b>Lambda</b>", which means that in order to access those functions in SymPy you have to use "<b>$beta()</b>" or "<b>$Lambda()</b>", and in favor of function names for "<b>zeta</b>" and "<b>Gamma</b>".
 This means that the LaTeX expression "<b>\zeta x</b>" means the Riemann zeta function of "<b>x</b>" and "<b>\Gamma x</b>" means "<b>gamma (x)</b>".
+</p><p>
+You can always tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
+Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name (this only works for top-level functions).
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
 </p><p>

@@ -271,12 +271,12 @@ def _ast2tex_intg (ast):
 				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {_ast2tex_wrap (ast.intg, {"diff"}, {"=", "lamb"})} \\ {ast2tex (ast.dv)}'
 
 _ast2tex_funcs = {
-	'=': lambda ast: f'{_ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2tex_eq_hs (ast, ast.rhs, lhs = False)}',
+	'=': lambda ast: f'{_ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2tex_eq_hs (ast, ast.rhs, False)}',
 	'#': _ast2tex_num,
 	'@': _ast2tex_var,
 	'.': _ast2tex_attr,
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
-	',': lambda ast: f'{", ".join (_ast2tex_wrap (c, 0, c.is_ass) for c in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (ast2tex (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
 	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.bracks)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
@@ -487,13 +487,13 @@ def _ast2nat_intg (ast):
 				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {ast2nat (ast.dv)}'
 
 _ast2nat_funcs = {
-	'=': lambda ast: f'{_ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2nat_eq_hs (ast, ast.rhs, lhs = False)}',
+	'=': lambda ast: f'{_ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2nat_eq_hs (ast, ast.rhs, False)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
 	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb"})}.{ast.attr}' \
 			if ast.args is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{", ".join (_ast2nat_wrap (c, 0, c.is_ass) for c in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (ast2nat (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2nat (ast.paren)})',
 	'[': lambda ast: f'[{", ".join (ast2nat (b) for b in ast.bracks)}]',
 	'|': lambda ast: f'{{|{ast2nat (ast.abs)}|}}',
@@ -617,7 +617,7 @@ def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expressio
 	if doit and callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
 		try:
 			spt = spt.doit ()
-			spt = sp.piecewise_fold (spt)
+			spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
 		except TypeError:
 			pass
 
@@ -640,13 +640,13 @@ _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n
 def _ast2spt_func (ast):
 	if ast.func == '@': # special reference meta-function
 		return ast2spt (ast.args [0])
-	if ast.func == '@@': # special stop evaluation meta-function
+	if ast.func == '#': # special stop evaluation meta-function
 		return ExprDontDoIt (ast2spt (ast.args [0]))
 
 	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
 	if func is None:
-		raise NameError (f'name {ast.func!r} is not defined')
+		raise NameError (f'function {ast.func!r} is not defined')
 
 	return _ast_func_call (func, ast.args)
 
@@ -827,7 +827,7 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
-	ExprDontDoIt: lambda spt: AST ('func', '@@', (spt2ast (spt.args [0]),)),
+	ExprDontDoIt: lambda spt: AST ('func', '#', (spt2ast (spt.args [0]),)),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,

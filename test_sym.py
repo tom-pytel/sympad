@@ -249,14 +249,14 @@ def expr (depth = None):
 
 	return f'{{{ret}}}' if CURLYS else ret
 
-def fix_py (ast):
+def fix_vars (ast):
 	if not isinstance (ast, AST):
 		return ast
 
 	if ast == ('@', '_'):
 		return AST ('@', 'x')
 
-	return AST (*tuple (fix_py (a) for a in ast))
+	return AST (*tuple (fix_vars (a) for a in ast))
 
 def process (ast):
 	if not isinstance (ast, AST):
@@ -284,6 +284,8 @@ def flatten (ast):
 #...............................................................................................
 CURLYS = True
 _DEPTH = 3
+
+# test_sym.py -tnpi --show --nc
 
 def test ():
 	global CURLYS
@@ -329,6 +331,9 @@ def test ():
 				print ('text:', text)
 
 			if dopy:
+				if not CURLYS:
+					ast = fix_vars (ast)
+
 				text              = sym.ast2py (ast)
 				ast, erridx, auto = parser.parse (text)
 
@@ -336,8 +341,6 @@ def test ():
 					print ()
 					print ('Invalid:', text)
 					continue
-
-				ast = fix_py (ast)
 
 			tex = dotex and sym.ast2tex (ast)
 			nat = donat and sym.ast2nat (ast)
