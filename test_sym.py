@@ -9,7 +9,7 @@ from sast import AST
 import sym
 import sparser
 
-# Piecewise((oo, 0), (partialx = lambda: a, lambda: b, True))
+# Piecewise((1,2), (partialx = lambda: a, lambda: b, True))
 
 TERMS = [
 	'0',
