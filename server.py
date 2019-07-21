@@ -212,8 +212,6 @@ class Handler (SimpleHTTPRequestHandler):
 			if isinstance (val, list) and len (val) == 1:
 				request [key] = val [0]
 
-		print (request, file = sys.stderr)
-
 		if request ['mode'] == 'validate':
 			response = self.validate (request)
 		else: # request ['mode'] == 'evaluate':

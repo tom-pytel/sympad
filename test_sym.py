@@ -268,7 +268,7 @@ def process (ast):
 	if ast.is_partial:
 		return ast.as_diff
 
-	if ast.is_paren:
+	if ast.is_paren and not ast.paren.is_comma:
 		return process (ast.paren)
 
 	return AST (*tuple (process (a) for a in ast))
