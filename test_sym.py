@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-# TODO: x +- lambda:
-
 from getopt import getopt
 from random import random, randrange, choice
 import sys
