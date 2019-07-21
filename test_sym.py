@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# TODO: x**---y
 # TODO: x +- lambda:
 
 from getopt import getopt
@@ -52,12 +51,10 @@ Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
 \int_{partial^{6} / partialy^{2} partialx^{2} partialz^{2} {partialx}}^{partial^{4} / partialz^{1} partialz^{2} partialx^{1} {0}} {{a} != {'str'}} dx
 {{{oo}**{'str'}}+{\int {oo} dx}+{partial^{7} / partialz^{3} partialx^{2} partialx^{2} {0}}}
 [{{{-1} \cdot {oo}}},{{{dx},{1.0},{oo}}},{partial^{8} / partialx^{3} partialx^{2} partialz^{3} {oo}}]
--{lambda x, y, z: {dx}}
 ('-', ('lamb', ('@', 'dx'), (('@', 'x'), ('@', 'y'), ('@', 'z'))))
 {{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'str'}}}
 {{lambda: {-1}} \cdot {\frac{partialx}{oo}} \cdot {{1.0} if {1} else {a'} if {0}}}
 {{{a'} / {-1}} {\lim_{x \to partial} {-1}} {lambda x, y, z: {partialx}}}
-{{{{d}*{0}}}+{{'str'}**{d}}+{lambda x, y: {partialx}}}
 \int_{\sqrt[{a}]{1.0}}^{[]} {lambda x: {partialx}} dx
 lambda x: {{dx} = {dx}}
 {{\lim_{x \to {{oo},}} {\frac{d}{d}}}  {{{{{partialx} \cdot {a'}}} \cdot {{{a'}*{'str'}}}}}}
@@ -67,7 +64,6 @@ lambda x: {{dx} = {dx}}
 \int_{{partial^{4} / partialx^{1} partialy^{3} {partial}}**{\sqrt[{oo}]{0}}}^{{{{-1} == {0}}*{({partial},{'str'},{a'})}*{{1} / {1}}}} {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
 \int {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
 \lim_{x \to \frac{lambda x, y, z: {-{0}}}{partial^{5} / partialz^{2} partialz^{1} partialx^{2} {Limit (a', x, 1)}}} {\arctan()}
-{{{|{{0}**{1.0}}|} / {lambda x, y: {\int_{a'}^{a'} {0} dx}}},{\int_{\sqrt{()}}^{lambda x, y, z: {Sum (partial, (x, a, partial))}} {lambda x, y: {{{1}*{a'}}}} dx},}
 -{{{{{{partialx},{partial},{oo},},{{dx},{-1.0},{a},},}}**{StrictGreaterThan({1.0})}} > {partial^{4} / partialz^{1} partialx^{2} partialy^{1} {{1.0}^{1}}}}
 -{{{{{\sum_{x = 0}^{-1.0} {oo}} \cdot {({0})}}},}}
 \int {{{{d}+{partialx}+{1}}} if {lambda x, y, z: {a}} else {{1} / {partialx}}} dx
@@ -119,13 +115,13 @@ def expr_eq (): ## BROKEN!
 	return f'{expr ()} {choice (["=", "==", "!=", "<", "<=", ">", ">="])} {expr ()}'
 
 def expr_paren ():
-	return '(' + ','.join (f'{expr ()}' for i in range (randrange (4))) + ')'
+	return '(' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + ')'
 
 def expr_brack ():
-	return '[' + ','.join (f'{expr ()}' for i in range (randrange (4))) + ']'
+	return '[' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + ']'
 
 def expr_abs ():
-	return f'\\left|{expr ()}\\right|'
+	return f'\\left|{expr (1)}\\right|'
 
 def expr_minus ():
 	return f'-{expr ()}'
@@ -216,21 +212,21 @@ def expr_intg ():
 			f'\\int {expr ()} dx'
 
 def expr_vec ():
-	return '({' + ','.join (f'{expr ()}' for i in range (randrange (1, 4))) + ',})'
+	return '({' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + ',})'
 
 def expr_mat ():
 	cols = randrange (1, 4)
 
-	return '({' + ','.join ('{' + ','.join (f'{expr ()}' for j in range (cols)) + ',}' for i in range (randrange (1, 4))) + ',})'
+	return '({' + ','.join ('{' + ','.join (f'{expr (1)}' for j in range (cols)) + ',}' for i in range (randrange (1, 4))) + ',})'
 
 def expr_piece ():
-	p = [f'{expr ()} if {expr ()}']
+	p = [f'{expr (1)} if {expr ()}']
 
 	for _ in range (randrange (3)):
-		p.append (f'else {expr ()} if {expr ()}')
+		p.append (f'else {expr (1)} if {expr ()}')
 
 	if random () >= 0.5:
-		p.append (f'else {expr ()}')
+		p.append (f'else {expr (1)}')
 
 	return ' '.join (p)
 
@@ -239,18 +235,25 @@ def expr_lamb ():
 
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
 
-def expr (depth = None):
+def expr (allow_lamb = 0, depth = None):
 	global DEPTH, CURLYS
 
 	if depth is not None:
 		DEPTH = depth
 
-	if not DEPTH:
+	if DEPTH <= 0:
 		ret = choice (TERMS)
 
 	else:
 		DEPTH -= 1
-		ret    = choice (EXPRS) ()
+
+		while 1:
+			e = choice (EXPRS)
+
+			if e is not expr_lamb or allow_lamb:
+				break
+
+		ret    = e ()
 		DEPTH += 1
 
 	return f'{{{ret}}}' if CURLYS else ret
@@ -323,7 +326,7 @@ def test ():
 	CURLYS = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
 
 	if ('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts:
-		expr_func = lambda: expr (_DEPTH)
+		expr_func = lambda: expr (1, _DEPTH)
 	else:
 		expr_func = iter (_EXPRESSIONS).__next__
 
@@ -409,6 +412,10 @@ def test ():
 				sys.exit (0)
 
 	except (Exception, KeyboardInterrupt) as e:
+		if isinstance (e, StopIteration):
+			print ("ALL GOOD...")
+			sys.exit (0)
+
 		print ()
 		print ('!' * 78)
 		print ('text:   ', text)
@@ -419,9 +426,7 @@ def test ():
 		print ('ast_py: ', ast_py)
 		print ()
 
-		if isinstance (e, StopIteration):
-			print ("ALL GOOD...")
-		elif not isinstance (e, KeyboardInterrupt):
+		if not isinstance (e, KeyboardInterrupt):
 			raise
 
 if __name__ == '__main__':
