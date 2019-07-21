@@ -209,7 +209,7 @@ def _ast2tex_func (ast):
 	return \
 			f'\\{ast.func}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}' \
 			if ast.func in AST.Func.TEX else \
-			'\\operatorname{' + ast.func.replace ('_', '\\_').replace ('%', '\\%') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+			'\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2tex_lim (ast):
 	s = ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -288,7 +288,7 @@ _ast2tex_funcs = {
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {ast2tex (p [1])}' for p in ast.pieces) + ' \\end{cases}',
-	'lamb': lambda ast: f'\\left({ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)}\\right)',
+	'lamb': lambda ast: f'\\left({ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 
 	'text': lambda ast: ast.tex,
 }
@@ -603,10 +603,10 @@ class ast2spt:
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
 
 	def _ast2spt_func (self, ast):
-		if ast.func == '@': # special reference meta-function
+		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
 
-		if ast.func == '%': # special stop evaluation meta-function
+		if ast.func == AST.Func.NOEVAL: # special stop evaluation meta-function
 			self.kw ['evaluate'] = False
 
 			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
@@ -785,7 +785,7 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
-	ExprDontDoIt: lambda spt: AST ('func', '%', (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
+	ExprDontDoIt: lambda spt: AST ('func', AST.Func.NOEVAL, (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,

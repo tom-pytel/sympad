@@ -56,13 +56,13 @@ class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
 def _ast_remap (ast, map_):
-	if not isinstance (ast, AST) or (ast.is_func and ast.func == '@'): # non-AST or stop remap
+	if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
 		return ast
 
 	if ast.is_var and ast.var in map_: # variable
 		ast = map_ [ast.var]
 
-		return AST ('func', '%', (ast,)) if ast.is_lamb else _ast_remap (ast, map_)
+		return AST ('func', AST.Func.NOEVAL, (ast,)) if ast.is_lamb else _ast_remap (ast, map_)
 
 	if ast.is_func and ast.func in map_: # user function
 		lamb = map_ [ast.func]

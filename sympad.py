@@ -1811,7 +1811,10 @@ class AST_Func (AST):
 	# GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
 	# 		'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
 
-	SPECIAL         = {'@', '%', 'vars', 'del', 'delall'}
+	NOREMAP         = '@'
+	NOEVAL          = '%'
+
+	SPECIAL         = {NOREMAP, NOEVAL, 'vars', 'del', 'delall'}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln', 'zeta', 'Gamma'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
@@ -2602,13 +2605,13 @@ class Parser (lalr1.Parser):
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {'@', '%'})))})"
+	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {AST.Func.NOREMAP, AST.Func.NOEVAL})))})"
 	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
 
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'),
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
@@ -2633,7 +2636,7 @@ class Parser (lalr1.Parser):
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
-		('VAR',          fr"(?:(\\partial\s?|{_UPARTIAL})({_VAR})|({_VAR}))('*)"),
+		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))('*)"),
 		('ATTR',         fr'\.(?:({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"({_STR})|\\text\s*{{\s*({_STR})\s*}}"),
 		('SUB1',         fr'_{_VARTEX1}'),
@@ -2678,7 +2681,7 @@ class Parser (lalr1.Parser):
 	def expr_lambda_2   (self, expr_mapsto):                                    return expr_mapsto
 
 	def expr_mapsto_1   (self, expr_paren, MAPSTO, expr_eq):                    return _expr_mapsto (expr_paren, expr_eq)
-	def expr_mapsto_2   (self, expr_piece):                                     return expr_piece
+	def expr_mapsto_3   (self, expr_piece):                                     return expr_piece
 
 	def expr_piece_1     (self, expr_ineq, IF, expr, ELSE, expr_lambda):
 		return \
@@ -2800,13 +2803,15 @@ class Parser (lalr1.Parser):
 	def expr_num        (self, NUM):                                            return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
 	def expr_var        (self, VAR):
 		var = \
-				'partial' + AST.Var.ANY2PY.get (VAR.grp [1], VAR.grp [1].replace ('\\_', '_')) \
+				'partial' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
 				if VAR.grp [0] else \
-				self._VAR_TEX_XLAT [VAR.grp [2]] \
-				if VAR.grp [2] in self._VAR_TEX_XLAT else \
-				AST.Var.ANY2PY.get (VAR.grp [2].replace (' ', ''), VAR.grp [2].replace ('\\_', '_'))
+				'd' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
+				if VAR.grp [1] else \
+				self._VAR_TEX_XLAT [VAR.grp [3]] \
+				if VAR.grp [3] in self._VAR_TEX_XLAT else \
+				AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-		return AST ('@', var + '_prime' * len (VAR.grp [3]))
+		return AST ('@', var + '_prime' * len (VAR.grp [4]))
 
 	def expr_sub_1      (self, SUB, expr_frac):                                 return expr_frac
 	def expr_sub_2      (self, SUB1):                                           return _ast_from_tok_digit_or_var (SUB1)
@@ -2856,7 +2861,7 @@ class Parser (lalr1.Parser):
 						self.autocompleting = False
 
 			else:
-				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, ('', '', '', '')))
+				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, ('', '', '', '', '')))
 				self._mark_error ()
 
 			tokidx += 1
@@ -3027,7 +3032,7 @@ class sparser: # for single script
 
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 	p = Parser ()
-	a = p.parse (r"\int 2x*-dx")
+	a = p.parse (r"doo")
 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
@@ -3239,7 +3244,7 @@ def _ast2tex_func (ast):
 	return \
 			f'\\{ast.func}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}' \
 			if ast.func in AST.Func.TEX else \
-			'\\operatorname{' + ast.func.replace ('_', '\\_').replace ('%', '\\%') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+			'\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2tex_lim (ast):
 	s = ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -3318,7 +3323,7 @@ _ast2tex_funcs = {
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {ast2tex (p [1])}' for p in ast.pieces) + ' \\end{cases}',
-	'lamb': lambda ast: f'\\left({ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)}\\right)',
+	'lamb': lambda ast: f'\\left({ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 
 	'text': lambda ast: ast.tex,
 }
@@ -3633,10 +3638,10 @@ class ast2spt:
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
 
 	def _ast2spt_func (self, ast):
-		if ast.func == '@': # special reference meta-function
+		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
 
-		if ast.func == '%': # special stop evaluation meta-function
+		if ast.func == AST.Func.NOEVAL: # special stop evaluation meta-function
 			self.kw ['evaluate'] = False
 
 			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
@@ -3815,7 +3820,7 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
-	ExprDontDoIt: lambda spt: AST ('func', '%', (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
+	ExprDontDoIt: lambda spt: AST ('func', AST.Func.NOEVAL, (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
@@ -3967,13 +3972,13 @@ class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
 def _ast_remap (ast, map_):
-	if not isinstance (ast, AST) or (ast.is_func and ast.func == '@'): # non-AST or stop remap
+	if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
 		return ast
 
 	if ast.is_var and ast.var in map_: # variable
 		ast = map_ [ast.var]
 
-		return AST ('func', '%', (ast,)) if ast.is_lamb else _ast_remap (ast, map_)
+		return AST ('func', AST.Func.NOEVAL, (ast,)) if ast.is_lamb else _ast_remap (ast, map_)
 
 	if ast.is_func and ast.func in map_: # user function
 		lamb = map_ [ast.func]

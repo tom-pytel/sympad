@@ -651,13 +651,13 @@ class Parser (lalr1.Parser):
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {'@', '%'})))})"
+	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {AST.Func.NOREMAP, AST.Func.NOEVAL})))})"
 	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
 
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'),
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
@@ -682,7 +682,7 @@ class Parser (lalr1.Parser):
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
-		('VAR',          fr"(?:(\\partial\s?|{_UPARTIAL})({_VAR})|({_VAR}))('*)"),
+		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))('*)"),
 		('ATTR',         fr'\.(?:({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"({_STR})|\\text\s*{{\s*({_STR})\s*}}"),
 		('SUB1',         fr'_{_VARTEX1}'),
@@ -727,7 +727,7 @@ class Parser (lalr1.Parser):
 	def expr_lambda_2   (self, expr_mapsto):                                    return expr_mapsto
 
 	def expr_mapsto_1   (self, expr_paren, MAPSTO, expr_eq):                    return _expr_mapsto (expr_paren, expr_eq)
-	def expr_mapsto_2   (self, expr_piece):                                     return expr_piece
+	def expr_mapsto_3   (self, expr_piece):                                     return expr_piece
 
 	def expr_piece_1     (self, expr_ineq, IF, expr, ELSE, expr_lambda):
 		return \
@@ -849,13 +849,15 @@ class Parser (lalr1.Parser):
 	def expr_num        (self, NUM):                                            return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
 	def expr_var        (self, VAR):
 		var = \
-				'partial' + AST.Var.ANY2PY.get (VAR.grp [1], VAR.grp [1].replace ('\\_', '_')) \
+				'partial' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
 				if VAR.grp [0] else \
-				self._VAR_TEX_XLAT [VAR.grp [2]] \
-				if VAR.grp [2] in self._VAR_TEX_XLAT else \
-				AST.Var.ANY2PY.get (VAR.grp [2].replace (' ', ''), VAR.grp [2].replace ('\\_', '_'))
+				'd' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
+				if VAR.grp [1] else \
+				self._VAR_TEX_XLAT [VAR.grp [3]] \
+				if VAR.grp [3] in self._VAR_TEX_XLAT else \
+				AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-		return AST ('@', var + '_prime' * len (VAR.grp [3]))
+		return AST ('@', var + '_prime' * len (VAR.grp [4]))
 
 	def expr_sub_1      (self, SUB, expr_frac):                                 return expr_frac
 	def expr_sub_2      (self, SUB1):                                           return _ast_from_tok_digit_or_var (SUB1)
@@ -905,7 +907,7 @@ class Parser (lalr1.Parser):
 						self.autocompleting = False
 
 			else:
-				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, ('', '', '', '')))
+				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, ('', '', '', '', '')))
 				self._mark_error ()
 
 			tokidx += 1
@@ -1077,5 +1079,5 @@ class sparser: # for single script
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 	p = Parser ()
-	a = p.parse (r"\int 2x*-dx")
+	a = p.parse (r"doo")
 	print (a)
