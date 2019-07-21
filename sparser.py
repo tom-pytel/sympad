@@ -465,13 +465,10 @@ def _xlat_func_Sum (ast): # translate function 'Sum' to native ast representatio
 			commas = ast2.commas
 			ast    = AST (*(('sum', ast.commas [0], *commas) + (AST.VarNull, AST.VarNull, AST.VarNull)) [:5])
 
-	if commas [-1].is_null_var:
+	if commas and commas [-1].is_null_var:
 		return ast
 
 	raise lalr1.Incomplete (ast)
-
-# eye(2).a -> ('.', ('func', 'eye', (('.', ('(', ('#', '2')), 'a'),)), 'a')
-# eye((2).a) -> ('func', 'eye', (('.', ('(', ('#', '2')), 'a'),))
 
 def _expr_func (iparm, *args, strip = 0): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	def astarg (arg):
