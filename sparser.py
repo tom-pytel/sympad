@@ -505,29 +505,29 @@ def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function
 	return wrap (_xlat_func (ast))
 
 _FUNC_AST_XLAT = {
-	'Abs'       : lambda expr: _expr_func (1, '|', expr, strip = 1),
-	'abs'       : lambda expr: _expr_func (1, '|', expr, strip = 1),
-	'Derivative': lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
-	'diff'      : lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
-	'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1),
-	'factorial' : lambda expr: _expr_func (1, '!', expr, strip = 1),
-	'Gamma'     : lambda expr: _expr_func (2, 'func', 'gamma', expr, strip = 1),
-	'Integral'  : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
-	'integrate' : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
-	'Limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
-	'limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
-	'Matrix'    : lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr),
-	'ln'        : lambda expr: _expr_func (1, 'log', expr),
-	'Piecewise' : lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr),
-	'Pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
-	'pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
-	'Sum'       : lambda expr: _expr_func_xlat (_xlat_func_Sum, expr),
+	'Abs'       : (1, lambda expr: _expr_func (1, '|', expr, strip = 1)),
+	'abs'       : (1, lambda expr: _expr_func (1, '|', expr, strip = 1)),
+	'Derivative': (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
+	'diff'      : (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
+	'exp'       : (1, lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1)),
+	'factorial' : (1, lambda expr: _expr_func (1, '!', expr, strip = 1)),
+	'Gamma'     : (1, lambda expr: _expr_func (2, 'func', 'gamma', expr, strip = 1)),
+	'Integral'  : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
+	'integrate' : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
+	'Limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
+	'limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
+	'Matrix'    : (0, lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr)),
+	'ln'        : (1, lambda expr: _expr_func (1, 'log', expr)),
+	'Piecewise' : (0, lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr)),
+	'Pow'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Pow, expr)),
+	'pow'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Pow, expr)),
+	'Sum'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Sum, expr)),
 }
 
 def _expr_func_func (FUNC, expr_neg_func):
-	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
-	xlat = _FUNC_AST_XLAT.get (func)
-	ast  = _expr_func (2, 'func', func, expr_neg_func)
+	func        = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
+	paren, xlat = _FUNC_AST_XLAT.get (func, (None, None))
+	ast         = _expr_func (2, 'func', func, expr_neg_func)
 
 	if not xlat:
 		return ast
@@ -538,7 +538,8 @@ def _expr_func_func (FUNC, expr_neg_func):
 
 	# return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
 
-	ast2 = xlat (args [0] if len (args) == 1 else AST (',', args)) # legacy args passed as AST commas instead of python tuple
+	arg  = args [0] if len (args) == 1 else AST (',', args)
+	ast2 = xlat (AST ('(', arg) if paren else arg) # legacy args passed as AST commas instead of python tuple
 
 	if ast2.is_func and len (ast2.args) == 1 and ast2.args [0].is_comma:
 		ast2 = AST ('func', ast2.func, ast2.args [0].commas)
@@ -1082,8 +1083,8 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	p = Parser ()
-# 	a = p.parse (r'Matrix(4, 4, lambda x, y: 1)')
-# 	print (a)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	p = Parser ()
+	a = p.parse (r'\arcsin2')
+	print (a)

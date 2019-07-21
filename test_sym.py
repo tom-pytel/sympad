@@ -110,7 +110,9 @@ a, lambda: b = 1
 \exp({a},{-1},{1})
 \int 2x*-dx
 x, y = lambda: 1, lambda: 2
+doo
 partial'
+ln((a)**b)
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!
