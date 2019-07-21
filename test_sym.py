@@ -9,6 +9,8 @@ from sast import AST
 import sym
 import sparser
 
+# Piecewise((oo, 0), (partialx = lambda: a, lambda: b, True))
+
 TERMS = [
 	'0',
 	'1',
@@ -107,6 +109,7 @@ dpartial
 a, lambda: b = 1
 \exp({a},{-1},{1})
 \int 2x*-dx
+x, y = lambda: 1, lambda: 2
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!
@@ -435,6 +438,3 @@ if __name__ == '__main__':
 	# ast = flatten (ast)
 	# print (ast)
 	test ()
-
-# (Matrix([[Derivative(a, y, 3, x, 2, x, 2) <= oo*1.0, Piecewise((oo, 0), (partialx = lambda: oo, lambda x, y, z: a_prime / {1.0 * {-1.0} d}, True))]]))
-# x, y = lambda: 1, lambda: 2
