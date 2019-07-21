@@ -194,11 +194,6 @@ class Handler (SimpleHTTPRequestHandler):
 		if self.path not in _STATIC_FILES:
 			self.send_error (404, f'Invalid path {self.path!r}')
 
-		# if self.path not in _STATIC_FILES:
-		# 	self.send_response (301)
-		# 	self.send_header ('Location', '/index.html')
-		# 	self.end_headers ()
-
 		elif not _RUNNING_AS_SINGLE_SCRIPT:
 			return SimpleHTTPRequestHandler.do_GET (self)
 

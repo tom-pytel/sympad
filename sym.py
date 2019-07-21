@@ -835,7 +835,7 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
-	ExprDontDoIt: lambda spt: AST ('func', '#', (spt2ast (spt.args [0]),)),
+	ExprDontDoIt: lambda spt: AST ('func', '%', (spt2ast (spt.args [0]),)),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
