@@ -34,6 +34,13 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+	_START_VARS = {
+		'beta' : AST ('lamb', ('func', 'beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
+		'gamma': AST ('lamb', ('func', 'gamma', (('@', 'z'),)), (('@', 'z'),)),
+		'Gamma': AST ('lamb', ('func', 'gamma', (('@', 'z'),)), (('@', 'z'),)),
+		'zeta' : AST ('lamb', ('func', 'zeta', (('@', 'z'),)), (('@', 'z'),)),
+	}
+
 	_sys_stdout = sys.stdout
 	_parser     = sparser.Parser ()
 	_vars       = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
@@ -317,7 +324,7 @@ if __name__ == '__main__':
 		if ('--debug', '') in opts:
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
-		if not _SYMPAD_CHILD:
+		if not _SYMPAD_CHILD: # watcher parent
 			args      = [sys.executable] + sys.argv
 			first_run = '1'
 
@@ -327,6 +334,11 @@ if __name__ == '__main__':
 
 				if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
 					sys.exit (0)
+
+		# child starts here
+		_vars.update (_START_VARS)
+		sym.set_user_funcs (set (_START_VARS))
+		_parser.set_user_funcs (set (_START_VARS))
 
 		if ('--sympyEI', '') in opts:
 			sast.sympyEI ()

@@ -934,7 +934,7 @@ The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respe
 Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
 By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
-This is objectively prettier, but can be changed via the "<b>$sympyEI (True)</b>" and "<b>$sympyEI (False)</b>" function.
+This is objectively prettier, but can be changed via the "<b>sympyEI (True)</b>" and "<b>sympyEI (False)</b>" function.
 The SymPy constant usage can also be activated via the command line switch "<b>--sympyEI</b>".
 </p><p>
 Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>", "<b>\partial x</b>" or "<b>∂x</b>" and are treated as a single variable.
@@ -1809,7 +1809,7 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	SPECIAL         = {NOREMAP, NOEVAL, 'vars', 'del', 'delall'}
+	SPECIAL         = {NOREMAP, NOEVAL, 'vars', 'del', 'delall', 'sympyEI'}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
@@ -2580,7 +2580,7 @@ class Parser (lalr1.Parser):
 			b'j57Hgw3O6QyeN2gc5Y9qyrbKPLlrZ/4KEqaaf2dCULzO8usOXbhddak/Zq4/bOGiXZ4r37rbUxmjMTicgyG4CELvZHFMLOqmPnij6ap9O+E8a+4x4dnuQVfwAZQbUJdQiZPvrwzeyzv0eK8ey7wT4W/spDi7HZNrlSeKLSkQDuWYd9zL3uhMNxcK5VWPZMfe' \
 			b'Fl3CUOtknMh+Y09tF1Vq9dPFuyoUxqJXcHEcuZFKsuZvjVr11ek4kX3Y0onYXbNEzDvq14zwYPWIrsvul7potNhCVZgfWBjtbVFEmI9Oxonsu+NRRFPdhBMx9LdGBW11Ok4sSvXxqKCrbsKJGG7NiAEm85NxIntzArKPX5HcrQy66thcE/DfbyCRsrB7rg76' \
 			b'TcM5t0ut0Fd7dCjTmVB8zHn+DZGK28nqtD/BzIF+nYAwKbbe9Ruf7u76LXGKnPwxy8lVR+BETtsGIDcqp1AdgRM5nawpH98v2OZkglr+d6Hf8Pr2KGYpRMjbBiFHK2QsATheJ8I98HzFAYVrqyN2MuG8bexyvMJ11RE7EW5zssL11RE7ES5ONsUalVaFbaNf' \
-			b'n+MgO5YFwjC1oksscNxXVgYNv4SzGDs+jKvGeYdCGWYpfZU5IWwnhJA9iEOVuyYor122xAa2dQ3u+QuKogyTgm2ZGtYBvOGni6haaYywE132yyBq3p/CcUAPoQC9ruAg5Ww6xNl0lPybi/8Hfes7Tw=='
+			b'n+MgO5YFwjC1oksscNxXVgYNv4SzGDs+jKvGeYdCGWYpfZU5IWwnhJA9iEOVuyYor122xAa2dQ3u+QuKogyTgm2ZGtYBvOGni6haaYywE132yyBq3p/CcUAPoQC9ruAg5Ww6xNl0lPybi/8Hfes7Tw==' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -3036,8 +3036,8 @@ class sparser: # for single script
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	p.set_user_funcs ({'f'})
-# 	a = p.parse (r'f(2).a')
+# 	a = p.parse (r'lambda x, y: $print (x, y)') [0]
+# 	a = sym.ast2spt (a)
 # 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
@@ -3232,14 +3232,14 @@ _ast2tex_func_xlat = {
 }
 
 def _ast2tex_func (ast):
-	act = _ast2tex_func_xlat.get (ast.func)
+	xlat = _ast2tex_func_xlat.get (ast.func)
 
-	if act is not None:
+	if xlat is not None:
 		try:
-			if act is True:
+			if xlat is True:
 				return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
 
-			return f'{act}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+			return f'{xlat}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 		except:
 			pass
@@ -3615,7 +3615,7 @@ class ast2spt:
 			try:
 				spt = spt.doit ()
 				spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
-			except TypeError:
+			except:
 				pass
 
 		return spt
@@ -3735,11 +3735,8 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 		if func:
 			return func (spt)
 
-		if cls is sp.Function:
-			if len (spt.args) == 1:
-				return _spt2ast_Function1 (spt)
-
-			break
+		# if cls is sp.Function:
+		# 	return _spt2ast_Function (spt)
 
 	tex = sp.latex (spt)
 
@@ -3823,8 +3820,8 @@ def _spt2ast_MatPow (spt):
 	except:
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
-def _spt2ast_Function1 (spt):
-	return AST ('func', spt.__class__.__name__, (spt2ast (spt.args [0]),)) # TODO: Multiple arguments?!?
+def _spt2ast_Function (spt):
+	return AST ('func', spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Integral (spt):
 	return \
@@ -3878,11 +3875,11 @@ _spt2ast_funcs = {
 	sp.arg: lambda spt: AST ('func', 'arg', (spt2ast (spt.args [0]),)),
 	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
-	sp.Function: _spt2ast_Function1,
-	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function1,
-	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function1,
-	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function1,
-	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function1,
+	sp.Function: _spt2ast_Function,
+	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
+	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
+	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
+	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Min: lambda spt: AST ('func', 'Min', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
 	sp.Max: lambda spt: AST ('func', 'Max', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
@@ -3963,6 +3960,13 @@ _VAR_LAST = '_'
 
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	import sympy as sp
+
+	_START_VARS = {
+		'beta' : AST ('lamb', ('func', 'beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
+		'gamma': AST ('lamb', ('func', 'gamma', (('@', 'z'),)), (('@', 'z'),)),
+		'Gamma': AST ('lamb', ('func', 'gamma', (('@', 'z'),)), (('@', 'z'),)),
+		'zeta' : AST ('lamb', ('func', 'zeta', (('@', 'z'),)), (('@', 'z'),)),
+	}
 
 	_sys_stdout = sys.stdout
 	_parser     = sparser.Parser ()
@@ -4246,7 +4250,7 @@ if __name__ == '__main__':
 		if ('--debug', '') in opts:
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
-		if not _SYMPAD_CHILD:
+		if not _SYMPAD_CHILD: # watcher parent
 			args      = [sys.executable] + sys.argv
 			first_run = '1'
 
@@ -4256,6 +4260,11 @@ if __name__ == '__main__':
 
 				if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
 					sys.exit (0)
+
+		# child starts here
+		_vars.update (_START_VARS)
+		sym.set_user_funcs (set (_START_VARS))
+		_parser.set_user_funcs (set (_START_VARS))
 
 		if ('--sympyEI', '') in opts:
 			sast.sympyEI ()

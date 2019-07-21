@@ -381,7 +381,7 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	SPECIAL         = {NOREMAP, NOEVAL, 'vars', 'del', 'delall'}
+	SPECIAL         = {NOREMAP, NOEVAL, 'vars', 'del', 'delall', 'sympyEI'}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}

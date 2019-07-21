@@ -192,14 +192,14 @@ _ast2tex_func_xlat = {
 }
 
 def _ast2tex_func (ast):
-	act = _ast2tex_func_xlat.get (ast.func)
+	xlat = _ast2tex_func_xlat.get (ast.func)
 
-	if act is not None:
+	if xlat is not None:
 		try:
-			if act is True:
+			if xlat is True:
 				return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
 
-			return f'{act}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+			return f'{xlat}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 		except:
 			pass
@@ -575,7 +575,7 @@ class ast2spt:
 			try:
 				spt = spt.doit ()
 				spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
-			except TypeError:
+			except:
 				pass
 
 		return spt
@@ -695,11 +695,8 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 		if func:
 			return func (spt)
 
-		if cls is sp.Function:
-			if len (spt.args) == 1:
-				return _spt2ast_Function1 (spt)
-
-			break
+		# if cls is sp.Function:
+		# 	return _spt2ast_Function (spt)
 
 	tex = sp.latex (spt)
 
@@ -783,8 +780,8 @@ def _spt2ast_MatPow (spt):
 	except:
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
-def _spt2ast_Function1 (spt):
-	return AST ('func', spt.__class__.__name__, (spt2ast (spt.args [0]),)) # TODO: Multiple arguments?!?
+def _spt2ast_Function (spt):
+	return AST ('func', spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Integral (spt):
 	return \
@@ -838,11 +835,11 @@ _spt2ast_funcs = {
 	sp.arg: lambda spt: AST ('func', 'arg', (spt2ast (spt.args [0]),)),
 	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
 	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
-	sp.Function: _spt2ast_Function1,
-	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function1,
-	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function1,
-	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function1,
-	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function1,
+	sp.Function: _spt2ast_Function,
+	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
+	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
+	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
+	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Min: lambda spt: AST ('func', 'Min', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
 	sp.Max: lambda spt: AST ('func', 'Max', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
