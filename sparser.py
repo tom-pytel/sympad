@@ -254,7 +254,7 @@ def _ast_strip_tail_differential (ast):
 			return \
 					(AST ('*', ast.muls [:-1] + (neg (ast2),)), dv) \
 					if ast2 else \
-					(AST ('*', neg (ast.muls [:-1])), dv) \
+					(neg (AST ('*', ast.muls [:-1])), dv) \
 					if len (ast.muls) > 2 else \
 					(neg (ast.muls [0]), dv)
 
@@ -1077,8 +1077,8 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	p = Parser ()
-# 	a = p.parse (r"Integral(x, 1, x)")
-# 	print (a)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	p = Parser ()
+	a = p.parse (r"\int 2x*-dx")
+	print (a)

@@ -194,6 +194,11 @@ class Handler (SimpleHTTPRequestHandler):
 		if self.path not in _STATIC_FILES:
 			self.send_error (404, f'Invalid path {self.path!r}')
 
+		# if self.path not in _STATIC_FILES:
+		# 	self.send_response (301)
+		# 	self.send_header ('Location', '/index.html')
+		# 	self.end_headers ()
+
 		elif not _RUNNING_AS_SINGLE_SCRIPT:
 			return SimpleHTTPRequestHandler.do_GET (self)
 
@@ -349,7 +354,7 @@ if __name__ == '__main__':
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
 		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
-			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/')
+			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/index.html')
 
 		while 1:
 			time.sleep (0.5)

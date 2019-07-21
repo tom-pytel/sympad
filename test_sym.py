@@ -109,6 +109,7 @@ abs(e**sqrt1, abs(-1.0))
 dpartial
 a, lambda: b = 1
 \exp({a},{-1},{1})
+\int 2x*-dx
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!

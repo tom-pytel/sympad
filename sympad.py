@@ -446,7 +446,7 @@ function ajaxResponse (resp) {
 				var eLogErrorHidden  = document.getElementById (idLogErrorHidden);
 
 				for (let i = 0; i < resp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i]}</div>`);
+					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i].replace (/  /g, '&emsp;')}</div>`);
 				}
 			}
 
@@ -469,34 +469,39 @@ function ajaxResponse (resp) {
 			logResize ();
 			scrollToEnd ();
 
-		} else if (resp.msg !== undefined) { // message
-			$(eLogEval).append (`<div class="LogMsg">${resp.msg}</div>`);
-
-			logResize ();
-			scrollToEnd ();
-
 		} else { // no error
-			for (let subidx in resp.math) {
-				let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
-				let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
+			if (resp.math !== undefined && resp.math.length) { // math results present?
+				for (let subidx in resp.math) {
+					let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
+					let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
 
-				$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
-						<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
-						</div>`);
+					$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
+							<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
+							</div>`);
 
-				let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
-				let eLogEvalMath  = document.getElementById (idLogEvalMath);
+					let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
+					let eLogEvalMath  = document.getElementById (idLogEvalMath);
 
-				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-					eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
+					MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
+						eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
 
-					eLogEvalMath.style.visibility = '';
+						eLogEvalMath.style.visibility = '';
 
-					logResize ();
-					scrollToEnd ();
-				}]);
+						logResize ();
+						scrollToEnd ();
+					}]);
 
-				reprioritizeMJQueue ();
+					reprioritizeMJQueue ();
+				}
+			}
+
+			if (resp.msg !== undefined && resp.msg.length) { // message present?
+				for (let msg of resp.msg) {
+					$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
+				}
+
+				logResize ();
+				scrollToEnd ();
 			}
 		}
 	}
@@ -846,7 +851,6 @@ User input is intended to be quick, easy and intuitive and is displayed in symbo
 Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
-<c>yo</c>
 <h4>Quick Start</h4>
 
 <p>
@@ -878,15 +882,14 @@ Enter the lines that follow one by one to see the effect:
 1<br>
 expand (_(x+1))<br>
 expand (_(x+1))<i>&emsp;**(or press the up arrow)</i><br>
-expand (_(x+1))<br>
+expand (_(x+1))<i>&emsp;...</i><br>
 </p><p>
 Or the following:
 </p><p>
 a, b = 1, 1<br>
 a, b = b, a + b<br>
 a, b = b, a + b<i>&emsp;**(or press the up arrow)</i><br>
-a, b = b, a + b<br>
-a, b = b, a + b<br>
+a, b = b, a + b<i>&emsp;...</i><br>
 </p>
 
 <h4>Usage</h4>
@@ -1089,7 +1092,7 @@ For example, two ways to get the transpose of a matrix are "<b>{{1,2,3},{4,5,6}}
 <p>
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
-Anything can be assigned to any valid variable like valid mathematical expressions, Python objects like strings or lists or even references to other variables.
+Anything can be assigned to any valid variable like mathematical expressions, Python objects like strings or lists, user lambda functions or even references to other variables.
 To delete an assignment use the "<b>del var</b>" function, to delete all assignments do "<b>delall</b>" and to see what variables are currently assigned to, use the "<b>vars</b>" function.
 </p><p>
 Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object like "<b>x, y = 1, 2</b>".
@@ -1107,38 +1110,62 @@ Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of co
 The "<b>@(expr)</b>" function technically prevents variable remapping for the expression it encompasses, so if you have the variable "<b>x = 2</b>" set and you do "<b>@(x)</b>" then you will get "<b>x</b>" and not "<b>2</b>".
 </p>
 
-<h2>Functions</h2>
 <div style="color: red">
+</div>
+<h2>Functions</h2>
 <p>
-All SymPy functions are available directly just by typing their name.
-To numerically evaluate the value of "<b>sin (2)</b>" type in "<b>N (sin (2))</b>".
-Functions may take multiple comma-separated arguments with optional keyword arguments as well.
+There are two types of functions made available in SymPad - all the SymPy functions are available directly just by typing their name, as well as user created lambda functions assigned to variables.
+In addition, member functions of objects are supported an callable like "<b>Matrix ([1,2,3]).transpose ()</b>".
+All functions may take multiple comma-separated arguments and the SymPy functions also optionally take keyword arguments.
+</p>
+
+<h4>SymPy Functions</h4>
+
+<p>
+Almost all SymPy function and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
+This means no "<b>N()</b>", "<b>S()</b>" or "<b>O()</b>" directly, though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$print ('Hello World...')</b>".
+Only the "safe" __builtin__ functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
+To numerically evaluate the value of "<b>sin (2)</b>" you use the "<b>$</b>" escape character with the "<b>N()</b>" function like "<b>$N (sin (2))</b>", or just use the member function "<b>sin (2).evalf ()</b>".
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
 The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
 The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
-This last form of exponentiating a function is extended as an input shortcut to all functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
+This form of exponentiating a function is extended as an input shortcut to all top-level functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
+This does not apply to member functions or user created lambda functions.
 Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
-Top-level functions don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
-Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" always require explicit parentheses.
-</p><p>
-Many functions which have an explicit mathematical display syntax are translated on the fly for correct rendering.
+Top-level functions also don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
+Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" and lambdas always require explicit parentheses.
+Many functions which have a common mathematical display style are translated on the fly for rendering in that style.
 These include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
 Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>", and more...
+</p>
+
+<h4>Lambda Functions</h4>
+
+<p>
+User created lambda functions are supported and are specified the same way as Python lambdas - "<b>lambda x, y: (x+y)**2</b>".
+In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
+When created, lambda functions will copy the global value of any variables inside which are not lambda arguments and this will be set for the life of the lambda.
+If you want a lambda to use the value a global variable at the time the lambda is evaluated, rather than when it is defined, then wrap the instance of the variable in the lambda using the "<b>@()</b>" pseudo-function.
+Lambda functions may reference other lambda functions as long as those are defied at the time of creation.
+Lambda recursion is currently not supported.
+</p>
+
+<h4>Pseudo-Functions</h4>
+<p>
+They are called pseudo-functions because they don't actually evaluate anything but rather affect how evaluation proceeds.
+The "<b>@()</b>" pseudo-function prevents variable mapping for any expression it encapsulates, effectively it creates references to variables rather than copying their value.
+This means that when you assign one variable to another as "<b>x = @(y)</b>" then from now on "<b>x</b>" will take on the value of "<b>y</b>" whatever that may be at any time instead of just on assignment.
 </p><p>
-The "<b>$</b>" escape character allows you to execute arbitrary functions which are not normally accepted by the grammar.
-Function names specifically recognized by the grammar are only those specified in the SymPy module which do not start with an underscore and are longer than one character (so no "<b>N</b>", "<b>O</b>" or "<b>S</b>") and a few builtins.
-When functions are entered using the "<b>$</b>" character then those as well as many more __builtin__ functions may be accessed, for whatever reason, whether useful or not.
-Try entering "<b>$print ('Hello World...')</b>" and have a look at the server output.
-Only the non-dangerous __builtin__ functions are specifically included in this list, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
-</p><p>
-You can tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
-Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name.
-</p><p>
+The "<b>%()</b>" pseudo-function ...
+This means no global variable remapping so if you have a lambda defined as "<b>f = lambda x: x + @(y) + @(z)</b>" and a global variable "<b>z = 3</b>" and you call the lambda as "<b>f(1,2)</b>" then you will
+T
 "<b>@@()</b>" pseudo-function.
 </p>
-</div>
+
+<h4>Implicit Multiplication, Functions and Parentheses</h4>
+
 <h2>Notes</h2>
 
 <p>
@@ -1153,6 +1180,9 @@ Due to mixing operators from Python and LaTeX the grammar may be a little wonky 
 There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
 This has been resolved in favor of variable names for "<b>beta</b>" and "<b>Lambda</b>", which means that in order to access those functions in SymPy you have to use "<b>$beta()</b>" or "<b>$Lambda()</b>", and in favor of function names for "<b>zeta</b>" and "<b>Gamma</b>".
 This means that the LaTeX expression "<b>\zeta x</b>" means the Riemann zeta function of "<b>x</b>" and "<b>\Gamma x</b>" means "<b>gamma (x)</b>".
+</p><p>
+You can always tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
+Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name (this only works for top-level functions).
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
 </p><p>
@@ -1783,7 +1813,7 @@ class AST_Func (AST):
 	# GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
 	# 		'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
 
-	SPECIAL         = {'@', '@@', 'vars', 'del', 'delall'}
+	SPECIAL         = {'@', '%', 'vars', 'del', 'delall'}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln', 'zeta', 'Gamma'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
@@ -1934,20 +1964,19 @@ class sast: # for single script
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
 
-# TODO: Matrix xlat convert column matrix to vector.
 # TODO: multiple vector weirdness
-# TODO: user_func**exp (args...)?
 # TODO: _xlat_func_Integral multiple integrals
 
 import ast as py_ast
 from collections import OrderedDict
 import os
 import re
+import sys
 
 
 def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
-			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\_', '_') or FUNC.text
+			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\', '') or FUNC.text
 
 def _ast_from_tok_digit_or_var (tok, i = 0):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
@@ -1975,9 +2004,15 @@ def _expr_lambda (lhs, expr):
 
 	elif lhs.is_comma:
 		commas = lhs.commas
+		ast    = None
 
 		for imul in range (len (commas) - 1, -1, -1):
 			if commas [imul].is_var:
+				if commas [imul].is_var_lambda:
+					ast = AST ('lamb', expr, commas [imul + 1:])
+
+					break
+
 				continue
 
 			if commas [imul].is_mul:
@@ -1987,7 +2022,10 @@ def _expr_lambda (lhs, expr):
 					if len (commas [imul].muls) > 2:
 						ast = AST ('*', commas [imul].muls [:-2] + (ast,))
 
-					return ast if imul == 0 else AST (',', commas [:imul] + (ast,))
+					break
+
+		if ast:
+			return ast if imul == 0 else AST (',', commas [:imul] + (ast,))
 
 	raise SyntaxError ('invalid lambda expression')
 
@@ -2169,7 +2207,7 @@ def _ast_strip_tail_differential (ast):
 			return \
 					(AST ('*', ast.muls [:-1] + (neg (ast2),)), dv) \
 					if ast2 else \
-					(AST ('*', neg (ast.muls [:-1])), dv) \
+					(neg (AST ('*', ast.muls [:-1])), dv) \
 					if len (ast.muls) > 2 else \
 					(neg (ast.muls [0]), dv)
 
@@ -2440,10 +2478,18 @@ _FUNC_AST_XLAT = {
 }
 
 def _expr_func_func (FUNC, expr_func_arg):
-		func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
-		xlat = _FUNC_AST_XLAT.get (func)
+	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
+	xlat = _FUNC_AST_XLAT.get (func)
+	ast  = _expr_func (2, 'func', func, expr_func_arg)
 
-		return xlat (expr_func_arg) if xlat else _expr_func (2, 'func', func, expr_func_arg)
+	if not xlat:
+		return ast
+
+	args = ast.args if ast.is_func else ast [1].args
+	arg  = args [0] if len (args) == 1 else AST (',', args)
+	ast2 = xlat (AST ('(', arg))
+
+	return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
 
 def _expr_mat (expr_mat_rows):
 	return \
@@ -2478,59 +2524,59 @@ class Parser (lalr1.Parser):
 		self._USER_FUNCS = user_funcs
 
 	_PARSER_TABLES = \
-			b'eJztXXuP3LZ2/zIF4gW0gMSn5P8cx8k16keu7QQtDMNwHKcIGiep7dy2uOh373lRfGp25J3ZnRkPljuSKIo8PDw/Pg4PyTsvv7r/9NHTJ191X/3Lu99/hsujB9++gMv39549ePIIbh5+9+Tpswev7//w7NG/w+O3z+7dl8sgVwXXrx989/r+vecPnsv943sv' \
-			b'5O7rePtjvP2ebylWTOXxwyc/0LcQ37+ix/MXz/D3h6/h98kPj+H3x3vo8/DJi++QyoeP6TX9/v0ZxvXoKb749ocnSN/XFPj+08eP74XMPAvpPQvp4M2zh9/9Db++9/h7+P3m60fPH917/je4ffDkG8kF3n0db3+Mt5KLB3/Hn0fPH4h3YATG9oIJAQIw5ON7' \
-			b'3z9/8RSTe0H5e/Bv9x+F18jObx7++PAbjOb+N09fEBck05TE94+IRw+/xftnDx9TIhQd8Ak/f/vmw7tPr//48Prnn377+OnNB/B69z9/fnj98a8/380Pv/z1+9vXbz78R3z5U7h9/+bT67d//JY+fvjjv4vHj+H57ZuP7z5+fJs//pk/hqc3P8XbT58iLW/e' \
-			b'fgr3f8aUkMRI3vtw+9uv8+2vv+N3/4hZfP/Xb69/fT+nnrz5PUbw86//CLef3n1IvH/5Jdz/9OHN2/98NxP1+7uZT2//+vDb/6bJwU3Cmjl7P/+csSBS/O6/5vxBInO2f3339t38AAX4e4z0z4+f/pgz/+b9Tz+/CU9zXHNaf7x//yZ7+PjVq+7lnUujOjNc' \
-			b'dHyj8EZ3l4auqrujOuW6y6HTA9xczL7kFz0uPd4Min/sAG/NReo1mNQLb/HDgX8Mv4A7iIuCeEx4sJKw7i+Cr/jNHpfDRHcQ0whf687IKyRBU6waf0yn9YU8whPdWcoqUi+vggc/mfAdvLfBC2/hTtG/8uFTigOTFX+mobtU4snPEP+giXFT8IA80B0Qr3qK' \
-			b'qecfA3EriTx6IRujL95iucG/7TREwWQavEFye/4xQj18oKmgp+4OpowsGi7EwyUPni/ogQmNUBgoEsxZeUTagVd97m+qRz3lXrZ+HFKvS0UFajB3o9zdoWyPzLNeZAwCDCp44S1+DxxGvlCiwxwgeMfHSxBd4hqWDrxhQbZ4gwEchB86EC8sLgWJYUag1CAK' \
-			b'DrkQAiFkhy0DQqbygJeKGA9fXPrOQCDOscMbJFQLKOAj7ToUzYgEeBe8Zw/kC/rY6DOwj4s+in188AGhJGEZ+SdBxygyrj3/EDCYRO3pFu9ceHkhj/AUXnAahn/MOOd99ppSL7xFxmj+gWK7uIi3GMaxZIRPUISJCGQ43VA1okP1xbSCH2NwfjRUNjqgEvJC' \
-			b'IjiyaFlFgj4FdKXe4gHPlOzEPyB6F/IMoKPMw5uB4pUny7UI0qcS4SAedypIr0iGn6EANQm+ENLlMQEH+aiQDjwZYuEwdcN84+UGuDTfMXioUjOdlfoF4lFUUYIf1LLQVrzsO8AOSCqQBMUA/prE0HbWddZ3TnVOd6PtRteNvhvHbpy6qe+mAXMG2QYsA1GA' \
-			b'EEuCDCUGoUCenemc7ZzrHEQydg6qIN/5sfMTFBPyY1TdCHWOQkZBfqHaGXp46OGpB+p6S1hQKJMjPjv4h6j7bgT+9CPkCYFngVC4h/T6zg3d5LoJgKYQawakzwK7sJIFyZxUN0HeEBjwfQe4ga87h+0lPAFTIMMDsgRrMHxWji+avLHmw0d8gjBaniy/BE6R' \
-			b'N7ALvTmmO04Cjxyh428GDmMktZGS+dIL4c4oHAS6zuwAdowiOhMJy8QiCjlkodH0mvNW54ozM2ejzENCOhD9imscEuppp7H2HKsdGF4s9lTMd0bJx0DIwNoSIocKHMJAQn1R4LM0cMmzTJx2+Q+OmcfF75lrPrBtJF4ytUBkJIoo2REVGYdTxu5IQF5iz/mM' \
-			b'dWw1CAXedN52HjKgOq8733d++OKBAMxxZ+YsM8efmbPMnPHMnKX2xUnDwhfFl1FzB9VId4A7HZrbb624U0sUY6heQvfSre2tfMb+I319JG3RnVHyTL6UG8/ZHQd5lg6Z5dxZCj+ZbrJS+HNRH3mzfMdKOdqRc8qy4XoZ0zA/JmbTJL12I2MaYg6M+W1/UHkC' \
-			b'AllIjY0EcuEdGJnMVuMTMoEciKPHumI4NHJZRCYq/YxQfDsxVHQYV2svUJKKREYd9twJRO5AVtXFl5FVLGzWrMDlS2+KSZcEfFid/wYHmJPHygfIMvBhziBn6bQaV9IFqnN19xKVoYqVoWd2YEt6ZoMow1WqioeMnpsI1ornfJnoGbJ5Zg+rw9XOFNcvs4ka' \
-			b'6KhqYjYpsuF6ag0SIex0sjOeUnZwfoREb5ChE4+31CBTkkqUFqLFYX2NMjInKVMInkr4yDnxEic/jj8bOHNDBco1TGNi+BXPHvPsSFLn4yQBfek5sOdPvZIWwfNg2/fheciEwXHD6jxfRo5LU42Gqj1k7XExsuf+Y++kciZuVToIy93MfNZxChpL4tk+qJui' \
-			b'Dk2xDk2xDk1hYUxcGCbIAhc0z4bp2IBzq84N+BfTB7xjJmEd1WYHJXPGSIERFA9PzYnqQybQHyaBAD3RGE6HVrio+u/3VR2g5lYUpYo1olx3SdWV1fNw1WQIo/EaKnDSEuFzYXgENYIWEyOdDhAchz7PLG8YNQwq55lJH3Eoypz1aTngSEyLYY7mEVj6Vstb' \
-			b'YIyumh2OqLLlaPhiv09Lv09xhw/HN2fTGC43bk3VefCL7aUXsWI5GnTAvZbOouJeIo6Kzrgn+fFnwXE8JNA8JNA8JNAyJNDHNnv/Ekcw+shGMDRk0aemT8KxlZKRj+aRj+aRD1zKvqBreJqs24OjAMXz9prnxanRleHrRA3BQWUfO5HUm2MUAUUX3BszFzKE' \
-			b'f0UDfUMW4PgLtBjpUJjzLCB2dbTotLLur+fOWtRv9Pl7zTw9snoLCDVVPxGINgwdw9AxojQwoi0whzi2QzSKzFuReRt6IizzlmTeirDbajBDObecc8s5t+d2murJMx/IuMyystRJA+NYVhzLigvVQQejJeGbS5oS+NDLh/7oFckvMeOeM+4JX6zulVUDDt8V' \
-			b'ylDM+MgcG/nDUcKOp8GO6QSyAZQdfzZQpiYxHe3FdrS/4JV2L3uEJ9RmTAnWQkjZHLXDpUCs6eAFQQDfaBdBdKR84TqRc5jmRNhhiRFTwjiqPYV3VHUWuYURcuyIc5U6iakocBnVl1nmHVVyA9KPGcAcIBMxGzhnh3nB2TmcmsNZO5yxwwWFWCfhMkNcYwj5' \
-			b'GnDVG3IYq1e0t0Zja7SjxgYSW0e0ocQyxHVfuEoL11bROlEIh0a3aN6Ktq241opqePBDE2W05cW1iWjLi6sRcaYJF1SgaTyagGN3CieUcDbJgz+qoVAHhXbh2JXCShwXG2EJ42QVLlZEa0/kA/a++x5KFZezWlzmjeudeS000HwJ6eJCZ4frYD3/g7hdTkNY' \
-			b'Hw5BFPvjOt8pBkv/gcpLj+/gf8RVvpgALvzucc+BHn16XDDcW9or4HKkB0wLl9v2uIIe14DDAxTfJa5QnpA+z4vlKRVbpUq5mS+09hznYOARmAGZoheQ0EiEAPHWCDFGcoTrng0unccVzD2mzquyaZ0xEoW8on0LID6VJEiJCCNx7fyEK77xA4gDc9XRFgOB' \
-			b'Vo//6AdRucTfIePxiquPB44Nl9cbXJyPq5ZphTOWAEQZ8m2k+IBSkJ/LCTluOV5cU475TQoJV7OHTxxGj8QiKyCMA7H4p53uYkDAwF1abzzAM8qykmdPz/+HSiusFYo6oagNuCq4PvYnBDhDuwb1JkCXYLZXALcEbAnUTSAtgZmCUm0A4QYEtpAnqNszwizj' \
-			b'h4GzgJhNaCmhwuhYREaJiBIJm1BQSn4i9SjtDSmnLhcIr08aMWpDZUnr3Ijp67VjJhHnXrrxZZuWdAliy+ZCr34Ikz9G+hICAp3hgPqLeeOetOzwD++pIzHUEKG2LcBiul47husgaG+UsQEV12jTAmR0uz3L2jKsVLxACMLhUhZcx5LBCYsXhkcTIcf3BBy6' \
-			b'9N0UkANgmea/NTAaWyhCzwRI8MiuRFRIMEvd8w4p80fyKYOO7hLcYeDJEvImwh6lYvji5Fvf11CcIvgQeDPoKP8F8JgnEXyRqKlui4hfEYhMkZXgVTNEUQsgKWAWe9oEaWxigE/Q4pBIG3sXKwEQF7gqbHo0o3dK8OsOCLlt2OrrIPeUUYvNhUMeYk57bvWk' \
-			b'xaMdhQi2/C51a7BL0ZbYpWYqYjdGXGC3TjojQ1fEIYIdgZgeqsZTYExJTXwxfHEhhhLEFFELxfKuwHHgUERyJK6BZE5xRrIEREHoW1AObGIwU9AsgQaYGyA2ZRN8+BA+47eJ34FEHTsXOXiHGbxD6VaBd2iBd8jBO0dcgnejI/AWXtz80t0icgdG7sDIHRi5' \
-			b'/HmF3GEJuRy+RK6wJ0HuTFkLuUOOXA6IIjA0kSs8EuQOjNyYwHbItV8Sck+9z4zDL0fjH5uj187otaVbhV7bQq/N0TtHXKK3SjojQ1fEBfTaHL34HLBrGbuWsWsZu/P3FXztEnw5fAlf4U8C39mzBV+bw5cDkgw04StMEvhahm9MYF0v2p1hfEIwJq0RKjB8' \
-			b'DuNZUcvvUrcKxr4FY5/DeI64hHGVdEaGrogLMPYFjH2EMatr6cIvjEu+r2Dsl2DM4UsYC38SGM9Rt2DscxhzQJQB34SxMElg7BnGMYF1MPZnGJ8QjEeSe/w0h/E4w3gs3SoYjy0Y59rgGHEJ4yrpjAxdERdgPBYwHiOMR4bxyDAeGcbz9xWMxyUYc/gSxsKf' \
-			b'BMZz1C0Y55plCYgyMDZhLEwSGI8M45jAOhiPZ430CeJZkW4Ly48VW4qV0oqV0mpWb3GI1K1BtWqpt1Su3ooRF6iuky4p0RV9AmxVqLdU1FErVm4pVm4pVm7F70tgqyX9loQvgB1YFIEdo24AW+X6LQmIiw+b+q3AJwa2Yv1WksA6YE9nYJ8isGnYjAXGw2bZ' \
-			b'QJ+31aeLANuWbhWwW4NnlQ+eY8QlsKuksQgyUnRFYEB2MYBWcQCteACteACteAAdv6+QvTSAlvAlsoVHCbJnzxay8wG0BLSaw9fIFkYJsnkAnSSwDtlDf4b2KULbEQLIEbQdQ9sxtN0MbVe6VdB2LWi7HNpzxCW0q6RLSnRFX0B2Yc+BzwHZjpHtGNmOkT1/' \
-			b'XyHbLSGbw5fIFhYlyJ6jbiHb5cjmgIhs10S28EmQ7RjZMYGVyB7OyD5FZJOSDIuKlWRkETfwpe+iTSOHSN0qZLdUZSpXlcWIS2RXSZeU6Iq+gOxCW6aitkyMGxVryxRry+L3FbKXtGUSvkS2sChB9hx1C9m5tkwCIrKb2rLAJ0E2a8uSBFYi+2z5dZLIJr0Z' \
-			b'lhPrzRSrzujS00WQPZZuFbJb2jOVa89ixCWyq6RLSnRFX0B2oUBTUYGmWIGmWIGmWIEWv6+QvaRAk/AlsoVFCbLnqFvIzhVoEhCR3VSgBT4JslmBliSwEtk6Ins4GXDTMqAzyFk5ztpkhZzEezxuRxHO6UI1etCSq9Kt0pKrlpZc5VryOeJSS14lXVKiK/qC' \
-			b'olwVinJFOB9ovrpnhTkbXtOFAxiXxFMpzNUC3iV8qTAXViUK8znqlsJc5QpzDohyoZoKcyFfFOaKFeYxgZV4bxuQZauQjnLu63Psx665AmkR1juANKIUD8TC07A2t+Ga2jpaF5vOfeF2KHpuwHXprr8UQuVG3FzB8n/ViFfJZ6ToisCAbJMMu31hTkaHek5i' \
-			b'BSoGKT1XqnUDrjNAY1SxDecUyzZcuJQvqVBtm+6s+da0uMILVY32m2MO7TfIBMaIy0e4JZ95kCF78nd5Lr+HqyYk29qe+zAb7n4ftt2n3mzTWjNa7246Wn830gW754a752ZGtyndqu65aYHbFOCe6SihXaVdOCcALwgcSUyw5irWFuJzQLjhXrrhXjovmopR' \
-			b'VCA3S710Dl8iXDiV9NLnqFu9dJPDnANazeFrlAvBgnJeTpUksLLVrqzODhPp5/H3Koxrmg7DIuHpMM3TYZqnw/Q8HcYhUrcG4Lo1Habz6bAYcYHvOumSEl3RJ623LmbDdJwN0zwbpnk2THPrHb8vka2XZsMkfIHswKKI7Bh1A9k6nw2TgLhjVbP9DnxiZGue' \
-			b'DUsSWInsyhBtf8gOWyWc8X1T+KY5MTqynPHNc2Ka58T0PCemXelW4bs1Jzaxfo3kGs8x6wXnDt/oem6sJqGkSFd0BpwXc2M6zo1pnhvTPDemeW4sfl/hfGluTMKXOBdWJTifo27hPJ8bk4BWc/ga5/w+4JznxpIEVuL8bKl2igg3ZKmGZcCWaoYt1QxbqpnZ' \
-			b'Uo0fUrcG4aZlqWZyS7UYcYHsOumSEl3RJ8g2haWaiZZqhi3VDFuqGbZUi9+XyDZLlmoSvkB2YFFEdoy6gWyTW6pJQNxwrmmpFvjEyDZsqZYksBLZZ1O1PSNbFLm3hHAapWIRsH4NL1gsmhE+q9g4ROpWIbylYTO5hi1GXCK8SrqkRFf0BYQX+yWYqF8zrF8z' \
-			b'vGGC4Q0T4vcVwvUSwjl8iXBhUYLwOerJhLsS5zrHuQSSr2qcC7cE55pxHpNZh3NV2a3tb8nIrrXlW23ktQ/4bq0a3wlUSWWGjDSZKtzMmjJ+l7pVIG1pykyuKauwWaWYpa4rmgIwC7XYZdhAyJhu4x5CZkkLJtGXOBQuJDicKdmg5Q4h2rjjlwF3rPuK0W65' \
-			b'XlpV1mRnvB0Y3mh4a8hleJsHtsaVbhXeWgNb4zbjrUoxS11XNAW8uSW8uSvwtjRmlehLvAkXErzNlGzCm4Ro441fBrzxSDVGuy3eKhuvM94ODG9kroUKvDHH22yoxe9StwpvLUMtM27GW5VilrquaAp4G5fwNl6BtyVbLIm+xJtwIcHbTMkmvEmINt74ZcAb' \
-			b'W2DFaLfFm/6SliCfshLIkhIImdxnuLSz+offpW4NLm1L/WNz9U+MuABonXRGhq6IC/u+9i2AytjQsvbHsvbHsvZHPq+2gF1S/Uj4ArCBPRGwkbKG6sfmqh8JiHLeVP0EHjF0Lat+kgS2hO55F65TgS7twmXpuIAMuvMuXPwudaug29qFy+a7cMWIS+hudATd' \
-			b'wkugu2kXLsu7cFnehcvyLlzyeQXdpV24JHwJXWFPAt2ZshZ08124JCDKeXMXrsAjgS7vwpUksCV0v6htuE4auizrCl0G3dmcmd+lbhV0W+bMNjdnjhGX0K2SzsjQFXEBumoTdNmK2bIVs2UrZvm8gu6SCbOEL6Er7EmgO1PWgm5uwiwBUc6bJsyBRwJdNnRM' \
-			b'EtgSuq7eOz01fjRHYsu8yy1tm4cvpCgfd2TqvC3a1faIrw5e2Ar1fsPW7yhcHl1rD3g7L1TkMKm7vjW0zVcqxpgbxzBQHmyDDMsLFUsvtJUk1bb1m2oHXq1oebWi5dWKEkO9Px8OWl1+LkOyfLG537zEVdYcwsDcUFp8W1VHXMeIUkDVh+/CfvS2uZgRt6UP' \
-			b'7JQ6hBc0Rh6VdQh50y/dY3WCF4dPVJn47uWNHMPAh6zICSut41U2aKyaJzG4K5BdIrpA8pXHpsD3Wx2ZgoiFd4tHpWBpHNgBDXK4STigYflYk/WHNJjrHNRw5ZElZqvjShAbG48p2eJ8EshEiYt+X9DAZtMe+CEleK7TNQ4qWWqpFo8IuqmDSoYjOawEmX2N' \
-			b'A0umSprrvuIOpdnvUpqvW9FvquSvkuayYudVSkck3X4P0j1Q1nYt4VtIN3eLh1nKQ9e4kHZg4VZ9GrPj06WA4PWnxu26/t7UrRm2lHq9vh7fIOUrN0C59oFTyJvPPKZtt3U5jviW63O/ncS7pT6MHbDPQgfaDDfUh8eqPYzsd1TB44p3eD8fjnhTFX2rF787' \
-			b'kd+/uIcj+XZewXNPbyAVxs2duzYQl67syoDYe3cXEiOxV93Lmx22jp83ct1z15zk2y+MVreS8QOSbcx4XDqHOrhL35zG2Uqu935+IBPYf2a3HNhzMxLs8IhvEWK/dzlu6VPXyLIV7ctJyTTqI1SUa5zw1zcg243tj1fV0woziNxR15Fzc7Wc292Iugi524Wc' \
-			b'bzN/0Jo32FbW+xuvu/06w9PPVC2GbjgmZHcm596trce92VrWB4rdX1fO7dVy7nYq57OQ9zfYL1kj46cr36lsIz9uto+yQrZ3INfuarn2+5Hr4SzXtyrX+qTl2l8t12stJbaUa3WW61uV68+f8jwGuR5vZlz5uQrAm1CIBOFVn6P002jHdChjx+vp9jAjN6LK' \
-			b'Q/ulxoy86xcltfun5el3moaX6fdxIt3edJbgE1B7XFMtXVS1aE13o/ONCypotBaZejqFvL8hBZ7NdHj7k9clc8jPUd+dgPwiUy7xOL6outtvtwFP8NyVyu6zug7A5T1JtNpY97rSAPiGauAr9y3e1vzPkWXCQUk0W0r3V9bKFKY0o72pyZUrthHewtYP94fm' \
-			b'A+n7VhdD3wVkU2W9t/nCs2jfvGgP9H+1aA9HLdqYMIn2sFm0dffSd3EV10CSPJAMJwIs0qtRRCdbrIHSbUlCSUmlY3RQ8lgKyVIjKmInZTuYdpnO5UlliWVFrWi6OIdawAYzkVkpg5yhpsqsy3REJ+NylMVgWzAhQKZarIXMIHm7DjMGyrcIsBO+yAfbMcjW' \
-			b'PDIzm+xKNpkmp8zhcMvkkM84FlB8ba65lVyr24C59t+u6t+Gs1dV6c0FhaGvPeyG+4r+q4rXhQo3RLBVZbtNMV1VjTaqT+nfAjF5NemrQr09PcLiAtQ9mbktj7kaMtFurye9w7HVNcZTzQWdO9UD1LJUN7/a3IUODMnVeJarreQKy/qQlU6JYOE61f52BEup' \
-			b'u5dUeHcvsbzgiWuv6Sxl20nZcDxSNhC1ByRlkEwqZbeubj9UQfPHoUY/hKYSpWo4YKm6oXUG89r+scuPNNskZfr2pIzSXitkNMG+KznzG8VsoO5oOC/sqmPCoNREAg9mJvE2hXBJ8FzSlB7JTGFaxe1vZnC7ag4N+lEfAAzF8S/knLyNeJPWzdNAPKrCSD5G' \
-			b'/t7S7s0WQ0DC0/TqAu7uXNIWwLzDi+rLnVxocwfaeCXfdYXWHqIRc5jVC5uaIHZ4wxE8FhXXnuOC3QnXL8Lv7HBTFblLlmmxTxE0cZiNS7U/eiHGtX9Ekt4fSVBlwB8ImkbTrtlpWuqm5Y/XMY+0QhNeIhYhDWwH8LyWsNSYSDX7I9V0q/+IJLs/kqACbfzh' \
-			b'LMjCG09viCx3FVnjdSiDoNUfztC0/JM/osznlFXbL/GG53Evpc37J+WbJ+EqdFpXbGVjJNkUqZWhbJNel2xIpJNNh3y60dArbCf5D2TSd8lD6rYJQ+9aH5W+8W3iT3wcty7himvbFTKMwRb+cBJu+S1V7JfTfot5GtslTQdF76q0sUuyP2fGysv6z4uMOD70' \
-			b'+5YI7J7t2DHlSSuO3T+/A5HBA21uSWpcx47P1JkfP99hN/j6sSw6LoONPRPeL2wzQhdlCLmXyxGO8dqOtnPb6HA8UPv66MvZ0ackUjgaOybHRbCxt7aNRDGrt5crHLFew4Vh5sZQnDV7UtI1dUfluAjcFR2M7QWMub2lmDX4hyqS4GCwnj6uckG1cUWoQkFB' \
-			b'zPCnJI+obzomx0UwHo48qu42HLNhOilJ1N1ROVYx9Ycjiaa7DcdsOKlBBTYLx+S4CNQRFMF8dujWRTF2h+YGHGcCWzaG4iLRO64cgsqtyWa3TR0xdTt0WLQNX7f4BXPFnKKg4sTK8TkuELud+nBnkmpzaUXeLvNVdRscnk27McCWLo2nFSfz6apR0K3yyXYH' \
-			b'4JhPW8463A6ffHcAjvl01SjmoGdn8DDqqxzbHfD/NuHLz62KUVi7HM6bJMHqPTN7z3Mk+2U2WnkctOPJ7asGQ4fNY9MdtmMeD0fNY9sdtmMeq6PmsesO2zGPYWyk0OLLC89NeJb3Fp+RJeiHLbuEg05YWhTAN5w+d7T33IA7Gg1sBIVmXa2QvkscBxyrgFgE' \
-			b'GHjsUjc4+WBK7KPQqo69cRuGWSbmsvVohcVGeGKAFwzmRu5W4lp3XrdFRUhzdiQUmgt+EnMcEMphRG4MIwwvX138P7Ub6eA=' 
+			b'eJztXWuP3LaS/TMLZAZQAxJfkvzNcZxcY/3ItZ1gFwPDcBxnEWycZG3n7i4W979vnaqSSJHqh2a6Z7pnBsNpSRQfxWIdPopF6uziq0cvnr54/lX11b98+P1nujx9/O1runz/8OXj50/p5sl3z1+8fPz20Q8vn/47PX778uEjvTR6NXT9+vF3bx89fPX4ld4/' \
+			b'e/ha776Otz/G2+/lllNFLs+ePP+B41J6/wqPV69f4veHr+n3+Q/P6PfHh/B58vz1d6DyyTN+zb9/f4m0nr7Ai29/eA76vubAj148e/ZwKMzLIT/cPHz2/ZAbHr/5+umrpw9f/Y1uHz//RqnH3dfx9sd4q9S/fPLd3wavofCP/46fp68ea6qvhRAiACGfPfz+' \
+			b'1esXyP81l+/xvz16OrwGO7958uOTbxD10TcvXjMXtNCc7PdPmUdPvqUfToXYg1jv33368OXtH5/e/vzTb5+/vPtEXh/+589Pbz//9eeH8eGXv35///bdp/+IL38abj+++/L2/R+/pY+f/vjv7PHz8Pz+3ecPnz+/nz7+OX0cnt79FG+/fIm0vHv/Zbj/M+YE' \
+			b'EiN5H4fb334db3/9fYz38a/f3v76ccz3H7HYv8eoP//6j+H2y4dPifcvvwz3P3169/4/P4zJ/v5h5ND7vz799r9pdnSTMGUs2M8/Twofaf3wX2PJKJOxwL9+eP9hfKCq+z0m+ufnL3+MxX738aef3w1PY1pjXn98/Phu8vD5qzfVxdnKNZVrziu5Mbix1crx' \
+			b'tanOTGVCtWoq29LN+ejLftFj1eKmMfLjyaNx56lX41Iv3CJiLT9OXtAdpcVBWmTceM2YPAdf9Rs9Vk3Pd0RTR7FNZbtz9Vg1llMFBdZW1pzrIz3xnUO4CrlKcqOHPNkhHkVwgxdu6c7wv6H87bk8rzjNRv2Fhmpl1FOePdFvmXH94EFl4Dsi3tScUi0/jtI2' \
+			b'mnj0AhujL25Rb/TvK9tXK38uz3SDEL38OPGmO2Ix7sgfOYNFUnLyCMlDKxd4IB4qAyUXovURtBNzmqm/Kx+7qZcvHl2deq1Mx6ym7E2rd2dcbGVqrTKGajODF24Rn1gBviBTFwMM3vFxZZhDnmunhrjL4ypwAPI3TUXiheoylBmKX4GBjYj8mhCAkG92DEiF' \
+			b'mgZcGc490H9bOTtQRTXDLKEEBBSoR6pvm0KD3g3eowf4Ah8XfRrx8dHHiE8YfEgomeut/CToANj4JsgPA0MqhZ5wizs/vDzXR3oaXkgeTn5cN5Z99OpTL9yCMVZ+qNrOz+MtwgSRjCEKRJg5BYbzDTcjdmi+pGUgP8Hg+Oi4buyASiontymdiJZHMStIk3At' \
+			b'9VYPeuZsO/kh0TvXZwIdF57eNJyuPnlpRagAJBJROCD1ImcsvSoZYYACeZ65ZoSCPibgYB8z5ENPjlnY9FUz3rR6Q1wa7wQ8REl/Tl3CRV2RNFK2BEfiNsGFRI1+fOVD5dsqmCrYqvNVF6qurbqu6vqqr6ue2NyhDMiYgeBZXqliKBSJbXBV8FUIVaBEuipQ' \
+			b'S9NWbVe1PdUGit2ZqqOmxYAfVCwSvqamh5qeaqql2qPBQSNP2eOZ8q+rrgGovKs8EUispXzqKjRVH6qecGQAJUfC5YkbaENJ8HpT9VSmALGguiRYUOwqoDukJ2IGFbQBK9BA4dkEuVj2RsOGRzxRGKtPXl4Sh9ib2ARvSeksaOBOEgwSp5EwTnPrOJu7yvyz' \
+			b'TjlH9NxpNnQqKj0LRy8iSSUTIbH8WspUlkYKMZKf0y4kv5GGg4W330tqtaTmG4GPiDVX51mndDcs+WjsKFFqf9HcVObutjVnTRCmSTW3wq12YFfHPBQqibhIzD6pmHA2ZegVBeICA907jGFq/VnaW1e1vmqJcFO1tmrrqm3uMlPCPVNKprT3TCmZ0t0zJe8v' \
+			b'gnYUcjFy6awMJJ125zJYsNIPWyODT6YUoWoNXevws/YaTfw7jn3kfctZNxAvg/JORzJeyuD5be+q3mvVjhV5op3pmdda8p2UUGo+1DqzkLruhRu9jqGdziyYKTSx9vVRlIUIk9pzPhImlXUk5AkbXZuQR2RQ3BqIb46FTBGFnmt5QiDe9gIFO8xibauI0eZg' \
+			b'QMzdHqJREc35pLgjL6TcwpH50t+C8qO0otQAGy7LiJNnA5Wbyr8PARAOnlr5qah3GgYdw+DuNoOB5R+qyDvNBne3i99xZxgV31TAO90rgJAJP3p+puLdabZYZsuVh6/p8gcNSC0zl9XHdL0ds7aLM0bQ6Rejuw3FwOoDi1ijUyGZP5lGF/SMzIga1a1kq4At' \
+			b'V+WJFv0CawqnSz4WQrjmpMmYWT99I4ussuiQNNrQwXPMVgK3ErU1Q63KLLmth+cmrXUoq5FYaOXSSVqWmyho1sDS02Bgra0rc6dQFngZ/00X6/pBx8Y82ic1fVRmGVFmGVFmGTC9F6a7oc6lQmUxycaeVrpf6Wlv/eDszPXKMm6WjkKmnNMKYogdj34R+jsh' \
+			b'rD0uwghSqrLrj6USqb2s633DGypS1UwaUUEa0TxKEzRpn70223S1ak7DQ2/Lj2awigHY8XpiZsN6izQWMcmmfXaQWPfrsDOj+MZMeeXSR0wF7blMAZN6wIzIqlmKlZlQ+tbqW2KILXoTSaiwcJjxxTjN6jjNyAAN8407bSjCw1Ijw9I7rKOApFiRFCtjAsW3' \
+			b'1TGekcEdZit3HN/t3RaUIP1JEHkJ2jJZaZlOYo37AhMMeyITDJ5Z2Nuit8HUx+gExcoExcoEhS7DUC4kD24yXMEg3cj6tpV1ZO4sdfbYc0N+FMXE2I8HY4IKouRcRk3uXGfOb3h+7dg+Gb9Eg9MBgLu7C2YYkljVFU0GUa0MqqI6oZ6+t8LLE2l/iEBXjOOI' \
+			b'WCeQcAIJp3N2p5N1d0xTLqBNZdurbPthxCCy7Vm2vQq1n5lkoHqkxF5K7O+y9p9i3eHyQ8C96B6DdhBBZCOIbIShG6ho8Kn8CknXQBFbjdierD72AgVupcAt40hU5mrLHvAu0zGiwJ1wqpOInYbtTpsN/QmTTxSdLvmQnV5NIWu1hazPZf/WRQ34USslFKB1' \
+			b'AUVjkgEbUFSjwNtQCJ5xqsT5p/yQtk5KlpYAbHDMgA5NWWQYt4op26RhTMuK+WnLnGb2E3vAP7aCTCwNpeDEqJr8mKnkh3KgICgJmIjiYE0LZcLqFZausKqFFS1sV0Pbg01s2MFG5WuwtwocRvMJK2GYCMP6Fx0fej3YDKIOscsIe4Ows4c3GVI4GJNCFw09' \
+			b'NHb6cAtOfrBPxTAHlqjY9YbFGZj6w7IdhtxYccFiC9ZhsAjT0juofaDzgTUzhkTY7oLmHTWMHU8wZ4Uta99RrWJjsMfeYGyFdLyBFjtL4UU+AZsnW/knMVtRV4P9tbyHEts04Y/NoX0Mlv6T1K1avKP/DltDkQG2X9bYqF7Dp8Yu0xp7Wemp4wfsyqU8PPYM' \
+			b'05VIXWFHaw/SWtlcPWbiZzP2kwv2OeOW+LASCcIDSuCUCqdFwS5ZkryVw37XGnljKyo/DPE8+MSb1Skxk+TEiSoTsT21183S2LGPVxXvSR+IbPEPP0oqJP4BTMcVe7sbSQ37sR12c2ObK2+JBe2U5CRv7BnGDugevPaSKrYgUwJdUj3OKomgH4mDVMqUILUK' \
+			b'9Zvq/3z3AAEJAQ9WAEN4gLAEhAcQDAIDexv1btn7n1AaoXXI2oasVZAm4YptQAeIC76nyN6E6gzNjN5NyM0QmyN1I0pzZCaoZDSuQ+EGCM5BT2F3OIjxcQIDakq8bMJKjhIBxlpQ5GDIQbAJALnYJyIPUZ8RcR5Rkay2Sd/FXabunxz7LnuF7stG6ZVZm4zK' \
+			b't3dlXjts0bPqmooofUTmm0Tsw7RPm3bovImjRim7EhHclw0oaK/Yb1E47DmAfX+BDDfThw0Iadb0X2nfRf6wS2DEUDgsnmOZe4Ie1CtNc3oGCgBB1AXZ6d8PQCFx78e/JagBTlLQZLgRH3hmAOpn/pCt7WMcjSkQ4ztBGcL1nnHWM9I4fSeXoNEQKAdeH6EG' \
+			b'mI0Q40JnMBNGRKhFevqy04F3AjuhiCqYgxc9Diet8OOAk9TT3sb2D9As9dTZsOw6+wCQJxmhq/knL0IyVvsEreFYcDoP0uayOL3NGEWvEMA/lLCWLk27Mz5khkEq71K3BKmcbIJU7ogiUmOaGVLLXCcU2IIuABaJBnlIe0ZFLefSy8XJJQyRc8xyGnOg1XcZ' \
+			b'bAe+ROBGumaAKzmOwNWAqPZ6DrkDhwS7HHSSwQx2ZzDr8v71yBF7D9cCriLeKNoUq82I1SZ3i7Ca9arNtFeNaeZY3egYq5mXdK5NswaojQBV+tdG+leNWQC1WQdUCZ8DVZmSAHUkag6o0x5WA6LCZ7vYgT0KVOlkkwx2A6q/E0C97eNfzKECT2L8FKx+BKvP' \
+			b'3SKw+gysfgrWMc0crEWuEwpsQdcAVj+CFbcDVL1A1QtUvUB1jFqg1a9Dq4TP0apcSdA6es6h1U/RKgG5xmfRqvxRtHpBa8xg2ZA43KP2NqCW9TtQOrRT1I46VXmXukWobTPUtlPUjmnmqC1ynVBgC7oG1EatKh/Ip6gVtSpf5IULSdQCte061Er4HLXKlQS1' \
+			b'Y9JzqG2nqJWAqPF2FrXKH0VtK6iNGSxDbXuP2tuA2o5lvYOboLYbUdvlbhFquwy13RS1Y5o5aotcJxTYgq4BtV1EbRdR2wlqO0FtJ6gdoxao7dahVsLnqFWuJKgdk55D7VTlqwFR490sapU/itpOUBszWIba7l5VfJvga1gNhYoTHRQuRCBfxFNALCFStwTE' \
+			b'JtNEmakmKqaZgbjMNSfCFqQpjk3UROFWcWxED2VED2VEDxWj5jg261RRGj7D8cCYiOOY9AyOzVQVpQGxdW5WFTWwSHBsRBWVZLAMx/09jm8VjnnKi5qSKS+fdt5Ueui5GSe+EiJ1i3CcTXzNdOIb08xxXOTa6CabMYYtaBuAHCe/Jk5+jUx+jUx+jUx+Y9QC' \
+			b'yOsmvxo+B7JyJgHy6DkH5OnkVwN6K+FLICuPFMgy+U0yWAbkpr5H8q1CcmCpZ8dIDoLkIEgOI5JD7hYhOWRIDlMkj2nmSC5yzYmwBWkDkKPVBG4HIAcBchAgBwHyGLUAclgHZAmfA1kZkwB5THoOyGEKZAkIIIdZICuLFMhBgBwzWAjk5h7ItwrIrM9CHYk+' \
+			b'i63NGrnUVbQUlBCpWwTkTKtlplqtmGYO5CLXnAhbkDYAOSq2TFRsqb2gEcWWEcVWjFoAeZ1iS8PnQFbGJEAek54D8lSxpQEB5FnF1sAiBbIotpIMFgL53pzqdgGZVVyoIFFxGdFyyedX+KJA7nK3CMiZostMFV0xzRzIRa45EbYgbQBy1HWZqOsyousyousy' \
+			b'ouuKUQsgr9N1afgcyMqYBMhj0nNAnuq6NCCAPKvrGlikQBZdV5LBQiDbCOTm9LHcZscL311EN6LqNeAh7vEZFMOg5gu324P22uRukfbaZNprM9Vej2nm2usi15wIW5A2KLBNVGAbBnXDX3PrRJEtlsp8kQAuJEkUimyzBtwaPldkK4MSRfaY9Jwi20wV2RIQ' \
+			b'UmBmFdlKviqyjSiyYwYLwT1vlDXZrXNaS1CXscm66haddSjeA4LxhSpe3ui29c+WOzPeEJouQbXio52zzd2Vtgog/sSW0oz/RQdd5Dyhwha0DUDGboKOizEx0UII3Wwg2QXJWky5ss7ZTvCLpGL/LJnl/bPyZrrlAF4zAJ50zZY3H6Bm61n4aspD34zaBJ+r' \
+			b'lQA5Fn8C5N494KYsdHS1DFxfWkAfX6eMTcX7tYa+7Z0y78ACG1FrTkbaTkbaTkbabgSzy92ikbbLsOwyLNdDojmSi2wzF6RjzmmDebQMuF0ccLsIaCcDbicDbtlDFGMXmHbrBtwSPge08icZcI9Jzw243RTVEtBbCV+CWglWUMvuoiSDhX1yYcl1fMC+nznv' \
+			b'DmnLq1L8GVjGs5VVKSurUnZclZIQqVuCZ5utStnpqlRMM4NzmWtOhC1I077ZxkUpGxelrCxKWVmUsrIoFaPmQLbrFqU0fAbkgTERyDHpGSDb6aKUBsTxSbOLUgOLBMhWFqWSDBYCuTDuOhCQk3MB7uF8cDjz0pRlx3CWpSkrS1N2XJqyIXeL4JwtTfUCZ+zJ' \
+			b'xcEQnYA6wN+WC1Rl3jkptiBwAHVcoLJxgcrKApWVBSorC1QxagHqdQtUGj4HtbInAfWY9ByopwtUGtBbCV+CWt4PoJYFqiSDhaC+t/26VXB2bPsF5ovtlxPbLye2X260/ZKH1C2Bs8tsv9zU9iummQG5zDUnwhakKZBdtP1y0fbLie2XE9svJ7ZfMWoOZLfO' \
+			b'9kvDZ0AeGBOBHJOeAbKb2n5pQC9ffy+BPLBIgOzE9ivJYCGQ742/DgVkVbXeEKB5kyJqQDYpOjkiQ9VhbtyqKH6pWwTobKuim25VjGnmgN7mGNCZlwI67lbE7QBo2avoZK+ik72KMWoB6HXbFTV8DmhlTALoMeneDXc5rKebFodAVmKVsFZGKaxl02KSzTJY' \
+			b'm8IS7DA7Kvasxd7hFKpDoHVnlfVekMkqajBxqqJ2o35a3qVuESYz9bSbqqcLKBaZTTK2BTkDDm1VHHzjojp69uwbZ9fBTlLOYadlT2A3ErFB+zyEsLMwk5cDzKzAbEx2x73BprDPuofXscCL9UxQBvgpvEYNk7xL3SJ4ZRom5zfDq8hskrEtyBng5Wfg5bfA' \
+			b'a50SSVPO4aVlT+A1em6Cl4aYh5e8HOAlqqOY7K7wKqym7uF1LPBiS0Zo2dopvEYbRnmXukXwymwYXbsZXkVmk4xtQc4Ar3YGXu0WeK0zU9SUc3hp2RN4jURsgpeGmIeXvBzgJcaJMdld4WXvxHbbW62v4XPdMOPppzAcD3VzhVsEwz6DYT+d2I1p5nicyziG' \
+			b'tqWX4rGvZs+gcXLGm8KSL2OxC3yuO+FNw+f4VKYk+ByJmtPS9FOYSkBM5/pZpCrRitRekBoz2BGp96dFnTpSPWtWwd16glQ/6lTlXeqWINVnOlU/1anGNDOklrlOKLAFXcMZwfU8Ur2oVL2oVL2oVDVmcV7wOn2qhs+QOjAlIjUSNYNUP9WnakCI9aw+dWCP' \
+			b'INWLPjXJYEek3o3jom41Ulll6vkrEROkjspSeZe6RUjNlKV+qiyNaeZI3egYqZmXInXNuW5edKVedKVedKUas0DqOkWphs+RqkxJkDoSNYfUqYpUA0KsZ1WkA3sUqaIiTTLYEamhPI07tR90p2D9u69zVPlMf3o/OQE8BXXYk3HwruCuFwC8vQzIw4bDxMmh' \
+			b'MsSiIT9V3I82DRImdVeyH0b8tB0YE5052Z/J9zMUeLFmyL06lqSVPsw1BmLS4MWkwYtJg0Yuj40DpWF6yH9i4zB7grmmlTcUyrapabH6zrUU0dgBdc+tRaiGE879rMUDDjofOKlNhlg9RPbkTQZ782+HX7QeLJUtXbjtaKuLw5/jv6dD/N0WCGfQLSDbb1Et' \
+			b'bVIrtdX2z2vg7PnjOdN/v+f5u6uc6b/twxZbPmex9TMWi79fQUXJxb4+iOTj21buiD9i4ds1sp/L/Zy8b/mOzA19yKLRjSdH/DELsPgKH7ToC+EtB3r7Et5wJI33ooZ7W6Pd8Pac0xBmv19hBsNu5Osssu2tH4V6GM1mwk2M2zIgGacwe/zWWDf9lFgoPyW2' \
+			b'RNx3nW7sONXYKPowbgv7b78Xfv/r0B8mauxopgEWrdpcE7AYCukRHeu/3rXrl7s2wELorS/Z1lPiO43P3T4/tUU1uOw7enserGwaqONLhTu1+c1+hD4R+Gv6+lZj59p5s2Utd78DF6go1g9edmzv147WXY/xOH/vx+wm3ntv6mlOGgZp99fS4C/QLW1s8KGI' \
+			b'd9fb8N9Yow+5j2c/sLrWXlPjXy7aXKbxXxkohMEnc9lOgPBiLb7SyHixO+Nlj92Buy6MXBEfGFVe96BIsdFeUWW6qH+AXPp9YaHdpu8scNC6RTiAHo2xcBUMGC8fKjW1XG03QsLtBomwV0gkn2O+Np3Osc8Prh8KKQyaZGPUteh6FsLg6hAIhej73US/PYzo' \
+			b'9/eifyyif+Ve4MhFvy1EP+wm+nuaL+Qzhfpe9I9F9M0tF/2uEP1rWbKF7n+w27j6CkCDU/nonTGHW8raeQl3f0J/UIFPp9r7WgHg9T5WodVLBf8KKwENf1B6l5lu6x5QZizl5QrtYaQc2iA3UQgdrmlfY2N0Kf3P9TXth9fzQDy6VNdz0CYdn3Ob0+9cRq9z' \
+			b'VX1OX10cpenNgc0OJm11fZn22sK48KYF+CrNMovDoQwM0lYY5oRztqebRNSr/QwMZtRwpuv5Y9/1vcAua3KPo6m90gAia1YbPgnyGk0H1jSjUIj0NUtlcxCpbNYLps2slK9JPLceR7yrCaNjW4xjEVex5G43iSy/zm19F4vuJVvZLacD72C/iMOe+WBvLkbR' \
+			b'3JoHhFiWZHMvyactyR3/b5Tk7rQluVNJ7jZLsq0u2iruG2tYcBsW2UReRVjbbNsVS9CM5EAyUmnoHNU0z2W7WK2NqqJQl42br8Ox/rhuQtwPxBOEGeaBOSlDgoN5DtXY7oWM4DMAnOw326HQAyRyGHDhWaguWfiGv1GgAhrGYLsxxJc8cSNb/BK22JIzzVFw' \
+			b'p5lCeODQgMorcyks4VLZhEvjvVPLvQsjt7XIcy3xuEupvyqzQXHdl+2mvFrQVu5SK9tawZnWb/gwR91PW7m2qMMbmAGt3bF6IFXq+tnOjAjM967oh29uVjO7A3SvM5hSdMrO0jqaXssEprsXo81ihHo5vtlx+vkRdjciR4aaIyyw9A9WEKL6wUrapv5eqLYI' \
+			b'1VGqXFKh6pnGIxIqyiYVqpvT+h2rXMEi72i1ecfQ70GImmMUomtahx7HzKGafgJsk1Bdu4q4NZdprswexQqJbRiI8wCy0u9rbfusFtWRCtzNL1fcpMytkzNUy0ksR6QN2OGWH3ZrxCwfSt4EnvvyJLbt+IXjM5E9ieIF5ubhzTndna34iF05lsXU+fErm89M' \
+			b'4S1YMKEfTQjUKgw2HXJkCL78ib3m2LHbYgsXTDQHJ8eiuOw/McpRP4kG/SqlhHiwIotxULqVOXQxKN3L/DFx9tDEUQsx8wczkOSJNzsH3sg2CSUbkZlQd2hCqbEq/qDBl2s383b8YwL9oQn01fwflhjWvmv5HRMYDk1gqC71x8S1U+KK05b0FPLx9KTNJyZN' \
+			b'j0vC9nXekmn0OKQgC2hzBZocq+uq8RgiPoJoOGrIp8cLvUFPKX8krm2VPKSunfnLgnCo+ThzYTJ/ZmN36Druqkv9MXH9YesYivC5aq67PVY1+oXDOaiUMy+MWC6TGHO8qQ/ehbpq304oTzp/LKO2exAZfEjmhqQmVOLkWzbj4+UdBsNXT2WtkzrYOHJxdjtC' \
+			b'18oQuDeVIyxJzzvm4kZnujnfEH2lOPY2iRQmY6fkpAo2juJ2kahWPyq9q1xhwnoFN0w2N4aSovlbJV19dVJOqiBsGWDsLmDC7R3FbIZ/0JAMrkvul7pBwbElVKamYGa0t0keoW46JSdV0B2PPJrqJpywob9Vkmirk3KigqqPRxJddRNO2HCrJhVQuJ+Skyow' \
+			b'J1AF43c7d66Krjo21wQilOaaG0NJldg9Nw79pomf26WN6Ks9OlTtjC/RvSaGcMXtpK3aH2PslDksc+sYhMW19a7f+HZ3129JU/jkj5lPrjoCJ3zaNjm5UT6F6gic8OmkVwLwhYdtTha75X+X8Hl0rGkPSeDrU+vCUcFjhsV7Yfa2GcpRMxtmBUfthMcHXvY4' \
+			b'MI9tddxOVrG3zW+Om8euOm4nPG5Omse+Om4nPMbxrjCDaZXndnjW9zi7j1kCPyzUqPzjYLOkKhqOhHMoOz52rMZZjxIyzIb0VeIkYFsERBUgcKhS1wSN0CVWPFDRaxF6/lalyMRYt22DUNAjIKSPRlpdLdYeNX+Ny/OWHdktI1uMaqn3Xo1CSCabDsxoOlgN' \
+			b'nf8/lorl2w=='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -2559,13 +2605,13 @@ class Parser (lalr1.Parser):
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {'@', '@@'})))})"
+	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {'@', '%'})))})"
 	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
 
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@@?|{_FUNCPY}\b)|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*(@@?|{_LETTER}(?:\w|\\_)*)\s*}}'),
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'),
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
@@ -2590,10 +2636,10 @@ class Parser (lalr1.Parser):
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
-		('VAR',          fr'(\\partial\s?|{_UPARTIAL})({_VAR})|{_VAR}'),
+		('VAR',          fr"(?:(\\partial\s?|{_UPARTIAL})({_VAR})|({_VAR}))('*)"),
 		('ATTR',         fr'\.(?:({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}})'),
-		('STR',          fr"(?<!\d|{_LETTERU}|')({_STR})|\\text\s*{{\s*({_STR})\s*}}"),
-		('PRIMES',        r"'+"),
+		('STR',          fr"(?<!{_LETTERU}|')({_STR})|\\text\s*{{\s*({_STR})\s*}}"),
+		# ('PRIMES',        r"'+"),
 		('SUB1',         fr'_{_VARTEX1}'),
 		('SUB',           r'_'),
 		('CARET1',       fr'\^{_VARTEX1}'),
@@ -2632,10 +2678,10 @@ class Parser (lalr1.Parser):
 	def expr_eq_1       (self, expr_lambda1, EQ, expr_lambda2):                 return AST ('=', '=', expr_lambda1, expr_lambda2)
 	def expr_eq_2       (self, expr_lambda):                                    return expr_lambda
 
-	def expr_lambda_1   (self, expr_commas, COLON, expr_mapsto):                return _expr_lambda (expr_commas, expr_mapsto)
+	def expr_lambda_1   (self, expr_commas, COLON, expr_eq):                    return _expr_lambda (expr_commas, expr_eq)
 	def expr_lambda_2   (self, expr_mapsto):                                    return expr_mapsto
 
-	def expr_mapsto_1   (self, expr_paren, MAPSTO, expr_piece):                 return _expr_mapsto (expr_paren, expr_piece)
+	def expr_mapsto_1   (self, expr_paren, MAPSTO, expr_eq):                    return _expr_mapsto (expr_paren, expr_eq)
 	def expr_mapsto_2   (self, expr_piece):                                     return expr_piece
 
 	def expr_piece_1     (self, expr_ineq, IF, expr, ELSE, expr_lambda):
@@ -2729,8 +2775,8 @@ class Parser (lalr1.Parser):
 	def expr_casess_2   (self, expr_casessp):                                   return expr_casessp
 	def expr_casessp_1  (self, expr_casessp, DBLSLASH, expr_casessc):           return expr_casessp + (expr_casessc,)
 	def expr_casessp_2  (self, expr_casessc):                                   return (expr_casessc,)
-	def expr_casessc_1  (self, expr1, AMP, expr2):                              return (expr1, expr2)
-	def expr_casessc_2  (self, expr, AMP):                                      return (expr, True)
+	def expr_casessc_1  (self, expr_commas1, AMP, expr_commas2):                return (expr_commas1, expr_commas2)
+	def expr_casessc_2  (self, expr_commas, AMP):                               return (expr_commas, True)
 
 	def expr_mat_1      (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return _expr_mat (expr_mat_rows) # translate these on the fly?
 	def expr_mat_2      (self, BEG_MAT, expr_mat_rows, END_MAT):                               return _expr_mat (expr_mat_rows)
@@ -2743,8 +2789,8 @@ class Parser (lalr1.Parser):
 	def expr_mat_rows_3 (self):                                                 return ()
 	def expr_mat_row_1  (self, expr_mat_row, DBLSLASH, expr_mat_col):           return expr_mat_row + (expr_mat_col,)
 	def expr_mat_row_2  (self, expr_mat_col):                                   return (expr_mat_col,)
-	def expr_mat_col_1  (self, expr_mat_col, AMP, expr):                        return expr_mat_col + (expr,)
-	def expr_mat_col_2  (self, expr):                                           return (expr,)
+	def expr_mat_col_1  (self, expr_mat_col, AMP, expr_commas):                 return expr_mat_col + (expr_commas,)
+	def expr_mat_col_2  (self, expr_commas):                                    return (expr_commas,)
 
 	def expr_curly_1    (self, CURLYL, expr_commas, CURLYR):                    return _expr_curly (expr_commas)
 	def expr_curly_2    (self, expr_bracket):                                   return expr_bracket
@@ -2759,16 +2805,15 @@ class Parser (lalr1.Parser):
 	def expr_term_4     (self, expr_var):                                       return expr_var
 
 	def expr_num        (self, NUM):                                            return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
-
-	def expr_var_1      (self, var, PRIMES):                                    return AST ('@', var + PRIMES.text.replace ("'", '_prime'))
-	def expr_var_2      (self, var):                                            return AST ('@', var)
-	def var             (self, VAR):
-		return \
+	def expr_var        (self, VAR):
+		var = \
 				'partial' + AST.Var.ANY2PY.get (VAR.grp [1], VAR.grp [1].replace ('\\_', '_')) \
 				if VAR.grp [0] else \
-				self._VAR_TEX_XLAT [VAR.text] \
-				if VAR.text in self._VAR_TEX_XLAT else \
-				AST.Var.ANY2PY.get (VAR.text.replace (' ', ''), VAR.text.replace ('\\_', '_'))
+				self._VAR_TEX_XLAT [VAR.grp [2]] \
+				if VAR.grp [2] in self._VAR_TEX_XLAT else \
+				AST.Var.ANY2PY.get (VAR.grp [2].replace (' ', ''), VAR.grp [2].replace ('\\_', '_'))
+
+		return AST ('@', var + '_prime' * len (VAR.grp [3]))
 
 	def expr_sub_1      (self, SUB, expr_frac):                                 return expr_frac
 	def expr_sub_2      (self, SUB1):                                           return _ast_from_tok_digit_or_var (SUB1)
@@ -2971,12 +3016,12 @@ class Parser (lalr1.Parser):
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			rated = list (rated)
-			print ()
+			print (file = sys.stderr)
 			for res in rated:
 				res = res [-1]
 				res = (res [0].remove_curlys (),) + res [1:] if isinstance (res [0], AST) else res
-				print ('parse:', res)
-			print ()
+				print ('parse:', res, file = sys.stderr)
+			print (file = sys.stderr)
 
 		res = next (iter (rated)) [-1]
 
@@ -2985,15 +3030,13 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	p = Parser ()
-# 	a = p.parse (r"Piecewise(((1, 2), a), ((3, 4), b))")
-# 	print (a)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	p = Parser ()
+	a = p.parse (r"\int 2x*-dx")
+	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: 'str'**x, 'str'!
 # TODO: MatrixSymbol ('A', 2, 2)**n
-# TODO: Multiple arguments in
 # TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
 # TODO: PurePoly(lambda**4 - 11*lambda**3 + 29*lambda**2 + 35*lambda - 150, lambda, domain='ZZ')
 # TODO: sequence(factorial(k), (k,1,oo))
@@ -3208,7 +3251,7 @@ def _ast2tex_func (ast):
 	return \
 			f'\\{ast.func}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}' \
 			if ast.func in AST.Func.TEX else \
-			'\\operatorname{' + ast.func.replace ('_', '\\_') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
+			'\\operatorname{' + ast.func.replace ('_', '\\_').replace ('%', '\\%') + f'}}{_ast2tex_paren (_tuple2ast_func_args (ast.args))}'
 
 def _ast2tex_lim (ast):
 	s = ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -3261,17 +3304,17 @@ def _ast2tex_intg (ast):
 				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {_ast2tex_wrap (ast.intg, {"diff"}, {"=", "lamb"})} \\ {ast2tex (ast.dv)}'
 
 _ast2tex_funcs = {
-	'=': lambda ast: f'{_ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2tex_eq_hs (ast, ast.rhs, lhs = False)}',
+	'=': lambda ast: f'{_ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2tex_eq_hs (ast, ast.rhs, False)}',
 	'#': _ast2tex_num,
 	'@': _ast2tex_var,
 	'.': _ast2tex_attr,
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
-	',': lambda ast: f'{", ".join (_ast2tex_wrap (c, 0, c.is_ass) for c in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (ast2tex (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'\\left({ast2tex (ast.paren)} \\right)',
 	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.bracks)} \\right]',
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_wrap (ast.minus, {"#", "-", "*"}, {"=", "+", "lamb"})}',
-	'!': lambda ast: f'{_ast2tex_wrap (ast.fact, {"^"}, (ast.fact.op not in {"#", "@", "(", "|", "!", "^", "vec", "mat"} or ast.fact.is_neg_num))}!',
+	'!': lambda ast: _ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
 	'+': lambda ast: ' + '.join (_ast2tex_wrap (n, n.strip_lim_sum ().is_intg and n is not ast.adds [-1], \
 			(n.op in ("piece", "lamb") and n is not ast.adds [-1]) or n.op in {'=', 'lamb'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
@@ -3412,7 +3455,7 @@ def _ast2nat_pow (ast, trighpow = True):
 
 	# b = ast2nat (ast.base)
 	# p = f'{{{ast2nat (ast.exp)}}}' if ast.exp.strip_minus ().op in {'+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece'} else ast2nat (ast.exp)
-	b = _ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '(', '|', 'mat'} or ast.base.is_pos_num))
+	b = _ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '|', 'mat'} or ast.base.is_pos_num))
 	p = _ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'}, {","})
 
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -3477,19 +3520,19 @@ def _ast2nat_intg (ast):
 				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {ast2nat (ast.dv)}'
 
 _ast2nat_funcs = {
-	'=': lambda ast: f'{_ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2nat_eq_hs (ast, ast.rhs, lhs = False)}',
+	'=': lambda ast: f'{_ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2nat_eq_hs (ast, ast.rhs, False)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
 	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb"})}.{ast.attr}' \
 			if ast.args is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{", ".join (_ast2nat_wrap (c, 0, c.is_ass) for c in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (ast2nat (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: f'({ast2nat (ast.paren)})',
 	'[': lambda ast: f'[{", ".join (ast2nat (b) for b in ast.bracks)}]',
 	'|': lambda ast: f'{{|{ast2nat (ast.abs)}|}}',
 	'-': lambda ast: f'-{_ast2nat_wrap (ast.minus, {"#", "-", "*", "piece"}, {"=", "+", "lamb"})}',
 	# '!': lambda ast: f'{_ast2nat_paren (ast.fact)}!' if (ast.fact.op not in {'#', '@', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) else f'{ast2nat (ast.fact)}!',
-	'!': lambda ast: f'{_ast2nat_wrap (ast.fact, {"^"}, ast.fact.op not in {"#", "@", "(", "|", "!", "^", "vec", "mat"} or ast.fact.is_neg_num)}!',
+	'!': lambda ast: _ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) + '!',
 	'+': lambda ast: ' + '.join (_ast2nat_wrap (n, n.op in {'intg', 'piece'} or (n.strip_lim_sum ().is_intg and n is not ast.adds [-1]), \
 			(n.op in ('piece', 'lamb') and n is not ast.adds [-1]) or n.op in {'=', 'lamb'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2nat_mul,
@@ -3518,7 +3561,7 @@ def ast2py (ast): # abstract syntax tree -> Python code text
 def _ast2py_curly (ast):
 	return \
 			_ast2py_paren (ast) \
-			if ast.strip_minus ().op in {'+', '*', '/'} or (ast.is_log and ast.base is not None) else \
+			if ast.strip_minus ().op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 			ast2py (ast)
 
 def _ast2py_paren (ast):
@@ -3601,23 +3644,6 @@ _ast2py_funcs = {
 }
 
 #...............................................................................................
-def ast2spt (ast, doit = False): # abstract syntax tree -> sympy tree (expression)
-	spt = _ast2spt_funcs [ast.op] (ast)
-
-	if doit and callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
-		try:
-			spt = spt.doit ()
-			spt = sp.piecewise_fold (spt)
-		except TypeError:
-			pass
-
-	return spt
-
-def _ast2spt_attr (ast):
-	mbr = getattr (ast2spt (ast.obj), ast.attr)
-
-	return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
-
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict               = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
 _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
@@ -3627,89 +3653,116 @@ _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable',
 
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
-def _ast2spt_func (ast):
-	if ast.func == '@': # special reference meta-function
-		return ast2spt (ast.args [0])
-	if ast.func == '@@': # special stop evaluation meta-function
-		return ExprDontDoIt (ast2spt (ast.args [0]))
+class ast2spt:
+	def __new__ (cls, ast):
+		self    = super ().__new__ (cls)
+		self.kw = {}
 
-	func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
+		spt     = self._ast2spt (ast)
 
-	if func is None:
-		raise NameError (f'name {ast.func!r} is not defined')
+		if callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
+			try:
+				spt = spt.doit ()
+				spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
+			except TypeError:
+				pass
 
-	return _ast_func_call (func, ast.args)
+		return spt
 
-def _ast2spt_diff (ast):
-	args = sum ((
-			(ast2spt (n.as_var),) \
-			if n.is_var else \
-			(ast2spt (n.base.as_var), sp.Integer (n.exp.num)) \
-			for n in ast.dvs \
-			), ())
+	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
+		return self._ast2spt_funcs [ast.op] (self, ast)
 
-	return sp.Derivative (ast2spt (ast [1]), *args)
+	def _ast2spt_attr (self, ast):
+		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
-def _ast2spt_intg (ast):
-	if ast.from_ is None:
-		return \
-				sp.Integral (1, ast2spt (ast.dv.as_var)) \
-				if ast.intg is None else \
-				sp.Integral (ast2spt (ast.intg), ast2spt (ast.dv.as_var))
-	else:
-		return \
-				sp.Integral (1, (ast2spt (ast.dv.as_var), ast2spt (ast.from_), ast2spt (ast.to))) \
-				if ast.intg is None else \
-				sp.Integral (ast2spt (ast [1]), (ast2spt (ast.dv.as_var), ast2spt (ast.from_), ast2spt (ast.to)))
+		return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
 
-_ast2spt_eq = {
-	'=':  sp.Eq,
-	'==': sp.Eq,
-	'!=': sp.Ne,
-	'<':  sp.Lt,
-	'<=': sp.Le,
-	'>':  sp.Gt,
-	'>=': sp.Ge,
-}
+	def _ast2spt_func (self, ast):
+		if ast.func == '@': # special reference meta-function
+			return self._ast2spt (ast.args [0])
 
-_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
-	'pi'   : sp.pi,
-	'oo'   : sp.oo,
-	'zoo'  : sp.zoo,
-	'None' : None,
-	'True' : sp.boolalg.true,
-	'False': sp.boolalg.false,
-	'nan'  : sp.nan,
-}
+		if ast.func == '%': # special stop evaluation meta-function
+			self.kw ['evaluate'] = False
 
-_ast2spt_funcs = {
-	'=': lambda ast: _ast2spt_eq [ast.rel] (ast2spt (ast.lhs), ast2spt (ast.rhs)),
-	'#': lambda ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-	'@': lambda ast: {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var)) if len (ast.var) > 1 else sp.Symbol (ast.var)),
-	'.': _ast2spt_attr,
-	'"': lambda ast: ast.str_,
-	',': lambda ast: tuple (ast2spt (p) for p in ast.commas),
-	'(': lambda ast: ast2spt (ast.paren),
-	'[': lambda ast: [ast2spt (b) for b in ast.bracks],
-	'|': lambda ast: sp.Abs (ast2spt (ast.abs)),
-	'-': lambda ast: -ast2spt (ast.minus),
-	'!': lambda ast: sp.factorial (ast2spt (ast.fact)),
-	'+': lambda ast: sp.Add (*(ast2spt (n) for n in ast.adds)),
-	'*': lambda ast: sp.Mul (*(ast2spt (n) for n in ast.muls)),
-	'/': lambda ast: sp.Mul (ast2spt (ast.numer), sp.Pow (ast2spt (ast.denom), -1)),
-	'^': lambda ast: sp.Pow (ast2spt (ast.base), ast2spt (ast.exp)),
-	'log': lambda ast: sp.log (ast2spt (ast.log)) if ast.base is None else sp.log (ast2spt (ast.log), ast2spt (ast.base)),
-	'sqrt': lambda ast: sp.Pow (ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (ast2spt (ast.rad), sp.Pow (ast2spt (ast.idx), -1)),
-	'func': _ast2spt_func,
-	'lim': lambda ast: (sp.Limit if ast.dir else sp.limit) (ast2spt (ast.lim), ast2spt (ast.lvar), ast2spt (ast.to), dir = ast.dir or '+-'),
-	'sum': lambda ast: sp.Sum (ast2spt (ast.sum), (ast2spt (ast.svar), ast2spt (ast.from_), ast2spt (ast.to))),
-	'diff': _ast2spt_diff,
-	'intg': _ast2spt_intg,
-	'vec': lambda ast: sp.Matrix ([[ast2spt (e)] for e in ast.vec]),
-	'mat': lambda ast: sp.Matrix ([[ast2spt (e) for e in row] for row in ast.mat]),
-	'piece': lambda ast: sp.Piecewise (*tuple ((ast2spt (p [0]), True if p [1] is True else ast2spt (p [1])) for p in ast.pieces)),
-	'lamb': lambda ast: sp.Lambda (tuple (ast2spt (v) for v in ast.vars), ast2spt (ast.lamb)),
-}
+			return ExprDontDoIt (self._ast2spt (ast.args [0]))
+
+		func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
+
+		if func is None:
+			raise NameError (f'function {ast.func!r} is not defined')
+
+		return _ast_func_call (func, ast.args)
+
+	def _ast2spt_diff (self, ast):
+		args = sum ((
+				(self._ast2spt (n.as_var),) \
+				if n.is_var else \
+				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.num)) \
+				for n in ast.dvs \
+				), ())
+
+		return sp.Derivative (self._ast2spt (ast [1]), *args, **self.kw)
+
+	def _ast2spt_intg (self, ast):
+		if ast.from_ is None:
+			return \
+					sp.Integral (1, self._ast2spt (ast.dv.as_var)) \
+					if ast.intg is None else \
+					sp.Integral (self._ast2spt (ast.intg), self._ast2spt (ast.dv.as_var))
+		else:
+			return \
+					sp.Integral (1, (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to))) \
+					if ast.intg is None else \
+					sp.Integral (self._ast2spt (ast [1]), (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+
+	_ast2spt_eq = {
+		'=':  sp.Eq,
+		'==': sp.Eq,
+		'!=': sp.Ne,
+		'<':  sp.Lt,
+		'<=': sp.Le,
+		'>':  sp.Gt,
+		'>=': sp.Ge,
+	}
+
+	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
+		'pi'   : sp.pi,
+		'oo'   : sp.oo,
+		'zoo'  : sp.zoo,
+		'None' : None,
+		'True' : sp.boolalg.true,
+		'False': sp.boolalg.false,
+		'nan'  : sp.nan,
+	}
+
+	_ast2spt_funcs = {
+		'=': lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
+		'#': lambda self, ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
+		'@': lambda self, ast: {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var, **self.kw)) if len (ast.var) > 1 else sp.Symbol (ast.var, **self.kw)),
+		'.': _ast2spt_attr,
+		'"': lambda self, ast: ast.str_,
+		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.commas),
+		'(': lambda self, ast: self._ast2spt (ast.paren),
+		'[': lambda self, ast: [self._ast2spt (b) for b in ast.bracks],
+		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), **self.kw),
+		'-': lambda self, ast: -self._ast2spt (ast.minus),
+		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), **self.kw),
+		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.adds), **self.kw),
+		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.muls), **self.kw),
+		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), sp.Pow (self._ast2spt (ast.denom), -1), **self.kw),
+		'^': lambda self, ast: sp.Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), **self.kw),
+		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), **self.kw) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), **self.kw),
+		'sqrt': lambda self, ast: sp.Pow (self._ast2spt (ast.rad), sp.Pow (2, -1), **self.kw) if ast.idx is None else sp.Pow (self._ast2spt (ast.rad), sp.Pow (self._ast2spt (ast.idx), -1, **self.kw), **self.kw),
+		'func': _ast2spt_func,
+		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
+		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
+		'diff': _ast2spt_diff,
+		'intg': _ast2spt_intg,
+		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], **self.kw),
+		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], **self.kw),
+		'piece': lambda self, ast: sp.Piecewise (*tuple ((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.pieces), **self.kw),
+		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
+	}
 
 #...............................................................................................
 def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
@@ -3817,7 +3870,7 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
-	ExprDontDoIt: lambda spt: AST ('func', '@@', (spt2ast (spt.args [0]),)),
+	ExprDontDoIt: lambda spt: AST ('func', '#', (spt2ast (spt.args [0]),)),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
@@ -3913,8 +3966,8 @@ class sym: # for single script
 	spt2ast        = spt2ast
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('^', ('@', 'x'), ('-', ('/', ('#', '1'), ('#', '1.0'))))
-# 	res = ast2nat (ast)
+# 	ast = AST ('+', (('@', '1'), ('@', '2')))
+# 	res = ast2spt (ast)
 # 	print (res)
 #!/usr/bin/env python
 # python 3.6+
@@ -3923,6 +3976,7 @@ class sym: # for single script
 # TODO: Exception prevents restart on file date change or too much time?
 
 import getopt
+import io
 import json
 import os
 import re
@@ -3946,8 +4000,9 @@ _VAR_LAST = '_'
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	import sympy as sp
 
-	_parser = sparser.Parser ()
-	_vars   = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_sys_stdout = sys.stdout
+	_parser     = sparser.Parser ()
+	_vars       = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 
@@ -4117,7 +4172,7 @@ class Handler (SimpleHTTPRequestHandler):
 		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
 
 		for key, val in list (request.items ()):
-			if len (val) == 1:
+			if isinstance (val, list) and len (val) == 1:
 				request [key] = val [0]
 
 		if request ['mode'] == 'validate':
@@ -4125,14 +4180,10 @@ class Handler (SimpleHTTPRequestHandler):
 		else: # request ['mode'] == 'evaluate':
 			response = self.evaluate (request)
 
-		response ['mode'] = request ['mode']
-		response ['idx']  = request ['idx']
-		response ['text'] = request ['text']
-
 		self.send_response (200)
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
-		self.wfile.write (json.dumps (response).encode ('utf8'))
+		self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
@@ -4145,11 +4196,11 @@ class Handler (SimpleHTTPRequestHandler):
 			py  = sym.ast2py (ast)
 
 			if os.environ.get ('SYMPAD_DEBUG'):
-				print ('ast:', ast)
-				print ('tex:', tex)
-				print ('nat:', nat)
-				print ('py: ', py)
-				print ()
+				print ('ast:', ast, file = sys.stderr)
+				print ('tex:', tex, file = sys.stderr)
+				print ('nat:', nat, file = sys.stderr)
+				print ('py: ', py, file = sys.stderr)
+				print (file = sys.stderr)
 
 		return {
 			'tex'         : tex,
@@ -4160,6 +4211,8 @@ class Handler (SimpleHTTPRequestHandler):
 		}
 
 	def evaluate (self, request):
+		sys.stdout = io.StringIO ()
+
 		try:
 			ast, _, _ = _parser.parse (request ['text'])
 
@@ -4167,33 +4220,46 @@ class Handler (SimpleHTTPRequestHandler):
 				asts = globals () [f'_admin_{ast.func}'] (ast)
 
 				if isinstance (asts, str):
-					return {'msg': asts}
+					return {'msg': [asts]}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _ast_prepare_ass (ast)
 
 				sym.set_precision (ast)
 
-				spt = sym.ast2spt (ast, doit = True)
+				spt = sym.ast2spt (ast)
 				ast = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
-					print ('spt:        ', repr (spt))
-					print ('spt type:   ', type (spt))
-					print ('sympy latex:', sp.latex (spt))
-					print ('ast:        ', ast)
-					print ()
+					print ('spt:        ', repr (spt), file = sys.stderr)
+					print ('spt type:   ', type (spt), file = sys.stderr)
+					print ('sympy latex:', sp.latex (spt), file = sys.stderr)
+					print ('ast:        ', ast, file = sys.stderr)
+					print (file = sys.stderr)
 
 				asts = _ast_execute_ass (ast, vars)
 
-			return {'math': [{
-				'tex': sym.ast2tex (ast),
-				'nat': sym.ast2nat (ast),
-				'py' : sym.ast2py (ast),
-			} for ast in asts]}
+			response = {}
+
+			if asts and asts [0] is not AST.None_:
+				response.update ({'math': [{
+					'tex': sym.ast2tex (ast),
+					'nat': sym.ast2nat (ast),
+					'py' : sym.ast2py (ast),
+				} for ast in asts]})
+
+			if sys.stdout.tell ():
+				sys.stdout.seek (0)
+
+				response ['msg'] = sys.stdout.read ().strip ().split ('\n')
+
+			return response
 
 		except Exception:
-			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).replace ('  ', '&emsp;').strip ().split ('\n')}
+			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')}
+
+		finally:
+			sys.stdout = _sys_stdout
 
 #...............................................................................................
 _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
