@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# TODO: x**---y
+# TODO: x +- lambda:
+
 from getopt import getopt
 from random import random, randrange, choice
 import sys
@@ -261,6 +264,15 @@ def fix_vars (ast):
 
 	return AST (*tuple (fix_vars (a) for a in ast))
 
+def fix_rest (ast):
+	if not isinstance (ast, AST):
+		return ast
+
+	if ast.is_comma:
+		return AST ('(', AST (*tuple (fix_vars (a) for a in ast)))
+
+	return AST (*tuple (fix_vars (a) for a in ast))
+
 def process (ast):
 	if not isinstance (ast, AST):
 		return ast
@@ -268,7 +280,7 @@ def process (ast):
 	if ast.is_partial:
 		return ast.as_diff
 
-	if ast.is_paren and not ast.paren.is_comma:
+	if ast.is_paren:
 		return process (ast.paren)
 
 	return AST (*tuple (process (a) for a in ast))
@@ -326,6 +338,7 @@ def test ():
 				continue
 
 			ast = flatten (ast)
+			ast = fix_rest (ast)
 
 			if ('--show', '') in opts:
 				print ()
@@ -344,6 +357,8 @@ def test ():
 					print ()
 					print ('Invalid:', text)
 					continue
+
+				ast = fix_rest (ast)
 
 			tex = dotex and sym.ast2tex (ast)
 			nat = donat and sym.ast2nat (ast)

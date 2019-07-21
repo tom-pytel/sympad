@@ -4332,7 +4332,7 @@ if __name__ == '__main__':
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
 		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
-			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/index.html')
+			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
 
 		while 1:
 			time.sleep (0.5)
