@@ -2,7 +2,7 @@
 #
 # Time and interest permitting:
 # sets
-# assumptions/hints
+# var assumptions
 # importing modules to allow custom code execution
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
 # sympy function/variable module prefix
