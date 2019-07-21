@@ -8,7 +8,9 @@
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
 
-# TODO: partial1
+# TODO: Matrix(2, 2, lambda a, b: 1 if a == b else 0)
+# TODO: indexing
+# TODO: change func xlat to work with python tupler args instead of AST commas tuple
 # TODO: multiple vector weirdness
 # TODO: _xlat_func_Integral multiple integrals
 
@@ -534,8 +536,15 @@ def _expr_func_func (FUNC, expr_neg_func):
 		return ast
 
 	args = ast.args if ast.is_func else ast [1].args
-	arg  = args [0] if len (args) == 1 else AST (',', args)
-	ast2 = xlat (AST ('(', arg))
+	# arg  = args [0] if len (args) == 1 else AST (',', args)
+	# ast2 = xlat (AST ('(', arg))
+
+	# return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
+
+	ast2 = xlat (args [0] if len (args) == 1 else AST (',', args)) # legacy args passed as AST commas instead of python tuple
+
+	if ast2.is_func and len (ast2.args) == 1 and ast2.args [0].is_comma:
+		ast2 = AST ('func', ast2.func, ast2.args [0].commas)
 
 	return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
 
@@ -1079,5 +1088,5 @@ class sparser: # for single script
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 	p = Parser ()
-	a = p.parse (r"doo")
+	a = p.parse (r'Matrix(1,2)')
 	print (a)

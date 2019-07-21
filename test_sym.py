@@ -110,6 +110,7 @@ a, lambda: b = 1
 \exp({a},{-1},{1})
 \int 2x*-dx
 x, y = lambda: 1, lambda: 2
+partial'
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!
@@ -302,24 +303,27 @@ def flatten (ast):
 
 #...............................................................................................
 CURLYS = True
-_DEPTH = 4
 
 # test_sym.py -tnpi --show --nc
 
 def test ():
-	global CURLYS
-	opts, _ = getopt (sys.argv [1:], 'tnpi', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys'])
+	global DEPTH, CURLYS
+
+	_DEPTH  = 3
+	opts, _ = getopt (sys.argv [1:], 'tnpid:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth'])
 	parser  = sparser.Parser ()
 
 	if ('--dump', '') in opts:
-		global DEPTH
-
 		DEPTH = 0
 
 		for e in EXPRS:
 			print (e ())
 
 		sys.exit (0)
+
+	for opt, arg in opts:
+		if opt in ('-d', '--depth'):
+			_DEPTH = int (arg)
 
 	dotex  = ('--tex', '') in opts or ('-t', '') in opts
 	donat  = ('--nat', '') in opts or ('-n', '') in opts

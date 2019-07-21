@@ -244,7 +244,7 @@ class AST_Var (AST):
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 	PY2TEX      = {**dict ((g, f'\\{g}') for g in GREEK), 'partial': '\\partial', 'oo': '\\infty', 'zoo': '\\widetilde\\infty'}
 
-	_rec_groups = re.compile (r'^(?:(?:(d(?!elta|partial))|(partial))(?!\d))?(.*)$')
+	_rec_groups = re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?(.*)$")
 
 	def _init (self, var):
 		self.var = var

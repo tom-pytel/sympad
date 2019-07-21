@@ -6,6 +6,7 @@
 # TODO: sequence(factorial(k), (k,1,oo))
 
 # Piecewise((Piecewise(((Matrix([[dx], [1.0]])), 1**1)), Derivative(factorial(oo), y, 3)), ([sqrt(partial), -1.0 + a_prime - 1, 'str'*-1*a_prime], partialx + oo = Piecewise((oo, 1.0), (0, 1.0))), (lambda x: -1 + dx + 1.0, (partialx, 0, 1) = Piecewise((partial, a))), (abs(Integral(-1, (x, a_prime, partial))), True))
+# lambda x, y, z: partialx if 0 + a_prime else partial**dx if d / dx**1 (oo) else 1/a if [a, a_prime] else ln(x) - {1.00 \sqrt[-d]{\infty^\infty} (sqrt(0 d * 0) (0 if 1 else 1.0 if 1.0 else d + \sum_{x=0}^{oo} 0) {-dx} if -1 else -1 if -1.0) {-({-1.0} partialx a) / acosh()}}
 
 import re
 import sympy as sp
@@ -117,13 +118,13 @@ def _ast2tex_var (ast):
 	n = v.replace ('_', '\\_')
 	t = AST.Var.PY2TEX.get (n)
 
-	return ( \
-			t or n            if not ast.diff_or_part_type else
-			f'd{t or n}'			if ast.is_diff_any else
-			'\\partial'       if ast.is_part_solo else
-			f'\\partial{t}'   if t else
-			f'\\partial {n}'
-	) + p
+	return \
+			f'{t or n}{p}'       if not ast.diff_or_part_type else \
+			f'd{t or n}{p}'		   if ast.is_diff_any else \
+			f'\\partial{p}'      if ast.is_part_solo else \
+			f'\\partial{t}{p}'   if t else \
+			f'\\partial {n}{p}'  if n else \
+			f'\\partial{p}'
 
 def _ast2tex_attr (ast):
 	a = ast.attr.replace ('_', '\\_')
@@ -151,6 +152,7 @@ def _ast2tex_mul (ast, ret_has = False):
 				p.is_diff_or_part_solo or n.is_diff_or_part_solo or p.is_diff_or_part or n.is_diff_or_part or \
 				(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
 			t.append (f'\\ {s}')
+
 		else:
 			t.append (f'{"" if not p else " "}{s}')
 
@@ -572,6 +574,8 @@ class ast2spt:
 
 		return spt
 
+	def __init__ (self): self.kw = {} # here to make pylint calm down
+
 	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
@@ -883,6 +887,6 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('+', (('@', '1'), ('@', '2')))
-# 	res = ast2spt (ast)
+# 	ast = AST ('@', 'partial_prime')
+# 	res = ast2tex (ast)
 # 	print (res)
