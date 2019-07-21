@@ -39,8 +39,11 @@ def _tuple2ast_func_args (args):
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
 
-def _ast_func_call (func, args):
-	kw     = {}
+def _ast_func_call (func, args, _ast2spt = None, **kw):
+	if _ast2spt is None:
+		_ast2spt = ast2spt
+
+	pykw   = kw.copy ()
 	pyargs = []
 
 	for arg in args:
@@ -48,12 +51,12 @@ def _ast_func_call (func, args):
 			name = arg.lhs.as_identifier ()
 
 			if name is not None:
-				kw [name] = ast2spt (arg.rhs)
+				pykw [name] = _ast2spt (arg.rhs)
 				continue
 
-		pyargs.append (ast2spt (arg))
+		pyargs.append (_ast2spt (arg))
 
-	return func (*pyargs, **kw)
+	return func (*pyargs, **pykw)
 
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
@@ -604,7 +607,7 @@ class ast2spt:
 	def _ast2spt_attr (self, ast):
 		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
-		return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
+		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
@@ -620,7 +623,7 @@ class ast2spt:
 		if func is None:
 			raise NameError (f'function {ast.func!r} is not defined')
 
-		return _ast_func_call (func, ast.args)
+		return _ast_func_call (func, ast.args, self._ast2spt)
 
 	def _ast2spt_diff (self, ast):
 		args = sum ((
@@ -885,8 +888,10 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('@', 'partial_prime')
-# 	res = ast2tex (ast)
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	# ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
+	# ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))), (('@', 'x'), ('@', 'y')))))
+	ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('func', '%', (('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))),)), (('@', 'x'), ('@', 'y')))))
+	res = ast2spt (ast)
+	print (res)

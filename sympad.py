@@ -779,12 +779,12 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('Integral (e^{-x^2}, (x, 0, \\infty))', true)">Integral (e^{-x^2}, (x, 0, \infty))</a>
 	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\infty e^{-s t} dt', true)">\int_0^\infty e^{-s t} dt</a>
 	<a class="GreetingA" href="javascript:inputting ('{{1,2},{3,4}}**-1', true)">{{1,2},{3,4}}**-1</a>
-	<a class="GreetingA" href="javascript:inputting ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}', true)">\<span></span>begin{matrix} A & B \\ C & D \<span></span>end{matrix} * {x, y}</a>
 	<a class="GreetingA" href="javascript:inputting ('{{1,2,3},{4,5,6}}.transpose ()', true)">{{1,2,3},{4,5,6}}.transpose ()</a>
 	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**4', true)">expand {x+1}**4</a>
 	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
 	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 0, 5)', true)">series (e^x, x, 0, 5)</a>
 	<a class="GreetingA" href="javascript:inputting ('x if 1 &lt; 2 else y', true)">x if 1 &lt; 2 else y</a>
+	<a class="GreetingA" href="javascript:inputting ('Matrix (4, 4, lambda r, c: c + r if c > r else 0)', true)">Matrix (4, 4, lambda r, c: c + r if c > r else 0)</a>
 
 	<br><br>
 	<div align="center">
@@ -866,12 +866,12 @@ Derivative (\int dx, x)<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\infty e^{-s t} dt<br>
 {{1,2},{3,4}}**-1<br>
-\<span></span>begin{matrix} A & B \\ C & D \<span></span>end{matrix} * {x, y}<br>
 {{1,2,3},{4,5,6}}.transpose ()<br>
 expand {x+1}**4<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 0, 5)<br>
 x if 1 &lt; 2 else y<br>
+Matrix (4, 4, lambda r, c: c + r if c > r else 0)
 </p>
 
 <h4>Multiline examples</h4>
@@ -1672,7 +1672,7 @@ class AST_Var (AST):
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 	PY2TEX      = {**dict ((g, f'\\{g}') for g in GREEK), 'partial': '\\partial', 'oo': '\\infty', 'zoo': '\\widetilde\\infty'}
 
-	_rec_groups = re.compile (r'^(?:(?:(d(?!elta|partial))|(partial))(?!\d))?(.*)$')
+	_rec_groups = re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?(.*)$")
 
 	def _init (self, var):
 		self.var = var
@@ -1965,7 +1965,9 @@ class sast: # for single script
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
 
-# TODO: partial1
+# TODO: Matrix(2, 2, lambda a, b: 1 if a == b else 0)
+# TODO: indexing
+# TODO: change func xlat to work with python tupler args instead of AST commas tuple
 # TODO: multiple vector weirdness
 # TODO: _xlat_func_Integral multiple integrals
 
@@ -2488,8 +2490,15 @@ def _expr_func_func (FUNC, expr_neg_func):
 		return ast
 
 	args = ast.args if ast.is_func else ast [1].args
-	arg  = args [0] if len (args) == 1 else AST (',', args)
-	ast2 = xlat (AST ('(', arg))
+	# arg  = args [0] if len (args) == 1 else AST (',', args)
+	# ast2 = xlat (AST ('(', arg))
+
+	# return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
+
+	ast2 = xlat (args [0] if len (args) == 1 else AST (',', args)) # legacy args passed as AST commas instead of python tuple
+
+	if ast2.is_func and len (ast2.args) == 1 and ast2.args [0].is_comma:
+		ast2 = AST ('func', ast2.func, ast2.args [0].commas)
 
 	return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
 
@@ -3030,10 +3039,10 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r"doo")
-	print (a)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	a = p.parse (r'Matrix(4, 4, lambda x, y: 1)')
+# 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: MatrixSymbol ('A', 2, 2)**n
@@ -3042,6 +3051,7 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # TODO: sequence(factorial(k), (k,1,oo))
 
 # Piecewise((Piecewise(((Matrix([[dx], [1.0]])), 1**1)), Derivative(factorial(oo), y, 3)), ([sqrt(partial), -1.0 + a_prime - 1, 'str'*-1*a_prime], partialx + oo = Piecewise((oo, 1.0), (0, 1.0))), (lambda x: -1 + dx + 1.0, (partialx, 0, 1) = Piecewise((partial, a))), (abs(Integral(-1, (x, a_prime, partial))), True))
+# lambda x, y, z: partialx if 0 + a_prime else partial**dx if d / dx**1 (oo) else 1/a if [a, a_prime] else ln(x) - {1.00 \sqrt[-d]{\infty^\infty} (sqrt(0 d * 0) (0 if 1 else 1.0 if 1.0 else d + \sum_{x=0}^{oo} 0) {-dx} if -1 else -1 if -1.0) {-({-1.0} partialx a) / acosh()}}
 
 import re
 import sympy as sp
@@ -3073,8 +3083,11 @@ def _tuple2ast_func_args (args):
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
 
-def _ast_func_call (func, args):
-	kw     = {}
+def _ast_func_call (func, args, _ast2spt = None, **kw):
+	if _ast2spt is None:
+		_ast2spt = ast2spt
+
+	pykw   = kw.copy ()
 	pyargs = []
 
 	for arg in args:
@@ -3082,12 +3095,12 @@ def _ast_func_call (func, args):
 			name = arg.lhs.as_identifier ()
 
 			if name is not None:
-				kw [name] = ast2spt (arg.rhs)
+				pykw [name] = _ast2spt (arg.rhs)
 				continue
 
-		pyargs.append (ast2spt (arg))
+		pyargs.append (_ast2spt (arg))
 
-	return func (*pyargs, **kw)
+	return func (*pyargs, **pykw)
 
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
@@ -3152,13 +3165,13 @@ def _ast2tex_var (ast):
 	n = v.replace ('_', '\\_')
 	t = AST.Var.PY2TEX.get (n)
 
-	return ( \
-			t or n            if not ast.diff_or_part_type else
-			f'd{t or n}'			if ast.is_diff_any else
-			'\\partial'       if ast.is_part_solo else
-			f'\\partial{t}'   if t else
-			f'\\partial {n}'
-	) + p
+	return \
+			f'{t or n}{p}'       if not ast.diff_or_part_type else \
+			f'd{t or n}{p}'		   if ast.is_diff_any else \
+			f'\\partial{p}'      if ast.is_part_solo else \
+			f'\\partial{t}{p}'   if t else \
+			f'\\partial {n}{p}'  if n else \
+			f'\\partial{p}'
 
 def _ast2tex_attr (ast):
 	a = ast.attr.replace ('_', '\\_')
@@ -3186,6 +3199,7 @@ def _ast2tex_mul (ast, ret_has = False):
 				p.is_diff_or_part_solo or n.is_diff_or_part_solo or p.is_diff_or_part or n.is_diff_or_part or \
 				(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
 			t.append (f'\\ {s}')
+
 		else:
 			t.append (f'{"" if not p else " "}{s}')
 
@@ -3607,6 +3621,8 @@ class ast2spt:
 
 		return spt
 
+	def __init__ (self): self.kw = {} # here to make pylint calm down
+
 	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
@@ -3635,7 +3651,7 @@ class ast2spt:
 	def _ast2spt_attr (self, ast):
 		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
-		return mbr if ast.args is None else _ast_func_call (mbr, ast.args)
+		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
@@ -3651,7 +3667,7 @@ class ast2spt:
 		if func is None:
 			raise NameError (f'function {ast.func!r} is not defined')
 
-		return _ast_func_call (func, ast.args)
+		return _ast_func_call (func, ast.args, self._ast2spt)
 
 	def _ast2spt_diff (self, ast):
 		args = sum ((
@@ -3916,10 +3932,12 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('+', (('@', '1'), ('@', '2')))
-# 	res = ast2spt (ast)
-# 	print (res)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	# ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
+	# ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))), (('@', 'x'), ('@', 'y')))))
+	ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('func', '%', (('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))),)), (('@', 'x'), ('@', 'y')))))
+	res = ast2spt (ast)
+	print (res)
 #!/usr/bin/env python
 # python 3.6+
 
