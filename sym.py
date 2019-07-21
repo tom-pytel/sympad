@@ -28,7 +28,7 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a single time
 	def doit (self, *args, **kwargs):
-		return self.args [0]
+		return self.args [0] if self.args [1] == 1 else ExprDontDoIt (self.args [0], self.args [1] - 1)
 
 def _tuple2ast_func_args (args):
 	return args [0] if len (args) == 1 else AST (',', args)
@@ -637,6 +637,28 @@ class ast2spt:
 	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
+	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
+		'pi'   : sp.pi,
+		'oo'   : sp.oo,
+		'zoo'  : sp.zoo,
+		'None' : None,
+		'True' : sp.boolalg.true,
+		'False': sp.boolalg.false,
+		'nan'  : sp.nan,
+	}
+
+	def _ast2spt_var (self, ast):
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
+
+		if spt is None:
+			if len (ast.var) > 1 and ast.var not in {'beta', 'Lambda'}:
+				spt = getattr (sp, ast.var, None)
+
+			if spt is None:
+				spt = sp.Symbol (ast.var, **self.kw)
+
+		return spt
+
 	def _ast2spt_attr (self, ast):
 		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
@@ -649,7 +671,7 @@ class ast2spt:
 		if ast.func == '%': # special stop evaluation meta-function
 			self.kw ['evaluate'] = False
 
-			return ExprDontDoIt (self._ast2spt (ast.args [0]))
+			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
 		func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
@@ -690,20 +712,10 @@ class ast2spt:
 		'>=': sp.Ge,
 	}
 
-	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
-		'pi'   : sp.pi,
-		'oo'   : sp.oo,
-		'zoo'  : sp.zoo,
-		'None' : None,
-		'True' : sp.boolalg.true,
-		'False': sp.boolalg.false,
-		'nan'  : sp.nan,
-	}
-
 	_ast2spt_funcs = {
 		'=': lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
 		'#': lambda self, ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-		'@': lambda self, ast: {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var, **self.kw)) if len (ast.var) > 1 else sp.Symbol (ast.var, **self.kw)),
+		'@': _ast2spt_var,
 		'.': _ast2spt_attr,
 		'"': lambda self, ast: ast.str_,
 		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.commas),
@@ -835,11 +847,12 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
-	ExprDontDoIt: lambda spt: AST ('func', '%', (spt2ast (spt.args [0]),)),
+	ExprDontDoIt: lambda spt: AST ('func', '%', (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
 	False.__class__: lambda spt: AST.False_,
+	int: lambda spt: AST ('#', str (spt)),
 	str: lambda spt: AST ('"', spt),
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),

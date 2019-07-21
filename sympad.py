@@ -899,7 +899,7 @@ You enter expresstions and they get evaluated.
 The expressions may be in normal Pythonic style like "<b>a * (b + sin (x)**2 + 3/4) / 2</b>", LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin**x{2} + \frac34) / 2</b>".
 The input is displayed symbolically as you type.
 Input history is supported with the up and down arrows.
-SymPad will give some limited options for autocompletion for certain expressions sometimes when you hit Enter, this mostly means that you will not have to close parentheses.
+SymPad will give some limited options for autocompletion for certain expressions sometimes, this mostly means that you will not have to close parentheses.
 </p><p>
 The symbolic expressions can be copied to the clipboard in various formats.
 Single-click for a simple native format meant to be pasted back into the input field.
@@ -982,15 +982,13 @@ Like strings these exist for the purpose of passing parameters to functions like
 <h4>Addition and Multiplication</h4>
 
 <p>
-Addition is addition and subtraction is subtraction: "<b>a + b</b>", "<b>a - b</b>". Multiplication is explicit with a "<b>*</b>" operator or implicit
-simply by writing two symbols next to each other so that "<b>a * b</b>" is the same as "<b>ab</b>". There is however a difference between the two in that
-the implicit version has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, derivative or division
-"<b>/</b>" expression whereas implicit multiplication will not, e.g. "<b>1/x y</b>" = $\frac{1}{x y}$ whereas "<b>1/x*y</b>" = $\frac{1}{x} \cdot y$.
+Addition is addition and subtraction is subtraction: "<b>a + b</b>", "<b>a - b</b>".
+Multiplication is explicit with a "<b>*</b>" operator or implicit simply by writing two symbols next to each other with a space in between so that "<b>a * b</b>" is the same as "<b>a b</b>".
+There is however a difference between the two in that the implicit version has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, derivative or division "<b>/</b>" expression whereas implicit multiplication will not, e.g. "<b>1/x y</b>" = $\frac{1}{x y}$ whereas "<b>1/x*y</b>" = $\frac{1}{x} \cdot y$.
 </p><p>
-Division also has two operators, the normal "<b>/</b>" which has a fairly low precedence and the LaTeX "<b>\frac</b>" version which has a very high
-precedence, even higher than exponentiation. So high in fact that parentheses are not needed if using "<b>\frac</b>" as an exponent as in
-"<b>x^\frac{1}{2}</b>" = $x^\frac{1}{2}$. The "<b>\frac</b>" operation also does not need parentheses if using single digit operands or single letter
-variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$ or "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$.
+Division also has two operators, the normal "<b>/</b>" which has a fairly low precedence and the LaTeX "<b>\frac</b>" version which has a very high precedence, even higher than exponentiation.
+So high in fact that parentheses are not needed if using "<b>\frac</b>" as an exponent as in "<b>x^\frac{1}{2}</b>" = $x^\frac{1}{2}$.
+The "<b>\frac</b>" operation also does not need parentheses if using single digit operands or single letter variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$ or "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$.
 </p>
 
 <h4>Exponentiation</h4>
@@ -1110,8 +1108,6 @@ Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of co
 The "<b>@(expr)</b>" function technically prevents variable remapping for the expression it encompasses, so if you have the variable "<b>x = 2</b>" set and you do "<b>@(x)</b>" then you will get "<b>x</b>" and not "<b>2</b>".
 </p>
 
-<div style="color: red">
-</div>
 <h2>Functions</h2>
 <p>
 There are two types of functions made available in SymPad - all the SymPy functions are available directly just by typing their name, as well as user created lambda functions assigned to variables.
@@ -1134,7 +1130,7 @@ This form of exponentiating a function is extended as an input shortcut to all t
 This does not apply to member functions or user created lambda functions.
 Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
-Top-level functions also don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
+Top-level functions also don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin**-1x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
 Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" and lambdas always require explicit parentheses.
 Many functions which have a common mathematical display style are translated on the fly for rendering in that style.
 These include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
@@ -1146,25 +1142,27 @@ Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>"
 <p>
 User created lambda functions are supported and are specified the same way as Python lambdas - "<b>lambda x, y: (x+y)**2</b>".
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
-When created, lambda functions will copy the global value of any variables inside which are not lambda arguments and this will be set for the life of the lambda.
-If you want a lambda to use the value a global variable at the time the lambda is evaluated, rather than when it is defined, then wrap the instance of the variable in the lambda using the "<b>@()</b>" pseudo-function.
-Lambda functions may reference other lambda functions as long as those are defied at the time of creation.
+When created, lambda functions will copy the global value of any variables which are not lambda arguments and this will be fixed for the life of the lambda.
+If you want a lambda to use the value of a global variable at the time the lambda is evaluated, rather than when it is defined, then wrap the instance of the variable in the lambda using the "<b>@()</b>" pseudo-function.
+Lambda functions may reference other lambda functions as long as those are defined at the time of creation.
 Lambda recursion is currently not supported.
-</p>
-
-<h4>Pseudo-Functions</h4>
-<p>
-They are called pseudo-functions because they don't actually evaluate anything but rather affect how evaluation proceeds.
-The "<b>@()</b>" pseudo-function prevents variable mapping for any expression it encapsulates, effectively it creates references to variables rather than copying their value.
-This means that when you assign one variable to another as "<b>x = @(y)</b>" then from now on "<b>x</b>" will take on the value of "<b>y</b>" whatever that may be at any time instead of just on assignment.
 </p><p>
-The "<b>%()</b>" pseudo-function ...
-This means no global variable remapping so if you have a lambda defined as "<b>f = lambda x: x + @(y) + @(z)</b>" and a global variable "<b>z = 3</b>" and you call the lambda as "<b>f(1,2)</b>" then you will
-T
-"<b>@@()</b>" pseudo-function.
+Normally when you enter an expression into SymPad and hit Enter that expression is evaluated and "<b>doit()</b>" is called on it to attempt to symbolically evaluate an answer.
+This may not always be desirable, like maybe in a lambda function, since when you enter a lambda function it is evaluated before it is assigned to a variable.
+This means that if you do "<b>f = lambda x: \int x dx</b>" you will wind up with a lambda function which is equivalent to "<b>f = lambda x: 1/2 x**2</b>" instead of the integral expression.
+In order to prevent evaluation of the integral on assignment and embed the operation itself within the lambda use the "<b>%()</b>" stop evaluation pseudo-function.
+This function essentially defers evaluation of an expression for one round.
+This will result in an assignment of "<b>f = lambda x: \int x dx</b>" if you define it as "<b>f = lambda x: %(\int x dx)</b>" instead of the result of the integral and this integral itself will be evaluated any time the lambda function is invoked.
+</p><p>
+This pseudo-function takes an optional count as a second argument.
+The default count is 1 round of evaluation, but you may set it to 2 or more to defer evaluation for that many rounds, though I'm not sure if a finite count would be useful for anything.
+What could be useful is a count of infinity, this would freeze the expression as it is and never evaluate.
 </p>
 
-<h4>Implicit Multiplication, Functions and Parentheses</h4>
+<h4>Functions, Parentheses and Implicit Multiplication</h4>
+<div style="color: red">
+<p>This...</p>
+</div>
 
 <h2>Notes</h2>
 
@@ -2576,7 +2574,7 @@ class Parser (lalr1.Parser):
 			b'18oQuDeVIyxJzzvm4kZnujnfEH2lOPY2iRQmY6fkpAo2juJ2kahWPyq9q1xhwnoFN0w2N4aSovlbJV19dVJOqiBsGWDsLmDC7R3FbIZ/0JAMrkvul7pBwbElVKamYGa0t0keoW46JSdV0B2PPJrqJpywob9Vkmirk3KigqqPRxJddRNO2HCrJhVQuJ+Skyow' \
 			b'J1AF43c7d66Krjo21wQilOaaG0NJldg9Nw79pomf26WN6Ks9OlTtjC/RvSaGcMXtpK3aH2PslDksc+sYhMW19a7f+HZ3129JU/jkj5lPrjoCJ3zaNjm5UT6F6gic8OmkVwLwhYdtTha75X+X8Hl0rGkPSeDrU+vCUcFjhsV7Yfa2GcpRMxtmBUfthMcHXvY4' \
 			b'MI9tddxOVrG3zW+Om8euOm4nPG5Omse+Om4nPMbxrjCDaZXndnjW9zi7j1kCPyzUqPzjYLOkKhqOhHMoOz52rMZZjxIyzIb0VeIkYFsERBUgcKhS1wSN0CVWPFDRaxF6/lalyMRYt22DUNAjIKSPRlpdLdYeNX+Ny/OWHdktI1uMaqn3Xo1CSCabDsxoOlgN' \
-			b'nf8/lorl2w=='
+			b'nf8/lorl2w==' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -3063,7 +3061,7 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a single time
 	def doit (self, *args, **kwargs):
-		return self.args [0]
+		return self.args [0] if self.args [1] == 1 else ExprDontDoIt (self.args [0], self.args [1] - 1)
 
 def _tuple2ast_func_args (args):
 	return args [0] if len (args) == 1 else AST (',', args)
@@ -3672,6 +3670,28 @@ class ast2spt:
 	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
+	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
+		'pi'   : sp.pi,
+		'oo'   : sp.oo,
+		'zoo'  : sp.zoo,
+		'None' : None,
+		'True' : sp.boolalg.true,
+		'False': sp.boolalg.false,
+		'nan'  : sp.nan,
+	}
+
+	def _ast2spt_var (self, ast):
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
+
+		if spt is None:
+			if len (ast.var) > 1 and ast.var not in {'beta', 'Lambda'}:
+				spt = getattr (sp, ast.var, None)
+
+			if spt is None:
+				spt = sp.Symbol (ast.var, **self.kw)
+
+		return spt
+
 	def _ast2spt_attr (self, ast):
 		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
@@ -3684,7 +3704,7 @@ class ast2spt:
 		if ast.func == '%': # special stop evaluation meta-function
 			self.kw ['evaluate'] = False
 
-			return ExprDontDoIt (self._ast2spt (ast.args [0]))
+			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
 		func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
 
@@ -3725,20 +3745,10 @@ class ast2spt:
 		'>=': sp.Ge,
 	}
 
-	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
-		'pi'   : sp.pi,
-		'oo'   : sp.oo,
-		'zoo'  : sp.zoo,
-		'None' : None,
-		'True' : sp.boolalg.true,
-		'False': sp.boolalg.false,
-		'nan'  : sp.nan,
-	}
-
 	_ast2spt_funcs = {
 		'=': lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
 		'#': lambda self, ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-		'@': lambda self, ast: {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, getattr (sp, ast.var, sp.Symbol (ast.var, **self.kw)) if len (ast.var) > 1 else sp.Symbol (ast.var, **self.kw)),
+		'@': _ast2spt_var,
 		'.': _ast2spt_attr,
 		'"': lambda self, ast: ast.str_,
 		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.commas),
@@ -3870,11 +3880,12 @@ def _spt2ast_Integral (spt):
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
 _spt2ast_funcs = {
-	ExprDontDoIt: lambda spt: AST ('func', '#', (spt2ast (spt.args [0]),)),
+	ExprDontDoIt: lambda spt: AST ('func', '%', (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
 	False.__class__: lambda spt: AST.False_,
+	int: lambda spt: AST ('#', str (spt)),
 	str: lambda spt: AST ('"', spt),
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
@@ -4025,7 +4036,9 @@ def _ast_remap (ast, map_):
 		return ast
 
 	if ast.is_var and ast.var in map_: # variable
-		return _ast_remap (map_ [ast.var], map_)
+		ast = map_ [ast.var]
+
+		return AST ('func', '%', (ast,)) if ast.is_lamb else _ast_remap (ast, map_)
 
 	if ast.is_func and ast.func in map_: # user function
 		lamb = map_ [ast.func]
@@ -4175,15 +4188,22 @@ class Handler (SimpleHTTPRequestHandler):
 			if isinstance (val, list) and len (val) == 1:
 				request [key] = val [0]
 
+		print (request, file = sys.stderr)
+
 		if request ['mode'] == 'validate':
 			response = self.validate (request)
 		else: # request ['mode'] == 'evaluate':
 			response = self.evaluate (request)
 
+		response ['mode'] = request ['mode']
+		response ['idx']  = request ['idx']
+		response ['text'] = request ['text']
+
 		self.send_response (200)
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
-		self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
+		self.wfile.write (json.dumps (response).encode ('utf8'))
+		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
@@ -4314,7 +4334,7 @@ if __name__ == '__main__':
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
 		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
-			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/')
+			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}/index.html')
 
 		while 1:
 			time.sleep (0.5)

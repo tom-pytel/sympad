@@ -60,7 +60,9 @@ def _ast_remap (ast, map_):
 		return ast
 
 	if ast.is_var and ast.var in map_: # variable
-		return _ast_remap (map_ [ast.var], map_)
+		ast = map_ [ast.var]
+
+		return AST ('func', '%', (ast,)) if ast.is_lamb else _ast_remap (ast, map_)
 
 	if ast.is_func and ast.func in map_: # user function
 		lamb = map_ [ast.func]
@@ -210,15 +212,22 @@ class Handler (SimpleHTTPRequestHandler):
 			if isinstance (val, list) and len (val) == 1:
 				request [key] = val [0]
 
+		print (request, file = sys.stderr)
+
 		if request ['mode'] == 'validate':
 			response = self.validate (request)
 		else: # request ['mode'] == 'evaluate':
 			response = self.evaluate (request)
 
+		response ['mode'] = request ['mode']
+		response ['idx']  = request ['idx']
+		response ['text'] = request ['text']
+
 		self.send_response (200)
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
-		self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
+		self.wfile.write (json.dumps (response).encode ('utf8'))
+		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
