@@ -183,9 +183,11 @@ def _ast2tex_log (ast):
 _ast2tex_func_xlat = {
 	'diag': True,
 	'eye': True,
-	'gamma': '\\Gamma',
 	'ones': True,
 	'zeros': True,
+	'beta': '\\beta', # hack to represent SymPy Greek functions with Greek letters
+	'gamma': '\\Gamma',
+	'Gamma': '\\Gamma',
 	'zeta': '\\zeta',
 }
 
@@ -562,6 +564,7 @@ _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable',
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
 class ast2spt:
+	def __init__ (self): self.kw = {} # never reached, here to make pylint calm down
 	def __new__ (cls, ast):
 		self    = super ().__new__ (cls)
 		self.kw = {}
@@ -576,8 +579,6 @@ class ast2spt:
 				pass
 
 		return spt
-
-	def __init__ (self): self.kw = {} # here to make pylint calm down
 
 	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
@@ -596,7 +597,7 @@ class ast2spt:
 		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
 
 		if spt is None:
-			if len (ast.var) > 1 and ast.var not in {'beta', 'Lambda'}:
+			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
 				spt = getattr (sp, ast.var, None)
 
 			if spt is None:
@@ -888,10 +889,8 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	# ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
-	# ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))), (('@', 'x'), ('@', 'y')))))
-	ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('func', '%', (('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))),)), (('@', 'x'), ('@', 'y')))))
-	res = ast2spt (ast)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('func', '%', (('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))),)), (('@', 'x'), ('@', 'y')))))
+# 	res = ast2spt (ast)
+# 	print (res)

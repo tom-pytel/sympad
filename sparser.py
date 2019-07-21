@@ -118,6 +118,8 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 		if last.var in user_funcs:
 			if arg.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
+			elif arg.is_attr and arg.obj.is_paren:
+				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg.obj)))
 
 	if ast:
 		return AST ('*', lhs.muls [:-1] + (ast,)) if lhs.is_mul else ast
@@ -511,7 +513,7 @@ _FUNC_AST_XLAT = {
 	'diff'      : (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
 	'exp'       : (1, lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1)),
 	'factorial' : (1, lambda expr: _expr_func (1, '!', expr, strip = 1)),
-	'Gamma'     : (1, lambda expr: _expr_func (2, 'func', 'gamma', expr, strip = 1)),
+	# 'Gamma'     : (1, lambda expr: _expr_func (2, 'func', 'gamma', expr, strip = 1)),
 	'Integral'  : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
 	'integrate' : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
 	'Limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
@@ -1083,8 +1085,9 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r'\arcsin2')
-	print (a)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	p.set_user_funcs ({'f'})
+# 	a = p.parse (r'f(2).a')
+# 	print (a)

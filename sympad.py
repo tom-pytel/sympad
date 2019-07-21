@@ -1661,10 +1661,10 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var = '@', True
 
-	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
-			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
-	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
-			'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
+	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
+			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
+	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
+			'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
 
 	TEX2PY      = {**dict ((f'\\{g}', g) for g in GREEK), '\\partial': 'partial', '\\infty': 'oo', \
 			'\\overline\\infty': 'zoo', '\\bar\\infty': 'zoo', '\\widetilde\\infty': 'zoo', '\\tilde\\infty': 'zoo'}
@@ -1806,24 +1806,19 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
-	# GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
-	# 		'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
-	# GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
-	# 		'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
-
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
 	SPECIAL         = {NOREMAP, NOEVAL, 'vars', 'del', 'delall'}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
-	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln', 'zeta', 'Gamma'}
+	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
 	PY_TRIGHINV     = {f'a{f}' for f in TRIGH}
 	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
 	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
 
-	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'beta', 'Lambda'}
+	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'beta', 'gamma', 'zeta', 'Lambda'}
 	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -1959,7 +1954,7 @@ class sast: # for single script
 #
 # Time and interest permitting:
 # sets
-# assumptions/hints
+# var assumptions
 # importing modules to allow custom code execution
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
 # sympy function/variable module prefix
@@ -2072,6 +2067,8 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 		if last.var in user_funcs:
 			if arg.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
+			elif arg.is_attr and arg.obj.is_paren:
+				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg.obj)))
 
 	if ast:
 		return AST ('*', lhs.muls [:-1] + (ast,)) if lhs.is_mul else ast
@@ -2419,13 +2416,10 @@ def _xlat_func_Sum (ast): # translate function 'Sum' to native ast representatio
 			commas = ast2.commas
 			ast    = AST (*(('sum', ast.commas [0], *commas) + (AST.VarNull, AST.VarNull, AST.VarNull)) [:5])
 
-	if commas [-1].is_null_var:
+	if commas and commas [-1].is_null_var:
 		return ast
 
 	raise lalr1.Incomplete (ast)
-
-# eye(2).a -> ('.', ('func', 'eye', (('.', ('(', ('#', '2')), 'a'),)), 'a')
-# eye((2).a) -> ('func', 'eye', (('.', ('(', ('#', '2')), 'a'),))
 
 def _expr_func (iparm, *args, strip = 0): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	def astarg (arg):
@@ -2462,29 +2456,29 @@ def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function
 	return wrap (_xlat_func (ast))
 
 _FUNC_AST_XLAT = {
-	'Abs'       : lambda expr: _expr_func (1, '|', expr, strip = 1),
-	'abs'       : lambda expr: _expr_func (1, '|', expr, strip = 1),
-	'Derivative': lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
-	'diff'      : lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr),
-	'exp'       : lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1),
-	'factorial' : lambda expr: _expr_func (1, '!', expr, strip = 1),
-	'Gamma'     : lambda expr: _expr_func (2, 'func', 'gamma', expr, strip = 1),
-	'Integral'  : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
-	'integrate' : lambda expr: _expr_func_xlat (_xlat_func_Integral, expr),
-	'Limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
-	'limit'     : lambda expr: _expr_func_xlat (_xlat_func_Limit, expr),
-	'Matrix'    : lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr),
-	'ln'        : lambda expr: _expr_func (1, 'log', expr),
-	'Piecewise' : lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr),
-	'Pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
-	'pow'       : lambda expr: _expr_func_xlat (_xlat_func_Pow, expr),
-	'Sum'       : lambda expr: _expr_func_xlat (_xlat_func_Sum, expr),
+	'Abs'       : (1, lambda expr: _expr_func (1, '|', expr, strip = 1)),
+	'abs'       : (1, lambda expr: _expr_func (1, '|', expr, strip = 1)),
+	'Derivative': (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
+	'diff'      : (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
+	'exp'       : (1, lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1)),
+	'factorial' : (1, lambda expr: _expr_func (1, '!', expr, strip = 1)),
+	# 'Gamma'     : (1, lambda expr: _expr_func (2, 'func', 'gamma', expr, strip = 1)),
+	'Integral'  : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
+	'integrate' : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
+	'Limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
+	'limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
+	'Matrix'    : (0, lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr)),
+	'ln'        : (1, lambda expr: _expr_func (1, 'log', expr)),
+	'Piecewise' : (0, lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr)),
+	'Pow'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Pow, expr)),
+	'pow'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Pow, expr)),
+	'Sum'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Sum, expr)),
 }
 
 def _expr_func_func (FUNC, expr_neg_func):
-	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
-	xlat = _FUNC_AST_XLAT.get (func)
-	ast  = _expr_func (2, 'func', func, expr_neg_func)
+	func        = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
+	paren, xlat = _FUNC_AST_XLAT.get (func, (None, None))
+	ast         = _expr_func (2, 'func', func, expr_neg_func)
 
 	if not xlat:
 		return ast
@@ -2495,7 +2489,8 @@ def _expr_func_func (FUNC, expr_neg_func):
 
 	# return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
 
-	ast2 = xlat (args [0] if len (args) == 1 else AST (',', args)) # legacy args passed as AST commas instead of python tuple
+	arg  = args [0] if len (args) == 1 else AST (',', args)
+	ast2 = xlat (AST ('(', arg) if paren else arg) # legacy args passed as AST commas instead of python tuple
 
 	if ast2.is_func and len (ast2.args) == 1 and ast2.args [0].is_comma:
 		ast2 = AST ('func', ast2.func, ast2.args [0].commas)
@@ -3041,7 +3036,8 @@ class sparser: # for single script
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	a = p.parse (r'Matrix(4, 4, lambda x, y: 1)')
+# 	p.set_user_funcs ({'f'})
+# 	a = p.parse (r'f(2).a')
 # 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
@@ -3227,9 +3223,11 @@ def _ast2tex_log (ast):
 _ast2tex_func_xlat = {
 	'diag': True,
 	'eye': True,
-	'gamma': '\\Gamma',
 	'ones': True,
 	'zeros': True,
+	'beta': '\\beta', # hack to represent SymPy Greek functions with Greek letters
+	'gamma': '\\Gamma',
+	'Gamma': '\\Gamma',
 	'zeta': '\\zeta',
 }
 
@@ -3606,6 +3604,7 @@ _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable',
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
 class ast2spt:
+	def __init__ (self): self.kw = {} # never reached, here to make pylint calm down
 	def __new__ (cls, ast):
 		self    = super ().__new__ (cls)
 		self.kw = {}
@@ -3620,8 +3619,6 @@ class ast2spt:
 				pass
 
 		return spt
-
-	def __init__ (self): self.kw = {} # here to make pylint calm down
 
 	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
@@ -3640,7 +3637,7 @@ class ast2spt:
 		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
 
 		if spt is None:
-			if len (ast.var) > 1 and ast.var not in {'beta', 'Lambda'}:
+			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
 				spt = getattr (sp, ast.var, None)
 
 			if spt is None:
@@ -3932,12 +3929,10 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	# ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
-	# ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))), (('@', 'x'), ('@', 'y')))))
-	ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('func', '%', (('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))),)), (('@', 'x'), ('@', 'y')))))
-	res = ast2spt (ast)
-	print (res)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('func', '%', (('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))),)), (('@', 'x'), ('@', 'y')))))
+# 	res = ast2spt (ast)
+# 	print (res)
 #!/usr/bin/env python
 # python 3.6+
 
