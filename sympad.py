@@ -760,7 +760,7 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.4.4</h5>
+		<h5>v0.4.5</h5>
 		<br><br>
 		Type '<b>help</b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -839,7 +839,7 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.4.4</h4>
+<h4 align="center" style="margin: 0">v0.4.5</h4>
 
 <h2>Introduction</h2>
 
