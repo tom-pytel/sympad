@@ -43,7 +43,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
-	pykw   = kw.copy ()
+	pykw   = {}
 	pyargs = []
 
 	for arg in args:
@@ -56,9 +56,12 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 
 		pyargs.append (_ast2spt (arg))
 
-	spt = func (*pyargs, **pykw)
+	try:
+		spt = func (*pyargs, **{**kw, **pykw})
+	except: # try again if function does not support **kw args
+		spt = func (*pyargs, **pykw)
 
-	if type (spt) is func:
+	if type (spt) is func and not kw.get ('evaluate', True):
 		spt._SYMPAD_ESCAPED = is_escaped
 
 	return spt
@@ -149,6 +152,9 @@ def _ast2tex_mul (ast, ret_has = False):
 		s = _ast2tex_wrap (n, \
 				_ast_is_neg (n) or (n.is_intg and n is not ast.muls [-1]) or (n.strip_lim_sum ().is_intg and n is not ast.muls [-1]), \
 				n.op in {'=', '+'} or (n.is_piece and n is not ast.muls [-1]))
+
+		if p and p.is_attr and s [:6] == '\\left(':
+			s = _ast2tex_wrap (s, 1)
 
 		if p and (n.op in {'!', '#', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/'}) or _ast_is_neg (n) or \
@@ -621,7 +627,7 @@ class ast2spt:
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
 
-		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
+		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped, **self.kw)
 
 	def _ast2spt_diff (self, ast):
 		args = sum ((
@@ -778,7 +784,10 @@ def _spt2ast_MatPow (spt):
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
 def _spt2ast_Function (spt):
-	return AST ('func', f'{AST.Func.ESCAPE}{spt.__class__.__name__}' if getattr (spt, '_SYMPAD_ESCAPED', None) else spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
+	return AST ('func', \
+			f'{AST.Func.ESCAPE}{spt.__class__.__name__}' \
+			if getattr (spt, '_SYMPAD_ESCAPED', None) else \
+			spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Integral (spt):
 	return \

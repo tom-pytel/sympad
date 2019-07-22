@@ -1162,9 +1162,26 @@ What could be useful is a count of infinity, this would freeze the expression as
 </p>
 
 <h4>Functions, Parentheses and Implicit Multiplication</h4>
-<div style="color: red">
-<p>This...</p>
-</div>
+
+<p>
+SymPad supports implicit multiplication, that is writing two variables next to each other to indicate multiplication so "<b>x y</b>" = "<b>x * y</b>".
+This brings some problems, such as deciding when "<b>x (a)</b>" is a function call and when it is multiplication.
+SymPad solves this by recognizing all top-level SymPy package function names and classes as functions and accepting the next expression as the argument(s) to that function.
+This brings along its own set of peculiarities such as removing those names from the possible namespace pool of variables, this means that you can never redefine "<b>sin</b>" as anything else, but why would you want to?
+</p><p>
+This only works on top-level objects, for members of an object the presence of a parenthesized expression after the attribute name will imply a function call.
+If that is not the intent and you instead want to treat the member as a data variable and multiply it with something then you must use explicit "<b>*</b>" multiplication or the curly parentheses as such "<b>{1, 2, 3}.T * (a + b)</b>" or "<b>{1, 2, 3}.T {a + b}</b>".
+If you try to do this with regular parentheses then a function call will be attempted with "<b>a + b</b>" as the argument.
+The meaning of parentheses for assigned user variables is inferred from whether the variable is a lambda or not, for lambdas parentheses are a function call and for other types they indicate multiplication.
+</p><p>
+In a roundabout sort of a way this all led to a peculiar delima.
+There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
+This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
+This was not very elegant so a workaround has been implemented as follows:
+The function names have been left out of the grammar but user lambdas are created for them on startup so that they may be used as functions.
+If you wish to use those letters as variables instead then simply delete the defined lambdas and those letters will behave as variables once more.
+You can always redefine the lambdas yourself if you want them back, the format is simple - "<b>beta = lambda x, y: %$beta (x, y)</b>".
+</p>
 
 <h2>Notes</h2>
 
@@ -1176,10 +1193,6 @@ To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand 
 Repeat this several times using the up arrow.
 </p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
-</p><p>
-There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
-This has been resolved in favor of variable names for "<b>beta</b>" and "<b>Lambda</b>", which means that in order to access those functions in SymPy you have to use "<b>$beta()</b>" or "<b>$Lambda()</b>", and in favor of function names for "<b>zeta</b>" and "<b>Gamma</b>".
-This means that the LaTeX expression "<b>\zeta x</b>" means the Riemann zeta function of "<b>x</b>" and "<b>\Gamma x</b>" means "<b>gamma (x)</b>".
 </p><p>
 You can always tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
 Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name (this only works for top-level functions).
@@ -3085,7 +3098,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
-	pykw   = kw.copy ()
+	pykw   = {}
 	pyargs = []
 
 	for arg in args:
@@ -3098,9 +3111,12 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 
 		pyargs.append (_ast2spt (arg))
 
-	spt = func (*pyargs, **pykw)
+	try:
+		spt = func (*pyargs, **{**kw, **pykw})
+	except: # try again if function does not support **kw args
+		spt = func (*pyargs, **pykw)
 
-	if type (spt) is func:
+	if type (spt) is func and not kw.get ('evaluate', True):
 		spt._SYMPAD_ESCAPED = is_escaped
 
 	return spt
@@ -3191,6 +3207,9 @@ def _ast2tex_mul (ast, ret_has = False):
 		s = _ast2tex_wrap (n, \
 				_ast_is_neg (n) or (n.is_intg and n is not ast.muls [-1]) or (n.strip_lim_sum ().is_intg and n is not ast.muls [-1]), \
 				n.op in {'=', '+'} or (n.is_piece and n is not ast.muls [-1]))
+
+		if p and p.is_attr and s [:6] == '\\left(':
+			s = _ast2tex_wrap (s, 1)
 
 		if p and (n.op in {'!', '#', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/'}) or _ast_is_neg (n) or \
@@ -3663,7 +3682,7 @@ class ast2spt:
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
 
-		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
+		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped, **self.kw)
 
 	def _ast2spt_diff (self, ast):
 		args = sum ((
@@ -3820,7 +3839,10 @@ def _spt2ast_MatPow (spt):
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
 def _spt2ast_Function (spt):
-	return AST ('func', f'{AST.Func.ESCAPE}{spt.__class__.__name__}' if getattr (spt, '_SYMPAD_ESCAPED', None) else spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
+	return AST ('func', \
+			f'{AST.Func.ESCAPE}{spt.__class__.__name__}' \
+			if getattr (spt, '_SYMPAD_ESCAPED', None) else \
+			spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Integral (spt):
 	return \
