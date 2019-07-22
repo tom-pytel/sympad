@@ -199,7 +199,7 @@ def _admin_del (ast):
 
 def _admin_delvars (ast):
 	for v, e in list (_vars.items ()):
-		if v != _VAR_LAST and not e.is_lamb:
+		if not e.is_lamb:# and v != _VAR_LAST:
 			del _vars [v]
 
 	return 'All variables deleted.'

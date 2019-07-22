@@ -1121,7 +1121,7 @@ All functions may take multiple comma-separated arguments and the SymPy function
 
 <p>
 Almost all SymPy function and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
-This means no "<b>N()</b>", "<b>S()</b>" or "<b>O()</b>" directly, though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$print ('Hello World...')</b>".
+This means no "<b>N()</b>", "<b>S()</b>" or "<b>O()</b>" directly, though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$oct (10)</b>".
 Only the "safe" __builtin__ functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
 To numerically evaluate the value of "<b>sin (2)</b>" you use the "<b>$</b>" escape character with the "<b>N()</b>" function like "<b>$N (sin (2))</b>", or just use the member function "<b>sin (2).evalf ()</b>".
 </p><p>
@@ -1827,7 +1827,7 @@ class AST_Func (AST):
 
 	ADMIN           = {'vars', 'funcs', 'del', 'delvars', 'delall', 'sympyEI'}
 	SPECIAL         = ADMIN | {NOREMAP, NOEVAL}
-	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
+	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum', 'print'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
@@ -1961,14 +1961,21 @@ for _vp, _vv in _CONSTS:
 	AST.CONSTS.add (ast)
 	setattr (AST, _vp, ast)
 
+def register_AST (cls):
+	_AST_OP2CLS [cls.op] = cls
+	_AST_CLS2OP [cls]    = cls.op
+
+	setattr (AST, cls.__name__ [4:], cls)
+
 def sympyEI (yes = True):
 	AST.CONSTS.difference_update ((AST.E.var, AST.I.var))
 	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
 	AST.CONSTS.update ((AST.E.var, AST.I.var))
 
 class sast: # for single script
-	AST     = AST
-	sympyEI = sympyEI
+	AST          = AST
+	register_AST = register_AST
+	sympyEI      = sympyEI
 # Builds expression tree from text, nodes are nested AST tuples.
 #
 # Time and interest permitting:
@@ -3081,8 +3088,10 @@ _NOPS                  = lambda ops: _OPS - ops
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
 
-	def _init (self, tex, nat = None, py = None):
-		self.tex, self.nat, self.py = tex, (tex if nat is None else nat), (tex if py is None else py)
+	def _init (self, tex, nat = None, py = None, spt = None):
+		self.tex, self.nat, self.py, self.spt = tex, (tex if nat is None else nat), (tex if py is None else py), spt
+
+sast.register_AST (AST_Text)
 
 class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a single time
 	def doit (self, *args, **kwargs):
@@ -3743,6 +3752,8 @@ class ast2spt:
 		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], **self.kw),
 		'piece': lambda self, ast: sp.Piecewise (*tuple ((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.pieces), **self.kw),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
+
+		'text': lambda self, ast: ast.spt,
 	}
 
 #...............................................................................................
@@ -3753,15 +3764,12 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 		if func:
 			return func (spt)
 
-		# if cls is sp.Function:
-		# 	return _spt2ast_Function (spt)
-
 	tex = sp.latex (spt)
 
-	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something>
+	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to javascript.
 		tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
 
-	return AST_Text (tex, str (spt), str (spt))
+	return AST ('text', tex, str (spt), str (spt), spt)
 
 _rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
 
@@ -4147,7 +4155,7 @@ def _admin_del (ast):
 
 def _admin_delvars (ast):
 	for v, e in list (_vars.items ()):
-		if v != _VAR_LAST and not e.is_lamb:
+		if not e.is_lamb:# and v != _VAR_LAST:
 			del _vars [v]
 
 	return 'All variables deleted.'
@@ -4258,6 +4266,8 @@ class Handler (SimpleHTTPRequestHandler):
 					print (file = sys.stderr)
 
 				asts = _ast_execute_ass (ast, vars)
+
+			# print (repr (_vars ['_']))
 
 			response = {}
 

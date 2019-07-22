@@ -384,7 +384,7 @@ class AST_Func (AST):
 
 	ADMIN           = {'vars', 'funcs', 'del', 'delvars', 'delall', 'sympyEI'}
 	SPECIAL         = ADMIN | {NOREMAP, NOEVAL}
-	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
+	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum', 'print'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
@@ -518,11 +518,18 @@ for _vp, _vv in _CONSTS:
 	AST.CONSTS.add (ast)
 	setattr (AST, _vp, ast)
 
+def register_AST (cls):
+	_AST_OP2CLS [cls.op] = cls
+	_AST_CLS2OP [cls]    = cls.op
+
+	setattr (AST, cls.__name__ [4:], cls)
+
 def sympyEI (yes = True):
 	AST.CONSTS.difference_update ((AST.E.var, AST.I.var))
 	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
 	AST.CONSTS.update ((AST.E.var, AST.I.var))
 
 class sast: # for single script
-	AST     = AST
-	sympyEI = sympyEI
+	AST          = AST
+	register_AST = register_AST
+	sympyEI      = sympyEI

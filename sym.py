@@ -15,6 +15,7 @@ sp.numbers   = sp.numbers # medication for pylint
 sp.boolalg   = sp.boolalg
 sp.fancysets = sp.fancysets
 
+import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
@@ -26,8 +27,10 @@ _NOPS                  = lambda ops: _OPS - ops
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
 
-	def _init (self, tex, nat = None, py = None):
-		self.tex, self.nat, self.py = tex, (tex if nat is None else nat), (tex if py is None else py)
+	def _init (self, tex, nat = None, py = None, spt = None):
+		self.tex, self.nat, self.py, self.spt = tex, (tex if nat is None else nat), (tex if py is None else py), spt
+
+sast.register_AST (AST_Text)
 
 class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a single time
 	def doit (self, *args, **kwargs):
@@ -688,6 +691,8 @@ class ast2spt:
 		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], **self.kw),
 		'piece': lambda self, ast: sp.Piecewise (*tuple ((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.pieces), **self.kw),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
+
+		'text': lambda self, ast: ast.spt,
 	}
 
 #...............................................................................................
@@ -698,15 +703,12 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 		if func:
 			return func (spt)
 
-		# if cls is sp.Function:
-		# 	return _spt2ast_Function (spt)
-
 	tex = sp.latex (spt)
 
-	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something>
+	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to javascript.
 		tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
 
-	return AST_Text (tex, str (spt), str (spt))
+	return AST ('text', tex, str (spt), str (spt), spt)
 
 _rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
 
