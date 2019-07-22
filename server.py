@@ -28,6 +28,8 @@ _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 _VAR_LAST = '_'
 
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
+	sys.path.insert (0, '') # allow importing from current directory
+
 	import sympy as sp
 	import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -175,8 +177,6 @@ def _admin_funcs (ast):
 	for v, e in sorted (_vars.items ()):
 		if v != _VAR_LAST:
 			if e.is_lamb:
-				# asts.append (AST ('=', '=', ('func', v, e.vars), e.lamb))
-				# asts.append (AST ('=', '=', ('*', (('@', v), ('(', (',', e.vars) if len (e.vars) != 1 else e.vars [0])),), e.lamb))
 				asts.append (AST ('=', '=', ('@', v), e))
 
 	if not asts:
@@ -372,7 +372,9 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		watch   = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
+		path    = os.path.dirname (sys.argv [0])
+		fnms    = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
+		watch   = [os.path.join (path, fnm) for fnm in fnms]
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)

@@ -113,6 +113,8 @@ x, y = lambda: 1, lambda: 2
 doo
 partial'
 ln((a)**b)
+a * \int dx + {\int dx dx}
+Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!

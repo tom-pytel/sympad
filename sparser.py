@@ -8,7 +8,6 @@
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
 
-# TODO: Matrix(2, 2, lambda a, b: 1 if a == b else 0)
 # TODO: indexing
 # TODO: change func xlat to work with python tupler args instead of AST commas tuple
 # TODO: multiple vector weirdness

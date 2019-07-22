@@ -152,11 +152,11 @@ class AST (tuple):
 
 		return (self, neg) if retneg else self
 
-	def strip_lim_sum (self, count = None):
+	def strip_mls (self, count = None):
 		count = 999999999 if count is None else count
 
-		while self.op in {'lim', 'sum'} and count:
-			self   = self [1]
+		while self.op in {'*', 'lim', 'sum'} and count:
+			self   = self.muls [-1] if self.is_mul else self [1]
 			count -= 1
 
 		return self

@@ -153,7 +153,7 @@ def _ast2tex_mul (ast, ret_has = False):
 
 	for n in ast.muls:
 		s = _ast2tex_wrap (n, \
-				_ast_is_neg (n) or (n.is_intg and n is not ast.muls [-1]) or (n.strip_lim_sum ().is_intg and n is not ast.muls [-1]), \
+				_ast_is_neg (n) or (n.strip_mls ().is_intg and n is not ast.muls [-1]), \
 				n.op in {'=', '+'} or (n.is_piece and n is not ast.muls [-1]))
 
 		if p and p.is_attr and s [:6] == '\\left(':
@@ -294,7 +294,7 @@ _ast2tex_funcs = {
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.is_mul, {"=", "+"})}',
 	'!': lambda ast: _ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
-	'+': lambda ast: ' + '.join (_ast2tex_wrap (n, n.strip_lim_sum ().is_intg and n is not ast.adds [-1], \
+	'+': lambda ast: ' + '.join (_ast2tex_wrap (n, ((n.strip_mls ().is_intg or (n.is_mul and n.muls [-1].strip_mls ().is_intg)) and n is not ast.adds [-1]), \
 			(n.op in ("piece") and n is not ast.adds [-1]) or n.op in {'='}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2tex_mul,
 	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{ast2tex (ast.denom)}}}',
@@ -356,7 +356,7 @@ def _ast2nat_mul (ast, ret_has = False):
 
 	for n in ast.muls:
 		s = _ast2nat_wrap (n, \
-				_ast_is_neg (n) or n.is_piece or (n.strip_lim_sum ().is_intg and n is not ast.muls [-1]), \
+				_ast_is_neg (n) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.muls [-1]), \
 				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.muls [-1]))
 
 		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
@@ -450,7 +450,7 @@ _ast2nat_funcs = {
 	'|': lambda ast: f'{{|{ast2nat (ast.abs)}|}}',
 	'-': lambda ast: f'-{_ast2nat_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.op in {"*", "piece"}, {"=", "+", "lamb"})}',
 	'!': lambda ast: _ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) + '!',
-	'+': lambda ast: ' + '.join (_ast2nat_wrap (n, n.op in {'intg', 'piece'} or (n.strip_lim_sum ().is_intg and n is not ast.adds [-1]), \
+	'+': lambda ast: ' + '.join (_ast2nat_wrap (n, n.op in {'intg', 'piece'} or ((n.strip_mls ().is_intg or (n.is_mul and n.muls [-1].strip_mls ().is_intg)) and n is not ast.adds [-1]), \
 			(n.op in ('piece', 'lamb') and n is not ast.adds [-1]) or n.op in {'=', 'lamb'}) for n in ast.adds).replace (' + -', ' - '),
 	'*': _ast2nat_mul,
 	'/': _ast2nat_div,
@@ -894,9 +894,8 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('func', '$gamma', (('@', 'x'),))
-	res = ast2spt (ast)
-	res = spt2ast (ast)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('+', (('sum', ('*', (('@', 'a'), ('intg', ('@', 'x'), ('@', 'dx')))), ('@', 'x'), ('#', '0'), ('#', '1')), ('*', (('#', '1'), ('@', 'dx')))))
+# 	res = ast2tex (ast)
+# 	print (res)
