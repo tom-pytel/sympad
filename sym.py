@@ -146,6 +146,12 @@ def _ast2tex_attr (ast):
 
 	return f'{_ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{a}'
 
+def _ast2tex_add (ast):
+	return ' + '.join (_ast2tex_wrap (n, \
+			((n.strip_mls ().is_intg or (n.is_mul and n.muls [-1].strip_mls ().is_intg)) and n is not ast.adds [-1]), \
+			(n.op in ("piece") and n is not ast.adds [-1]) or n.op in {'='})
+			for n in ast.adds).replace (' + -', ' - ')
+
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
 	p   = None
@@ -294,8 +300,7 @@ _ast2tex_funcs = {
 	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.is_mul, {"=", "+"})}',
 	'!': lambda ast: _ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
-	'+': lambda ast: ' + '.join (_ast2tex_wrap (n, ((n.strip_mls ().is_intg or (n.is_mul and n.muls [-1].strip_mls ().is_intg)) and n is not ast.adds [-1]), \
-			(n.op in ("piece") and n is not ast.adds [-1]) or n.op in {'='}) for n in ast.adds).replace (' + -', ' - '),
+	'+': _ast2tex_add,
 	'*': _ast2tex_mul,
 	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{ast2tex (ast.denom)}}}',
 	'^': _ast2tex_pow,
@@ -348,6 +353,12 @@ def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {}):
 
 def _ast2nat_eq_hs (ast, hs, lhs = True):
 	return _ast2nat_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {'piece', 'lamb'})) if ast.is_ass else {'=', 'piece', 'lamb'})
+
+def _ast2nat_add (ast):
+	return ' + '.join (_ast2nat_wrap (n, \
+			n.op in {'intg', 'piece'} or ((n.strip_mls ().is_intg or (n.is_mul and n.muls [-1].strip_mls ().is_intg)) and n is not ast.adds [-1]), \
+			(n.op in ('piece', 'lamb') and n is not ast.adds [-1]) or n.op in {'=', 'lamb'} \
+			) for n in ast.adds).replace (' + -', ' - ')
 
 def _ast2nat_mul (ast, ret_has = False):
 	t   = []
@@ -450,8 +461,7 @@ _ast2nat_funcs = {
 	'|': lambda ast: f'{{|{ast2nat (ast.abs)}|}}',
 	'-': lambda ast: f'-{_ast2nat_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.op in {"*", "piece"}, {"=", "+", "lamb"})}',
 	'!': lambda ast: _ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) + '!',
-	'+': lambda ast: ' + '.join (_ast2nat_wrap (n, n.op in {'intg', 'piece'} or ((n.strip_mls ().is_intg or (n.is_mul and n.muls [-1].strip_mls ().is_intg)) and n is not ast.adds [-1]), \
-			(n.op in ('piece', 'lamb') and n is not ast.adds [-1]) or n.op in {'=', 'lamb'}) for n in ast.adds).replace (' + -', ' - '),
+	'+': _ast2nat_add,
 	'*': _ast2nat_mul,
 	'/': _ast2nat_div,
 	'^': _ast2nat_pow,
