@@ -408,6 +408,7 @@ def _ast2nat_sum (ast):
 
 def _ast2nat_diff (ast):
 	p = 0
+	d = ''
 
 	for n in ast.dvs:
 		if n.is_var:

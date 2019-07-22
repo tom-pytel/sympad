@@ -2253,7 +2253,9 @@ def _xlat_func_Derivative (ast): # translate function 'Derivative' to native ast
 	while commas:
 		d = commas.pop ().as_diff
 
-		if commas and commas [-1].is_num:
+		if not d:
+			raise SyntaxError ('expecting variable')
+		elif commas and commas [-1].is_num:
 			ds.append (AST ('^', d, commas.pop ()))
 		else:
 			ds.append (d)
@@ -2580,7 +2582,7 @@ class Parser (lalr1.Parser):
 			b'j57Hgw3O6QyeN2gc5Y9qyrbKPLlrZ/4KEqaaf2dCULzO8usOXbhddak/Zq4/bOGiXZ4r37rbUxmjMTicgyG4CELvZHFMLOqmPnij6ap9O+E8a+4x4dnuQVfwAZQbUJdQiZPvrwzeyzv0eK8ey7wT4W/spDi7HZNrlSeKLSkQDuWYd9zL3uhMNxcK5VWPZMfe' \
 			b'Fl3CUOtknMh+Y09tF1Vq9dPFuyoUxqJXcHEcuZFKsuZvjVr11ek4kX3Y0onYXbNEzDvq14zwYPWIrsvul7potNhCVZgfWBjtbVFEmI9Oxonsu+NRRFPdhBMx9LdGBW11Ok4sSvXxqKCrbsKJGG7NiAEm85NxIntzArKPX5HcrQy66thcE/DfbyCRsrB7rg76' \
 			b'TcM5t0ut0Fd7dCjTmVB8zHn+DZGK28nqtD/BzIF+nYAwKbbe9Ruf7u76LXGKnPwxy8lVR+BETtsGIDcqp1AdgRM5nawpH98v2OZkglr+d6Hf8Pr2KGYpRMjbBiFHK2QsATheJ8I98HzFAYVrqyN2MuG8bexyvMJ11RE7EW5zssL11RE7ES5ONsUalVaFbaNf' \
-			b'n+MgO5YFwjC1oksscNxXVgYNv4SzGDs+jKvGeYdCGWYpfZU5IWwnhJA9iEOVuyYor122xAa2dQ3u+QuKogyTgm2ZGtYBvOGni6haaYywE132yyBq3p/CcUAPoQC9ruAg5Ww6xNl0lPybi/8Hfes7Tw==' 
+			b'n+MgO5YFwjC1oksscNxXVgYNv4SzGDs+jKvGeYdCGWYpfZU5IWwnhJA9iEOVuyYor122xAa2dQ3u+QuKogyTgm2ZGtYBvOGni6haaYywE132yyBq3p/CcUAPoQC9ruAg5Ww6xNl0lPybi/8Hfes7Tw=='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -3034,11 +3036,11 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	p = Parser ()
-# 	a = p.parse (r'lambda x, y: $print (x, y)') [0]
-# 	a = sym.ast2spt (a)
-# 	print (a)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	p = Parser ()
+	a = p.parse (r'diff (1/x, 1') [0]
+	# a = sym.ast2spt (a)
+	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: MatrixSymbol ('A', 2, 2)**n
@@ -3448,6 +3450,7 @@ def _ast2nat_sum (ast):
 
 def _ast2nat_diff (ast):
 	p = 0
+	d = ''
 
 	for n in ast.dvs:
 		if n.is_var:
