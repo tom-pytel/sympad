@@ -515,7 +515,6 @@ _FUNC_AST_XLAT = {
 	'diff'      : (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
 	'exp'       : (1, lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1)),
 	'factorial' : (1, lambda expr: _expr_func (1, '!', expr, strip = 1)),
-	# 'Gamma'     : (1, lambda expr: _expr_func (2, 'func', 'gamma', expr, strip = 1)),
 	'Integral'  : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
 	'integrate' : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
 	'Limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
@@ -537,11 +536,6 @@ def _expr_func_func (FUNC, expr_neg_func):
 		return ast
 
 	args = ast.args if ast.is_func else ast [1].args
-	# arg  = args [0] if len (args) == 1 else AST (',', args)
-	# ast2 = xlat (AST ('(', arg))
-
-	# return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
-
 	arg  = args [0] if len (args) == 1 else AST (',', args)
 	ast2 = xlat (AST ('(', arg) if paren else arg) # legacy args passed as AST commas instead of python tuple
 
@@ -658,7 +652,7 @@ class Parser (lalr1.Parser):
 	_VARTEX   = fr'(?:{_TEXGREEK}|{_TEXXLAT}|\\partial|(?:(?:\\overline|\\bar|\\widetilde|\\tilde)\s*)?\\infty)'
 	_VARTEX1  = fr'(?:(\d)|({_LETTER})|({_VARTEX}))'
 	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'
-	_VAR      = fr'(?:{_VARPY}|{_VARTEX}|{_VARUNI})'
+	_VAR      = fr'(?:{_VARPY}|{_VARTEX}(?!{_LETTERU})|{_VARUNI})'
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
@@ -668,15 +662,15 @@ class Parser (lalr1.Parser):
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|(\${_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
-		('LEFT',         fr'\\left(?!{_LETTER})'),
-		('RIGHT',        fr'\\right(?!{_LETTER})'),
-		('CDOT',         fr'\\cdot(?!{_LETTER})'),
-		('TO',           fr'\\to(?!{_LETTER})'),
-		('MAPSTO',       fr'\\mapsto(?!{_LETTER})'),
+		('LEFT',         fr'\\left(?!{_LETTERU})'),
+		('RIGHT',        fr'\\right(?!{_LETTERU})'),
+		('CDOT',         fr'\\cdot(?!{_LETTERU})'),
+		('TO',           fr'\\to(?!{_LETTERU})'),
+		('MAPSTO',       fr'\\mapsto(?!{_LETTERU})'),
 		('BEG_MAT',       r'\\begin\s*{\s*matrix\s*}'),
 		('END_MAT',       r'\\end\s*{\s*matrix\s*}'),
 		('BEG_BMAT',      r'\\begin\s*{\s*bmatrix\s*}'),

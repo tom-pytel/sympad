@@ -286,7 +286,9 @@ For example, two ways to get the transpose of a matrix are "<b>{{1,2,3},{4,5,6}}
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
 Anything can be assigned to any valid variable like mathematical expressions, Python objects like strings or lists, user lambda functions or even references to other variables.
-To delete an assignment use the "<b>del var</b>" function, to delete all assignments do "<b>delall</b>" and to see what variables are currently assigned to, use the "<b>vars</b>" function.
+To delete an assignment use the "<b>del var</b>" function, to delete all non-lambda variables do "<b>delvars</b>", to delete all assignments (including lambdas) use "<b>delall</b>".
+To see what variables are currently assigned to, use the "<b>vars</b>" function.
+This will not show lambda assignments though, to see those use "<b>funcs</b>".
 </p><p>
 Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object like "<b>x, y = 1, 2</b>".
 A useless example of iterable assignment would be setting "<b> a, b, c = 'str' </b>" which would give you "<b> a = 's' </b>", "<b> b = 't' </b>" and "<b> c = 'r' </b>".

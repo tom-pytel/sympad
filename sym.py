@@ -39,7 +39,7 @@ def _tuple2ast_func_args (args):
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
 
-def _ast_func_call (func, args, _ast2spt = None, **kw):
+def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
@@ -56,7 +56,12 @@ def _ast_func_call (func, args, _ast2spt = None, **kw):
 
 		pyargs.append (_ast2spt (arg))
 
-	return func (*pyargs, **pykw)
+	spt = func (*pyargs, **pykw)
+
+	if type (spt) is func:
+		spt._SYMPAD_ESCAPED = is_escaped
+
+	return spt
 
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
@@ -185,7 +190,7 @@ _ast2tex_func_xlat = {
 	'eye': True,
 	'ones': True,
 	'zeros': True,
-	'beta': '\\beta', # hack to represent SymPy Greek functions with Greek letters
+	'beta': '\\beta', # represent SymPy Greek functions as Greek letters
 	'gamma': '\\Gamma',
 	'Gamma': '\\Gamma',
 	'zeta': '\\zeta',
@@ -389,15 +394,6 @@ def _ast2nat_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2nat_curly (ast.base)}{_ast2nat_paren (ast.log)}'
 
-def _ast2nat_func (ast):
-	if ast.is_trigh_func:
-		return f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
-
-	return \
-			f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}' \
-			if ast.func in AST.Func.PY or ast.func in _USER_FUNCS else \
-			f'${ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
-
 def _ast2nat_lim (ast):
 	s = _ast2nat_wrap (ast.to, {'piece'}) if ast.dir is None else (_ast2nat_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
 
@@ -452,7 +448,7 @@ _ast2nat_funcs = {
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
 	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{ast2tex (ast.idx)}]{{{ast2tex (ast.rad.strip_paren_noncomma (1))}}}',
-	'func': _ast2nat_func,
+	'func': lambda ast: f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}',
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,
 	'diff': _ast2nat_diff,
@@ -541,7 +537,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad)}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.func}{_ast2py_paren (_tuple2ast_func_args (ast.args))}',
+	'func': lambda ast: f'{ast.unescaped}{_ast2py_paren (_tuple2ast_func_args (ast.args))}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -620,12 +616,12 @@ class ast2spt:
 
 			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
+		func = getattr (sp, ast.unescaped, _ast2spt_func_builtins.get (ast.unescaped))
 
 		if func is None:
-			raise NameError (f'function {ast.func!r} is not defined')
+			raise NameError (f'function {ast.unescaped!r} is not defined')
 
-		return _ast_func_call (func, ast.args, self._ast2spt)
+		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
 	def _ast2spt_diff (self, ast):
 		args = sum ((
@@ -782,7 +778,7 @@ def _spt2ast_MatPow (spt):
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
 def _spt2ast_Function (spt):
-	return AST ('func', spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
+	return AST ('func', f'{AST.Func.ESCAPE}{spt.__class__.__name__}' if getattr (spt, '_SYMPAD_ESCAPED', None) else spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Integral (spt):
 	return \
@@ -887,8 +883,9 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('func', '%', (('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))),)), (('@', 'x'), ('@', 'y')))))
-# 	res = ast2spt (ast)
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	ast = AST ('func', '$gamma', (('@', 'x'),))
+	res = ast2spt (ast)
+	res = spt2ast (ast)
+	print (res)

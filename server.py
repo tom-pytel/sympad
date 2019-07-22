@@ -35,10 +35,10 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 	_START_VARS = {
-		'beta' : AST ('lamb', ('func', 'beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
-		'gamma': AST ('lamb', ('func', 'gamma', (('@', 'z'),)), (('@', 'z'),)),
-		'Gamma': AST ('lamb', ('func', 'gamma', (('@', 'z'),)), (('@', 'z'),)),
-		'zeta' : AST ('lamb', ('func', 'zeta', (('@', 'z'),)), (('@', 'z'),)),
+		'beta' : AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
+		'gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
+		'Gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
+		'zeta' : AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),)),
 	}
 
 	_sys_stdout = sys.stdout
@@ -157,37 +157,61 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	return asts
 
 def _admin_vars (ast):
-	if len (_vars) == 1:
-		return 'No variables defined.'
-
 	asts = []
 
 	for v, e in sorted (_vars.items ()):
 		if v != _VAR_LAST:
-			asts.append (AST ('=', '=', ('@', v), e))
-			# if e.is_lamb:
-			# 	asts.append (AST ('=', '=', ('func', v, e.vars), e.lamb))
-			# else:
-			# 	asts.append (AST ('=', '=', ('@', v), e))
+			if not e.is_lamb:
+				asts.append (AST ('=', '=', ('@', v), e))
+
+	if not asts:
+		return 'No variables defined.'
+
+	return asts
+
+def _admin_funcs (ast):
+	asts = []
+
+	for v, e in sorted (_vars.items ()):
+		if v != _VAR_LAST:
+			if e.is_lamb:
+				# asts.append (AST ('=', '=', ('func', v, e.vars), e.lamb))
+				# asts.append (AST ('=', '=', ('*', (('@', v), ('(', (',', e.vars) if len (e.vars) != 1 else e.vars [0])),), e.lamb))
+				asts.append (AST ('=', '=', ('@', v), e))
+
+	if not asts:
+		return 'No functions defined.'
 
 	return asts
 
 def _admin_del (ast):
-	arg = ast.args [0] if ast.args else AST.VarNull
+	var = ast.args [0] if ast.args else AST.VarNull
 
 	try:
-		del _vars [arg.var]
-	except KeyError:
-		raise AE35UnitError (f'Variable {sym.ast2nat (arg)!r} is not defined, it can only be attributable to human error.')
+		ast = _vars [var.var]
 
-	return f'Variable {sym.ast2nat (arg)!r} deleted.'
+		del _vars [var.var]
+
+	except KeyError:
+		raise AE35UnitError (f'Variable {sym.ast2nat (var)!r} is not defined, it can only be attributable to human error.')
+
+	return f'{"Function" if ast.is_lamb else "Variable"} {sym.ast2nat (var)!r} deleted.'
+
+def _admin_delvars (ast):
+	for v, e in list (_vars.items ()):
+		if v != _VAR_LAST and not e.is_lamb:
+			del _vars [v]
+
+	return 'All variables deleted.'
 
 def _admin_delall (ast):
 	last_var = _vars [_VAR_LAST]
+
 	_vars.clear ()
+
 	_vars [_VAR_LAST] = last_var
 
-	return 'All variables deleted.'
+	return 'All assignments deleted.'
 
 def _admin_sympyEI (ast):
 	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
@@ -232,7 +256,6 @@ class Handler (SimpleHTTPRequestHandler):
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
 		self.wfile.write (json.dumps (response).encode ('utf8'))
-		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
@@ -265,7 +288,7 @@ class Handler (SimpleHTTPRequestHandler):
 		try:
 			ast, _, _ = _parser.parse (request ['text'])
 
-			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
+			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (ast)
 
 				if isinstance (asts, str):

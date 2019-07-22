@@ -378,10 +378,12 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
+	ESCAPE          = '$'
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	SPECIAL         = {NOREMAP, NOEVAL, 'vars', 'del', 'delall', 'sympyEI'}
+	ADMIN           = {'vars', 'funcs', 'del', 'delvars', 'delall', 'sympyEI'}
+	SPECIAL         = ADMIN | {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
@@ -406,6 +408,8 @@ class AST_Func (AST):
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
 	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
+	_is_escaped           = lambda self: self.func [:1] == self.ESCAPE
+	_unescaped            = lambda self: self.func.lstrip (self.ESCAPE)
 
 class AST_Lim (AST):
 	op, is_lim = 'lim', True

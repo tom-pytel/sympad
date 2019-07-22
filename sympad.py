@@ -1091,7 +1091,9 @@ For example, two ways to get the transpose of a matrix are "<b>{{1,2,3},{4,5,6}}
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
 Anything can be assigned to any valid variable like mathematical expressions, Python objects like strings or lists, user lambda functions or even references to other variables.
-To delete an assignment use the "<b>del var</b>" function, to delete all assignments do "<b>delall</b>" and to see what variables are currently assigned to, use the "<b>vars</b>" function.
+To delete an assignment use the "<b>del var</b>" function, to delete all non-lambda variables do "<b>delvars</b>", to delete all assignments (including lambdas) use "<b>delall</b>".
+To see what variables are currently assigned to, use the "<b>vars</b>" function.
+This will not show lambda assignments though, to see those use "<b>funcs</b>".
 </p><p>
 Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object like "<b>x, y = 1, 2</b>".
 A useless example of iterable assignment would be setting "<b> a, b, c = 'str' </b>" which would give you "<b> a = 's' </b>", "<b> b = 't' </b>" and "<b> c = 'r' </b>".
@@ -1806,10 +1808,12 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = 'func', True
 
+	ESCAPE          = '$'
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	SPECIAL         = {NOREMAP, NOEVAL, 'vars', 'del', 'delall', 'sympyEI'}
+	ADMIN           = {'vars', 'funcs', 'del', 'delvars', 'delall', 'sympyEI'}
+	SPECIAL         = ADMIN | {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'ln'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
@@ -1834,6 +1838,8 @@ class AST_Func (AST):
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
 	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
+	_is_escaped           = lambda self: self.func [:1] == self.ESCAPE
+	_unescaped            = lambda self: self.func.lstrip (self.ESCAPE)
 
 class AST_Lim (AST):
 	op, is_lim = 'lim', True
@@ -2464,7 +2470,6 @@ _FUNC_AST_XLAT = {
 	'diff'      : (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
 	'exp'       : (1, lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1)),
 	'factorial' : (1, lambda expr: _expr_func (1, '!', expr, strip = 1)),
-	# 'Gamma'     : (1, lambda expr: _expr_func (2, 'func', 'gamma', expr, strip = 1)),
 	'Integral'  : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
 	'integrate' : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
 	'Limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
@@ -2486,11 +2491,6 @@ def _expr_func_func (FUNC, expr_neg_func):
 		return ast
 
 	args = ast.args if ast.is_func else ast [1].args
-	# arg  = args [0] if len (args) == 1 else AST (',', args)
-	# ast2 = xlat (AST ('(', arg))
-
-	# return ast2 if ast.is_func else AST (ast.op, ast2, *ast [2:])
-
 	arg  = args [0] if len (args) == 1 else AST (',', args)
 	ast2 = xlat (AST ('(', arg) if paren else arg) # legacy args passed as AST commas instead of python tuple
 
@@ -2607,7 +2607,7 @@ class Parser (lalr1.Parser):
 	_VARTEX   = fr'(?:{_TEXGREEK}|{_TEXXLAT}|\\partial|(?:(?:\\overline|\\bar|\\widetilde|\\tilde)\s*)?\\infty)'
 	_VARTEX1  = fr'(?:(\d)|({_LETTER})|({_VARTEX}))'
 	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'
-	_VAR      = fr'(?:{_VARPY}|{_VARTEX}|{_VARUNI})'
+	_VAR      = fr'(?:{_VARPY}|{_VARTEX}(?!{_LETTERU})|{_VARUNI})'
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
@@ -2617,15 +2617,15 @@ class Parser (lalr1.Parser):
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|\$({_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|(\${_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
-		('LEFT',         fr'\\left(?!{_LETTER})'),
-		('RIGHT',        fr'\\right(?!{_LETTER})'),
-		('CDOT',         fr'\\cdot(?!{_LETTER})'),
-		('TO',           fr'\\to(?!{_LETTER})'),
-		('MAPSTO',       fr'\\mapsto(?!{_LETTER})'),
+		('LEFT',         fr'\\left(?!{_LETTERU})'),
+		('RIGHT',        fr'\\right(?!{_LETTERU})'),
+		('CDOT',         fr'\\cdot(?!{_LETTERU})'),
+		('TO',           fr'\\to(?!{_LETTERU})'),
+		('MAPSTO',       fr'\\mapsto(?!{_LETTERU})'),
 		('BEG_MAT',       r'\\begin\s*{\s*matrix\s*}'),
 		('END_MAT',       r'\\end\s*{\s*matrix\s*}'),
 		('BEG_BMAT',      r'\\begin\s*{\s*bmatrix\s*}'),
@@ -3081,7 +3081,7 @@ def _tuple2ast_func_args (args):
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
 
-def _ast_func_call (func, args, _ast2spt = None, **kw):
+def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
@@ -3098,7 +3098,12 @@ def _ast_func_call (func, args, _ast2spt = None, **kw):
 
 		pyargs.append (_ast2spt (arg))
 
-	return func (*pyargs, **pykw)
+	spt = func (*pyargs, **pykw)
+
+	if type (spt) is func:
+		spt._SYMPAD_ESCAPED = is_escaped
+
+	return spt
 
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
@@ -3227,7 +3232,7 @@ _ast2tex_func_xlat = {
 	'eye': True,
 	'ones': True,
 	'zeros': True,
-	'beta': '\\beta', # hack to represent SymPy Greek functions with Greek letters
+	'beta': '\\beta', # represent SymPy Greek functions as Greek letters
 	'gamma': '\\Gamma',
 	'Gamma': '\\Gamma',
 	'zeta': '\\zeta',
@@ -3431,15 +3436,6 @@ def _ast2nat_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2nat_curly (ast.base)}{_ast2nat_paren (ast.log)}'
 
-def _ast2nat_func (ast):
-	if ast.is_trigh_func:
-		return f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
-
-	return \
-			f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}' \
-			if ast.func in AST.Func.PY or ast.func in _USER_FUNCS else \
-			f'${ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}'
-
 def _ast2nat_lim (ast):
 	s = _ast2nat_wrap (ast.to, {'piece'}) if ast.dir is None else (_ast2nat_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
 
@@ -3494,7 +3490,7 @@ _ast2nat_funcs = {
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
 	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{ast2tex (ast.idx)}]{{{ast2tex (ast.rad.strip_paren_noncomma (1))}}}',
-	'func': _ast2nat_func,
+	'func': lambda ast: f'{ast.func}{_ast2nat_paren (_tuple2ast_func_args (ast.args))}',
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,
 	'diff': _ast2nat_diff,
@@ -3583,7 +3579,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad)}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.func}{_ast2py_paren (_tuple2ast_func_args (ast.args))}',
+	'func': lambda ast: f'{ast.unescaped}{_ast2py_paren (_tuple2ast_func_args (ast.args))}',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -3662,12 +3658,12 @@ class ast2spt:
 
 			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = getattr (sp, ast.func, _ast2spt_func_builtins.get (ast.func))
+		func = getattr (sp, ast.unescaped, _ast2spt_func_builtins.get (ast.unescaped))
 
 		if func is None:
-			raise NameError (f'function {ast.func!r} is not defined')
+			raise NameError (f'function {ast.unescaped!r} is not defined')
 
-		return _ast_func_call (func, ast.args, self._ast2spt)
+		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
 	def _ast2spt_diff (self, ast):
 		args = sum ((
@@ -3824,7 +3820,7 @@ def _spt2ast_MatPow (spt):
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
 def _spt2ast_Function (spt):
-	return AST ('func', spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
+	return AST ('func', f'{AST.Func.ESCAPE}{spt.__class__.__name__}' if getattr (spt, '_SYMPAD_ESCAPED', None) else spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Integral (spt):
 	return \
@@ -3929,10 +3925,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', 'Matrix', (('#', '4'), ('#', '4'), ('lamb', ('func', '%', (('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '0'), True))),)), (('@', 'x'), ('@', 'y')))))
-# 	res = ast2spt (ast)
-# 	print (res)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	ast = AST ('func', '$gamma', (('@', 'x'),))
+	res = ast2spt (ast)
+	res = spt2ast (ast)
+	print (res)
 #!/usr/bin/env python
 # python 3.6+
 
@@ -3965,10 +3962,10 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sympy as sp
 
 	_START_VARS = {
-		'beta' : AST ('lamb', ('func', 'beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
-		'gamma': AST ('lamb', ('func', 'gamma', (('@', 'z'),)), (('@', 'z'),)),
-		'Gamma': AST ('lamb', ('func', 'gamma', (('@', 'z'),)), (('@', 'z'),)),
-		'zeta' : AST ('lamb', ('func', 'zeta', (('@', 'z'),)), (('@', 'z'),)),
+		'beta' : AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
+		'gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
+		'Gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
+		'zeta' : AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),)),
 	}
 
 	_sys_stdout = sys.stdout
@@ -4086,37 +4083,61 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	return asts
 
 def _admin_vars (ast):
-	if len (_vars) == 1:
-		return 'No variables defined.'
-
 	asts = []
 
 	for v, e in sorted (_vars.items ()):
 		if v != _VAR_LAST:
-			asts.append (AST ('=', '=', ('@', v), e))
-			# if e.is_lamb:
-			# 	asts.append (AST ('=', '=', ('func', v, e.vars), e.lamb))
-			# else:
-			# 	asts.append (AST ('=', '=', ('@', v), e))
+			if not e.is_lamb:
+				asts.append (AST ('=', '=', ('@', v), e))
+
+	if not asts:
+		return 'No variables defined.'
+
+	return asts
+
+def _admin_funcs (ast):
+	asts = []
+
+	for v, e in sorted (_vars.items ()):
+		if v != _VAR_LAST:
+			if e.is_lamb:
+				# asts.append (AST ('=', '=', ('func', v, e.vars), e.lamb))
+				# asts.append (AST ('=', '=', ('*', (('@', v), ('(', (',', e.vars) if len (e.vars) != 1 else e.vars [0])),), e.lamb))
+				asts.append (AST ('=', '=', ('@', v), e))
+
+	if not asts:
+		return 'No functions defined.'
 
 	return asts
 
 def _admin_del (ast):
-	arg = ast.args [0] if ast.args else AST.VarNull
+	var = ast.args [0] if ast.args else AST.VarNull
 
 	try:
-		del _vars [arg.var]
-	except KeyError:
-		raise AE35UnitError (f'Variable {sym.ast2nat (arg)!r} is not defined, it can only be attributable to human error.')
+		ast = _vars [var.var]
 
-	return f'Variable {sym.ast2nat (arg)!r} deleted.'
+		del _vars [var.var]
+
+	except KeyError:
+		raise AE35UnitError (f'Variable {sym.ast2nat (var)!r} is not defined, it can only be attributable to human error.')
+
+	return f'{"Function" if ast.is_lamb else "Variable"} {sym.ast2nat (var)!r} deleted.'
+
+def _admin_delvars (ast):
+	for v, e in list (_vars.items ()):
+		if v != _VAR_LAST and not e.is_lamb:
+			del _vars [v]
+
+	return 'All variables deleted.'
 
 def _admin_delall (ast):
 	last_var = _vars [_VAR_LAST]
+
 	_vars.clear ()
+
 	_vars [_VAR_LAST] = last_var
 
-	return 'All variables deleted.'
+	return 'All assignments deleted.'
 
 def _admin_sympyEI (ast):
 	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
@@ -4161,7 +4182,6 @@ class Handler (SimpleHTTPRequestHandler):
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
 		self.wfile.write (json.dumps (response).encode ('utf8'))
-		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
@@ -4194,7 +4214,7 @@ class Handler (SimpleHTTPRequestHandler):
 		try:
 			ast, _, _ = _parser.parse (request ['text'])
 
-			if ast.is_func and ast.func in {'vars', 'del', 'delall', 'sympyEI'}: # special admin function?
+			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (ast)
 
 				if isinstance (asts, str):
