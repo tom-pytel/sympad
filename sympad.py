@@ -4267,8 +4267,6 @@ class Handler (SimpleHTTPRequestHandler):
 
 				asts = _ast_execute_ass (ast, vars)
 
-			# print (repr (_vars ['_']))
-
 			response = {}
 
 			if asts and asts [0] is not AST.None_:

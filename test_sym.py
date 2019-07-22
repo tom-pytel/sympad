@@ -312,7 +312,7 @@ def test ():
 	global DEPTH, CURLYS
 
 	_DEPTH  = 3
-	opts, _ = getopt (sys.argv [1:], 'tnpid:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth'])
+	opts, _ = getopt (sys.argv [1:] or ['-tnp'], 'tnpid:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth='])
 	parser  = sparser.Parser ()
 
 	if ('--dump', '') in opts:
