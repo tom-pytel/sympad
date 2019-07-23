@@ -389,7 +389,7 @@ class AST_Func (AST):
 	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
 	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
 
-	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'beta', 'gamma', 'zeta', 'Lambda'}
+	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'beta', 'gamma', 'zeta', 'Lambda'} - {'evaluate'}
 	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -529,9 +529,9 @@ def register_AST (cls):
 	setattr (AST, cls.__name__ [4:], cls)
 
 def sympyEI (yes = True):
-	AST.CONSTS.difference_update ((AST.E.var, AST.I.var))
+	AST.CONSTS.difference_update ((AST.E, AST.I))
 	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
-	AST.CONSTS.update ((AST.E.var, AST.I.var))
+	AST.CONSTS.update ((AST.E, AST.I))
 
 class sast: # for single script
 	AST          = AST

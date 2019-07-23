@@ -1175,7 +1175,7 @@ This brings some problems, such as deciding when "<b>x (a)</b>" is a function ca
 SymPad solves this by recognizing all top-level SymPy package function names and classes as functions and accepting the next expression as the argument(s) to that function.
 This brings along its own set of peculiarities such as removing those names from the possible namespace pool of variables, this means that you can never redefine "<b>sin</b>" as anything else, but why would you want to?
 </p><p>
-This only works on top-level objects, for members of an object the presence of a parenthesized expression after the attribute name will imply a function call.
+This recognition only works on top-level objects, for members of an object the presence of a parenthesized expression after the attribute name will imply a function call.
 If that is not the intent and you instead want to treat the member as a data variable and multiply it with something then you must use explicit "<b>*</b>" multiplication or the curly parentheses as such "<b>{1, 2, 3}.T * (a + b)</b>" or "<b>{1, 2, 3}.T {a + b}</b>".
 If you try to do this with regular parentheses then a function call will be attempted with "<b>a + b</b>" as the argument.
 The meaning of parentheses for assigned user variables is inferred from whether the variable is a lambda or not, for lambdas parentheses are a function call and for other types they indicate multiplication.
@@ -1838,7 +1838,7 @@ class AST_Func (AST):
 	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
 	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
 
-	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'beta', 'gamma', 'zeta', 'Lambda'}
+	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'beta', 'gamma', 'zeta', 'Lambda'} - {'evaluate'}
 	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -1978,9 +1978,9 @@ def register_AST (cls):
 	setattr (AST, cls.__name__ [4:], cls)
 
 def sympyEI (yes = True):
-	AST.CONSTS.difference_update ((AST.E.var, AST.I.var))
+	AST.CONSTS.difference_update ((AST.E, AST.I))
 	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
-	AST.CONSTS.update ((AST.E.var, AST.I.var))
+	AST.CONSTS.update ((AST.E, AST.I))
 
 class sast: # for single script
 	AST          = AST
@@ -4198,6 +4198,12 @@ def _admin_delall (ast):
 
 def _admin_sympyEI (ast):
 	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
+
+	if AST.E.var in _vars:
+		del _vars [AST.E.var]
+
+	if AST.I.var in _vars:
+		del _vars [AST.I.var]
 
 	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
 

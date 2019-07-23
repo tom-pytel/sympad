@@ -216,6 +216,12 @@ def _admin_delall (ast):
 def _admin_sympyEI (ast):
 	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
 
+	if AST.E.var in _vars:
+		del _vars [AST.E.var]
+
+	if AST.I.var in _vars:
+		del _vars [AST.I.var]
+
 	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
 
 #...............................................................................................
