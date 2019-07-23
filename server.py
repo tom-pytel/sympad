@@ -21,6 +21,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+_SYMPAD_PATH              = os.path.dirname (sys.argv [0])
 _SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
 _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 
@@ -236,17 +237,15 @@ class Handler (SimpleHTTPRequestHandler):
 		if self.path == '/':
 			self.path = '/index.html'
 
-		if self.path not in _STATIC_FILES:
+		fnm = os.path.join (_SYMPAD_PATH, self.path.lstrip ('/'))
+
+		if self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm)):
 			self.send_error (404, f'Invalid path {self.path!r}')
 
-		elif not _RUNNING_AS_SINGLE_SCRIPT:
-			return SimpleHTTPRequestHandler.do_GET (self)
-
-		else:
-			self.send_response (200)
-			self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
-			self.end_headers ()
-			self.wfile.write (_FILES [self.path [1:]])
+		self.send_response (200)
+		self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
+		self.end_headers ()
+		self.wfile.write (_FILES [self.path [1:]] if _RUNNING_AS_SINGLE_SCRIPT else open (fnm, 'rb').read ())
 
 	def do_POST (self):
 		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
@@ -387,9 +386,8 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		path    = os.path.dirname (sys.argv [0])
 		fnms    = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
-		watch   = [os.path.join (path, fnm) for fnm in fnms]
+		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)

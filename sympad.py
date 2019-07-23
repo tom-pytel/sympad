@@ -760,7 +760,7 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.4.6</h5>
+		<h5>v0.4.7</h5>
 		<br><br>
 		Type '<b>help</b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -769,8 +769,7 @@ r"""<!DOCTYPE html>
 		Type or click any of the following to get started:
 	</div>
 	<br><br>
-	<a class="GreetingA" href="javascript:inputting ('cos**-1 x', true)">cos**-1 x</a>
-	<a class="GreetingA" href="javascript:inputting ('\\log_2{8}', true)">\log_2{8}</a>
+	<a class="GreetingA" href="javascript:inputting ('cos**-1 x + \\log_2{8}', true)">cos**-1 x + \log_2{8}</a>
 	<a class="GreetingA" href="javascript:inputting ('\\lim_{x\\to\\infty} 1/x', true)">\lim_{x\to\infty} 1/x</a>
 	<a class="GreetingA" href="javascript:inputting ('Limit (\\frac1x, x, 0, dir=\'-\')', true)">Limit (\frac1x, x, 0, dir='-')</a>
 	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}**oo x^n / n!', true)">\sum_{n=0}**oo x^n / n!</a>
@@ -839,7 +838,7 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.4.6</h4>
+<h4 align="center" style="margin: 0">v0.4.7</h4>
 
 <h2>Introduction</h2>
 
@@ -856,8 +855,7 @@ The input will be evaluated symbolically or numerically with the results being c
 <p>
 The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad:
 </p><p>
-cos**-1 x<br>
-\log_2{8}<br>
+cos**-1 x + \log_2{8}<br>
 \lim_{x\to\infty} 1/x<br>
 Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
@@ -890,6 +888,13 @@ a, b = 1, 1<br>
 a, b = b, a + b<br>
 a, b = b, a + b<i>&emsp;**(or press the up arrow)</i><br>
 a, b = b, a + b<i>&emsp;...</i><br>
+</p><p>
+Automatic variable substitution:
+</p><p>
+y = x**2 + 2x + 1<br>
+y<br>
+x = 2<br>
+y<br>
 </p>
 
 <h4>Usage</h4>
@@ -3586,7 +3591,7 @@ _ast2nat_funcs = {
 	'intg': _ast2nat_intg,
 	'vec': lambda ast: f'{{{", ".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
-	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], {"piece", "lamb"}, {"=", ","})}' if p [1] is True else f'{_ast2nat_wrap (p [0], {"piece", "lamb"}, {"=", ","})} if {_ast2nat_curly (p [1], {"piece", "lamb"})}' for p in ast.pieces),
+	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], {"piece", "lamb", "="}, {","})}' if p [1] is True else f'{_ast2nat_wrap (p [0], {"piece", "lamb", "="}, {","})} if {_ast2nat_wrap (p [1], {"piece", "lamb", "="}, {","})}' for p in ast.pieces),
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {_ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
 	'idx': lambda ast: f'{ast2nat (ast.obj)}[{ast2nat (_tuple2ast (ast.idx))}]',
 
@@ -4045,6 +4050,7 @@ from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 
+_SYMPAD_PATH              = os.path.dirname (sys.argv [0])
 _SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
 _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 
@@ -4255,17 +4261,15 @@ class Handler (SimpleHTTPRequestHandler):
 		if self.path == '/':
 			self.path = '/index.html'
 
-		if self.path not in _STATIC_FILES:
+		fnm = os.path.join (_SYMPAD_PATH, self.path.lstrip ('/'))
+
+		if self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm)):
 			self.send_error (404, f'Invalid path {self.path!r}')
 
-		elif not _RUNNING_AS_SINGLE_SCRIPT:
-			return SimpleHTTPRequestHandler.do_GET (self)
-
-		else:
-			self.send_response (200)
-			self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
-			self.end_headers ()
-			self.wfile.write (_FILES [self.path [1:]])
+		self.send_response (200)
+		self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
+		self.end_headers ()
+		self.wfile.write (_FILES [self.path [1:]] if _RUNNING_AS_SINGLE_SCRIPT else open (fnm, 'rb').read ())
 
 	def do_POST (self):
 		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
@@ -4406,9 +4410,8 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		path    = os.path.dirname (sys.argv [0])
 		fnms    = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
-		watch   = [os.path.join (path, fnm) for fnm in fnms]
+		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
