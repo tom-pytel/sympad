@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Working directory.
 # TODO: Exception prevents restart on file date change or too much time?
 
 import getopt
@@ -53,7 +52,7 @@ _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.htm
 _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sympyEI] [host:port]
+usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
 """
 
 #...............................................................................................
@@ -351,13 +350,13 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], '', ['help', 'nobrowser', 'debug', 'sympyEI'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEq', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick'])
 
-		if ('--help', '') in opts:
+		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.strip ())
 			sys.exit (0)
 
-		if ('--debug', '') in opts:
+		if ('--debug', '') in opts or ('-d', '') in opts:
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if not _SYMPAD_CHILD: # watcher parent
@@ -376,8 +375,11 @@ if __name__ == '__main__':
 		sym.set_user_funcs (set (_START_VARS))
 		_parser.set_user_funcs (set (_START_VARS))
 
-		if ('--sympyEI', '') in opts:
+		if ('--sympyEI', '') in opts or ('-E', '') in opts:
 			sast.sympyEI ()
+
+		if ('--quick', '') in opts or ('-q', '') in opts:
+			_parser.set_quick ()
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS
@@ -405,7 +407,7 @@ if __name__ == '__main__':
 
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
-		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
+		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts and ('-n', '') not in opts:
 			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
 
 		while 1:

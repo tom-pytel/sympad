@@ -5,13 +5,7 @@
 # var assumptions
 # importing modules to allow custom code execution
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
-# sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
-
-# TODO: indexing - slices
-# TODO: change func xlat to work with python tupler args instead of AST commas tuple
-# TODO: multiple vector weirdness
-# TODO: _xlat_func_Integral multiple integrals
 
 import ast as py_ast
 from collections import OrderedDict

@@ -906,6 +906,11 @@ Single-click for a simple native format meant to be pasted back into the input f
 A double click-copies the expression in Python format suitable for pasting into a Python shell or source file.
 Finally, a triple-click will copy the expression in LaTeX format.
 The single-click native and double-click Python formats should always be pasteable back into SymPad whereas the LaTeX format may or may not be depending on what elements are present.
+</p><p>
+SymPad normally allows long variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
+This can be turned off by switching into quick input mode using the function "<b>quick()</b>".
+When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek) and explicit space characters are no longer necessary between recognized function and variable names.
+This means that an expression entered in normal mode like this "<b>x y sin z**2</b>" can be entered in quick mode like this "<b>xysinz**2</b>".
 </p>
 
 <h2>Types</h2>
@@ -1997,13 +2002,7 @@ class sast: # for single script
 # var assumptions
 # importing modules to allow custom code execution
 # Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
-# sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
-
-# TODO: indexing - slices
-# TODO: change func xlat to work with python tupler args instead of AST commas tuple
-# TODO: multiple vector weirdness
-# TODO: _xlat_func_Integral multiple integrals
 
 import ast as py_ast
 from collections import OrderedDict
@@ -4027,7 +4026,6 @@ class sym: # for single script
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Working directory.
 # TODO: Exception prevents restart on file date change or too much time?
 
 import getopt
@@ -4073,7 +4071,7 @@ _DEFAULT_ADDRESS = ('localhost', 8000)
 _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
 
 _HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sympyEI] [host:port]
+usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
 """
 
 #...............................................................................................
@@ -4371,13 +4369,13 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], '', ['help', 'nobrowser', 'debug', 'sympyEI'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEq', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick'])
 
-		if ('--help', '') in opts:
+		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.strip ())
 			sys.exit (0)
 
-		if ('--debug', '') in opts:
+		if ('--debug', '') in opts or ('-d', '') in opts:
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if not _SYMPAD_CHILD: # watcher parent
@@ -4396,8 +4394,11 @@ if __name__ == '__main__':
 		sym.set_user_funcs (set (_START_VARS))
 		_parser.set_user_funcs (set (_START_VARS))
 
-		if ('--sympyEI', '') in opts:
+		if ('--sympyEI', '') in opts or ('-E', '') in opts:
 			sast.sympyEI ()
+
+		if ('--quick', '') in opts or ('-q', '') in opts:
+			_parser.set_quick ()
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS
@@ -4425,7 +4426,7 @@ if __name__ == '__main__':
 
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
-		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
+		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts and ('-n', '') not in opts:
 			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
 
 		while 1:
