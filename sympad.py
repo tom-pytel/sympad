@@ -2275,7 +2275,7 @@ def _ast_strip_tail_differential (ast):
 
 	return ast, None
 
-def _expr_int (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
+def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	ast, neg = ast.strip_minus (retneg = True)
 	ast, dv  = _ast_strip_tail_differential (ast)
 
@@ -2590,57 +2590,57 @@ class Parser (lalr1.Parser):
 		self._USER_FUNCS = user_funcs
 
 	_PARSER_TABLES = \
-			b'eJztXWuP3LaS/TMLxAOoAYkvSf7mOE6usbaTazvBLgzDcBxnEWxeazt3d7G4/33rVBVFiuyXZrrH3TOD4bREqkQWi3X4KD5079UXD7998u2zL5ov/uX97z/R5cmjr1/S5bsHzx89e0I3j7959u3zR28efv/8yb+T9+vnDx7qpdOroeuXj7558/DBi0cv9P7p' \
-			b'g5d692W6/SHdfie3HCtSefr42ff8LsX3rwh48fI5fr//kn6fff+Ufn94gJDHz15+Ay4fP+XH/Pv354jrybd48PX3z8Dfl0z88NunTx/EzDyP6eHmwdPvYmrwfvXlkxdPHrz4G90+evaVco+7L9PtD+lWuX/++Ju/xaCY+Ud/x8+TF4801pfCCDEAyqcPvnvx' \
-			b'8luk/5Lz9+jfHj6JjyHOrx7/8PgrvPrwq29fshQ00xztd09YRo+/ph+OhcSDt969/fD+05s/Prz56cdfP356+4GC3v/Pnx/efPzrz/eT5/f3//Hm579+f5ce/hhvf3v76c27P37NvR/++O/C+zH63739+P7jx3dz759zb/S9/THdfvo08fLz23ef4v2fKaU5' \
-			b'e7/F219/mW5/+X1677e/fn3zy29Tuv9I2f49vfrTL/+It5/ef8iCf/453v/44e27/3z/KRPTlJW/Pvz6v3lydJMJZcrYTz/NMp94ff9fU84okSnDv7x/937yUNH9niL98+OnP6Zsv/3tx5/eRt8U15TWH7/99nbm+fjF6+bVvZXrGtddNHJjcGObleNr19wz' \
-			b'jQnNqmtsTzcXUyiHpYBVj5vOyI+ngM5d5EGdy4Nwixdb+XHygO4oLibpkXDnNWEKjKEaNgWsupHviKeB3jaNHS40YNVZjhUcWNtYc6Fe8vGdA12DVCW6KUB8Nr5HL7gYhFu6M/xvKH17If4Vx9lpuPDQrIwGit8T/5YFN8YAygPfEfOm5Zha+XEUt9HIUxDE' \
-			b'mEJxi3Kjf9/YsVn5C/HTDShG+XESTHckYtxROFKGiCTnFBAyTy8XBOA9FAZyLkyrF7yTcLp5uKu9wzzIV17X5kErM7BAWlUllI6UXCe3IKMcI/uI2yWCGJy8K8OC8FwILbRavKvABBRuuoa0CKViKDHksoGcOtHsDRRAiu/2JKQimxOuDKce6L9vnI1cUQFI' \
-			b'zq3qPoqLitXmCKBnMXgKgFwQ4lJIJyE+hRgJCTGEdI81upefDATAFN8E+WH9F4UmH25x5+PDC/WSLz6QNJz8uGHK+xQ05kG4hWCs/FCxXVykW9AQI0qnXoILpzXKA1UeAMAwdygJpuBqxMbqS2oGChMMTl7HhWYjKkkAXKcMonMe+W+gZiLOPFgDyM/JDvJD' \
-			b'OnmhfgIds0ZPOo5XfV5qEcoZ6UrSGmRBFJDVWlUmxHxR4D2XEMdeE2Mln2NJdpBDN90ZveviQ6lxkO54QQ3Aq7YhpaRECHwkdEINaRz9eGKy8b4JbRO6ZvDNEJqhb4ahGcZmbJuRhDqAYyTcoVAJq6S2VD5ERdobTBNsE1wTKJLQhL7pfdPTUxQFMjm0zUAl' \
-			b'ZZB7KkfSwa4lf0sBLYW0DtULqnTbDFRGLb09NP0I6HlGmA+N7xtP4iSOQjMSnAwQ5UjHPEkDNSbp32iakfIUoARUcoQOylgT0PiRj4RBGe0gClRH8JMw+GI5GNUYvPARjVWfl4feS3CQqIKEksQ4dJAISRS4dHKJqQ2czG0V/j3KD8uI+LnVYhhUVUZWjlH0' \
-			b'aOxUSSw/ljzVuZFMTOyXvAvLr7nWEOUdDxJbK7E5YdkLy1yc9wblu2PNR9VGkVJti+qmMbe3rrnXBRGayKyXiqEPsS5gGQqXxNzEzEG5mEk2F+gVFeIVurW3GMNU+3P+e9P0VGSu6dum75owNGG8zUJxd0KpheLvhFILJdwJpWwvgrSnvVyMNBtDJx1Jp825' \
-			b'tLxWQq2RzidzCqpWu52t1Wt8Tfw9dy1OvG25NzhlXlvMUfLgJY+eszi6ZvRatFNBnmljes/rQMPLKMSLAvhBxxvaTZSHo/ahnY4s+NXBNIM9ibwQY1J6zifGpLBOhD0Ro+sz9ogNerdtT4XFQUpaFD0yhyejwNjGPqTtFSlaDWif39/urhll0VzMsjvJQvIt' \
-			b'Elmf+xuQf+RWjBkQw2UFcfZisKwGh1AAkeC55Z+yeqthMDAMbm81SDwaMUHeajG42519ypPJDd6UwVvdKoCRmTxG9o/t7RaLZbFcueuaT3tQh9SycNlsTNebMVp7dY8RdP7ZGG5CNjDrwCrW6VBIxk6m04k8IyOiTsbQppj96/nlM836K8wlnC/7mACRykHs' \
-			b'XPW86WuZXJXJhqzShu2d3+yFuFfjVhtLVQxFIU5MhTEvdRipEVmQUVIIEhcJz4hFDag4CwH2g7DumfWZocBL328+QTdGuxpfD8nJ6CcDlhEDlhEDloHARwl1RstbClMmkGxqZaXplVb2NnTMzGlZ7u4NAiPntJikbjwd/pwi1fWnxRgBazitoiSOxkNDHOZR' \
-			b'tUoaMUEasTxKFTSrn73OOtDV6jIa7npb9prY+lp9PFtew3aL/C2Skc3bbMoC/Hfzr2vqlM7MZeVyL4aC9kKGgFk5YERkdTmKlZFQ/tTqUydP5y2KRFStbFgTin6a1X6akQ4axhu3eoEId0uNdEtvsY0CmmJFU6z0CxTfVvt4Rjp3dLnt+A7DrVaUIPVZEH0J' \
-			b'Wp0h1XOZ236FAYY9kwEGjyzsTbHbYPhjdJBiZZBiZZBCl9htCpnHzbor6K8bmde2Mn/MjaVYE0epx+UR8e8upKPiLnSw+pqHtI6XAuOXcue0zXW3d44KvQCr5plZv6WXPkgawQ/z51ZkeSaQJwZd1XUiZp1ooRMtdDpUdjpGdqc0ooBSe1VqH1tnUWrPSu1V' \
-			b'm/2aDj3KRbLqJav+Nlvax3Cb8w/N9mLnC1oZB9GNILoRYpXbkBxUXiGrhunFXl/sz9b2+QoZ7iXDPeNIzNO6XpyzltnzkNlBpDTIS4PSDectgvGc2R/OmH3ozqhLDVtda9heyP6oVy2gRzWUcICaBRxNUQZs8NCRO2/zIGimIQmnn8tD6jnJ2az2MiyDgNyr' \
-			b'qLguzAUm1eGaWq2NHVFuIUk8kB+vMtSVfCnTJKiWwlioJAzkAxlBTiBEZAdzR8gTZokwRYTZI8wcYTsY6h1sEsMOMcpfh71LkDCqTqzCxRJcrK5Fo4cWD2vzUIbYxYO9N9g5w3tCiQ6LNbGDhmttlCGFYe0n+jXYVYYdZdhHBtsWVo1jkTQWBWNCA3MdmOjo' \
-			b'iRamFdhVsFIYfSBsJUG1DpMyNhfB0A+T/IgGB1tsPXbZYlOh4z2q2LzpsSeWHLYs9/JPr66oicEWVt6NiJ24CMf+yzGR5f/E3arHPT0feA94w5u6oXcrlMEKhbCC6vFe6gG7OqlIVj32LlMAFfKKMLHCptERrPWyTXlKxK9N2M8u2AiKW5LDSrQHbFGM3mja' \
-			b'2DTJWcTmW/ixpZTUZDViUyd74nueN1xj2zdF1mYpcQoqRGz0HON+ZMoCHjW8uzsy2SOTiJiiCjaTGKKF7LGztpPYqNxWDvuisWEUMUM4FDxLGrtysc1+8BIhNvji3axknFXukAbIUXD0z9kaXjf/54f7ICTFv78CBsJ90JL+34dOEAY42GhwDyr/T9hkUCkU' \
-			b'VUJRGUhNcEXoD0C2wHoO6G1gLkDMoN0G2AKoJUC3gjMHZA7GYQv4tiBvHeIUbcdDFu/Hj2CpYbINIiU4BA8bsVBioNT9LXqfa3um6dDwNZrNfSdS0T5rqbiB1N2IU0tlr9BY2aS00vNObfz2hsujyQqDzlHolAX3ElTVu0zbQ2rB5k23KD9lqUUuhxoI3HJF' \
-			b'5e+v2EoRHVbwY7X8ztYqgqJd01LlrRQAYhUkRIf17VjQPgMMNJ8GMiNjI4wMjSC748eIDYLDOP0tAQoe5ziBP4MKecWVmBnX/IEpO6Z39E1BFe4UWKAbPUNLElR8cTJBXwNRibUxoQvImlDFmS6QJYJI6Er8jFubFxWBsj5rWDhKhRsTzWLNGxU73kcNNFJr' \
-			b'wXrq7H2gm/SCruafPJXH2BwzdIZTweV6UHaXxeVNxGTHOo1okXtptbTF6qYGS57lbgkyOdoMmdzWJGSmOAtk1qnOOLAVXwAoWt7AnlnjpyiNdAJTTjPEwBKjXbsBpPqsgGmUSwJq4ms7UJXId5LkDKlRMoJVJptFvAarazDqyvbzxBF6B88JnqLOyNIcm92E' \
-			b'za50i7BZtJrdvNVMcZbY3OoYm0WQNJ5dtwGYSqTAlPZTAytgdpuAKfQlMFUoGTAnpnYAU4i88jYHpopFgSmNaBbxfsD0twKYN7U/2/Fgr+OZuRk4/QROX7pF4PQFOP0cnFOcJTirVGcc2IqvCE4/gRO3EZpKotD0As3p1QqdfhM6hb5Ep0olQ+dEugOdQsSl' \
-			b'XaFT5aLo9ILOFPGyLm64Q+k5o7Rn3cYrc5RO1k95lrtFKO0LlPZzlE5xliitUp1xYCu+IkqT/ZMPoVOUKomitBeUTq9WKO03oVToS5SqVDKUTlHvQKkQ+U6SnKNU5aIo7QWlKeJlKO3vUHrOKB1Yt0E+R+kwoXQo3SKUDgVKhzlKpzhLlFapzjiwFV8RpUNC' \
-			b'6ZBQqiSK0kFQOr1aoXTYhFKhL1GqUslQOkW9A6VC5DtJco5SlYuidBCUpoiXoXS4M+XeBLgaVnIUmNiMcCHG+CKBAlqhyN0S0JrCcmTmlqMUZwHaOtWSCVuxprg1yXKEW8VtJBHcGrEbpVdL3JpNpiOlL3AbBZNwm6Lejlsl8iL5OW6jaAS3RkxHWcTLcDve' \
-			b'4fZG4JaHrIZXpTFuveBWDu4208BVKHK3CLfFwNXMB64pzhK3VaqdbiGZ3rAVbxG4afBq0uA1kihwZfCaXq2Au2nwqvQlcFUyGXAn0h3AFSIvoi+Aq7JR4MrgNYt4GXC79g65NwK5gbWcHSM3CHKDIDdMyA2lW4TcUCA3zJE7xVkit0q1ZMJWrEXgpoUKuI3A' \
-			b'VRIFbhDgTq9WwA2bgKsJFMBVwWTAnaLeAVwh8iL5ArgqGgVuEOCmiBcCt7sD7o0ALtufUDZif+LFXJ1c2iatwROK3C0CbmGFMnMrVIqzBG6VasmErViLwE2GKJMMUZFEgSuGqPRqBdxNhiilL4GrgsmAO0W9A7hC5EXyBXBVNApcMURlES8E7t1ypZsBXDZJ' \
-			b'oWDEJGXEKiWfBOGLAnco3SLgFoYpMzdMpThL4FaplkzYirUI3GSbMsk2FUkUuGKbSq9WwN1km1L6ErgqmAy4U9Q7gCtEXiRfAFdFo8AV21QW8ULg2gTc7vyx22eH395OBENJsFIYssM9iA2DmC9cP0frsindIuuyKazLZm5dnuIsrctVqiUTtmItGphNMjAb' \
-			b'BnHHXxQbxNCspGpoNmJonsIrQ7PZZGgW+tLQrALKDM1T1DsMzULkpQQKQ7OKSA3NshI4i3ghmNcveprtbbkZU0K7kHvVTS3HQi6mFjCVEXa1w5YbLQuXTw31EqKNsC3dlVbZ4/3ZGsVu+q8a4irlGRe24i0CGAvxUfaRh9gOW0lmWqSoi6Fi8lVDbGfYRXSp' \
-			b'LZYEy7ZY5TNfsY+gHS2x5bX7fWRw3hRLpLEpRiFC1s1KcJxyP8Px6O5zDRZ6unaMW18vKD69NjiMh15cfFPbYN6vBPGhtJx0pJ10pJ10pN2EYVe6RR1pV0DYFRBuY6QlgKtkCxekHS55w2pj7mAYl/rTGY6VSvvTsusmvV3B2G3qTwt9iWGVT9afnqLegWIh' \
-			b'8lIABYiVUQWxE+imiBc2wdXCqdMD8t1AeDeELVuwIH2xYFmxYFmxYNnJgiUUuVuCX1tYsOzcgpXiLOBbp1oyYSvWtAm2yYJlkwUrkghwrViw0qslcO0mC5bSF8CNgknATVFvB64SeZH8HLhRNAJcKxasLOKFwK3WUh0JuNkm+Tv4Hg2+bMeyfMbASo4aYPiK' \
-			b'HctOdiyhyN0i+BZ2rFHmfLFLFacjDALiAeG2tmbVaZes2IrBCOJkzbLJmhVJFMRizUqvViDeZM1S+hLEKp4MxFPUO0AsRF7kX4BYy0ZBLNasLOKFIL5banUj4OtYyyF0WWrlZKmVk6VWblpqJZ7cLYGvK5ZauflSqxRnAdw61ZIJW7GmwHVpqZVLS60iiQDX' \
-			b'yVKr9GoJXLdpqZXSF8CNgknATVFvB64SeZH8HLhRNAJcJ0utsogXAvdurdWxgKsW0msGMO/hg+RlD5+TQyHUiuWmnXwSlrtFAC528rn5Tr4UZwngXY4BXAQpgNNmPtxGACuJAlisV+nVCsCbdvMpfQlgFUwG4Cnq0U2Jb4axEHilm8NYBaQwlj19WfTLYGyq' \
-			b'hVfH2ZBwYKPzHkcsHQOdeyPyymhkazIEOLcmu8mULM9ytwiHhSXZzS3JFfyqxGYJ24qdiD1bH+/CTwV2a094cXYT1CTmEmqa9wxqiYnNABOC+jQjfRDRZQVdU4x77pg11aqoO1SdAqp4XTHG836OqmlFsTzL3SJUFSuKnd+OqiqxWcK2Yieiyq9Bld+Bqk1r' \
-			b'hjXmElWa9wxViYnNqBKCNaiSBxFVslg4xbgvqqolS3eoOgVUseEV9rF+jqrJ5CrPcrcIVYXJ1fXbUVUlNkvYVuxEVPVrUNXvQNUmq6rGXKJK856hKjGxGVVCsAZV8iCiSsypKcZ9UWVvxZbUG2l04bPK6NeNc+RNB5W5yi1C3lggb36wX4qzhOC6hBO1rYMU' \
-			b'guP6c1cikQ7WRhmsSWAFyU2nlil9CUkVSgbJiakdphaVRydJzpGpYlFkjoLMFPGeyLw7EelckelZnyHVdobMdLymPMvdEmT6whDq54bQFGeBzDrVGQe24iueaNuuR2YkEmR6sYNqYHW67SYjqNIXyIxCSchMTG1HphL5TpKcITOKRZDpxQiaRbwnMm/HkUg3' \
-			b'Epls54RI52eV+cnCKc9ytwiZhYXTzy2cKc4SmVsdI7MIUmRuOKssEikyxcCpgRUyN1k3lb5EpgolQ+bE1A5kClHkbY5MFYsiU+yaWcR7IjPUB0Xni/TcOaywPdTZn3zKPD2fHU6dgzgcaPHtHmCm7O8HaH8ZUIctZ1wH+QSCbEgtD7v205ZUocndldbm+vme' \
-			b'1BTpmnPmmX2/hgMvW1LLIKzpYwOxDxvAr3QKftmXqoH1UWiQlpsfOZ9tVF17sLbGVVYMKrb5kl0N3VwzoNy5dghNPHXbV9tWcfh2lKBWEbJ1NYmlrCI4mH8H/KK2wCUgjOuKvnl1/CPlD3SevNsB2QKqFUTHHe3sJmuQb3Z/4IFqtxM6Xv6wR8u7qxwvv+PT' \
-			b'Cls+qLDzQwqLv6BAuSi1vT2KwuMTSu6EP6PAdUCp8qW6r1PzHR8w+UyfUuh0/8bpfk4BEr7kJxXGSmfrbtyhdDacSFV96c9/FFU0iRa7W85Dh/1hdRjCuu7Pgkg3tZ90OXZVC50mme3odUzjkgN+0mqYf7Eq1F+sWqLl+44h9hw/bNV4SMYftrZe+JmpY38I' \
-			b'p7PTggmIZxVKM/hiBOTnVWz+SNS+H4jaslGW2R0uUbNTvHv1vd0hv+hEMlz2lbYD90i2dcLx/btdNTyfCHoAXc/0/Jo+8gSRLP8e2mF7JzA3bOyh2N21u9nUE3cj+tr8mRmzn1YfvGLnb6yqkvtrqd4XmIe2Vu8Uxh8bvKZq/rNV8VD3dCwCW1m7a6rq67mV' \
-			b'S1T1KwNJIOL2MlU+wcRafPqPYWL3hskBK393XdC4IizwRdTr7PkoJGCEu7bWAOnYQ0GAzYeLWobeLFF/GMQYApdVfePlo5emlasdJiS4/ZAQDoqE7Iu+12adOeW+//UjINf+LttidC1Wm2XafzXND5XG+/00vj+Oxo93Gn8KGl9OWt8gje8rjQ/7afyBxgLl' \
-			b'KKC90/hT0HhzczV+qDT+WiZWYbOPqymubrnvcIQdPTPmeDNPe020Hk7Xj6rn+ej5UJZ7npqDIcyPS/X9chZ8WNT2G7z25j6lw8pdz6MeR7lh13Ez087xKvINC34uZcm5nor8+BYbxDPkVpujVuD4ltg6S80lLDRXscyMzauTXA5z5DUBec2M5npZ7WyxuO9z' \
-			b'6+1VKmHEeazZ/7zOxaq+ctnnNs30uqYFa1t0Mcsw8rei2zs93b+CPY2K9Uq9hKISxTLS65rX31BpwrQxtqyM3VGUsdusj7ZYF3xNWrlzsf4+iwgNL5I4FS2VddP9Nk3lx+UK28Uae8k6dft6+h0rCDsONpqDqnKlLq0bWIHNnQKfrwIP/L9VgdcsET8TBQ6q' \
-			b'wMN2BbbNq75J+7A61teONTVTU9HRvtjGxIqzRmFCsTthMFTILJAhlShKM2gxdm598U1FZ7NhrY39/jVyG4peUjBYMkOFtX8mE+YMcCb7t/bIdERCiQDOPPTpspnv+ER/1c2gD7t2P4H4WiZuEotfIhZbS6Y7Cel0c/RGCUVAXllKYYmU6ppb6uy9Kux9BLmr' \
-			b'Iq4q4Ni37a8qaHDbjnV1GSR4/ypynxLZUfkVJRW/KdGO88qtr4ruM4xuNm78PIYtdONIZk3Jr29Lx+5zjljWbqY81Oik1pi6abSORswyOBnutGez9qBYT2/Am38og911q4+hygfzIeP9FXSnvb+Smmi806UtunSSxpNcl0bm8TR0iUoj16XPZ7Y7RXXCrPHJ' \
-			b'muM+c+MG3elOUXeuY5I46o9r5l+l2qZL5rp1qb9U5WQOp028XnN93xqGBUzyramo6q88kU/17PPPLnw2VdugXtCls5g9yKuro8wW7FdlWT5iuwsDRMgl3Ad+4Pi0X99SOAbXFEh391Z8gqycW2La8nyS7YeK8L4mrFSfpvV1XRbO3pCzNfDZSezSxqbXHvui' \
-			b'sDYyOjk3xBX/2foYDZPXcFBH4Dtex5XeQe5W5tjZoHgv88fM2WMzRxXDmj8szch8vF848O6wGZXs52VG3bEZpTqq+oPlXa7DmqfTHzPoj82gb9b/YWpg47Oer8xgODaDobnUHzPXz5mrjiPS87Wn44W2Hyk0P08IZ+ZM5wa5dFbQugzlZ/nEc3r4jB49jwcb' \
-			b'nNMZPK/ROMof1ZR9k3ly16/5K0iYav07FUHxOstvOHbhDs2l/pi58biFi3Z5Xfm2w4HKGI3B8RwMwUUQeieLY2JRd+3RG03XHNoJ51lzjwnP/gC6gg+gfAZ1CY04+f7K5L28Q4/36rGsdyL8rZ0UZ3djcqPyRLElBcKhHOsd97K3OjOsC4XyqkeyY2+KLmGo' \
-			b'dTZOZL+1p7aPKvX66eJ9FQpj0Su4OI7cSiVZ8zdGrcbmfJzIPuzoROyvWSLmPfVrjfBg9YhuyO6Xumi02EFVmB9YGP1NUUSYj87GieyH01FE03wOJ2IYb4wK2uZ8nFiU2tNRQdd8DidiuDEjBjQCZ+NE9uYMZB+/IrlfGYTm1FwXwPy4hUTKwh64Ohi3Defc' \
-			b'PrXC2BzQoUzXhOJjzuvfEKm4vaxOhxPMOtBvEhAmxTa7cevT/d24I06Rkz9lObnmBJzIadcA5LPKKTQn4EROZ2vKx/cLdjmZoJb/fei3vL47irUUIuRdg5CTFTKWAJyuE+Eeeb7iiMK1zQk7mXDeNXY5XeG65oSdCLc7W+H65oSdCBcnm2KNSq/CttGvz3GQ' \
-			b'HcsCYei96xILHPeVlUHHL+EsxoEP42px3qFQhrWUvsmcEPYVIWQP4tDkrgvK65AtsYFtXYNH/oKiKENVsD1TwzqAN3y9iKqXxgg70WW/DKLm/SkcB/QQCjDqCg5Szm5AnN1Ayb+++H/zETu1'
+			b'eJztXfmP3LaS/mcWiAdQAxIvSf7NcZw8Y20nz3aCXRiG4TjOQ7C51nb2wOL971tfVVGkyL400z3unhkMpyVSJbJYrI9H8dC9V188/PbJt8++aL74l/e//0SXJ4++fkmX7x48f/TsCd08/ubZt88fvXn4/fMn/07er58/eKiXTq+Grl8++ubNwwcvHr3Q+6cP' \
+			b'Xurdl+n2h3T7ndxyrEjl6eNn3/O7FN+/IuDFy+f4/f5L+n32/VP6/eEBQh4/e/kNuHz8lB/z79+fI64n3+LB198/A39fMvHDb58+fRAz8zymh5sHT7+LqcH71ZdPXjx58OJvdPvo2VfKPe6+TLc/pFvl/vnjb/4Wg2LmH/0dP09ePNJYXwojxAAonz747sXL' \
+			b'b5H+S87fo397+CQ+hji/evzD46/w6sOvvn3JUtBMc7TfPWEZPf6afjgWEg/eevf2w/tPb/748OanH3/9+OntBwp6/z9/fnjz8a8/30+e39//483Pf/3+Lj38Md7+9vbTm3d//Jp7P/zx34X3Y/S/e/vx/ceP7+beP+fe6Hv7Y7r99Gni5ee37z7F+z9TSnP2' \
+			b'fou3v/4y3f7y+6d/THz99eubX36bEv6vlO/f07s//fJf8fbT+w9Z8M8/x/sfP7x99x/vP2VymvLy14df/zdPjm4yqUw5++mnWe4Ts+//c8oaJTLl+Jf3795PHiq731Okf3789MeU77e//fjT2+ib4prS+uO3397OPB+/eN28urdyXeO6i0ZuDG5ss3J87Zp7' \
+			b'pjGhWXWN7enmYgrlsBSw6nHTGfnxFNC5izyoc3kQbvFiKz9OHtAdxcUkPRLuvCZMgTFUw6aAVTfyHfE00NumscOFBqw6y7GCA2sbay7USz6+c6BrkKpENwWIz8b36AUXg3BLd4b/DaVvL8S/4jg7DRcempXRQPF74t+y4MYYQHngO2LetBxTKz+O4jYaeQqC' \
+			b'GFMoblFu9O8bOzYrfyF+ugHFKD9OgumORIw7CkfKEJHknAJC5unlggC8h8JAzoVp9YJ3Ek43D3e1d5gH+crr2jxoZQYWSKuqhNKRkuvkFmSUY2QfcbtEEIOTd2VYEJ4LoYVWi3cVmIDCTdeQFqFUDCWGXDaQUyeavYECSPHdnoRUZHPCleHUA/33jbORKyoA' \
+			b'yblV3UdxUbHaHAH0LAZPAZALQlwK6STEpxAjISGGkO6xRvfyk4EAmOKbID+s/6LQ5MMt7nx8eKFe8sUHkoaTHzdMeZ+CxjwItxCMlR8qtouLdAsaYkTp1Etw4bRGeaDKAwAY5g4lwRRcjdhYfUnNQGGCwcnruNBsRCUJgOuUQXTOI/8N1EzEmQdrAPk52UF+' \
+			b'SCcv1E+gY9boScfxqs9LLUI5I11JWoMsiAKyWqvKhJgvCrznEuLYa2Ks5HMsyQ5y6KY7o3ddfCg1DtIdL6gBeNU2pJSUCIGPhE6oIY2jH09MNt43oW1C1wy+GUIz9M0wNMPYjG0zklAHcIyEOxQqYZXUlsqHqEh7g2mCbYJrAkUSmtA3vW96eoqiQCaHthmo' \
+			b'pAxyT+VIOti15G8poKWQ1qF6QZVum4HKqKW3h6YfAT3PCPOh8X3jSZzEUWhGgpMBohzpmCdpoMYk/RtNM1KeApSASo7QQRlrAho/8pEwKKMdRIHqCH4SBl8sB6Magxc+orHq8/LQewkOElWQUJIYhw4SIYkCl04uMbWBk7mtwr9H+WEZET+3WgyDqsrIyjGK' \
+			b'Ho2dKonlx5KnOjeSiYn9kndh+TXXGqK840FiayU2Jyx7YZmL896gfHes+ajaKFKqbVHdNOb21jX3uiBCE5n1UjH0IdYFLEPhkpibmDkoFzPJ5gK9okK8Qrf2FmOYan/Of2+anorMNX3b9F0ThiaMt1ko7k4otVD8nVBqoYQ7oZTtRZD2tJeLkWZj6KQj6bQ5' \
+			b'l5bXSqg10vlkTkHVareztXqNr4m/567Fibct9wanzGuLOUoevOTRcxZH14xei3YqyDNtTO95HWh4GYV4UQA/6HhDu4nycNQ+tNORBb86mGawJ5EXYkxKz/nEmBTWibAnYnR9xh6xQe+27amwOEhJi6JH5vBkFBjb2Ie0vSJFqwHt8/vb3TWjLJqLWXYnWUi+' \
+			b'RSLrc38D8o/cijEDYrisIM5eDJbV4BAKIBI8t/xTVm81DAaGwe2tBolHIybIWy0Gd7uzT3kyucGbMnirWwUwMpPHyP6xvd1isSyWK3dd82kP6pBaFi6bjel6M0Zrr+4xgs4/G8NNyAZmHVjFOh0KydjJdDqRZ2RE1MkY2hSzfz2/fKZZf4W5hPNlHxMgUjmI' \
+			b'naueN30tk6sy2ZBV2rC985u9EPdq3GpjqYqhKMSJqTDmpQ4jNSILMkoKQeIi4RmxqAEVZyHAfhDWPbM+MxR46fvNJ+jGaFfj6yE5Gf1kwDJiwDJiwDIQ+Cihzmh5S2HKBJJNraw0vdLK3oaOmTkty929QWDknBaT1I2nw59TpLr+tBgjYA2nVZTE0XhoiMM8' \
+			b'qlZJIyZII5ZHqYJm9bPXWQe6Wl1Gw11vy14TW1+rj2fLa9hukb9FMrJ5m01ZgP9u/nVNndKZuaxc7sVQ0F7IEDArB4yIrC5HsTISyp9aferk6bxFkYiqlQ1rQtFPs9pPM9JBw3jjVi8Q4W6pkW7pLbZRQFOsaIqVfoHi22ofz0jnji63Hd9huNWKEqQ+C6Iv' \
+			b'QaszpHouc9uvMMCwZzLA4JGFvSl2Gwx/jA5SrAxSrAxS6BK7TSHzuFl3Bf11I/PaVuaPubEUa+Io9bg8Iv7dhXRU3IUOVl/zkNbxUmD8Uu6ctrnu9s5RoRdg1Twz67f00gdJI/hh/tyKLM8E8sSgq7pOxKwTLXSihU6Hyk7HyO6URhRQaq9K7WPrLErtWam9' \
+			b'arNf06FHuUhWvWTV32ZL+xhuc/6h2V7sfEEr4yC6EUQ3QqxyG5KDyitk1TC92OuL/dnaPl8hw71kuGcciXla14tz1jJ7HjI7iJQGeWlQuuG8RTCeM/vDGbMP3Rl1qWGraw3bC9kf9aoF9KiGEg5Qs4CjKcqADR46cudtHgTNNCTh9HN5SD0nOZvVXoZlEJB7' \
+			b'FRXXhbnApDpcU6u1sSPKLSSJB/LjVYa6ki9lmgTVUhgLlYSBfCAjyAmEiOxg7gh5wiwRpogwe4SZI2wHQ72DTWLYIUb567B3CRJG1YlVuFiCi9W1aPTQ4mFtHsoQu3iw9wY7Z3hPKNFhsSZ20HCtjTKkMKz9RL8Gu8qwowz7yGDbwqpxLJLGomBMaGCuAxMd' \
+			b'PdHCtAK7ClYKow+ErSSo1mFSxuYiGPphkh/R4GCLrccuW2wqdLxHFZs3PfbEksOW5V7+6dUVNTHYwsq7EbETF+HYfzkmsvyfuFv1uKfnA+8Bb3hTN/RuhTJYoRBWUD3eSz1gVycVyarH3mUKoEJeESZW2DQ6grVetilPifi1CfvZBRtBcUtyWIn2gC2K0RtN' \
+			b'G5smOYvYfAs/tpSSmqxGbOpkT3zP84ZrbPumyNosJU5BhYiNnmPcj0xZwKOGd3dHJntkEhFTVMFmEkO0kD121nYSG5XbymFfNDaMImYIh4JnSWNXLrbZD14ixAZfvJuVjLPKHdIAOQqO/jlbw+vm//xwH4Sk+PdXwEC4D1rS//vQCcIABxsN7kHl/wmbDCqF' \
+			b'okooKgOpCa4I/QHIFljPAb0NzAWIGbTbAFsAtQToVnDmgMzBOGwB3xbkrUOcou14yOL9+BEsNUy2QaQEh+BhIxZKDJS6v0Xvc23PNB0avkazue9EKtpnLRU3kLobcWqp7BUaK5uUVnreqY3f3nB5NFlh0DkKnbLgXoKqepdpe0gt2LzpFuWnLLXI5VADgVuu' \
+			b'qPz9FVsposMKfqyW39laRVC0a1qqvJUCQKyChOiwvh0L2meAgebTQGZkbISRoRFkd/wYsUFwGKe/JUDB4xwn8GdQIa+4EjPjmj8wZcf0jr4pqMKdAgt0o2doSYKKL04m6GsgKrE2JnQBWROqONMFskQQCV2Jn3Fr86IiUNZnDQtHqXBjolmseaNix/uogUZq' \
+			b'LVhPnb0PdJNe0NX8k6fyGJtjhs5wKrhcD8rusri8iZjsWKcRLXIvrZa2WN3UYMmz3C1BJkebIZPbmoTMFGeBzDrVGQe24gsARcsb2DNr/BSlkU5gymmGGFhitGs3gFSfFTCNcklATXxtB6oS+U6SnCE1SkawymSziNdgdQ1GXdl+njhC7+A5wVPUGVmaY7Ob' \
+			b'sNmVbhE2i1azm7eaKc4Sm1sdY7MIksaz6zYAU4kUmNJ+amAFzG4TMIW+BKYKJQPmxNQOYAqRV97mwFSxKDClEc0i3g+Y/lYA86b2Zzse7HU8MzcDp5/A6Uu3CJy+AKefg3OKswRnleqMA1vxFcHpJ3DiNkJTSRSaXqA5vVqh029Cp9CX6FSpZOicSHegU4i4' \
+			b'tCt0qlwUnV7QmSJe1sUNdyg9Z5T2rNt4ZY7Syfopz3K3CKV9gdJ+jtIpzhKlVaozDmzFV0Rpsn/yIXSKUiVRlPaC0unVCqX9JpQKfYlSlUqG0inqHSgVIt9JknOUqlwUpb2gNEW8DKX9HUrPGaUD6zbI5ygdJpQOpVuE0qFA6TBH6RRnidIq1RkHtuIronRI' \
+			b'KB0SSpVEUToISqdXK5QOm1Aq9CVKVSoZSqeod6BUiHwnSc5RqnJRlA6C0hTxMpQOd6bcmwBXw0qOAhObES7EGF8kUEArFLlbAlpTWI7M3HKU4ixAW6daMmEr1hS3JlmOcKu4jSSCWyN2o/RqiVuzyXSk9AVuo2ASblPU23GrRF4kP8dtFI3g1ojpKIt4GW7H' \
+			b'O9zeCNzykNXwqjTGrRfcysHdZhq4CkXuFuG2GLia+cA1xVnitkq10y0k0xu24i0CNw1eTRq8RhIFrgxe06sVcDcNXpW+BK5KJgPuRLoDuELkRfQFcFU2ClwZvGYRLwNu194h90YgN7CWs2PkBkFuEOSGCbmhdIuQGwrkhjlypzhL5FaplkzYirUI3LRQAbcR' \
+			b'uEqiwA0C3OnVCrhhE3A1gQK4KpgMuFPUO4ArRF4kXwBXRaPADQLcFPFC4HZ3wL0RwGX7E8pG7E+8mKuTS9ukNXhCkbtFwC2sUGZuhUpxlsCtUi2ZsBVrEbjJEGWSISqSKHDFEJVerYC7yRCl9CVwVTAZcKeodwBXiLxIvgCuikaBK4aoLOKFwL1brnQzgMsm' \
+			b'KRSMmKSMWKXkkyB8UeAOpVsE3MIwZeaGqRRnCdwq1ZIJW7EWgZtsUybZpiKJAldsU+nVCribbFNKXwJXBZMBd4p6B3CFyIvkC+CqaBS4YpvKIl4IXJuA250/dvvs8NvbiWAoCVYKQ3a4B7FhEPOF6+doXTalW2RdNoV12cyty1OcpXW5SrVkwlasRQOzSQZm' \
+			b'wyDu+ItigxialVQNzUYMzVN4ZWg2mwzNQl8amlVAmaF5inqHoVmIvJRAYWhWEamhWVYCZxEvBPP6RU+zvS03Y0poF3KvuqnlWMjF1AKmMsKudthyo2Xh8qmhXkK0Ebalu9Iqe7w/W6PYTf9VQ1ylPOPCVrxFAGMhPso+8hDbYSvJTIsUdTFUTL5qiO0Mu4gu' \
+			b'tcWSYNkWq3zmK/YRtKMltrx2v48MzptiiTQ2xShEyLpZCY5T7mc4Ht19rsFCT9eOcevrBcWn1waH8dCLi29qG8z7lSA+lJaTjrSTjrSTjrSbMOxKt6gj7QoIuwLCbYy0BHCVbOGCtMMlb1htzB0M41J/OsOxUml/WnbdpLcrGLtN/WmhLzGs8sn601PUO1As' \
+			b'RF4KoACxMqogdgLdFPHCJrhaOHV6QL4bCO+GsGULFqQvFiwrFiwrFiw7WbCEIndL8GsLC5adW7BSnAV861RLJmzFmjbBNlmwbLJgRRIBrhULVnq1BK7dZMFS+gK4UTAJuCnq7cBVIi+SnwM3ikaAa8WClUW8ELjVWqojATfbJH8H36PBl+1Yls8YWMlRAwxf' \
+			b'sWPZyY4lFLlbBN/CjjXKnC92qeJ0hEFAPCDc1tasOu2SFVsxGEGcrFk2WbMiiYJYrFnp1QrEm6xZSl+CWMWTgXiKegeIhciL/AsQa9koiMWalUW8EMR3S61uBHwdazmELkutnCy1crLUyk1LrcSTuyXwdcVSKzdfapXiLIBbp1oyYSvWFLguLbVyaalVJBHg' \
+			b'OllqlV4tges2LbVS+gK4UTAJuCnq7cBVIi+SnwM3ikaA62SpVRbxQuDerbU6FnDVQnrNAOY9fJC87OFzciiEWrHctJNPwnK3CMDFTj4338mX4iwBvMsxgIsgBXDazIfbCGAlUQCL9Sq9WgF4024+pS8BrILJADxFPbop8c0wFgKvdHMYq4AUxrKnL4t+GYxN' \
+			b'tfDqOBsSDmx03uOIpWOgc29EXhmNbE2GAOfWZDeZkuVZ7hbhsLAku7kluYJfldgsYVuxE7Fn6+Nd+KnAbu0JL85ugprEXEJN855BLTGxGWBCUJ9mpA8iuqyga4pxzx2zploVdYeqU0AVryvGeN7PUTWtKJZnuVuEqmJFsfPbUVUlNkvYVuxEVPk1qPI7ULVp' \
+			b'zbDGXKJK856hKjGxGVVCsAZV8iCiShYLpxj3RVW1ZOkOVaeAKja8wj7Wz1E1mVzlWe4Woaowubp+O6qqxGYJ24qdiKp+Dar6HajaZFXVmEtUad4zVCUmNqNKCNagSh5EVIk5NcW4L6rsrdiSeiONLnxWGf26cY686aAyV7lFyBsL5M0P9ktxlhBcl3CitnWQ' \
+			b'QnBcf+5KJNLB2iiDNQmsILnp1DKlLyGpQskgOTG1w9Si8ugkyTkyVSyKzFGQmSLeE5l3JyKdKzI96zOk2s6QmY7XlGe5W4JMXxhC/dwQmuIskFmnOuPAVnzFE23b9ciMRIJML3ZQDaxOt91kBFX6AplRKAmZiantyFQi30mSM2RGsQgyvRhBs4j3RObtOBLp' \
+			b'RiKT7ZwQ6fysMj9ZOOVZ7hYhs7Bw+rmFM8VZInOrY2QWQYrMDWeVRSJFphg4NbBC5ibrptKXyFShZMicmNqBTCGKvM2RqWJRZIpdM4t4T2SG+qDofJGeO4cVtoc6+5NPmafns8OpcxCHAy2+3QPMlP39AO0vA+qw5YzrIJ9AkA2p5WHXftqSKjS5u9LaXD/f' \
+			b'k5oiXXPOPLPv13DgZUtqGYQ1fWwg9mED+JVOwS/7UjWwPgoN0nLzI+ezjaprD9bWuMqKQcU2X7KroZtrBpQ71w6hiadu+2rbKg7fjhLUKkK2riaxlFUEB/PvgF/UFrgEhHFd0Tevjn+k/IHOk3c7IFtAtYLouKOd3WQN8s3uDzxQ7XZCx8sf9mh5d5Xj5Xd8' \
+			b'WmHLBxV2fkhh8RcUKBeltrdHUXh8Qsmd8GcUuA4oVb5U93VqvuMDJp/pUwqd7t843c8pQMKX/KTCWOls3Y07lM6GE6mqL/35j6KKJtFid8t56LA/rA5DWNf9WRDppvaTLseuaqHTJLMdvY5pXHLAT1oN8y9WhfqLVUu0fN8xxJ7jh60aD8n4w9bWCz8zdewP' \
+			b'4XR2WjAB8axCaQZfjID8vIrNH4na9wNRWzbKMrvDJWp2inevvrc75BedSIbLvtJ24B7Jtk44vn+3q4bnE0EPoOuZnl/TR54gkuXfQzts7wTmho09FLu7djebeuJuRF+bPzNj9tPqg1fs/I1VVXJ/LdX7AvPQ1uqdwvhjg9dUzX+2Kh7qno5FYCtrd01VfT23' \
+			b'comqfmUgCUTcXqbKJ5hYi0//MUzs3jA5YOXvrgsaV4QFvoh6nT0fhQSMcNfWGiAdeygIsPlwUcvQmyXqD4MYQ+Cyqm+8fPTStHK1w4QEtx8SwkGRkH3R99qsM6fc979+BOTa32VbjK7FarNM+6+m+aHSeL+fxvfH0fjxTuNPQePLSesbpPF9pfFhP40/0Fig' \
+			b'HAW0dxp/Chpvbq7GD5XGX8vEKmz2cTXF1S33HY6wo2fGHG/maa+J1sPp+lH1PB89H8pyz1NzMIT5cam+X86CD4vafoPX3tyndFi563nU4yg37DpuZto5XkW+YcHPpSw511ORH99ig3iG3Gpz1Aoc3xJbZ6m5hIXmKpaZsXl1ksthjrwmIK+Z0Vwvq50tFvd9' \
+			b'br29SiWMOI81+5/XuVjVVy773KaZXte0YG2LLmYZRv5WdHunp/tXsKdRsV6pl1BUolhGel3z+hsqTZg2xpaVsTuKMnab9dEW64KvSSt3LtbfZxGh4UUSp6Klsm6636ap/LhcYbtYYy9Zp25fT79jBWHHwUZzUFWu1KV1AyuwuVPg81Xggf+3KvCaJeJnosBB' \
+			b'FXjYrsC2edU3aR9Wx/rasaZmaio62hfbmFhx1ihMKHYnDIYKmQUypBJFaQYtxs6tL76p6Gw2rLWx379GbkPRSwoGS2aosPbPZMKcAc5k/9YemY5IKBHAmYc+XTbzHZ/or7oZ9GHX7icQX8vETWLxS8Ria8l0JyGdbo7eKKEIyCtLKSyRUl1zS529V4W9jyB3' \
+			b'VcRVBRz7tv1VBQ1u27GuLoME719F7lMiOyq/oqTiNyXacV659VXRfYbRzcaNn8ewhW4cyawp+fVt6dh9zhHL2s2Uhxqd1BpTN43W0YhZBifDnfZs1h4U6+kNePMPZbC7bvUxVPlgPmS8v4LutPdXUhONd7q0RZdO0niS69LIPJ6GLlFp5Lr0+cx2p6hOmDU+' \
+			b'WXPcZ27coDvdKerOdUwSR/1xzfyrVNt0yVy3LvWXqpzM4bSJ12uu71vDsIBJvjUVVf2VJ/Kpnn3+2YXPpmob1Au6dBazB3l1dZTZgv2qLMtHbHdhgAi5hPvADxyf9utbCsfgmgLp7t6KT5CVc0tMW55Psv1QEd7XhJXq07S+rsvC2RtytgY+O4ld2tj02mNf' \
+			b'FNZGRifnhrjiP1sfo2HyGg7qCHzH67jSO8jdyhw7GxTvZf6YOXts5qhiWPOHpRmZj/cLB94dNqOS/bzMqDs2o1RHVX+wvMt1WPN0+mMG/bEZ9M36P0wNbHzW85UZDMdmMDSX+mPm+jlz1XFEer72dLzQ9iOF5ucJ4cyc6dwgl84KWpeh/CyfeE4Pn9Gj5/Fg' \
+			b'g3M6g+c1Gkf5o5qybzJP7vo1fwUJU61/pyIoXmf5Dccu3KG51B8zNx63cNEuryvfdjhQGaMxOJ6DIbgIQu9kcUws6q49eqPpmkM74Txr7jHh2R9AV/ABlM+gLqERJ99fmbyXd+jxXj2W9U6Ev7WT4uxuTG5Unii2pEA4lGO94172VmeGdaFQXvVIduxN0SUM' \
+			b'tc7Giey39tT2UaVeP128r0JhLHoFF8eRW6kka/7GqNXYnI8T2YcdnYj9NUvEvKd+rREerB7RDdn9UheNFjuoCvMDC6O/KYoI89HZOJH9cDqKaJrP4UQM441RQducjxOLUns6Kuiaz+FEDDdmxIBG4GycyN6cgezjVyT3K4PQnJrrApgft5BIWdgDVwfjtuGc' \
+			b'26dWGJsDOpTpmlB8zHn9GyIVt5fV6XCCWQf6TQLCpNhmN259ur8bd8QpcvKnLCfXnIATOe0agHxWOYXmBJzI6WxN+fh+wS4nE9Tyvw/9ltd3R7GWQoS8axByskLGEoDTdSLcI89XHFG4tjlhJxPOu8Yupytc15ywE+F2Zytc35ywE+HiZFOsUelV2Db69TkO' \
+			b'smNZIAy9d11igeO+sjLo+CWcxTjwYVwtzjsUyrCW0jeZE8K+IoTsQRya3HVBeR2yJTawrWvwyF9QFGWoCrZnalgH8IavF1H10hhhJ7rsl0HUvD+F44AeQgFGXcFBytkNiLMbKPnXF/8PaWU8HA==' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -2752,73 +2752,73 @@ class Parser (lalr1.Parser):
 
 	TOKENS_LONG  = OrderedDict () # initialized in __init__()
 
-	def expr_commas_1   (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
-	def expr_commas_2   (self, expr_comma):                                     return expr_comma
-	def expr_commas_3   (self):                                                 return AST (',', ())
-	def expr_comma_1    (self, expr_comma, COMMA, expr):                        return AST.flatcat (',', expr_comma, expr)
-	def expr_comma_2    (self, expr):                                           return expr
+	def expr_commas_1      (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
+	def expr_commas_2      (self, expr_comma):                                     return expr_comma
+	def expr_commas_3      (self):                                                 return AST (',', ())
+	def expr_comma_1       (self, expr_comma, COMMA, expr):                        return AST.flatcat (',', expr_comma, expr)
+	def expr_comma_2       (self, expr):                                           return expr
 
-	def expr            (self, expr_eq):                                        return expr_eq
+	def expr               (self, expr_eq):                                        return expr_eq
 
-	def expr_eq_1       (self, expr_lambda1, EQ, expr_lambda2):                 return AST ('=', '=', expr_lambda1, expr_lambda2)
-	def expr_eq_2       (self, expr_lambda):                                    return expr_lambda
+	def expr_eq_1          (self, expr_lambda1, EQ, expr_lambda2):                 return AST ('=', '=', expr_lambda1, expr_lambda2)
+	def expr_eq_2          (self, expr_lambda):                                    return expr_lambda
 
-	def expr_lambda_1   (self, expr_commas, COLON, expr_eq):                    return _expr_lambda (expr_commas, expr_eq)
-	def expr_lambda_2   (self, expr_mapsto):                                    return expr_mapsto
+	def expr_lambda_1      (self, expr_commas, COLON, expr_eq):                    return _expr_lambda (expr_commas, expr_eq)
+	def expr_lambda_2      (self, expr_mapsto):                                    return expr_mapsto
 
-	def expr_mapsto_1   (self, expr_paren, MAPSTO, expr_eq):                    return _expr_mapsto (expr_paren, expr_eq)
-	def expr_mapsto_3   (self, expr_piece):                                     return expr_piece
+	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_eq):                    return _expr_mapsto (expr_paren, expr_eq)
+	def expr_mapsto_3      (self, expr_piece):                                     return expr_piece
 
-	def expr_piece_1     (self, expr_ineq, IF, expr, ELSE, expr_lambda):
+	def expr_piece_1       (self, expr_ineq, IF, expr, ELSE, expr_lambda):
 		return \
 				AST ('piece', ((expr_ineq, expr),) + expr_lambda.pieces) \
 				if expr_lambda.is_piece else \
 				AST ('piece', ((expr_ineq, expr), (expr_lambda, True)))
 
-	def expr_piece_2     (self, expr_ineq, IF, expr):                           return AST ('piece', ((expr_ineq, expr),))
-	def expr_piece_3     (self, expr_ineq):                                     return expr_ineq
+	def expr_piece_2       (self, expr_ineq, IF, expr):                            return AST ('piece', ((expr_ineq, expr),))
+	def expr_piece_3       (self, expr_ineq):                                      return expr_ineq
 
-	def expr_ineq_2     (self, expr_add1, INEQ, expr_add2):                     return AST ('=', AST.Eq.ANY2PY.get (INEQ.text, INEQ.text), expr_add1, expr_add2)
-	def expr_ineq_3     (self, expr_add):                                       return expr_add
+	def expr_ineq_2        (self, expr_add1, INEQ, expr_add2):                     return AST ('=', AST.Eq.ANY2PY.get (INEQ.text, INEQ.text), expr_add1, expr_add2)
+	def expr_ineq_3        (self, expr_add):                                       return expr_add
 
-	def expr_add_1      (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2      (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, expr_mul_exp.neg (stack = True))
-	def expr_add_3      (self, expr_mul_exp):                                   return expr_mul_exp
+	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, expr_mul_exp)
+	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, expr_mul_exp.neg (stack = True))
+	def expr_add_3         (self, expr_mul_exp):                                   return expr_mul_exp
 
-	def expr_mul_exp_1  (self, expr_mul_exp, CDOT, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
-	def expr_mul_exp_2  (self, expr_mul_exp, STAR, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
-	def expr_mul_exp_3  (self, expr_neg):                                       return expr_neg
+	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
+	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
+	def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
 
-	def expr_neg_1      (self, MINUS, expr_neg):                                return expr_neg.neg (stack = True)
-	def expr_neg_2      (self, expr_diff):                                      return expr_diff
+	def expr_neg_1         (self, MINUS, expr_neg):                                return expr_neg.neg (stack = True)
+	def expr_neg_2         (self, expr_diff):                                      return expr_diff
 
-	def expr_diff       (self, expr_div):                                       return _expr_diff (expr_div)
+	def expr_diff          (self, expr_div):                                       return _expr_diff (expr_div)
 
-	def expr_div_1      (self, expr_div, DIVIDE, expr_mul_imp):                 return AST ('/', expr_div, expr_mul_imp)
-	def expr_div_2      (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, expr_mul_imp.neg (stack = True))
-	def expr_div_3      (self, expr_mul_imp):                                   return expr_mul_imp
+	def expr_div_1         (self, expr_div, DIVIDE, expr_mul_imp):                 return AST ('/', expr_div, expr_mul_imp)
+	def expr_div_2         (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, expr_mul_imp.neg (stack = True))
+	def expr_div_3         (self, expr_mul_imp):                                   return expr_mul_imp
 
-	def expr_mul_imp_1  (self, expr_mul_imp, expr_int):                         return _expr_mul_imp (expr_mul_imp, expr_int, self._USER_FUNCS)
-	def expr_mul_imp_2  (self, expr_int):                                       return expr_int
+	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                        return _expr_mul_imp (expr_mul_imp, expr_intg, self._USER_FUNCS)
+	def expr_mul_imp_2     (self, expr_intg):                                      return expr_intg
 
-	def expr_int_1      (self, INTG, expr_sub, expr_super, expr_add):           return _expr_int (expr_add, (expr_sub, expr_super))
-	def expr_int_2      (self, INTG, expr_add):                                 return _expr_int (expr_add)
-	def expr_int_3      (self, expr_lim):                                       return expr_lim
+	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):           return _expr_intg (expr_add, (expr_sub, expr_super))
+	def expr_intg_2        (self, INTG, expr_add):                                 return _expr_intg (expr_add)
+	def expr_intg_3        (self, expr_lim):                                       return expr_lim
 
-	def expr_lim_1      (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                           return AST ('lim', expr_neg, expr_var, expr)
-	def expr_lim_2      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):   return AST ('lim', expr_neg, expr_var, expr, '+')
-	def expr_lim_3      (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg):  return AST ('lim', expr_neg, expr_var, expr, '-')
-	def expr_lim_6      (self, expr_sum):                                                                         return expr_sum
+	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                           return AST ('lim', expr_neg, expr_var, expr)
+	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):   return AST ('lim', expr_neg, expr_var, expr, '+')
+	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg):  return AST ('lim', expr_neg, expr_var, expr, '-')
+	def expr_lim_6         (self, expr_sum):                                                                         return expr_sum
 
-	def expr_sum_1      (self, SUM, SUB, CURLYL, expr_var, EQ, expr, CURLYR, expr_super, expr_neg):               return AST ('sum', expr_neg, expr_var, expr, expr_super)
-	def expr_sum_2      (self, expr_func):                                                                        return expr_func
+	def expr_sum_1         (self, SUM, SUB, CURLYL, expr_var, EQ, expr, CURLYR, expr_super, expr_neg):               return AST ('sum', expr_neg, expr_var, expr, expr_super)
+	def expr_sum_2         (self, expr_func):                                                                        return expr_func
 
-	def expr_func_1     (self, SQRT, expr_neg_func):                            return _expr_func (1, 'sqrt', expr_neg_func)
-	def expr_func_2     (self, SQRT, BRACKL, expr, BRACKR, expr_neg_func):      return _expr_func (1, 'sqrt', expr_neg_func, expr)
-	def expr_func_3     (self, LOG, expr_neg_func):                             return _expr_func (1, 'log', expr_neg_func)
-	def expr_func_4     (self, LOG, expr_sub, expr_neg_func):                   return _expr_func (1, 'log', expr_neg_func, expr_sub)
-	def expr_func_5     (self, FUNC, expr_neg_func):                            return _expr_func_func (FUNC, expr_neg_func)
-	def expr_func_6     (self, FUNC, expr_super, expr_neg_func):
+	def expr_func_1        (self, SQRT, expr_neg_func):                            return _expr_func (1, 'sqrt', expr_neg_func)
+	def expr_func_2        (self, SQRT, BRACKL, expr, BRACKR, expr_neg_func):      return _expr_func (1, 'sqrt', expr_neg_func, expr)
+	def expr_func_3        (self, LOG, expr_neg_func):                             return _expr_func (1, 'log', expr_neg_func)
+	def expr_func_4        (self, LOG, expr_sub, expr_neg_func):                   return _expr_func (1, 'log', expr_neg_func, expr_sub)
+	def expr_func_5        (self, FUNC, expr_neg_func):                            return _expr_func_func (FUNC, expr_neg_func)
+	def expr_func_6        (self, FUNC, expr_super, expr_neg_func):
 		func = _FUNC_name (FUNC)
 
 		return \
@@ -2826,68 +2826,68 @@ class Parser (lalr1.Parser):
 				if expr_super.remove_curlys () != AST.NegOne or not AST ('func', func, ()).is_trigh_func_noninv else \
 				_expr_func_func (f'a{func}', expr_neg_func)
 
-	def expr_func_8     (self, expr_pow):                                       return expr_pow
+	def expr_func_8        (self, expr_pow):                                       return expr_pow
 
-	def expr_pow_1      (self, expr_pow, expr_super):                           return AST ('^', expr_pow, expr_super)
-	def expr_pow_2      (self, expr_fact):                                      return expr_fact
+	def expr_pow_1         (self, expr_pow, expr_super):                           return AST ('^', expr_pow, expr_super)
+	def expr_pow_2         (self, expr_fact):                                      return expr_fact
 
-	def expr_fact_1     (self, expr_fact, EXCL):                                return AST ('!', expr_fact)
-	def expr_fact_2     (self, expr_attr):                                      return expr_attr
+	def expr_fact_1        (self, expr_fact, EXCL):                                return AST ('!', expr_fact)
+	def expr_fact_2        (self, expr_attr):                                      return expr_attr
 
-	def expr_attr_1     (self, expr_attr, ATTR):                                return AST ('.', expr_attr, ATTR.grp [0] or ATTR.grp [1])
-	def expr_attr_2     (self, expr_abs):                                       return expr_abs
+	def expr_attr_1        (self, expr_attr, ATTR):                                return AST ('.', expr_attr, ATTR.grp [0] or ATTR.grp [1])
+	def expr_attr_2        (self, expr_abs):                                       return expr_abs
 
-	def expr_abs_1      (self, LEFT, BAR1, expr_commas, RIGHT, BAR2):           return AST ('|', expr_commas)
-	def expr_abs_2      (self, BAR1, expr_commas, BAR2):                        return AST ('|', expr_commas)
-	def expr_abs_3      (self, expr_paren):                                     return expr_paren
+	def expr_abs_1         (self, LEFT, BAR1, expr_commas, RIGHT, BAR2):           return AST ('|', expr_commas)
+	def expr_abs_2         (self, BAR1, expr_commas, BAR2):                        return AST ('|', expr_commas)
+	def expr_abs_3         (self, expr_paren):                                     return expr_paren
 
-	def expr_paren_1    (self, LEFT, PARENL, expr_commas, RIGHT, PARENR):       return AST ('(', expr_commas)
-	def expr_paren_2    (self, PARENL, expr_commas, PARENR):                    return AST ('(', expr_commas)
-	def expr_paren_3    (self, IGNORE_CURLY, CURLYL, expr, CURLYR):             return AST ('{', expr)
-	def expr_paren_4    (self, expr_frac):                                      return expr_frac
+	def expr_paren_1       (self, LEFT, PARENL, expr_commas, RIGHT, PARENR):       return AST ('(', expr_commas)
+	def expr_paren_2       (self, PARENL, expr_commas, PARENR):                    return AST ('(', expr_commas)
+	def expr_paren_3       (self, IGNORE_CURLY, CURLYL, expr, CURLYR):             return AST ('{', expr)
+	def expr_paren_4       (self, expr_frac):                                      return expr_frac
 
-	def expr_frac_1     (self, FRAC, expr_cases1, expr_cases2):                 return AST ('/', expr_cases1.remove_curlys (), expr_cases2.remove_curlys ())
-	def expr_frac_2     (self, FRAC1, expr_cases):                              return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_cases.remove_curlys ())
-	def expr_frac_3     (self, FRAC2):                                          return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
-	def expr_frac_4     (self, expr_cases):                                     return expr_cases
+	def expr_frac_1        (self, FRAC, expr_cases1, expr_cases2):                 return AST ('/', expr_cases1.remove_curlys (), expr_cases2.remove_curlys ())
+	def expr_frac_2        (self, FRAC1, expr_cases):                              return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_cases.remove_curlys ())
+	def expr_frac_3        (self, FRAC2):                                          return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
+	def expr_frac_4        (self, expr_cases):                                     return expr_cases
 
-	def expr_cases_1    (self, BEG_CASES, expr_casess, END_CASES):              return AST ('piece', expr_casess) # translate this on the fly?
-	def expr_cases_2    (self, expr_mat):                                       return expr_mat
-	def expr_casess_1   (self, expr_casessp, DBLSLASH):                         return expr_casessp
-	def expr_casess_2   (self, expr_casessp):                                   return expr_casessp
-	def expr_casessp_1  (self, expr_casessp, DBLSLASH, expr_casessc):           return expr_casessp + (expr_casessc,)
-	def expr_casessp_2  (self, expr_casessc):                                   return (expr_casessc,)
-	def expr_casessc_1  (self, expr_commas1, AMP, expr_commas2):                return (expr_commas1, expr_commas2)
-	def expr_casessc_2  (self, expr_commas, AMP):                               return (expr_commas, True)
+	def expr_cases_1       (self, BEG_CASES, expr_casess, END_CASES):              return AST ('piece', expr_casess) # translate this on the fly?
+	def expr_cases_2       (self, expr_mat):                                       return expr_mat
+	def expr_casess_1      (self, expr_casessp, DBLSLASH):                         return expr_casessp
+	def expr_casess_2      (self, expr_casessp):                                   return expr_casessp
+	def expr_casessp_1     (self, expr_casessp, DBLSLASH, expr_casessc):           return expr_casessp + (expr_casessc,)
+	def expr_casessp_2     (self, expr_casessc):                                   return (expr_casessc,)
+	def expr_casessc_1     (self, expr_commas1, AMP, expr_commas2):                return (expr_commas1, expr_commas2)
+	def expr_casessc_2     (self, expr_commas, AMP):                               return (expr_commas, True)
 
-	def expr_mat_1      (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return _expr_mat (expr_mat_rows) # translate these on the fly?
-	def expr_mat_2      (self, BEG_MAT, expr_mat_rows, END_MAT):                               return _expr_mat (expr_mat_rows)
-	def expr_mat_3      (self, BEG_BMAT, expr_mat_rows, END_BMAT):                             return _expr_mat (expr_mat_rows)
-	def expr_mat_4      (self, BEG_VMAT, expr_mat_rows, END_VMAT):                             return _expr_mat (expr_mat_rows)
-	def expr_mat_5      (self, BEG_PMAT, expr_mat_rows, END_PMAT):                             return _expr_mat (expr_mat_rows)
-	def expr_mat_6      (self, expr_curly):                                                    return expr_curly
-	def expr_mat_rows_1 (self, expr_mat_row, DBLSLASH):                         return expr_mat_row
-	def expr_mat_rows_2 (self, expr_mat_row):                                   return expr_mat_row
-	def expr_mat_rows_3 (self):                                                 return ()
-	def expr_mat_row_1  (self, expr_mat_row, DBLSLASH, expr_mat_col):           return expr_mat_row + (expr_mat_col,)
-	def expr_mat_row_2  (self, expr_mat_col):                                   return (expr_mat_col,)
-	def expr_mat_col_1  (self, expr_mat_col, AMP, expr_commas):                 return expr_mat_col + (expr_commas,)
-	def expr_mat_col_2  (self, expr_commas):                                    return (expr_commas,)
+	def expr_mat_1         (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return _expr_mat (expr_mat_rows) # translate these on the fly?
+	def expr_mat_2         (self, BEG_MAT, expr_mat_rows, END_MAT):                               return _expr_mat (expr_mat_rows)
+	def expr_mat_3         (self, BEG_BMAT, expr_mat_rows, END_BMAT):                             return _expr_mat (expr_mat_rows)
+	def expr_mat_4         (self, BEG_VMAT, expr_mat_rows, END_VMAT):                             return _expr_mat (expr_mat_rows)
+	def expr_mat_5         (self, BEG_PMAT, expr_mat_rows, END_PMAT):                             return _expr_mat (expr_mat_rows)
+	def expr_mat_6         (self, expr_curly):                                                    return expr_curly
+	def expr_mat_rows_1    (self, expr_mat_row, DBLSLASH):                         return expr_mat_row
+	def expr_mat_rows_2    (self, expr_mat_row):                                   return expr_mat_row
+	def expr_mat_rows_3    (self):                                                 return ()
+	def expr_mat_row_1     (self, expr_mat_row, DBLSLASH, expr_mat_col):           return expr_mat_row + (expr_mat_col,)
+	def expr_mat_row_2     (self, expr_mat_col):                                   return (expr_mat_col,)
+	def expr_mat_col_1     (self, expr_mat_col, AMP, expr_commas):                 return expr_mat_col + (expr_commas,)
+	def expr_mat_col_2     (self, expr_commas):                                    return (expr_commas,)
 
-	def expr_curly_1    (self, CURLYL, expr_commas, CURLYR):                    return _expr_curly (expr_commas)
-	def expr_curly_2    (self, expr_bracket):                                   return expr_bracket
+	def expr_curly_1       (self, CURLYL, expr_commas, CURLYR):                    return _expr_curly (expr_commas)
+	def expr_curly_2       (self, expr_bracket):                                   return expr_bracket
 
-	def expr_bracket_1  (self, LEFT, BRACKL, expr_commas, RIGHT, BRACKR):       return AST ('[', expr_commas.commas if expr_commas.is_comma else (expr_commas,))
-	def expr_bracket_2  (self, BRACKL, expr_commas, BRACKR):                    return AST ('[', expr_commas.commas if expr_commas.is_comma else (expr_commas,))
-	def expr_bracket_3  (self, expr_term):                                      return expr_term
+	def expr_bracket_1     (self, LEFT, BRACKL, expr_commas, RIGHT, BRACKR):       return AST ('[', expr_commas.commas if expr_commas.is_comma else (expr_commas,))
+	def expr_bracket_2     (self, BRACKL, expr_commas, BRACKR):                    return AST ('[', expr_commas.commas if expr_commas.is_comma else (expr_commas,))
+	def expr_bracket_3     (self, expr_term):                                      return expr_term
 
-	def expr_term_1     (self, expr_num):                                       return expr_num
-	def expr_term_2     (self, expr_var):                                       return expr_var
-	def expr_term_3     (self, STR):                                            return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1]))
-	def expr_term_4     (self, SUB):                                            return AST ('@', '_') # for last expression variable
+	def expr_term_1        (self, expr_num):                                       return expr_num
+	def expr_term_2        (self, expr_var):                                       return expr_var
+	def expr_term_3        (self, STR):                                            return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1]))
+	def expr_term_4        (self, SUB):                                            return AST ('@', '_') # for last expression variable
 
-	def expr_num        (self, NUM):                                            return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
-	def expr_var        (self, VAR):
+	def expr_num           (self, NUM):                                            return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
+	def expr_var           (self, VAR):
 		var = \
 				'partial' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
 				if VAR.grp [0] else \
@@ -2899,18 +2899,18 @@ class Parser (lalr1.Parser):
 
 		return AST ('@', var + '_prime' * len (VAR.grp [4]))
 
-	def expr_sub_1      (self, SUB, expr_frac):                                 return expr_frac
-	def expr_sub_2      (self, SUB1):                                           return _ast_from_tok_digit_or_var (SUB1)
+	def expr_sub_1         (self, SUB, expr_frac):                                 return expr_frac
+	def expr_sub_2         (self, SUB1):                                           return _ast_from_tok_digit_or_var (SUB1)
 
-	def expr_super_1    (self, DBLSTAR, expr_neg_func):                         return expr_neg_func
-	def expr_super_3    (self, CARET, expr_frac):                               return expr_frac
-	def expr_super_4    (self, CARET1):                                         return _ast_from_tok_digit_or_var (CARET1)
+	def expr_super_1       (self, DBLSTAR, expr_neg_func):                         return expr_neg_func
+	def expr_super_3       (self, CARET, expr_frac):                               return expr_frac
+	def expr_super_4       (self, CARET1):                                         return _ast_from_tok_digit_or_var (CARET1)
 
-	def expr_neg_func_1 (self, MINUS, expr_neg_func):                           return expr_neg_func.neg (stack = True)
-	def expr_neg_func_2 (self, expr_func):                                      return expr_func
+	def expr_neg_func_1    (self, MINUS, expr_neg_func):                           return expr_neg_func.neg (stack = True)
+	def expr_neg_func_2    (self, expr_func):                                      return expr_func
 
-	def caret_or_dblstar_1 (self, DBLSTAR):                                     return '**'
-	def caret_or_dblstar_2 (self, CARET):                                       return '^'
+	def caret_or_dblstar_1 (self, DBLSTAR):                                        return '**'
+	def caret_or_dblstar_2 (self, CARET):                                          return '^'
 
 	#...............................................................................................
 	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not necessarily expression
@@ -3009,7 +3009,7 @@ class Parser (lalr1.Parser):
 
 		return self._insert_symbol ('CURLYR')
 
-	def _parse_autocomplete_expr_int (self):
+	def _parse_autocomplete_expr_intg (self):
 		s               = self.stack [-1]
 		self.stack [-1] = lalr1.State (s.idx, s.sym, AST ('*', (s.red, AST.VarNull)))
 		expr_vars       = set ()
@@ -3071,8 +3071,8 @@ class Parser (lalr1.Parser):
 			return self._parse_autocomplete_expr_commas (rule, pos)
 
 		if pos >= len (rule [1]): # end of rule
-			if rule [0] == 'expr_int': # TODO: Fix this!
-				return self._parse_autocomplete_expr_int ()
+			if rule [0] == 'expr_intg': # TODO: Fix this!
+				return self._parse_autocomplete_expr_intg ()
 
 			return False
 

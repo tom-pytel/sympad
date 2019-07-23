@@ -242,6 +242,7 @@ def expr_piece ():
 def expr_lamb ():
 	return f'lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr ()}'
 
+#...............................................................................................
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
 
 def expr (allow_lamb = 0, depth = None):
