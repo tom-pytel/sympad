@@ -30,7 +30,7 @@
 # ('intg', expr, var, from, to)      - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('vec', (e1, e2, ...))             - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
-# ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST
+# ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('lamb', expr, (v1, v2, ...))      - lambda expression: v = ('@', 'var')
 # ('idx', expr, (i0, i1, ...))       - indexing: expr [i0, i1, ...]
 
@@ -439,8 +439,6 @@ class AST_Vec (AST):
 
 	def _init (self, vec):
 		self.vec = vec
-
-	# _len = lambda self: len (self.vec)
 
 class AST_Mat (AST):
 	op, is_mat = 'mat', True

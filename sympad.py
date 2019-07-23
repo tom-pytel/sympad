@@ -1499,7 +1499,7 @@ class lalr1: # for single script
 # ('intg', expr, var, from, to)      - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('vec', (e1, e2, ...))             - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
-# ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST
+# ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('lamb', expr, (v1, v2, ...))      - lambda expression: v = ('@', 'var')
 # ('idx', expr, (i0, i1, ...))       - indexing: expr [i0, i1, ...]
 
@@ -1908,8 +1908,6 @@ class AST_Vec (AST):
 
 	def _init (self, vec):
 		self.vec = vec
-
-	# _len = lambda self: len (self.vec)
 
 class AST_Mat (AST):
 	op, is_mat = 'mat', True
@@ -3103,10 +3101,12 @@ class Parser (lalr1.Parser):
 		if os.environ.get ('SYMPAD_DEBUG'):
 			rated = list (rated)
 			print (file = sys.stderr)
-			for res in rated:
+			for res in rated [:32]:
 				res = res [-1]
 				res = (res [0].remove_curlys (),) + res [1:] if isinstance (res [0], AST) else res
 				print ('parse:', res, file = sys.stderr)
+			if len (rated) > 32:
+				print (f'... total {len (rated)}', file = sys.stderr)
 			print (file = sys.stderr)
 
 		res = next (iter (rated)) [-1]
@@ -3116,11 +3116,11 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r'a, lambda: (b = 1) = 0') [0]
-	# a = sym.ast2spt (a)
-	print (a)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	a = p.parse (r'a, lambda: (b = 1) = 0') [0]
+# 	# a = sym.ast2spt (a)
+# 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
 # TODO: Exponential notation in latex.

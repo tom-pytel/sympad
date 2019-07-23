@@ -1098,10 +1098,12 @@ class Parser (lalr1.Parser):
 		if os.environ.get ('SYMPAD_DEBUG'):
 			rated = list (rated)
 			print (file = sys.stderr)
-			for res in rated:
+			for res in rated [:32]:
 				res = res [-1]
 				res = (res [0].remove_curlys (),) + res [1:] if isinstance (res [0], AST) else res
 				print ('parse:', res, file = sys.stderr)
+			if len (rated) > 32:
+				print (f'... total {len (rated)}', file = sys.stderr)
 			print (file = sys.stderr)
 
 		res = next (iter (rated)) [-1]
@@ -1111,9 +1113,9 @@ class Parser (lalr1.Parser):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r'a, lambda: (b = 1) = 0') [0]
-	# a = sym.ast2spt (a)
-	print (a)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	a = p.parse (r'a, lambda: (b = 1) = 0') [0]
+# 	# a = sym.ast2spt (a)
+# 	print (a)
