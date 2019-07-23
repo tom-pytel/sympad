@@ -476,7 +476,7 @@ _ast2nat_funcs = {
 	'intg': _ast2nat_intg,
 	'vec': lambda ast: f'{{{", ".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
-	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], {"piece", "lamb"}, {"=", ","})}' if p [1] is True else f'{_ast2nat_wrap (p [0], {"piece", "lamb"}, {"=", ","})} if {_ast2nat_curly (p [1], {"piece", "lamb"})}' for p in ast.pieces),
+	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], {"piece", "lamb", "="}, {","})}' if p [1] is True else f'{_ast2nat_wrap (p [0], {"piece", "lamb", "="}, {","})} if {_ast2nat_wrap (p [1], {"piece", "lamb", "="}, {","})}' for p in ast.pieces),
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {_ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
 	'idx': lambda ast: f'{ast2nat (ast.obj)}[{ast2nat (_tuple2ast (ast.idx))}]',
 

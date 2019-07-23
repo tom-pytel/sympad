@@ -115,6 +115,7 @@ partial'
 ln((a)**b)
 a * \int dx + {\int dx dx}
 Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
+1 if {a = x if z} else 0 if y
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!
