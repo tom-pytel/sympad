@@ -54,7 +54,7 @@ Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
 ('-', ('lamb', ('@', 'dx'), (('@', 'x'), ('@', 'y'), ('@', 'z'))))
 {{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'str'}}}
 {{lambda: {-1}} \cdot {\frac{partialx}{oo}} \cdot {{1.0} if {1} else {a'} if {0}}}
-{{{a'} / {-1}} {\lim_{x \to partial} {-1}} {lambda x, y, z: {partialx}}}
+{{{a'} / {-1}} {\lim_{x \to partial} {-1}} * [lambda x, y, z: {partialx}]}
 \int_{\sqrt[{a}]{1.0}}^{[]} {lambda x: {partialx}} dx
 lambda x: {{dx} = {dx}}
 {{\lim_{x \to {{oo},}} {\frac{d}{d}}}  {{{{{partialx} \cdot {a'}}} \cdot {{{a'}*{'str'}}}}}}
@@ -73,7 +73,7 @@ lambda x: {{dx} = {dx}}
 {\lim_{x \to -1.0} {dx}} > {{oo} if {-1.0} else {d} if {d} else {1}}
 \frac{{-1.0} > {oo}}{\ln{-1.0}}
 {{{{{{0},},}},{|{d}|},},{{({1.0},{1})},{[{oo}]},},}
-1/2 * {a+b} lambda: {d}
+1/2 * {a+b} [lambda: {d}]
 {{{'str'} < {1.0}} \cdot {({a'})} \cdot {{1} if {a'}}}
 -{1.0 if partial else d if 1 else oo if 1.0 else 'str'}
 {partial^{5} / partialy^{2} partialy^{2} partialy^{1} {partial}}^{{-1.0} > {d}}
@@ -89,9 +89,8 @@ Limit (\sum_{x = oo}^{partial} {-1.0}, x, \sec({-1.0},{-1},{partialx}))
 lambda x: {{a} = {dx}}
 {{{d}^{oo}}*{{a}^{d}}}
 {{oo} if {oo}} = {is_mersenne_prime({'str'})}
-\lim_{x \to 0} {sqrt(dx) lambda x, y: -1.0}
+\lim_{x \to 0} {sqrt(dx) + [lambda x, y: -1.0]}
 {{\frac{\int_{a}^{1} {dx} dx}{{{oo} \cdot {d} \cdot {dx}}}}}
-\frac{{{lambda x, y: {({{1},{partial},})}}*{lambda: {-{1}}}}}{\sum_{x = {({{d},})} / {{partialx} if {0} else {dx} if {partialx} else {d} if {partial}}}^{{{{1} = {partial}}  {\sum_{x = partial}^{-1} {oo}}}} {-{{{'str'}  {1}}}}}
 \int d/dx dx
 (((-1)**partial)**({a_prime, oo, 'str'}))**-{-{0}}
 Limit ({{{0}^{'str'}}  {\left|{a}\right|}  {({a},{a'})}}, x, lambda x: {{1}!})
@@ -104,7 +103,6 @@ cofactors( 1 , {lambda x: 1 = lambda: 2} )
 {Sum (\int {1} dx, (x, 0, 1))} dx
 {{\sum_{x = \left|{0}\right|}^{\tan({-1.0})} {\int_{partialx}^{oo} {d} dx}}+{{{\lim_{x \to 1} {d}} \cdot {{{a'}+{-1}+{dx}}}}}+{{{{a} = {a'}}+{({{{dx},},{{0},},{{d},},})}+{{{dx}*{dx}*{a'}}}}}}
 log(partialx*'str'*partialx) / log(Derivative(a, z, 3, y, 2))
-abs(e**sqrt1, abs(-1.0))
 dpartial
 a, lambda: b = 1
 \exp({a},{-1},{1})
