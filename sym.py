@@ -108,7 +108,7 @@ def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'=', '+'}):
 	return (s, has) if ret_has else s
 
 def _ast2tex_eq_hs (ast, hs, lhs = True):
-	return _ast2tex_wrap (hs, 0, (hs.is_ass or (lhs and hs.is_piece)) if ast.is_ass else {'=', 'piece'})
+	return _ast2tex_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {',', 'piece'})) if ast.is_ass else {'=', 'piece'})
 
 def _ast2tex_num (ast):
 	m, e = ast.mant_and_exp
@@ -166,7 +166,7 @@ def _ast2tex_mul (ast, ret_has = False):
 		if p and p.is_attr and s [:6] == '\\left(':
 			s = _ast2tex_wrap (s, 1)
 
-		if p and (n.op in {'!', '#', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
+		if p and (n.op in {'#', '[', '!', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/'}) or _ast_is_neg (n) or \
 				(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo)))):
 			t.append (f' \\cdot {s}')
@@ -354,7 +354,7 @@ def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {}):
 	return (s, has) if ret_has else s
 
 def _ast2nat_eq_hs (ast, hs, lhs = True):
-	return _ast2nat_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {'piece', 'lamb'})) if ast.is_ass else {'=', 'piece', 'lamb'})
+	return _ast2nat_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {',', 'piece', 'lamb'})) if ast.is_ass else {'=', 'piece', 'lamb'})
 
 def _ast2nat_add (ast):
 	return ' + '.join (_ast2nat_wrap (n, \
@@ -372,7 +372,7 @@ def _ast2nat_mul (ast, ret_has = False):
 				_ast_is_neg (n) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.muls [-1]), \
 				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.muls [-1]))
 
-		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
+		if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
 				(n.is_pow and n.base.is_pos_num) or \
 				n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'}):
 			t.append (f' * {s}')

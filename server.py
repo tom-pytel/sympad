@@ -34,9 +34,8 @@ usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrows
 """
 
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
-	sys.path.insert (0, '') # allow importing from current directory
+	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
-	import sympy as sp
 	import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -329,6 +328,8 @@ class Handler (SimpleHTTPRequestHandler):
 				ast = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
+					import sympy as sp
+
 					print ('spt:        ', repr (spt), file = sys.stderr)
 					print ('spt type:   ', type (spt), file = sys.stderr)
 					print ('sympy latex:', sp.latex (spt), file = sys.stderr)

@@ -1,3 +1,4 @@
+// TODO: clear() function to delete old log items.
 // TODO: Change input to text field for longer expression support.
 // TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.

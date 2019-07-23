@@ -324,8 +324,8 @@ The "<b>@(expr)</b>" function technically prevents variable remapping for the ex
 
 <h2>Functions</h2>
 <p>
-There are two types of functions made available in SymPad - all the SymPy functions are available directly just by typing their name, as well as user created lambda functions assigned to variables.
-In addition, member functions of objects are supported an callable like "<b>Matrix ([1,2,3]).transpose ()</b>".
+There are two types of functions made available in SymPad - all the SymPy native functions are available directly just by typing their name (a few escaped with "<b>$</b>"), as well as user created lambda functions assigned to variables.
+In addition, member functions of objects are supported and callable like "<b>Matrix ([1,2,3]).transpose ()</b>".
 All functions may take multiple comma-separated arguments and the SymPy functions also optionally take keyword arguments.
 </p>
 
@@ -404,12 +404,16 @@ There is a special use for the "<b>_</b>" underscore character which is the same
 To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
 Repeat this several times using the up arrow.
 </p><p>
+After filling up the browser with many pretty mathematical expressions you may note that it starts to get slower, simply reload the page, all your variables and history will be preserved.
+</p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
 You can always tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
 Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name (this only works for top-level functions).
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
+</p><p>
+SymPad inserts the current working directory at the beginning of the Python module search path which means that for example if you run SymPad in the SymPy development directory then the SymPy module used will be the development version.
 </p><p>
 There are many SymPy objects which SymPad does not understand natively yet.
 In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the element will be used in the native representation string.

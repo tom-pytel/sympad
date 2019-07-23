@@ -168,7 +168,8 @@ body {
 
 	'script.js': # script.js
 
-r"""// TODO: Change input to text field for longer expression support.
+r"""// TODO: clear() function to delete old log items.
+// TODO: Change input to text field for longer expression support.
 // TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.
 // TODO: Stupid scrollbars...
@@ -1129,8 +1130,8 @@ The "<b>@(expr)</b>" function technically prevents variable remapping for the ex
 
 <h2>Functions</h2>
 <p>
-There are two types of functions made available in SymPad - all the SymPy functions are available directly just by typing their name, as well as user created lambda functions assigned to variables.
-In addition, member functions of objects are supported an callable like "<b>Matrix ([1,2,3]).transpose ()</b>".
+There are two types of functions made available in SymPad - all the SymPy native functions are available directly just by typing their name (a few escaped with "<b>$</b>"), as well as user created lambda functions assigned to variables.
+In addition, member functions of objects are supported and callable like "<b>Matrix ([1,2,3]).transpose ()</b>".
 All functions may take multiple comma-separated arguments and the SymPy functions also optionally take keyword arguments.
 </p>
 
@@ -1209,12 +1210,16 @@ There is a special use for the "<b>_</b>" underscore character which is the same
 To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
 Repeat this several times using the up arrow.
 </p><p>
+After filling up the browser with many pretty mathematical expressions you may note that it starts to get slower, simply reload the page, all your variables and history will be preserved.
+</p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
 You can always tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
 Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name (this only works for top-level functions).
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
+</p><p>
+SymPad inserts the current working directory at the beginning of the Python module search path which means that for example if you run SymPad in the SymPy development directory then the SymPy module used will be the development version.
 </p><p>
 There are many SymPy objects which SymPad does not understand natively yet.
 In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the element will be used in the native representation string.
@@ -2670,7 +2675,7 @@ class Parser (lalr1.Parser):
 	TOKENS    = OrderedDict ([ # order matters
 		('SQRT',          r'sqrt\b|\\sqrt(?!{_LETTER})'),
 		('LOG',           r'log\b|\\log(?!{_LETTER})'),
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|(\${_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LETTERU})|(\${_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|\$?{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 		('LIM',          fr'\\lim(?!{_LETTER})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LETTER})|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LETTER})|{_UINTG}'),
@@ -3113,7 +3118,7 @@ class sparser: # for single script
 
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 	p = Parser ()
-	a = p.parse (r'diff (1/x, 1') [0]
+	a = p.parse (r'a, lambda: (b = 1) = 0') [0]
 	# a = sym.ast2spt (a)
 	print (a)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
@@ -3224,7 +3229,7 @@ def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'=', '+'}):
 	return (s, has) if ret_has else s
 
 def _ast2tex_eq_hs (ast, hs, lhs = True):
-	return _ast2tex_wrap (hs, 0, (hs.is_ass or (lhs and hs.is_piece)) if ast.is_ass else {'=', 'piece'})
+	return _ast2tex_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {',', 'piece'})) if ast.is_ass else {'=', 'piece'})
 
 def _ast2tex_num (ast):
 	m, e = ast.mant_and_exp
@@ -3282,7 +3287,7 @@ def _ast2tex_mul (ast, ret_has = False):
 		if p and p.is_attr and s [:6] == '\\left(':
 			s = _ast2tex_wrap (s, 1)
 
-		if p and (n.op in {'!', '#', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
+		if p and (n.op in {'#', '[', '!', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/'}) or _ast_is_neg (n) or \
 				(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo)))):
 			t.append (f' \\cdot {s}')
@@ -3470,7 +3475,7 @@ def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {}):
 	return (s, has) if ret_has else s
 
 def _ast2nat_eq_hs (ast, hs, lhs = True):
-	return _ast2nat_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {'piece', 'lamb'})) if ast.is_ass else {'=', 'piece', 'lamb'})
+	return _ast2nat_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {',', 'piece', 'lamb'})) if ast.is_ass else {'=', 'piece', 'lamb'})
 
 def _ast2nat_add (ast):
 	return ' + '.join (_ast2nat_wrap (n, \
@@ -3488,7 +3493,7 @@ def _ast2nat_mul (ast, ret_has = False):
 				_ast_is_neg (n) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.muls [-1]), \
 				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.muls [-1]))
 
-		if p and (n.op in {'!', '#', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
+		if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
 				(n.is_pow and n.base.is_pos_num) or \
 				n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'}):
 			t.append (f' * {s}')
@@ -4064,9 +4069,8 @@ usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrows
 """
 
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
-	sys.path.insert (0, '') # allow importing from current directory
+	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
-	import sympy as sp
 
 	_VAR_LAST   = '_'
 	_START_VARS = {
@@ -4355,6 +4359,8 @@ class Handler (SimpleHTTPRequestHandler):
 				ast = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
+					import sympy as sp
+
 					print ('spt:        ', repr (spt), file = sys.stderr)
 					print ('spt type:   ', type (spt), file = sys.stderr)
 					print ('sympy latex:', sp.latex (spt), file = sys.stderr)

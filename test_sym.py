@@ -116,6 +116,8 @@ ln((a)**b)
 a * \int dx + {\int dx dx}
 Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 1 if {a = x if z} else 0 if y
+a, lambda: b = 1 = 0
+a * [2]
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!
@@ -315,8 +317,15 @@ def test ():
 	global DEPTH, CURLYS
 
 	_DEPTH  = 3
-	opts, _ = getopt (sys.argv [1:] or ['-tnp'], 'tnpid:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth='])
+	single  = None
+	opts, _ = getopt (sys.argv [1:] or ['-tnp'], 'tnpid:x:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth=', 'expr='])
 	parser  = sparser.Parser ()
+
+	for opt, arg in opts:
+		if opt in ('-d', '--depth'):
+			_DEPTH = int (arg)
+		elif opt in ('-x', '--expr'):
+			single = [arg]
 
 	if ('--dump', '') in opts:
 		DEPTH = 0
@@ -326,19 +335,15 @@ def test ():
 
 		sys.exit (0)
 
-	for opt, arg in opts:
-		if opt in ('-d', '--depth'):
-			_DEPTH = int (arg)
-
 	dotex  = ('--tex', '') in opts or ('-t', '') in opts
 	donat  = ('--nat', '') in opts or ('-n', '') in opts
 	dopy   = ('--py', '') in opts or ('-p', '') in opts
 	CURLYS = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
 
-	if ('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts:
+	if (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts) and not single:
 		expr_func = lambda: expr (1, _DEPTH)
 	else:
-		expr_func = iter (_EXPRESSIONS).__next__
+		expr_func = iter (single or _EXPRESSIONS).__next__
 
 	try:
 		while 1:
@@ -417,7 +422,7 @@ def test ():
 					print ('py:  ', ast_py)
 
 				print ()
-				print ('FOUND ONE!')
+				print ('FAILED!')
 
 				sys.exit (0)
 

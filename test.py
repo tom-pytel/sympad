@@ -193,6 +193,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)'), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)'), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
 		self.assertEqual (p ('eye (2).is_diagonal ()'), ('.', ('func', 'eye', (('#', '2'),)), 'is_diagonal', ()))
+		self.assertEqual (p ('a [2]'), ('idx', ('@', 'a'), (('#', '2'),)))
+		self.assertEqual (p ('a [2,3]'), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
+		self.assertEqual (p ('a * [2]'), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -359,6 +362,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), '\\left(x \\mapsto x^2 \\right)')
 		self.assertEqual (ast2tex (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), '\\left(\\left(x, y \\right) \\mapsto x + y \\right)')
 		self.assertEqual (ast2tex (p ('eye (2).is_diagonal ()')), '\\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix}.\\operatorname{is\\_diagonal}\\left( \\right)')
+		self.assertEqual (ast2tex (p ('a [2]')), 'a[2]')
+		self.assertEqual (ast2tex (p ('a [2,3]')), 'a[2, 3]')
+		self.assertEqual (ast2tex (p ('a * [2]')), 'a \\cdot \\left[2 \\right]')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -525,6 +531,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), '(lambda x: x**2)')
 		self.assertEqual (ast2nat (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), '(lambda x, y: x + y)')
 		self.assertEqual (ast2nat (p ('eye (2).is_diagonal ()')), 'eye(2).is_diagonal()')
+		self.assertEqual (ast2nat (p ('a [2]')), 'a[2]')
+		self.assertEqual (ast2nat (p ('a [2,3]')), 'a[2, 3]')
+		self.assertEqual (ast2nat (p ('a * [2]')), 'a * [2]')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -691,6 +700,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), '(lambda x: x**2)')
 		self.assertEqual (ast2py (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), '(lambda x, y: x + y)')
 		self.assertEqual (ast2py (p ('eye (2).is_diagonal ()')), 'eye(2).is_diagonal()')
+		self.assertEqual (ast2py (p ('a [2]')), 'a[2]')
+		self.assertEqual (ast2py (p ('a [2,3]')), 'a[2, 3]')
+		self.assertEqual (ast2py (p ('a * [2]')), 'a*[2]')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -857,6 +869,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2tex2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
 		self.assertEqual (ast2tex2ast (p ('eye (2).is_diagonal ()')), ('.', ('mat', ((('#', '1'), ('#', '0')), (('#', '0'), ('#', '1')))), 'is\\_diagonal', ()))
+		self.assertEqual (ast2tex2ast (p ('a [2]')), ('idx', ('@', 'a'), (('#', '2'),)))
+		self.assertEqual (ast2tex2ast (p ('a [2,3]')), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
+		self.assertEqual (ast2tex2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1023,6 +1038,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2nat2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
 		self.assertEqual (ast2nat2ast (p ('eye (2).is_diagonal ()')), ('.', ('func', 'eye', (('#', '2'),)), 'is_diagonal', ()))
+		self.assertEqual (ast2nat2ast (p ('a [2]')), ('idx', ('@', 'a'), (('#', '2'),)))
+		self.assertEqual (ast2nat2ast (p ('a [2,3]')), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
+		self.assertEqual (ast2nat2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1189,6 +1207,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2py2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
 		self.assertEqual (ast2py2ast (p ('eye (2).is_diagonal ()')), ('.', ('func', 'eye', (('#', '2'),)), 'is_diagonal', ()))
+		self.assertEqual (ast2py2ast (p ('a [2]')), ('idx', ('@', 'a'), (('#', '2'),)))
+		self.assertEqual (ast2py2ast (p ('a [2,3]')), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
+		self.assertEqual (ast2py2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1355,6 +1376,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (ast2spt2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('lamb', ('+', (('@', 'y'), ('@', 'x'))), (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('eye (2).is_diagonal ()')), ('@', 'True'))
+		self.assertRaises (TypeError, ast2spt2ast, p ('a [2]'))
+		self.assertRaises (TypeError, ast2spt2ast, p ('a [2,3]'))
+		self.assertRaises (SympifyError, ast2spt2ast, p ('a * [2]'))
 
 _EXPRESSIONS = """
 1
@@ -1521,6 +1545,9 @@ a lambda x, y: x + y
 \\left(\\left(x \\right) \\mapsto x^2 \\right)
 \\left(\\left(x, y \\right) \\mapsto x + y \\right)
 eye (2).is_diagonal ()
+a [2]
+a [2,3]
+a * [2]
 """
 
 if __name__ == '__main__':
