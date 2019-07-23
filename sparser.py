@@ -8,7 +8,7 @@
 # sympy function/variable module prefix
 # systems of equations, ODEs, graphical plots (using matplotlib?)...
 
-# TODO: indexing
+# TODO: indexing - slices
 # TODO: change func xlat to work with python tupler args instead of AST commas tuple
 # TODO: multiple vector weirdness
 # TODO: _xlat_func_Integral multiple integrals
@@ -113,12 +113,18 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 			elif rhs.is_attr:
 				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, rhs.obj), rhs.attr))
 
-	elif last.is_var:
+	elif last.is_var: # user_func * () -> user_func ()
 		if last.var in user_funcs:
 			if arg.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
 			elif arg.is_attr and arg.obj.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg.obj)))
+
+	if arg.is_brack: # x * [y] -> x [y]
+		if not arg.brack:
+			raise SyntaxError ('missing index')
+
+		ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
 		return AST ('*', lhs.muls [:-1] + (ast,)) if lhs.is_mul else ast
@@ -236,7 +242,6 @@ def _ast_strip_tail_differential (ast):
 					(neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv) \
 					if len (ast.dvs) == 1 else \
 					(neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
-			# raise NotImplementedError ('changing differential to ordinary fraction')
 
 	elif ast.is_div:
 		ast2, neg = ast.denom.strip_minus (retneg = True)
@@ -362,26 +367,26 @@ def _xlat_func_Limit (ast): # translate function 'Limit' to native ast represent
 	raise lalr1.Incomplete (ast)
 
 def _xlat_func_Matrix (ast):
-	if ast.is_brack and ast.bracks:
-		if not ast.bracks [0].is_brack: # single layer or brackets, column matrix?
-			return AST ('vec', ast.bracks)
+	if ast.is_brack and ast.brack:
+		if not ast.brack [0].is_brack: # single layer or brackets, column matrix?
+			return AST ('vec', ast.brack)
 
-		elif ast.bracks [0].bracks:
-			rows = [ast.bracks [0].bracks]
+		elif ast.brack [0].brack:
+			rows = [ast.brack [0].brack]
 			cols = len (rows [0])
 
-			for row in ast.bracks [1 : -1]:
-				if len (row.bracks) != cols:
+			for row in ast.brack [1 : -1]:
+				if len (row.brack) != cols:
 					break
 
-				rows.append (row.bracks)
+				rows.append (row.brack)
 
 			else:
-				l = len (ast.bracks [-1].bracks)
+				l = len (ast.brack [-1].brack)
 
 				if l <= cols:
-					if len (ast.bracks) > 1:
-						rows.append (ast.bracks [-1].bracks + (AST.VarNull,) * (cols - l))
+					if len (ast.brack) > 1:
+						rows.append (ast.brack [-1].brack + (AST.VarNull,) * (cols - l))
 
 					if l != cols:
 						raise lalr1.Incomplete (AST ('mat', tuple (rows)))

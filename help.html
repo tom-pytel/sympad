@@ -262,6 +262,12 @@ Currently only a single comparison is allowed so an expression like "<b>0 &lt;= 
 Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a lower precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
 </p>
 
+<h4>Indexing</h4>
+
+<p>
+<span style="color: red">This...</span>
+</p>
+
 <h4>Parentheses</h4>
 
 <p>
@@ -375,7 +381,7 @@ This means that those function names could be encoded in the grammar and never b
 This was not very elegant so a workaround has been implemented as follows:
 The function names have been left out of the grammar but user lambdas are created for them on startup so that they may be used as functions.
 If you wish to use those letters as variables instead then simply delete the defined lambdas and those letters will behave as variables once more.
-You can always redefine the lambdas yourself if you want them back, the format is simple - "<b>beta = lambda x, y: %$beta (x, y)</b>".
+You can always redefine the lambdas yourself if you want them back, the format is as follows - "<b>beta = lambda x, y: %$beta (x, y)</b>".
 </p>
 
 <h2>Notes</h2>

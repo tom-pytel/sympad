@@ -9,7 +9,7 @@ from sast import AST
 import sym
 import sparser
 
-# Piecewise((1,2), (partialx = lambda: a, lambda: b, True))
+# TODO: indexing
 
 TERMS = [
 	'0',

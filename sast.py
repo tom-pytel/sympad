@@ -9,7 +9,7 @@
 # (',', (expr1, expr2, ...))         - comma expression (tuple)
 # ('{', expr)                        - invilible parentheses for grouping
 # ('(', expr)                        - explicit parentheses
-# ('[', expr)                        - brackets
+# ('[', expr)                        - brackets (list, not index)
 # ('|', expr)                        - absolute value
 # ('-', expr)                        - negative of expression, negative numbers are represented with this at least initially
 # ('!', expr)                        - factorial
@@ -32,16 +32,13 @@
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 # ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST
 # ('lamb', expr, (v1, v2, ...))      - lambda expression: v = ('@', 'var')
-
-# TODO: Add zeta and Gamma unicode character functions.
+# ('idx', expr, (i0, i1, ...))       - indexing: expr [i0, i1, ...]
 
 import re
 import types
 
 import sympy as sp
 
-# _SYMPY_OBJECTS = dict ((name, obj) for name, obj in \
-# 		filter (lambda no: no [0] [0] != '_' and len (no [0]) >= 2 and not isinstance (no [1], types.ModuleType), sp.__dict__.items ()))
 _SYMPY_OBJECTS = dict ((name, obj) for name, obj in filter (lambda no: no [0] [0] != '_', sp.__dict__.items ()))
 _SYMPY_FUNCS   = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and callable (no [1]), _SYMPY_OBJECTS.items ()))
 
@@ -307,10 +304,10 @@ class AST_Paren (AST):
 class AST_Brack (AST):
 	op, is_brack = '[', True
 
-	def _init (self, bracks):
-		self.bracks = bracks
+	def _init (self, brack):
+		self.brack = brack
 
-	# _len = lambda self: len (self.bracks)
+	# _len = lambda self: len (self.brack)
 
 class AST_Abs (AST):
 	op, is_abs = '|', True
@@ -466,6 +463,12 @@ class AST_Lamb (AST):
 	def _init (self, lamb, vars):
 		self.lamb, self.vars = lamb, vars
 
+class AST_Idx (AST):
+	op, is_idx = 'idx', True
+
+	def _init (self, obj, idx):
+		self.obj, self.idx = obj, idx
+
 #...............................................................................................
 _AST_OP2CLS = {
 	'=': AST_Eq,
@@ -495,6 +498,7 @@ _AST_OP2CLS = {
 	'mat': AST_Mat,
 	'piece': AST_Piece,
 	'lamb': AST_Lamb, # not to be confused with the Greek variable lambda
+	'idx': AST_Idx,
 }
 
 _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
