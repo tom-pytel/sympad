@@ -575,6 +575,16 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 
 #...............................................................................................
 class Parser (lalr1.Parser):
+	def __init__ (self):
+		self.TOKENS_LONG.update ([(v, self.TOKENS [v]) for v in self.TOKENS_QUICK])
+
+		lalr1.Parser.__init__ (self)
+
+	def set_quick (self, yes = True):
+		self.TOKENS.update (self.TOKENS_QUICK if yes else self.TOKENS_LONG)
+
+		self.set_tokens (self.TOKENS)
+
 	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
 
 	def set_user_funcs  (self, user_funcs):
@@ -631,7 +641,7 @@ class Parser (lalr1.Parser):
 			b'nNMZPK/ROMof1ZR9k3ly16/5K0iYav07FUHxOstvOHbhDs2l/pi58biFi3Z5Xfm2w4HKGI3B8RwMwUUQeieLY2JRd+3RG03XHNoJ51lzjwnP/gC6gg+gfAZ1CY04+f7K5L28Q4/36rGsdyL8rZ0UZ3djcqPyRLElBcKhHOsd97K3OjOsC4XyqkeyY2+KLmGo' \
 			b'dTZOZL+1p7aPKvX66eJ9FQpj0Su4OI7cSiVZ8zdGrcbmfJzIPuzoROyvWSLmPfVrjfBg9YhuyO6Xumi02EFVmB9YGP1NUUSYj87GieyH01FE03wOJ2IYb4wK2uZ8nFiU2tNRQdd8DidiuDEjBjQCZ+NE9uYMZB+/IrlfGYTm1FwXwPy4hUTKwh64Ohi3Defc' \
 			b'PrXC2BzQoUzXhOJjzuvfEKm4vaxOhxPMOtBvEhAmxTa7cevT/d24I06Rkz9lObnmBJzIadcA5LPKKTQn4EROZ2vKx/cLdjmZoJb/fei3vL47irUUIuRdg5CTFTKWAJyuE+Eeeb7iiMK1zQk7mXDeNXY5XeG65oSdCLc7W+H65oSdCBcnm2KNSq/CttGvz3GQ' \
-			b'HcsCYei96xILHPeVlUHHL+EsxoEP42px3qFQhrWUvsmcEPYVIWQP4tDkrgvK65AtsYFtXYNH/oKiKENVsD1TwzqAN3y9iKqXxgg70WW/DKLm/SkcB/QQCjDqCg5Szm5AnN1Ayb+++H/zETu1' 
+			b'HcsCYei96xILHPeVlUHHL+EsxoEP42px3qFQhrWUvsmcEPYVIWQP4tDkrgvK65AtsYFtXYNH/oKiKENVsD1TwzqAN3y9iKqXxgg70WW/DKLm/SkcB/QQCjDqCg5Szm5AnN1Ayb+++H/zETu1'
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -720,6 +730,28 @@ class Parser (lalr1.Parser):
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
 		('ignore',        r'\\,|\\:|\\?\s+|\\text\s*{\s*[^}]*\s*}'),
 	])
+
+	_VARPY_QUICK = fr'(?:{_LETTER})'
+	_VAR_QUICK   = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
+
+	TOKENS_QUICK = OrderedDict ([
+		('SQRT',          r'sqrt\b|\\sqrt'),
+		('LOG',           r'log\b|\\log'),
+		('FUNC',         fr'(@|\%|{_FUNCPY})|\\({_FUNCTEX})|(\${_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('LIM',          fr'\\lim'),
+		('SUM',          fr'\\sum(?:\s*\\limits)?|{_USUM}'),
+		('INTG',         fr'\\int(?:\s*\\limits)?|{_UINTG}'),
+		('LEFT',         fr'\\left'),
+		('RIGHT',        fr'\\right'),
+		('CDOT',         fr'\\cdot'),
+		('TO',           fr'\\to'),
+		('MAPSTO',       fr'\\mapsto'),
+		('IF',            r'if'),
+		('ELSE',          r'else'),
+		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR_QUICK})|({_VAR_QUICK}))('*)"),
+	])
+
+	TOKENS_LONG  = OrderedDict () # initialized in __init__()
 
 	def expr_commas_1   (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
 	def expr_commas_2   (self, expr_comma):                                     return expr_comma

@@ -224,6 +224,13 @@ def _admin_sympyEI (ast):
 
 	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
 
+def _admin_quick (ast):
+	yes = bool (sym.ast2spt (ast.args [0])) if ast.args else True
+
+	_parser.set_quick (yes)
+
+	return f'Quick mode is {"on" if yes else "off"}.'
+
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
 	def do_GET (self):

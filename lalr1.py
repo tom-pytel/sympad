@@ -32,15 +32,9 @@ class Parser:
 
 	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
 
-	def __init__ (self):
-		if isinstance (self._PARSER_TABLES, bytes):
-			import ast, base64, zlib
-			symbols, rules, strules, terms, nterms = ast.literal_eval (zlib.decompress (base64.b64decode (self._PARSER_TABLES)).decode ('utf8'))
-		else:
-			symbols, rules, strules, terms, nterms = self._PARSER_TABLES
-
+	def set_tokens (self, tokens):
 		self.tokgrps = {} # {'token': (groups pos start, groups pos end), ...}
-		tokpats      = list (self.TOKENS.items ())
+		tokpats      = list (tokens.items ())
 		pos          = 0
 
 		for tok, pat in tokpats:
@@ -50,6 +44,16 @@ class Parser:
 
 		self.tokre   = '|'.join (f'(?P<{tok}>{pat})' for tok, pat in tokpats)
 		self.tokrec  = re.compile (self.tokre)
+
+	def __init__ (self):
+		if isinstance (self._PARSER_TABLES, bytes):
+			import ast, base64, zlib
+			symbols, rules, strules, terms, nterms = ast.literal_eval (zlib.decompress (base64.b64decode (self._PARSER_TABLES)).decode ('utf8'))
+		else:
+			symbols, rules, strules, terms, nterms = self._PARSER_TABLES
+
+		self.set_tokens (self.TOKENS)
+
 		self.rules   = [(0, (symbols [-1]))] + [(symbols [r [0]], tuple (symbols [s] for s in (r [1] if isinstance (r [1], tuple) else (r [1],)))) for r in rules]
 		self.strules = [[t if isinstance (t, tuple) else (t, 0) for t in (sr if isinstance (sr, list) else [sr])] for sr in strules]
 		states       = max (max (max (t [1]) for t in terms), max (max (t [1]) for t in nterms)) + 1
