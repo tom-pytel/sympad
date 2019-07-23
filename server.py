@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Working directory.
 # TODO: Exception prevents restart on file date change or too much time?
 
 import getopt
@@ -28,6 +27,8 @@ _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 _VAR_LAST = '_'
 
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
+	sys.path.insert (0, '') # allow importing from current directory
+
 	import sympy as sp
 	import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -51,7 +52,7 @@ _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.htm
 _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help] [--debug] [--nobrowser] [--sympyEI] [host:port]
+usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
 """
 
 #...............................................................................................
@@ -175,8 +176,6 @@ def _admin_funcs (ast):
 	for v, e in sorted (_vars.items ()):
 		if v != _VAR_LAST:
 			if e.is_lamb:
-				# asts.append (AST ('=', '=', ('func', v, e.vars), e.lamb))
-				# asts.append (AST ('=', '=', ('*', (('@', v), ('(', (',', e.vars) if len (e.vars) != 1 else e.vars [0])),), e.lamb))
 				asts.append (AST ('=', '=', ('@', v), e))
 
 	if not asts:
@@ -216,7 +215,20 @@ def _admin_delall (ast):
 def _admin_sympyEI (ast):
 	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
 
+	if AST.E.var in _vars:
+		del _vars [AST.E.var]
+
+	if AST.I.var in _vars:
+		del _vars [AST.I.var]
+
 	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
+
+def _admin_quick (ast):
+	yes = bool (sym.ast2spt (ast.args [0])) if ast.args else True
+
+	_parser.set_quick (yes)
+
+	return f'Quick mode is {"on" if yes else "off"}.'
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -338,13 +350,13 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], '', ['help', 'nobrowser', 'debug', 'sympyEI'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEq', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick'])
 
-		if ('--help', '') in opts:
+		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.strip ())
 			sys.exit (0)
 
-		if ('--debug', '') in opts:
+		if ('--debug', '') in opts or ('-d', '') in opts:
 			os.environ ['SYMPAD_DEBUG'] = '1'
 
 		if not _SYMPAD_CHILD: # watcher parent
@@ -363,8 +375,11 @@ if __name__ == '__main__':
 		sym.set_user_funcs (set (_START_VARS))
 		_parser.set_user_funcs (set (_START_VARS))
 
-		if ('--sympyEI', '') in opts:
+		if ('--sympyEI', '') in opts or ('-E', '') in opts:
 			sast.sympyEI ()
+
+		if ('--quick', '') in opts or ('-q', '') in opts:
+			_parser.set_quick ()
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS
@@ -372,7 +387,9 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		watch   = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
+		path    = os.path.dirname (sys.argv [0])
+		fnms    = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'sparser.py', 'sym.py', 'server.py')
+		watch   = [os.path.join (path, fnm) for fnm in fnms]
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
@@ -390,7 +407,7 @@ if __name__ == '__main__':
 
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
-		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts:
+		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts and ('-n', '') not in opts:
 			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
 
 		while 1:

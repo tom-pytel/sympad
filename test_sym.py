@@ -9,7 +9,7 @@ from sast import AST
 import sym
 import sparser
 
-# Piecewise((1,2), (partialx = lambda: a, lambda: b, True))
+# TODO: indexing
 
 TERMS = [
 	'0',
@@ -113,6 +113,8 @@ x, y = lambda: 1, lambda: 2
 doo
 partial'
 ln((a)**b)
+a * \int dx + {\int dx dx}
+Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!

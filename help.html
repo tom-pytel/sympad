@@ -34,7 +34,7 @@
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.4.5</h4>
+<h4 align="center" style="margin: 0">v0.4.6</h4>
 
 <h2>Introduction</h2>
 
@@ -101,6 +101,11 @@ Single-click for a simple native format meant to be pasted back into the input f
 A double click-copies the expression in Python format suitable for pasting into a Python shell or source file.
 Finally, a triple-click will copy the expression in LaTeX format.
 The single-click native and double-click Python formats should always be pasteable back into SymPad whereas the LaTeX format may or may not be depending on what elements are present.
+</p><p>
+SymPad normally allows long variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
+This can be turned off by switching into quick input mode using the function "<b>quick()</b>".
+When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek) and explicit space characters are no longer necessary between recognized function and variable names.
+This means that an expression entered in normal mode like this "<b>x y sin z**2</b>" can be entered in quick mode like this "<b>xysinz**2</b>".
 </p>
 
 <h2>Types</h2>
@@ -262,6 +267,12 @@ Currently only a single comparison is allowed so an expression like "<b>0 &lt;= 
 Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a lower precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
 </p>
 
+<h4>Indexing</h4>
+
+<p>
+<span style="color: red">This...</span>
+</p>
+
 <h4>Parentheses</h4>
 
 <p>
@@ -364,18 +375,18 @@ This brings some problems, such as deciding when "<b>x (a)</b>" is a function ca
 SymPad solves this by recognizing all top-level SymPy package function names and classes as functions and accepting the next expression as the argument(s) to that function.
 This brings along its own set of peculiarities such as removing those names from the possible namespace pool of variables, this means that you can never redefine "<b>sin</b>" as anything else, but why would you want to?
 </p><p>
-This only works on top-level objects, for members of an object the presence of a parenthesized expression after the attribute name will imply a function call.
+This recognition only works on top-level objects, for members of an object the presence of a parenthesized expression after the attribute name will imply a function call.
 If that is not the intent and you instead want to treat the member as a data variable and multiply it with something then you must use explicit "<b>*</b>" multiplication or the curly parentheses as such "<b>{1, 2, 3}.T * (a + b)</b>" or "<b>{1, 2, 3}.T {a + b}</b>".
 If you try to do this with regular parentheses then a function call will be attempted with "<b>a + b</b>" as the argument.
 The meaning of parentheses for assigned user variables is inferred from whether the variable is a lambda or not, for lambdas parentheses are a function call and for other types they indicate multiplication.
 </p><p>
-In a roundabout sort of a way this all led to a peculiar delima.
+In a roundabout sort of way this all led to a peculiar delima.
 There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
 This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
 This was not very elegant so a workaround has been implemented as follows:
 The function names have been left out of the grammar but user lambdas are created for them on startup so that they may be used as functions.
 If you wish to use those letters as variables instead then simply delete the defined lambdas and those letters will behave as variables once more.
-You can always redefine the lambdas yourself if you want them back, the format is simple - "<b>beta = lambda x, y: %$beta (x, y)</b>".
+You can always redefine the lambdas yourself if you want them back, the format is as follows - "<b>beta = lambda x, y: %$beta (x, y)</b>".
 </p>
 
 <h2>Notes</h2>
