@@ -168,31 +168,31 @@ body {
 
 	'script.js': # script.js
 
-r"""// TODO: Multiple spaces screw up overlay text position.
+r"""// TODO: Change input to text field for longer expression support.
+// TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.
 // TODO: Stupid scrollbars...
-// TODO: Warning messages on evaluate when SymPy object not understood?
 // TODO: Arrow keys in Edge?
 
-var URL              = '/';
-var MJQueue          = null;
-var MarginTop        = Infinity;
-var PreventFocusOut  = true;
+URL              = '/';
+MJQueue          = null;
+MarginTop        = Infinity;
+PreventFocusOut  = true;
 
-var History          = [];
-var HistIdx          = 0;
-var LogIdx           = 0;
-var UniqueID         = 1;
+History          = [];
+HistIdx          = 0;
+LogIdx           = 0;
+UniqueID         = 1;
 
-var Validations      = [undefined];
-var Evaluations      = [undefined];
-var ErrorIdx         = null;
-var Autocomplete     = [];
+Validations      = [undefined];
+Evaluations      = [undefined];
+ErrorIdx         = null;
+Autocomplete     = [];
 
-var LastClickTime    = 0;
-var NumClicks        = 0;
+LastClickTime    = 0;
+NumClicks        = 0;
 
-var GreetingFadedOut = false;
+GreetingFadedOut = false;
 
 //...............................................................................................
 function generateBG () {
@@ -740,6 +740,7 @@ r"""<!DOCTYPE html>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="script.js"></script>
+<script type="text/javascript" src="history.js"></script>
 <script type="text/x-mathjax-config">
 	MathJax.Hub.Config ({
 		messageStyle: "none",
@@ -3591,7 +3592,8 @@ _ast2nat_funcs = {
 	'intg': _ast2nat_intg,
 	'vec': lambda ast: f'{{{", ".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
-	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], {"piece", "lamb", "="}, {","})}' if p [1] is True else f'{_ast2nat_wrap (p [0], {"piece", "lamb", "="}, {","})} if {_ast2nat_wrap (p [1], {"piece", "lamb", "="}, {","})}' for p in ast.pieces),
+	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})}' if p [1] is True else \
+			f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {_ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.pieces),
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {_ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
 	'idx': lambda ast: f'{ast2nat (ast.obj)}[{ast2nat (_tuple2ast (ast.idx))}]',
 
@@ -4054,13 +4056,19 @@ _SYMPAD_PATH              = os.path.dirname (sys.argv [0])
 _SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
 _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 
-_VAR_LAST = '_'
+_DEFAULT_ADDRESS          = ('localhost', 8000)
+_STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+
+_HELP = f"""
+usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
+"""
 
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory
 
 	import sympy as sp
 
+	_VAR_LAST   = '_'
 	_START_VARS = {
 		'beta' : AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
 		'gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
@@ -4070,15 +4078,9 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 
 	_sys_stdout = sys.stdout
 	_parser     = sparser.Parser ()
+
 	_vars       = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-
-_DEFAULT_ADDRESS = ('localhost', 8000)
-
-_STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-
-_HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
-"""
+	_history    = [] # persistent history across browser closing
 
 #...............................................................................................
 # class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
@@ -4263,13 +4265,26 @@ class Handler (SimpleHTTPRequestHandler):
 
 		fnm = os.path.join (_SYMPAD_PATH, self.path.lstrip ('/'))
 
-		if self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm)):
+		if self.path != '/history.js' and (self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm))):
 			self.send_error (404, f'Invalid path {self.path!r}')
 
-		self.send_response (200)
-		self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
-		self.end_headers ()
-		self.wfile.write (_FILES [self.path [1:]] if _RUNNING_AS_SINGLE_SCRIPT else open (fnm, 'rb').read ())
+		else:
+			if self.path == '/history.js':
+				content = 'text/javascript'
+				data    = f'History = {_history}\nHistIdx = {len (_history)}'.encode ('utf8')
+
+			else:
+				content = _STATIC_FILES [self.path]
+
+				if _RUNNING_AS_SINGLE_SCRIPT:
+					data = _FILES [self.path [1:]]
+				else:
+					data = open (fnm, 'rb').read ()
+
+			self.send_response (200)
+			self.send_header ('Content-type', f'text/{content}')
+			self.end_headers ()
+			self.wfile.write (data)
 
 	def do_POST (self):
 		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
@@ -4291,6 +4306,7 @@ class Handler (SimpleHTTPRequestHandler):
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
 		self.wfile.write (json.dumps (response).encode ('utf8'))
+		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
@@ -4318,10 +4334,11 @@ class Handler (SimpleHTTPRequestHandler):
 		}
 
 	def evaluate (self, request):
-		sys.stdout = io.StringIO ()
-
 		try:
-			ast, _, _ = _parser.parse (request ['text'])
+			_history.append (request ['text'])
+
+			sys.stdout = io.StringIO ()
+			ast, _, _  = _parser.parse (request ['text'])
 
 			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (ast)

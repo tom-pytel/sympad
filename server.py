@@ -25,7 +25,13 @@ _SYMPAD_PATH              = os.path.dirname (sys.argv [0])
 _SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
 _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 
-_VAR_LAST = '_'
+_DEFAULT_ADDRESS          = ('localhost', 8000)
+_STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_FILES                    = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
+
+_HELP = f"""
+usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
+"""
 
 if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory
@@ -36,6 +42,7 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+	_VAR_LAST   = '_'
 	_START_VARS = {
 		'beta' : AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
 		'gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
@@ -45,16 +52,9 @@ if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for w
 
 	_sys_stdout = sys.stdout
 	_parser     = sparser.Parser ()
+
 	_vars       = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-
-_DEFAULT_ADDRESS = ('localhost', 8000)
-
-_STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
-
-_HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
-"""
+	_history    = [] # persistent history across browser closing
 
 #...............................................................................................
 # class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
@@ -239,13 +239,26 @@ class Handler (SimpleHTTPRequestHandler):
 
 		fnm = os.path.join (_SYMPAD_PATH, self.path.lstrip ('/'))
 
-		if self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm)):
+		if self.path != '/history.js' and (self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm))):
 			self.send_error (404, f'Invalid path {self.path!r}')
 
-		self.send_response (200)
-		self.send_header ('Content-type', f'text/{_STATIC_FILES [self.path]}')
-		self.end_headers ()
-		self.wfile.write (_FILES [self.path [1:]] if _RUNNING_AS_SINGLE_SCRIPT else open (fnm, 'rb').read ())
+		else:
+			if self.path == '/history.js':
+				content = 'text/javascript'
+				data    = f'History = {_history}\nHistIdx = {len (_history)}'.encode ('utf8')
+
+			else:
+				content = _STATIC_FILES [self.path]
+
+				if _RUNNING_AS_SINGLE_SCRIPT:
+					data = _FILES [self.path [1:]]
+				else:
+					data = open (fnm, 'rb').read ()
+
+			self.send_response (200)
+			self.send_header ('Content-type', f'text/{content}')
+			self.end_headers ()
+			self.wfile.write (data)
 
 	def do_POST (self):
 		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
@@ -267,6 +280,7 @@ class Handler (SimpleHTTPRequestHandler):
 		self.send_header ("Content-type", "application/json")
 		self.end_headers ()
 		self.wfile.write (json.dumps (response).encode ('utf8'))
+		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _parser.parse (request ['text'])
@@ -294,10 +308,11 @@ class Handler (SimpleHTTPRequestHandler):
 		}
 
 	def evaluate (self, request):
-		sys.stdout = io.StringIO ()
-
 		try:
-			ast, _, _ = _parser.parse (request ['text'])
+			_history.append (request ['text'])
+
+			sys.stdout = io.StringIO ()
+			ast, _, _  = _parser.parse (request ['text'])
 
 			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (ast)

@@ -1,28 +1,28 @@
+// TODO: Change input to text field for longer expression support.
 // TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.
 // TODO: Stupid scrollbars...
-// TODO: Warning messages on evaluate when SymPy object not understood?
 // TODO: Arrow keys in Edge?
 
-var URL              = '/';
-var MJQueue          = null;
-var MarginTop        = Infinity;
-var PreventFocusOut  = true;
+URL              = '/';
+MJQueue          = null;
+MarginTop        = Infinity;
+PreventFocusOut  = true;
 
-var History          = [];
-var HistIdx          = 0;
-var LogIdx           = 0;
-var UniqueID         = 1;
+History          = [];
+HistIdx          = 0;
+LogIdx           = 0;
+UniqueID         = 1;
 
-var Validations      = [undefined];
-var Evaluations      = [undefined];
-var ErrorIdx         = null;
-var Autocomplete     = [];
+Validations      = [undefined];
+Evaluations      = [undefined];
+ErrorIdx         = null;
+Autocomplete     = [];
 
-var LastClickTime    = 0;
-var NumClicks        = 0;
+LastClickTime    = 0;
+NumClicks        = 0;
 
-var GreetingFadedOut = false;
+GreetingFadedOut = false;
 
 //...............................................................................................
 function generateBG () {
