@@ -19,6 +19,8 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
+_VERSION                  = 'v0.4.8'
+
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPAD_PATH              = os.path.dirname (sys.argv [0])
@@ -33,7 +35,7 @@ _HELP = f"""
 usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
 """
 
-if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
+if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
 	import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -238,13 +240,13 @@ class Handler (SimpleHTTPRequestHandler):
 
 		fnm = os.path.join (_SYMPAD_PATH, self.path.lstrip ('/'))
 
-		if self.path != '/history.js' and (self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm))):
+		if self.path != '/env.js' and (self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm))):
 			self.send_error (404, f'Invalid path {self.path!r}')
 
 		else:
-			if self.path == '/history.js':
+			if self.path == '/env.js':
 				content = 'text/javascript'
-				data    = f'History = {_history}\nHistIdx = {len (_history)}'.encode ('utf8')
+				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}'.encode ('utf8')
 
 			else:
 				content = _STATIC_FILES [self.path]
