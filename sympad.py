@@ -741,7 +741,7 @@ r"""<!DOCTYPE html>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="script.js"></script>
-<script type="text/javascript" src="history.js"></script>
+<script type="text/javascript" src="env.js"></script>
 <script type="text/x-mathjax-config">
 	MathJax.Hub.Config ({
 		messageStyle: "none",
@@ -762,7 +762,7 @@ r"""<!DOCTYPE html>
 <div id="Greeting">
 	<div align="center">
 		<h2>SymPad</h2>
-		<h5>v0.4.7</h5>
+		<h5><script type="text/javascript">document.write (Version)</script></h5>
 		<br><br>
 		Type '<b>help</b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -825,6 +825,7 @@ r"""<!DOCTYPE html>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
 <script type="text/javascript" src="script.js"></script>
+<script type="text/javascript" src="env.js"></script>
 <script type="text/x-mathjax-config">
 	MathJax.Hub.Config ({
 		messageStyle: "none",
@@ -840,7 +841,7 @@ r"""<!DOCTYPE html>
 <canvas id="Background"></canvas>
 
 <h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0">v0.4.7</h4>
+<h4 align="center" style="margin: 0"><script type="text/javascript">document.write (Version)</script></h4>
 
 <h2>Introduction</h2>
 
@@ -2044,63 +2045,23 @@ def _expr_lambda (lhs, expr):
 		else:
 			return AST ('lamb', expr, lhs.commas)
 
-	# raise SyntaxError ('invalid lambda expression')
-	# if lhs.is_var:
-	# 	if lhs.is_var_lambda:
-	# 		return AST ('lamb', expr, ())
+	raise SyntaxError ('invalid lambda function')
 
-	# elif lhs.is_mul:
-	# 	if lhs.muls [-1].is_var:
-	# 		if lhs.muls [-1].is_var_lambda:
-	# 			return AST ('*', lhs.muls [:-1] + (('lamb', expr, ()),))
+# def _expr_mapsto (lhs, expr):
+# 	lhs = lhs.strip ()
 
-	# 		if lhs.muls [-2].is_var_lambda:
-	# 			ast = AST ('lamb', expr, (lhs.muls [-1],))
+# 	if lhs.is_var:
+# 		return AST ('lamb', expr, (lhs,))
 
-	# 			return ast if len (lhs.muls) == 2 else AST ('*', lhs.muls [:-2] + (ast,))
+# 	if lhs.is_comma:
+# 		for var in lhs.commas:
+# 			if not var.is_var:
+# 				break
 
-	# elif lhs.is_comma:
-	# 	commas = lhs.commas
-	# 	ast    = None
+# 		else:
+# 			return AST ('lamb', expr, lhs.commas)
 
-	# 	for imul in range (len (commas) - 1, -1, -1):
-	# 		if commas [imul].is_var:
-	# 			if commas [imul].is_var_lambda:
-	# 				ast = AST ('lamb', expr, commas [imul + 1:])
-
-	# 				break
-
-	# 			continue
-
-	# 		if commas [imul].is_mul:
-	# 			if commas [imul].muls [-1].is_var and commas [imul].muls [-2].is_var_lambda:
-	# 				ast = AST ('lamb', expr, (commas [imul].muls [-1],) + commas [imul + 1:])
-
-	# 				if len (commas [imul].muls) > 2:
-	# 					ast = AST ('*', commas [imul].muls [:-2] + (ast,))
-
-	# 				break
-
-	# 	if ast:
-	# 		return ast if imul == 0 else AST (',', commas [:imul] + (ast,))
-
-	# raise SyntaxError ('invalid lambda expression')
-
-def _expr_mapsto (lhs, expr):
-	lhs = lhs.strip ()
-
-	if lhs.is_var:
-		return AST ('lamb', expr, (lhs,))
-
-	if lhs.is_comma:
-		for var in lhs.commas:
-			if not var.is_var:
-				break
-
-		else:
-			return AST ('lamb', expr, lhs.commas)
-
-	raise SyntaxError ('invalid LaTeX \\mapsto expression')
+# 	raise SyntaxError ('invalid LaTeX \\mapsto expression')
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 	last      = lhs.muls [-1] if lhs.is_mul else lhs
@@ -2779,8 +2740,8 @@ class Parser (lalr1.Parser):
 
 	def expr_lambda_2      (self, expr_mapsto):                                    return expr_mapsto
 
-	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_eq):                    return _expr_mapsto (expr_paren, expr_eq)
-	def expr_mapsto_3      (self, expr_piece):                                     return expr_piece
+	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_eq):                    return _expr_lambda (expr_paren.strip (), expr_eq)
+	def expr_mapsto_2      (self, expr_piece):                                     return expr_piece
 
 	def expr_piece_1       (self, expr_ineq, IF, expr, ELSE, expr_lambda):
 		return \
@@ -4071,6 +4032,8 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
+_VERSION                  = 'v0.4.8'
+
 
 _SYMPAD_PATH              = os.path.dirname (sys.argv [0])
 _SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
@@ -4083,7 +4046,7 @@ _HELP = f"""
 usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
 """
 
-if _SYMPAD_CHILD: # sympy slow to import if not precompiled so don't do it for watcher process as is unnecessary there
+if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
 
@@ -4284,13 +4247,13 @@ class Handler (SimpleHTTPRequestHandler):
 
 		fnm = os.path.join (_SYMPAD_PATH, self.path.lstrip ('/'))
 
-		if self.path != '/history.js' and (self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm))):
+		if self.path != '/env.js' and (self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm))):
 			self.send_error (404, f'Invalid path {self.path!r}')
 
 		else:
-			if self.path == '/history.js':
+			if self.path == '/env.js':
 				content = 'text/javascript'
-				data    = f'History = {_history}\nHistIdx = {len (_history)}'.encode ('utf8')
+				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}'.encode ('utf8')
 
 			else:
 				content = _STATIC_FILES [self.path]

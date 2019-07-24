@@ -41,63 +41,23 @@ def _expr_lambda (lhs, expr):
 		else:
 			return AST ('lamb', expr, lhs.commas)
 
-	# raise SyntaxError ('invalid lambda expression')
-	# if lhs.is_var:
-	# 	if lhs.is_var_lambda:
-	# 		return AST ('lamb', expr, ())
+	raise SyntaxError ('invalid lambda function')
 
-	# elif lhs.is_mul:
-	# 	if lhs.muls [-1].is_var:
-	# 		if lhs.muls [-1].is_var_lambda:
-	# 			return AST ('*', lhs.muls [:-1] + (('lamb', expr, ()),))
+# def _expr_mapsto (lhs, expr):
+# 	lhs = lhs.strip ()
 
-	# 		if lhs.muls [-2].is_var_lambda:
-	# 			ast = AST ('lamb', expr, (lhs.muls [-1],))
+# 	if lhs.is_var:
+# 		return AST ('lamb', expr, (lhs,))
 
-	# 			return ast if len (lhs.muls) == 2 else AST ('*', lhs.muls [:-2] + (ast,))
+# 	if lhs.is_comma:
+# 		for var in lhs.commas:
+# 			if not var.is_var:
+# 				break
 
-	# elif lhs.is_comma:
-	# 	commas = lhs.commas
-	# 	ast    = None
+# 		else:
+# 			return AST ('lamb', expr, lhs.commas)
 
-	# 	for imul in range (len (commas) - 1, -1, -1):
-	# 		if commas [imul].is_var:
-	# 			if commas [imul].is_var_lambda:
-	# 				ast = AST ('lamb', expr, commas [imul + 1:])
-
-	# 				break
-
-	# 			continue
-
-	# 		if commas [imul].is_mul:
-	# 			if commas [imul].muls [-1].is_var and commas [imul].muls [-2].is_var_lambda:
-	# 				ast = AST ('lamb', expr, (commas [imul].muls [-1],) + commas [imul + 1:])
-
-	# 				if len (commas [imul].muls) > 2:
-	# 					ast = AST ('*', commas [imul].muls [:-2] + (ast,))
-
-	# 				break
-
-	# 	if ast:
-	# 		return ast if imul == 0 else AST (',', commas [:imul] + (ast,))
-
-	# raise SyntaxError ('invalid lambda expression')
-
-def _expr_mapsto (lhs, expr):
-	lhs = lhs.strip ()
-
-	if lhs.is_var:
-		return AST ('lamb', expr, (lhs,))
-
-	if lhs.is_comma:
-		for var in lhs.commas:
-			if not var.is_var:
-				break
-
-		else:
-			return AST ('lamb', expr, lhs.commas)
-
-	raise SyntaxError ('invalid LaTeX \\mapsto expression')
+# 	raise SyntaxError ('invalid LaTeX \\mapsto expression')
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 	last      = lhs.muls [-1] if lhs.is_mul else lhs
@@ -776,8 +736,8 @@ class Parser (lalr1.Parser):
 
 	def expr_lambda_2      (self, expr_mapsto):                                    return expr_mapsto
 
-	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_eq):                    return _expr_mapsto (expr_paren, expr_eq)
-	def expr_mapsto_3      (self, expr_piece):                                     return expr_piece
+	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_eq):                    return _expr_lambda (expr_paren.strip (), expr_eq)
+	def expr_mapsto_2      (self, expr_piece):                                     return expr_piece
 
 	def expr_piece_1       (self, expr_ineq, IF, expr, ELSE, expr_lambda):
 		return \
