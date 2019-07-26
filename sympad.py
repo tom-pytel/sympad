@@ -197,7 +197,7 @@ GreetingFadedOut = false;
 History          = [];
 HistIdx          = 0;
 Version          = 'None'
-DisplayMode      = 1
+DisplayStyle     = 1
 
 //...............................................................................................
 function generateBG () {
@@ -303,7 +303,7 @@ function monitorStuff () {
 function readyMathJax () {
 	window.MJQueue = MathJax.Hub.queue;
 
-	if (DisplayMode) {
+	if (DisplayStyle) {
 		var TEX        = MathJax.InputJax.TeX;
 		var PREFILTER  = TEX.prefilterMath;
 
@@ -4039,7 +4039,7 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-_VERSION                  = 'v0.4.8'
+_VERSION                  = 'v0.4.9'
 
 
 _SYMPAD_PATH              = os.path.dirname (sys.argv [0])
@@ -4048,7 +4048,7 @@ _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 _STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_DISPLAY_MODE             = [1]
+_DISPLAYSTYLE             = [1]
 
 _HELP = f"""
 usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [--ugly | -u] [host:port]
@@ -4263,7 +4263,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 			if self.path == '/env.js':
 				content = 'text/javascript'
-				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}\nDisplayMode = {_DISPLAY_MODE [0]}'.encode ('utf8')
+				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
 
 				self.send_header ('Cache-Control', 'no-store')
 
@@ -4414,7 +4414,7 @@ if __name__ == '__main__':
 			_parser.set_quick ()
 
 		if ('--ugly', '') in opts or ('-u', '') in opts:
-			_DISPLAY_MODE [0] = 0
+			_DISPLAYSTYLE [0] = 0
 
 		_vars.update (_START_VARS)
 		sym.set_user_funcs (set (_START_VARS))

@@ -27,7 +27,7 @@ GreetingFadedOut = false;
 History          = [];
 HistIdx          = 0;
 Version          = 'None'
-DisplayMode      = 1
+DisplayStyle     = 1
 
 //...............................................................................................
 function generateBG () {
@@ -133,7 +133,7 @@ function monitorStuff () {
 function readyMathJax () {
 	window.MJQueue = MathJax.Hub.queue;
 
-	if (DisplayMode) {
+	if (DisplayStyle) {
 		var TEX        = MathJax.InputJax.TeX;
 		var PREFILTER  = TEX.prefilterMath;
 
