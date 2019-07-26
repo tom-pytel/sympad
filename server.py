@@ -29,10 +29,11 @@ _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 _STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_DISPLAY_MODE             = [1]
 _FILES                    = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
+usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [--ugly | -u] [host:port]
 """
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
@@ -244,9 +245,13 @@ class Handler (SimpleHTTPRequestHandler):
 			self.send_error (404, f'Invalid path {self.path!r}')
 
 		else:
+			self.send_response (200)
+
 			if self.path == '/env.js':
 				content = 'text/javascript'
-				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}'.encode ('utf8')
+				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}\nDisplayMode = {_DISPLAY_MODE [0]}'.encode ('utf8')
+
+				self.send_header ('Cache-Control', 'no-store')
 
 			else:
 				content = _STATIC_FILES [self.path]
@@ -256,7 +261,6 @@ class Handler (SimpleHTTPRequestHandler):
 				else:
 					data = open (fnm, 'rb').read ()
 
-			self.send_response (200)
 			self.send_header ('Content-type', f'text/{content}')
 			self.end_headers ()
 			self.wfile.write (data)
@@ -278,7 +282,8 @@ class Handler (SimpleHTTPRequestHandler):
 		response ['text'] = request ['text']
 
 		self.send_response (200)
-		self.send_header ("Content-type", "application/json")
+		self.send_header ('Content-type', 'application/json')
+		self.send_header ('Cache-Control', 'no-store')
 		self.end_headers ()
 		self.wfile.write (json.dumps (response).encode ('utf8'))
 		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
@@ -367,7 +372,7 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEq', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEqu', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.strip ())
@@ -388,15 +393,18 @@ if __name__ == '__main__':
 					sys.exit (0)
 
 		# child starts here
-		_vars.update (_START_VARS)
-		sym.set_user_funcs (set (_START_VARS))
-		_parser.set_user_funcs (set (_START_VARS))
-
 		if ('--sympyEI', '') in opts or ('-E', '') in opts:
 			sast.sympyEI ()
 
 		if ('--quick', '') in opts or ('-q', '') in opts:
 			_parser.set_quick ()
+
+		if ('--ugly', '') in opts or ('-u', '') in opts:
+			_DISPLAY_MODE [0] = 0
+
+		_vars.update (_START_VARS)
+		sym.set_user_funcs (set (_START_VARS))
+		_parser.set_user_funcs (set (_START_VARS))
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS

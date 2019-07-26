@@ -10,8 +10,6 @@ MJQueue          = null;
 MarginTop        = Infinity;
 PreventFocusOut  = true;
 
-History          = [];
-HistIdx          = 0;
 LogIdx           = 0;
 UniqueID         = 1;
 
@@ -24,6 +22,12 @@ LastClickTime    = 0;
 NumClicks        = 0;
 
 GreetingFadedOut = false;
+
+// replaced in env.js
+History          = [];
+HistIdx          = 0;
+Version          = 'None'
+DisplayMode      = 1
 
 //...............................................................................................
 function generateBG () {
@@ -129,14 +133,16 @@ function monitorStuff () {
 function readyMathJax () {
 	window.MJQueue = MathJax.Hub.queue;
 
-	var TEX        = MathJax.InputJax.TeX;
-	var PREFILTER  = TEX.prefilterMath;
+	if (DisplayMode) {
+		var TEX        = MathJax.InputJax.TeX;
+		var PREFILTER  = TEX.prefilterMath;
 
-	TEX.Augment ({
-		prefilterMath: function (tex, displaymode, script) {
-			return PREFILTER.call (TEX, '\\displaystyle{' + tex + '}', displaymode, script);
-		}
-	});
+		TEX.Augment ({
+			prefilterMath: function (tex, displaymode, script) {
+				return PREFILTER.call (TEX, '\\displaystyle{' + tex + '}', displaymode, script);
+			}
+		});
+	}
 }
 
 //...............................................................................................

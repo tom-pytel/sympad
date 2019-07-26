@@ -180,8 +180,6 @@ MJQueue          = null;
 MarginTop        = Infinity;
 PreventFocusOut  = true;
 
-History          = [];
-HistIdx          = 0;
 LogIdx           = 0;
 UniqueID         = 1;
 
@@ -194,6 +192,12 @@ LastClickTime    = 0;
 NumClicks        = 0;
 
 GreetingFadedOut = false;
+
+// replaced in env.js
+History          = [];
+HistIdx          = 0;
+Version          = 'None'
+DisplayMode      = 1
 
 //...............................................................................................
 function generateBG () {
@@ -299,14 +303,16 @@ function monitorStuff () {
 function readyMathJax () {
 	window.MJQueue = MathJax.Hub.queue;
 
-	var TEX        = MathJax.InputJax.TeX;
-	var PREFILTER  = TEX.prefilterMath;
+	if (DisplayMode) {
+		var TEX        = MathJax.InputJax.TeX;
+		var PREFILTER  = TEX.prefilterMath;
 
-	TEX.Augment ({
-		prefilterMath: function (tex, displaymode, script) {
-			return PREFILTER.call (TEX, '\\displaystyle{' + tex + '}', displaymode, script);
-		}
-	});
+		TEX.Augment ({
+			prefilterMath: function (tex, displaymode, script) {
+				return PREFILTER.call (TEX, '\\displaystyle{' + tex + '}', displaymode, script);
+			}
+		});
+	}
 }
 
 //...............................................................................................
@@ -3413,7 +3419,7 @@ _ast2tex_funcs = {
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {ast2tex (p [1])}' for p in ast.pieces) + ' \\end{cases}',
 	'lamb': lambda ast: f'\\left({ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
-	'idx': lambda ast: f'{ast2tex (ast.obj)}[{ast2tex (_tuple2ast (ast.idx))}]',
+	'idx': lambda ast: f'{_ast2tex_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{ast2tex (_tuple2ast (ast.idx))}]',
 
 	'text': lambda ast: ast.tex,
 }
@@ -3565,7 +3571,7 @@ _ast2nat_funcs = {
 	'/': _ast2nat_div,
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
-	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{ast2tex (ast.idx)}]{{{ast2tex (ast.rad.strip_paren_noncomma (1))}}}',
+	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{ast2nat (ast.idx)}]{{{ast2nat (ast.rad.strip_paren_noncomma (1))}}}',
 	'func': lambda ast: f'{ast.func}{_ast2nat_paren (_tuple2ast (ast.args))}',
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,
@@ -3576,7 +3582,7 @@ _ast2nat_funcs = {
 	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})}' if p [1] is True else \
 			f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {_ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.pieces),
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {_ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
-	'idx': lambda ast: f'{ast2nat (ast.obj)}[{ast2nat (_tuple2ast (ast.idx))}]',
+	'idx': lambda ast: f'{_ast2nat_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{ast2nat (_tuple2ast (ast.idx))}]',
 
 	'text': lambda ast: ast.nat,
 }
@@ -3665,8 +3671,8 @@ _ast2py_funcs = {
 	'vec': lambda ast: 'Matrix([' + ', '.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
 	'mat': lambda ast: 'Matrix([' + ', '.join (f'[{", ".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
 	'piece': lambda ast: 'Piecewise(' + ', '.join (f'({ast2py (p [0])}, {True if p [1] is True else ast2py (p [1])})' for p in ast.pieces) + ')',
-	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {ast2nat (ast.lamb)}',
-	'idx': lambda ast: f'{ast2nat (ast.obj)}[{ast2nat (_tuple2ast (ast.idx))}]',
+	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {ast2py (ast.lamb)}',
+	'idx': lambda ast: f'{_ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"} else ast2py (ast.obj)}[{ast2py (_tuple2ast (ast.idx))}]',
 
 	'text': lambda ast: ast.py,
 }
@@ -4041,9 +4047,10 @@ _SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
 
 _DEFAULT_ADDRESS          = ('localhost', 8000)
 _STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_DISPLAY_MODE             = [1]
 
 _HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [host:port]
+usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [--ugly | -u] [host:port]
 """
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
@@ -4251,9 +4258,13 @@ class Handler (SimpleHTTPRequestHandler):
 			self.send_error (404, f'Invalid path {self.path!r}')
 
 		else:
+			self.send_response (200)
+
 			if self.path == '/env.js':
 				content = 'text/javascript'
-				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}'.encode ('utf8')
+				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}\nDisplayMode = {_DISPLAY_MODE [0]}'.encode ('utf8')
+
+				self.send_header ('Cache-Control', 'no-store')
 
 			else:
 				content = _STATIC_FILES [self.path]
@@ -4263,7 +4274,6 @@ class Handler (SimpleHTTPRequestHandler):
 				else:
 					data = open (fnm, 'rb').read ()
 
-			self.send_response (200)
 			self.send_header ('Content-type', f'text/{content}')
 			self.end_headers ()
 			self.wfile.write (data)
@@ -4285,7 +4295,8 @@ class Handler (SimpleHTTPRequestHandler):
 		response ['text'] = request ['text']
 
 		self.send_response (200)
-		self.send_header ("Content-type", "application/json")
+		self.send_header ('Content-type', 'application/json')
+		self.send_header ('Cache-Control', 'no-store')
 		self.end_headers ()
 		self.wfile.write (json.dumps (response).encode ('utf8'))
 		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
@@ -4374,7 +4385,7 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEq', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEqu', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.strip ())
@@ -4395,15 +4406,18 @@ if __name__ == '__main__':
 					sys.exit (0)
 
 		# child starts here
-		_vars.update (_START_VARS)
-		sym.set_user_funcs (set (_START_VARS))
-		_parser.set_user_funcs (set (_START_VARS))
-
 		if ('--sympyEI', '') in opts or ('-E', '') in opts:
 			sast.sympyEI ()
 
 		if ('--quick', '') in opts or ('-q', '') in opts:
 			_parser.set_quick ()
+
+		if ('--ugly', '') in opts or ('-u', '') in opts:
+			_DISPLAY_MODE [0] = 0
+
+		_vars.update (_START_VARS)
+		sym.set_user_funcs (set (_START_VARS))
+		_parser.set_user_funcs (set (_START_VARS))
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS

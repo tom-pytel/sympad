@@ -116,6 +116,7 @@ Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 1 if {a = x if z} else 0 if y
 a, lambda: b = 1 = 0
 a * [2]
+(dx**p*artial)*Limit(sqrt(-1), x, 0**d)[(Matrix([[partialx]])), lcm_list()]
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!

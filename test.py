@@ -1458,6 +1458,7 @@ eye (2).is_diagonal ()
 a [2]
 a [2,3]
 a * [2]
+a * {-1}[x]
 """
 
 if __name__ == '__main__':
