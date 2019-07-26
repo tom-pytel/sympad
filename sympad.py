@@ -1218,6 +1218,7 @@ To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand 
 Repeat this several times using the up arrow.
 </p><p>
 After filling up the browser with many pretty mathematical expressions you may note that it starts to get slower, simply reload the page, all your variables and history will be preserved.
+Or try adding "<b>--ugly</b>" to the command line, this will use a quicker draft rendering for the math.
 </p><p>
 Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
