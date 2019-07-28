@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# TODO: Exception prevents restart on file date change or too much time?
-
 import getopt
 import io
 import json

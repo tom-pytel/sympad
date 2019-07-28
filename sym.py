@@ -1,14 +1,5 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
-# TODO: Exponential notation in latex.
-# TODO: MatrixSymbol ('A', 2, 2)**n
-# TODO: ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
-# TODO: PurePoly(lambda**4 - 11*lambda**3 + 29*lambda**2 + 35*lambda - 150, lambda, domain='ZZ')
-# TODO: sequence(factorial(k), (k,1,oo))
-
-# Piecewise((Piecewise(((Matrix([[dx], [1.0]])), 1**1)), Derivative(factorial(oo), y, 3)), ([sqrt(partial), -1.0 + a_prime - 1, 'str'*-1*a_prime], partialx + oo = Piecewise((oo, 1.0), (0, 1.0))), (lambda x: -1 + dx + 1.0, (partialx, 0, 1) = Piecewise((partial, a))), (abs(Integral(-1, (x, a_prime, partial))), True))
-# lambda x, y, z: partialx if 0 + a_prime else partial**dx if d / dx**1 (oo) else 1/a if [a, a_prime] else ln(x) - {1.00 \sqrt[-d]{\infty^\infty} (sqrt(0 d * 0) (0 if 1 else 1.0 if 1.0 else d + \sum_{x=0}^{oo} 0) {-dx} if -1 else -1 if -1.0) {-({-1.0} partialx a) / acosh()}}
-
 import re
 import sympy as sp
 
@@ -22,8 +13,8 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
 
-_OPS                   = AST.OPS | {'Text'}
-_NOPS                  = lambda ops: _OPS - ops
+# _OPS                   = AST.OPS # | {'Text'}
+# _NOPS                  = lambda ops: _OPS - ops
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
@@ -33,7 +24,7 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 sast.register_AST (AST_Text)
 
-class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a single time
+class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a number of times
 	def doit (self, *args, **kwargs):
 		return self.args [0] if self.args [1] == 1 else ExprDontDoIt (self.args [0], self.args [1] - 1)
 
@@ -805,7 +796,8 @@ def _spt2ast_Function (spt):
 	return AST ('func', \
 			f'{AST.Func.ESCAPE}{spt.__class__.__name__}' \
 			if getattr (spt, '_SYMPAD_ESCAPED', None) else \
-			spt.__class__.__name__, tuple (spt2ast (arg) for arg in spt.args))
+			spt.__class__.__name__ \
+			, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Integral (spt):
 	return \
@@ -835,7 +827,7 @@ _spt2ast_funcs = {
 	sp.numbers.Exp1: lambda spt: AST.E,
 	sp.numbers.Infinity: lambda spt: AST.Infty,
 	sp.numbers.NegativeInfinity: lambda spt: AST ('-', AST.Infty),
-	sp.numbers.ComplexInfinity: lambda spt: AST.Infty, # not exactly but whatever
+	sp.numbers.ComplexInfinity: lambda spt: AST.CInfty,
 	sp.numbers.NaN: lambda spt: AST.NaN,
 	sp.Symbol: lambda spt: AST ('@', spt.name),
 

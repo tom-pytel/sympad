@@ -524,11 +524,15 @@ def register_AST (cls):
 	_AST_OP2CLS [cls.op] = cls
 	_AST_CLS2OP [cls]    = cls.op
 
+	AST.OPS.add (cls.op)
+
 	setattr (AST, cls.__name__ [4:], cls)
 
 def sympyEI (yes = True):
 	AST.CONSTS.difference_update ((AST.E, AST.I))
+
 	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
+
 	AST.CONSTS.update ((AST.E, AST.I))
 
 class sast: # for single script
