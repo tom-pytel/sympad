@@ -2,13 +2,13 @@
 #
 # ('=', 'rel', lhs, rhs)             - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
 # ('#', 'num')                       - real numbers represented as strings to pass on maximum precision to sympy
-# ('@', 'var')                       - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'x_2', '\partial x_{y_2}', "d\alpha_{x_{\beta''}'}'''"
+# ('@', 'var')                       - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
 # ('.', expr, 'name')                - data member reference
 # ('.', expr, 'name', (a1, a2, ...)) - method member call
-# ('"', 'str')                       - string (for function parameters like '+' or '-')
+# ('"', 'str')                       - string
 # (',', (expr1, expr2, ...))         - comma expression (tuple)
 # ('{', expr)                        - invilible parentheses for grouping
-# ('(', expr)                        - explicit parentheses
+# ('(', expr)                        - explicit parentheses (not tuple)
 # ('[', expr)                        - brackets (list, not index)
 # ('|', expr)                        - absolute value
 # ('-', expr)                        - negative of expression, negative numbers are represented with this at least initially
@@ -21,7 +21,7 @@
 # ('log', expr, base)                - logarithm of expr in base
 # ('sqrt', expr)                     - square root of expr
 # ('sqrt', expr, n)                  - nth root of expr
-# ('func', 'func', (a1, a2, ...))    - sympy or regular python function 'func', will be called with sympy expression (',' expr gives multiple arguments)
+# ('func', 'func', (a1, a2, ...))    - sympy or regular python function 'func', will be called with sympy expression
 # ('lim', expr, var, to)             - limit of expr when variable var approaches to from both positive and negative directions
 # ('lim', expr, var, to, 'dir')      - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('sum', expr, var, from, to)       - summation of expr over variable var from from to to
@@ -31,7 +31,7 @@
 # ('vec', (e1, e2, ...))             - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 # ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
-# ('lamb', expr, (v1, v2, ...))      - lambda expression: v = ('@', 'var')
+# ('lamb', expr, (v1, v2, ...))      - lambda expression: v? = ('@', 'var')
 # ('idx', expr, (i0, i1, ...))       - indexing: expr [i0, i1, ...]
 
 import re

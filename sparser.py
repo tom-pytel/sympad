@@ -1047,13 +1047,18 @@ class Parser (lalr1.Parser):
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			rated = list (rated)
+
 			print (file = sys.stderr)
+
 			for res in rated [:32]:
 				res = res [-1]
 				res = (res [0].remove_curlys (),) + res [1:] if isinstance (res [0], AST) else res
+
 				print ('parse:', res, file = sys.stderr)
+
 			if len (rated) > 32:
 				print (f'... total {len (rated)}', file = sys.stderr)
+
 			print (file = sys.stderr)
 
 		res = next (iter (rated)) [-1]
