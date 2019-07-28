@@ -9,6 +9,7 @@ sp.fancysets = sp.fancysets
 
 import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
+import xlat          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
@@ -189,26 +190,20 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
-_ast2tex_func_xlat = {
-	'diag': True,
-	'eye': True,
-	'ones': True,
-	'zeros': True,
-	'beta': '\\beta', # represent SymPy Greek functions as Greek letters
-	'gamma': '\\Gamma',
-	'Gamma': '\\Gamma',
-	'zeta': '\\zeta',
-}
-
 def _ast2tex_func (ast):
-	xlat = _ast2tex_func_xlat.get (ast.func)
+	xact = xlat.XLAT_FUNC.get (ast.func)
 
-	if xlat is not None:
+	if xact is not None:
 		try:
-			if xlat is True:
+			if xact is True:
 				return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+			if isinstance (xact, str):
+				return f'{xact}{_ast2tex_paren (_tuple2ast (ast.args))}'
 
-			return f'{xlat}{_ast2tex_paren (_tuple2ast (ast.args))}'
+			ast2 = xact (*ast.args)
+
+			if ast2 is not None:
+				return ast2tex (ast2)
 
 		except:
 			pass
@@ -901,6 +896,6 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('+', (('sum', ('*', (('@', 'a'), ('intg', ('@', 'x'), ('@', 'dx')))), ('@', 'x'), ('#', '0'), ('#', '1')), ('*', (('#', '1'), ('@', 'dx')))))
+# 	ast = AST ('func', 'exp', (('@', 'x'),))
 # 	res = ast2tex (ast)
 # 	print (res)

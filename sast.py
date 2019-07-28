@@ -86,6 +86,9 @@ class AST (tuple):
 		else:
 			return self.is_single_var
 
+	def _len (self):
+		return len (self)
+
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
 			return \
@@ -172,12 +175,24 @@ class AST (tuple):
 
 		return name if AST._rec_identifier.match (name) else None
 
-	def vars (self): # return set of unique variables found in tree
-		pass ## TODO: This!
+	@staticmethod
+	def _free_vars (ast, vars):
+		if isinstance (ast, AST):
+			if ast.is_const_var is False and ast.var:
+				vars.add (ast)
 
+			for e in ast:
+				AST._free_vars (e, vars)
+
+	def free_vars (self): # return set of unique unbound variables found in tree
+		vars = set ()
+
+		AST._free_vars (self, vars)
+
+		return vars
 
 	@staticmethod
-	def is_int_text (text): # >= 0
+	def is_int_text (text):
 		return AST_Num._rec_int.match (text)
 
 	@staticmethod
@@ -252,6 +267,7 @@ class AST_Var (AST):
 	_grp                  = lambda self: AST_Var._rec_groups.match (self.var).groups ()
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
+	_is_const_var         = lambda self: self.var in AST.CONSTS
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]

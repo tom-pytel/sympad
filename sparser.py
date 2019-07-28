@@ -257,50 +257,50 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 _xlat_func_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
-def _xlat_func_Derivative (ast): # translate function 'Derivative' to native ast representation for pretty rendering
-	if ast.is_null_var:
-		return AST ('diff', ast, (AST.VarNull,))
-	elif not ast.is_comma:
-		raise lalr1.Incomplete (AST ('diff', ast, (AST.VarNull,)))
-	elif len (ast.commas) == 0:
-		raise lalr1.Incomplete (AST ('diff', AST.VarNull, (AST.VarNull,)))
-	elif len (ast.commas) == 1:
-		raise lalr1.Incomplete (AST ('diff', ast.commas [0], (AST.VarNull,)))
+# def _xlat_func_Derivative (ast): # translate function 'Derivative' to native ast representation for pretty rendering
+# 	if ast.is_null_var:
+# 		return AST ('diff', ast, (AST.VarNull,))
+# 	elif not ast.is_comma:
+# 		raise lalr1.Incomplete (AST ('diff', ast, (AST.VarNull,)))
+# 	elif len (ast.commas) == 0:
+# 		raise lalr1.Incomplete (AST ('diff', AST.VarNull, (AST.VarNull,)))
+# 	elif len (ast.commas) == 1:
+# 		raise lalr1.Incomplete (AST ('diff', ast.commas [0], (AST.VarNull,)))
 
-	commas = list (ast.commas [:0:-1])
-	ds     = []
+# 	commas = list (ast.commas [:0:-1])
+# 	ds     = []
 
-	while commas:
-		d = commas.pop ().as_diff
+# 	while commas:
+# 		d = commas.pop ().as_diff
 
-		if not d:
-			raise SyntaxError ('expecting variable')
-		elif commas and commas [-1].is_num:
-			ds.append (AST ('^', d, commas.pop ()))
-		else:
-			ds.append (d)
+# 		if not d:
+# 			raise SyntaxError ('expecting variable')
+# 		elif commas and commas [-1].is_num:
+# 			ds.append (AST ('^', d, commas.pop ()))
+# 		else:
+# 			ds.append (d)
 
-	return AST ('diff', ast.commas [0], AST (*ds))
+# 	return AST ('diff', ast.commas [0], AST (*ds))
 
-def _xlat_func_Integral (ast): # translate function 'Integral' to native ast representation for pretty rendering
-	if not ast.is_comma:
-		return AST ('intg', ast, ast.as_diff if ast.is_var else AST.VarNull)
-	elif len (ast.commas) == 0:
-		ast = AST ('intg', AST.VarNull, AST.VarNull)
-	elif len (ast.commas) == 1:
-		ast = AST ('intg', ast.commas [0], AST.VarNull)
+# def _xlat_func_Integral (ast): # translate function 'Integral' to native ast representation for pretty rendering
+# 	if not ast.is_comma:
+# 		return AST ('intg', ast, ast.as_diff if ast.is_var else AST.VarNull)
+# 	elif len (ast.commas) == 0:
+# 		ast = AST ('intg', AST.VarNull, AST.VarNull)
+# 	elif len (ast.commas) == 1:
+# 		ast = AST ('intg', ast.commas [0], AST.VarNull)
 
-	else:
-		ast2 = ast.commas [1].strip (1)
+# 	else:
+# 		ast2 = ast.commas [1].strip (1)
 
-		if not ast2.is_comma:
-			return AST ('intg', ast.commas [0], ast2.as_diff)
-		elif len (ast2.commas) == 3:
-			return AST ('intg', ast.commas [0], ast2.commas [0].as_diff, ast2.commas [1], ast2.commas [2])
-		else:
-			ast = AST (*(('intg', ast.commas [0], ast2.commas [0].as_diff) + ast2.commas [1:] + (AST.VarNull, AST.VarNull)) [:5])
+# 		if not ast2.is_comma:
+# 			return AST ('intg', ast.commas [0], ast2.as_diff)
+# 		elif len (ast2.commas) == 3:
+# 			return AST ('intg', ast.commas [0], ast2.commas [0].as_diff, ast2.commas [1], ast2.commas [2])
+# 		else:
+# 			ast = AST (*(('intg', ast.commas [0], ast2.commas [0].as_diff) + ast2.commas [1:] + (AST.VarNull, AST.VarNull)) [:5])
 
-	raise lalr1.Incomplete (ast)
+# 	raise lalr1.Incomplete (ast)
 
 def _xlat_func_Limit (ast): # translate function 'Limit' to native ast representation for pretty rendering
 	if ast.is_null_var:
@@ -454,14 +454,14 @@ def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function
 	return wrap (_xlat_func (ast))
 
 _FUNC_AST_XLAT = {
-	'Abs'       : (1, lambda expr: _expr_func (1, '|', expr, strip = 1)),
-	'abs'       : (1, lambda expr: _expr_func (1, '|', expr, strip = 1)),
-	'Derivative': (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
-	'diff'      : (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
-	'exp'       : (1, lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1)),
-	'factorial' : (1, lambda expr: _expr_func (1, '!', expr, strip = 1)),
-	'Integral'  : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
-	'integrate' : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
+	# 'Abs'       : (1, lambda expr: _expr_func (1, '|', expr, strip = 1)),
+	# 'abs'       : (1, lambda expr: _expr_func (1, '|', expr, strip = 1)),
+	# 'Derivative': (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
+	# 'diff'      : (0, lambda expr: _expr_func_xlat (_xlat_func_Derivative, expr)),
+	# 'exp'       : (1, lambda expr: _expr_func (2, '^', AST.E, expr, strip = 1)),
+	# 'factorial' : (1, lambda expr: _expr_func (1, '!', expr, strip = 1)),
+	# 'Integral'  : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
+	# 'integrate' : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
 	'Limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
 	'limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
 	'Matrix'    : (0, lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr)),
