@@ -30,6 +30,21 @@ def _ast_func_tuple_args (ast):
 
 	return ast.commas if ast.is_comma else (ast,)
 
+def _ast_func_reorder (ast):
+	if ast.is_fact:
+		if ast.fact.is_paren:
+			return ast.fact, lambda a: AST ('!', a)
+
+	elif ast.is_pow:
+		if ast.base.is_paren:
+			return ast.base, lambda a: AST ('^', a, ast.exp)
+
+	elif ast.is_attr:
+		if ast.obj.is_paren:
+			return ast.obj, lambda a: AST ('.', a, *ast [2:])
+
+	return ast, lambda a: a
+
 def _expr_lambda (lhs, expr):
 	if lhs.is_var:
 		return AST ('lamb', expr, (lhs,))
@@ -61,7 +76,7 @@ def _expr_lambda (lhs, expr):
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 	last      = lhs.muls [-1] if lhs.is_mul else lhs
-	arg, wrap = _expr_func_reorder (rhs, strip = 0)
+	arg, wrap = _ast_func_reorder (rhs)
 	ast       = None
 
 	if last.is_attr: # {x.y} * () -> x.y(), x.{y.z} -> {x.y}.z
@@ -444,36 +459,12 @@ def _xlat_func_Sum (ast): # translate function 'Sum' to native ast representatio
 	raise lalr1.Incomplete (ast)
 
 def _expr_func (iparm, *args, strip = 0): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
-	def astarg (arg):
-		return (_ast_func_tuple_args (arg) if args [0] == 'func' else arg.strip (strip)),
+	ast, wrap = _ast_func_reorder (args [iparm])
 
-	if args [iparm].is_fact:
-		if args [iparm].fact.is_paren:
-			return AST ('!', args [:iparm] + astarg (args [iparm].fact) + args [iparm + 1:])
-
-	elif args [iparm].is_pow:
-		if args [iparm].base.is_paren:
-			return AST ('^', args [:iparm] + astarg (args [iparm].base) + args [iparm + 1:], args [iparm].exp)
-
-	elif args [iparm].is_attr:
-		if args [iparm].obj.is_paren:
-			if args [0] != 'func':
-				return AST ('.', args [:iparm] + (args [iparm].strip (strip),) + args [iparm + 1:], *args [iparm] [2:])
-			else:
-				return AST ('.', args [:iparm] + (_ast_func_tuple_args (args [iparm].obj),) + args [iparm + 1:], *args [iparm] [2:])
-
-	return AST (*(args [:iparm] + astarg (args [iparm]) + args [iparm + 1:]))
-
-def _expr_func_reorder (ast, strip):
-	ast = _expr_func (1, None, ast, strip = strip)
-
-	return \
-			(ast [1], lambda a: a) \
-			if ast.op is None else \
-			(ast [1] [1], lambda a: AST (ast.op, a, *ast [2:]))
+	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast.strip (strip)),) + args [iparm + 1:])))
 
 def _expr_func_xlat (_xlat_func, ast): # rearrange ast tree for a given function translation like 'Derivative' or 'Limit'
-	ast, wrap = _expr_func_reorder (ast, strip = None) # strip all parentheses
+	ast, wrap = _ast_func_reorder (ast.strip ())
 
 	return wrap (_xlat_func (ast))
 
@@ -536,7 +527,6 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 				AST ('vec', tuple (c.vec [0] for c in ast.commas))
 
 	return AST ('vec', ast.commas) # raise SyntaxError ('invalid matrix syntax')
-
 
 #...............................................................................................
 class Parser (lalr1.Parser):
@@ -605,7 +595,7 @@ class Parser (lalr1.Parser):
 			b'xrWtxoHRtZO/IkGWcsOjMbDhxVJZ6oKiyLw7gGZ01Z5/wmFfcngFfZgqw6wmLNGCRbU/VOGPX7G5J3fD5K9IIGnWPTFJUhAQIQ4HqGbuKFy/E/ab+kaV4KotwiJd4L7bzTmxeBfO7UcMEm8OoTFtdQMO/JvTeJksUx0OVMdcNFUeso/jzvsVSWxyqIItnTZn' \
 			b't6B0oyIF4UVl4vHQekcjhw2xPJCZj2hTBArl7pBe8fjxlBxqYEtndqtaQdI7KperruLCIHlbQhTwRPrBi1SMjROn5FADk17xVPbLtAzC3kHX5kRoqtz1TVWELHTBOrM9YWFqEZH0d0kpbXVSDjUw6cPfqlK66pYcLEn1XVJHX52UQw1MBgi3qo5tdUsOwrhL' \
 			b'ow2ePTglhxqYDDaupo7BNLRWqm6BVjpU+DU5rsn5CGJ/zUOQzcQyvUYvr1E8c0q3Vkym2uwo5dY0S1xOZ44mpDUZXxyZtFx1HA7Sao9cWm11HA7SWjCwOFpjNn/QYYHD5DH+Fz4y++yi52cTQdSnPG/As/RH7SDiBSOS4xWxrY7bYd77Zic+bljErjpuBxEv' \
-			b'GMgcr4h9ddwOIqbhkTE8E6x+G/x4LfIhcXywq5UwXgek2k9dsbweSGaUgI94G+QMIV5JhNaejzKaSdlWmUPCbpKQxc+Juyp3Tau89tmSGDYba/AgX6SEQkzqt5MlMbKSSldRlSufugFrRmp8isvwBhhsPxEivOCKlWDQpSUNTwIJ0Z7yf33+/+zws+E=' 
+			b'GMgcr4h9ddwOIqbhkTE8E6x+G/x4LfIhcXywq5UwXgek2k9dsbweSGaUgI94G+QMIV5JhNaejzKaSdlWmUPCbpKQxc+Juyp3Tau89tmSGDYba/AgX6SEQkzqt5MlMbKSSldRlSufugFrRmp8isvwBhhsPxEivOCKlWDQpSUNTwIJ0Z7yf33+/+zws+E='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
