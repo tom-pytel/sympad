@@ -45,6 +45,7 @@ def _ast_func_reorder (ast):
 
 	return ast, lambda a: a
 
+#...............................................................................................
 def _expr_lambda (lhs, expr):
 	if lhs.is_var:
 		return AST ('lamb', expr, (lhs,))
@@ -57,22 +58,6 @@ def _expr_lambda (lhs, expr):
 			return AST ('lamb', expr, lhs.commas)
 
 	raise SyntaxError ('invalid lambda function')
-
-# def _expr_mapsto (lhs, expr):
-# 	lhs = lhs.strip ()
-
-# 	if lhs.is_var:
-# 		return AST ('lamb', expr, (lhs,))
-
-# 	if lhs.is_comma:
-# 		for var in lhs.commas:
-# 			if not var.is_var:
-# 				break
-
-# 		else:
-# 			return AST ('lamb', expr, lhs.commas)
-
-# 	raise SyntaxError ('invalid LaTeX \\mapsto expression')
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 	last      = lhs.muls [-1] if lhs.is_mul else lhs

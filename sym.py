@@ -13,9 +13,6 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
 
-# _OPS                   = AST.OPS # | {'Text'}
-# _NOPS                  = lambda ops: _OPS - ops
-
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
 
