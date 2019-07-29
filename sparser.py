@@ -26,7 +26,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0):
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
 def _ast_func_tuple_args (ast):
-	ast = ast.strip ()
+	ast = ast.strip (1)
 
 	return ast.commas if ast.is_comma else (ast,)
 

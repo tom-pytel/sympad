@@ -104,11 +104,11 @@ def _xlat_func_Matrix (ast = AST.VarNull):
 def _xlat_func_Piecewise (*args):
 	pcs = []
 
-	# if ast.is_comma and ast.commas and ast.commas [0].strip_paren ().is_comma:
-	if args and not args [0].strip ().is_comma:
-		ast = AST (',', args)
+	if not args or args [0].is_null_var:
+		return AST ('piece', ((AST.VarNull, AST.VarNull),))
 
-	else:
+	# if ast.is_comma and ast.commas and ast.commas [0].strip_paren ().is_comma:
+	if len (args) > 1:
 		for c in args [:-1]:
 			c = c.strip ()
 
@@ -117,8 +117,12 @@ def _xlat_func_Piecewise (*args):
 
 			pcs.append (c.commas)
 
-		ast = args [-1].strip ()
+	ast = args [-1]
 
+	if not ast.is_paren:
+		return None
+
+	ast = ast.strip ()
 	pcs = tuple (pcs)
 
 	if not ast.is_comma:
@@ -131,7 +135,6 @@ def _xlat_func_Piecewise (*args):
 			return AST ('piece', pcs + ((ast.commas [0], AST.VarNull),))
 		if len (ast.commas) == 2:
 			return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1] == AST.True_ else ast.commas [1]),))
-			# return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1].stip_curlys ().strip_paren () == AST.True_ else ast.commas [1]),))
 
 	return None
 
