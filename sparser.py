@@ -31,17 +31,20 @@ def _ast_func_tuple_args (ast):
 	return ast.commas if ast.is_comma else (ast,)
 
 def _ast_func_reorder (ast):
+	wrap = None
+
 	if ast.is_fact:
-		if ast.fact.is_paren:
-			return ast.fact, lambda a: AST ('!', a)
-
+		ast2, wrap = ast.fact, lambda a: AST ('!', a)
 	elif ast.is_pow:
-		if ast.base.is_paren:
-			return ast.base, lambda a: AST ('^', a, ast.exp)
-
+		ast2, wrap = ast.base, lambda a: AST ('^', a, ast.exp)
 	elif ast.is_attr:
-		if ast.obj.is_paren:
-			return ast.obj, lambda a: AST ('.', a, *ast [2:])
+		ast2, wrap = ast.obj, lambda a: AST ('.', a, *ast [2:])
+
+	if wrap:
+		ast3, wrap2 = _ast_func_reorder (ast2)
+
+		if ast3.is_paren:
+			return ast3, lambda a: wrap (wrap2 (a))
 
 	return ast, lambda a: a
 

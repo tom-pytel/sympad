@@ -200,8 +200,8 @@ class xlat: # for single script
 	XLAT_FUNC = XLAT_FUNC
 	xlat_func = xlat_func
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('@', 'x')
-	res = XLAT_FUNC ['ln'] (ast)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('@', 'x')
+# 	res = XLAT_FUNC ['ln'] (ast)
+# 	print (res)
