@@ -556,3 +556,8 @@ class sast: # for single script
 	AST          = AST
 	register_AST = register_AST
 	sympyEI      = sympyEI
+
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('func', 'exp', AST (('@', 'x'),))
+# 	print (ast)

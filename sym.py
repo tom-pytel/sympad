@@ -29,6 +29,9 @@ class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a number
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
 
+def _trail_comma (obj):
+	return ',' if len (obj) == 1 else ''
+
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
 
@@ -46,18 +49,10 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 			raise SyntaxError ('positional argument follows keyword argument')
 		else:
 			pyargs.append (_ast2spt (arg))
-		# if arg.is_ass and arg.lhs.is_var:
-		# 	name = arg.lhs.as_identifier ()
-
-		# 	if name is not None:
-		# 		pykw [name] = _ast2spt (arg.rhs)
-		# 		continue
-
-		# pyargs.append (_ast2spt (arg))
 
 	try:
 		spt = func (*pyargs, **{**kw, **pykw})
-	except: # try again if function does not support **kw args
+	except: # try again if function does not support **kw
 		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func and not kw.get ('evaluate', True):
@@ -65,15 +60,44 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 
 	return spt
 
-def _trail_comma (obj):
-	return ',' if len (obj) == 1 else ''
-
 #...............................................................................................
 def ast2tex (ast): # abstract syntax tree -> LaTeX text
+	return _ast2tex (_ast2tex_xlat_funcs (ast))
+
+def _ast2tex_xlat_funcs (ast):
+	if not isinstance (ast, AST):
+		return ast
+
+	if ast.is_func:
+		xact = xlat.XLAT_FUNC.get (ast.func)
+
+		if xact is not None:
+			args = AST (*(_ast2tex_xlat_funcs (arg) for arg in ast.args))
+
+			if xact is True: # True means execute function and use return value for ast
+				return spt2ast (_ast_func_call (getattr (sp, ast.func), args))
+
+			if isinstance (xact, str): # str is straight LaTeX
+				return AST ('func', xact, args)
+
+			try:
+				ast2 = xlat.xlat_func (xact, args)
+
+				if ast2 is not None:
+					return ast2
+
+			except:
+				pass
+
+			return AST ('func', ast.func, args)
+
+	return AST (*(_ast2tex_xlat_funcs (e) for e in ast))
+
+def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
 
 def _ast2tex_wrap (obj, curly = None, paren = None):
-	s = ast2tex (obj) if isinstance (obj, AST) else str (obj)
+	s = _ast2tex (obj) if isinstance (obj, AST) else str (obj)
 
 	if (obj.op in paren) if isinstance (paren, set) else paren:
 		return f'\\left({s} \\right)'
@@ -85,9 +109,9 @@ def _ast2tex_wrap (obj, curly = None, paren = None):
 
 def _ast2tex_curly (ast):
 	return \
-			f'{ast2tex (ast)}'                    if ast.is_single_unit else \
-			f'{{{ast2tex (ast)}}}'                if not ast.is_comma else \
-			f'{{\\left({ast2tex (ast)}\\right)}}'
+			f'{_ast2tex (ast)}'                     if ast.is_single_unit else \
+			f'{{{_ast2tex (ast)}}}'                 if not ast.is_comma else \
+			f'{{\\left({_ast2tex (ast)}\\right)}}'
 
 def _ast2tex_paren (ast, ops = {}):
 	return _ast2tex_wrap (ast, 0, not (ast.is_paren or (ops and ast.op not in ops)))
@@ -96,9 +120,9 @@ def _ast2tex_paren_mul_exp (ast, ret_has = False, also = {'=', '+'}):
 	if ast.is_mul:
 		s, has = _ast2tex_mul (ast, True)
 	else:
-		s, has = ast2tex (ast), ast.op in also
+		s, has = _ast2tex (ast), ast.op in also
 
-	s = _ast2tex_wrap (s, 0, has) # f'\\left({s} \\right)' if has else s
+	s = _ast2tex_wrap (s, 0, has)
 
 	return (s, has) if ret_has else s
 
@@ -197,23 +221,23 @@ def _ast2tex_log (ast):
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
 def _ast2tex_func (ast):
-	xact = xlat.XLAT_FUNC.get (ast.func)
+	# xact = xlat.XLAT_FUNC.get (ast.func)
 
-	if xact is not None:
-		if xact is True: # True means execute function and use return value for display
-			return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
+	# if xact is not None:
+	# 	if xact is True: # True means execute function and use return value for display
+	# 		return _ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
 
-		if isinstance (xact, str): # str is straight LaTeX
-			return f'{xact}{_ast2tex_paren (_tuple2ast (ast.args))}'
+	# 	if isinstance (xact, str): # str is straight LaTeX
+	# 		return f'{xact}{_ast2tex_paren (_tuple2ast (ast.args))}'
 
-		try:
-			ast2 = xlat.xlat_func (xact, ast.args)
+	# 	try:
+	# 		ast2 = xlat.xlat_func (xact, ast.args)
 
-			if ast2 is not None:
-				return ast2tex (ast2)
+	# 		if ast2 is not None:
+	# 			return _ast2tex (ast2)
 
-		except:
-			pass
+	# 	except:
+	# 		pass
 
 	if ast.is_trigh_func:
 		n = (f'\\operatorname{{{ast.func [1:]}}}^{{-1}}' \
@@ -230,12 +254,12 @@ def _ast2tex_func (ast):
 			'\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}{_ast2tex_paren (_tuple2ast (ast.args))}'
 
 def _ast2tex_lim (ast):
-	s = ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
+	s = _ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
 
-	return f'\\lim_{{{ast2tex (ast.lvar)} \\to {s}}} {_ast2tex_paren_mul_exp (ast.lim)}'
+	return f'\\lim_{{{_ast2tex (ast.lvar)} \\to {s}}} {_ast2tex_paren_mul_exp (ast.lim)}'
 
 def _ast2tex_sum (ast):
-	return f'\\sum_{{{ast2tex (ast.svar)} = {ast2tex (ast.from_)}}}^{_ast2tex_curly (ast.to)} {_ast2tex_paren_mul_exp (ast.sum)}' \
+	return f'\\sum_{{{_ast2tex (ast.svar)} = {_ast2tex (ast.from_)}}}^{_ast2tex_curly (ast.to)} {_ast2tex_paren_mul_exp (ast.sum)}' \
 
 _rec_diff_var_single_start = re.compile (r'^d(?=[^_])')
 
@@ -260,24 +284,24 @@ def _ast2tex_diff (ast):
 	dv = next (iter (ds))
 
 	if len (ds) == 1 and not dv.is_partial:
-		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (ast2tex (n) for n in ast.dvs)}}}{_ast2tex_paren (ast.diff)}'
+		return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (_ast2tex (n) for n in ast.dvs)}}}{_ast2tex_paren (ast.diff)}'
 
 	else:
-		s = ''.join (_rec_diff_var_single_start.sub (r'\\partial ', ast2tex (n)) for n in ast.dvs)
+		s = ''.join (_rec_diff_var_single_start.sub (r'\\partial ', _ast2tex (n)) for n in ast.dvs)
 
 		return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{_ast2tex_paren (ast.diff)}'
 
 def _ast2tex_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'\\int \\ {ast2tex (ast.dv)}' \
+				f'\\int \\ {_ast2tex (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {_ast2tex_wrap (ast.intg, {"diff"}, {"="})} \\ {ast2tex (ast.dv)}'
+				f'\\int {_ast2tex_wrap (ast.intg, {"diff"}, {"="})} \\ {_ast2tex (ast.dv)}'
 	else:
 		return \
-				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} \\ {ast2tex (ast.dv)}' \
+				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} \\ {_ast2tex (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {_ast2tex_wrap (ast.intg, {"diff"}, {"="})} \\ {ast2tex (ast.dv)}'
+				f'\\int_{_ast2tex_curly (ast.from_)}^{_ast2tex_curly (ast.to)} {_ast2tex_wrap (ast.intg, {"diff"}, {"="})} \\ {_ast2tex (ast.dv)}'
 
 _ast2tex_funcs = {
 	'=': lambda ast: f'{_ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2tex_eq_hs (ast, ast.rhs, False)}',
@@ -285,28 +309,28 @@ _ast2tex_funcs = {
 	'@': _ast2tex_var,
 	'.': _ast2tex_attr,
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
-	',': lambda ast: f'{", ".join (ast2tex (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (_ast2tex (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
 	'(': lambda ast: _ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
-	'[': lambda ast: f'\\left[{", ".join (ast2tex (b) for b in ast.brack)} \\right]',
-	'|': lambda ast: f'\\left|{ast2tex (ast.abs)} \\right|',
+	'[': lambda ast: f'\\left[{", ".join (_ast2tex (b) for b in ast.brack)} \\right]',
+	'|': lambda ast: f'\\left|{_ast2tex (ast.abs)} \\right|',
 	'-': lambda ast: f'-{_ast2tex_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.is_mul, {"=", "+"})}',
 	'!': lambda ast: _ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
 	'+': _ast2tex_add,
 	'*': _ast2tex_mul,
-	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{ast2tex (ast.denom)}}}',
+	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{_ast2tex (ast.denom)}}}',
 	'^': _ast2tex_pow,
 	'log': _ast2tex_log,
-	'sqrt': lambda ast: f'\\sqrt{{{ast2tex (ast.rad.strip_paren_noncomma (1))}}}' if ast.idx is None else f'\\sqrt[{ast2tex (ast.idx)}]{{{ast2tex (ast.rad.strip_paren_noncomma (1))}}}',
+	'sqrt': lambda ast: f'\\sqrt{{{_ast2tex (ast.rad.strip_paren_noncomma (1))}}}' if ast.idx is None else f'\\sqrt[{_ast2tex (ast.idx)}]{{{_ast2tex (ast.rad.strip_paren_noncomma (1))}}}',
 	'func': _ast2tex_func,
 	'lim': _ast2tex_lim,
 	'sum': _ast2tex_sum,
 	'diff': _ast2tex_diff,
 	'intg': _ast2tex_intg,
-	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
-	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
-	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {ast2tex (p [1])}' for p in ast.pieces) + ' \\end{cases}',
-	'lamb': lambda ast: f'\\left({ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
-	'idx': lambda ast: f'{_ast2tex_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{ast2tex (_tuple2ast (ast.idx))}]',
+	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (_ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
+	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (_ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
+	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {_ast2tex (p [1])}' for p in ast.pieces) + ' \\end{cases}',
+	'lamb': lambda ast: f'\\left({_ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
+	'idx': lambda ast: f'{_ast2tex_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{_ast2tex (_tuple2ast (ast.idx))}]',
 
 	'text': lambda ast: ast.tex,
 }
@@ -574,6 +598,16 @@ _ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable',
 
 _ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
 
+_ast2spt_consts              = { # 'e' and 'i' dynamically set on use from AST.E or I
+	'pi'   : sp.pi,
+	'oo'   : sp.oo,
+	'zoo'  : sp.zoo,
+	'None' : None,
+	'True' : sp.boolalg.true,
+	'False': sp.boolalg.false,
+	'nan'  : sp.nan,
+}
+
 class ast2spt:
 	def __init__ (self): self.kw = {} # never reached, here to make pylint calm down
 	def __new__ (cls, ast):
@@ -594,18 +628,8 @@ class ast2spt:
 	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
-	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or I
-		'pi'   : sp.pi,
-		'oo'   : sp.oo,
-		'zoo'  : sp.zoo,
-		'None' : None,
-		'True' : sp.boolalg.true,
-		'False': sp.boolalg.false,
-		'nan'  : sp.nan,
-	}
-
 	def _ast2spt_var (self, ast):
-		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
+		spt = {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
 
 		if spt is None:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
@@ -694,7 +718,7 @@ class ast2spt:
 		'intg': _ast2spt_intg,
 		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], **self.kw),
 		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], **self.kw),
-		'piece': lambda self, ast: sp.Piecewise (*tuple ((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.pieces), **self.kw),
+		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.pieces), **self.kw),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
 		'idx': lambda self, ast: self._ast2spt (ast.obj) [self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)],
 
