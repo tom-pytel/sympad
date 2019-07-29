@@ -255,8 +255,6 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 	raise SyntaxError ('integration expecting a differential')
 
-_xlat_func_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
-
 # def _xlat_func_Derivative (ast): # translate function 'Derivative' to native ast representation for pretty rendering
 # 	if ast.is_null_var:
 # 		return AST ('diff', ast, (AST.VarNull,))
@@ -302,146 +300,148 @@ _xlat_func_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 # 	raise lalr1.Incomplete (ast)
 
-def _xlat_func_Limit (ast): # translate function 'Limit' to native ast representation for pretty rendering
-	if ast.is_null_var:
-		return AST ('lim', ast, AST.VarNull, AST.VarNull)
-	elif not ast.is_comma:
-		raise lalr1.Incomplete (AST ('lim', ast, AST.VarNull, AST.VarNull))
+# _xlat_func_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
-	commas = ast.commas
-	l      = len (commas)
+# def _xlat_func_Limit (ast): # translate function 'Limit' to native ast representation for pretty rendering
+# 	if ast.is_null_var:
+# 		return AST ('lim', ast, AST.VarNull, AST.VarNull)
+# 	elif not ast.is_comma:
+# 		raise lalr1.Incomplete (AST ('lim', ast, AST.VarNull, AST.VarNull))
 
-	if l == 0:
-		ast = AST ('lim', AST.VarNull, AST.VarNull, AST.VarNull)
-	elif l == 1:
-		ast = AST ('lim', commas [0], AST.VarNull, AST.VarNull)
-	elif l == 2:
-		ast = AST ('lim', commas [0], commas [1], AST.VarNull)
-	elif l == 3:
-		return AST ('lim', commas [0], commas [1], commas [2], '+')
-	elif commas [3].is_str:
-		return AST ('lim', *(commas [:3] + _xlat_func_Limit_dirs.get (commas [3].str_, ('+',))))
-	elif commas [3].is_ass and commas [3].lhs.as_identifier () == 'dir' and commas [3].rhs.is_str:
-		return AST ('lim', *(commas [:3] + _xlat_func_Limit_dirs.get (commas [3].rhs.str_, ('+',))))
-	else:
-		ast = AST ('lim', commas [0], commas [1], commas [2])
+# 	commas = ast.commas
+# 	l      = len (commas)
 
-	if l and commas [-1].is_null_var:
-		return ast
+# 	if l == 0:
+# 		ast = AST ('lim', AST.VarNull, AST.VarNull, AST.VarNull)
+# 	elif l == 1:
+# 		ast = AST ('lim', commas [0], AST.VarNull, AST.VarNull)
+# 	elif l == 2:
+# 		ast = AST ('lim', commas [0], commas [1], AST.VarNull)
+# 	elif l == 3:
+# 		return AST ('lim', commas [0], commas [1], commas [2], '+')
+# 	elif commas [3].is_str:
+# 		return AST ('lim', *(commas [:3] + _xlat_func_Limit_dirs.get (commas [3].str_, ('+',))))
+# 	elif commas [3].is_ass and commas [3].lhs.as_identifier () == 'dir' and commas [3].rhs.is_str:
+# 		return AST ('lim', *(commas [:3] + _xlat_func_Limit_dirs.get (commas [3].rhs.str_, ('+',))))
+# 	else:
+# 		ast = AST ('lim', commas [0], commas [1], commas [2])
 
-	raise lalr1.Incomplete (ast)
+# 	if l and commas [-1].is_null_var:
+# 		return ast
 
-def _xlat_func_Matrix (ast):
-	if ast.is_brack and ast.brack:
-		if not ast.brack [0].is_brack: # single layer or brackets, column matrix?
-			return AST ('vec', ast.brack)
+# 	raise lalr1.Incomplete (ast)
 
-		elif ast.brack [0].brack:
-			rows = [ast.brack [0].brack]
-			cols = len (rows [0])
+# def _xlat_func_Matrix (ast):
+# 	if ast.is_brack and ast.brack:
+# 		if not ast.brack [0].is_brack: # single layer or brackets, column matrix?
+# 			return AST ('vec', ast.brack)
 
-			for row in ast.brack [1 : -1]:
-				if len (row.brack) != cols:
-					break
+# 		elif ast.brack [0].brack:
+# 			rows = [ast.brack [0].brack]
+# 			cols = len (rows [0])
 
-				rows.append (row.brack)
+# 			for row in ast.brack [1 : -1]:
+# 				if len (row.brack) != cols:
+# 					break
 
-			else:
-				l = len (ast.brack [-1].brack)
+# 				rows.append (row.brack)
 
-				if l <= cols:
-					if len (ast.brack) > 1:
-						rows.append (ast.brack [-1].brack + (AST.VarNull,) * (cols - l))
+# 			else:
+# 				l = len (ast.brack [-1].brack)
 
-					if l != cols:
-						raise lalr1.Incomplete (AST ('mat', tuple (rows)))
+# 				if l <= cols:
+# 					if len (ast.brack) > 1:
+# 						rows.append (ast.brack [-1].brack + (AST.VarNull,) * (cols - l))
 
-					return \
-							AST ('mat', tuple (rows)) \
-							if cols > 1 else \
-							AST ('vec', tuple (r [0] for r in rows))
+# 					if l != cols:
+# 						raise lalr1.Incomplete (AST ('mat', tuple (rows)))
 
-	return AST ('func', 'Matrix', (ast,))
+# 					return \
+# 							AST ('mat', tuple (rows)) \
+# 							if cols > 1 else \
+# 							AST ('vec', tuple (r [0] for r in rows))
 
-def _xlat_func_Piecewise (ast):
-	pcs = []
+# 	return AST ('func', 'Matrix', (ast,))
 
-	if ast.is_comma and ast.commas and ast.commas [0].strip_paren ().is_comma:
-		for c in ast.commas [:-1]:
-			c = c.strip_paren ()
+# def _xlat_func_Piecewise (ast):
+# 	pcs = []
 
-			if not c.is_comma or len (c.commas) != 2:
-				raise SyntaxError ('expecting tuple of length 2')
+# 	if ast.is_comma and ast.commas and ast.commas [0].strip_paren ().is_comma:
+# 		for c in ast.commas [:-1]:
+# 			c = c.strip_paren ()
 
-			pcs.append (c.commas)
+# 			if not c.is_comma or len (c.commas) != 2:
+# 				raise SyntaxError ('expecting tuple of length 2')
 
-		ast = ast.commas [-1].strip_paren ()
+# 			pcs.append (c.commas)
 
-	pcs = tuple (pcs)
+# 		ast = ast.commas [-1].strip_paren ()
 
-	if not ast.is_comma:
-		raise lalr1.Incomplete (AST ('piece', pcs + ((ast, AST.VarNull),)))
-	if len (ast.commas) == 0:
-		raise lalr1.Incomplete (AST ('piece', pcs + ()))
+# 	pcs = tuple (pcs)
 
-	if not ast.commas [0].is_comma:
-		if len (ast.commas) == 1:
-			raise lalr1.Incomplete (AST ('piece', pcs + ((ast.commas [0], AST.VarNull),)))
-		if len (ast.commas) == 2:
-			return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1] == AST.True_ else ast.commas [1]),))
-			# return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1].stip_curlys ().strip_paren () == AST.True_ else ast.commas [1]),))
+# 	if not ast.is_comma:
+# 		raise lalr1.Incomplete (AST ('piece', pcs + ((ast, AST.VarNull),)))
+# 	if len (ast.commas) == 0:
+# 		raise lalr1.Incomplete (AST ('piece', pcs + ()))
 
-		raise SyntaxError ('invalid tuple length')
+# 	if not ast.commas [0].is_comma:
+# 		if len (ast.commas) == 1:
+# 			raise lalr1.Incomplete (AST ('piece', pcs + ((ast.commas [0], AST.VarNull),)))
+# 		if len (ast.commas) == 2:
+# 			return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1] == AST.True_ else ast.commas [1]),))
+# 			# return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1].stip_curlys ().strip_paren () == AST.True_ else ast.commas [1]),))
 
-	raise RuntimeError ()
+# 		raise SyntaxError ('invalid tuple length')
 
-def _xlat_func_Pow (ast):
-	if not ast.is_comma:
-		raise lalr1.Incomplete (AST ('^', ast, AST.VarNull))
-	elif len (ast.commas) == 0:
-		raise lalr1.Incomplete (AST ('^', AST.VarNull, AST.VarNull))
-	elif len (ast.commas) == 1:
-		raise lalr1.Incomplete (AST ('^', ast.commas [0], AST.VarNull))
+# 	raise RuntimeError ()
 
-	elif len (ast.commas) == 2:
-		ast = AST ('^', ast.commas [0], ast.commas [1])
+# def _xlat_func_Pow (ast):
+# 	if not ast.is_comma:
+# 		raise lalr1.Incomplete (AST ('^', ast, AST.VarNull))
+# 	elif len (ast.commas) == 0:
+# 		raise lalr1.Incomplete (AST ('^', AST.VarNull, AST.VarNull))
+# 	elif len (ast.commas) == 1:
+# 		raise lalr1.Incomplete (AST ('^', ast.commas [0], AST.VarNull))
 
-		if ast.exp.is_null_var:
-			raise lalr1.Incomplete (ast)
-		else:
-			return ast
+# 	elif len (ast.commas) == 2:
+# 		ast = AST ('^', ast.commas [0], ast.commas [1])
 
-	raise SyntaxError ('too many parameters')
+# 		if ast.exp.is_null_var:
+# 			raise lalr1.Incomplete (ast)
+# 		else:
+# 			return ast
 
-def _xlat_func_Sum (ast): # translate function 'Sum' to native ast representation for pretty rendering
-	if ast.is_null_var:
-		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
-	elif not ast.is_comma:
-		raise lalr1.Incomplete (AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull))
+# 	raise SyntaxError ('too many parameters')
 
-	commas = ast.commas
+# def _xlat_func_Sum (ast): # translate function 'Sum' to native ast representation for pretty rendering
+# 	if ast.is_null_var:
+# 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
+# 	elif not ast.is_comma:
+# 		raise lalr1.Incomplete (AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull))
 
-	if len (commas) == 0:
-		raise lalr1.Incomplete (AST ('sum', AST.VarNull, AST.VarNull, AST.VarNull, AST.VarNull))
-	elif len (commas) == 1:
-		ast = AST ('sum', commas [0], AST.VarNull, AST.VarNull, AST.VarNull)
+# 	commas = ast.commas
 
-	else:
-		ast2 = commas [1].strip_paren (1)
+# 	if len (commas) == 0:
+# 		raise lalr1.Incomplete (AST ('sum', AST.VarNull, AST.VarNull, AST.VarNull, AST.VarNull))
+# 	elif len (commas) == 1:
+# 		ast = AST ('sum', commas [0], AST.VarNull, AST.VarNull, AST.VarNull)
 
-		if not ast2.is_comma:
-			ast = AST ('sum', commas [0], ast2, AST.VarNull, AST.VarNull)
-		elif len (ast2.commas) == 3:
-			return AST ('sum', commas [0], ast2.commas [0], ast2.commas [1], ast2.commas [2])
+# 	else:
+# 		ast2 = commas [1].strip_paren (1)
 
-		else:
-			commas = ast2.commas
-			ast    = AST (*(('sum', ast.commas [0], *commas) + (AST.VarNull, AST.VarNull, AST.VarNull)) [:5])
+# 		if not ast2.is_comma:
+# 			ast = AST ('sum', commas [0], ast2, AST.VarNull, AST.VarNull)
+# 		elif len (ast2.commas) == 3:
+# 			return AST ('sum', commas [0], ast2.commas [0], ast2.commas [1], ast2.commas [2])
 
-	if commas and commas [-1].is_null_var:
-		return ast
+# 		else:
+# 			commas = ast2.commas
+# 			ast    = AST (*(('sum', ast.commas [0], *commas) + (AST.VarNull, AST.VarNull, AST.VarNull)) [:5])
 
-	raise lalr1.Incomplete (ast)
+# 	if commas and commas [-1].is_null_var:
+# 		return ast
+
+# 	raise lalr1.Incomplete (ast)
 
 def _expr_func (iparm, *args, strip = 0): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	ast, wrap = _ast_func_reorder (args [iparm])
@@ -462,14 +462,14 @@ _FUNC_AST_XLAT = {
 	# 'factorial' : (1, lambda expr: _expr_func (1, '!', expr, strip = 1)),
 	# 'Integral'  : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
 	# 'integrate' : (0, lambda expr: _expr_func_xlat (_xlat_func_Integral, expr)),
-	'Limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
-	'limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
-	'Matrix'    : (0, lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr)),
-	'ln'        : (1, lambda expr: _expr_func (1, 'log', expr)),
-	'Piecewise' : (0, lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr)),
-	'Pow'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Pow, expr)),
-	'pow'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Pow, expr)),
-	'Sum'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Sum, expr)),
+	# 'Limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
+	# 'limit'     : (0, lambda expr: _expr_func_xlat (_xlat_func_Limit, expr)),
+	# 'Matrix'    : (0, lambda expr: _expr_func_xlat (_xlat_func_Matrix, expr)),
+	# 'ln'        : (1, lambda expr: _expr_func (1, 'log', expr)),
+	# 'Piecewise' : (0, lambda expr: _expr_func_xlat (_xlat_func_Piecewise, expr)),
+	# 'Pow'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Pow, expr)),
+	# 'pow'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Pow, expr)),
+	# 'Sum'       : (0, lambda expr: _expr_func_xlat (_xlat_func_Sum, expr)),
 }
 
 def _expr_func_func (FUNC, expr_neg_func):
@@ -498,7 +498,7 @@ def _expr_mat (expr_mat_rows):
 			AST ('vec', tuple (c [0] for c in expr_mat_rows))
 
 def _expr_curly (ast): # convert curly expression to vector or matrix if appropriate
-	if ast.op != ',':
+	if not ast.is_comma:
 		return AST ('{', ast)
 	elif not ast.commas: # empty {}?
 		return AST.VarNull
@@ -673,7 +673,7 @@ class Parser (lalr1.Parser):
 	_VARPY_QUICK = fr'(?:{_LETTER})'
 	_VAR_QUICK   = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
 
-	TOKENS_QUICK = OrderedDict ([
+	TOKENS_QUICK = OrderedDict ([ # quick input mode different tokens
 		('SQRT',          r'sqrt\b|\\sqrt'),
 		('LOG',           r'log\b|\\log'),
 		('FUNC',         fr'(@|\%|{_FUNCPY})|\\({_FUNCTEX})|(\${_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
@@ -1071,6 +1071,6 @@ class sparser: # for single script
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	a = p.parse (r'a, lambda: (b = 1) = 0') [0]
+# 	a = p.parse (r'Piecewise ((1,True))') [0]
 # 	# a = sym.ast2spt (a)
 # 	print (a)

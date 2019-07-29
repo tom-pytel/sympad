@@ -9,7 +9,7 @@
 # (',', (expr1, expr2, ...))         - comma expression (tuple)
 # ('{', expr)                        - invilible parentheses for grouping
 # ('(', expr)                        - explicit parentheses (not tuple)
-# ('[', expr)                        - brackets (list, not index)
+# ('[', (expr1, expr2, ...))         - brackets (list, not index)
 # ('|', expr)                        - absolute value
 # ('-', expr)                        - negative of expression, negative numbers are represented with this at least initially
 # ('!', expr)                        - factorial
@@ -268,6 +268,7 @@ class AST_Var (AST):
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
 	_is_const_var         = lambda self: self.var in AST.CONSTS
+	_is_nonconst_var      = lambda self: self.var not in AST.CONSTS
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]

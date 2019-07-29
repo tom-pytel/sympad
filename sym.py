@@ -36,18 +36,24 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
-	pykw   = {}
 	pyargs = []
+	pykw   = {}
 
 	for arg in args:
-		if arg.is_ass and arg.lhs.is_var:
-			name = arg.lhs.as_identifier ()
+		if arg.is_ass:
+			pykw [arg.lhs.as_identifier ()] = _ast2spt (arg.rhs)
+		elif pykw:
+			raise SyntaxError ('positional argument follows keyword argument')
+		else:
+			pyargs.append (_ast2spt (arg))
+		# if arg.is_ass and arg.lhs.is_var:
+		# 	name = arg.lhs.as_identifier ()
 
-			if name is not None:
-				pykw [name] = _ast2spt (arg.rhs)
-				continue
+		# 	if name is not None:
+		# 		pykw [name] = _ast2spt (arg.rhs)
+		# 		continue
 
-		pyargs.append (_ast2spt (arg))
+		# pyargs.append (_ast2spt (arg))
 
 	try:
 		spt = func (*pyargs, **{**kw, **pykw})
@@ -194,13 +200,14 @@ def _ast2tex_func (ast):
 	xact = xlat.XLAT_FUNC.get (ast.func)
 
 	if xact is not None:
-		try:
-			if xact is True:
-				return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
-			if isinstance (xact, str):
-				return f'{xact}{_ast2tex_paren (_tuple2ast (ast.args))}'
+		if xact is True: # True means execute function and use return value for display
+			return ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
 
-			ast2 = xact (*ast.args)
+		if isinstance (xact, str): # str is straight LaTeX
+			return f'{xact}{_ast2tex_paren (_tuple2ast (ast.args))}'
+
+		try:
+			ast2 = xlat.xlat_func (xact, ast.args)
 
 			if ast2 is not None:
 				return ast2tex (ast2)
