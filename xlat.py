@@ -107,7 +107,6 @@ def _xlat_func_Piecewise (*args):
 	if not args or args [0].is_null_var:
 		return AST ('piece', ((AST.VarNull, AST.VarNull),))
 
-	# if ast.is_comma and ast.commas and ast.commas [0].strip_paren ().is_comma:
 	if len (args) > 1:
 		for c in args [:-1]:
 			c = c.strip ()
