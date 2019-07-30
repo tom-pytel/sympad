@@ -2459,10 +2459,10 @@ def _ast2tex_log (ast):
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
 _ast2tex_xlat_func_greek = {
-	'beta' : '\\beta',
+	'beta': '\\beta',
 	'gamma': '\\Gamma',
 	'Gamma': '\\Gamma',
-	'zeta' : '\\zeta',
+	'zeta': '\\zeta',
 }
 
 def _ast2tex_func (ast):
@@ -3062,6 +3062,8 @@ def _spt2ast_Integral (spt):
 			if len (spt.args [1]) == 3 else \
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
 
+_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
+
 _spt2ast_funcs = {
 	ExprDontDoIt: lambda spt: AST ('func', AST.Func.NOEVAL, (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
 
@@ -3118,6 +3120,7 @@ _spt2ast_funcs = {
 	sp.Min: lambda spt: AST ('func', 'Min', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
 	sp.Max: lambda spt: AST ('func', 'Max', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
 
+	sp.Limit: lambda spt: AST (*(('lim', spt2ast (spt.args [0]), spt2ast (spt.args [1]), spt2ast (spt.args [2])) + _spt2ast_Limit_dirs [spt.args [3].name])),
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
 	sp.Integral: _spt2ast_Integral,
 
@@ -3160,11 +3163,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('func', 'ImmutableDenseMatrix', (('[', (('#', '1'), ('#', '2'), ('#', '3'))),))
-	res = ast2spt (ast)
-	res = spt2ast (res)
-	print (res)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('func', 'ImmutableDenseMatrix', (('[', (('#', '1'), ('#', '2'), ('#', '3'))),))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 #
 # Time and interest permitting:
