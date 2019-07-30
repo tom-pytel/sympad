@@ -2190,7 +2190,7 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 
 	return None
 
-XLAT_FUNC = {
+XLAT_FUNC_NAT = {
 	'abs'                  : lambda ast: AST ('|', ast),
 	'Abs'                  : lambda ast: AST ('|', ast),
 	'Derivative'           : _xlat_func_Derivative,
@@ -2201,12 +2201,14 @@ XLAT_FUNC = {
 	'integrate'            : _xlat_func_Integral,
 	'Limit'                : _xlat_func_Limit,
 	'limit'                : _xlat_func_Limit,
+	'Matrix'               : _xlat_func_Matrix,
 	'Piecewise'            : _xlat_func_Piecewise,
 	'Pow'                  : _xlat_func_Pow,
 	'pow'                  : _xlat_func_Pow,
 	'Sum'                  : _xlat_func_Sum,
+}
 
-	'Matrix'               : _xlat_func_Matrix,
+XLAT_FUNC_TEX = {**XLAT_FUNC_NAT,
 	'MutableDenseMatrix'   : _xlat_func_Matrix,
 	'MutableSparseMatrix'  : _xlat_func_Matrix,
 	'ImmutableDenseMatrix' : _xlat_func_Matrix,
@@ -2215,11 +2217,6 @@ XLAT_FUNC = {
 	'eye'                  : True,
 	'ones'                 : True,
 	'zeros'                : True,
-
-	'beta'                 : '\\beta', # hack - represent SymPy Greek functions as Greek letters
-	'gamma'                : '\\Gamma',
-	'Gamma'                : '\\Gamma',
-	'zeta'                 : '\\zeta',
 }
 
 def xlat_func (xact, args):
@@ -2237,8 +2234,9 @@ def xlat_func (xact, args):
 	return xact (*xargs, **xkw)
 
 class xlat: # for single script
-	XLAT_FUNC = XLAT_FUNC
-	xlat_func = xlat_func
+	XLAT_FUNC_NAT = XLAT_FUNC_NAT
+	XLAT_FUNC_TEX = XLAT_FUNC_TEX
+	xlat_func     = xlat_func
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	ast = AST ('@', 'x')
@@ -2303,25 +2301,18 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 
 	return spt
 
-#...............................................................................................
-def ast2tex (ast): # abstract syntax tree -> LaTeX text
-	return _ast2tex (_ast2tex_xlat_funcs (ast))
-
-def _ast2tex_xlat_funcs (ast):
+def _ast_xlat_funcs (ast, XLAT): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
 		return ast
 
 	if ast.is_func:
-		xact = xlat.XLAT_FUNC.get (ast.func)
+		xact = XLAT.get (ast.func)
 
 		if xact is not None:
-			args = AST (*(_ast2tex_xlat_funcs (arg) for arg in ast.args))
+			args = AST (*(_ast_xlat_funcs (arg, XLAT) for arg in ast.args))
 
 			if xact is True: # True means execute function and use return value for ast
 				return spt2ast (_ast_func_call (getattr (sp, ast.func), args))
-
-			if isinstance (xact, str): # str is straight LaTeX
-				return AST ('func', xact, args)
 
 			try:
 				ast2 = xlat.xlat_func (xact, args)
@@ -2334,7 +2325,11 @@ def _ast2tex_xlat_funcs (ast):
 
 			return AST ('func', ast.func, args)
 
-	return AST (*(_ast2tex_xlat_funcs (e) for e in ast))
+	return AST (*(_ast_xlat_funcs (e, XLAT) for e in ast))
+
+#...............................................................................................
+def ast2tex (ast): # abstract syntax tree -> LaTeX text
+	return _ast2tex (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_TEX))
 
 def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
@@ -2463,25 +2458,14 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
+_ast2tex_xlat_func_greek = {
+	'beta' : '\\beta',
+	'gamma': '\\Gamma',
+	'Gamma': '\\Gamma',
+	'zeta' : '\\zeta',
+}
+
 def _ast2tex_func (ast):
-	# xact = xlat.XLAT_FUNC.get (ast.func)
-
-	# if xact is not None:
-	# 	if xact is True: # True means execute function and use return value for display
-	# 		return _ast2tex (spt2ast (_ast_func_call (getattr (sp, ast.func), ast.args)))
-
-	# 	if isinstance (xact, str): # str is straight LaTeX
-	# 		return f'{xact}{_ast2tex_paren (_tuple2ast (ast.args))}'
-
-	# 	try:
-	# 		ast2 = xlat.xlat_func (xact, ast.args)
-
-	# 		if ast2 is not None:
-	# 			return _ast2tex (ast2)
-
-	# 	except:
-	# 		pass
-
 	if ast.is_trigh_func:
 		n = (f'\\operatorname{{{ast.func [1:]}}}^{{-1}}' \
 				if ast.func in {'asech', 'acsch'} else \
@@ -2491,7 +2475,11 @@ def _ast2tex_func (ast):
 
 		return f'{n}{_ast2tex_paren (_tuple2ast (ast.args))}'
 
+	greek = _ast2tex_xlat_func_greek.get (ast.func)
+
 	return \
+			f'{greek}{_ast2tex_paren (_tuple2ast (ast.args))}' \
+			if greek else \
 			f'\\{ast.func}{_ast2tex_paren (_tuple2ast (ast.args))}' \
 			if ast.func in AST.Func.TEX else \
 			'\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}{_ast2tex_paren (_tuple2ast (ast.args))}'
@@ -2580,10 +2568,13 @@ _ast2tex_funcs = {
 
 #...............................................................................................
 def ast2nat (ast): # abstract syntax tree -> simple text
+	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_NAT))
+
+def _ast2nat (ast):
 	return _ast2nat_funcs [ast.op] (ast)
 
 def _ast2nat_wrap (obj, curly = None, paren = None):
-	s = ast2nat (obj) if isinstance (obj, AST) else str (obj)
+	s = _ast2nat (obj) if isinstance (obj, AST) else str (obj)
 
 	if (obj.op in paren) if isinstance (paren, set) else paren:
 		return f'({s})'
@@ -2603,7 +2594,7 @@ def _ast2nat_curly_mul_exp (ast, ret_has = False, also = {}):
 	if ast.is_mul:
 		s, has = _ast2nat_mul (ast, True)
 	else:
-		s, has = ast2nat (ast), False
+		s, has = _ast2nat (ast), False
 
 	has = has or ((ast.op in also) if isinstance (also, set) else also)
 	s   = _ast2nat_wrap (s, has)
@@ -2676,10 +2667,10 @@ def _ast2nat_log (ast):
 def _ast2nat_lim (ast):
 	s = _ast2nat_wrap (ast.to, {'piece'}) if ast.dir is None else (_ast2nat_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
 
-	return f'\\lim_{{{ast2nat (ast.lvar)} \\to {s}}} {_ast2nat_curly_mul_exp (ast.lim, False, ast.lim.op in {"=", "+", "piece", "lamb"} or ast.lim.is_mul_has_abs)}'
+	return f'\\lim_{{{_ast2nat (ast.lvar)} \\to {s}}} {_ast2nat_curly_mul_exp (ast.lim, False, ast.lim.op in {"=", "+", "piece", "lamb"} or ast.lim.is_mul_has_abs)}'
 
 def _ast2nat_sum (ast):
-	return f'\\sum_{{{ast2nat (ast.svar)}={_ast2nat_curly (ast.from_, {"piece"})}}}^{_ast2nat_curly (ast.to)} {_ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "+", "piece", "lamb"} or ast.sum.is_mul_has_abs)}' \
+	return f'\\sum_{{{_ast2nat (ast.svar)}={_ast2nat_curly (ast.from_, {"piece"})}}}^{_ast2nat_curly (ast.to)} {_ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "+", "piece", "lamb"} or ast.sum.is_mul_has_abs)}' \
 
 def _ast2nat_diff (ast):
 	p = 0
@@ -2693,31 +2684,31 @@ def _ast2nat_diff (ast):
 			d  = n.base.diff_or_part_type
 			p += int (n.exp.num)
 
-	return f'{d.strip () if d else "d"}{"" if p == 1 else f"^{p}"} / {" ".join (ast2nat (n) for n in ast.dvs)} {_ast2nat_paren (ast.diff)}'
+	return f'{d.strip () if d else "d"}{"" if p == 1 else f"^{p}"} / {" ".join (_ast2nat (n) for n in ast.dvs)} {_ast2nat_paren (ast.diff)}'
 
 def _ast2nat_intg (ast):
 	if ast.from_ is None:
 		return \
-				f'\\int {ast2nat (ast.dv)}' \
+				f'\\int {_ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {ast2nat (ast.dv)}'
+				f'\\int {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {_ast2nat (ast.dv)}'
 	else:
 		return \
-				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {ast2nat (ast.dv)}' \
+				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat (ast.dv)}' \
 				if ast.intg is None else \
-				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {ast2nat (ast.dv)}'
+				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {_ast2nat (ast.dv)}'
 
 _ast2nat_funcs = {
 	'=': lambda ast: f'{_ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2nat_eq_hs (ast, ast.rhs, False)}',
 	'#': lambda ast: ast.num,
 	'@': lambda ast: ast.var,
 	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb"})}.{ast.attr}' \
-			if ast.args is None else f'{ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast (ast.args))}',
+			if ast.args is None else f'{_ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{", ".join (ast2nat (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
-	'(': lambda ast: f'({ast2nat (ast.paren)})',
-	'[': lambda ast: f'[{", ".join (ast2nat (b) for b in ast.brack)}]',
-	'|': lambda ast: f'{{|{ast2nat (ast.abs)}|}}',
+	',': lambda ast: f'{", ".join (_ast2nat (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
+	'(': lambda ast: f'({_ast2nat (ast.paren)})',
+	'[': lambda ast: f'[{", ".join (_ast2nat (b) for b in ast.brack)}]',
+	'|': lambda ast: f'{{|{_ast2nat (ast.abs)}|}}',
 	'-': lambda ast: f'-{_ast2nat_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.op in {"*", "piece"}, {"=", "+", "lamb"})}',
 	'!': lambda ast: _ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) + '!',
 	'+': _ast2nat_add,
@@ -2725,18 +2716,18 @@ _ast2nat_funcs = {
 	'/': _ast2nat_div,
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
-	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{ast2nat (ast.idx)}]{{{ast2nat (ast.rad.strip_paren_noncomma (1))}}}',
+	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{_ast2nat (ast.idx)}]{{{_ast2nat (ast.rad.strip_paren_noncomma (1))}}}',
 	'func': lambda ast: f'{ast.func}{_ast2nat_paren (_tuple2ast (ast.args))}',
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,
 	'diff': _ast2nat_diff,
 	'intg': _ast2nat_intg,
-	'vec': lambda ast: f'{{{", ".join (ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
-	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
+	'vec': lambda ast: f'{{{", ".join (_ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
+	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (_ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
 	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})}' if p [1] is True else \
 			f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {_ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.pieces),
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {_ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
-	'idx': lambda ast: f'{_ast2nat_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{ast2nat (_tuple2ast (ast.idx))}]',
+	'idx': lambda ast: f'{_ast2nat_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{_ast2nat (_tuple2ast (ast.idx))}]',
 
 	'text': lambda ast: ast.nat,
 }
@@ -3087,7 +3078,6 @@ _spt2ast_funcs = {
 	sp.Integer: _spt2ast_num,
 	sp.Float: _spt2ast_num,
 	sp.Rational: lambda spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
-	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 	sp.numbers.ImaginaryUnit: lambda ast: AST.I,
 	sp.numbers.Pi: lambda spt: AST.Pi,
 	sp.numbers.Exp1: lambda spt: AST.E,
@@ -3107,6 +3097,8 @@ _spt2ast_funcs = {
 	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 
 	sp.fancysets.Complexes: lambda spt: AST.Complexes,
+
+	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 
 	sp.Add: _spt2ast_Add,
 	sp.Mul: _spt2ast_Mul,
@@ -3168,10 +3160,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', 'exp', (('@', 'x'),))
-# 	res = ast2tex (ast)
-# 	print (res)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	ast = AST ('func', 'ImmutableDenseMatrix', (('[', (('#', '1'), ('#', '2'), ('#', '3'))),))
+	res = ast2spt (ast)
+	res = spt2ast (res)
+	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 #
 # Time and interest permitting:

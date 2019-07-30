@@ -150,7 +150,7 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 
 	return None
 
-XLAT_FUNC = {
+XLAT_FUNC_NAT = {
 	'abs'                  : lambda ast: AST ('|', ast),
 	'Abs'                  : lambda ast: AST ('|', ast),
 	'Derivative'           : _xlat_func_Derivative,
@@ -161,12 +161,14 @@ XLAT_FUNC = {
 	'integrate'            : _xlat_func_Integral,
 	'Limit'                : _xlat_func_Limit,
 	'limit'                : _xlat_func_Limit,
+	'Matrix'               : _xlat_func_Matrix,
 	'Piecewise'            : _xlat_func_Piecewise,
 	'Pow'                  : _xlat_func_Pow,
 	'pow'                  : _xlat_func_Pow,
 	'Sum'                  : _xlat_func_Sum,
+}
 
-	'Matrix'               : _xlat_func_Matrix,
+XLAT_FUNC_TEX = {**XLAT_FUNC_NAT,
 	'MutableDenseMatrix'   : _xlat_func_Matrix,
 	'MutableSparseMatrix'  : _xlat_func_Matrix,
 	'ImmutableDenseMatrix' : _xlat_func_Matrix,
@@ -175,11 +177,6 @@ XLAT_FUNC = {
 	'eye'                  : True,
 	'ones'                 : True,
 	'zeros'                : True,
-
-	'beta'                 : '\\beta', # hack - represent SymPy Greek functions as Greek letters
-	'gamma'                : '\\Gamma',
-	'Gamma'                : '\\Gamma',
-	'zeta'                 : '\\zeta',
 }
 
 def xlat_func (xact, args):
@@ -197,8 +194,9 @@ def xlat_func (xact, args):
 	return xact (*xargs, **xkw)
 
 class xlat: # for single script
-	XLAT_FUNC = XLAT_FUNC
-	xlat_func = xlat_func
+	XLAT_FUNC_NAT = XLAT_FUNC_NAT
+	XLAT_FUNC_TEX = XLAT_FUNC_TEX
+	xlat_func     = xlat_func
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
