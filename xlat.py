@@ -200,6 +200,6 @@ class xlat: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('@', 'x')
-# 	res = XLAT_FUNC ['ln'] (ast)
+# 	ast = AST ('(', (',', (('#', '1'), ('#', '2'))))
+# 	res = XLAT_FUNC_NAT ['Piecewise'] (ast)
 # 	print (res)

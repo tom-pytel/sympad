@@ -178,8 +178,8 @@ def expr_func ():
 	while 1:
 		py = choice (list (AST.Func.PY))
 
-		if py not in sparser._FUNC_AST_XLAT and py not in xlat.XLAT_FUNC:
-			break
+		# if py not in sparser._FUNC_AST_XLAT and py not in xlat.XLAT_FUNC:
+		# 	break
 
 	return \
 			'\\' + f'{choice (list (AST.Func.TEX))}{expr_paren ()}' \
@@ -319,7 +319,7 @@ def test ():
 
 	_DEPTH  = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:] or ['-tnp'], 'tnpid:x:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth=', 'expr='])
+	opts, _ = getopt (sys.argv [1:], 'tnpid:x:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth=', 'expr='])
 	parser  = sparser.Parser ()
 
 	for opt, arg in opts:
@@ -336,9 +336,13 @@ def test ():
 
 		sys.exit (0)
 
-	dotex  = ('--tex', '') in opts or ('-t', '') in opts
-	donat  = ('--nat', '') in opts or ('-n', '') in opts
-	dopy   = ('--py', '') in opts or ('-p', '') in opts
+	dotex = ('--tex', '') in opts or ('-t', '') in opts
+	donat = ('--nat', '') in opts or ('-n', '') in opts
+	dopy  = ('--py', '') in opts or ('-p', '') in opts
+
+	if not (dotex or donat or dopy):
+		dotex = donat = dopy = True
+
 	CURLYS = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
 
 	if (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts) and not single:
@@ -379,8 +383,8 @@ def test ():
 
 				ast = fix_rest (ast)
 
-			tex = dotex and sym.ast2tex (ast)
-			nat = donat and sym.ast2nat (ast)
+			tex = dotex and sym.ast2tex (ast, doxlat = False)
+			nat = donat and sym.ast2nat (ast, doxlat = False)
 			py  = dopy and sym.ast2py (ast)
 
 			if ('--show', '') in opts:

@@ -17,7 +17,7 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-_VERSION                  = 'v0.4.9'
+_VERSION                  = 'v0.5.0'
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 

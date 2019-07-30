@@ -87,8 +87,8 @@ def _ast_xlat_funcs (ast, XLAT): # translate eligible functions in tree to other
 	return AST (*(_ast_xlat_funcs (e, XLAT) for e in ast))
 
 #...............................................................................................
-def ast2tex (ast): # abstract syntax tree -> LaTeX text
-	return _ast2tex (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_TEX))
+def ast2tex (ast, doxlat = True): # abstract syntax tree -> LaTeX text
+	return _ast2tex (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_TEX) if doxlat else ast)
 
 def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
@@ -232,16 +232,16 @@ def _ast2tex_func (ast):
 				if ast.func [0] == 'a' else \
 				(f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}')
 
-		return f'{n}{_ast2tex_paren (_tuple2ast (ast.args))}'
+		return f'{n}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
 
 	greek = _ast2tex_xlat_func_greek.get (ast.func)
 
 	return \
-			f'{greek}{_ast2tex_paren (_tuple2ast (ast.args))}' \
+			f'{greek}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)' \
 			if greek else \
-			f'\\{ast.func}{_ast2tex_paren (_tuple2ast (ast.args))}' \
+			f'\\{ast.func}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)' \
 			if ast.func in AST.Func.TEX else \
-			'\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}{_ast2tex_paren (_tuple2ast (ast.args))}'
+			'\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
 
 def _ast2tex_lim (ast):
 	s = _ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -326,8 +326,8 @@ _ast2tex_funcs = {
 }
 
 #...............................................................................................
-def ast2nat (ast): # abstract syntax tree -> simple text
-	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_NAT))
+def ast2nat (ast, doxlat = True): # abstract syntax tree -> simple text
+	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_NAT) if doxlat else ast)
 
 def _ast2nat (ast):
 	return _ast2nat_funcs [ast.op] (ast)
@@ -476,7 +476,7 @@ _ast2nat_funcs = {
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
 	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{_ast2nat (ast.idx)}]{{{_ast2nat (ast.rad.strip_paren_noncomma (1))}}}',
-	'func': lambda ast: f'{ast.func}{_ast2nat_paren (_tuple2ast (ast.args))}',
+	'func': lambda ast: f'{ast.func}({_ast2nat (_tuple2ast (ast.args))})',
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,
 	'diff': _ast2nat_diff,
@@ -518,7 +518,7 @@ def _ast2py_pow (ast):
 
 def _ast2py_log (ast):
 	return \
-			f'log{_ast2py_paren (ast.log)}' \
+			f'ln{_ast2py_paren (ast.log)}' \
 			if ast.base is None else \
 			f'log{_ast2py_paren (ast.log)} / log{_ast2py_paren (ast.base)}' \
 
@@ -567,7 +567,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad)}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.unescaped}{_ast2py_paren (_tuple2ast (ast.args))}',
+	'func': lambda ast: f'{ast.unescaped}({ast2py (_tuple2ast (ast.args))})',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -924,7 +924,6 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', 'ImmutableDenseMatrix', (('[', (('#', '1'), ('#', '2'), ('#', '3'))),))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
+# 	ast = AST ('func', 'Piecewise', (('(', (',', (('#', '1'), ('#', '2')))),))
+# 	res = ast2py (ast)
 # 	print (res)
