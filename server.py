@@ -74,20 +74,20 @@ def _ast_remap (ast, map_):
 		if var: # user var
 			return AST ('func', AST.Func.NOEVAL, (var,)) if var.is_lamb else _ast_remap (var, map_)
 
-	elif ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
-		lvars = {v.var for v in ast.vars}
-		map_  = {v: a for v, a in filter (lambda va: va [0] not in lvars, map_.items ())}
-
-		return AST (*(_ast_remap (a, map_) if a not in ast.vars else a for a in ast))
-
 	elif ast.is_func:
-		lamb = map_ [ast.func]
+		lamb = map_.get (ast.func)
 
 		if lamb and lamb.is_lamb: # user function
 			if len (ast.args) != len (lamb.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
 			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
+
+	elif ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
+		lvars = {v.var for v in ast.vars}
+		map_  = {v: a for v, a in filter (lambda va: va [0] not in lvars, map_.items ())}
+
+		return AST (*(_ast_remap (a, map_) if a not in ast.vars else a for a in ast))
 
 	return AST (*(_ast_remap (a, map_) for a in ast))
 
