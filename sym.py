@@ -218,10 +218,10 @@ def _ast2tex_log (ast):
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
 _ast2tex_xlat_func_greek = {
-	'beta' : '\\beta',
+	'beta': '\\beta',
 	'gamma': '\\Gamma',
 	'Gamma': '\\Gamma',
-	'zeta' : '\\zeta',
+	'zeta': '\\zeta',
 }
 
 def _ast2tex_func (ast):
@@ -919,9 +919,9 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('func', 'ImmutableDenseMatrix', (('[', (('#', '1'), ('#', '2'), ('#', '3'))),))
-	res = ast2spt (ast)
-	res = spt2ast (res)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('func', 'ImmutableDenseMatrix', (('[', (('#', '1'), ('#', '2'), ('#', '3'))),))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	print (res)
