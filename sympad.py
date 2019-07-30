@@ -854,7 +854,7 @@ r"""<!DOCTYPE html>
 <p>
 SymPad is a simple single script symbolic calculator / scratchpad using SymPy for the math and MathJax for the display in a browser.
 It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally that last bit is exactly what happens but the response time is better :)
-This desire for simplicity led to the single script option "sympad.py" which I could plop down on my desktop and execute when needed.
+This desire for simplicity led to the single script option "sympad.py" which I could plop down on the desktop and execute when needed.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
 Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
@@ -1309,6 +1309,8 @@ class Parser:
 		self.terms   = [{} for _ in range (states)] # [{'symbol': [+shift or -reduce, conflict +shift or -reduce or None], ...}] - index by state num then terminal
 		self.nterms  = [{} for _ in range (states)] # [{'symbol': +shift or -reduce, ...}] - index by state num then non-terminal
 		self.rfuncs  = [None] # first rule is always None
+
+		self.tokidx  = None # pylint kibble
 
 		for t in terms:
 			sym, sts, acts, confs = t if len (t) == 4 else t + (None,)
@@ -1776,10 +1778,8 @@ class AST_Str (AST):
 class AST_Comma (AST):
 	op, is_comma = ',', True
 
-	def _init (self, commas):
-		self.comma = commas
-
-	# _len = lambda self: len (self.comma)
+	def _init (self, comma):
+		self.comma = comma
 
 class AST_Curly (AST):
 	op, is_curly = '{', True
@@ -1787,23 +1787,17 @@ class AST_Curly (AST):
 	def _init (self, curly):
 		self.curly = curly
 
-	# _len = lambda self: len (self.paren)
-
 class AST_Paren (AST):
 	op, is_paren = '(', True
 
 	def _init (self, paren):
 		self.paren = paren
 
-	# _len = lambda self: len (self.paren)
-
 class AST_Brack (AST):
 	op, is_brack = '[', True
 
 	def _init (self, brack):
 		self.brack = brack
-
-	# _len = lambda self: len (self.brack)
 
 class AST_Abs (AST):
 	op, is_abs = '|', True
@@ -1826,23 +1820,19 @@ class AST_Fact (AST):
 class AST_Add (AST):
 	op, is_add = '+', True
 
-	def _init (self, adds):
-		self.add = adds
-
-	# _len = lambda self: len (self.add)
+	def _init (self, add):
+		self.add = add
 
 class AST_Mul (AST):
 	op, is_mul = '*', True
 
-	def _init (self, muls):
-		self.mul = muls
+	def _init (self, mul):
+		self.mul = mul
 
 	def _is_mul_has_abs (self):
 		for m in self.mul:
 			if m.is_abs:
 				return True
-
-	# _len = lambda self: len (self.mul)
 
 class AST_Div (AST):
 	op, is_div = '/', True
@@ -1948,8 +1938,8 @@ class AST_Mat (AST):
 class AST_Piece (AST):
 	op, is_piece = 'piece', True
 
-	def _init (self, pieces):
-		self.piece = pieces
+	def _init (self, piece):
+		self.piece = piece
 
 class AST_Lamb (AST):
 	op, is_lamb = 'lamb', True
@@ -2107,7 +2097,7 @@ def _xlat_func_Pow (ast = AST.VarNull, exp = AST.VarNull):
 	return AST ('^', ast, exp)
 
 def _xlat_func_Matrix (ast = AST.VarNull):
-	if ast == AST.VarNull:
+	if ast.is_null_var:
 		return AST ('vec', ())
 
 	if ast.is_brack and ast.brack:
@@ -2850,7 +2840,7 @@ class ast2spt:
 
 		spt     = self._ast2spt (ast)
 
-		if callable (getattr (spt, 'doit', None)): # and spt.__class__ != sp.Piecewise
+		if callable (getattr (spt, 'doit', None)):
 			try:
 				spt = spt.doit ()
 				spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
@@ -4041,7 +4031,7 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-_VERSION                  = 'v0.5.0'
+_VERSION                  = 'v0.5.1'
 
 
 _SYMPAD_PATH              = os.path.dirname (sys.argv [0])
@@ -4072,7 +4062,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_parser     = sparser.Parser ()
 
 	_vars       = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_history    = [] # persistent history across browser closing
+	_history    = [] # persistent history across browser closings
 
 #...............................................................................................
 # class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
@@ -4086,21 +4076,22 @@ def _ast_remap (ast, map_):
 	if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
 		return ast
 
-	if ast.is_var and ast.var in map_: # variable
-		ast = map_ [ast.var]
+	if ast.is_var:
+		var = map_.get (ast.var)
 
-		return AST ('func', AST.Func.NOEVAL, (ast,)) if ast.is_lamb else _ast_remap (ast, map_)
+		if var: # user var
+			return AST ('func', AST.Func.NOEVAL, (var,)) if var.is_lamb else _ast_remap (var, map_)
 
-	if ast.is_func and ast.func in map_: # user function
-		lamb = map_ [ast.func]
+	elif ast.is_func:
+		lamb = map_.get (ast.func)
 
-		if lamb.is_lamb:
+		if lamb and lamb.is_lamb: # user function
 			if len (ast.args) != len (lamb.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
 			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
 
-	if ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
+	elif ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
 		lvars = {v.var for v in ast.vars}
 		map_  = {v: a for v, a in filter (lambda va: va [0] not in lvars, map_.items ())}
 

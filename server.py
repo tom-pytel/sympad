@@ -81,7 +81,7 @@ def _ast_remap (ast, map_):
 			if len (ast.args) != len (lamb.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
+			ast = _ast_remap (lamb.lamb, dict (filter (lambda va: va [0] != va [1].var, zip ((v.var for v in lamb.vars), ast.args))))
 
 	elif ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
 		lvars = {v.var for v in ast.vars}
