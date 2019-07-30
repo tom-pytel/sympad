@@ -42,13 +42,13 @@ def _xlat_func_Integral (ast = None, dvab = None, *args):
 	ast2 = None
 
 	if dvab.is_comma:
-		if dvab.commas and dvab.commas [0].is_nonconst_var:
-			if dvab.commas.len == 1:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.commas [0].var}'))
-			elif dvab.commas.len == 2:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.commas [0].var}'), AST.Zero, dvab.commas [1])
-			elif dvab.commas.len == 3:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.commas [0].var}'), dvab.commas [1], dvab.commas [2])
+		if dvab.comma and dvab.comma [0].is_nonconst_var:
+			if dvab.comma.len == 1:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'))
+			elif dvab.comma.len == 2:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'), AST.Zero, dvab.comma [1])
+			elif dvab.comma.len == 3:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'), dvab.comma [1], dvab.comma [2])
 
 	elif dvab.is_var:
 		ast2 = AST ('intg', ast, ('@', f'd{dvab.var}'))
@@ -111,10 +111,10 @@ def _xlat_func_Piecewise (*args):
 		for c in args [:-1]:
 			c = c.strip ()
 
-			if not c.is_comma or len (c.commas) != 2:
+			if not c.is_comma or len (c.comma) != 2:
 				return None
 
-			pcs.append (c.commas)
+			pcs.append (c.comma)
 
 	ast = args [-1]
 
@@ -126,14 +126,14 @@ def _xlat_func_Piecewise (*args):
 
 	if not ast.is_comma:
 		return AST ('piece', pcs + ((ast, AST.VarNull),))
-	if len (ast.commas) == 0:
+	if len (ast.comma) == 0:
 		return AST ('piece', pcs + ())
 
-	if not ast.commas [0].is_comma:
-		if len (ast.commas) == 1:
-			return AST ('piece', pcs + ((ast.commas [0], AST.VarNull),))
-		if len (ast.commas) == 2:
-			return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1] == AST.True_ else ast.commas [1]),))
+	if not ast.comma [0].is_comma:
+		if len (ast.comma) == 1:
+			return AST ('piece', pcs + ((ast.comma [0], AST.VarNull),))
+		if len (ast.comma) == 2:
+			return AST ('piece', pcs + ((ast.comma [0], True if ast.comma [1] == AST.True_ else ast.comma [1]),))
 
 	return None
 
@@ -145,8 +145,8 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 
 	if ab.is_var:
 		return AST ('sum', ast, ab, AST.VarNull, AST.VarNull)
-	if ab.is_comma and ab.commas and ab.commas.len <= 3 and ab.commas [0].is_var:
-		return AST ('sum', ast, *ab.commas, *((AST.VarNull,) * (3 - ab.commas.len)))
+	if ab.is_comma and ab.comma and ab.comma.len <= 3 and ab.comma [0].is_var:
+		return AST ('sum', ast, *ab.comma, *((AST.VarNull,) * (3 - ab.comma.len)))
 
 	return None
 

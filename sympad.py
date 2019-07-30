@@ -1635,7 +1635,7 @@ class AST (tuple):
 		count = 999999999 if count is None else count
 
 		while self.op in {'*', 'lim', 'sum'} and count:
-			self   = self.muls [-1] if self.is_mul else self [1]
+			self   = self.mul [-1] if self.is_mul else self [1]
 			count -= 1
 
 		return self
@@ -1648,7 +1648,7 @@ class AST (tuple):
 
 		else:
 			try:
-				name = ''.join (m.as_identifier () for m in self.muls)
+				name = ''.join (m.as_identifier () for m in self.mul)
 			except TypeError:
 				return None
 
@@ -1777,9 +1777,9 @@ class AST_Comma (AST):
 	op, is_comma = ',', True
 
 	def _init (self, commas):
-		self.commas = commas
+		self.comma = commas
 
-	# _len = lambda self: len (self.commas)
+	# _len = lambda self: len (self.comma)
 
 class AST_Curly (AST):
 	op, is_curly = '{', True
@@ -1827,22 +1827,22 @@ class AST_Add (AST):
 	op, is_add = '+', True
 
 	def _init (self, adds):
-		self.adds = adds
+		self.add = adds
 
-	# _len = lambda self: len (self.adds)
+	# _len = lambda self: len (self.add)
 
 class AST_Mul (AST):
 	op, is_mul = '*', True
 
 	def _init (self, muls):
-		self.muls = muls
+		self.mul = muls
 
 	def _is_mul_has_abs (self):
-		for m in self.muls:
+		for m in self.mul:
 			if m.is_abs:
 				return True
 
-	# _len = lambda self: len (self.muls)
+	# _len = lambda self: len (self.mul)
 
 class AST_Div (AST):
 	op, is_div = '/', True
@@ -1949,7 +1949,7 @@ class AST_Piece (AST):
 	op, is_piece = 'piece', True
 
 	def _init (self, pieces):
-		self.pieces = pieces
+		self.piece = pieces
 
 class AST_Lamb (AST):
 	op, is_lamb = 'lamb', True
@@ -2082,13 +2082,13 @@ def _xlat_func_Integral (ast = None, dvab = None, *args):
 	ast2 = None
 
 	if dvab.is_comma:
-		if dvab.commas and dvab.commas [0].is_nonconst_var:
-			if dvab.commas.len == 1:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.commas [0].var}'))
-			elif dvab.commas.len == 2:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.commas [0].var}'), AST.Zero, dvab.commas [1])
-			elif dvab.commas.len == 3:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.commas [0].var}'), dvab.commas [1], dvab.commas [2])
+		if dvab.comma and dvab.comma [0].is_nonconst_var:
+			if dvab.comma.len == 1:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'))
+			elif dvab.comma.len == 2:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'), AST.Zero, dvab.comma [1])
+			elif dvab.comma.len == 3:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'), dvab.comma [1], dvab.comma [2])
 
 	elif dvab.is_var:
 		ast2 = AST ('intg', ast, ('@', f'd{dvab.var}'))
@@ -2151,10 +2151,10 @@ def _xlat_func_Piecewise (*args):
 		for c in args [:-1]:
 			c = c.strip ()
 
-			if not c.is_comma or len (c.commas) != 2:
+			if not c.is_comma or len (c.comma) != 2:
 				return None
 
-			pcs.append (c.commas)
+			pcs.append (c.comma)
 
 	ast = args [-1]
 
@@ -2166,14 +2166,14 @@ def _xlat_func_Piecewise (*args):
 
 	if not ast.is_comma:
 		return AST ('piece', pcs + ((ast, AST.VarNull),))
-	if len (ast.commas) == 0:
+	if len (ast.comma) == 0:
 		return AST ('piece', pcs + ())
 
-	if not ast.commas [0].is_comma:
-		if len (ast.commas) == 1:
-			return AST ('piece', pcs + ((ast.commas [0], AST.VarNull),))
-		if len (ast.commas) == 2:
-			return AST ('piece', pcs + ((ast.commas [0], True if ast.commas [1] == AST.True_ else ast.commas [1]),))
+	if not ast.comma [0].is_comma:
+		if len (ast.comma) == 1:
+			return AST ('piece', pcs + ((ast.comma [0], AST.VarNull),))
+		if len (ast.comma) == 2:
+			return AST ('piece', pcs + ((ast.comma [0], True if ast.comma [1] == AST.True_ else ast.comma [1]),))
 
 	return None
 
@@ -2185,8 +2185,8 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 
 	if ab.is_var:
 		return AST ('sum', ast, ab, AST.VarNull, AST.VarNull)
-	if ab.is_comma and ab.commas and ab.commas.len <= 3 and ab.commas [0].is_var:
-		return AST ('sum', ast, *ab.commas, *((AST.VarNull,) * (3 - ab.commas.len)))
+	if ab.is_comma and ab.comma and ab.comma.len <= 3 and ab.comma [0].is_var:
+		return AST ('sum', ast, *ab.comma, *((AST.VarNull,) * (3 - ab.comma.len)))
 
 	return None
 
@@ -2274,7 +2274,7 @@ def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
 
 def _ast_is_neg (ast):
-	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.muls [0]))
+	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.mul [0]))
 
 def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 	if _ast2spt is None:
@@ -2406,19 +2406,19 @@ def _ast2tex_attr (ast):
 
 def _ast2tex_add (ast):
 	return ' + '.join (_ast2tex_wrap (n, \
-			((n.strip_mls ().is_intg or (n.is_mul and n.muls [-1].strip_mls ().is_intg)) and n is not ast.adds [-1]), \
-			(n.op in ("piece") and n is not ast.adds [-1]) or n.op in {'='})
-			for n in ast.adds).replace (' + -', ' - ')
+			((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
+			(n.op in ("piece") and n is not ast.add [-1]) or n.op in {'='})
+			for n in ast.add).replace (' + -', ' - ')
 
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
 	p   = None
 	has = False
 
-	for n in ast.muls:
+	for n in ast.mul:
 		s = _ast2tex_wrap (n, \
-				_ast_is_neg (n) or (n.strip_mls ().is_intg and n is not ast.muls [-1]), \
-				n.op in {'=', '+'} or (n.is_piece and n is not ast.muls [-1]))
+				_ast_is_neg (n) or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+				n.op in {'=', '+'} or (n.is_piece and n is not ast.mul [-1]))
 
 		if p and p.is_attr and s [:6] == '\\left(':
 			s = _ast2tex_wrap (s, 1)
@@ -2540,7 +2540,7 @@ _ast2tex_funcs = {
 	'@': _ast2tex_var,
 	'.': _ast2tex_attr,
 	'"': lambda ast: f'\\text{{{repr (ast.str_)}}}',
-	',': lambda ast: f'{", ".join (_ast2tex (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (_ast2tex (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
 	'(': lambda ast: _ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
 	'[': lambda ast: f'\\left[{", ".join (_ast2tex (b) for b in ast.brack)} \\right]',
 	'|': lambda ast: f'\\left|{_ast2tex (ast.abs)} \\right|',
@@ -2559,7 +2559,7 @@ _ast2tex_funcs = {
 	'intg': _ast2tex_intg,
 	'vec': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (_ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (_ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
-	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {_ast2tex (p [1])}' for p in ast.pieces) + ' \\end{cases}',
+	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {_ast2tex (p [1])}' for p in ast.piece) + ' \\end{cases}',
 	'lamb': lambda ast: f'\\left({_ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 	'idx': lambda ast: f'{_ast2tex_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{_ast2tex (_tuple2ast (ast.idx))}]',
 
@@ -2606,19 +2606,19 @@ def _ast2nat_eq_hs (ast, hs, lhs = True):
 
 def _ast2nat_add (ast):
 	return ' + '.join (_ast2nat_wrap (n, \
-			n.is_piece or ((n.strip_mls ().is_intg or (n.is_mul and n.muls [-1].strip_mls ().is_intg)) and n is not ast.adds [-1]), \
-			(n.op in ('piece', 'lamb') and n is not ast.adds [-1]) or n.op in {'=', 'lamb'} \
-			) for n in ast.adds).replace (' + -', ' - ')
+			n.is_piece or ((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
+			(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', 'lamb'} \
+			) for n in ast.add).replace (' + -', ' - ')
 
 def _ast2nat_mul (ast, ret_has = False):
 	t   = []
 	p   = None
 	has = False
 
-	for n in ast.muls:
+	for n in ast.mul:
 		s = _ast2nat_wrap (n, \
-				_ast_is_neg (n) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.muls [-1]), \
-				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.muls [-1]))
+				_ast_is_neg (n) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.mul [-1]))
 
 		if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
 				(n.is_pow and n.base.is_pos_num) or \
@@ -2705,7 +2705,7 @@ _ast2nat_funcs = {
 	'.': lambda ast: f'{_ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb"})}.{ast.attr}' \
 			if ast.args is None else f'{_ast2nat (ast.obj)}.{ast.attr}{_ast2nat_paren (_tuple2ast (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{", ".join (_ast2nat (c) for c in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (_ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
 	'(': lambda ast: f'({_ast2nat (ast.paren)})',
 	'[': lambda ast: f'[{", ".join (_ast2nat (b) for b in ast.brack)}]',
 	'|': lambda ast: f'{{|{_ast2nat (ast.abs)}|}}',
@@ -2725,7 +2725,7 @@ _ast2nat_funcs = {
 	'vec': lambda ast: f'{{{", ".join (_ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
 	'mat': lambda ast: ('{' + ', '.join (f'{{{", ".join (_ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
 	'piece': lambda ast: ' else '.join (f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})}' if p [1] is True else \
-			f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {_ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.pieces),
+			f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {_ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.piece),
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {_ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
 	'idx': lambda ast: f'{_ast2nat_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{_ast2nat (_tuple2ast (ast.idx))}]',
 
@@ -2796,14 +2796,14 @@ _ast2py_funcs = {
 	'@': lambda ast: ast.var,
 	'.': lambda ast: f'{ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{ast2py (ast.obj)}.{ast.attr}{_ast2py_paren (_tuple2ast (ast.args))}',
 	'"': lambda ast: repr (ast.str_),
-	',': lambda ast: f'{", ".join (ast2py (parm) for parm in ast.commas)}{_trail_comma (ast.commas)}',
+	',': lambda ast: f'{", ".join (ast2py (parm) for parm in ast.comma)}{_trail_comma (ast.comma)}',
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'[': lambda ast: f'[{", ".join (ast2py (b) for b in ast.brack)}]',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2py (ast.minus)}',
 	'!': lambda ast: f'factorial({ast2py (ast.fact)})',
-	'+': lambda ast: ' + '.join (ast2py (n) for n in ast.adds).replace (' + -', ' - '),
-	'*': lambda ast: '*'.join (_ast2py_paren (n) if n.is_add else ast2py (n) for n in ast.muls),
+	'+': lambda ast: ' + '.join (ast2py (n) for n in ast.add).replace (' + -', ' - '),
+	'*': lambda ast: '*'.join (_ast2py_paren (n) if n.is_add else ast2py (n) for n in ast.mul),
 	'/': _ast2py_div,
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
@@ -2815,7 +2815,7 @@ _ast2py_funcs = {
 	'intg': _ast2py_intg,
 	'vec': lambda ast: 'Matrix([' + ', '.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
 	'mat': lambda ast: 'Matrix([' + ', '.join (f'[{", ".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
-	'piece': lambda ast: 'Piecewise(' + ', '.join (f'({ast2py (p [0])}, {True if p [1] is True else ast2py (p [1])})' for p in ast.pieces) + ')',
+	'piece': lambda ast: 'Piecewise(' + ', '.join (f'({ast2py (p [0])}, {True if p [1] is True else ast2py (p [1])})' for p in ast.piece) + ')',
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {ast2py (ast.lamb)}',
 	'idx': lambda ast: f'{_ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"} else ast2py (ast.obj)}[{ast2py (_tuple2ast (ast.idx))}]',
 
@@ -2933,14 +2933,14 @@ class ast2spt:
 		'@': _ast2spt_var,
 		'.': _ast2spt_attr,
 		'"': lambda self, ast: ast.str_,
-		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.commas),
+		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.comma),
 		'(': lambda self, ast: self._ast2spt (ast.paren),
 		'[': lambda self, ast: [self._ast2spt (b) for b in ast.brack],
 		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), **self.kw),
 		'-': lambda self, ast: -self._ast2spt (ast.minus),
 		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), **self.kw),
-		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.adds), **self.kw),
-		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.muls), **self.kw),
+		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add), **self.kw),
+		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul), **self.kw),
 		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), sp.Pow (self._ast2spt (ast.denom), -1), **self.kw),
 		'^': lambda self, ast: sp.Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), **self.kw),
 		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), **self.kw) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), **self.kw),
@@ -2952,7 +2952,7 @@ class ast2spt:
 		'intg': _ast2spt_intg,
 		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], **self.kw),
 		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], **self.kw),
-		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.pieces), **self.kw),
+		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece), **self.kw),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
 		'idx': lambda self, ast: self._ast2spt (ast.obj) [self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)],
 
@@ -3194,7 +3194,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0):
 def _ast_func_tuple_args (ast):
 	ast = ast.strip (1)
 
-	return ast.commas if ast.is_comma else (ast,)
+	return ast.comma if ast.is_comma else (ast,)
 
 def _ast_func_reorder (ast):
 	wrap = None
@@ -3220,16 +3220,16 @@ def _expr_lambda (lhs, expr):
 		return AST ('lamb', expr, (lhs,))
 
 	elif lhs.is_comma:
-		for var in lhs.commas:
+		for var in lhs.comma:
 			if not var.is_var:
 				break
 		else:
-			return AST ('lamb', expr, lhs.commas)
+			return AST ('lamb', expr, lhs.comma)
 
 	raise SyntaxError ('invalid lambda function')
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
-	last      = lhs.muls [-1] if lhs.is_mul else lhs
+	last      = lhs.mul [-1] if lhs.is_mul else lhs
 	arg, wrap = _ast_func_reorder (rhs)
 	ast       = None
 
@@ -3261,7 +3261,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 		ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
-		return AST ('*', lhs.muls [:-1] + (ast,)) if lhs.is_mul else ast
+		return AST ('*', lhs.mul [:-1] + (ast,)) if lhs.is_mul else ast
 
 	return AST.flatcat ('*', lhs, rhs)
 
@@ -3280,7 +3280,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 		ast_dv_check = (lambda n: n.is_differential) if v.is_diff_solo else (lambda n: n.is_partial)
 
-		ns = ast.denom.muls if ast.denom.is_mul else (ast.denom,)
+		ns = ast.denom.mul if ast.denom.is_mul else (ast.denom,)
 		ds = []
 		cp = p
 
@@ -3320,21 +3320,21 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
 		tail = []
-		end  = len (ast.muls)
+		end  = len (ast.mul)
 
 		for i in range (end - 1, -1, -1):
-			if ast.muls [i].is_div:
-				diff = _interpret_divide (ast.muls [i])
+			if ast.mul [i].is_div:
+				diff = _interpret_divide (ast.mul [i])
 
 				if diff:
 					if diff.expr:
 						if i < end - 1:
-							tail [0 : 0] = ast.muls [i + 1 : end]
+							tail [0 : 0] = ast.mul [i + 1 : end]
 
 						tail.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('diff', ast.muls [i + 1] if i == end - 2 else AST ('*', ast.muls [i + 1 : end]), diff.dvs))
+						tail.insert (0, AST ('diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
 
 					else:
 						continue
@@ -3344,7 +3344,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		if tail:
 			tail = tail [0] if len (tail) == 1 else AST ('*', tuple (tail))
 
-			return tail if end == 0 else AST.flatcat ('*', ast.muls [0], tail) if end == 1 else AST.flatcat ('*', AST ('*', ast.muls [:end]), tail)
+			return tail if end == 0 else AST.flatcat ('*', ast.mul [0], tail) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), tail)
 
 	return ast
 
@@ -3390,23 +3390,23 @@ def _ast_strip_tail_differential (ast):
 			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
 
 	elif ast.is_mul:
-		ast2, neg = ast.muls [-1].strip_minus (retneg = True)
+		ast2, neg = ast.mul [-1].strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
 			return \
-					(AST ('*', ast.muls [:-1] + (neg (ast2),)), dv) \
+					(AST ('*', ast.mul [:-1] + (neg (ast2),)), dv) \
 					if ast2 else \
-					(neg (AST ('*', ast.muls [:-1])), dv) \
-					if len (ast.muls) > 2 else \
-					(neg (ast.muls [0]), dv)
+					(neg (AST ('*', ast.mul [:-1])), dv) \
+					if len (ast.mul) > 2 else \
+					(neg (ast.mul [0]), dv)
 
 	elif ast.is_add:
-		ast2, neg = ast.adds [-1].strip_minus (retneg = True)
+		ast2, neg = ast.add [-1].strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv and ast2:
-			return AST ('+', ast.adds [:-1] + (neg (ast2),)), dv
+			return AST ('+', ast.add [:-1] + (neg (ast2),)), dv
 
 	return ast, None
 
@@ -3445,18 +3445,18 @@ def _expr_mat (expr_mat_rows):
 def _expr_curly (ast): # convert curly expression to vector or matrix if appropriate
 	if not ast.is_comma:
 		return AST ('{', ast)
-	elif not ast.commas: # empty {}?
+	elif not ast.comma: # empty {}?
 		return AST.VarNull
 
-	c = sum (bool (c.is_vec) for c in ast.commas)
+	c = sum (bool (c.is_vec) for c in ast.comma)
 
-	if c == len (ast.commas) and len (set (len (c.vec) for c in ast.commas)) == 1:
+	if c == len (ast.comma) and len (set (len (c.vec) for c in ast.comma)) == 1:
 		return \
-				AST ('mat', tuple (c.vec for c in ast.commas)) \
-				if len (ast.commas [0].vec) > 1 else \
-				AST ('vec', tuple (c.vec [0] for c in ast.commas))
+				AST ('mat', tuple (c.vec for c in ast.comma)) \
+				if len (ast.comma [0].vec) > 1 else \
+				AST ('vec', tuple (c.vec [0] for c in ast.comma))
 
-	return AST ('vec', ast.commas) # raise SyntaxError ('invalid matrix syntax')
+	return AST ('vec', ast.comma) # raise SyntaxError ('invalid matrix syntax')
 
 #...............................................................................................
 class Parser (lalr1.Parser):
@@ -3664,7 +3664,7 @@ class Parser (lalr1.Parser):
 
 	def expr_piece_1       (self, expr_ineq, IF, expr, ELSE, expr_lambda):
 		return \
-				AST ('piece', ((expr_ineq, expr),) + expr_lambda.pieces) \
+				AST ('piece', ((expr_ineq, expr),) + expr_lambda.piece) \
 				if expr_lambda.is_piece else \
 				AST ('piece', ((expr_ineq, expr), (expr_lambda, True)))
 
@@ -3771,8 +3771,8 @@ class Parser (lalr1.Parser):
 	def expr_curly_1       (self, CURLYL, expr_commas, CURLYR):                    return _expr_curly (expr_commas)
 	def expr_curly_2       (self, expr_bracket):                                   return expr_bracket
 
-	def expr_bracket_1     (self, LEFT, BRACKL, expr_commas, RIGHT, BRACKR):       return AST ('[', expr_commas.commas if expr_commas.is_comma else (expr_commas,))
-	def expr_bracket_2     (self, BRACKL, expr_commas, BRACKR):                    return AST ('[', expr_commas.commas if expr_commas.is_comma else (expr_commas,))
+	def expr_bracket_1     (self, LEFT, BRACKL, expr_commas, RIGHT, BRACKR):       return AST ('[', expr_commas.comma if expr_commas.is_comma else (expr_commas,))
+	def expr_bracket_2     (self, BRACKL, expr_commas, BRACKR):                    return AST ('[', expr_commas.comma if expr_commas.is_comma else (expr_commas,))
 	def expr_bracket_3     (self, expr_term):                                      return expr_term
 
 	def expr_term_1        (self, expr_num):                                       return expr_num
@@ -3875,7 +3875,7 @@ class Parser (lalr1.Parser):
 				return self._mark_error (('CURLYR', 'CURLYR'))
 			elif not self.stack [-1].red.is_comma:
 				return self._insert_symbol (('COMMA', 'CURLYR', 'COMMA', 'CURLYR'), 1)
-			elif len (self.stack [-1].red.commas) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
+			elif len (self.stack [-1].red.comma) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
 				return self._insert_symbol (('CURLYR', 'COMMA', 'CURLYR'))
 			else:
 				return self._mark_error (('CURLYR', 'CURLYR'))
@@ -3884,7 +3884,7 @@ class Parser (lalr1.Parser):
 			if self.stack [-1].red.is_vec:
 				return self._insert_symbol (('COMMA', 'CURLYR'), 1)
 			elif self.stack [-1].red.is_comma:
-				if len (self.stack [-1].red.commas) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
+				if len (self.stack [-1].red.comma) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
 					return self._insert_symbol ('CURLYR')
 				else:
 					return self._mark_error ('CURLYR')
@@ -3892,11 +3892,11 @@ class Parser (lalr1.Parser):
 		else:
 			cols = \
 					len (self.stack [-4].red.vec)             if self.stack [-4].red.is_vec else \
-					len (self.stack [-4].red.commas [0].vec)  if self.stack [-4].red.is_comma and self.stack [-4].red.commas [0].is_vec else \
+					len (self.stack [-4].red.comma [0].vec)  if self.stack [-4].red.is_comma and self.stack [-4].red.comma [0].is_vec else \
 					None
 
 			if cols is not None:
-				vec             = self.stack [-1].red.commas if self.stack [-1].red.is_comma else (self.stack [-1].red,)
+				vec             = self.stack [-1].red.comma if self.stack [-1].red.is_comma else (self.stack [-1].red,)
 				self.stack [-1] = lalr1.State (self.stack [-1].idx, self.stack [-1].sym, AST (',', vec + (AST.VarNull,) * (cols - len (vec))))
 
 				return self._mark_error (('CURLYR', 'CURLYR')) if len (vec) != cols else self._insert_symbol (('CURLYR', 'CURLYR'))
@@ -4117,7 +4117,7 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so restructure
 		lhss = []
-		itr  = iter (ast.commas)
+		itr  = iter (ast.comma)
 
 		for c in itr:
 			if c.is_var:
@@ -4158,7 +4158,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 
 	else: # tuple assignment
 		ast  = ast.strip_paren ()
-		asts = ast.commas if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
+		asts = ast.comma if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
 
 		if len (vars) < len (asts):
 			raise ValueError (f'too many values to unpack (expected {len (vars)})')

@@ -99,7 +99,7 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so restructure
 		lhss = []
-		itr  = iter (ast.commas)
+		itr  = iter (ast.comma)
 
 		for c in itr:
 			if c.is_var:
@@ -140,7 +140,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 
 	else: # tuple assignment
 		ast  = ast.strip_paren ()
-		asts = ast.commas if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
+		asts = ast.comma if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
 
 		if len (vars) < len (asts):
 			raise ValueError (f'too many values to unpack (expected {len (vars)})')

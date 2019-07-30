@@ -61,6 +61,8 @@ class Parser:
 		self.nterms  = [{} for _ in range (states)] # [{'symbol': +shift or -reduce, ...}] - index by state num then non-terminal
 		self.rfuncs  = [None] # first rule is always None
 
+		self.tokidx  = None # pylint kibble
+
 		for t in terms:
 			sym, sts, acts, confs = t if len (t) == 4 else t + (None,)
 			sym                   = symbols [sym]

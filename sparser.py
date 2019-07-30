@@ -28,7 +28,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0):
 def _ast_func_tuple_args (ast):
 	ast = ast.strip (1)
 
-	return ast.commas if ast.is_comma else (ast,)
+	return ast.comma if ast.is_comma else (ast,)
 
 def _ast_func_reorder (ast):
 	wrap = None
@@ -54,16 +54,16 @@ def _expr_lambda (lhs, expr):
 		return AST ('lamb', expr, (lhs,))
 
 	elif lhs.is_comma:
-		for var in lhs.commas:
+		for var in lhs.comma:
 			if not var.is_var:
 				break
 		else:
-			return AST ('lamb', expr, lhs.commas)
+			return AST ('lamb', expr, lhs.comma)
 
 	raise SyntaxError ('invalid lambda function')
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
-	last      = lhs.muls [-1] if lhs.is_mul else lhs
+	last      = lhs.mul [-1] if lhs.is_mul else lhs
 	arg, wrap = _ast_func_reorder (rhs)
 	ast       = None
 
@@ -95,7 +95,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 		ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
-		return AST ('*', lhs.muls [:-1] + (ast,)) if lhs.is_mul else ast
+		return AST ('*', lhs.mul [:-1] + (ast,)) if lhs.is_mul else ast
 
 	return AST.flatcat ('*', lhs, rhs)
 
@@ -114,7 +114,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 		ast_dv_check = (lambda n: n.is_differential) if v.is_diff_solo else (lambda n: n.is_partial)
 
-		ns = ast.denom.muls if ast.denom.is_mul else (ast.denom,)
+		ns = ast.denom.mul if ast.denom.is_mul else (ast.denom,)
 		ds = []
 		cp = p
 
@@ -154,21 +154,21 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
 		tail = []
-		end  = len (ast.muls)
+		end  = len (ast.mul)
 
 		for i in range (end - 1, -1, -1):
-			if ast.muls [i].is_div:
-				diff = _interpret_divide (ast.muls [i])
+			if ast.mul [i].is_div:
+				diff = _interpret_divide (ast.mul [i])
 
 				if diff:
 					if diff.expr:
 						if i < end - 1:
-							tail [0 : 0] = ast.muls [i + 1 : end]
+							tail [0 : 0] = ast.mul [i + 1 : end]
 
 						tail.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('diff', ast.muls [i + 1] if i == end - 2 else AST ('*', ast.muls [i + 1 : end]), diff.dvs))
+						tail.insert (0, AST ('diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
 
 					else:
 						continue
@@ -178,7 +178,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		if tail:
 			tail = tail [0] if len (tail) == 1 else AST ('*', tuple (tail))
 
-			return tail if end == 0 else AST.flatcat ('*', ast.muls [0], tail) if end == 1 else AST.flatcat ('*', AST ('*', ast.muls [:end]), tail)
+			return tail if end == 0 else AST.flatcat ('*', ast.mul [0], tail) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), tail)
 
 	return ast
 
@@ -224,23 +224,23 @@ def _ast_strip_tail_differential (ast):
 			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
 
 	elif ast.is_mul:
-		ast2, neg = ast.muls [-1].strip_minus (retneg = True)
+		ast2, neg = ast.mul [-1].strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
 			return \
-					(AST ('*', ast.muls [:-1] + (neg (ast2),)), dv) \
+					(AST ('*', ast.mul [:-1] + (neg (ast2),)), dv) \
 					if ast2 else \
-					(neg (AST ('*', ast.muls [:-1])), dv) \
-					if len (ast.muls) > 2 else \
-					(neg (ast.muls [0]), dv)
+					(neg (AST ('*', ast.mul [:-1])), dv) \
+					if len (ast.mul) > 2 else \
+					(neg (ast.mul [0]), dv)
 
 	elif ast.is_add:
-		ast2, neg = ast.adds [-1].strip_minus (retneg = True)
+		ast2, neg = ast.add [-1].strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv and ast2:
-			return AST ('+', ast.adds [:-1] + (neg (ast2),)), dv
+			return AST ('+', ast.add [:-1] + (neg (ast2),)), dv
 
 	return ast, None
 
@@ -279,18 +279,18 @@ def _expr_mat (expr_mat_rows):
 def _expr_curly (ast): # convert curly expression to vector or matrix if appropriate
 	if not ast.is_comma:
 		return AST ('{', ast)
-	elif not ast.commas: # empty {}?
+	elif not ast.comma: # empty {}?
 		return AST.VarNull
 
-	c = sum (bool (c.is_vec) for c in ast.commas)
+	c = sum (bool (c.is_vec) for c in ast.comma)
 
-	if c == len (ast.commas) and len (set (len (c.vec) for c in ast.commas)) == 1:
+	if c == len (ast.comma) and len (set (len (c.vec) for c in ast.comma)) == 1:
 		return \
-				AST ('mat', tuple (c.vec for c in ast.commas)) \
-				if len (ast.commas [0].vec) > 1 else \
-				AST ('vec', tuple (c.vec [0] for c in ast.commas))
+				AST ('mat', tuple (c.vec for c in ast.comma)) \
+				if len (ast.comma [0].vec) > 1 else \
+				AST ('vec', tuple (c.vec [0] for c in ast.comma))
 
-	return AST ('vec', ast.commas) # raise SyntaxError ('invalid matrix syntax')
+	return AST ('vec', ast.comma) # raise SyntaxError ('invalid matrix syntax')
 
 #...............................................................................................
 class Parser (lalr1.Parser):
@@ -498,7 +498,7 @@ class Parser (lalr1.Parser):
 
 	def expr_piece_1       (self, expr_ineq, IF, expr, ELSE, expr_lambda):
 		return \
-				AST ('piece', ((expr_ineq, expr),) + expr_lambda.pieces) \
+				AST ('piece', ((expr_ineq, expr),) + expr_lambda.piece) \
 				if expr_lambda.is_piece else \
 				AST ('piece', ((expr_ineq, expr), (expr_lambda, True)))
 
@@ -605,8 +605,8 @@ class Parser (lalr1.Parser):
 	def expr_curly_1       (self, CURLYL, expr_commas, CURLYR):                    return _expr_curly (expr_commas)
 	def expr_curly_2       (self, expr_bracket):                                   return expr_bracket
 
-	def expr_bracket_1     (self, LEFT, BRACKL, expr_commas, RIGHT, BRACKR):       return AST ('[', expr_commas.commas if expr_commas.is_comma else (expr_commas,))
-	def expr_bracket_2     (self, BRACKL, expr_commas, BRACKR):                    return AST ('[', expr_commas.commas if expr_commas.is_comma else (expr_commas,))
+	def expr_bracket_1     (self, LEFT, BRACKL, expr_commas, RIGHT, BRACKR):       return AST ('[', expr_commas.comma if expr_commas.is_comma else (expr_commas,))
+	def expr_bracket_2     (self, BRACKL, expr_commas, BRACKR):                    return AST ('[', expr_commas.comma if expr_commas.is_comma else (expr_commas,))
 	def expr_bracket_3     (self, expr_term):                                      return expr_term
 
 	def expr_term_1        (self, expr_num):                                       return expr_num
@@ -709,7 +709,7 @@ class Parser (lalr1.Parser):
 				return self._mark_error (('CURLYR', 'CURLYR'))
 			elif not self.stack [-1].red.is_comma:
 				return self._insert_symbol (('COMMA', 'CURLYR', 'COMMA', 'CURLYR'), 1)
-			elif len (self.stack [-1].red.commas) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
+			elif len (self.stack [-1].red.comma) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
 				return self._insert_symbol (('CURLYR', 'COMMA', 'CURLYR'))
 			else:
 				return self._mark_error (('CURLYR', 'CURLYR'))
@@ -718,7 +718,7 @@ class Parser (lalr1.Parser):
 			if self.stack [-1].red.is_vec:
 				return self._insert_symbol (('COMMA', 'CURLYR'), 1)
 			elif self.stack [-1].red.is_comma:
-				if len (self.stack [-1].red.commas) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
+				if len (self.stack [-1].red.comma) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
 					return self._insert_symbol ('CURLYR')
 				else:
 					return self._mark_error ('CURLYR')
@@ -726,11 +726,11 @@ class Parser (lalr1.Parser):
 		else:
 			cols = \
 					len (self.stack [-4].red.vec)             if self.stack [-4].red.is_vec else \
-					len (self.stack [-4].red.commas [0].vec)  if self.stack [-4].red.is_comma and self.stack [-4].red.commas [0].is_vec else \
+					len (self.stack [-4].red.comma [0].vec)  if self.stack [-4].red.is_comma and self.stack [-4].red.comma [0].is_vec else \
 					None
 
 			if cols is not None:
-				vec             = self.stack [-1].red.commas if self.stack [-1].red.is_comma else (self.stack [-1].red,)
+				vec             = self.stack [-1].red.comma if self.stack [-1].red.is_comma else (self.stack [-1].red,)
 				self.stack [-1] = lalr1.State (self.stack [-1].idx, self.stack [-1].sym, AST (',', vec + (AST.VarNull,) * (cols - len (vec))))
 
 				return self._mark_error (('CURLYR', 'CURLYR')) if len (vec) != cols else self._insert_symbol (('CURLYR', 'CURLYR'))

@@ -156,7 +156,7 @@ class AST (tuple):
 		count = 999999999 if count is None else count
 
 		while self.op in {'*', 'lim', 'sum'} and count:
-			self   = self.muls [-1] if self.is_mul else self [1]
+			self   = self.mul [-1] if self.is_mul else self [1]
 			count -= 1
 
 		return self
@@ -169,7 +169,7 @@ class AST (tuple):
 
 		else:
 			try:
-				name = ''.join (m.as_identifier () for m in self.muls)
+				name = ''.join (m.as_identifier () for m in self.mul)
 			except TypeError:
 				return None
 
@@ -297,10 +297,8 @@ class AST_Str (AST):
 class AST_Comma (AST):
 	op, is_comma = ',', True
 
-	def _init (self, commas):
-		self.commas = commas
-
-	# _len = lambda self: len (self.commas)
+	def _init (self, comma):
+		self.comma = comma
 
 class AST_Curly (AST):
 	op, is_curly = '{', True
@@ -308,23 +306,17 @@ class AST_Curly (AST):
 	def _init (self, curly):
 		self.curly = curly
 
-	# _len = lambda self: len (self.paren)
-
 class AST_Paren (AST):
 	op, is_paren = '(', True
 
 	def _init (self, paren):
 		self.paren = paren
 
-	# _len = lambda self: len (self.paren)
-
 class AST_Brack (AST):
 	op, is_brack = '[', True
 
 	def _init (self, brack):
 		self.brack = brack
-
-	# _len = lambda self: len (self.brack)
 
 class AST_Abs (AST):
 	op, is_abs = '|', True
@@ -347,23 +339,19 @@ class AST_Fact (AST):
 class AST_Add (AST):
 	op, is_add = '+', True
 
-	def _init (self, adds):
-		self.adds = adds
-
-	# _len = lambda self: len (self.adds)
+	def _init (self, add):
+		self.add = adds
 
 class AST_Mul (AST):
 	op, is_mul = '*', True
 
-	def _init (self, muls):
-		self.muls = muls
+	def _init (self, mul):
+		self.mul = muls
 
 	def _is_mul_has_abs (self):
-		for m in self.muls:
+		for m in self.mul:
 			if m.is_abs:
 				return True
-
-	# _len = lambda self: len (self.muls)
 
 class AST_Div (AST):
 	op, is_div = '/', True
@@ -470,7 +458,7 @@ class AST_Piece (AST):
 	op, is_piece = 'piece', True
 
 	def _init (self, pieces):
-		self.pieces = pieces
+		self.piece = pieces
 
 class AST_Lamb (AST):
 	op, is_lamb = 'lamb', True
