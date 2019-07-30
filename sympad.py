@@ -1086,12 +1086,6 @@ Currently only a single comparison is allowed so an expression like "<b>0 &lt;= 
 Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a lower precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
 </p>
 
-<h4>Indexing</h4>
-
-<p>
-Python style bracket indexing is natively supported for all objects using single or tuple indices, no slices yet - "<b>{{1, 2, 3}, {4, 5, 6}} [1,2] == 6</b>".
-</p>
-
 <h4>Parentheses</h4>
 
 <p>
@@ -1100,6 +1094,12 @@ delineate an expression as an input to a function. They may be used interchangea
 version is not drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions
 in general and always when calling functions which take multiple parameters like "<b>max(1,2,3)</b>". The curly braces are used as shorthand for vectors
 and matrices if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
+</p>
+
+<h4>Indexing</h4>
+
+<p>
+Python style bracket indexing is natively supported for all objects using single or tuple indices, no slices yet - "<b>{{1, 2, 3}, {4, 5, 6}} [1,2] == 6</b>".
 </p>
 
 <h4>Member Access</h4>
