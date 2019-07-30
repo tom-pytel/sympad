@@ -1294,7 +1294,7 @@ class Test (unittest.TestCase):
 		self.assertRaises (AttributeError, ast2spt2ast, p ('x**y.a ()!'))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('x**y.a ()**2'))
 		self.assertEqual (ast2spt2ast (p ('lambda: x')), ('lamb', ('@', 'x'), ()))
-		self.assertEqual (ast2spt2ast (p ('lambda x: x**2')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))./tes
+		self.assertEqual (ast2spt2ast (p ('lambda x: x**2')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (ast2spt2ast (p ('lambda x, y: x + y')), ('lamb', ('+', (('@', 'y'), ('@', 'x'))), (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('1, lambda: x')), ('(', (',', (('#', '1'), ('lamb', ('@', 'x'), ())))))
 		self.assertEqual (ast2spt2ast (p ('1, lambda x: x**2')), ('(', (',', (('#', '1'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))))
