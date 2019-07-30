@@ -1274,7 +1274,7 @@ class State (tuple): # easier on the eyes
 		else: # must be 3
 			self.idx, self.sym, self.red = self
 
-class Parser:
+class LALR1:
 	_PARSER_TABLES = '' # placeholders so pylint doesn't have a fit
 	_PARSER_TOP    = ''
 	TOKENS         = {}
@@ -1310,8 +1310,6 @@ class Parser:
 		self.nterms  = [{} for _ in range (states)] # [{'symbol': +shift or -reduce, ...}] - index by state num then non-terminal
 		self.rfuncs  = [None] # first rule is always None
 
-		self.tokidx  = None # pylint kibble
-
 		for t in terms:
 			sym, sts, acts, confs = t if len (t) == 4 else t + (None,)
 			sym                   = symbols [sym]
@@ -1333,10 +1331,10 @@ class Parser:
 			obj = getattr (self, name)
 
 			if name [0] != '_' and type (obj) is types.MethodType and obj.__code__.co_argcount >= 1: # 2: allow empty productions
-				m = Parser._rec_SYMBOL_NUMTAIL.match (name)
+				m = LALR1._rec_SYMBOL_NUMTAIL.match (name)
 
 				if m:
-					parms = tuple (p if p in self.TOKENS else Parser._rec_SYMBOL_NUMTAIL.match (p).group (1) \
+					parms = tuple (p if p in self.TOKENS else LALR1._rec_SYMBOL_NUMTAIL.match (p).group (1) \
 							for p in obj.__code__.co_varnames [1 : obj.__code__.co_argcount])
 					prods [(m.group (1), parms)] = obj
 
@@ -1478,7 +1476,7 @@ class lalr1: # for single script
 	Incomplete = Incomplete
 	Token      = Token
 	State      = State
-	Parser     = Parser
+	LALR1      = LALR1
 # Base classes for abstract math syntax tree, tuple based.
 #
 # ('=', 'rel', lhs, rhs)             - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
@@ -3449,11 +3447,11 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 	return AST ('vec', ast.comma) # raise SyntaxError ('invalid matrix syntax')
 
 #...............................................................................................
-class Parser (lalr1.Parser):
+class Parser (lalr1.LALR1):
 	def __init__ (self):
 		self.TOKENS_LONG.update ([(v, self.TOKENS [v]) for v in self.TOKENS_QUICK])
 
-		lalr1.Parser.__init__ (self)
+		lalr1.LALR1.__init__ (self)
 
 	def set_quick (self, yes = True):
 		self.TOKENS.update (self.TOKENS_QUICK if yes else self.TOKENS_LONG)
@@ -3976,7 +3974,7 @@ class Parser (lalr1.Parser):
 		self.autocompleting = True
 		self.erridx         = None
 
-		lalr1.Parser.parse (self, text)
+		lalr1.LALR1.parse (self, text)
 
 		if not self.parse_results:
 			return (None, 0, [])
@@ -4089,7 +4087,7 @@ def _ast_remap (ast, map_):
 			if len (ast.args) != len (lamb.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
+			ast = _ast_remap (lamb.lamb, dict (filter (lambda va: va [0] != va [1].var, zip ((v.var for v in lamb.vars), ast.args))))
 
 	elif ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
 		lvars = {v.var for v in ast.vars}

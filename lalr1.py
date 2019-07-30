@@ -25,7 +25,7 @@ class State (tuple): # easier on the eyes
 		else: # must be 3
 			self.idx, self.sym, self.red = self
 
-class Parser:
+class LALR1:
 	_PARSER_TABLES = '' # placeholders so pylint doesn't have a fit
 	_PARSER_TOP    = ''
 	TOKENS         = {}
@@ -61,8 +61,6 @@ class Parser:
 		self.nterms  = [{} for _ in range (states)] # [{'symbol': +shift or -reduce, ...}] - index by state num then non-terminal
 		self.rfuncs  = [None] # first rule is always None
 
-		self.tokidx  = None # pylint kibble
-
 		for t in terms:
 			sym, sts, acts, confs = t if len (t) == 4 else t + (None,)
 			sym                   = symbols [sym]
@@ -84,10 +82,10 @@ class Parser:
 			obj = getattr (self, name)
 
 			if name [0] != '_' and type (obj) is types.MethodType and obj.__code__.co_argcount >= 1: # 2: allow empty productions
-				m = Parser._rec_SYMBOL_NUMTAIL.match (name)
+				m = LALR1._rec_SYMBOL_NUMTAIL.match (name)
 
 				if m:
-					parms = tuple (p if p in self.TOKENS else Parser._rec_SYMBOL_NUMTAIL.match (p).group (1) \
+					parms = tuple (p if p in self.TOKENS else LALR1._rec_SYMBOL_NUMTAIL.match (p).group (1) \
 							for p in obj.__code__.co_varnames [1 : obj.__code__.co_argcount])
 					prods [(m.group (1), parms)] = obj
 
@@ -229,4 +227,4 @@ class lalr1: # for single script
 	Incomplete = Incomplete
 	Token      = Token
 	State      = State
-	Parser     = Parser
+	LALR1      = LALR1

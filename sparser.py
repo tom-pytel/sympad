@@ -293,11 +293,11 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 	return AST ('vec', ast.comma) # raise SyntaxError ('invalid matrix syntax')
 
 #...............................................................................................
-class Parser (lalr1.Parser):
+class Parser (lalr1.LALR1):
 	def __init__ (self):
 		self.TOKENS_LONG.update ([(v, self.TOKENS [v]) for v in self.TOKENS_QUICK])
 
-		lalr1.Parser.__init__ (self)
+		lalr1.LALR1.__init__ (self)
 
 	def set_quick (self, yes = True):
 		self.TOKENS.update (self.TOKENS_QUICK if yes else self.TOKENS_LONG)
@@ -820,7 +820,7 @@ class Parser (lalr1.Parser):
 		self.autocompleting = True
 		self.erridx         = None
 
-		lalr1.Parser.parse (self, text)
+		lalr1.LALR1.parse (self, text)
 
 		if not self.parse_results:
 			return (None, 0, [])
