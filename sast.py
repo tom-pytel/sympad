@@ -340,13 +340,13 @@ class AST_Add (AST):
 	op, is_add = '+', True
 
 	def _init (self, add):
-		self.add = adds
+		self.add = add
 
 class AST_Mul (AST):
 	op, is_mul = '*', True
 
 	def _init (self, mul):
-		self.mul = muls
+		self.mul = mul
 
 	def _is_mul_has_abs (self):
 		for m in self.mul:
@@ -457,8 +457,8 @@ class AST_Mat (AST):
 class AST_Piece (AST):
 	op, is_piece = 'piece', True
 
-	def _init (self, pieces):
-		self.piece = pieces
+	def _init (self, piece):
+		self.piece = piece
 
 class AST_Lamb (AST):
 	op, is_lamb = 'lamb', True

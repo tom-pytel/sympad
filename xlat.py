@@ -67,7 +67,7 @@ def _xlat_func_Pow (ast = AST.VarNull, exp = AST.VarNull):
 	return AST ('^', ast, exp)
 
 def _xlat_func_Matrix (ast = AST.VarNull):
-	if ast == AST.VarNull:
+	if ast.is_null_var:
 		return AST ('vec', ())
 
 	if ast.is_brack and ast.brack:

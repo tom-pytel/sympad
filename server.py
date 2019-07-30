@@ -17,7 +17,7 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-_VERSION                  = 'v0.5.0'
+_VERSION                  = 'v0.5.1'
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -54,7 +54,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_parser     = sparser.Parser ()
 
 	_vars       = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_history    = [] # persistent history across browser closing
+	_history    = [] # persistent history across browser closings
 
 #...............................................................................................
 # class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
@@ -68,25 +68,26 @@ def _ast_remap (ast, map_):
 	if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
 		return ast
 
-	if ast.is_var and ast.var in map_: # variable
-		ast = map_ [ast.var]
+	if ast.is_var:
+		var = map_.get (ast.var)
 
-		return AST ('func', AST.Func.NOEVAL, (ast,)) if ast.is_lamb else _ast_remap (ast, map_)
+		if var: # user var
+			return AST ('func', AST.Func.NOEVAL, (var,)) if var.is_lamb else _ast_remap (var, map_)
 
-	if ast.is_func and ast.func in map_: # user function
-		lamb = map_ [ast.func]
-
-		if lamb.is_lamb:
-			if len (ast.args) != len (lamb.vars):
-				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
-
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
-
-	if ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
+	elif ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
 		lvars = {v.var for v in ast.vars}
 		map_  = {v: a for v, a in filter (lambda va: va [0] not in lvars, map_.items ())}
 
 		return AST (*(_ast_remap (a, map_) if a not in ast.vars else a for a in ast))
+
+	elif ast.is_func:
+		lamb = map_ [ast.func]
+
+		if lamb and lamb.is_lamb: # user function
+			if len (ast.args) != len (lamb.vars):
+				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
+
+			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)))
 
 	return AST (*(_ast_remap (a, map_) for a in ast))
 
