@@ -833,6 +833,11 @@ def _spt2ast_Function (spt, name = None):
 			name \
 			, tuple (spt2ast (arg) for arg in spt.args))
 
+def _spt2ast_Derivative (spt):
+	return AST ('diff', spt2ast (spt.args [0]), tuple ( \
+			('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p))) \
+			for s, p in spt.args [1:]))
+
 def _spt2ast_Integral (spt):
 	return \
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])) \
@@ -900,6 +905,7 @@ _spt2ast_funcs = {
 
 	sp.Limit: lambda spt: AST (*(('lim', spt2ast (spt.args [0]), spt2ast (spt.args [1]), spt2ast (spt.args [2])) + _spt2ast_Limit_dirs [spt.args [3].name])),
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
+	sp.Derivative: _spt2ast_Derivative,
 	sp.Integral: _spt2ast_Integral,
 
 	sp.Order: lambda spt: AST ('func', 'O', ((spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),)),
@@ -941,9 +947,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	# ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
+	# res = ast2spt (ast)
+	x = sp.Symbol ('x')
+	res = sp.Derivative (1/x, x)
+	res = spt2ast (res)
+	print (res)

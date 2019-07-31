@@ -17,22 +17,23 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-_VERSION                  = 'v0.5.1'
-
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SYMPAD_PATH              = os.path.dirname (sys.argv [0])
-_SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
-_SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
+_VERSION          = '0.5.1'
 
-_DEFAULT_ADDRESS          = ('localhost', 8000)
-_STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_DISPLAYSTYLE             = [1]
-_FILES                    = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
+_SYMPAD_PATH      = os.path.dirname (sys.argv [0])
+_SYMPAD_FIRST_RUN = os.environ.get ('SYMPAD_FIRST_RUN')
+_SYMPAD_CHILD     = os.environ.get ('SYMPAD_CHILD')
 
-_HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [--ugly | -u] [host:port]
-"""
+_DEFAULT_ADDRESS  = ('localhost', 8000)
+_STATIC_FILES     = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_DISPLAYSTYLE     = [1]
+_FILES            = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
+
+_HELP             = f'usage: {os.path.basename (sys.argv [0])} ' \
+			'[-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-E | --sympyEI] [-q | --quick] [-u | --ugly] ' \
+			'[host:port]'
+			# '[-N | --noN] [-O | --noO] [-S | --noS] [-b | --nobeta] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] ' \
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
@@ -246,7 +247,7 @@ def _admin_quick (ast):
 
 	_parser.set_quick (yes)
 
-	return f'Quick mode is {"on" if yes else "off"}.'
+	return f'Quick input mode is {"on" if yes else "off"}.'
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -264,7 +265,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 			if self.path == '/env.js':
 				content = 'text/javascript'
-				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
+				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {"v" + _VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
 
 				self.send_header ('Cache-Control', 'no-store')
 
@@ -387,10 +388,14 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEqu', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnEqu', ['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.strip ())
+			sys.exit (0)
+
+		if ('--version', '') in opts or ('-v', '') in opts:
+			print (_VERSION)
 			sys.exit (0)
 
 		if ('--debug', '') in opts or ('-d', '') in opts:

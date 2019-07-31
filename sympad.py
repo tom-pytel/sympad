@@ -1225,11 +1225,12 @@ Due to mixing operators from Python and LaTeX the grammar may be a little wonky 
 You can always tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
 Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name (this only works for top-level functions).
 </p><p>
-If you are getting results which are just plain wrong, check to see if you have any variables mapped which would be changing the evaluation.
+If you are getting results which are just plain wrong, check to see if you have any variables or lambdas mapped which would be changing the evaluation.
 </p><p>
 SymPad inserts the current working directory at the beginning of the Python module search path which means that for example if you run SymPad in the SymPy development directory then the SymPy module used will be the development version.
 </p><p>
 The server runs a single thread for consistency and keeps a single global state (variables), this means that if have two browser windows open the results of calculations in one will be reflected in the other.
+If you want a completely separate context then you can run another SymPad on a different port.
 </p><p>
 There are many SymPy objects which SymPad does not understand natively yet.
 In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the element will be used in the native representation string.
@@ -3058,6 +3059,11 @@ def _spt2ast_Function (spt, name = None):
 			name \
 			, tuple (spt2ast (arg) for arg in spt.args))
 
+def _spt2ast_Derivative (spt):
+	return AST ('diff', spt2ast (spt.args [0]), tuple ( \
+			('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p))) \
+			for s, p in spt.args [1:]))
+
 def _spt2ast_Integral (spt):
 	return \
 			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])) \
@@ -3125,6 +3131,7 @@ _spt2ast_funcs = {
 
 	sp.Limit: lambda spt: AST (*(('lim', spt2ast (spt.args [0]), spt2ast (spt.args [1]), spt2ast (spt.args [2])) + _spt2ast_Limit_dirs [spt.args [3].name])),
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
+	sp.Derivative: _spt2ast_Derivative,
 	sp.Integral: _spt2ast_Integral,
 
 	sp.Order: lambda spt: AST ('func', 'O', ((spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),)),
@@ -3166,11 +3173,13 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
-# 	print (res)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	# ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
+	# res = ast2spt (ast)
+	x = sp.Symbol ('x')
+	res = sp.Derivative (1/x, x)
+	res = spt2ast (res)
+	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 #
 # Time and interest permitting:
@@ -4045,20 +4054,21 @@ from urllib.parse import parse_qs
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-_VERSION                  = 'v0.5.1'
 
+_VERSION          = '0.5.1'
 
-_SYMPAD_PATH              = os.path.dirname (sys.argv [0])
-_SYMPAD_FIRST_RUN         = os.environ.get ('SYMPAD_FIRST_RUN')
-_SYMPAD_CHILD             = os.environ.get ('SYMPAD_CHILD')
+_SYMPAD_PATH      = os.path.dirname (sys.argv [0])
+_SYMPAD_FIRST_RUN = os.environ.get ('SYMPAD_FIRST_RUN')
+_SYMPAD_CHILD     = os.environ.get ('SYMPAD_CHILD')
 
-_DEFAULT_ADDRESS          = ('localhost', 8000)
-_STATIC_FILES             = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_DISPLAYSTYLE             = [1]
+_DEFAULT_ADDRESS  = ('localhost', 8000)
+_STATIC_FILES     = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_DISPLAYSTYLE     = [1]
 
-_HELP = f"""
-usage: {os.path.basename (sys.argv [0])} [--help | -h] [--debug | -d] [--nobrowser | -n] [--sympyEI | -E] [--quick | -q] [--ugly | -u] [host:port]
-"""
+_HELP             = f'usage: {os.path.basename (sys.argv [0])} ' \
+			'[-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-E | --sympyEI] [-q | --quick] [-u | --ugly] ' \
+			'[host:port]'
+			# '[-N | --noN] [-O | --noO] [-S | --noS] [-b | --nobeta] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] ' \
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
@@ -4268,7 +4278,7 @@ def _admin_quick (ast):
 
 	_parser.set_quick (yes)
 
-	return f'Quick mode is {"on" if yes else "off"}.'
+	return f'Quick input mode is {"on" if yes else "off"}.'
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -4286,7 +4296,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 			if self.path == '/env.js':
 				content = 'text/javascript'
-				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {_VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
+				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {"v" + _VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
 
 				self.send_header ('Cache-Control', 'no-store')
 
@@ -4409,10 +4419,14 @@ _month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hdnEqu', ['help', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnEqu', ['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.strip ())
+			sys.exit (0)
+
+		if ('--version', '') in opts or ('-v', '') in opts:
+			print (_VERSION)
 			sys.exit (0)
 
 		if ('--debug', '') in opts or ('-d', '') in opts:
