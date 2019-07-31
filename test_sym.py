@@ -312,7 +312,7 @@ def flatten (ast):
 #...............................................................................................
 CURLYS = True
 
-# test_sym.py -tnpi --show --nc
+# test_sym.py -i --show --nc
 
 def test ():
 	global DEPTH, CURLYS

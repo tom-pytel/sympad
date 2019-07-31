@@ -26,10 +26,6 @@ class State (tuple): # easier on the eyes
 			self.idx, self.sym, self.red = self
 
 class LALR1:
-	_PARSER_TABLES = '' # placeholders so pylint doesn't have a fit
-	_PARSER_TOP    = ''
-	TOKENS         = {}
-
 	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
 
 	def set_tokens (self, tokens):

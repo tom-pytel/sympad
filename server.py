@@ -44,6 +44,9 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_VAR_LAST   = '_'
 	_START_VARS = {
+		'N'    : AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),)),
+		'O'    : AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),)),
+		'S'    : AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),)),
 		'beta' : AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
 		'gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
 		'Gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
@@ -95,6 +98,12 @@ def _ast_remap (ast, map_, recurse = True):
 		return AST (*(_ast_remap (a, map_, recurse) if a not in ast.vars else a for a in ast))
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
+
+def _update_user_funcs ():
+	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb, _vars.items ())}
+
+	sym.set_user_funcs (user_funcs)
+	_parser.set_user_funcs (user_funcs)
 
 def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = None
@@ -157,10 +166,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 
 		asts = [AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
 
-	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb, _vars.items ())}
-
-	sym.set_user_funcs (user_funcs)
-	_parser.set_user_funcs (user_funcs)
+	_update_user_funcs ()
 
 	return asts
 
@@ -198,6 +204,8 @@ def _admin_del (ast):
 
 		del _vars [var.var]
 
+		_update_user_funcs ()
+
 	except KeyError:
 		raise AE35UnitError (f'Variable {sym.ast2nat (var)!r} is not defined, it can only be attributable to human error.')
 
@@ -208,12 +216,15 @@ def _admin_delvars (ast):
 		if not e.is_lamb:# and v != _VAR_LAST:
 			del _vars [v]
 
+	_update_user_funcs ()
+
 	return 'All variables deleted.'
 
 def _admin_delall (ast):
 	last_var = _vars [_VAR_LAST]
 
 	_vars.clear ()
+	_update_user_funcs ()
 
 	_vars [_VAR_LAST] = last_var
 

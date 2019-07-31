@@ -1275,10 +1275,6 @@ class State (tuple): # easier on the eyes
 			self.idx, self.sym, self.red = self
 
 class LALR1:
-	_PARSER_TABLES = '' # placeholders so pylint doesn't have a fit
-	_PARSER_TOP    = ''
-	TOKENS         = {}
-
 	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
 
 	def set_tokens (self, tokens):
@@ -2235,10 +2231,6 @@ class xlat: # for single script
 import re
 import sympy as sp
 
-sp.numbers   = sp.numbers # medication for pylint
-sp.boolalg   = sp.boolalg
-sp.fancysets = sp.fancysets
-
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
@@ -2254,6 +2246,16 @@ sast.register_AST (AST_Text)
 class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a number of times
 	def doit (self, *args, **kwargs):
 		return self.args [0] if self.args [1] == 1 else ExprDontDoIt (self.args [0], self.args [1] - 1)
+
+class ExprOverride (sp.Expr): # override to allow lambdification of functions which always evaluate
+	name = lambda self: self.__class__._SYMPAD_FUNC.__class__.__name__
+
+	def doit (self, *args, **kw):
+		return self.__class__._SYMPAD_FUNC (*self.args).doit (*args, **kw)
+
+class ExprN (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.N, 'N'
+class ExprO (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.O, 'O'
+class ExprS (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.S, 'S'
 
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
@@ -2811,16 +2813,7 @@ _ast2py_funcs = {
 }
 
 #...............................................................................................
-# Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
-_builtins_dict               = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
-_ast2spt_func_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
-		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
-		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
-		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
-
-_ast2spt_func_builtins       = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _ast2spt_func_builtins_names)))
-
-_ast2spt_consts              = { # 'e' and 'i' dynamically set on use from AST.E or I
+_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
 	'pi'   : sp.pi,
 	'oo'   : sp.oo,
 	'zoo'  : sp.zoo,
@@ -2830,8 +2823,22 @@ _ast2spt_consts              = { # 'e' and 'i' dynamically set on use from AST.E
 	'nan'  : sp.nan,
 }
 
+# Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
+_builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
+_builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
+		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
+		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
+		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
+
+_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
+
+_ast2spt_func_override = {
+	'N': ExprN,
+	'O': ExprO,
+	'S': ExprS,
+}
+
 class ast2spt:
-	def __init__ (self): self.kw = {} # never reached, here to make pylint calm down
 	def __new__ (cls, ast):
 		self    = super ().__new__ (cls)
 		self.kw = {}
@@ -2840,7 +2847,6 @@ class ast2spt:
 
 		try:
 			spt = spt.doit ()
-			# spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
 		except:
 			pass
 
@@ -2862,6 +2868,12 @@ class ast2spt:
 		return spt
 
 	def _ast2spt_attr (self, ast):
+		# spt = self._ast2spt (ast.obj)
+
+		# while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
+		# 	spt = spt.args [0]
+
+		# mbr = getattr (spt, ast.attr)
 		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
@@ -2871,11 +2883,11 @@ class ast2spt:
 			return self._ast2spt (ast.args [0])
 
 		if ast.func == AST.Func.NOEVAL: # special stop evaluation meta-function
-			self.kw ['evaluate'] = False
+			self.kw ['evaluate'] = False # don't evaluate expressions automatically on instantiation
 
 			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = getattr (sp, ast.unescaped, _ast2spt_func_builtins.get (ast.unescaped))
+		func = _ast2spt_func_override.get (ast.unescaped) or getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
 
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
@@ -3036,11 +3048,14 @@ def _spt2ast_MatPow (spt):
 	except:
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
-def _spt2ast_Function (spt):
+def _spt2ast_Function (spt, name = None):
+	if name is None:
+		name = spt.__class__.__name__
+
 	return AST ('func', \
-			f'{AST.Func.ESCAPE}{spt.__class__.__name__}' \
+			f'{AST.Func.ESCAPE}{name}' \
 			if getattr (spt, '_SYMPAD_ESCAPED', None) else \
-			spt.__class__.__name__ \
+			name \
 			, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Integral (spt):
@@ -3053,6 +3068,7 @@ _spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 _spt2ast_funcs = {
 	ExprDontDoIt: lambda spt: AST ('func', AST.Func.NOEVAL, (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
+	ExprOverride: lambda spt: _spt2ast_Function (spt, spt._SYMPAD_NAME),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
@@ -3151,8 +3167,9 @@ class sym: # for single script
 	spt2ast        = spt2ast
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', 'Piecewise', (('(', (',', (('#', '1'), ('#', '2')))),))
-# 	res = ast2py (ast)
+# 	ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
 # 	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 #
@@ -4004,11 +4021,11 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r'Piecewise ((1,True))') [0]
-	# a = sym.ast2spt (a)
-	print (a)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	a = p.parse (r'Piecewise ((1,True))') [0]
+# 	# a = sym.ast2spt (a)
+# 	print (a)
 #!/usr/bin/env python
 # python 3.6+
 
@@ -4049,6 +4066,9 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_VAR_LAST   = '_'
 	_START_VARS = {
+		'N'    : AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),)),
+		'O'    : AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),)),
+		'S'    : AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),)),
 		'beta' : AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
 		'gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
 		'Gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
@@ -4100,6 +4120,12 @@ def _ast_remap (ast, map_, recurse = True):
 		return AST (*(_ast_remap (a, map_, recurse) if a not in ast.vars else a for a in ast))
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
+
+def _update_user_funcs ():
+	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb, _vars.items ())}
+
+	sym.set_user_funcs (user_funcs)
+	_parser.set_user_funcs (user_funcs)
 
 def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = None
@@ -4162,10 +4188,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 
 		asts = [AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
 
-	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb, _vars.items ())}
-
-	sym.set_user_funcs (user_funcs)
-	_parser.set_user_funcs (user_funcs)
+	_update_user_funcs ()
 
 	return asts
 
@@ -4203,6 +4226,8 @@ def _admin_del (ast):
 
 		del _vars [var.var]
 
+		_update_user_funcs ()
+
 	except KeyError:
 		raise AE35UnitError (f'Variable {sym.ast2nat (var)!r} is not defined, it can only be attributable to human error.')
 
@@ -4213,12 +4238,15 @@ def _admin_delvars (ast):
 		if not e.is_lamb:# and v != _VAR_LAST:
 			del _vars [v]
 
+	_update_user_funcs ()
+
 	return 'All variables deleted.'
 
 def _admin_delall (ast):
 	last_var = _vars [_VAR_LAST]
 
 	_vars.clear ()
+	_update_user_funcs ()
 
 	_vars [_VAR_LAST] = last_var
 
