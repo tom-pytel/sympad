@@ -26,7 +26,7 @@ class State (tuple): # easier on the eyes
 			self.idx, self.sym, self.red = self
 
 class LALR1:
-	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])(_?\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
+	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])_?(\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
 
 	def set_tokens (self, tokens):
 		self.tokgrps = {} # {'token': (groups pos start, groups pos end), ...}

@@ -166,12 +166,13 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 
 			for name, obj in pc_obj.__dict__.items ():
 				if name [0] != '_' and type (obj) is types.FunctionType and obj.__code__.co_argcount >= 1: # 2: allow empty productions
-					name_sym = LALR1._rec_SYMBOL_NUMTAIL.match (name).group (1)
+					name, num = LALR1._rec_SYMBOL_NUMTAIL.match (name).groups ()
+					num       = 0 if num is None else int (num)
 
-					pc_funcs.setdefault (name_sym, []).append ((name, obj, obj.__code__.co_varnames [1 : obj.__code__.co_argcount]))
+					pc_funcs.setdefault (name, []).append ((name, num, obj, obj.__code__.co_varnames [1 : obj.__code__.co_argcount]))
 
 					if pc_start is None:
-						pc_start = name_sym
+						pc_start = name
 
 			if pc_start is None:
 				raise RuntimeError ('start production not found')
@@ -199,7 +200,7 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 
 		rhss = prods.setdefault (prod, [])
 
-		for name, func, parms in sorted (pc_funcs [prod]): # pc_funcs [prod]:
+		for _, _, _, parms in sorted (pc_funcs [prod]): # pc_funcs [prod]:
 			parms = [p if p in pc_obj.TOKENS else LALR1._rec_SYMBOL_NUMTAIL.match (p).group (1) for p in parms]
 
 			rhss.append (parms)
