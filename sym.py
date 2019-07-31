@@ -947,11 +947,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	# ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
-	# res = ast2spt (ast)
-	x = sp.Symbol ('x')
-	res = sp.Derivative (1/x, x)
-	res = spt2ast (res)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	# ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
+# 	# res = ast2spt (ast)
+# 	x = sp.Symbol ('x')
+# 	res = sp.Derivative (1/x, x)
+# 	res = spt2ast (res)
+# 	print (res)

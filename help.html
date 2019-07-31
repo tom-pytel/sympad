@@ -334,14 +334,15 @@ All functions may take multiple comma-separated arguments and the SymPy function
 
 <p>
 Almost all SymPy function and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
-This means no "<b>N()</b>", "<b>S()</b>" or "<b>O()</b>" directly, though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$oct (10)</b>".
+Though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$oct (10)</b>".
 Only the "safe" __builtin__ functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
-To numerically evaluate the value of "<b>sin (2)</b>" you use the "<b>$</b>" escape character with the "<b>N()</b>" function like "<b>$N (sin (2))</b>", or just use the member function "<b>sin (2).evalf ()</b>".
+The reason for excluding single letter functions is that all natively recognized function names are permanently excluded from being used as variables but since very often single letters are used as variable names this would be problematic.
+A workaround is in place and described further down.
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
 The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
 The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
-This form of exponentiating a function is extended as an input shortcut to all top-level functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
+This form of exponentiating a function is extended as an input shortcut for all top-level functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
 This does not apply to member functions or user created lambda functions.
 Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
@@ -359,8 +360,8 @@ User created lambda functions are supported and are specified the same way as Py
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
 When created, lambda functions will copy the global value of any variables which are not lambda arguments and this will be fixed for the life of the lambda.
 If you want a lambda to use the value of a global variable at the time the lambda is evaluated, rather than when it is defined, then wrap the instance of the variable in the lambda using the "<b>@()</b>" pseudo-function.
-Lambda functions may reference other lambda functions as long as those are defined at the time of creation.
-Lambda recursion is currently not supported.
+Lambda functions may reference other lambda functions as long as those are defined at the time of creation, though in that case they copy the expression from the target lambdas.
+Lambda recursion is not currently supported.
 </p><p>
 Normally when you enter an expression into SymPad and hit Enter that expression is evaluated and "<b>doit()</b>" is called on it to attempt to symbolically evaluate an answer.
 This may not always be desirable, like maybe in a lambda function, since when you enter a lambda function it is evaluated before it is assigned to a variable.
@@ -378,7 +379,7 @@ What could be useful is a count of infinity, this would freeze the expression as
 
 <p>
 SymPad supports implicit multiplication, that is writing two variables next to each other to indicate multiplication so "<b>x y</b>" = "<b>x * y</b>".
-This brings some problems, such as deciding when "<b>x (a)</b>" is a function call and when it is multiplication.
+This brings some problems, such as deciding when "<b>x (a + b)</b>" is a function call and when it is multiplication.
 SymPad solves this by recognizing all top-level SymPy package function names and classes as functions and accepting the next expression as the argument(s) to that function.
 This brings along its own set of peculiarities such as removing those names from the possible namespace pool of variables, this means that you can never redefine "<b>sin</b>" as anything else, but why would you want to?
 </p><p>
@@ -390,10 +391,11 @@ The meaning of parentheses for assigned user variables is inferred from whether 
 In a roundabout sort of way this all led to a peculiar delima.
 There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
 This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
-This was not very elegant so a workaround has been implemented as follows:
+This was not very elegant so the workaround is as follows:
 The function names have been left out of the grammar but user lambdas are created for them on startup so that they may be used as functions.
 If you wish to use those letters as variables instead then simply delete the defined lambdas and those letters will behave as variables once more.
 You can always redefine the lambdas yourself if you want them back, the format is as follows - "<b>beta = lambda x, y: %$beta (x, y)</b>".
+This same mechanism is used to make the functions "<b>N()</b>", "<b>O()</b>" and "<b>S()</b>" available for calling without the use of "<b>$</b>".
 </p>
 
 <h2>Notes</h2>

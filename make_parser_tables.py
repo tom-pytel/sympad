@@ -19,7 +19,7 @@ import os
 import re
 import types
 
-from lalr1 import Parser
+from lalr1 import LALR1
 
 #...............................................................................................
 def parse_rules (conflict_reduce_first = ()): # conflict_reduce_first = {'TOKEN', 'TOKEN', ...}
@@ -161,12 +161,12 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 
 			pc_name  = name
 			pc_obj   = obj
-			pc_start = Parser._rec_SYMBOL_NUMTAIL.match (obj._PARSER_TOP).group (1)
+			pc_start = LALR1._rec_SYMBOL_NUMTAIL.match (obj._PARSER_TOP).group (1)
 			pc_funcs = {} # {'prod': [('name', func, ('parm', ...)), ...], ...} - 'self' stripped from parms
 
 			for name, obj in pc_obj.__dict__.items ():
 				if name [0] != '_' and type (obj) is types.FunctionType and obj.__code__.co_argcount >= 1: # 2: allow empty productions
-					name_sym = Parser._rec_SYMBOL_NUMTAIL.match (name).group (1)
+					name_sym = LALR1._rec_SYMBOL_NUMTAIL.match (name).group (1)
 
 					pc_funcs.setdefault (name_sym, []).append ((name, obj, obj.__code__.co_varnames [1 : obj.__code__.co_argcount]))
 
@@ -200,7 +200,7 @@ def process (fnm, nodelete = False, compress = False, width = 512):
 		rhss = prods.setdefault (prod, [])
 
 		for name, func, parms in sorted (pc_funcs [prod]): # pc_funcs [prod]:
-			parms = [p if p in pc_obj.TOKENS else Parser._rec_SYMBOL_NUMTAIL.match (p).group (1) for p in parms]
+			parms = [p if p in pc_obj.TOKENS else LALR1._rec_SYMBOL_NUMTAIL.match (p).group (1) for p in parms]
 
 			rhss.append (parms)
 			stack.extend (filter (lambda p: p not in pc_obj.TOKENS and p not in prods and p not in stack, parms))
