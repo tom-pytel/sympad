@@ -609,12 +609,11 @@ class ast2spt:
 
 		spt     = self._ast2spt (ast)
 
-		if callable (getattr (spt, 'doit', None)):
-			try:
-				spt = spt.doit ()
-				spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
-			except:
-				pass
+		try:
+			spt = spt.doit ()
+			# spt = sp.piecewise_fold (spt) # prevent SymPy infinite piecewise recursion
+		except:
+			pass
 
 		return spt
 
