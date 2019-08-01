@@ -363,7 +363,7 @@ class Parser (lalr1.LALR1):
 			b'Oi2TKl5SqxdTZKrcZ8PLbiWV6y/UzjUdRGevAfaVMhYZmeSMx2eXX9T9vyKUB1XzAWF4D4VyxytyPLw91AuVc02f+lqJQw2sKXeuuskVx/LXRUQBD7M7vkj62KxyqBcqZ9I5n1bLMgFEJawhhnPsNFV+dWPn8ival66PWBiIhCXdEcurrQ72QuVMhhJ3Kq+u' \
 			b'uqMLZrD6iCXVVwd7oXIm45Q7ldS2uqMLzDjiQQ9PpBzqhcqZjHluJqn9NaOgnLuXctVBFrZ0ca3OBxDVl7wE3kyM8ZeI7BbZMyOAl7PJVFdfvbsmwsIrT2cuTXBrMpbZM265aj8ucKvdc2611X5c4NaCkcqhGOlZGy248GmZ4X/ha5e+v1Zas5FQE0c0XcJL' \
 			b'HQ7mAvcXjIAOhvuuOpwL6wd2PhV0i9z31eFc4P6CMdXBcL+tDucC9/lYayY9qNtGN8YRfDIqs8fyaiA+XUXn//ncyLyKiH8UgZjCp9s1fB5S02qK7WzMUGUXIoZJRK4KjtxV+dUEaE057SkuSPJcpfDu5XvjSVaurPrQyzSzGS95S0vVZpapKbVydMl4+5Ys' \
-			b'k8S0tdWcNBeeKfQsKLoYqOFpNcm5p6K8Of9/7LjJIA==' 
+			b'k8S0tdWcNBeeKfQsKLoYqOFpNcm5p6K8Of9/7LjJIA=='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -392,7 +392,7 @@ class Parser (lalr1.LALR1):
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {AST.Func.NOREMAP, AST.Func.NOEVAL})))})"
+	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - AST.Func.PSEUDO)))})"
 	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
 
 	TOKENS    = OrderedDict ([ # order matters

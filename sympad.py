@@ -1863,7 +1863,7 @@ class AST_Func (AST):
 	NOEVAL          = '%'
 
 	ADMIN           = {'vars', 'funcs', 'del', 'delvars', 'delall', 'sympyEI', 'quick'}
-	SPECIAL         = ADMIN | {NOREMAP, NOEVAL}
+	PSEUDO          = {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum', 'print'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
@@ -1872,7 +1872,7 @@ class AST_Func (AST):
 	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
 	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
 
-	PY              = SPECIAL | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'sqrt', 'log', 'ln', 'evaluate', 'beta', 'gamma', 'zeta', 'Lambda'}
+	PY              = ADMIN | PSEUDO | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'sqrt', 'log', 'ln', 'evaluate', 'beta', 'gamma', 'zeta', 'Lambda'}
 	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -2250,15 +2250,13 @@ class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a number
 	def doit (self, *args, **kwargs):
 		return self.args [0] if self.args [1] == 1 else ExprDontDoIt (self.args [0], self.args [1] - 1)
 
-class ExprOverride (sp.Expr): # override to allow lambdification of functions which always evaluate
-	name = lambda self: self.__class__._SYMPAD_FUNC.__class__.__name__
-
+class ExprDefer (sp.Expr): # override to allow lambdification of functions which normally evaluate immediately to defer to end of calculation point .doit()
 	def doit (self, *args, **kw):
 		return self.__class__._SYMPAD_FUNC (*self.args).doit (*args, **kw)
 
-class ExprN (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.N, 'N'
-class ExprO (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.O, 'O'
-class ExprS (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.S, 'S'
+class ExprN (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.N, 'N'
+class ExprO (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.O, 'O'
+class ExprS (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.S, 'S'
 
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
@@ -2286,7 +2284,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 
 	try:
 		spt = func (*pyargs, **{**kw, **pykw})
-	except: # try again if function does not support **kw
+	except: # try again if function does not support our **kw options
 		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func and not kw.get ('evaluate', True):
@@ -2835,7 +2833,7 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
-_ast2spt_func_override = {
+_ast2spt_func_defer    = {
 	'N': ExprN,
 	'O': ExprO,
 	'S': ExprS,
@@ -2871,15 +2869,15 @@ class ast2spt:
 		return spt
 
 	def _ast2spt_attr (self, ast):
-		spt = self._ast2spt (ast.obj)
+		# spt = self._ast2spt (ast.obj)
 
-		while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
-			spt = spt.args [0]
+		# while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
+		# 	spt = spt.args [0]
 
-		print (type (spt), spt)
+		# print (type (spt), spt)
 
-		mbr = getattr (spt, ast.attr)
-		# mbr = getattr (self._ast2spt (ast.obj), ast.attr)
+		# mbr = getattr (spt, ast.attr)
+		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
@@ -2892,7 +2890,7 @@ class ast2spt:
 
 			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = _ast2spt_func_override.get (ast.unescaped) or getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
+		func = _ast2spt_func_defer.get (ast.unescaped) or getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
 
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
@@ -3078,7 +3076,7 @@ _spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 _spt2ast_funcs = {
 	ExprDontDoIt: lambda spt: AST ('func', AST.Func.NOEVAL, (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
-	ExprOverride: lambda spt: _spt2ast_Function (spt, spt._SYMPAD_NAME),
+	ExprDefer: lambda spt: _spt2ast_Function (spt, spt._SYMPAD_NAME),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
@@ -3546,7 +3544,7 @@ class Parser (lalr1.LALR1):
 			b'Oi2TKl5SqxdTZKrcZ8PLbiWV6y/UzjUdRGevAfaVMhYZmeSMx2eXX9T9vyKUB1XzAWF4D4VyxytyPLw91AuVc02f+lqJQw2sKXeuuskVx/LXRUQBD7M7vkj62KxyqBcqZ9I5n1bLMgFEJawhhnPsNFV+dWPn8ival66PWBiIhCXdEcurrQ72QuVMhhJ3Kq+u' \
 			b'uqMLZrD6iCXVVwd7oXIm45Q7ldS2uqMLzDjiQQ9PpBzqhcqZjHluJqn9NaOgnLuXctVBFrZ0ca3OBxDVl7wE3kyM8ZeI7BbZMyOAl7PJVFdfvbsmwsIrT2cuTXBrMpbZM265aj8ucKvdc2611X5c4NaCkcqhGOlZGy248GmZ4X/ha5e+v1Zas5FQE0c0XcJL' \
 			b'HQ7mAvcXjIAOhvuuOpwL6wd2PhV0i9z31eFc4P6CMdXBcL+tDucC9/lYayY9qNtGN8YRfDIqs8fyaiA+XUXn//ncyLyKiH8UgZjCp9s1fB5S02qK7WzMUGUXIoZJRK4KjtxV+dUEaE057SkuSPJcpfDu5XvjSVaurPrQyzSzGS95S0vVZpapKbVydMl4+5Ys' \
-			b'k8S0tdWcNBeeKfQsKLoYqOFpNcm5p6K8Of9/7LjJIA==' 
+			b'k8S0tdWcNBeeKfQsKLoYqOFpNcm5p6K8Of9/7LjJIA=='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -3575,7 +3573,7 @@ class Parser (lalr1.LALR1):
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - {AST.Func.NOREMAP, AST.Func.NOEVAL})))})"
+	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - AST.Func.PSEUDO)))})"
 	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
 
 	TOKENS    = OrderedDict ([ # order matters
@@ -4109,19 +4107,14 @@ class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
 def _ast_remap (ast, map_, recurse = True):
-	if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
+	if not isinstance (ast, AST) or ast.is_lamb or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 		return ast
 
 	if ast.is_var:
 		var = map_.get (ast.var)
 
 		if var: # user var
-			return \
-					AST ('func', AST.Func.NOEVAL, (var,)) \
-					if var.is_lamb else \
-					_ast_remap (var, map_, recurse) \
-					if recurse else \
-					var
+			return var if var.is_lamb or not recurse else _ast_remap (var, map_, recurse)
 
 	elif ast.is_func:
 		lamb = map_.get (ast.func)
@@ -4130,13 +4123,7 @@ def _ast_remap (ast, map_, recurse = True):
 			if len (ast.args) != len (lamb.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), recurse = False)
-
-	elif ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
-		lvars = {v.var for v in ast.vars}
-		map_  = {v: a for v, a in filter (lambda va: va [0] not in lvars, map_.items ())}
-
-		return AST (*(_ast_remap (a, map_, recurse) if a not in ast.vars else a for a in ast))
+			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), recurse = False) # remap lambda vars only once to avoid circular varname references
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 

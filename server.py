@@ -68,19 +68,14 @@ class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
 def _ast_remap (ast, map_, recurse = True):
-	if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
+	if not isinstance (ast, AST) or ast.is_lamb or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 		return ast
 
 	if ast.is_var:
 		var = map_.get (ast.var)
 
 		if var: # user var
-			return \
-					AST ('func', AST.Func.NOEVAL, (var,)) \
-					if var.is_lamb else \
-					_ast_remap (var, map_, recurse) \
-					if recurse else \
-					var
+			return var if var.is_lamb or not recurse else _ast_remap (var, map_, recurse)
 
 	elif ast.is_func:
 		lamb = map_.get (ast.func)
@@ -89,13 +84,7 @@ def _ast_remap (ast, map_, recurse = True):
 			if len (ast.args) != len (lamb.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), recurse = False)
-
-	elif ast.is_lamb: # do not remap lambda owned vars within lambda, they belong to the lambda
-		lvars = {v.var for v in ast.vars}
-		map_  = {v: a for v, a in filter (lambda va: va [0] not in lvars, map_.items ())}
-
-		return AST (*(_ast_remap (a, map_, recurse) if a not in ast.vars else a for a in ast))
+			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), recurse = False) # remap lambda vars only once to avoid circular varname references
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 

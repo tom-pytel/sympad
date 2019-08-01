@@ -22,15 +22,13 @@ class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a number
 	def doit (self, *args, **kwargs):
 		return self.args [0] if self.args [1] == 1 else ExprDontDoIt (self.args [0], self.args [1] - 1)
 
-class ExprOverride (sp.Expr): # override to allow lambdification of functions which always evaluate
-	name = lambda self: self.__class__._SYMPAD_FUNC.__class__.__name__
-
+class ExprDefer (sp.Expr): # override to allow lambdification of functions which normally evaluate immediately to defer to end of calculation point .doit()
 	def doit (self, *args, **kw):
 		return self.__class__._SYMPAD_FUNC (*self.args).doit (*args, **kw)
 
-class ExprN (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.N, 'N'
-class ExprO (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.O, 'O'
-class ExprS (ExprOverride): _SYMPAD_FUNC, _SYMPAD_NAME = sp.S, 'S'
+class ExprN (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.N, 'N'
+class ExprO (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.O, 'O'
+class ExprS (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.S, 'S'
 
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
@@ -58,7 +56,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 
 	try:
 		spt = func (*pyargs, **{**kw, **pykw})
-	except: # try again if function does not support **kw
+	except: # try again if function does not support our **kw options
 		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func and not kw.get ('evaluate', True):
@@ -607,7 +605,7 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
-_ast2spt_func_override = {
+_ast2spt_func_defer    = {
 	'N': ExprN,
 	'O': ExprO,
 	'S': ExprS,
@@ -643,15 +641,15 @@ class ast2spt:
 		return spt
 
 	def _ast2spt_attr (self, ast):
-		spt = self._ast2spt (ast.obj)
+		# spt = self._ast2spt (ast.obj)
 
-		while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
-			spt = spt.args [0]
+		# while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
+		# 	spt = spt.args [0]
 
-		print (type (spt), spt)
+		# print (type (spt), spt)
 
-		mbr = getattr (spt, ast.attr)
-		# mbr = getattr (self._ast2spt (ast.obj), ast.attr)
+		# mbr = getattr (spt, ast.attr)
+		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
@@ -664,7 +662,7 @@ class ast2spt:
 
 			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = _ast2spt_func_override.get (ast.unescaped) or getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
+		func = _ast2spt_func_defer.get (ast.unescaped) or getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
 
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
@@ -850,7 +848,7 @@ _spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 _spt2ast_funcs = {
 	ExprDontDoIt: lambda spt: AST ('func', AST.Func.NOEVAL, (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
-	ExprOverride: lambda spt: _spt2ast_Function (spt, spt._SYMPAD_NAME),
+	ExprDefer: lambda spt: _spt2ast_Function (spt, spt._SYMPAD_NAME),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
