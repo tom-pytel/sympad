@@ -2280,7 +2280,10 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	spt = func (*pyargs, **pykw)
 
 	if type (spt) is func:
-		spt.SYMPAD_ESCAPED = is_escaped
+		try:
+			spt.SYMPAD_ESCAPED = is_escaped
+		except AttributeError: # couldn't assign to python object (probably because is built-in type)
+			pass
 
 	return spt
 
@@ -2866,15 +2869,12 @@ class ast2spt:
 		mbr = getattr (obj, ast.attr)
 
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
-		# mbr = getattr (self._ast2spt (ast.obj), ast.attr)
-
-		# return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
 
-		if ast.func == AST.Func.NOEVAL: # special stop evaluation meta-function
+		if ast.func == AST.Func.NOEVAL: # special no evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
 		func = getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
@@ -4048,7 +4048,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.5.1'
+_VERSION         = '0.5.2'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -4123,7 +4123,7 @@ def _update_user_funcs ():
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
 
-def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
+def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = None
 
 	if ast.is_ass:
@@ -4152,7 +4152,7 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 	return _ast_remap (ast, _VARS), vars
 
-def _ast_execute_ass (ast, vars): # execute assignment if it was detected
+def _execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars):
 		try: # check for circular references
 			_ast_remap (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
@@ -4192,9 +4192,8 @@ def _admin_vars (ast):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
-		if v != _VAR_LAST:
-			if not e.is_lamb:
-				asts.append (AST ('=', '=', ('@', v), e))
+		if v != _VAR_LAST and not e.is_lamb:
+			asts.append (AST ('=', '=', ('@', v), e))
 
 	if not asts:
 		return 'No variables defined.'
@@ -4205,9 +4204,8 @@ def _admin_funcs (ast):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
-		if v != _VAR_LAST:
-			if e.is_lamb:
-				asts.append (AST ('=', '=', ('@', v), e))
+		if v != _VAR_LAST and e.is_lamb:
+			asts.append (AST ('=', '=', ('@', v), e))
 
 	if not asts:
 		return 'No functions defined.'
@@ -4231,7 +4229,7 @@ def _admin_del (ast):
 
 def _admin_delvars (ast):
 	for v, e in list (_VARS.items ()):
-		if not e.is_lamb:# and v != _VAR_LAST:
+		if not e.is_lamb and v != _VAR_LAST:
 			del _VARS [v]
 
 	_update_user_funcs ()
@@ -4360,7 +4358,7 @@ class Handler (SimpleHTTPRequestHandler):
 					return {'msg': [asts]}
 
 			else: # not admin function, normal evaluation
-				ast, vars = _ast_prepare_ass (ast)
+				ast, vars = _prepare_ass (ast)
 
 				sym.set_precision (ast)
 
@@ -4376,7 +4374,7 @@ class Handler (SimpleHTTPRequestHandler):
 					print ('ast:        ', ast, file = sys.stderr)
 					print (file = sys.stderr)
 
-				asts = _ast_execute_ass (ast, vars)
+				asts = _execute_ass (ast, vars)
 
 			response = {}
 

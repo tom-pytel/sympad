@@ -52,7 +52,10 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	spt = func (*pyargs, **pykw)
 
 	if type (spt) is func:
-		spt.SYMPAD_ESCAPED = is_escaped
+		try:
+			spt.SYMPAD_ESCAPED = is_escaped
+		except AttributeError: # couldn't assign to python object (probably because is built-in type)
+			pass
 
 	return spt
 
@@ -638,15 +641,12 @@ class ast2spt:
 		mbr = getattr (obj, ast.attr)
 
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
-		# mbr = getattr (self._ast2spt (ast.obj), ast.attr)
-
-		# return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
 
-		if ast.func == AST.Func.NOEVAL: # special stop evaluation meta-function
+		if ast.func == AST.Func.NOEVAL: # special no evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
 		func = getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
