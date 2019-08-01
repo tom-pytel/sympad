@@ -1,5 +1,6 @@
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
+from ast import literal_eval
 import re
 import sympy as sp
 
@@ -22,13 +23,18 @@ class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a number
 	def doit (self, *args, **kwargs):
 		return self.args [0] if self.args [1] == 1 else ExprDontDoIt (self.args [0], self.args [1] - 1)
 
-class ExprDefer (sp.Expr): # override to allow lambdification of functions which normally evaluate immediately to defer to end of calculation point .doit()
-	def doit (self, *args, **kw):
-		return self.__class__._SYMPAD_FUNC (*self.args).doit (*args, **kw)
+# class ExprDefer (sp.Expr): # override to allow lambdification of functions which normally evaluate immediately to defer to end of calculation point .doit()
+# 	def doit (self, *args, **kw):
+# 		return self.__class__._SYMPAD_FUNC (*self.args).doit (*args, **kw)
 
-class ExprN (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.N, 'N'
-class ExprO (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.O, 'O'
-class ExprS (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.S, 'S'
+# class ExprN (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.N, 'N'
+# class ExprO (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.O, 'O'
+# class ExprS (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.S, 'S'
+
+class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit
+	def as_AST (self):
+		ast = AST (*literal_eval (self.args [0]))
+		return ast if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (ast, spt2ast (self.args [1])))
 
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
@@ -605,11 +611,11 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
-_ast2spt_func_defer    = {
-	'N': ExprN,
-	'O': ExprO,
-	'S': ExprS,
-}
+# _ast2spt_func_defer    = {
+# 	'N': ExprN,
+# 	'O': ExprO,
+# 	'S': ExprS,
+# }
 
 class ast2spt:
 	def __new__ (cls, ast):
@@ -661,8 +667,10 @@ class ast2spt:
 			self.kw ['evaluate'] = False # don't evaluate expressions automatically on instantiation
 
 			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
+			# return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = _ast2spt_func_defer.get (ast.unescaped) or getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
+		# func = _ast2spt_func_defer.get (ast.unescaped) or getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
+		func = getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
 
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
@@ -848,7 +856,8 @@ _spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 _spt2ast_funcs = {
 	ExprDontDoIt: lambda spt: AST ('func', AST.Func.NOEVAL, (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
-	ExprDefer: lambda spt: _spt2ast_Function (spt, spt._SYMPAD_NAME),
+	# ExprDefer: lambda spt: _spt2ast_Function (spt, spt._SYMPAD_NAME),
+	ExprNoEval: lambda spt: spt.as_AST (),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,
@@ -949,9 +958,7 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	# ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
-# 	# res = ast2spt (ast)
-# 	x = sp.Symbol ('x')
-# 	res = sp.Derivative (1/x, x)
+# 	ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
+# 	res = ast2spt (ast)
 # 	res = spt2ast (res)
 # 	print (res)
