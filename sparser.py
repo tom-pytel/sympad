@@ -301,14 +301,17 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 	return AST ('vec', ast.comma) # raise SyntaxError ('invalid matrix syntax')
 
 def _expr_num (NUM):
-	return \
-			AST ('#', NUM.grp [1]) \
-			if not (NUM.grp [0] or NUM.grp [2]) else \
-			AST ('#', NUM.text) \
-			if not NUM.grp [2] else \
-			AST ('#', NUM.text.lower ()) \
-			if NUM.grp [2] [1] in ('-', '+') else \
-			AST ('#', f'{NUM.grp [0] or NUM.grp [1]}{NUM.grp [2] [0].lower ()}+{NUM.grp [2] [1:]}')
+	num = NUM.grp [1] or (NUM.grp [0] if NUM.text [0] != '.' else f'0{NUM.grp [0]}')
+
+	if not NUM.grp [2]:
+		return AST ('#', num)
+
+	g2  = NUM.grp [2].replace ('{', '').replace ('}', '')
+
+	if g2 [1] in {'-', '+'}:
+		return AST ('#', f'{num}{g2.lower ()}')
+	else:
+		return AST ('#', f'{num}{g2 [0].lower ()}+{g2 [1:]}')
 
 def _expr_var (VAR, var_tex_xlat):
 		var = \
@@ -453,7 +456,7 @@ class Parser (lalr1.LALR1):
 		('FRAC',          r'\\frac'),
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
-		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
+		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))('*)"),
 		('ATTR',         fr'\.(?:({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"({_STR})|\\text\s*{{\s*({_STR})\s*}}"),

@@ -128,7 +128,7 @@ def _ast2tex_eq_hs (ast, hs, lhs = True):
 def _ast2tex_num (ast):
 	m, e = ast.mant_and_exp
 
-	return m if e is None else f'{m} \\cdot 10^{_ast2tex_curly (AST ("#", e))}'
+	return f'{m}{{e}}{{{e}}}' if e else m
 
 _ast2tex_var_xlat = {'Naturals', 'Naturals0', 'Integers', 'Reals', 'Complexes'}
 
@@ -187,7 +187,7 @@ def _ast2tex_mul (ast, ret_has = False):
 			t.append (f' \\cdot {s}')
 			has = True
 
-		elif p and (p.op in {'sqrt'} or \
+		elif p and (p.op in {'sqrt'} or p.num_exp or \
 				p.is_diff_or_part_solo or n.is_diff_or_part_solo or p.is_diff_or_part or n.is_diff_or_part or \
 				(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
 			t.append (f'\\ {s}')

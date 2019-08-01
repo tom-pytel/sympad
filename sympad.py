@@ -1706,19 +1706,16 @@ class AST_Num (AST):
 
 	_rec_int          = re.compile (r'^-?\d+$')
 	_rec_pos_int      = re.compile (r'^\d+$')
-	_rec_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)[eE](?:(-\d+)|\+?(\d+))$')
+	_rec_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)(?:[eE]([+-]?\d+))?$')
 
 	def _init (self, num):
 		self.num = num
 
-	_is_pos_num = lambda self: self.num [0] != '-'
-	_is_neg_num = lambda self: self.num [0] == '-'
-	_is_pos_int = lambda self: AST_Num._rec_pos_int.match (self.num)
-
-	def _mant_and_exp (self):
-		m = AST_Num._rec_mant_and_exp.match (self.num)
-
-		return (self.num, None) if not m else (m.group (1) , m.group (2) or m.group (3))
+	_is_pos_num   = lambda self: self.num [0] != '-'
+	_is_neg_num   = lambda self: self.num [0] == '-'
+	_is_pos_int   = lambda self: AST_Num._rec_pos_int.match (self.num)
+	_num_exp      = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (2)
+	_mant_and_exp = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (1, 2)
 
 class AST_Var (AST):
 	op, is_var = '@', True
@@ -2356,7 +2353,7 @@ def _ast2tex_eq_hs (ast, hs, lhs = True):
 def _ast2tex_num (ast):
 	m, e = ast.mant_and_exp
 
-	return m if e is None else f'{m} \\cdot 10^{_ast2tex_curly (AST ("#", e))}'
+	return f'{m}{{e}}{{{e}}}' if e else m
 
 _ast2tex_var_xlat = {'Naturals', 'Naturals0', 'Integers', 'Reals', 'Complexes'}
 
@@ -2415,7 +2412,7 @@ def _ast2tex_mul (ast, ret_has = False):
 			t.append (f' \\cdot {s}')
 			has = True
 
-		elif p and (p.op in {'sqrt'} or \
+		elif p and (p.op in {'sqrt'} or p.num_exp or \
 				p.is_diff_or_part_solo or n.is_diff_or_part_solo or p.is_diff_or_part or n.is_diff_or_part or \
 				(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
 			t.append (f'\\ {s}')
@@ -3466,14 +3463,17 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 	return AST ('vec', ast.comma) # raise SyntaxError ('invalid matrix syntax')
 
 def _expr_num (NUM):
-	return \
-			AST ('#', NUM.grp [1]) \
-			if not (NUM.grp [0] or NUM.grp [2]) else \
-			AST ('#', NUM.text) \
-			if not NUM.grp [2] else \
-			AST ('#', NUM.text.lower ()) \
-			if NUM.grp [2] [1] in ('-', '+') else \
-			AST ('#', f'{NUM.grp [0] or NUM.grp [1]}{NUM.grp [2] [0].lower ()}+{NUM.grp [2] [1:]}')
+	num = NUM.grp [1] or (NUM.grp [0] if NUM.text [0] != '.' else f'0{NUM.grp [0]}')
+
+	if not NUM.grp [2]:
+		return AST ('#', num)
+
+	g2  = NUM.grp [2].replace ('{', '').replace ('}', '')
+
+	if g2 [1] in {'-', '+'}:
+		return AST ('#', f'{num}{g2.lower ()}')
+	else:
+		return AST ('#', f'{num}{g2 [0].lower ()}+{g2 [1:]}')
 
 def _expr_var (VAR, var_tex_xlat):
 		var = \
@@ -3618,7 +3618,7 @@ class Parser (lalr1.LALR1):
 		('FRAC',          r'\\frac'),
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
-		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)([eE][+-]?\d+)?'),
+		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))('*)"),
 		('ATTR',         fr'\.(?:({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"({_STR})|\\text\s*{{\s*({_STR})\s*}}"),

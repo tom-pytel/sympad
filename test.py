@@ -30,6 +30,12 @@ p = sparser
 class Test (unittest.TestCase):
 	def test_sparser (self):
 		self.assertEqual (p ('1'), ('#', '1'))
+		self.assertEqual (p ('1.'), ('#', '1'))
+		self.assertEqual (p ('.1'), ('#', '0.1'))
+		self.assertEqual (p ('1e20'), ('#', '1e+20'))
+		self.assertEqual (p ('1E-20'), ('#', '1e-20'))
+		self.assertEqual (p ('1.e+20'), ('#', '1e+20'))
+		self.assertEqual (p ('.1e-20'), ('#', '0.1e-20'))
 		self.assertEqual (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (p ('x'), ('@', 'x'))
 		self.assertEqual (p ('xy'), ('@', 'xy'))
@@ -194,6 +200,12 @@ class Test (unittest.TestCase):
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
+		self.assertEqual (ast2tex (p ('1.')), '1')
+		self.assertEqual (ast2tex (p ('.1')), '0.1')
+		self.assertEqual (ast2tex (p ('1e20')), '1{e}{+20}')
+		self.assertEqual (ast2tex (p ('1E-20')), '1{e}{-20}')
+		self.assertEqual (ast2tex (p ('1.e+20')), '1{e}{+20}')
+		self.assertEqual (ast2tex (p ('.1e-20')), '0.1{e}{-20}')
 		self.assertEqual (ast2tex (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')
 		self.assertEqual (ast2tex (p ('x')), 'x')
 		self.assertEqual (ast2tex (p ('xy')), 'xy')
@@ -358,6 +370,12 @@ class Test (unittest.TestCase):
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
+		self.assertEqual (ast2nat (p ('1.')), '1')
+		self.assertEqual (ast2nat (p ('.1')), '0.1')
+		self.assertEqual (ast2nat (p ('1e20')), '1e+20')
+		self.assertEqual (ast2nat (p ('1E-20')), '1e-20')
+		self.assertEqual (ast2nat (p ('1.e+20')), '1e+20')
+		self.assertEqual (ast2nat (p ('.1e-20')), '0.1e-20')
 		self.assertEqual (ast2nat (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')
 		self.assertEqual (ast2nat (p ('x')), 'x')
 		self.assertEqual (ast2nat (p ('xy')), 'xy')
@@ -522,6 +540,12 @@ class Test (unittest.TestCase):
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
+		self.assertEqual (ast2py (p ('1.')), '1')
+		self.assertEqual (ast2py (p ('.1')), '0.1')
+		self.assertEqual (ast2py (p ('1e20')), '1e+20')
+		self.assertEqual (ast2py (p ('1E-20')), '1e-20')
+		self.assertEqual (ast2py (p ('1.e+20')), '1e+20')
+		self.assertEqual (ast2py (p ('.1e-20')), '0.1e-20')
 		self.assertEqual (ast2py (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')
 		self.assertEqual (ast2py (p ('x')), 'x')
 		self.assertEqual (ast2py (p ('xy')), 'xy')
@@ -686,6 +710,12 @@ class Test (unittest.TestCase):
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
+		self.assertEqual (ast2tex2ast (p ('1.')), ('#', '1'))
+		self.assertEqual (ast2tex2ast (p ('.1')), ('#', '0.1'))
+		self.assertEqual (ast2tex2ast (p ('1e20')), ('#', '1e+20'))
+		self.assertEqual (ast2tex2ast (p ('1E-20')), ('#', '1e-20'))
+		self.assertEqual (ast2tex2ast (p ('1.e+20')), ('#', '1e+20'))
+		self.assertEqual (ast2tex2ast (p ('.1e-20')), ('#', '0.1e-20'))
 		self.assertEqual (ast2tex2ast (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (ast2tex2ast (p ('x')), ('@', 'x'))
 		self.assertEqual (ast2tex2ast (p ('xy')), ('@', 'xy'))
@@ -850,6 +880,12 @@ class Test (unittest.TestCase):
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
+		self.assertEqual (ast2nat2ast (p ('1.')), ('#', '1'))
+		self.assertEqual (ast2nat2ast (p ('.1')), ('#', '0.1'))
+		self.assertEqual (ast2nat2ast (p ('1e20')), ('#', '1e+20'))
+		self.assertEqual (ast2nat2ast (p ('1E-20')), ('#', '1e-20'))
+		self.assertEqual (ast2nat2ast (p ('1.e+20')), ('#', '1e+20'))
+		self.assertEqual (ast2nat2ast (p ('.1e-20')), ('#', '0.1e-20'))
 		self.assertEqual (ast2nat2ast (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (ast2nat2ast (p ('x')), ('@', 'x'))
 		self.assertEqual (ast2nat2ast (p ('xy')), ('@', 'xy'))
@@ -1014,6 +1050,12 @@ class Test (unittest.TestCase):
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
+		self.assertEqual (ast2py2ast (p ('1.')), ('#', '1'))
+		self.assertEqual (ast2py2ast (p ('.1')), ('#', '0.1'))
+		self.assertEqual (ast2py2ast (p ('1e20')), ('#', '1e+20'))
+		self.assertEqual (ast2py2ast (p ('1E-20')), ('#', '1e-20'))
+		self.assertEqual (ast2py2ast (p ('1.e+20')), ('#', '1e+20'))
+		self.assertEqual (ast2py2ast (p ('.1e-20')), ('#', '0.1e-20'))
 		self.assertEqual (ast2py2ast (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (ast2py2ast (p ('x')), ('@', 'x'))
 		self.assertEqual (ast2py2ast (p ('xy')), ('@', 'xy'))
@@ -1178,6 +1220,12 @@ class Test (unittest.TestCase):
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
+		self.assertEqual (ast2spt2ast (p ('1.')), ('#', '1'))
+		self.assertEqual (ast2spt2ast (p ('.1')), ('#', '0.1'))
+		self.assertEqual (ast2spt2ast (p ('1e20')), ('#', '1e+20'))
+		self.assertEqual (ast2spt2ast (p ('1E-20')), ('#', '1e-20'))
+		self.assertEqual (ast2spt2ast (p ('1.e+20')), ('#', '1e+20'))
+		self.assertEqual (ast2spt2ast (p ('.1e-20')), ('#', '1e-21'))
 		self.assertEqual (ast2spt2ast (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (ast2spt2ast (p ('x')), ('@', 'x'))
 		self.assertEqual (ast2spt2ast (p ('xy')), ('@', 'xy'))
@@ -1342,6 +1390,12 @@ class Test (unittest.TestCase):
 
 _EXPRESSIONS = """
 1
+1.
+.1
+1e20
+1E-20
+1.e+20
+.1e-20
 -1.23456789012345678901234567890123456789012345678901234567890123456789012345678901
 x
 xy

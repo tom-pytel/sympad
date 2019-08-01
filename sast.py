@@ -228,19 +228,16 @@ class AST_Num (AST):
 
 	_rec_int          = re.compile (r'^-?\d+$')
 	_rec_pos_int      = re.compile (r'^\d+$')
-	_rec_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)[eE](?:(-\d+)|\+?(\d+))$')
+	_rec_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)(?:[eE]([+-]?\d+))?$')
 
 	def _init (self, num):
 		self.num = num
 
-	_is_pos_num = lambda self: self.num [0] != '-'
-	_is_neg_num = lambda self: self.num [0] == '-'
-	_is_pos_int = lambda self: AST_Num._rec_pos_int.match (self.num)
-
-	def _mant_and_exp (self):
-		m = AST_Num._rec_mant_and_exp.match (self.num)
-
-		return (self.num, None) if not m else (m.group (1) , m.group (2) or m.group (3))
+	_is_pos_num   = lambda self: self.num [0] != '-'
+	_is_neg_num   = lambda self: self.num [0] == '-'
+	_is_pos_int   = lambda self: AST_Num._rec_pos_int.match (self.num)
+	_num_exp      = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (2)
+	_mant_and_exp = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (1, 2)
 
 class AST_Var (AST):
 	op, is_var = '@', True
