@@ -17,6 +17,9 @@ import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+def _raise (exc):
+	raise exc
+
 def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
 			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\', '') or FUNC.text
@@ -263,10 +266,15 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 
 	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast.strip (strip)),) + args [iparm + 1:])))
 
-def _expr_func_func (FUNC, expr_neg_func):
+def _expr_func_func (FUNC, expr_neg_func, expr_super = None):
 	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
 
-	return _expr_func (2, 'func', func, expr_neg_func)
+	return \
+			_expr_func (2, 'func', func, expr_neg_func) \
+			if expr_super is None else \
+			AST ('^', _expr_func_func (FUNC, expr_neg_func), expr_super) \
+			if expr_super.remove_curlys () != AST.NegOne or not AST ('func', func, ()).is_trigh_func_noninv else \
+			_expr_func_func (f'a{func}', expr_neg_func)
 
 def _expr_mat (expr_mat_rows):
 	return \
@@ -291,6 +299,28 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 				AST ('vec', tuple (c.vec [0] for c in ast.comma))
 
 	return AST ('vec', ast.comma) # raise SyntaxError ('invalid matrix syntax')
+
+def _expr_num (NUM):
+	return \
+			AST ('#', NUM.grp [1]) \
+			if not (NUM.grp [0] or NUM.grp [2]) else \
+			AST ('#', NUM.text) \
+			if not NUM.grp [2] else \
+			AST ('#', NUM.text.lower ()) \
+			if NUM.grp [2] [1] in ('-', '+') else \
+			AST ('#', f'{NUM.grp [0] or NUM.grp [1]}{NUM.grp [2] [0].lower ()}+{NUM.grp [2] [1:]}')
+
+def _expr_var (VAR, var_tex_xlat):
+		var = \
+				'partial' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
+				if VAR.grp [0] else \
+				'd' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
+				if VAR.grp [1] else \
+				var_tex_xlat [VAR.grp [3]] \
+				if VAR.grp [3] in var_tex_xlat else \
+				AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
+
+		return AST ('@', var + '_prime' * len (VAR.grp [4]))
 
 #...............................................................................................
 class Parser (lalr1.LALR1):
@@ -488,12 +518,7 @@ class Parser (lalr1.LALR1):
 	def expr_eq_1          (self, expr_lambda1, EQ, expr_lambda2):                 return AST ('=', '=', expr_lambda1, expr_lambda2)
 	def expr_eq_2          (self, expr_lambda):                                    return expr_lambda
 
-	def expr_lambda_1      (self, expr_var, expr_commas, COLON, expr_eq):
-		if expr_var.is_var_lambda:
-			return _expr_lambda (expr_commas, expr_eq)
-		else:
-			raise SyntaxError ()
-
+	def expr_lambda_1      (self, expr_var, expr_commas, COLON, expr_eq):          return _expr_lambda (expr_commas, expr_eq) if expr_var.is_var_lambda else _raise (SyntaxError ())
 	def expr_lambda_2      (self, expr_mapsto):                                    return expr_mapsto
 
 	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_eq):                    return _expr_lambda (expr_paren.strip (), expr_eq)
@@ -552,14 +577,7 @@ class Parser (lalr1.LALR1):
 	def expr_func_7        (self, LOG, expr_super, expr_neg_func):                 return AST ('^', _expr_func (1, 'log', expr_neg_func), expr_super)
 	def expr_func_8        (self, LOG, expr_neg_func):                             return _expr_func (1, 'log', expr_neg_func)
 	def expr_func_9        (self, FUNC, expr_neg_func):                            return _expr_func_func (FUNC, expr_neg_func)
-	def expr_func_10       (self, FUNC, expr_super, expr_neg_func):
-		func = _FUNC_name (FUNC)
-
-		return \
-				AST ('^', _expr_func_func (FUNC, expr_neg_func), expr_super) \
-				if expr_super.remove_curlys () != AST.NegOne or not AST ('func', func, ()).is_trigh_func_noninv else \
-				_expr_func_func (f'a{func}', expr_neg_func)
-
+	def expr_func_10       (self, FUNC, expr_super, expr_neg_func):                return _expr_func_func (FUNC, expr_neg_func, expr_super)
 	def expr_func_11       (self, expr_pow):                                       return expr_pow
 
 	def expr_pow_1         (self, expr_pow, expr_super):                           return AST ('^', expr_pow, expr_super)
@@ -585,7 +603,7 @@ class Parser (lalr1.LALR1):
 	def expr_frac_3        (self, FRAC2):                                          return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
 	def expr_frac_4        (self, expr_cases):                                     return expr_cases
 
-	def expr_cases_1       (self, BEG_CASES, expr_casess, END_CASES):              return AST ('piece', expr_casess) # translate this on the fly?
+	def expr_cases_1       (self, BEG_CASES, expr_casess, END_CASES):              return AST ('piece', expr_casess)
 	def expr_cases_2       (self, expr_mat):                                       return expr_mat
 	def expr_casess_1      (self, expr_casessp, DBLSLASH):                         return expr_casessp
 	def expr_casess_2      (self, expr_casessp):                                   return expr_casessp
@@ -594,7 +612,7 @@ class Parser (lalr1.LALR1):
 	def expr_casessc_1     (self, expr1, AMP, expr2):                              return (expr1, expr2)
 	def expr_casessc_2     (self, expr, AMP):                                      return (expr, True)
 
-	def expr_mat_1         (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return _expr_mat (expr_mat_rows) # translate these on the fly?
+	def expr_mat_1         (self, LEFT, BRACKL, BEG_MAT, expr_mat_rows, END_MAT, RIGHT, BRACKR):  return _expr_mat (expr_mat_rows)
 	def expr_mat_2         (self, BEG_MAT, expr_mat_rows, END_MAT):                               return _expr_mat (expr_mat_rows)
 	def expr_mat_3         (self, BEG_BMAT, expr_mat_rows, END_BMAT):                             return _expr_mat (expr_mat_rows)
 	def expr_mat_4         (self, BEG_VMAT, expr_mat_rows, END_VMAT):                             return _expr_mat (expr_mat_rows)
@@ -620,18 +638,8 @@ class Parser (lalr1.LALR1):
 	def expr_term_3        (self, STR):                                            return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1]))
 	def expr_term_4        (self, SUB):                                            return AST ('@', '_') # for last expression variable
 
-	def expr_num           (self, NUM):                                            return AST ('#', NUM.text) if NUM.grp [0] or NUM.grp [2] else AST ('#', NUM.grp [1])
-	def expr_var           (self, VAR):
-		var = \
-				'partial' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
-				if VAR.grp [0] else \
-				'd' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
-				if VAR.grp [1] else \
-				self._VAR_TEX_XLAT [VAR.grp [3]] \
-				if VAR.grp [3] in self._VAR_TEX_XLAT else \
-				AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
-
-		return AST ('@', var + '_prime' * len (VAR.grp [4]))
+	def expr_num           (self, NUM):                                            return _expr_num (NUM)
+	def expr_var           (self, VAR):                                            return _expr_var (VAR, self._VAR_TEX_XLAT)
 
 	def expr_sub_1         (self, SUB, expr_frac):                                 return expr_frac
 	def expr_sub_2         (self, SUB1):                                           return _ast_from_tok_digit_or_var (SUB1)
@@ -648,12 +656,12 @@ class Parser (lalr1.LALR1):
 
 	#...............................................................................................
 	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not necessarily expression
-		'CARET1'             : 'CARET',
-		'SUB1'               : 'SUB',
-		'FRAC2'              : 'FRAC',
-		'FRAC1'              : 'FRAC',
-		'expr_super'         : 'CARET',
-		'caret_or_doublestar': 'CARET',
+		'CARET1'          : 'CARET',
+		'SUB1'            : 'SUB',
+		'FRAC2'           : 'FRAC',
+		'FRAC1'           : 'FRAC',
+		'expr_super'      : 'CARET',
+		'caret_or_dblstar': 'CARET',
 	}
 
 	_AUTOCOMPLETE_CONTINUE = {
@@ -723,6 +731,7 @@ class Parser (lalr1.LALR1):
 		if self.stack [-3].sym != 'COMMA' or self.stack [-4].sym != 'expr_comma' or self.stack [-5].sym != 'CURLYL':
 			if self.stack [-1].red.is_vec:
 				return self._insert_symbol (('COMMA', 'CURLYR'), 1)
+
 			elif self.stack [-1].red.is_comma:
 				if len (self.stack [-1].red.comma) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
 					return self._insert_symbol ('CURLYR')
