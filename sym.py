@@ -19,22 +19,11 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 sast.register_AST (AST_Text)
 
-class ExprDontDoIt (sp.Expr): # prevent doit() evaluation of expression a number of times
-	def doit (self, *args, **kwargs):
-		return self.args [0] if self.args [1] == 1 else ExprDontDoIt (self.args [0], self.args [1] - 1)
-
-# class ExprDefer (sp.Expr): # override to allow lambdification of functions which normally evaluate immediately to defer to end of calculation point .doit()
-# 	def doit (self, *args, **kw):
-# 		return self.__class__._SYMPAD_FUNC (*self.args).doit (*args, **kw)
-
-# class ExprN (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.N, 'N'
-# class ExprO (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.O, 'O'
-# class ExprS (ExprDefer): _SYMPAD_FUNC, _SYMPAD_NAME = sp.S, 'S'
-
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit
-	def as_AST (self):
-		ast = AST (*literal_eval (self.args [0]))
-		return ast if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (ast, spt2ast (self.args [1])))
+	SYMPAD_ast = lambda self: AST (*literal_eval (self.args [0]))
+
+	def SYMPAD_eval (self):
+		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
@@ -45,7 +34,7 @@ def _trail_comma (obj):
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.mul [0]))
 
-def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
+def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
@@ -60,13 +49,10 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, **kw):
 		else:
 			pyargs.append (_ast2spt (arg))
 
-	try:
-		spt = func (*pyargs, **{**kw, **pykw})
-	except: # try again if function does not support our **kw options
-		spt = func (*pyargs, **pykw)
+	spt = func (*pyargs, **pykw)
 
-	if type (spt) is func and not kw.get ('evaluate', True):
-		spt._SYMPAD_ESCAPED = is_escaped
+	if type (spt) is func:
+		spt.SYMPAD_ESCAPED = is_escaped
 
 	return spt
 
@@ -611,18 +597,10 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
-# _ast2spt_func_defer    = {
-# 	'N': ExprN,
-# 	'O': ExprO,
-# 	'S': ExprS,
-# }
-
 class ast2spt:
 	def __new__ (cls, ast):
-		self    = super ().__new__ (cls)
-		self.kw = {}
-
-		spt     = self._ast2spt (ast)
+		self = super ().__new__ (cls)
+		spt  = self._ast2spt (ast)
 
 		try:
 			spt = spt.doit ()
@@ -642,40 +620,41 @@ class ast2spt:
 				spt = getattr (sp, ast.var, None)
 
 			if spt is None:
-				spt = sp.Symbol (ast.var, **self.kw)
+				spt = sp.Symbol (ast.var)
 
 		return spt
 
 	def _ast2spt_attr (self, ast):
-		# spt = self._ast2spt (ast.obj)
+		obj = ast.obj
 
-		# while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
-		# 	spt = spt.args [0]
+		while obj.is_func and obj.func == AST.Func.NOEVAL and obj.args:
+			obj = obj.args [0]
 
-		# print (type (spt), spt)
+		if obj.is_lamb and obj.lamb.is_func: # support S.Half and other lambdized sympy function or class attributes
+			obj = getattr (sp, obj.lamb.unescaped)
+		else:
+			obj = self._ast2spt (ast.obj)
 
-		# mbr = getattr (spt, ast.attr)
-		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
+		mbr = getattr (obj, ast.attr)
 
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
+		# mbr = getattr (self._ast2spt (ast.obj), ast.attr)
+
+		# return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
 
 		if ast.func == AST.Func.NOEVAL: # special stop evaluation meta-function
-			self.kw ['evaluate'] = False # don't evaluate expressions automatically on instantiation
+			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-			return ExprDontDoIt (self._ast2spt (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
-			# return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
-
-		# func = _ast2spt_func_defer.get (ast.unescaped) or getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
 		func = getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
 
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
 
-		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped, **self.kw)
+		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
 	def _ast2spt_diff (self, ast):
 		args = sum ((
@@ -685,7 +664,7 @@ class ast2spt:
 				for n in ast.dvs \
 				), ())
 
-		return sp.Derivative (self._ast2spt (ast [1]), *args, **self.kw)
+		return sp.Derivative (self._ast2spt (ast [1]), *args)
 
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
@@ -718,23 +697,23 @@ class ast2spt:
 		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.comma),
 		'(': lambda self, ast: self._ast2spt (ast.paren),
 		'[': lambda self, ast: [self._ast2spt (b) for b in ast.brack],
-		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), **self.kw),
+		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs)),
 		'-': lambda self, ast: -self._ast2spt (ast.minus),
-		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), **self.kw),
-		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add), **self.kw),
-		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul), **self.kw),
-		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), sp.Pow (self._ast2spt (ast.denom), -1), **self.kw),
-		'^': lambda self, ast: sp.Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), **self.kw),
-		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), **self.kw) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), **self.kw),
-		'sqrt': lambda self, ast: sp.Pow (self._ast2spt (ast.rad), sp.Pow (2, -1), **self.kw) if ast.idx is None else sp.Pow (self._ast2spt (ast.rad), sp.Pow (self._ast2spt (ast.idx), -1, **self.kw), **self.kw),
+		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact)),
+		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add)),
+		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul)),
+		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), sp.Pow (self._ast2spt (ast.denom), -1)),
+		'^': lambda self, ast: sp.Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp)),
+		'log': lambda self, ast: sp.log (self._ast2spt (ast.log)) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base)),
+		'sqrt': lambda self, ast: sp.Pow (self._ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (self._ast2spt (ast.rad), sp.Pow (self._ast2spt (ast.idx), -1)),
 		'func': _ast2spt_func,
 		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
 		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
 		'diff': _ast2spt_diff,
 		'intg': _ast2spt_intg,
-		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], **self.kw),
-		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], **self.kw),
-		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece), **self.kw),
+		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
+		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
+		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
 		'idx': lambda self, ast: self._ast2spt (ast.obj) [self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)],
 
@@ -837,7 +816,7 @@ def _spt2ast_Function (spt, name = None):
 
 	return AST ('func', \
 			f'{AST.Func.ESCAPE}{name}' \
-			if getattr (spt, '_SYMPAD_ESCAPED', None) else \
+			if getattr (spt, 'SYMPAD_ESCAPED', None) else \
 			name \
 			, tuple (spt2ast (arg) for arg in spt.args))
 
@@ -855,9 +834,7 @@ def _spt2ast_Integral (spt):
 _spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 _spt2ast_funcs = {
-	ExprDontDoIt: lambda spt: AST ('func', AST.Func.NOEVAL, (spt2ast (spt.args [0]), spt2ast (spt.args [1]))),
-	# ExprDefer: lambda spt: _spt2ast_Function (spt, spt._SYMPAD_NAME),
-	ExprNoEval: lambda spt: spt.as_AST (),
+	ExprNoEval: lambda spt: spt.SYMPAD_eval (),
 
 	None.__class__: lambda spt: AST.None_,
 	True.__class__: lambda spt: AST.True_,

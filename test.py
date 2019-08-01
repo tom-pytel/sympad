@@ -187,6 +187,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('a [2,3]'), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
 		self.assertEqual (p ('a * [2]'), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
 		self.assertEqual (p ('a * {-1}[x]'), ('*', (('@', 'a'), ('idx', ('#', '-1'), (('@', 'x'),)))))
+		self.assertEqual (p ('$N (1/2)'), ('func', '$N', (('/', ('#', '1'), ('#', '2')),)))
+		self.assertEqual (p ("$S ('1/2')"), ('func', '$S', (('"', '1/2'),)))
+		self.assertEqual (p ("$N ($S ('1/2'))"), ('func', '$N', (('func', '$S', (('"', '1/2'),)),)))
+		self.assertEqual (p ('{lambda x: $S (x)}.Half'), ('.', ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),)), 'Half'))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -347,6 +351,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('a [2,3]')), 'a[2, 3]')
 		self.assertEqual (ast2tex (p ('a * [2]')), 'a \\cdot \\left[2 \\right]')
 		self.assertEqual (ast2tex (p ('a * {-1}[x]')), 'a \\left(-1 \\right)[x]')
+		self.assertEqual (ast2tex (p ('$N (1/2)')), '\\operatorname{$N}\\left(\\frac{1}{2} \\right)')
+		self.assertEqual (ast2tex (p ("$S ('1/2')")), "\\operatorname{$S}\\left(\\text{'1/2'} \\right)")
+		self.assertEqual (ast2tex (p ("$N ($S ('1/2'))")), "\\operatorname{$N}\\left(\\operatorname{$S}\\left(\\text{'1/2'} \\right) \\right)")
+		self.assertEqual (ast2tex (p ('{lambda x: $S (x)}.Half')), '\\left(x \\mapsto \\operatorname{$S}\\left(x \\right) \\right).Half')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -507,6 +515,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('a [2,3]')), 'a[2, 3]')
 		self.assertEqual (ast2nat (p ('a * [2]')), 'a * [2]')
 		self.assertEqual (ast2nat (p ('a * {-1}[x]')), 'a (-1)[x]')
+		self.assertEqual (ast2nat (p ('$N (1/2)')), '$N(1/2)')
+		self.assertEqual (ast2nat (p ("$S ('1/2')")), "$S('1/2')")
+		self.assertEqual (ast2nat (p ("$N ($S ('1/2'))")), "$N($S('1/2'))")
+		self.assertEqual (ast2nat (p ('{lambda x: $S (x)}.Half')), '(lambda x: $S(x)).Half')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -667,6 +679,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('a [2,3]')), 'a[2, 3]')
 		self.assertEqual (ast2py (p ('a * [2]')), 'a*[2]')
 		self.assertEqual (ast2py (p ('a * {-1}[x]')), 'a*(-1)[x]')
+		self.assertEqual (ast2py (p ('$N (1/2)')), 'N(1/2)')
+		self.assertEqual (ast2py (p ("$S ('1/2')")), "S('1/2')")
+		self.assertEqual (ast2py (p ("$N ($S ('1/2'))")), "N(S('1/2'))")
+		self.assertEqual (ast2py (p ('{lambda x: $S (x)}.Half')), 'lambda x: S(x).Half')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -827,6 +843,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('a [2,3]')), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2tex2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
 		self.assertEqual (ast2tex2ast (p ('a * {-1}[x]')), ('*', (('@', 'a'), ('idx', ('(', ('#', '-1')), (('@', 'x'),)))))
+		self.assertEqual (ast2tex2ast (p ('$N (1/2)')), ('func', '$N', (('/', ('#', '1'), ('#', '2')),)))
+		self.assertEqual (ast2tex2ast (p ("$S ('1/2')")), ('func', '$S', (('"', '1/2'),)))
+		self.assertEqual (ast2tex2ast (p ("$N ($S ('1/2'))")), ('func', '$N', (('func', '$S', (('"', '1/2'),)),)))
+		self.assertEqual (ast2tex2ast (p ('{lambda x: $S (x)}.Half')), ('.', ('(', ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))), 'Half'))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -987,6 +1007,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('a [2,3]')), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2nat2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
 		self.assertEqual (ast2nat2ast (p ('a * {-1}[x]')), ('*', (('@', 'a'), ('idx', ('(', ('#', '-1')), (('@', 'x'),)))))
+		self.assertEqual (ast2nat2ast (p ('$N (1/2)')), ('func', '$N', (('/', ('#', '1'), ('#', '2')),)))
+		self.assertEqual (ast2nat2ast (p ("$S ('1/2')")), ('func', '$S', (('"', '1/2'),)))
+		self.assertEqual (ast2nat2ast (p ("$N ($S ('1/2'))")), ('func', '$N', (('func', '$S', (('"', '1/2'),)),)))
+		self.assertEqual (ast2nat2ast (p ('{lambda x: $S (x)}.Half')), ('.', ('(', ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))), 'Half'))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1147,6 +1171,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('a [2,3]')), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2py2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
 		self.assertEqual (ast2py2ast (p ('a * {-1}[x]')), ('*', (('@', 'a'), ('idx', ('(', ('#', '-1')), (('@', 'x'),)))))
+		self.assertEqual (ast2py2ast (p ('$N (1/2)')), ('*', (('@', 'N'), ('(', ('/', ('#', '1'), ('#', '2'))))))
+		self.assertEqual (ast2py2ast (p ("$S ('1/2')")), ('*', (('@', 'S'), ('(', ('"', '1/2')))))
+		self.assertEqual (ast2py2ast (p ("$N ($S ('1/2'))")), ('*', (('@', 'N'), ('(', ('*', (('@', 'S'), ('(', ('"', '1/2'))))))))
+		self.assertEqual (ast2py2ast (p ('{lambda x: $S (x)}.Half')), ('lamb', ('*', (('@', 'S'), ('.', ('(', ('@', 'x')), 'Half'))), (('@', 'x'),)))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1307,6 +1335,10 @@ class Test (unittest.TestCase):
 		self.assertRaises (TypeError, ast2spt2ast, p ('a [2,3]'))
 		self.assertRaises (SympifyError, ast2spt2ast, p ('a * [2]'))
 		self.assertRaises (TypeError, ast2spt2ast, p ('a * {-1}[x]'))
+		self.assertEqual (ast2spt2ast (p ('$N (1/2)')), ('#', '0.5'))
+		self.assertEqual (ast2spt2ast (p ("$S ('1/2')")), ('/', ('#', '1'), ('#', '2')))
+		self.assertEqual (ast2spt2ast (p ("$N ($S ('1/2'))")), ('#', '0.5'))
+		self.assertEqual (ast2spt2ast (p ('{lambda x: $S (x)}.Half')), ('/', ('#', '1'), ('#', '2')))
 
 _EXPRESSIONS = """
 1
@@ -1467,6 +1499,10 @@ a [2]
 a [2,3]
 a * [2]
 a * {-1}[x]
+$N (1/2)
+$S ('1/2')
+$N ($S ('1/2'))
+{lambda x: $S (x)}.Half
 """
 
 if __name__ == '__main__':
