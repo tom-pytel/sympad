@@ -643,13 +643,15 @@ class ast2spt:
 		return spt
 
 	def _ast2spt_attr (self, ast):
-		# spt = self._ast2spt (ast.obj)
+		spt = self._ast2spt (ast.obj)
 
-		# while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
-		# 	spt = spt.args [0]
+		while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
+			spt = spt.args [0]
 
-		# mbr = getattr (spt, ast.attr)
-		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
+		print (type (spt), spt)
+
+		mbr = getattr (spt, ast.attr)
+		# mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 

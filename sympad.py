@@ -2871,13 +2871,15 @@ class ast2spt:
 		return spt
 
 	def _ast2spt_attr (self, ast):
-		# spt = self._ast2spt (ast.obj)
+		spt = self._ast2spt (ast.obj)
 
-		# while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
-		# 	spt = spt.args [0]
+		while isinstance (spt, ExprDontDoIt): # ignore ExprDontDoIt wrapper and get underlying object
+			spt = spt.args [0]
 
-		# mbr = getattr (spt, ast.attr)
-		mbr = getattr (self._ast2spt (ast.obj), ast.attr)
+		print (type (spt), spt)
+
+		mbr = getattr (spt, ast.attr)
+		# mbr = getattr (self._ast2spt (ast.obj), ast.attr)
 
 		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
@@ -4058,51 +4060,50 @@ import threading
 import traceback
 import webbrowser
 
-from urllib.parse import parse_qs
-from socketserver import ThreadingMixIn
+from collections import OrderedDict
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from socketserver import ThreadingMixIn
+from urllib.parse import parse_qs
 
 
-_VERSION          = '0.5.1'
+_VERSION         = '0.5.1'
 
-_SYMPAD_PATH      = os.path.dirname (sys.argv [0])
-_SYMPAD_FIRST_RUN = os.environ.get ('SYMPAD_FIRST_RUN')
-_SYMPAD_CHILD     = os.environ.get ('SYMPAD_CHILD')
+_SYMPAD_PATH     = os.path.dirname (sys.argv [0])
+_SYMPAD_NAME     = os.path.basename (sys.argv [0])
+_SYMPAD_FIRSTRUN = os.environ.get ('SYMPAD_FIRSTRUN')
+_SYMPAD_CHILD    = os.environ.get ('SYMPAD_CHILD')
 
-_DEFAULT_ADDRESS  = ('localhost', 8000)
-_STATIC_FILES     = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_DISPLAYSTYLE     = [1]
+_DEFAULT_ADDRESS = ('localhost', 8000)
+_STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_DISPLAYSTYLE    = [1]
 
-_HELP             = f'usage: {os.path.basename (sys.argv [0])} ' \
-			'[-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-E | --sympyEI] [-q | --quick] [-u | --ugly] ' \
-			'[host:port]'
-			# '[-N | --noN] [-O | --noO] [-S | --noS] [-b | --nobeta] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] ' \
+_HELP            = f'usage: {_SYMPAD_NAME} ' \
+		'[-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-E | --sympyEI] [-q | --quick] [-u | --ugly] ' \
+		'[-N | --noN] [-O | --noO] [-S | --noS] [-b | --nobeta] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] ' \
+		'[host:port]'
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
 
-	_VAR_LAST   = '_'
-	_START_VARS = {
-		'N'    : AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),)),
-		'O'    : AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),)),
-		'S'    : AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),)),
-		'beta' : AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))),
-		'gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
-		'Gamma': AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),)),
-		'zeta' : AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),)),
-	}
+	_SYS_STDOUT  = sys.stdout
+	_VAR_LAST    = '_' # name of last evaluated expression variable
+	_HISTORY     = [] # persistent history across browser closings
 
-	_sys_stdout = sys.stdout
-	_parser     = sparser.Parser ()
+	_PARSER      = sparser.Parser ()
+	_VARS        = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 
-	_vars       = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_history    = [] # persistent history across browser closings
+	_START_FUNCS = OrderedDict ([
+		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
+		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
+		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
+		('beta',  AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))),
+		('gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
+		('Gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
+		('zeta',  AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),))),
+	])
 
 #...............................................................................................
-# class ThreadingHTTPServer (ThreadingMixIn, HTTPServer):
-# 	pass
-
 class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
@@ -4140,10 +4141,10 @@ def _ast_remap (ast, map_, recurse = True):
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
-	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb, _vars.items ())}
+	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb, _VARS.items ())}
 
 	sym.set_user_funcs (user_funcs)
-	_parser.set_user_funcs (user_funcs)
+	_PARSER.set_user_funcs (user_funcs)
 
 def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = None
@@ -4172,19 +4173,19 @@ def _ast_prepare_ass (ast): # check and prepare for simple or tuple assignment
 			if AST ('@', var) in AST.CONSTS:
 				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
-	return _ast_remap (ast, _vars), vars
+	return _ast_remap (ast, _VARS), vars
 
 def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars):
 		try: # check for circular references
-			_ast_remap (AST (',', tuple (('@', v) for v in vars)), {**_vars, **vars})
+			_ast_remap (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
 		except RecursionError:
 			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
 
-		_vars.update (vars)
+		_VARS.update (vars)
 
 	if not vars: # no assignment
-		_vars [_VAR_LAST] = ast
+		_VARS [_VAR_LAST] = ast
 
 		return [ast]
 
@@ -4213,7 +4214,7 @@ def _ast_execute_ass (ast, vars): # execute assignment if it was detected
 def _admin_vars (ast):
 	asts = []
 
-	for v, e in sorted (_vars.items ()):
+	for v, e in sorted (_VARS.items ()):
 		if v != _VAR_LAST:
 			if not e.is_lamb:
 				asts.append (AST ('=', '=', ('@', v), e))
@@ -4226,7 +4227,7 @@ def _admin_vars (ast):
 def _admin_funcs (ast):
 	asts = []
 
-	for v, e in sorted (_vars.items ()):
+	for v, e in sorted (_VARS.items ()):
 		if v != _VAR_LAST:
 			if e.is_lamb:
 				asts.append (AST ('=', '=', ('@', v), e))
@@ -4240,9 +4241,9 @@ def _admin_del (ast):
 	var = ast.args [0] if ast.args else AST.VarNull
 
 	try:
-		ast = _vars [var.var]
+		ast = _VARS [var.var]
 
-		del _vars [var.var]
+		del _VARS [var.var]
 
 		_update_user_funcs ()
 
@@ -4252,39 +4253,39 @@ def _admin_del (ast):
 	return f'{"Function" if ast.is_lamb else "Variable"} {sym.ast2nat (var)!r} deleted.'
 
 def _admin_delvars (ast):
-	for v, e in list (_vars.items ()):
+	for v, e in list (_VARS.items ()):
 		if not e.is_lamb:# and v != _VAR_LAST:
-			del _vars [v]
+			del _VARS [v]
 
 	_update_user_funcs ()
 
 	return 'All variables deleted.'
 
 def _admin_delall (ast):
-	last_var = _vars [_VAR_LAST]
+	last_var = _VARS [_VAR_LAST]
 
-	_vars.clear ()
+	_VARS.clear ()
 	_update_user_funcs ()
 
-	_vars [_VAR_LAST] = last_var
+	_VARS [_VAR_LAST] = last_var
 
 	return 'All assignments deleted.'
 
 def _admin_sympyEI (ast):
 	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
 
-	if AST.E.var in _vars:
-		del _vars [AST.E.var]
+	if AST.E.var in _VARS:
+		del _VARS [AST.E.var]
 
-	if AST.I.var in _vars:
-		del _vars [AST.I.var]
+	if AST.I.var in _VARS:
+		del _VARS [AST.I.var]
 
 	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
 
 def _admin_quick (ast):
 	yes = bool (sym.ast2spt (ast.args [0])) if ast.args else True
 
-	_parser.set_quick (yes)
+	_PARSER.set_quick (yes)
 
 	return f'Quick input mode is {"on" if yes else "off"}.'
 
@@ -4304,7 +4305,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 			if self.path == '/env.js':
 				content = 'text/javascript'
-				data    = f'History = {_history}\nHistIdx = {len (_history)}\nVersion = {"v" + _VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
+				data    = f'History = {_HISTORY}\nHistIdx = {len (_HISTORY)}\nVersion = {"v" + _VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
 
 				self.send_header ('Cache-Control', 'no-store')
 
@@ -4340,15 +4341,15 @@ class Handler (SimpleHTTPRequestHandler):
 		self.send_header ('Content-type', 'application/json')
 		self.send_header ('Cache-Control', 'no-store')
 		self.end_headers ()
-		self.wfile.write (json.dumps (response).encode ('utf8'))
-		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
+		# self.wfile.write (json.dumps (response).encode ('utf8'))
+		self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
-		ast, erridx, autocomplete = _parser.parse (request ['text'])
+		ast, erridx, autocomplete = _PARSER.parse (request ['text'])
 		tex = nat = py            = None
 
 		if ast is not None:
-			ast = _ast_remap (ast, {_VAR_LAST: _vars [_VAR_LAST]}) # just remap last evaluated _
+			ast = _ast_remap (ast, {_VAR_LAST: _VARS [_VAR_LAST]}) # just remap last evaluated _
 			tex = sym.ast2tex (ast)
 			nat = sym.ast2nat (ast)
 			py  = sym.ast2py (ast)
@@ -4370,10 +4371,10 @@ class Handler (SimpleHTTPRequestHandler):
 
 	def evaluate (self, request):
 		try:
-			_history.append (request ['text'])
+			_HISTORY.append (request ['text'])
 
 			sys.stdout = io.StringIO ()
-			ast, _, _  = _parser.parse (request ['text'])
+			ast, _, _  = _PARSER.parse (request ['text'])
 
 			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (ast)
@@ -4420,14 +4421,15 @@ class Handler (SimpleHTTPRequestHandler):
 			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')}
 
 		finally:
-			sys.stdout = _sys_stdout
+			sys.stdout = _SYS_STDOUT
 
 #...............................................................................................
-_month_name = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+_MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnEqu', ['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnEquNOSbgGz', \
+				['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.strip ())
@@ -4445,7 +4447,7 @@ if __name__ == '__main__':
 			first_run = '1'
 
 			while 1:
-				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_CHILD': '1', 'SYMPAD_FIRST_RUN': first_run})
+				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_CHILD': '1', 'SYMPAD_FIRSTRUN': first_run})
 				first_run = ''
 
 				if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
@@ -4456,14 +4458,20 @@ if __name__ == '__main__':
 			sast.sympyEI ()
 
 		if ('--quick', '') in opts or ('-q', '') in opts:
-			_parser.set_quick ()
+			_PARSER.set_quick ()
 
 		if ('--ugly', '') in opts or ('-u', '') in opts:
 			_DISPLAYSTYLE [0] = 0
 
-		_vars.update (_START_VARS)
-		sym.set_user_funcs (set (_START_VARS))
-		_parser.set_user_funcs (set (_START_VARS))
+		funcs = {}
+
+		for opt, (func, ast) in zip ('NOSbgGz', _START_FUNCS.items ()):
+			if (f'--no{func}', '') not in opts and (f'-{opt}', '') not in opts:
+				funcs [func] = ast
+
+		_VARS.update (funcs)
+		sym.set_user_funcs (set (funcs))
+		_PARSER.set_user_funcs (set (funcs))
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS
@@ -4471,7 +4479,7 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		fnms    = ('sympad.py',) if _RUNNING_AS_SINGLE_SCRIPT else ('lalr1.py', 'xlat.py', 'sym.py', 'sparser.py', 'server.py')
+		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'xlat.py', 'lalr1.py')
 		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
@@ -4483,14 +4491,14 @@ if __name__ == '__main__':
 			y, m, d, hh, mm, ss, _, _, _ = time.localtime (time.time ())
 
 			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
-					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _month_name [m], y, hh, mm, ss)}] {msg}\n')
+					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
-		if _SYMPAD_FIRST_RUN:
+		if _SYMPAD_FIRSTRUN:
 			print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
 
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
-		if os.environ.get ('SYMPAD_FIRST_RUN') and ('--nobrowser', '') not in opts and ('-n', '') not in opts:
+		if os.environ.get ('SYMPAD_FIRSTRUN') and ('--nobrowser', '') not in opts and ('-n', '') not in opts:
 			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
 
 		while 1:
