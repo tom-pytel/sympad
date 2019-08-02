@@ -75,13 +75,12 @@ def _ast_remap (ast, map_, recurse = True):
 		var = map_.get (ast.var)
 
 		if var: # user var
-			return \
-					AST ('func', AST.Func.NOEVAL, (var,)) \
-					if var.is_lamb else \
-					_ast_remap (var, map_, recurse) \
-					if recurse else \
-					var
-			# return var if var.is_lamb or not recurse else _ast_remap (var, map_, recurse)
+			if var.is_lamb:
+				return AST ('func', AST.Func.NOEVAL, (var,))
+			elif recurse:
+				return _ast_remap (var, map_, recurse)
+			else:
+				return var
 
 	elif ast.is_func:
 		lamb = map_.get (ast.func)

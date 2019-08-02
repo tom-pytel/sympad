@@ -65,6 +65,14 @@ def _expr_lambda (lhs, expr):
 
 	raise SyntaxError ('invalid lambda function')
 
+def _expr_piece (expr_ineq, expr, expr_lambda = None):
+	if expr_lambda is None:
+		return AST ('piece', ((expr_ineq, expr),))
+	elif expr_lambda.is_piece:
+		return AST ('piece', ((expr_ineq, expr),) + expr_lambda.piece)
+	else:
+		return AST ('piece', ((expr_ineq, expr), (expr_lambda, True)))
+
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 	last      = lhs.mul [-1] if lhs.is_mul else lhs
 	arg, wrap = _ast_func_reorder (rhs)
@@ -396,7 +404,7 @@ class Parser (lalr1.LALR1):
 			b'Oi2TKl5SqxdTZKrcZ8PLbiWV6y/UzjUdRGevAfaVMhYZmeSMx2eXX9T9vyKUB1XzAWF4D4VyxytyPLw91AuVc02f+lqJQw2sKXeuuskVx/LXRUQBD7M7vkj62KxyqBcqZ9I5n1bLMgFEJawhhnPsNFV+dWPn8ival66PWBiIhCXdEcurrQ72QuVMhhJ3Kq+u' \
 			b'uqMLZrD6iCXVVwd7oXIm45Q7ldS2uqMLzDjiQQ9PpBzqhcqZjHluJqn9NaOgnLuXctVBFrZ0ca3OBxDVl7wE3kyM8ZeI7BbZMyOAl7PJVFdfvbsmwsIrT2cuTXBrMpbZM265aj8ucKvdc2611X5c4NaCkcqhGOlZGy248GmZ4X/ha5e+v1Zas5FQE0c0XcJL' \
 			b'HQ7mAvcXjIAOhvuuOpwL6wd2PhV0i9z31eFc4P6CMdXBcL+tDucC9/lYayY9qNtGN8YRfDIqs8fyaiA+XUXn//ncyLyKiH8UgZjCp9s1fB5S02qK7WzMUGUXIoZJRK4KjtxV+dUEaE057SkuSPJcpfDu5XvjSVaurPrQyzSzGS95S0vVZpapKbVydMl4+5Ys' \
-			b'k8S0tdWcNBeeKfQsKLoYqOFpNcm5p6K8Of9/7LjJIA=='
+			b'k8S0tdWcNBeeKfQsKLoYqOFpNcm5p6K8Of9/7LjJIA==' 
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -527,13 +535,8 @@ class Parser (lalr1.LALR1):
 	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_eq):                    return _expr_lambda (expr_paren.strip (), expr_eq)
 	def expr_mapsto_2      (self, expr_piece):                                     return expr_piece
 
-	def expr_piece_1       (self, expr_ineq, IF, expr, ELSE, expr_lambda):
-		return \
-				AST ('piece', ((expr_ineq, expr),) + expr_lambda.piece) \
-				if expr_lambda.is_piece else \
-				AST ('piece', ((expr_ineq, expr), (expr_lambda, True)))
-
-	def expr_piece_2       (self, expr_ineq, IF, expr):                            return AST ('piece', ((expr_ineq, expr),))
+	def expr_piece_1       (self, expr_ineq, IF, expr, ELSE, expr_lambda):         return _expr_piece (expr_ineq, expr, expr_lambda)
+	def expr_piece_2       (self, expr_ineq, IF, expr):                            return _expr_piece (expr_ineq, expr)
 	def expr_piece_3       (self, expr_ineq):                                      return expr_ineq
 
 	def expr_ineq_2        (self, expr_add1, INEQ, expr_add2):                     return AST ('=', AST.Eq.ANY2PY.get (INEQ.text, INEQ.text), expr_add1, expr_add2)
@@ -734,7 +737,6 @@ class Parser (lalr1.LALR1):
 		if self.stack [-3].sym != 'COMMA' or self.stack [-4].sym != 'expr_comma' or self.stack [-5].sym != 'CURLYL':
 			if self.stack [-1].red.is_vec:
 				return self._insert_symbol (('COMMA', 'CURLYR'), 1)
-
 			elif self.stack [-1].red.is_comma:
 				if len (self.stack [-1].red.comma) == 1 or self.tokens [self.tokidx - 1] != 'COMMA':
 					return self._insert_symbol ('CURLYR')
