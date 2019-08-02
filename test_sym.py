@@ -119,6 +119,7 @@ a, lambda: b = 1
 a * [2]
 (dx**p*artial)*Limit(sqrt(-1), x, 0**d)[(Matrix([[partialx]])), lcm_list()]
 sqrt(1, 2)
+x*[][y]
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!

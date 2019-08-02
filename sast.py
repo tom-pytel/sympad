@@ -131,6 +131,11 @@ class AST (tuple):
 
 		return self
 
+	# def strip_paren_noncomma (self, count = None):
+	# 	new = self.strip_paren (count)
+
+	# 	return new if not new.is_comma or not self.is_paren else AST ('(', new)
+
 	def strip (self, count = None):
 		count = 999999999 if count is None else count
 
