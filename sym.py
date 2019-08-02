@@ -31,6 +31,9 @@ def _tuple2ast (args):
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
 
+def _ast_slice_bounds (ast, None_ = AST.VarNull):
+	return tuple (a or None_ for a in ((ast.start, ast.stop) if ast.step is None else (ast.start, ast.stop, ast.step)))
+
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.mul [0]))
 
@@ -320,7 +323,8 @@ _ast2tex_funcs = {
 	'mat': lambda ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (_ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 	'piece': lambda ast: '\\begin{cases} ' + r' \\ '.join (f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{_ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {_ast2tex (p [1])}' for p in ast.piece) + ' \\end{cases}',
 	'lamb': lambda ast: f'\\left({_ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {_ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
-	'idx': lambda ast: f'{_ast2tex_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{_ast2tex (_tuple2ast (ast.idx))}]',
+	'idx': lambda ast: f'{_ast2tex_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}\\left[{_ast2tex (_tuple2ast (ast.idx))} \\right]',
+	'slice': lambda ast: '{:}'.join (_ast2tex_wrap (a, a and _ast_is_neg (a), a and (a.is_ass or a.op in {',', 'lamb', 'slice'})) for a in _ast_slice_bounds (ast, '')),
 
 	'text': lambda ast: ast.tex,
 }
@@ -488,6 +492,7 @@ _ast2nat_funcs = {
 			f'{_ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {_ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.piece),
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {_ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
 	'idx': lambda ast: f'{_ast2nat_wrap (ast.obj, 0, ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"})}[{_ast2nat (_tuple2ast (ast.idx))}]',
+	'slice': lambda ast: ':'.join (_ast2nat_wrap (a, 0, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 
 	'text': lambda ast: ast.nat,
 }
@@ -502,8 +507,14 @@ def _ast2py_curly (ast):
 			if ast.strip_minus ().op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 			ast2py (ast)
 
-def _ast2py_paren (ast):
-	return ast2py (ast) if ast.is_paren else f'({ast2py (ast)})'
+def _ast2py_paren (ast, paren = None):
+	if paren is None:
+		return ast2py (ast) if ast.is_paren else f'({ast2py (ast)})'
+
+	if (ast.op in paren) if isinstance (paren, set) else paren:
+		return f'({ast2py (ast)})'
+
+	return ast2py (ast)
 
 def _ast2py_div (ast):
 	n = _ast2py_curly (ast.numer)
@@ -578,6 +589,7 @@ _ast2py_funcs = {
 	'piece': lambda ast: 'Piecewise(' + ', '.join (f'({ast2py (p [0])}, {True if p [1] is True else ast2py (p [1])})' for p in ast.piece) + ')',
 	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {ast2py (ast.lamb)}',
 	'idx': lambda ast: f'{_ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"} else ast2py (ast.obj)}[{ast2py (_tuple2ast (ast.idx))}]',
+	'slice': lambda ast: ':'.join (_ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 
 	'text': lambda ast: ast.py,
 }
@@ -718,6 +730,7 @@ class ast2spt:
 		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
 		'idx': lambda self, ast: self._ast2spt (ast.obj) [self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)],
+		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
 
 		'text': lambda self, ast: ast.spt,
 	}

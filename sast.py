@@ -33,7 +33,7 @@
 # ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('lamb', expr, (v1, v2, ...))      - lambda expression: v? = ('@', 'var')
 # ('idx', expr, (i0, i1, ...))       - indexing: expr [i0, i1, ...]
-# ('slice', start, stop, step)       - indexing slice object: obj [start : stop : step]
+# ('slice', start, stop, step)       - indexing slice object: obj [start : stop : step], None or False indicates not specified
 
 import re
 import types
@@ -475,7 +475,7 @@ class AST_Idx (AST):
 class AST_Slice (AST):
 	op, is_slice = 'slice', True
 
-	def _init (self, start = None, stop = None, step = None):
+	def _init (self, start, stop, step):
 		self.start, self.stop, self.step = start, stop, step
 
 #...............................................................................................
