@@ -93,11 +93,10 @@ def _xlat_func_Matrix (ast = AST.VarNull):
 
 					if l != cols:
 						return AST ('mat', tuple (rows))
-
-					return \
-							AST ('mat', tuple (rows)) \
-							if cols > 1 else \
-							AST ('vec', tuple (r [0] for r in rows))
+					elif cols > 1:
+						return AST ('mat', tuple (rows))
+					else:
+						return AST ('vec', tuple (r [0] for r in rows))
 
 	return None
 
@@ -126,13 +125,13 @@ def _xlat_func_Piecewise (*args):
 
 	if not ast.is_comma:
 		return AST ('piece', pcs + ((ast, AST.VarNull),))
-	if len (ast.comma) == 0:
+	elif len (ast.comma) == 0:
 		return AST ('piece', pcs + ())
 
 	if not ast.comma [0].is_comma:
 		if len (ast.comma) == 1:
 			return AST ('piece', pcs + ((ast.comma [0], AST.VarNull),))
-		if len (ast.comma) == 2:
+		elif len (ast.comma) == 2:
 			return AST ('piece', pcs + ((ast.comma [0], True if ast.comma [1] == AST.True_ else ast.comma [1]),))
 
 	return None
@@ -145,7 +144,7 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 
 	if ab.is_var:
 		return AST ('sum', ast, ab, AST.VarNull, AST.VarNull)
-	if ab.is_comma and ab.comma and ab.comma.len <= 3 and ab.comma [0].is_var:
+	elif ab.is_comma and ab.comma and ab.comma.len <= 3 and ab.comma [0].is_var:
 		return AST ('sum', ast, *ab.comma, *((AST.VarNull,) * (3 - ab.comma.len)))
 
 	return None

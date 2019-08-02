@@ -92,15 +92,20 @@ class AST (tuple):
 
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
-			return \
-					AST ('-', self)            if not self.is_pos_num else \
-					AST ('#', f'-{self.num}')
+			if not self.is_pos_num:
+				return AST ('-', self)
+			else:
+				return AST ('#', f'-{self.num}')
+
 		else:
-			return \
-					self.minus                 if self.is_minus else \
-					AST ('-', self)            if not self.is_num else \
-					AST ('#', self.num [1:])   if self.num [0] == '-' else \
-					AST ('#', f'-{self.num}')
+			if self.is_minus:
+				return self.minus
+			elif not self.is_num:
+				return AST ('-', self)
+			elif self.num [0] == '-':
+				return AST ('#', self.num [1:])
+			else:
+				return AST ('#', f'-{self.num}')
 
 	def strip_curlys (self, count = None):
 		count = 999999999 if count is None else count
@@ -112,10 +117,10 @@ class AST (tuple):
 		return self
 
 	def remove_curlys (self):
-		return \
-				self.curly.remove_curlys () \
-				if self.is_curly else \
-				AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
+		if self.is_curly:
+			return self.curly.remove_curlys ()
+		else:
+			return AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
 
 	def strip_paren (self, count = None):
 		count = 999999999 if count is None else count
@@ -199,16 +204,16 @@ class AST (tuple):
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 		if ast0.op == op:
-			return \
-					AST (op, ast0 [-1] + ast1 [-1]) \
-					if ast1.op == op else \
-					AST (op, ast0 [-1] + (ast1,))
+			if ast1.op == op:
+				return AST (op, ast0 [-1] + ast1 [-1])
+			else:
+				return AST (op, ast0 [-1] + (ast1,))
 
 		else: # ast0.op != op
-			return \
-					AST (op, (ast0,) + ast1 [-1]) \
-					if ast1.op == op else \
-					AST (op, (ast0, ast1))
+			if ast1.op == op:
+				return AST (op, (ast0,) + ast1 [-1])
+			else:
+				return AST (op, (ast0, ast1))
 
 #...............................................................................................
 class AST_Eq (AST):

@@ -785,8 +785,8 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('Derivative (\\int dx, x)', true)">Derivative (\int dx, x)</a>
 	<a class="GreetingA" href="javascript:inputting ('Integral (e^{-x^2}, (x, 0, \\infty))', true)">Integral (e^{-x^2}, (x, 0, \infty))</a>
 	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\infty e^{-s t} dt', true)">\int_0^\infty e^{-s t} dt</a>
-	<a class="GreetingA" href="javascript:inputting ('{{1,2},{3,4}}**-1', true)">{{1,2},{3,4}}**-1</a>
-	<a class="GreetingA" href="javascript:inputting ('{{1,2,3},{4,5,6}}.transpose ()', true)">{{1,2,3},{4,5,6}}.transpose ()</a>
+	<a class="GreetingA" href="javascript:inputting ('{{1, 2}, {3, 4}}**-1', true)">{{1, 2}, {3, 4}}**-1</a>
+	<a class="GreetingA" href="javascript:inputting ('{{1, 2, 3}, {4, 5, 6}}.transpose ()', true)">{{1, 2, 3}, {4, 5, 6}}.transpose ()</a>
 	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**4', true)">expand {x+1}**4</a>
 	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
 	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 0, 5)', true)">series (e^x, x, 0, 5)</a>
@@ -859,6 +859,7 @@ User input is intended to be quick, easy and intuitive and is displayed in symbo
 Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
+
 <h4>Quick Start</h4>
 
 <p>
@@ -872,8 +873,8 @@ d**6 / dx dy**2 dz**3 x^3 y^3 z^3<br>
 Derivative (\int dx, x)<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\infty e^{-s t} dt<br>
-{{1,2},{3,4}}**-1<br>
-{{1,2,3},{4,5,6}}.transpose ()<br>
+{{1, 2}, {3, 4}}**-1<br>
+{{1, 2, 3}, {4, 5, 6}}.transpose ()<br>
 expand {x+1}**4<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
 series (e^x, x, 0, 5)<br>
@@ -922,9 +923,13 @@ Single-click for a simple native format meant to be pasted back into the input f
 A double click-copies the expression in Python format suitable for pasting into a Python shell or source file.
 Finally, a triple-click will copy the expression in LaTeX format.
 The single-click native and double-click Python formats should always be pasteable back into SymPad whereas the LaTeX format may or may not be depending on what elements are present.
-</p><p>
+</p>
+
+<h4>Quick Input Mode</h4>
+
+<p>
 SymPad normally allows long variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
-This can be turned off by switching into quick input mode using the function "<b>quick()</b>".
+This can be turned off by switching into quick input mode using the function "<b>quick()</b>" or by using the "<b>--quick</b>" option on the command line.
 When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek) and explicit space characters are no longer necessary between recognized function and variable names.
 This means that an expression entered in normal mode like this "<b>x y sin z**2</b>" can be entered in quick mode like this "<b>xysinz**2</b>".
 </p>
@@ -995,7 +1000,7 @@ supporting escape sequences. For example "<b>Limit (1/x, x, 0, '-')</b>".
 
 <p>
 Standard Python bracket enclosed lists and optionally parentheses enclosed tuples are accepted.
-Like strings these exist for the purpose of passing parameters to functions like "<b>Matrix ([[1,2],[3,4]])</b>".
+Like strings these exist for the purpose of passing parameters to functions like "<b>Matrix ([[1, 2], [3, 4]])</b>".
 </p>
 
 <h2>Operations</h2>
@@ -1025,14 +1030,14 @@ of curly braces whereas the "<b>**</b>" follows Python rules which allow negativ
 <h4>Logarithms</h4>
 
 <p>
-The natural logarithm of x is specified by "<b>lnx</b>", "<b>\ln x</b>", "<b>log x</b>", "<b>\log{x}</b>". A logarithm in a specific base is specified
-by "<b>\log_b x</b>" = $\log_b x$, "<b>\log_{10}(1000)</b>" = $\log_{10} {1000}$ = 3, etc...
+The natural logarithm of x is specified by "<b>ln x</b>", "<b>\ln x</b>", "<b>log x</b>", "<b>\log{x}</b>". A logarithm in a specific base is specified
+by "<b>\log_b x</b>" = $\log_b x$, "<b>\log_{10}(1000)</b>" = $\log_{10}{1000}$ = 3, etc...
 </p>
 
 <h4>Roots</h4>
 
 <p>
-The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrtx</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or without the slash.
+The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrt x</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or without the slash.
 The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
 </p>
 
@@ -1094,14 +1099,14 @@ Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and 
 Explicit "<b>( )</b>" or implicit curly "<b>{ }</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
 delineate an expression as an input to a function. They may be used interchangeably for single expressions, the only difference being that the implicit
 version is not drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions
-in general and always when calling functions which take multiple parameters like "<b>max(1,2,3)</b>". The curly braces are used as shorthand for vectors
+in general and always when calling functions which take multiple parameters like "<b>max(1, 2, 3)</b>". The curly braces are used as shorthand for vectors
 and matrices if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
 </p>
 
 <h4>Indexing</h4>
 
 <p>
-Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>{{1, 2, 3}, {4, 5, 6}} [1,2]</b>" = "<b>6</b>" and "<b>{{1, 2, 3}, {4, 5, 6}} [:,1]</b>" = "<b>{{2,}, {5,}}</b>".
+Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>{{1, 2, 3}, {4, 5, 6}} [1, 2]</b>" = "<b>6</b>" and "<b>{{1, 2, 3}, {4, 5, 6}} [:,1]</b>" = "<b>{{2,}, {5,}}</b>".
 </p>
 
 <h4>Member Access</h4>
@@ -1109,7 +1114,7 @@ Python style bracket indexing is natively supported for all objects using single
 <p>
 You can access member data or functions of an expression just like in Python with the "<b>.</b>" operator.
 If the attribute name following the dot is followed by a parenthesized expression then it will be treated as a function call instead of an implicit multiplication, otherwise it is a data member.
-For example, two ways to get the transpose of a matrix are "<b>{{1,2,3},{4,5,6}}.T</b>" and "<b>{{1,2,3},{4,5,6}}.transpose ()</b>".
+For example, two ways to get the transpose of a matrix are "<b>{{1, 2, 3}, {4, 5, 6}}.T</b>" and "<b>{{1, 2, 3}, {4, 5, 6}}.transpose ()</b>".
 </p>
 
 <h4>Variable Assignment</h4>
@@ -1140,7 +1145,7 @@ The "<b>@(expr)</b>" function technically prevents variable remapping for the ex
 <h2>Functions</h2>
 <p>
 There are two types of functions made available in SymPad - all the SymPy native functions are available directly just by typing their name (a few escaped with "<b>$</b>"), as well as user created lambda functions assigned to variables.
-In addition, member functions of objects are supported and callable like "<b>Matrix ([1,2,3]).transpose ()</b>".
+In addition, member functions of objects are supported and callable like "<b>Matrix ([1, 2, 3]).transpose ()</b>".
 All functions may take multiple comma-separated arguments and the SymPy functions also optionally take keyword arguments.
 </p>
 
@@ -1572,15 +1577,20 @@ class AST (tuple):
 
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
-			return \
-					AST ('-', self)            if not self.is_pos_num else \
-					AST ('#', f'-{self.num}')
+			if not self.is_pos_num:
+				return AST ('-', self)
+			else:
+				return AST ('#', f'-{self.num}')
+
 		else:
-			return \
-					self.minus                 if self.is_minus else \
-					AST ('-', self)            if not self.is_num else \
-					AST ('#', self.num [1:])   if self.num [0] == '-' else \
-					AST ('#', f'-{self.num}')
+			if self.is_minus:
+				return self.minus
+			elif not self.is_num:
+				return AST ('-', self)
+			elif self.num [0] == '-':
+				return AST ('#', self.num [1:])
+			else:
+				return AST ('#', f'-{self.num}')
 
 	def strip_curlys (self, count = None):
 		count = 999999999 if count is None else count
@@ -1592,10 +1602,10 @@ class AST (tuple):
 		return self
 
 	def remove_curlys (self):
-		return \
-				self.curly.remove_curlys () \
-				if self.is_curly else \
-				AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
+		if self.is_curly:
+			return self.curly.remove_curlys ()
+		else:
+			return AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
 
 	def strip_paren (self, count = None):
 		count = 999999999 if count is None else count
@@ -1679,16 +1689,16 @@ class AST (tuple):
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 		if ast0.op == op:
-			return \
-					AST (op, ast0 [-1] + ast1 [-1]) \
-					if ast1.op == op else \
-					AST (op, ast0 [-1] + (ast1,))
+			if ast1.op == op:
+				return AST (op, ast0 [-1] + ast1 [-1])
+			else:
+				return AST (op, ast0 [-1] + (ast1,))
 
 		else: # ast0.op != op
-			return \
-					AST (op, (ast0,) + ast1 [-1]) \
-					if ast1.op == op else \
-					AST (op, (ast0, ast1))
+			if ast1.op == op:
+				return AST (op, (ast0,) + ast1 [-1])
+			else:
+				return AST (op, (ast0, ast1))
 
 #...............................................................................................
 class AST_Eq (AST):
@@ -2130,11 +2140,10 @@ def _xlat_func_Matrix (ast = AST.VarNull):
 
 					if l != cols:
 						return AST ('mat', tuple (rows))
-
-					return \
-							AST ('mat', tuple (rows)) \
-							if cols > 1 else \
-							AST ('vec', tuple (r [0] for r in rows))
+					elif cols > 1:
+						return AST ('mat', tuple (rows))
+					else:
+						return AST ('vec', tuple (r [0] for r in rows))
 
 	return None
 
@@ -2163,13 +2172,13 @@ def _xlat_func_Piecewise (*args):
 
 	if not ast.is_comma:
 		return AST ('piece', pcs + ((ast, AST.VarNull),))
-	if len (ast.comma) == 0:
+	elif len (ast.comma) == 0:
 		return AST ('piece', pcs + ())
 
 	if not ast.comma [0].is_comma:
 		if len (ast.comma) == 1:
 			return AST ('piece', pcs + ((ast.comma [0], AST.VarNull),))
-		if len (ast.comma) == 2:
+		elif len (ast.comma) == 2:
 			return AST ('piece', pcs + ((ast.comma [0], True if ast.comma [1] == AST.True_ else ast.comma [1]),))
 
 	return None
@@ -2182,7 +2191,7 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 
 	if ab.is_var:
 		return AST ('sum', ast, ab, AST.VarNull, AST.VarNull)
-	if ab.is_comma and ab.comma and ab.comma.len <= 3 and ab.comma [0].is_var:
+	elif ab.is_comma and ab.comma and ab.comma.len <= 3 and ab.comma [0].is_var:
 		return AST ('sum', ast, *ab.comma, *((AST.VarNull,) * (3 - ab.comma.len)))
 
 	return None
@@ -4130,7 +4139,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.5.2'
+_VERSION         = '0.5.3'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -4258,7 +4267,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 		if len (vars) < len (asts):
 			raise ValueError (f'too many values to unpack (expected {len (vars)})')
-		if len (vars) > len (asts):
+		elif len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
 		_set_vars (dict (zip (vars, asts)))
