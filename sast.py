@@ -33,6 +33,7 @@
 # ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('lamb', expr, (v1, v2, ...))      - lambda expression: v? = ('@', 'var')
 # ('idx', expr, (i0, i1, ...))       - indexing: expr [i0, i1, ...]
+# ('slice', start, stop, step)       - indexing slice object: obj [start : stop : step]
 
 import re
 import types
@@ -297,6 +298,8 @@ class AST_Comma (AST):
 	def _init (self, comma):
 		self.comma = comma
 
+	_is_empty_comma = lambda self: not (len (self.comma))
+
 class AST_Curly (AST):
 	op, is_curly = '{', True
 
@@ -469,6 +472,12 @@ class AST_Idx (AST):
 	def _init (self, obj, idx):
 		self.obj, self.idx = obj, idx
 
+class AST_Slice (AST):
+	op, is_slice = 'slice', True
+
+	def _init (self, start = None, stop = None, step = None):
+		self.start, self.stop, self.step = start, stop, step
+
 #...............................................................................................
 _AST_OP2CLS = {
 	'=': AST_Eq,
@@ -499,6 +508,7 @@ _AST_OP2CLS = {
 	'piece': AST_Piece,
 	'lamb': AST_Lamb, # not to be confused with the Greek variable lambda
 	'idx': AST_Idx,
+	'slice': AST_Slice,
 }
 
 _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
@@ -506,14 +516,15 @@ _AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
 for cls in _AST_CLS2OP:
 	setattr (AST, cls.__name__ [4:], cls)
 
-AST.OPS      = set (_AST_OP2CLS)
-AST.Zero     = AST ('#', '0')
-AST.One      = AST ('#', '1')
-AST.NegOne   = AST ('#', '-1')
-AST.VarNull  = AST ('@', '')
-AST.MatEmpty = AST ('func', 'Matrix', ('[', ()))
+AST.OPS        = set (_AST_OP2CLS)
+AST.Zero       = AST ('#', '0')
+AST.One        = AST ('#', '1')
+AST.NegOne     = AST ('#', '-1')
+AST.VarNull    = AST ('@', '')
+AST.CommaEmpty = AST (',', ())
+AST.MatEmpty   = AST ('func', 'Matrix', ('[', ()))
 
-_CONSTS      = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
+_CONSTS        = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
 		('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
 
 for _vp, _vv in _CONSTS:
