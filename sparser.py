@@ -60,58 +60,6 @@ def _ast_pre_slice (pre, post):
 	raise SyntaxError ('invalid slice')
 
 #...............................................................................................
-# lambda x, y: 0
-# (',', (
-# 	('*', (
-# 		('@', 'lambda'),
-# 		('@', 'x')
-# 	)),
-# 	('slice',
-# 		('@', 'y'),
-# 		('#', '0')
-# 		None
-# 	)
-# ))
-
-# lambda x, y, z: 0
-# (',', (
-# 	('*', (
-# 		('@', 'lambda'),
-# 		('@', 'x')
-# 	)),
-# 	('@', 'y'),
-# 	('slice',
-# 		('@', 'z'),
-# 		('#', '0'),
-# 		None
-# 	)
-# ))
-
-# lhs = lambda x, y
-# (',', (
-# 	('*', (
-# 		('@', 'lambda'),
-# 		('@', 'x')
-# 	)),
-# 	('@', 'y')
-# ))
-
-# a = lambda x, y: 0
-# (',', (
-# 	('=', '=',
-# 		('@', 'a'),
-# 		('*', (
-# 			('@', 'lambda'),
-# 			('@', 'x')
-# 		))
-# 	),
-# 	('slice',
-# 		('@', 'y'),
-# 		('#', '0')
-# 		None
-# 	)
-# ))
-
 def _expr_comma (lhs, rhs):
 	if not rhs.is_slice or rhs.step is not None or not rhs.stop or not rhs.start or not rhs.start.is_var:
 		return AST.flatcat (',', lhs, rhs)
