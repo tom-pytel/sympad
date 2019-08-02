@@ -1616,11 +1616,6 @@ class AST (tuple):
 
 		return self
 
-	def strip_paren_noncomma (self, count = None):
-		new = self.strip_paren (count)
-
-		return new if not new.is_comma or not self.is_paren else AST ('(', new)
-
 	def strip (self, count = None):
 		count = 999999999 if count is None else count
 
@@ -2560,7 +2555,7 @@ _ast2tex_funcs = {
 	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{_ast2tex (ast.denom)}}}',
 	'^': _ast2tex_pow,
 	'log': _ast2tex_log,
-	'sqrt': lambda ast: f'\\sqrt{{{_ast2tex (ast.rad.strip_paren_noncomma (1))}}}' if ast.idx is None else f'\\sqrt[{_ast2tex (ast.idx)}]{{{_ast2tex (ast.rad.strip_paren_noncomma (1))}}}',
+	'sqrt': lambda ast: f'\\sqrt{{{_ast2tex_wrap (ast.rad, 0, {","})}}}' if ast.idx is None else f'\\sqrt[{_ast2tex (ast.idx)}]{{{_ast2tex_wrap (ast.rad, 0, {","})}}}',
 	'func': _ast2tex_func,
 	'lim': _ast2tex_lim,
 	'sum': _ast2tex_sum,
@@ -2727,7 +2722,7 @@ _ast2nat_funcs = {
 	'/': _ast2nat_div,
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
-	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{_ast2nat (ast.idx)}]{{{_ast2nat (ast.rad.strip_paren_noncomma (1))}}}',
+	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{_ast2nat (ast.idx)}]{{{_ast2nat_wrap (ast.rad, 0, {","})}}}',
 	'func': lambda ast: f'{ast.func}({_ast2nat (_tuple2ast (ast.args))})',
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,

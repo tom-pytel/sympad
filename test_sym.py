@@ -118,6 +118,7 @@ Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 a, lambda: b = 1
 a * [2]
 (dx**p*artial)*Limit(sqrt(-1), x, 0**d)[(Matrix([[partialx]])), lcm_list()]
+sqrt(1, 2)
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!
@@ -178,8 +179,8 @@ def expr_func ():
 	while 1:
 		py = choice (list (AST.Func.PY))
 
-		# if py not in sparser._FUNC_AST_XLAT and py not in xlat.XLAT_FUNC:
-		# 	break
+		if py not in xlat.XLAT_FUNC_TEX: # and py not in xlat.XLAT_FUNC_NAT:
+			break
 
 	return \
 			'\\' + f'{choice (list (AST.Func.TEX))}{expr_paren ()}' \
