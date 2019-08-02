@@ -110,8 +110,6 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 		if last.var in user_funcs:
 			if arg.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
-			# elif arg.is_attr and arg.obj.is_paren:
-			# 	ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg.obj)))
 			else:
 				ast = wrap (AST ('func', last.var, (arg,)))
 
@@ -219,24 +217,24 @@ def _ast_strip_tail_differential (ast):
 			ast2, dv  = _ast_strip_tail_differential (ast2)
 
 			if dv:
-				return \
-						(AST ('intg', neg (ast2), dv, *ast [3:]), ast.dv) \
-						if ast2 else \
-						(AST ('intg', neg (AST.One), dv, *ast [3:]), ast.dv) \
-						if neg.has_neg else \
-						(AST ('intg', None, dv, *ast [3:]), ast.dv)
+				if ast2:
+					return (AST ('intg', neg (ast2), dv, *ast [3:]), ast.dv)
+				elif neg.has_neg:
+					return (AST ('intg', neg (AST.One), dv, *ast [3:]), ast.dv)
+				else:
+					return (AST ('intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
 		ast2, neg = ast.diff.strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
-			return \
-					(AST ('diff', neg (ast2), ast.dvs), dv) \
-					if ast2 else \
-					(neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv) \
-					if len (ast.dvs) == 1 else \
-					(neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
+			if ast2:
+				return (AST ('diff', neg (ast2), ast.dvs), dv)
+			elif len (ast.dvs) == 1:
+				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv)
+			else:
+				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
 
 	elif ast.is_div:
 		ast2, neg = ast.denom.strip_minus (retneg = True)
@@ -255,12 +253,12 @@ def _ast_strip_tail_differential (ast):
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
-			return \
-					(AST ('*', ast.mul [:-1] + (neg (ast2),)), dv) \
-					if ast2 else \
-					(neg (AST ('*', ast.mul [:-1])), dv) \
-					if len (ast.mul) > 2 else \
-					(neg (ast.mul [0]), dv)
+			if ast2:
+				return (AST ('*', ast.mul [:-1] + (neg (ast2),)), dv)
+			elif len (ast.mul) > 2:
+				return (neg (AST ('*', ast.mul [:-1])), dv)
+			else:
+				return (neg (ast.mul [0]), dv)
 
 	elif ast.is_add:
 		ast2, neg = ast.add [-1].strip_minus (retneg = True)
@@ -276,12 +274,12 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 	ast, dv  = _ast_strip_tail_differential (ast)
 
 	if dv:
-		return \
-				AST ('intg', neg (ast), dv, *from_to) \
-				if ast else \
-				AST ('intg', neg (AST.One), dv, *from_to) \
-				if neg.has_neg else \
-				neg (AST ('intg', None, dv, *from_to))
+		if ast:
+			return AST ('intg', neg (ast), dv, *from_to)
+		elif neg.has_neg:
+			return AST ('intg', neg (AST.One), dv, *from_to)
+		else:
+			return neg (AST ('intg', None, dv, *from_to))
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -293,20 +291,20 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 def _expr_func_func (FUNC, expr_neg_func, expr_super = None):
 	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
 
-	return \
-			_expr_func (2, 'func', func, expr_neg_func) \
-			if expr_super is None else \
-			AST ('^', _expr_func_func (FUNC, expr_neg_func), expr_super) \
-			if expr_super.remove_curlys () != AST.NegOne or not AST ('func', func, ()).is_trigh_func_noninv else \
-			_expr_func_func (f'a{func}', expr_neg_func)
+	if expr_super is None:
+		return _expr_func (2, 'func', func, expr_neg_func)
+	elif expr_super.remove_curlys () != AST.NegOne or not AST ('func', func, ()).is_trigh_func_noninv:
+		return AST ('^', _expr_func_func (FUNC, expr_neg_func), expr_super)
+	else:
+		return _expr_func_func (f'a{func}', expr_neg_func)
 
 def _expr_mat (expr_mat_rows):
-	return \
-			AST.MatEmpty \
-			if not expr_mat_rows else \
-			AST ('mat', expr_mat_rows) \
-			if len (expr_mat_rows [0]) > 1 else  \
-			AST ('vec', tuple (c [0] for c in expr_mat_rows))
+	if not expr_mat_rows:
+		return AST.MatEmpty
+	elif len (expr_mat_rows [0]) > 1:
+		return AST ('mat', expr_mat_rows)
+	else:
+		return AST ('vec', tuple (c [0] for c in expr_mat_rows))
 
 def _expr_curly (ast): # convert curly expression to vector or matrix if appropriate
 	if not ast.is_comma:
@@ -317,10 +315,10 @@ def _expr_curly (ast): # convert curly expression to vector or matrix if appropr
 	c = sum (bool (c.is_vec) for c in ast.comma)
 
 	if c == len (ast.comma) and len (set (len (c.vec) for c in ast.comma)) == 1:
-		return \
-				AST ('mat', tuple (c.vec for c in ast.comma)) \
-				if len (ast.comma [0].vec) > 1 else \
-				AST ('vec', tuple (c.vec [0] for c in ast.comma))
+		if len (ast.comma [0].vec) > 1:
+			return AST ('mat', tuple (c.vec for c in ast.comma))
+		else:
+			return AST ('vec', tuple (c.vec [0] for c in ast.comma))
 
 	return AST ('vec', ast.comma) # raise SyntaxError ('invalid matrix syntax')
 
@@ -338,16 +336,16 @@ def _expr_num (NUM):
 		return AST ('#', f'{num}{g2 [0].lower ()}+{g2 [1:]}')
 
 def _expr_var (VAR, var_tex_xlat):
-		var = \
-				'partial' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
-				if VAR.grp [0] else \
-				'd' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_')) \
-				if VAR.grp [1] else \
-				var_tex_xlat [VAR.grp [3]] \
-				if VAR.grp [3] in var_tex_xlat else \
-				AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
+	if VAR.grp [0]:
+		var = 'partial' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_'))
+	elif VAR.grp [1]:
+		var = 'd' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_'))
+	elif VAR.grp [3] in var_tex_xlat:
+		var = var_tex_xlat [VAR.grp [3]]
+	else:
+		var = AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-		return AST ('@', var + '_prime' * len (VAR.grp [4]))
+	return AST ('@', var + '_prime' * len (VAR.grp [4]))
 
 #...............................................................................................
 class Parser (lalr1.LALR1):
