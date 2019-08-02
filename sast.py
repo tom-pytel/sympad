@@ -506,7 +506,7 @@ _AST_OP2CLS = {
 	'vec': AST_Vec,
 	'mat': AST_Mat,
 	'piece': AST_Piece,
-	'lamb': AST_Lamb, # not to be confused with the Greek variable lambda
+	'lamb': AST_Lamb,
 	'idx': AST_Idx,
 	'slice': AST_Slice,
 }

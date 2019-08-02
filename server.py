@@ -94,7 +94,7 @@ def _ast_remap (ast, map_, recurse = True):
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
-	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb, _VARS.items ())}
+	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
 
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
@@ -292,8 +292,8 @@ class Handler (SimpleHTTPRequestHandler):
 		self.send_header ('Content-type', 'application/json')
 		self.send_header ('Cache-Control', 'no-store')
 		self.end_headers ()
-		# self.wfile.write (json.dumps (response).encode ('utf8'))
-		self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
+		self.wfile.write (json.dumps (response).encode ('utf8'))
+		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _PARSER.parse (request ['text'])
