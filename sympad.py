@@ -3232,20 +3232,20 @@ def _ast_func_tuple_args (ast):
 	return ast.comma if ast.is_comma else (ast,)
 
 def _ast_func_reorder (ast):
-	wrap = None
+	wrap2 = None
 
 	if ast.is_fact:
-		ast2, wrap = ast.fact, lambda a: AST ('!', a)
+		ast2, wrap2 = ast.fact, lambda a: AST ('!', a)
 	elif ast.is_pow:
-		ast2, wrap = ast.base, lambda a: AST ('^', a, ast.exp)
+		ast2, wrap2 = ast.base, lambda a: AST ('^', a, ast.exp)
 	elif ast.is_attr:
-		ast2, wrap = ast.obj, lambda a: AST ('.', a, *ast [2:])
+		ast2, wrap2 = ast.obj, lambda a: AST ('.', a, *ast [2:])
 
-	if wrap:
-		ast3, wrap2 = _ast_func_reorder (ast2)
+	if wrap2:
+		ast3, wrap3 = _ast_func_reorder (ast2)
 
-		if ast3.is_paren:
-			return ast3, lambda a: wrap (wrap2 (a))
+		if ast3.is_paren or ast3.is_brack:
+			return ast3, lambda a: wrap2 (wrap3 (a))
 
 	return ast, lambda a: a
 
@@ -4115,11 +4115,11 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	p = Parser ()
-# 	a = p.parse (r'lambda x: y') [0]
-# 	# a = sym.ast2spt (a)
-# 	print (a)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	p = Parser ()
+	a = p.parse (r'o [i].m') [0]
+	# a = sym.ast2spt (a)
+	print (a)
 #!/usr/bin/env python
 # python 3.6+
 
