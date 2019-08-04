@@ -245,6 +245,15 @@ def expr_piece ():
 def expr_lamb ():
 	return f'lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr ()}'
 
+def expr_idx ():
+	return f'{expr (1)} [{expr (1)}]'
+
+def expr_slice ():
+	return \
+			f'{expr (1)} : {expr (1)}' \
+			if random () >= 0.5 else \
+			f'{expr (1)} : {expr (1)} : {expr (1)}'
+
 #...............................................................................................
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
 
