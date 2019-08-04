@@ -1,9 +1,8 @@
-// TODO: clear() function to delete old log items.
-// TODO: Change input to text field for longer expression support.
-// TODO: Multiple spaces screw up overlay text position.
 // TODO: Change how left/right arrows interact with autocomplete.
 // TODO: Stupid scrollbars...
+// TODO: Change input to text field for longer expression support?
 // TODO: Arrow keys in Edge?
+// TODO: clear() function to delete old log items?
 
 URL              = '/';
 MJQueue          = null;
@@ -57,18 +56,24 @@ function generateBG () {
 	ctx.putImageData (imgd, 0, 0);
 
 	if (window.location.pathname == '/') {
-		canv        = $('#InputBG') [0];
-		ctx         = canv.getContext ('2d');
-		canv.width  = window.innerWidth;
+		for (let name of ['#InputBG', '#InputBGLeft', '#InputBGRight']) {
+			canv        = $(name) [0];
+			ctx         = canv.getContext ('2d');
+			canv.width  = window.innerWidth;
 
-		ctx.putImageData (imgd, 0, 0);
+			ctx.putImageData (imgd, 0, 0);
+		}
 	}
 }
 
 //...............................................................................................
 function copyInputStyle () {
-	JQInput.css ({left: $('#LogEntry1').position ().left})
-	JQInput.width ($('#Log').width ());
+	let left = $('#LogEntry1').position ().left;
+
+	JQInput.css ({left: left})
+	JQInput.width (window.innerWidth - left - 32);
+	$('#InputBGLeft').width (left);
+	$('#InputBGRight').css ({left: window.innerWidth - 30});
 
 	let style   = getComputedStyle (document.getElementById ('Input'));
 	let overlay = document.getElementById ('InputOverlay');
@@ -77,7 +82,8 @@ function copyInputStyle () {
     overlay.style [prop] = style [prop];
 	}
 
-	overlay.style ['backgroundColor'] = 'transparent';
+	overlay.style ['z-index']        = 4;
+	overlay.style ['pointer-events'] = 'none';
 }
 
 //...............................................................................................
@@ -126,6 +132,7 @@ function monitorStuff () {
 		JQInput.focus ();
 	}
 
+	updateOverlayPosition ();
 	setTimeout (monitorStuff, 50);
 }
 
@@ -206,6 +213,17 @@ function copyToClipboard (e, val_or_eval, idx, subidx = 0) {
 }
 
 //...............................................................................................
+function updateOverlayPosition () {
+	let left       = -JQInput.scrollLeft ();
+	let goodwidth  = $('#OverlayGood').width ();
+	let errorwidth = $('#OverlayError').width ();
+
+	$('#OverlayGood').css ({left: left})
+	$('#OverlayError').css ({top: 0, left: left + goodwidth});
+	$('#OverlayAutocomplete').css ({top: 0, left: left + goodwidth + errorwidth});
+}
+
+//...............................................................................................
 function updateOverlay (text, erridx, autocomplete) {
 	ErrorIdx     = erridx;
 	Autocomplete = autocomplete;
@@ -220,6 +238,8 @@ function updateOverlay (text, erridx, autocomplete) {
 	}
 
 	$('#OverlayAutocomplete').text (Autocomplete.join (''));
+
+	updateOverlayPosition ();
 }
 
 //...............................................................................................
@@ -498,6 +518,10 @@ function inputKeydown (e) {
 			// updateOverlay (text, ErrorIdx, Autocomplete);
 		}
 	}
+
+	setTimeout (updateOverlayPosition, 0);
+
+	return true;
 }
 
 //...............................................................................................

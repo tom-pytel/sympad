@@ -46,7 +46,25 @@ body {
 	bottom: 0;
 	left: 0;
 	right: 0;
-	background-color: white;
+	background-color: #0000;
+}
+
+#InputBGLeft {
+	position: fixed;
+	z-index: 5;
+	height: 4em;
+	bottom: 0;
+	left: 0;
+	background-color: #0000;
+}
+
+#InputBGRight {
+	position: fixed;
+	z-index: 5;
+	height: 4em;
+	bottom: 0;
+	right: 0;
+	background-color: #0000;
 }
 
 #Input {
@@ -62,17 +80,23 @@ body {
 
 #InputOverlay {
 	z-index: 4;
+	pointer-events: none;
 }
 
 #OverlayGood {
+	white-space: pre;
 	-webkit-text-fill-color: transparent;
 }
 
 #OverlayError {
+	position: absolute;
+	white-space: pre;
 	-webkit-text-fill-color: #f44;
 }
 
 #OverlayAutocomplete {
+	position: absolute;
+	white-space: pre;
 	-webkit-text-fill-color: #999;
 }
 

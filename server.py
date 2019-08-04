@@ -20,7 +20,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '0.5.3'
+_VERSION         = '0.5.4'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])

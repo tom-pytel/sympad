@@ -82,7 +82,25 @@ body {
 	bottom: 0;
 	left: 0;
 	right: 0;
-	background-color: white;
+	background-color: #0000;
+}
+
+#InputBGLeft {
+	position: fixed;
+	z-index: 5;
+	height: 4em;
+	bottom: 0;
+	left: 0;
+	background-color: #0000;
+}
+
+#InputBGRight {
+	position: fixed;
+	z-index: 5;
+	height: 4em;
+	bottom: 0;
+	right: 0;
+	background-color: #0000;
 }
 
 #Input {
@@ -98,17 +116,23 @@ body {
 
 #InputOverlay {
 	z-index: 4;
+	pointer-events: none;
 }
 
 #OverlayGood {
+	white-space: pre;
 	-webkit-text-fill-color: transparent;
 }
 
 #OverlayError {
+	position: absolute;
+	white-space: pre;
 	-webkit-text-fill-color: #f44;
 }
 
 #OverlayAutocomplete {
+	position: absolute;
+	white-space: pre;
 	-webkit-text-fill-color: #999;
 }
 
@@ -168,12 +192,11 @@ body {
 
 	'script.js': # script.js
 
-r"""// TODO: clear() function to delete old log items.
-// TODO: Change input to text field for longer expression support.
-// TODO: Multiple spaces screw up overlay text position.
-// TODO: Change how left/right arrows interact with autocomplete.
+r"""// TODO: Change how left/right arrows interact with autocomplete.
 // TODO: Stupid scrollbars...
+// TODO: Change input to text field for longer expression support?
 // TODO: Arrow keys in Edge?
+// TODO: clear() function to delete old log items?
 
 URL              = '/';
 MJQueue          = null;
@@ -227,18 +250,24 @@ function generateBG () {
 	ctx.putImageData (imgd, 0, 0);
 
 	if (window.location.pathname == '/') {
-		canv        = $('#InputBG') [0];
-		ctx         = canv.getContext ('2d');
-		canv.width  = window.innerWidth;
+		for (let name of ['#InputBG', '#InputBGLeft', '#InputBGRight']) {
+			canv        = $(name) [0];
+			ctx         = canv.getContext ('2d');
+			canv.width  = window.innerWidth;
 
-		ctx.putImageData (imgd, 0, 0);
+			ctx.putImageData (imgd, 0, 0);
+		}
 	}
 }
 
 //...............................................................................................
 function copyInputStyle () {
-	JQInput.css ({left: $('#LogEntry1').position ().left})
-	JQInput.width ($('#Log').width ());
+	let left = $('#LogEntry1').position ().left;
+
+	JQInput.css ({left: left})
+	JQInput.width (window.innerWidth - left - 32);
+	$('#InputBGLeft').width (left);
+	$('#InputBGRight').css ({left: window.innerWidth - 30});
 
 	let style   = getComputedStyle (document.getElementById ('Input'));
 	let overlay = document.getElementById ('InputOverlay');
@@ -247,7 +276,8 @@ function copyInputStyle () {
     overlay.style [prop] = style [prop];
 	}
 
-	overlay.style ['backgroundColor'] = 'transparent';
+	overlay.style ['z-index']        = 4;
+	overlay.style ['pointer-events'] = 'none';
 }
 
 //...............................................................................................
@@ -296,6 +326,7 @@ function monitorStuff () {
 		JQInput.focus ();
 	}
 
+	updateOverlayPosition ();
 	setTimeout (monitorStuff, 50);
 }
 
@@ -376,6 +407,17 @@ function copyToClipboard (e, val_or_eval, idx, subidx = 0) {
 }
 
 //...............................................................................................
+function updateOverlayPosition () {
+	let left       = -JQInput.scrollLeft ();
+	let goodwidth  = $('#OverlayGood').width ();
+	let errorwidth = $('#OverlayError').width ();
+
+	$('#OverlayGood').css ({left: left})
+	$('#OverlayError').css ({top: 0, left: left + goodwidth});
+	$('#OverlayAutocomplete').css ({top: 0, left: left + goodwidth + errorwidth});
+}
+
+//...............................................................................................
 function updateOverlay (text, erridx, autocomplete) {
 	ErrorIdx     = erridx;
 	Autocomplete = autocomplete;
@@ -390,6 +432,8 @@ function updateOverlay (text, erridx, autocomplete) {
 	}
 
 	$('#OverlayAutocomplete').text (Autocomplete.join (''));
+
+	updateOverlayPosition ();
 }
 
 //...............................................................................................
@@ -668,6 +712,10 @@ function inputKeydown (e) {
 			// updateOverlay (text, ErrorIdx, Autocomplete);
 		}
 	}
+
+	setTimeout (updateOverlayPosition, 0);
+
+	return true;
 }
 
 //...............................................................................................
@@ -802,6 +850,8 @@ r"""<!DOCTYPE html>
 <div id="Log"></div>
 
 <canvas id="InputBG"></canvas>
+<canvas id="InputBGLeft"></canvas>
+<canvas id="InputBGRight"></canvas>
 <input id="Input" oninput="inputting (this.value)" autofocus>
 <div id="InputOverlay"><span id="OverlayGood"></span><span id="OverlayError"></span><span id="OverlayAutocomplete"></span></div>
 
@@ -4141,7 +4191,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.5.3'
+_VERSION         = '0.5.4'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
