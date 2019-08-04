@@ -121,6 +121,7 @@ a * [2]
 sqrt(1, 2)
 x*[][y]
 lambda: x:
+a*[x][y][z]
 """.strip ().split ('\n')
 
 def expr_eq (): ## BROKEN!
