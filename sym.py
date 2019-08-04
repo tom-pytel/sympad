@@ -573,7 +573,7 @@ _ast2py_funcs = {
 	'(': lambda ast: f'({ast2py (ast.paren)})',
 	'[': lambda ast: f'[{", ".join (ast2py (b) for b in ast.brack)}]',
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
-	'-': lambda ast: f'-{_ast2py_paren (ast.minus)}' if ast.minus.is_add else f'-{ast2py (ast.minus)}',
+	'-': lambda ast: f'-{_ast2py_paren (ast.minus, ast.minus.op in {"+", "lamb"})}',
 	'!': lambda ast: f'factorial({ast2py (ast.fact)})',
 	'+': lambda ast: ' + '.join (ast2py (n) for n in ast.add).replace (' + -', ' - '),
 	'*': lambda ast: '*'.join (_ast2py_paren (n) if n.is_add else ast2py (n) for n in ast.mul),
@@ -950,9 +950,9 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', '%', (('func', '$N', (('#', '2'),)),))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	ast = AST ('lamb', ('slice', ('@', 'x'), False, None), ())
+	res = ast2tex (ast)
+	# res = spt2ast (res)
+	print (res)

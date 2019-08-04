@@ -197,6 +197,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ("$S ('1/2')"), ('func', '$S', (('"', '1/2'),)))
 		self.assertEqual (p ("$N ($S ('1/2'))"), ('func', '$N', (('func', '$S', (('"', '1/2'),)),)))
 		self.assertEqual (p ('{lambda x: $S (x)}.Half'), ('.', ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),)), 'Half'))
+		self.assertEqual (p ('o [i].t'), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
+		self.assertEqual (p ('o [i]**2'), ('^', ('idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
+		self.assertEqual (p ('o [i]!'), ('!', ('idx', ('@', 'o'), (('@', 'i'),))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -367,6 +370,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ("$S ('1/2')")), "\\operatorname{$S}\\left(\\text{'1/2'} \\right)")
 		self.assertEqual (ast2tex (p ("$N ($S ('1/2'))")), "\\operatorname{$N}\\left(\\operatorname{$S}\\left(\\text{'1/2'} \\right) \\right)")
 		self.assertEqual (ast2tex (p ('{lambda x: $S (x)}.Half')), '\\left(x \\mapsto \\operatorname{$S}\\left(x \\right) \\right).Half')
+		self.assertEqual (ast2tex (p ('o [i].t')), 'o\\left[i \\right].t')
+		self.assertEqual (ast2tex (p ('o [i]**2')), '\\left(o\\left[i \\right] \\right)^2')
+		self.assertEqual (ast2tex (p ('o [i]!')), '\\left(o\\left[i \\right] \\right)!')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -537,6 +543,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ("$S ('1/2')")), "$S('1/2')")
 		self.assertEqual (ast2nat (p ("$N ($S ('1/2'))")), "$N($S('1/2'))")
 		self.assertEqual (ast2nat (p ('{lambda x: $S (x)}.Half')), '(lambda x: $S(x)).Half')
+		self.assertEqual (ast2nat (p ('o [i].t')), 'o[i].t')
+		self.assertEqual (ast2nat (p ('o [i]**2')), '(o[i])**2')
+		self.assertEqual (ast2nat (p ('o [i]!')), '(o[i])!')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -707,6 +716,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ("$S ('1/2')")), "S('1/2')")
 		self.assertEqual (ast2py (p ("$N ($S ('1/2'))")), "N(S('1/2'))")
 		self.assertEqual (ast2py (p ('{lambda x: $S (x)}.Half')), 'lambda x: S(x).Half')
+		self.assertEqual (ast2py (p ('o [i].t')), 'o[i].t')
+		self.assertEqual (ast2py (p ('o [i]**2')), 'o[i]**2')
+		self.assertEqual (ast2py (p ('o [i]!')), 'factorial(o[i])')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -877,6 +889,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ("$S ('1/2')")), ('func', '$S', (('"', '1/2'),)))
 		self.assertEqual (ast2tex2ast (p ("$N ($S ('1/2'))")), ('func', '$N', (('func', '$S', (('"', '1/2'),)),)))
 		self.assertEqual (ast2tex2ast (p ('{lambda x: $S (x)}.Half')), ('.', ('(', ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))), 'Half'))
+		self.assertEqual (ast2tex2ast (p ('o [i].t')), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
+		self.assertEqual (ast2tex2ast (p ('o [i]**2')), ('^', ('(', ('idx', ('@', 'o'), (('@', 'i'),))), ('#', '2')))
+		self.assertEqual (ast2tex2ast (p ('o [i]!')), ('!', ('(', ('idx', ('@', 'o'), (('@', 'i'),)))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1047,6 +1062,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ("$S ('1/2')")), ('func', '$S', (('"', '1/2'),)))
 		self.assertEqual (ast2nat2ast (p ("$N ($S ('1/2'))")), ('func', '$N', (('func', '$S', (('"', '1/2'),)),)))
 		self.assertEqual (ast2nat2ast (p ('{lambda x: $S (x)}.Half')), ('.', ('(', ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))), 'Half'))
+		self.assertEqual (ast2nat2ast (p ('o [i].t')), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
+		self.assertEqual (ast2nat2ast (p ('o [i]**2')), ('^', ('(', ('idx', ('@', 'o'), (('@', 'i'),))), ('#', '2')))
+		self.assertEqual (ast2nat2ast (p ('o [i]!')), ('!', ('(', ('idx', ('@', 'o'), (('@', 'i'),)))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1217,6 +1235,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ("$S ('1/2')")), ('*', (('@', 'S'), ('(', ('"', '1/2')))))
 		self.assertEqual (ast2py2ast (p ("$N ($S ('1/2'))")), ('*', (('@', 'N'), ('(', ('*', (('@', 'S'), ('(', ('"', '1/2'))))))))
 		self.assertEqual (ast2py2ast (p ('{lambda x: $S (x)}.Half')), ('lamb', ('*', (('@', 'S'), ('.', ('(', ('@', 'x')), 'Half'))), (('@', 'x'),)))
+		self.assertEqual (ast2py2ast (p ('o [i].t')), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
+		self.assertEqual (ast2py2ast (p ('o [i]**2')), ('^', ('idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
+		self.assertEqual (ast2py2ast (p ('o [i]!')), ('func', 'factorial', (('idx', ('@', 'o'), (('@', 'i'),)),)))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1387,6 +1408,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ("$S ('1/2')")), ('/', ('#', '1'), ('#', '2')))
 		self.assertEqual (ast2spt2ast (p ("$N ($S ('1/2'))")), ('#', '0.5'))
 		self.assertEqual (ast2spt2ast (p ('{lambda x: $S (x)}.Half')), ('/', ('#', '1'), ('#', '2')))
+		self.assertRaises (TypeError, ast2spt2ast, p ('o [i].t'))
+		self.assertRaises (TypeError, ast2spt2ast, p ('o [i]**2'))
+		self.assertRaises (TypeError, ast2spt2ast, p ('o [i]!'))
 
 _EXPRESSIONS = """
 1
@@ -1557,6 +1581,9 @@ $N (1/2)
 $S ('1/2')
 $N ($S ('1/2'))
 {lambda x: $S (x)}.Half
+o [i].t
+o [i]**2
+o [i]!
 """
 
 if __name__ == '__main__':
