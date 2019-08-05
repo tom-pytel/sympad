@@ -14,8 +14,8 @@ _USER_FUNCS            = set () # set or dict of user function names
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
 
-	def _init (self, tex, nat = None, py = None, spt = None):
-		self.tex, self.nat, self.py, self.spt = tex, (tex if nat is None else nat), (tex if py is None else py), spt
+	def _init (self, tex = None, nat = None, py = None, spt = None):
+		self.tex, self.nat, self.py, self.spt = tex, nat, py, spt
 
 sast.register_AST (AST_Text)
 
@@ -222,11 +222,12 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
-_ast2tex_xlat_func_greek = {
-	'beta': '\\beta',
-	'gamma': '\\Gamma',
-	'Gamma': '\\Gamma',
-	'zeta': '\\zeta',
+_ast2tex_xlat_func2text = {
+	'beta'    : lambda ast: f'\\beta\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'Gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'zeta'    : lambda ast: f'\\zeta\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'binomial': lambda ast: f'\\binom{{{_ast2tex (ast.args [0])}}}{{{_ast2tex (ast.args [1])}}}' if len (ast.args) == 2 else None,
 }
 
 def _ast2tex_func (ast):
@@ -239,14 +240,18 @@ def _ast2tex_func (ast):
 
 		return f'{n}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
 
-	greek = _ast2tex_xlat_func_greek.get (ast.func)
+	xact = _ast2tex_xlat_func2text.get (ast.func)
 
-	return \
-			f'{greek}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)' \
-			if greek else \
-			f'\\{ast.func}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)' \
-			if ast.func in AST.Func.TEX else \
-			'\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
+	if xact:
+		text = xact (ast)
+
+		if text is not None:
+			return text
+
+	if ast.func in AST.Func.TEX:
+		return f'\\{ast.func}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
+	else:
+		return '\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
 
 def _ast2tex_lim (ast):
 	s = _ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -312,7 +317,8 @@ _ast2tex_funcs = {
 	'!': lambda ast: _ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
 	'+': _ast2tex_add,
 	'*': _ast2tex_mul,
-	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{_ast2tex (ast.denom)}}}',
+	# '/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{_ast2tex (ast.denom)}}}',
+	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{_ast2tex (ast.denom)}}}',
 	'^': _ast2tex_pow,
 	'log': _ast2tex_log,
 	'sqrt': lambda ast: f'\\sqrt{{{_ast2tex_wrap (ast.rad, 0, {","})}}}' if ast.idx is None else f'\\sqrt[{_ast2tex (ast.idx)}]{{{_ast2tex_wrap (ast.rad, 0, {","})}}}',
@@ -405,8 +411,9 @@ def _ast2nat_mul (ast, ret_has = False):
 	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2nat_div (ast):
+		# (_ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
 	n, ns = (_ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
-		(_ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
+		(_ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
 		_ast2nat_curly_mul_exp (ast.numer, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
 
 	d, ds = (_ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else _ast2nat_curly_mul_exp (ast.denom, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
@@ -415,13 +422,14 @@ def _ast2nat_div (ast):
 	return f'{n}{" / " if s else "/"}{d}'
 
 def _ast2nat_pow (ast, trighpow = True):
-	b = _ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '|', 'mat'} or ast.base.is_pos_num))
+	b = _ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat'} or ast.base.is_pos_num))
 	p = _ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'}, {","})
 
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
 		i = len (ast.base.func)
 
-		return f'{b [1 : i + 1]}**{p}{b [i + 1 : -1]}'
+		return f'{b [:i]}**{p}{b [i:]}'
+		# return f'{b [1 : i + 1]}**{p}{b [i + 1 : -1]}'
 
 	return f'{b}**{p}'
 
@@ -961,7 +969,6 @@ def set_user_funcs (user_funcs):
 	_USER_FUNCS = user_funcs
 
 class sym: # for single script
-	AST_Text       = AST_Text
 	set_precision  = set_precision
 	set_user_funcs = set_user_funcs
 	ast2tex        = ast2tex
@@ -970,9 +977,9 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('idx', ('@', 'a'), (('#', '1'), ('#', '2')))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	ast = AST ('func', 'binomial', (('@', 'x'), ('@', 'y')))
+	res = ast2spt (ast)
+	res = spt2ast (res)
+	print (res)

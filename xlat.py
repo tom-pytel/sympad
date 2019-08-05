@@ -195,7 +195,7 @@ def xlat_func (xact, args):
 class xlat: # for single script
 	XLAT_FUNC_NAT = XLAT_FUNC_NAT
 	XLAT_FUNC_TEX = XLAT_FUNC_TEX
-	xlat_func     = xlat_func
+	xlat_func         = xlat_func
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
