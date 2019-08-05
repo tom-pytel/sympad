@@ -117,6 +117,13 @@ def _expr_piece (expr, expr_if, expr_else):
 	else:
 		return AST ('piece', ((expr, expr_if), (expr_else, True)))
 
+def _expr_neg (expr):
+	# TODO: DELETEME: return expr.neg (stack = True)
+	if expr.is_mul:
+		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
+	else:
+		return expr.neg (stack = True)
+
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 	last      = lhs.mul [-1] if lhs.is_mul else lhs
 	arg, wrap = _ast_func_reorder (rhs)
@@ -598,20 +605,20 @@ class Parser (lalr1.LALR1):
 	def expr_ineq_3        (self, expr_add):                                       return expr_add
 
 	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, expr_mul_exp.neg (stack = True))
+	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp)) # TODO: DELETEME: AST.flatcat ('+', expr_add, expr_mul_exp.neg (stack = True))
 	def expr_add_3         (self, expr_mul_exp):                                   return expr_mul_exp
 
 	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
 
-	def expr_neg_1         (self, MINUS, expr_neg):                                return expr_neg.neg (stack = True)
+	def expr_neg_1         (self, MINUS, expr_neg):                                return _expr_neg (expr_neg) # TODO: DELETEME: expr_neg.neg (stack = True)
 	def expr_neg_2         (self, expr_diff):                                      return expr_diff
 
 	def expr_diff          (self, expr_div):                                       return _expr_diff (expr_div)
 
 	def expr_div_1         (self, expr_div, DIVIDE, expr_mul_imp):                 return AST ('/', expr_div, expr_mul_imp)
-	def expr_div_2         (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, expr_mul_imp.neg (stack = True))
+	def expr_div_2         (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, _expr_neg (expr_mul_imp)) # TODO: DELETEME: AST ('/', expr_div, expr_mul_imp.neg (stack = True))
 	def expr_div_3         (self, expr_mul_imp):                                   return expr_mul_imp
 
 	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                        return _expr_mul_imp (expr_mul_imp, expr_intg, self._USER_FUNCS)
@@ -714,7 +721,7 @@ class Parser (lalr1.LALR1):
 	def expr_super_3       (self, CARET, expr_frac):                               return expr_frac
 	def expr_super_4       (self, CARET1):                                         return _ast_from_tok_digit_or_var (CARET1)
 
-	def expr_neg_func_1    (self, MINUS, expr_neg_func):                           return expr_neg_func.neg (stack = True)
+	def expr_neg_func_1    (self, MINUS, expr_neg_func):                           return _expr_neg (expr_neg_func) # TODO: DELETEME: expr_neg_func.neg (stack = True)
 	def expr_neg_func_2    (self, expr_func):                                      return expr_func
 
 	def caret_or_dblstar_1 (self, DBLSTAR):                                        return '**'
@@ -934,6 +941,6 @@ class sparser: # for single script
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	a = p.parse (r'f = lambda x, y: z') [0]
+# 	a = p.parse (r'y - 1*x') [0]
 # 	# a = sym.ast2spt (a)
 # 	print (a)

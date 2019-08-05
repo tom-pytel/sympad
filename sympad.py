@@ -2477,7 +2477,7 @@ def _ast2tex_mul (ast, ret_has = False):
 
 	for n in ast.mul:
 		s = _ast2tex_wrap (n, \
-				_ast_is_neg (n) or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+				(p and _ast_is_neg (n)) or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
 				n.op in {'=', '+'} or (n.is_piece and n is not ast.mul [-1]))
 
 		if p and p.is_attr and s [:6] == '\\left(':
@@ -2686,7 +2686,7 @@ def _ast2nat_mul (ast, ret_has = False):
 
 	for n in ast.mul:
 		s = _ast2nat_wrap (n, \
-				_ast_is_neg (n) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+				(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
 				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.mul [-1]))
 
 		if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
@@ -3073,7 +3073,7 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 	tex = sp.latex (spt)
 
-	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to javascript.
+	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
 		tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
 
 	return AST ('text', tex, str (spt), str (spt), spt)
@@ -3276,9 +3276,9 @@ class sym: # for single script
 	spt2ast        = spt2ast
 
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('func', 'binomial', (('@', 'x'), ('@', 'y')))
-	res = ast2spt (ast)
-	res = spt2ast (res)
+	ast = AST ('*', (('#', '-1'), ('@', 'x')))
+	res = ast2nat (ast)
+	# res = spt2ast (res)
 	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 #
@@ -3395,6 +3395,13 @@ def _expr_piece (expr, expr_if, expr_else):
 		return AST ('piece', ((expr, expr_if),) + expr_else.piece)
 	else:
 		return AST ('piece', ((expr, expr_if), (expr_else, True)))
+
+def _expr_neg (expr):
+	# TODO: DELETEME: return expr.neg (stack = True)
+	if expr.is_mul:
+		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
+	else:
+		return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 	last      = lhs.mul [-1] if lhs.is_mul else lhs
@@ -3877,20 +3884,20 @@ class Parser (lalr1.LALR1):
 	def expr_ineq_3        (self, expr_add):                                       return expr_add
 
 	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, expr_mul_exp.neg (stack = True))
+	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp)) # TODO: DELETEME: AST.flatcat ('+', expr_add, expr_mul_exp.neg (stack = True))
 	def expr_add_3         (self, expr_mul_exp):                                   return expr_mul_exp
 
 	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
 
-	def expr_neg_1         (self, MINUS, expr_neg):                                return expr_neg.neg (stack = True)
+	def expr_neg_1         (self, MINUS, expr_neg):                                return _expr_neg (expr_neg) # TODO: DELETEME: expr_neg.neg (stack = True)
 	def expr_neg_2         (self, expr_diff):                                      return expr_diff
 
 	def expr_diff          (self, expr_div):                                       return _expr_diff (expr_div)
 
 	def expr_div_1         (self, expr_div, DIVIDE, expr_mul_imp):                 return AST ('/', expr_div, expr_mul_imp)
-	def expr_div_2         (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, expr_mul_imp.neg (stack = True))
+	def expr_div_2         (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, _expr_neg (expr_mul_imp)) # TODO: DELETEME: AST ('/', expr_div, expr_mul_imp.neg (stack = True))
 	def expr_div_3         (self, expr_mul_imp):                                   return expr_mul_imp
 
 	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                        return _expr_mul_imp (expr_mul_imp, expr_intg, self._USER_FUNCS)
@@ -3993,7 +4000,7 @@ class Parser (lalr1.LALR1):
 	def expr_super_3       (self, CARET, expr_frac):                               return expr_frac
 	def expr_super_4       (self, CARET1):                                         return _ast_from_tok_digit_or_var (CARET1)
 
-	def expr_neg_func_1    (self, MINUS, expr_neg_func):                           return expr_neg_func.neg (stack = True)
+	def expr_neg_func_1    (self, MINUS, expr_neg_func):                           return _expr_neg (expr_neg_func) # TODO: DELETEME: expr_neg_func.neg (stack = True)
 	def expr_neg_func_2    (self, expr_func):                                      return expr_func
 
 	def caret_or_dblstar_1 (self, DBLSTAR):                                        return '**'
@@ -4212,7 +4219,7 @@ class sparser: # for single script
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	a = p.parse (r'f = lambda x, y: z') [0]
+# 	a = p.parse (r'y - 1*x') [0]
 # 	# a = sym.ast2spt (a)
 # 	print (a)
 #!/usr/bin/env python

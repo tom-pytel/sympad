@@ -179,7 +179,7 @@ def _ast2tex_mul (ast, ret_has = False):
 
 	for n in ast.mul:
 		s = _ast2tex_wrap (n, \
-				_ast_is_neg (n) or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+				(p and _ast_is_neg (n)) or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
 				n.op in {'=', '+'} or (n.is_piece and n is not ast.mul [-1]))
 
 		if p and p.is_attr and s [:6] == '\\left(':
@@ -388,7 +388,7 @@ def _ast2nat_mul (ast, ret_has = False):
 
 	for n in ast.mul:
 		s = _ast2nat_wrap (n, \
-				_ast_is_neg (n) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+				(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
 				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.mul [-1]))
 
 		if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
@@ -775,7 +775,7 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 	tex = sp.latex (spt)
 
-	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to javascript.
+	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
 		tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
 
 	return AST ('text', tex, str (spt), str (spt), spt)
@@ -979,7 +979,7 @@ class sym: # for single script
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('func', 'binomial', (('@', 'x'), ('@', 'y')))
-	res = ast2spt (ast)
-	res = spt2ast (res)
+	ast = AST ('*', (('#', '-1'), ('@', 'x')))
+	res = ast2nat (ast)
+	# res = spt2ast (res)
 	print (res)
