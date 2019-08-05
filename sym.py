@@ -651,13 +651,20 @@ class ast2spt:
 			obj = obj.args [0]
 
 		if obj.is_lamb and obj.lamb.is_func: # support S.Half and other lambdized sympy function or class attributes
-			obj = getattr (sp, obj.lamb.unescaped)
+			spt = getattr (sp, obj.lamb.unescaped)
 		else:
-			obj = self._ast2spt (ast.obj)
+			spt = self._ast2spt (ast.obj)
 
-		mbr = getattr (obj, ast.attr)
+		try:
+			mbr = getattr (spt, ast.attr)
 
-		return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
+			return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
+
+		except: # unresolved symbols should not raise but be returned as origninal attribute access op
+			if not obj.free_vars ():
+				raise
+
+		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), sp.S.One)
 
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
@@ -697,11 +704,11 @@ class ast2spt:
 
 	def _ast2spt_idx (self, ast):
 		spt = self._ast2spt (ast.obj)
-		idx = self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else sp.Tuple (self._ast2spt (i) for i in ast.idx)
+		idx = self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)
 
 		try:
 			return spt [idx]
-		except:
+		except: # unresolved symbols should not raise but be returned as origninal indexing op
 			if not ast.free_vars ():
 				raise
 
@@ -965,7 +972,7 @@ class sym: # for single script
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('idx', ('[', (('#', '0'), ('#', '1'), ('#', '2'))), (('#', '0'),))
+	ast = AST ('idx', ('@', 'a'), (('#', '1'), ('#', '2')))
 	res = ast2spt (ast)
 	res = spt2ast (res)
 	print (res)
