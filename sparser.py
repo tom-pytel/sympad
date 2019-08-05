@@ -919,9 +919,9 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r'f = lambda x, y: z') [0]
-	# a = sym.ast2spt (a)
-	print (a)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	a = p.parse (r'f = lambda x, y: z') [0]
+# 	# a = sym.ast2spt (a)
+# 	print (a)

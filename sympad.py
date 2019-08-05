@@ -2316,7 +2316,8 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 sast.register_AST (AST_Text)
 
-class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit
+class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
+	is_number  = False
 	SYMPAD_ast = lambda self: AST (*literal_eval (self.args [0]))
 
 	def SYMPAD_eval (self):
@@ -2991,6 +2992,18 @@ class ast2spt:
 					if ast.intg is None else \
 					sp.Integral (self._ast2spt (ast [1]), (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
+	def _ast2spt_idx (self, ast):
+		spt = self._ast2spt (ast.obj)
+		idx = self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else sp.Tuple (self._ast2spt (i) for i in ast.idx)
+
+		try:
+			return spt [idx]
+		except:
+			if not ast.free_vars ():
+				raise
+
+		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), sp.S.One)
+
 	_ast2spt_eq = {
 		'=':  sp.Eq,
 		'==': sp.Eq,
@@ -3028,7 +3041,7 @@ class ast2spt:
 		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
 		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
-		'idx': lambda self, ast: self._ast2spt (ast.obj) [self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)],
+		'idx': _ast2spt_idx, # lambda self, ast: self._ast2spt (ast.obj) [self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)], #
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
 
 		'text': lambda self, ast: ast.spt,
@@ -3247,11 +3260,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', 'series', (('^', ('@', 'e'), ('-', ('@', 'x'))),))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
-# 	print (res)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	ast = AST ('idx', ('[', (('#', '0'), ('#', '1'), ('#', '2'))), (('#', '0'),))
+	res = ast2spt (ast)
+	res = spt2ast (res)
+	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 #
 # Time and interest permitting:
@@ -4170,11 +4183,11 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r'f = lambda x, y: z') [0]
-	# a = sym.ast2spt (a)
-	print (a)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	a = p.parse (r'f = lambda x, y: z') [0]
+# 	# a = sym.ast2spt (a)
+# 	print (a)
 #!/usr/bin/env python
 # python 3.6+
 
