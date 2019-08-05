@@ -2466,7 +2466,7 @@ def _ast2tex_add (ast):
 	return ' + '.join (_ast2tex_wrap (n, \
 			((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
 			(n.op in ("piece") and n is not ast.add [-1]) or n.op in {'='})
-			for n in ast.add).replace (' + -', ' - ')
+			for n in ast.add).replace (' + -', ' - ').replace (' + {-', ' - {')
 
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
@@ -2669,7 +2669,7 @@ def _ast2nat_add (ast):
 	return ' + '.join (_ast2nat_wrap (n, \
 			n.is_piece or ((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
 			(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', 'lamb'} \
-			) for n in ast.add).replace (' + -', ' - ')
+			) for n in ast.add).replace (' + -', ' - ').replace (' + {-', ' - {')
 
 def _ast2nat_mul (ast, ret_has = False):
 	t   = []
@@ -2872,7 +2872,7 @@ _ast2py_funcs = {
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus, ast.minus.op in {"+", "lamb"})}',
 	'!': lambda ast: f'factorial({ast2py (ast.fact)})',
-	'+': lambda ast: ' + '.join (ast2py (n) for n in ast.add).replace (' + -', ' - '),
+	'+': lambda ast: ' + '.join (ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
 	'*': lambda ast: '*'.join (_ast2py_paren (n) if n.is_add else ast2py (n) for n in ast.mul),
 	'/': _ast2py_div,
 	'^': _ast2py_pow,
@@ -3247,11 +3247,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('lamb', ('slice', ('@', 'x'), False, None), ())
-	res = ast2tex (ast)
-	# res = spt2ast (res)
-	print (res)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('func', 'series', (('^', ('@', 'e'), ('-', ('@', 'x'))),))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 #
 # Time and interest permitting:
@@ -3315,6 +3315,10 @@ def _expr_comma (lhs, rhs):
 	if lhs.is_mul:
 		if lhs.mul.len == 2 and lhs.mul [0].is_var_lambda and lhs.mul [1].is_var:
 			return AST ('lamb', rhs.stop, (lhs.mul [1], rhs.start))
+
+	elif lhs.is_ass:
+		if lhs.rhs.is_mul and lhs.rhs.mul.len == 2 and lhs.rhs.mul [0].is_var_lambda and lhs.rhs.mul [1].is_var:
+			return AST ('=', '=', lhs.lhs, ('lamb', rhs.stop, (lhs.rhs.mul [1], rhs.start)))
 
 	elif lhs.is_comma:
 		for i in range (lhs.comma.len - 1, -1, -1):
@@ -3695,7 +3699,7 @@ class Parser (lalr1.LALR1):
 			b'aOrrFxbuu+zegfwmJZ/rs9uRQDW3LlNtNTh8pS0Nubyzu0roPIfKMefLlp79di6qt0pY5OMgZdwh3+6kr3qe4170TChVf7xBmezBChwPZ+6qQ91c0HNcIm+ogBVSZ6srujh0OzcWyucPVvZ4EH1XHepm0vGe1spi8UMdLBTCOW42Ver4o8zNJV00JlwQqzAF' \
 			b'CEfaw5VWU91Zh7qZDBFuU1ptdUsOvOgPV05ddWcdDFKT0cltyqmvbsmBF4c71GGD+V11qBtzF+smfjB7WR211Z67puX/7pwoqCu7c53SnzdOrReoFhaLnTqu55lQInrLG2DNZAC1TYB3xZ05VbGdS7Y63/H3yC+Ks8Sl6cylCWZNpgD2i1m+2g8HZi0YHt0m' \
 			b's9pqPxyYdTjzI6yGFjiZ6k7+F752XhLLk5uNgYpYMEy6IxXBSw7ujAPzb2KW6IaY76u74zCnv2DgdVeYH6q748D85nCY31Z3x4H5fDI2b2Vq9d7G+w73ju+ZNRzGq6QahFN3MK0h4h+vD2jl6C/Dx780Qas3zMbsqsQhYjuJyFXBkfsqdU2LLqmc8RRXBgWu' \
-			b'TgT3+DB0FJVzq73tee6Rl6ClS8+GJWMzy8U6MIqPFyk2TMmuUpkB5hwlJ82FJwk9CwkGHnyiQ9NJzj0V5c3p/wOPNh1x' 
+			b'TgT3+DB0FJVzq73tee6Rl6ClS8+GJWMzy8U6MIqPFyk2TMmuUpkB5hwlJ82FJwk9CwkGHnyiQ9NJzj0V5c3p/wOPNh1x'
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -3786,10 +3790,11 @@ class Parser (lalr1.LALR1):
 		('ignore',        r'\\,|\\:|\\?\s+|\\text\s*{\s*[^}]*\s*}'),
 	])
 
-	_VARPY_QUICK = fr'(?:{_LETTER})'
-	_VAR_QUICK   = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
+	_PYGREEK_QUICK = '(?:' + '|'.join (reversed (sorted (g for g in AST.Var.GREEK))) + ')'
+	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}|{_LETTER})'
+	_VAR_QUICK     = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
 
-	TOKENS_QUICK = OrderedDict ([ # quick input mode different tokens
+	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens
 		('FUNC',         fr'(@|\%|{_FUNCPY})|\\({_FUNCTEX})|(\${_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 		('SQRT',          r'sqrt|\\sqrt'),
 		('LOG',           r'log|\\log'),
@@ -4167,7 +4172,7 @@ class sparser: # for single script
 
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 	p = Parser ()
-	a = p.parse (r'o [i].m') [0]
+	a = p.parse (r'f = lambda x, y: z') [0]
 	# a = sym.ast2spt (a)
 	print (a)
 #!/usr/bin/env python
