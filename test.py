@@ -204,6 +204,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('o [i].t'), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (p ('o [i]**2'), ('^', ('idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
 		self.assertEqual (p ('o [i]!'), ('!', ('idx', ('@', 'o'), (('@', 'i'),))))
+		self.assertEqual (p ("'Hello' [::-1]"), ('idx', ('"', 'Hello'), (('slice', False, False, ('#', '-1')),)))
+		self.assertEqual (p ('{{1, 2, 3}, {4, 5, 6}} [:,1]'), ('idx', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), (('slice', False, False, None), ('#', '1'))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -381,6 +383,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('o [i].t')), 'o\\left[i \\right].t')
 		self.assertEqual (ast2tex (p ('o [i]**2')), '\\left(o\\left[i \\right] \\right)^2')
 		self.assertEqual (ast2tex (p ('o [i]!')), '\\left(o\\left[i \\right] \\right)!')
+		self.assertEqual (ast2tex (p ("'Hello' [::-1]")), "\\text{'Hello'}\\left[{:}{:}{-1} \\right]")
+		self.assertEqual (ast2tex (p ('{{1, 2, 3}, {4, 5, 6}} [:,1]')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}\\left[{:}, 1 \\right]')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -558,6 +562,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('o [i].t')), 'o[i].t')
 		self.assertEqual (ast2nat (p ('o [i]**2')), '(o[i])**2')
 		self.assertEqual (ast2nat (p ('o [i]!')), '(o[i])!')
+		self.assertEqual (ast2nat (p ("'Hello' [::-1]")), "'Hello'[::-1]")
+		self.assertEqual (ast2nat (p ('{{1, 2, 3}, {4, 5, 6}} [:,1]')), '{{1, 2, 3}, {4, 5, 6}}[:, 1]')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -735,6 +741,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('o [i].t')), 'o[i].t')
 		self.assertEqual (ast2py (p ('o [i]**2')), 'o[i]**2')
 		self.assertEqual (ast2py (p ('o [i]!')), 'factorial(o[i])')
+		self.assertEqual (ast2py (p ("'Hello' [::-1]")), "'Hello'[::-1]")
+		self.assertEqual (ast2py (p ('{{1, 2, 3}, {4, 5, 6}} [:,1]')), 'Matrix([[1, 2, 3], [4, 5, 6]])[:, 1]')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -912,6 +920,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('o [i].t')), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (ast2tex2ast (p ('o [i]**2')), ('^', ('(', ('idx', ('@', 'o'), (('@', 'i'),))), ('#', '2')))
 		self.assertEqual (ast2tex2ast (p ('o [i]!')), ('!', ('(', ('idx', ('@', 'o'), (('@', 'i'),)))))
+		self.assertEqual (ast2tex2ast (p ("'Hello' [::-1]")), ('idx', ('"', 'Hello'), (('slice', False, False, ('#', '-1')),)))
+		self.assertEqual (ast2tex2ast (p ('{{1, 2, 3}, {4, 5, 6}} [:,1]')), ('idx', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), (('slice', False, False, None), ('#', '1'))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1089,6 +1099,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('o [i].t')), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (ast2nat2ast (p ('o [i]**2')), ('^', ('(', ('idx', ('@', 'o'), (('@', 'i'),))), ('#', '2')))
 		self.assertEqual (ast2nat2ast (p ('o [i]!')), ('!', ('(', ('idx', ('@', 'o'), (('@', 'i'),)))))
+		self.assertEqual (ast2nat2ast (p ("'Hello' [::-1]")), ('idx', ('"', 'Hello'), (('slice', False, False, ('#', '-1')),)))
+		self.assertEqual (ast2nat2ast (p ('{{1, 2, 3}, {4, 5, 6}} [:,1]')), ('idx', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), (('slice', False, False, None), ('#', '1'))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1266,6 +1278,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('o [i].t')), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (ast2py2ast (p ('o [i]**2')), ('^', ('idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
 		self.assertEqual (ast2py2ast (p ('o [i]!')), ('func', 'factorial', (('idx', ('@', 'o'), (('@', 'i'),)),)))
+		self.assertEqual (ast2py2ast (p ("'Hello' [::-1]")), ('idx', ('"', 'Hello'), (('slice', False, False, ('#', '-1')),)))
+		self.assertEqual (ast2py2ast (p ('{{1, 2, 3}, {4, 5, 6}} [:,1]')), ('idx', ('func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))),)), (('slice', False, False, None), ('#', '1'))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1443,6 +1457,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('o [i].t')), ('.', ('idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (ast2spt2ast (p ('o [i]**2')), ('^', ('idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
 		self.assertEqual (ast2spt2ast (p ('o [i]!')), ('!', ('idx', ('@', 'o'), (('@', 'i'),))))
+		self.assertEqual (ast2spt2ast (p ("'Hello' [::-1]")), ('"', 'olleH'))
+		self.assertEqual (ast2spt2ast (p ('{{1, 2, 3}, {4, 5, 6}} [:,1]')), ('vec', (('#', '2'), ('#', '5'))))
 
 _EXPRESSIONS = """
 1
@@ -1620,6 +1636,8 @@ $N ($S ('1/2'))
 o [i].t
 o [i]**2
 o [i]!
+'Hello' [::-1]
+{{1, 2, 3}, {4, 5, 6}} [:,1]
 """
 
 if __name__ == '__main__':

@@ -670,7 +670,7 @@ class ast2spt:
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
 
-		if ast.func == AST.Func.NOEVAL: # special no evaluate meta-function
+		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
 		func = getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
@@ -970,9 +970,9 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('idx', ('@', 'a'), (('#', '1'), ('#', '2')))
-	res = ast2spt (ast)
-	res = spt2ast (res)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('idx', ('@', 'a'), (('#', '1'), ('#', '2')))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	print (res)

@@ -978,9 +978,10 @@ The single-click native and double-click Python formats should always be pasteab
 <h4>Quick Input Mode</h4>
 
 <p>
+This is the input mode SymPad was born in and still my preferred mode for quick calculations due to the ease and speed of input.
 SymPad normally allows long variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
 This can be turned off by switching into quick input mode using the function "<b>quick()</b>" or by using the "<b>--quick</b>" option on the command line.
-When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek) and explicit space characters are no longer necessary between recognized function and variable names.
+When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between recognized function and variable names.
 This means that an expression entered in normal mode like this "<b>x y sin z**2</b>" can be entered in quick mode like this "<b>xysinz**2</b>".
 </p>
 
@@ -2967,7 +2968,7 @@ class ast2spt:
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
 
-		if ast.func == AST.Func.NOEVAL: # special no evaluate meta-function
+		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
 		func = getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
@@ -3267,11 +3268,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('idx', ('@', 'a'), (('#', '1'), ('#', '2')))
-	res = ast2spt (ast)
-	res = spt2ast (res)
-	print (res)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('idx', ('@', 'a'), (('#', '1'), ('#', '2')))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 #
 # Time and interest permitting:
@@ -4230,7 +4231,23 @@ _DISPLAYSTYLE    = [1]
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		'[-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-E | --sympyEI] [-q | --quick] [-u | --ugly] ' \
 		'[-N | --noN] [-O | --noO] [-S | --noS] [-b | --nobeta] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] ' \
-		'[host:port]'
+		'[host:port]' '''
+
+  -h | --help      - This
+  -v | --version   - Show version string
+  -d | --debug     - Dump debug info to server output
+  -n | --nobrowser - Don't start system browser to SymPad page
+  -E | --sympyEI   - Start with SymPy constant letters 'E' and 'I'
+  -q | --quick     - Start in quick input mode
+  -u | --ugly      - Start in draft display style (can only set on command line)
+  -N | --noN       - Start without "N()" lambda function
+  -S | --noS       - Start without "S()" lambda function
+  -O | --noO       - Start without "O()" lambda function
+  -b | --nobeta    - Start without "beta()" lambda function
+  -g | --nogamma   - Start without "gamma()" lambda function
+  -G | --noGamma   - Start without "Gamma()" lambda function
+  -z | --nozeta    - Start without "zeta()" lambda function
+'''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)

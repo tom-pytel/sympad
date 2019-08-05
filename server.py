@@ -35,7 +35,23 @@ _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		'[-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-E | --sympyEI] [-q | --quick] [-u | --ugly] ' \
 		'[-N | --noN] [-O | --noO] [-S | --noS] [-b | --nobeta] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] ' \
-		'[host:port]'
+		'[host:port]' '''
+
+  -h | --help      - This
+  -v | --version   - Show version string
+  -d | --debug     - Dump debug info to server output
+  -n | --nobrowser - Don't start system browser to SymPad page
+  -E | --sympyEI   - Start with SymPy constant letters 'E' and 'I'
+  -q | --quick     - Start in quick input mode
+  -u | --ugly      - Start in draft display style (can only set on command line)
+  -N | --noN       - Start without "N()" lambda function
+  -S | --noS       - Start without "S()" lambda function
+  -O | --noO       - Start without "O()" lambda function
+  -b | --nobeta    - Start without "beta()" lambda function
+  -g | --nogamma   - Start without "gamma()" lambda function
+  -G | --noGamma   - Start without "Gamma()" lambda function
+  -z | --nozeta    - Start without "zeta()" lambda function
+'''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
