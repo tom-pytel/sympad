@@ -169,7 +169,7 @@ def _ast2tex_add (ast):
 	return ' + '.join (_ast2tex_wrap (n, \
 			((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
 			(n.op in ("piece") and n is not ast.add [-1]) or n.op in {'='})
-			for n in ast.add).replace (' + -', ' - ')
+			for n in ast.add).replace (' + -', ' - ').replace (' + {-', ' - {')
 
 def _ast2tex_mul (ast, ret_has = False):
 	t   = []
@@ -372,7 +372,7 @@ def _ast2nat_add (ast):
 	return ' + '.join (_ast2nat_wrap (n, \
 			n.is_piece or ((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
 			(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', 'lamb'} \
-			) for n in ast.add).replace (' + -', ' - ')
+			) for n in ast.add).replace (' + -', ' - ').replace (' + {-', ' - {')
 
 def _ast2nat_mul (ast, ret_has = False):
 	t   = []
@@ -575,7 +575,7 @@ _ast2py_funcs = {
 	'|': lambda ast: f'abs({ast2py (ast.abs)})',
 	'-': lambda ast: f'-{_ast2py_paren (ast.minus, ast.minus.op in {"+", "lamb"})}',
 	'!': lambda ast: f'factorial({ast2py (ast.fact)})',
-	'+': lambda ast: ' + '.join (ast2py (n) for n in ast.add).replace (' + -', ' - '),
+	'+': lambda ast: ' + '.join (ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
 	'*': lambda ast: '*'.join (_ast2py_paren (n) if n.is_add else ast2py (n) for n in ast.mul),
 	'/': _ast2py_div,
 	'^': _ast2py_pow,
@@ -950,9 +950,9 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('lamb', ('slice', ('@', 'x'), False, None), ())
-	res = ast2tex (ast)
-	# res = spt2ast (res)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('func', 'series', (('^', ('@', 'e'), ('-', ('@', 'x'))),))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	print (res)
