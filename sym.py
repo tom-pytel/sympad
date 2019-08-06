@@ -194,7 +194,7 @@ def _ast2tex_mul (ast, ret_has = False):
 			has = True
 
 		elif p and (p.op in {'sqrt'} or p.num_exp or \
-				p.is_diff_or_part_solo or n.is_diff_or_part_solo or p.is_diff_or_part or n.is_diff_or_part or \
+				p.strip_minus ().is_diff_or_part_any or n.is_diff_or_part_any or \
 				(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
 			t.append (f'\\ {s}')
 

@@ -1816,6 +1816,7 @@ class AST_Var (AST):
 	_is_part_any          = lambda self: self.grp [1]
 	_is_diff_or_part      = lambda self: (self.grp [0] or self.grp [1]) and self.grp [2]
 	_is_diff_or_part_solo = lambda self: (self.grp [0] or self.grp [1]) and not self.grp [2]
+	_is_diff_or_part_any  = lambda self: self.grp [0] or self.grp [1]
 	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] or '' # 'dx' -> 'd', 'partialx' -> 'partial', else ''
 	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted, non-primed)?
 	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
@@ -2492,7 +2493,7 @@ def _ast2tex_mul (ast, ret_has = False):
 			has = True
 
 		elif p and (p.op in {'sqrt'} or p.num_exp or \
-				p.is_diff_or_part_solo or n.is_diff_or_part_solo or p.is_diff_or_part or n.is_diff_or_part or \
+				p.strip_minus ().is_diff_or_part_any or n.is_diff_or_part_any or \
 				(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
 			t.append (f'\\ {s}')
 
