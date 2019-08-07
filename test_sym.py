@@ -124,8 +124,10 @@ lambda: x:
 a*[x][y][z]
 """.strip ().split ('\n')
 
+_ALLOW_LAMB = 1
+
 def expr_eq (): ## BROKEN!
-	return f'{expr ()} {choice (["=", "==", "!=", "<", "<=", ">", ">="])} {expr ()}'
+	return f'{expr (_ALLOW_LAMB)} {choice (["=", "==", "!=", "<", "<=", ">", ">="])} {expr (_ALLOW_LAMB)}'
 
 def expr_paren ():
 	return '(' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + ')'
@@ -137,46 +139,46 @@ def expr_abs ():
 	return f'\\left|{expr (1)}\\right|'
 
 def expr_minus ():
-	return f'-{expr ()}'
+	return f'-{expr (_ALLOW_LAMB)}'
 
 def expr_fact ():
-	return f'{expr ()}!'
+	return f'{expr (_ALLOW_LAMB)}!'
 
 def expr_add ():
-	return '{' + '+'.join (f'{expr ()}' for i in range (randrange (2, 4))) + '}'
+	return '{' + '+'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
 def expr_mul_imp ():
-	return '{' + '  '.join (f'{expr ()}' for i in range (randrange (2, 4))) + '}'
+	return '{' + '  '.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
 def expr_mul_exp ():
-	return '{' + '*'.join (f'{expr ()}' for i in range (randrange (2, 4))) + '}'
+	return '{' + '*'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
 def expr_mul_cdot ():
-	return '{' + ' \\cdot '.join (f'{expr ()}' for i in range (randrange (2, 4))) + '}'
+	return '{' + ' \\cdot '.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
 def expr_div ():
-	return f'{expr ()} / {expr ()}'
+	return f'{expr (_ALLOW_LAMB)} / {expr (_ALLOW_LAMB)}'
 
 def expr_frac ():
-	return f'\\frac{expr ()}{expr ()}'
+	return f'\\frac{expr (_ALLOW_LAMB)}{expr (_ALLOW_LAMB)}'
 
 def expr_caret ():
-	return f'{expr ()}^{expr ()}'
+	return f'{expr (_ALLOW_LAMB)}^{expr (_ALLOW_LAMB)}'
 
 def expr_dblstar ():
-	return f'{expr ()}**{expr ()}'
+	return f'{expr (_ALLOW_LAMB)}**{expr (_ALLOW_LAMB)}'
 
 def expr_log ():
 	return \
-			choice (['', '\\']) + f'{choice (["ln", "log"])}{expr ()}' \
+			choice (['', '\\']) + f'{choice (["ln", "log"])}{expr (_ALLOW_LAMB)}' \
 			if random () >= 0.5 else \
-			f'\\log_{expr ()}{expr ()}'
+			f'\\log_{expr (_ALLOW_LAMB)}{expr (_ALLOW_LAMB)}'
 
 def expr_sqrt ():
 	return \
-			choice (['', '\\']) + f'sqrt{expr ()}' \
+			choice (['', '\\']) + f'sqrt{expr (_ALLOW_LAMB)}' \
 			if random () >= 0.5 else \
-			f'\\sqrt[{expr ()}]{expr ()}'
+			f'\\sqrt[{expr (_ALLOW_LAMB)}]{expr (_ALLOW_LAMB)}'
 
 def expr_func ():
 	while 1:
@@ -192,15 +194,15 @@ def expr_func ():
 
 def expr_lim ():
 	return \
-			'\\lim_{x \\to ' + f'{expr ()}}} {expr ()}' \
+			'\\lim_{x \\to ' + f'{expr (_ALLOW_LAMB)}}} {expr (_ALLOW_LAMB)}' \
 			if random () >= 0.5 else \
-			f'Limit ({expr ()}, x, {expr ()})'
+			f'Limit ({expr (_ALLOW_LAMB)}, x, {expr (_ALLOW_LAMB)})'
 
 def expr_sum ():
 	return \
-			'\\sum_{x = ' + f'{expr ()}}}^{expr ()} {expr ()}' \
+			'\\sum_{x = ' + f'{expr (_ALLOW_LAMB)}}}^{expr (_ALLOW_LAMB)} {expr (_ALLOW_LAMB)}' \
 			if random () >= 0.5 else \
-			f'Sum ({expr ()}, (x, {expr ()}, {expr ()}))'
+			f'Sum ({expr (_ALLOW_LAMB)}, (x, {expr (_ALLOW_LAMB)}, {expr (_ALLOW_LAMB)}))'
 
 def expr_diff ():
 	d  = 'd' # choice (['d', 'partial'])
@@ -214,15 +216,15 @@ def expr_diff ():
 		dv.append ((choice (['x', 'y', 'z']), n))
 
 	return \
-			f'{d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr ()}'
+			f'{d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr (_ALLOW_LAMB)}'
 			# if random () >= 0.5 else \
-			# f'Derivative ({expr ()}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
+			# f'Derivative ({expr (_ALLOW_LAMB)}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
 
 def expr_intg ():
 	return \
-			f'\\int_{expr ()}^{expr ()} {expr ()} dx' \
+			f'\\int_{expr (_ALLOW_LAMB)}^{expr (_ALLOW_LAMB)} {expr (_ALLOW_LAMB)} dx' \
 			if random () >= 0.5 else \
-			f'\\int {expr ()} dx'
+			f'\\int {expr (_ALLOW_LAMB)} dx'
 
 def expr_vec ():
 	return '({' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + ',})'
@@ -233,10 +235,10 @@ def expr_mat ():
 	return '({' + ','.join ('{' + ','.join (f'{expr (1)}' for j in range (cols)) + ',}' for i in range (randrange (1, 4))) + ',})'
 
 def expr_piece ():
-	p = [f'{expr (1)} if {expr ()}']
+	p = [f'{expr (1)} if {expr (_ALLOW_LAMB)}']
 
 	for _ in range (randrange (3)):
-		p.append (f'else {expr (1)} if {expr ()}')
+		p.append (f'else {expr (1)} if {expr (_ALLOW_LAMB)}')
 
 	if random () >= 0.5:
 		p.append (f'else {expr (1)}')
@@ -244,7 +246,7 @@ def expr_piece ():
 	return ' '.join (p)
 
 def expr_lamb ():
-	return f'lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr ()}'
+	return f'lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr (_ALLOW_LAMB)}'
 
 def expr_idx ():
 	return f'{expr (1)} [{expr (1)}]'
