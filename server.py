@@ -29,28 +29,32 @@ _SYMPAD_CHILD    = os.environ.get ('SYMPAD_CHILD')
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_DISPLAYSTYLE    = [1]
 _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+__name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
-		'[-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-E | --sympyEI] [-q | --quick] [-u | --ugly] ' \
-		'[-N | --noN] [-O | --noO] [-S | --noS] [-b | --nobeta] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] ' \
-		'[host:port]' '''
+		'[-h | --help] [-v | --version] \n' \
+		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
+		f'{__name_indent} [-E | --sympyEI] [-q | --quick] [-u | --ugly] \n' \
+		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
+		f'{__name_indent} [-b | --nobeta] [-g | --nogamma] \n' \
+		f'{__name_indent} [-G | --noGamma] [-z | --nozeta] \n' \
+		f'{__name_indent} [host:port | host | :port]' '''
 
-  -h | --help      - This
-  -v | --version   - Show version string
-  -d | --debug     - Dump debug info to server output
-  -n | --nobrowser - Don't start system browser to SymPad page
-  -E | --sympyEI   - Start with SymPy constant letters 'E' and 'I'
-  -q | --quick     - Start in quick input mode
-  -u | --ugly      - Start in draft display style (can only set on command line)
-  -N | --noN       - Start without "N()" lambda function
-  -S | --noS       - Start without "S()" lambda function
-  -O | --noO       - Start without "O()" lambda function
-  -b | --nobeta    - Start without "beta()" lambda function
-  -g | --nogamma   - Start without "gamma()" lambda function
-  -G | --noGamma   - Start without "Gamma()" lambda function
-  -z | --nozeta    - Start without "zeta()" lambda function
+  -h, --help      - This
+  -v, --version   - Show version string
+  -d, --debug     - Dump debug info to server output
+  -n, --nobrowser - Don't start system browser to SymPad page
+  -E, --sympyEI   - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
+  -q, --quick     - Start in quick input mode
+  -u, --ugly      - Start in draft display style (only on command line)
+  -N, --noN       - Start without "N()" lambda function
+  -S, --noS       - Start without "S()" lambda function
+  -O, --noO       - Start without "O()" lambda function
+  -b, --nobeta    - Start without "beta()" lambda function
+  -g, --nogamma   - Start without "gamma()" lambda function
+  -G, --noGamma   - Start without "Gamma()" lambda function
+  -z, --nozeta    - Start without "zeta()" lambda function
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
@@ -61,14 +65,16 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-	_SYS_STDOUT  = sys.stdout
-	_VAR_LAST    = '_' # name of last evaluated expression variable
-	_HISTORY     = [] # persistent history across browser closings
+	_SYS_STDOUT   = sys.stdout
+	_VAR_LAST     = '_' # name of last evaluated expression variable
+	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
+	_HISTORY      = [] # persistent history across browser closings
+	_ENV          = {'EI': False, 'quick': False, 'eval': True, 'doit': True}
 
-	_PARSER      = sparser.Parser ()
-	_VARS        = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_PARSER       = sparser.Parser ()
+	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 
-	_START_FUNCS = OrderedDict ([
+	_START_FUNCS  = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
 		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
 		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
@@ -399,7 +405,7 @@ if __name__ == '__main__':
 				['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
-			print (_HELP.strip ())
+			print (_HELP.lstrip ())
 			sys.exit (0)
 
 		if ('--version', '') in opts or ('-v', '') in opts:

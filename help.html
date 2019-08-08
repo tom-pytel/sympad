@@ -425,6 +425,8 @@ Also, SymPad will give you an empty set of parentheses as an autocomplete option
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables or lambdas mapped which would be changing the evaluation.
 </p><p>
+If you are unable to use a keyword argument identifier in a function call because it is a reserved name then you can wrap it in quotes, Python strings are allowed as keyword identifiers specifically for this purpose.
+</p><p>
 SymPad inserts the current working directory at the beginning of the Python module search path which means that for example if you run SymPad in the SymPy development directory then the SymPy module used will be the development version.
 </p><p>
 The server runs a single thread for consistency and keeps a single global state (variables), this means that if have two browser windows open the results of calculations in one will be reflected in the other.

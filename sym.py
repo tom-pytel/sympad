@@ -626,6 +626,9 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
 class ast2spt:
+	_EVAL = True
+	_DOIT = True
+
 	def __new__ (cls, ast):
 		self = super ().__new__ (cls)
 		spt  = self._ast2spt (ast)
@@ -746,10 +749,10 @@ class ast2spt:
 		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact)),
 		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add)),
 		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul)),
-		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), self._ast2spt (ast.denom)**-1),
-		'^': lambda self, ast: self._ast2spt (ast.base) ** self._ast2spt (ast.exp),
+		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), sp.Pow (self._ast2spt (ast.denom), -1)),
+		'^': lambda self, ast: sp.Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp)),
 		'log': lambda self, ast: sp.log (self._ast2spt (ast.log)) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base)),
-		'sqrt': lambda self, ast: self._ast2spt (ast.rad)**S.Half if ast.idx is None else self._ast2spt (ast.rad)**(1/self._ast2spt (ast.idx)),
+		'sqrt': lambda self, ast: sp.Pow (self._ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (self._ast2spt (ast.rad), sp.Pow (self._ast2spt (ast.idx), -1)),
 		'func': _ast2spt_func,
 		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
 		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
@@ -851,7 +854,7 @@ def _spt2ast_Pow (spt):
 
 def _spt2ast_MatPow (spt):
 	try: # compensate for some MatPow.doit() != mat**pow
-		return spt2ast (spt.args [0] ** spt.args [1])
+		return spt2ast (spt.args [0]**spt.args [1])
 	except:
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
