@@ -111,7 +111,6 @@ def _expr_piece (expr, expr_if, expr_else):
 		return AST ('piece', ((expr, expr_if), (expr_else, True)))
 
 def _expr_neg (expr):
-	# TODO: DELETEME: return expr.neg (stack = True)
 	if expr.is_mul:
 		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
 	else:
@@ -319,7 +318,8 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast.strip (strip)),) + args [iparm + 1:])))
 
 def _expr_func_func (FUNC, expr_neg_func, expr_super = None):
-	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
+	func          = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
+	expr_neg_func = expr_neg_func.strip_curlys ()
 
 	if expr_super is None:
 		return _expr_func (2, 'func', func, expr_neg_func)
@@ -565,10 +565,12 @@ class Parser (lalr1.LALR1):
 		('MAPSTO',       fr'\\mapsto'),
 		('IF',            r'if'),
 		('ELSE',          r'else'),
-		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR_QUICK})|(partial|zoo|oo|True|False|None|{_VAR_QUICK}))('*)"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR_QUICK})|(partial|zoo|oo|None|True|False|{_VAR_QUICK}))('*)"),
 	])
 
 	TOKENS_LONG    = OrderedDict () # initialized in __init__()
+
+	# grammar definition and implementation
 
 	def expr_commas_1      (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
 	def expr_commas_2      (self, expr_comma):                                     return expr_comma
@@ -875,11 +877,11 @@ class Parser (lalr1.LALR1):
 		if pos == 1 and rule == ('expr_func', ('FUNC', 'expr_neg_func')):
 			return self._insert_symbol (('PARENL', 'PARENR'))
 
-		if pos and rule [1] [pos - 1] == 'expr_commas':
+		if pos and rule [1] [pos - 1] == 'expr_commas' and rule [0] != 'expr_abs':
 			return self._parse_autocomplete_expr_commas (rule, pos)
 
 		if pos >= len (rule [1]): # end of rule
-			if rule [0] == 'expr_intg': # TODO: Fix this!
+			if rule [0] == 'expr_intg': # TODO: Fix this! Fix what?
 				return self._parse_autocomplete_expr_intg ()
 
 			return False
@@ -934,6 +936,6 @@ class sparser: # for single script
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	a = p.parse (r'y - 1*x') [0]
+# 	a = p.parse (r'|x') [0]
 # 	# a = sym.ast2spt (a)
 # 	print (a)

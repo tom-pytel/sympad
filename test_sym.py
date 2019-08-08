@@ -13,8 +13,6 @@ import xlat
 import sym
 import sparser
 
-# TODO: indexing
-
 TERMS = [
 	'0',
 	'1',
@@ -30,10 +28,21 @@ TERMS = [
 	'dx',
 	'partial',
 	'partialx',
+	'\\partial ',
+	'\\partialx',
+	'\\partial x',
 	'oo',
+	'\\infty '
+	'zoo',
+	'\\tilde\\infty ',
 	"'str'",
+	'"str"',
+	'None',
+	'True',
+	'False',
 ]
 
+# previously problematic static test expressions
 _EXPRESSIONS = r"""
 \sqrt[{{1} / {1.0}}]{({oo},{partial})}
 sqrt{{-1.0}**{0}}

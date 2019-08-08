@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# Server and state machine for expressions.
+# Server for web component and state machine for expressions.
 
 import getopt
 import io
@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '0.5.5'
+_VERSION         = '0.5.6'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -40,7 +40,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		f'{__name_indent} [-E | --EI] [-q | --quick] [-u | --ugly] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
 		f'{__name_indent} [-b | --nobeta] [-g | --nogamma] \n' \
-		f'{__name_indent} [-G | --noGamma] [-z | --nozeta] \n' \
+		f'{__name_indent} [-G | --noGamma] [-L | --Lambda] [-z | --nozeta] \n' \
 		f'{__name_indent} [host:port | host | :port]' '''
 
   -h, --help      - This
@@ -56,6 +56,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
   -b, --nobeta    - Start without "beta()" lambda function
   -g, --nogamma   - Start without "gamma()" lambda function
   -G, --noGamma   - Start without "Gamma()" lambda function
+  -L, --Lambda    - Start with "Lambda()" lambda function
   -z, --nozeta    - Start without "zeta()" lambda function
 '''
 
@@ -72,7 +73,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_HISTORY      = []  # persistent history across browser closings
 
 	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True), \
-			('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
+			('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('Lambda', False), ('zeta', True)])
 
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
@@ -80,13 +81,14 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_ONE_VARS     = {}
 
 	_ONE_FUNCS    = OrderedDict ([
-		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
-		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
-		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
-		('beta',  AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))),
-		('gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
-		('Gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
-		('zeta',  AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),))),
+		('N',      AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
+		('O',      AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
+		('S',      AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
+		('beta',   AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))),
+		('gamma',  AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
+		('Gamma',  AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
+		('Lambda', AST ('lamb', ('func', '$Lambda', (('@', 'a'), ('@', 'b'))), (('@', 'a'), ('@', 'b')))),
+		('zeta',   AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),))),
 	])
 
 #...............................................................................................
@@ -481,9 +483,9 @@ _MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqltNOSbgGz',
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqltNOSbgGLz',
 				['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'noeval', 'nodoit',
-				'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
+				'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'Lambda', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.lstrip ())
@@ -508,38 +510,13 @@ if __name__ == '__main__':
 					sys.exit (0)
 
 		# child starts here
-		# if ('--EI', '') in opts or ('-E', '') in opts:
-		# 	_admin_env (AST ('@', 'EI'))
-
-		# if ('--quick', '') in opts or ('-q', '') in opts:
-		# 	_admin_env (AST ('@', 'quick'))
-
-		# if ('--noeval', '') in opts or ('-l', '') in opts:
-		# 	_admin_env (AST ('@', 'noeval'))
-
-		# if ('--nodoit', '') in opts or ('-t', '') in opts:
-		# 	_admin_env (AST ('@', 'nodoit'))
-
-		# if ('--ugly', '') in opts or ('-u', '') in opts:
-		# 	_DISPLAYSTYLE [0] = 0
-
-		# funcs = {}
-
-		# for opt, (func, ast) in zip ('NOSbgGz', _START_FUNCS.items ()):
-		# 	if (f'--no{func}', '') not in opts and (f'-{opt}', '') not in opts:
-		# 		funcs [func] = ast
-
-		# _VARS.update (funcs)
-		# sym.set_user_funcs (set (funcs))
-		# _PARSER.set_user_funcs (set (funcs))
-
 		_update_user_funcs ()
 
 		if ('--ugly', '') in opts or ('-u', '') in opts:
 			_DISPLAYSTYLE [0] = 0
 
-		for short, long in zip ('EqltNOSbgGz', \
-				['EI', 'quick', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta']):
+		for short, long in zip ('EqltNOSbgGLz', \
+				['EI', 'quick', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'Lambda', 'nozeta']):
 			if (f'--{long}', '') in opts or (f'-{short}', '') in opts:
 				_admin_env (AST ('@', long))
 
@@ -549,10 +526,10 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'xlat.py', 'lalr1.py')
+		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'xlat.py', 'sast.py', 'lalr1.py')
 		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
-		httpd   = HTTPServer ((host, port), Handler) # ThreadingHTTPServer ((host, port), Handler)
+		httpd   = HTTPServer ((host, port), Handler)
 		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
 
 		thread.start ()

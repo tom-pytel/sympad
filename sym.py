@@ -1,4 +1,4 @@
-# Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
+# Convert between internal AST and SymPy expressions and write out LaTeX, native shorthand and Python code
 
 from ast import literal_eval
 import re
@@ -34,6 +34,12 @@ def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evalua
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
 
+def _funcargs2ast (ast): # ast.is_func
+	if ast.kws:
+		return _tuple2ast (ast.args + tuple (AST ('=', '=', ('@', kw), a) for kw, a in ast.kws))
+	else:
+		return _tuple2ast (ast.args)
+
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
 
@@ -66,7 +72,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if type (spt) is func:
 		try:
 			spt.SYMPAD_ESCAPED = is_escaped
-		except AttributeError: # couldn't assign to python object (probably because is built-in type)
+		except AttributeError: # couldn't assign to Python object (probably because is built-in type)
 			pass
 
 	return spt
@@ -214,7 +220,7 @@ def _ast2tex_mul (ast, ret_has = False):
 	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2tex_pow (ast, trighpow = True):
-	b = _ast2tex_wrap (ast.base, {'mat'}, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat'} or ast.base.is_pos_num))
+	b = _ast2tex_wrap (ast.base, {'mat'}, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat', 'lamb'} or ast.base.is_pos_num))
 	p = _ast2tex_curly (ast.exp)
 
 	if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -231,10 +237,11 @@ def _ast2tex_log (ast):
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
 _ast2tex_xlat_func2text = {
-	'beta'    : lambda ast: f'\\beta\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
-	'gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
-	'Gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
-	'zeta'    : lambda ast: f'\\zeta\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'beta'    : lambda ast: f'\\beta\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
+	'gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
+	'Gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
+	'Lambda'  : lambda ast: f'\\Lambda\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
+	'zeta'    : lambda ast: f'\\zeta\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
 	'binomial': lambda ast: f'\\binom{{{_ast2tex (ast.args [0])}}}{{{_ast2tex (ast.args [1])}}}' if len (ast.args) == 2 else None,
 }
 
@@ -246,7 +253,7 @@ def _ast2tex_func (ast):
 				if ast.func [0] == 'a' else \
 				(f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}')
 
-		return f'{n}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
+		return f'{n}\\left({_ast2tex (_funcargs2ast (ast))} \\right)'
 
 	xact = _ast2tex_xlat_func2text.get (ast.func)
 
@@ -257,9 +264,9 @@ def _ast2tex_func (ast):
 			return text
 
 	if ast.func in AST.Func.TEX:
-		return f'\\{ast.func}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
+		return f'\\{ast.func}\\left({_ast2tex (_funcargs2ast (ast))} \\right)'
 	else:
-		return '\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
+		return '\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({_ast2tex (_funcargs2ast (ast))} \\right)'
 
 def _ast2tex_lim (ast):
 	s = _ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -325,7 +332,6 @@ _ast2tex_funcs = {
 	'!': lambda ast: _ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
 	'+': _ast2tex_add,
 	'*': _ast2tex_mul,
-	# '/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{_ast2tex (ast.denom)}}}',
 	'/': lambda ast: f'\\frac{{{_ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{_ast2tex (ast.denom)}}}',
 	'^': _ast2tex_pow,
 	'log': _ast2tex_log,
@@ -346,7 +352,7 @@ _ast2tex_funcs = {
 }
 
 #...............................................................................................
-def ast2nat (ast, doxlat = True): # abstract syntax tree -> simple text
+def ast2nat (ast, doxlat = True): # abstract syntax tree -> native text
 	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_NAT) if doxlat else ast)
 
 def _ast2nat (ast):
@@ -419,7 +425,6 @@ def _ast2nat_mul (ast, ret_has = False):
 	return (''.join (t), has) if ret_has else ''.join (t)
 
 def _ast2nat_div (ast):
-		# (_ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
 	n, ns = (_ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
 		(_ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
 		_ast2nat_curly_mul_exp (ast.numer, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
@@ -437,7 +442,6 @@ def _ast2nat_pow (ast, trighpow = True):
 		i = len (ast.base.func)
 
 		return f'{b [:i]}**{p}{b [i:]}'
-		# return f'{b [1 : i + 1]}**{p}{b [i + 1 : -1]}'
 
 	return f'{b}**{p}'
 
@@ -500,7 +504,7 @@ _ast2nat_funcs = {
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
 	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{_ast2nat (ast.idx)}]{{{_ast2nat_wrap (ast.rad, 0, {","})}}}',
-	'func': lambda ast: f'{ast.func}({_ast2nat (_tuple2ast (ast.args))})',
+	'func': lambda ast: f'{ast.func}({_ast2nat (_funcargs2ast (ast))})',
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,
 	'diff': _ast2nat_diff,
@@ -542,7 +546,7 @@ def _ast2py_div (ast):
 	return f'{n}{" / " if ast.numer.strip_minus ().op not in {"#", "@"} or ast.denom.strip_minus ().op not in {"#", "@"} else "/"}{d}'
 
 def _ast2py_pow (ast):
-	b = _ast2py_paren (ast.base) if _ast_is_neg (ast.base) else _ast2py_curly (ast.base)
+	b = _ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_lamb else _ast2py_curly (ast.base)
 	e = _ast2py_curly (ast.exp)
 
 	return f'{b}**{e}'
@@ -598,7 +602,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad)}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.unescaped}({ast2py (_tuple2ast (ast.args))})',
+	'func': lambda ast: f'{ast.unescaped}({ast2py (_funcargs2ast (ast))})',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -625,7 +629,7 @@ _ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
 }
 
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
-_builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__ # __builtins__.__dict__ if __name__ == '__main__' else __builtins__
+_builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
 _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
 		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
 		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
@@ -633,7 +637,7 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
-class ast2spt:
+class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __new__ (cls, ast):
 		self = super ().__new__ (cls)
 		spt  = self._ast2spt (ast)
@@ -646,7 +650,7 @@ class ast2spt:
 
 		return spt
 
-	def _ast2spt (self, ast): # abstract syntax tree -> sympy tree (expression)
+	def _ast2spt (self, ast):
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
 	def _ast2spt_var (self, ast):
@@ -667,7 +671,7 @@ class ast2spt:
 		while obj.is_func and obj.func == AST.Func.NOEVAL and obj.args:
 			obj = obj.args [0]
 
-		if obj.is_lamb and obj.lamb.is_func: # support S.Half and other lambdized sympy function or class attributes
+		if obj.is_lamb and obj.lamb.is_func: # support S.Half and other lambdified SymPy function or class attributes
 			spt = getattr (sp, obj.lamb.unescaped)
 		else:
 			spt = self._ast2spt (ast.obj)
@@ -864,15 +868,20 @@ def _spt2ast_MatPow (spt):
 	except:
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
-def _spt2ast_Function (spt, name = None):
+def _spt2ast_Function (spt, name = None, args = None, kws = None):
 	if name is None:
 		name = spt.__class__.__name__
 
-	return AST ('func', \
-			f'{AST.Func.ESCAPE}{name}' \
-			if getattr (spt, 'SYMPAD_ESCAPED', None) else \
-			name \
-			, tuple (spt2ast (arg) for arg in spt.args))
+	if getattr (spt, 'SYMPAD_ESCAPED', None):
+		name = f'{AST.Func.ESCAPE}{name}'
+
+	if args is None:
+		args = spt.args
+
+	if kws:
+		return AST ('func', name, tuple (spt2ast (arg) for arg in args), kws)
+	else:
+		return AST ('func', name, tuple (spt2ast (arg) for arg in args))
 
 def _spt2ast_Derivative (spt):
 	return AST ('diff', spt2ast (spt.args [0]), tuple ( \
@@ -924,6 +933,8 @@ _spt2ast_funcs = {
 	sp.fancysets.Complexes: lambda spt: AST.Complexes,
 
 	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
+
+	sp.Poly: lambda spt: _spt2ast_Function (spt, args = spt.args + spt.gens, kws = (('domain', AST ('"', str (spt.domain))),)),
 
 	sp.Add: _spt2ast_Add,
 	sp.Mul: _spt2ast_Mul,
@@ -995,10 +1006,10 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	_EVAL = False
-	ast = AST ('/', ('#', '1'), ('#', '4'))
-	res = ast2spt (ast)
-	res = spt2ast (res)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	_EVAL = False
+# 	ast = AST ('/', ('#', '1'), ('#', '4'))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	print (res)
