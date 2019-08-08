@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# python 3.6+
 
 import unittest
 

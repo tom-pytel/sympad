@@ -1,3 +1,5 @@
+# Parser for PLY generated LALR1 grammar.
+
 import re
 import types
 

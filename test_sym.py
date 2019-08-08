@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# python 3.6+
+
+# Randomized consistency testing of parsing: text -> ast -> tex/nat/py -> text -> ast
 
 from getopt import getopt
 from random import random, randrange, choice
@@ -18,9 +21,9 @@ TERMS = [
 	'-1',
 	'1.0',
 	'-1.0',
-	# '1e-100',
-	# '1e100',
-	# '1e+100',
+	'1e-100',
+	'1e100',
+	'1e+100',
 	'a',
 	"a'",
 	'd',

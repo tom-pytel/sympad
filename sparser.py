@@ -1,11 +1,4 @@
 # Builds expression tree from text, nodes are nested AST tuples.
-#
-# Time and interest permitting:
-# sets
-# var assumptions
-# importing modules to allow custom code execution
-# Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
-# systems of equations, ODEs, graphical plots (using matplotlib?)...
 
 import ast as py_ast
 from collections import OrderedDict

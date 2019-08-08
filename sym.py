@@ -26,6 +26,9 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
+def _Pow (base, exp, eval = True): # fix inconsistent sympy Pow (..., evaluate = True)
+	return base**exp if eval else sp.Pow (base, exp, evaluate = False)
+
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
 
@@ -38,7 +41,7 @@ def _ast_slice_bounds (ast, None_ = AST.VarNull):
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.mul [0]))
 
-def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
+def _ast_func_call (func, args, _ast2spt = None, is_escaped = False, evaluate = True):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
@@ -53,7 +56,10 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 		else:
 			pyargs.append (_ast2spt (arg))
 
-	spt = func (*pyargs, **pykw)
+	try:
+		spt = func (*pyargs, **{'evaluate': evaluate, **pykw})
+	except: # 'evaluate' keyword not supported?
+		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func:
 		try:
@@ -626,17 +632,26 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
 class ast2spt:
-	_EVAL = True
-	_DOIT = True
+	EVAL = True
+	DOIT = True
+
+	@staticmethod
+	def set_eval (eval):
+		ast2spt.EVAL = bool (eval)
+
+	@staticmethod
+	def set_doit (doit):
+		ast2spt.DOIT = bool (doit)
 
 	def __new__ (cls, ast):
 		self = super ().__new__ (cls)
 		spt  = self._ast2spt (ast)
 
-		try:
-			spt = spt.doit ()
-		except:
-			pass
+		if self.DOIT:
+			try:
+				spt = spt.doit ()
+			except:
+				pass
 
 		return spt
 
@@ -669,7 +684,7 @@ class ast2spt:
 		try:
 			mbr = getattr (spt, ast.attr)
 
-			return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
+			return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt, evaluate = self.EVAL)
 
 		except: # unresolved symbols should not raise but be returned as origninal attribute access op
 			if not obj.free_vars ():
@@ -689,7 +704,7 @@ class ast2spt:
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
 
-		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
+		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped, evaluate = self.EVAL)
 
 	def _ast2spt_diff (self, ast):
 		args = sum ((
@@ -699,7 +714,7 @@ class ast2spt:
 				for n in ast.dvs \
 				), ())
 
-		return sp.Derivative (self._ast2spt (ast [1]), *args)
+		return sp.Derivative (self._ast2spt (ast [1]), *args, evaluate = self.EVAL)
 
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
@@ -744,25 +759,25 @@ class ast2spt:
 		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.comma),
 		'(': lambda self, ast: self._ast2spt (ast.paren),
 		'[': lambda self, ast: [self._ast2spt (b) for b in ast.brack],
-		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs)),
+		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), evaluate = self.EVAL),
 		'-': lambda self, ast: -self._ast2spt (ast.minus),
-		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact)),
-		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add)),
-		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul)),
-		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), sp.Pow (self._ast2spt (ast.denom), -1)),
-		'^': lambda self, ast: sp.Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp)),
-		'log': lambda self, ast: sp.log (self._ast2spt (ast.log)) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base)),
-		'sqrt': lambda self, ast: sp.Pow (self._ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (self._ast2spt (ast.rad), sp.Pow (self._ast2spt (ast.idx), -1)),
+		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), evaluate = self.EVAL),
+		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add), evaluate = self.EVAL),
+		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul), evaluate = self.EVAL),
+		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, eval = self.EVAL)),
+		'^': lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), eval = self.EVAL),
+		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), evaluate = self.EVAL) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), evaluate = self.EVAL),
+		'sqrt': lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (2, -1, eval = self.EVAL), eval = self.EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, eval = self.EVAL), eval = self.EVAL),
 		'func': _ast2spt_func,
 		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
 		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
 		'diff': _ast2spt_diff,
 		'intg': _ast2spt_intg,
-		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
-		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
-		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
+		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], evaluate = self.EVAL),
+		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], evaluate = self.EVAL),
+		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece), evaluate = self.EVAL),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
-		'idx': _ast2spt_idx, # lambda self, ast: self._ast2spt (ast.obj) [self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)], #
+		'idx': _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
 
 		'text': lambda self, ast: ast.spt,

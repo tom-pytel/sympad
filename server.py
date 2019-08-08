@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # python 3.6+
 
+# Server and state machine for expressions.
+
 import getopt
 import io
 import json
@@ -68,8 +70,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_SYS_STDOUT   = sys.stdout
 	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
-	_HISTORY      = [] # persistent history across browser closings
-	_ENV          = {'EI': False, 'quick': False, 'eval': True, 'doit': True}
+	_HISTORY      = []  # persistent history across browser closings
+	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True)])
 
 	_PARSER       = sparser.Parser ()
 	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
@@ -186,7 +188,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 	return asts
 
-def _admin_vars (ast):
+def _admin_vars (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
@@ -198,7 +200,7 @@ def _admin_vars (ast):
 
 	return asts
 
-def _admin_funcs (ast):
+def _admin_funcs (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
@@ -210,8 +212,8 @@ def _admin_funcs (ast):
 
 	return asts
 
-def _admin_del (ast):
-	var = ast.args [0] if ast.args else AST.VarNull
+def _admin_del (var):
+	# var = ast.args [0] if ast.args else AST.VarNull
 
 	try:
 		ast = _VARS [var.var]
@@ -225,7 +227,7 @@ def _admin_del (ast):
 
 	return f'{"Function" if ast.is_lamb else "Variable"} {sym.ast2nat (var)!r} deleted.'
 
-def _admin_delvars (ast):
+def _admin_delvars (*args):
 	for v, e in list (_VARS.items ()):
 		if not e.is_lamb and v != _VAR_LAST:
 			del _VARS [v]
@@ -234,7 +236,7 @@ def _admin_delvars (ast):
 
 	return 'All variables deleted.'
 
-def _admin_delall (ast):
+def _admin_delall (*args):
 	last_var = _VARS [_VAR_LAST]
 
 	_VARS.clear ()
@@ -244,23 +246,76 @@ def _admin_delall (ast):
 
 	return 'All assignments deleted.'
 
-def _admin_sympyEI (ast):
-	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
+def _admin_env (*args):
+	def _envop (env, apply):
+		msgs = []
 
-	if AST.E.var in _VARS:
-		del _VARS [AST.E.var]
+		for var, state in env.items ():
+			if apply:
+				_ENV [var] = state
 
-	if AST.I.var in _VARS:
-		del _VARS [AST.I.var]
+			if var == 'EI':
+				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.')
 
-	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
+				if apply:
+					sast.sympyEI (state)
 
-def _admin_quick (ast):
-	yes = bool (sym.ast2spt (ast.args [0])) if ast.args else True
+					if AST.E.var in _VARS:
+						del _VARS [AST.E.var]
 
-	_PARSER.set_quick (yes)
+					if AST.I.var in _VARS:
+						del _VARS [AST.I.var]
 
-	return f'Quick input mode is {"on" if yes else "off"}.'
+			elif var == 'quick':
+				msgs.append (f'Quick input mode is {"on" if state else "off"}.')
+
+				if apply:
+					_PARSER.set_quick (state)
+
+			elif var == 'eval':
+				msgs.append (f'Expression evaluation is {"on" if state else "off"}.')
+
+				if apply:
+					sym.ast2spt.set_eval (state)
+
+			elif var == 'doit':
+				msgs.append (f'Expression doit() is {"on" if state else "off"}.')
+
+				if apply:
+					sym.ast2spt.set_doit (state)
+
+		return msgs
+
+	# start here
+	if not args:
+		return _envop (_ENV, False)
+
+	env = OrderedDict ()
+
+	for arg in args:
+		if arg.is_ass:
+			var = arg.lhs.as_identifier ()
+
+			if var:
+				state = bool (sym.ast2spt (arg.rhs))
+
+		else:
+			var = arg.as_identifier ()
+
+			if var is None:
+				raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
+
+			if var [:2] == 'no':
+				var, state = var [2:], False
+			else:
+				state = True
+
+		if var not in {'EI', 'quick', 'eval', 'doit'}:
+			raise NameError (f'invalid environment setting {var!r}')
+
+		env [var] = state
+
+	return _envop (env, True)
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -350,10 +405,10 @@ class Handler (SimpleHTTPRequestHandler):
 			ast, _, _  = _PARSER.parse (request ['text'])
 
 			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
-				asts = globals () [f'_admin_{ast.func}'] (ast)
+				asts = globals () [f'_admin_{ast.func}'] (*ast.args)
 
-				if isinstance (asts, str):
-					return {'msg': [asts]}
+				if isinstance (asts, (str, list)):
+					return {'msg': [asts] if isinstance (asts, str) else asts}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
@@ -401,8 +456,9 @@ _MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnEquNOSbgGz', \
-				['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnEqltuNOSbgGz',
+				['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'noeval', 'nodoit',
+				'ugly', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.lstrip ())
@@ -428,10 +484,16 @@ if __name__ == '__main__':
 
 		# child starts here
 		if ('--sympyEI', '') in opts or ('-E', '') in opts:
-			sast.sympyEI ()
+			_admin_env (AST ('@', 'EI'))
 
 		if ('--quick', '') in opts or ('-q', '') in opts:
-			_PARSER.set_quick ()
+			_admin_env (AST ('@', 'quick'))
+
+		if ('--noeval', '') in opts or ('-l', '') in opts:
+			_admin_env (AST ('@', 'noeval'))
+
+		if ('--nodoit', '') in opts or ('-t', '') in opts:
+			_admin_env (AST ('@', 'nodoit'))
 
 		if ('--ugly', '') in opts or ('-u', '') in opts:
 			_DISPLAYSTYLE [0] = 0
