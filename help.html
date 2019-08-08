@@ -11,7 +11,7 @@
 <style>
 	body { margin: 3em 4em; }
 	h2 { margin: 2em 0 1em 0; }
-	h4 { margin: 1.5em 0 0.5em 0; }
+	h4 { margin: 1.5em 0 0.75em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
 	i { color: #0008; }
 	del { color: red; }
@@ -44,7 +44,7 @@ SymPad is a simple single script symbolic calculator / scratchpad using SymPy fo
 It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally that last bit is exactly what happens but the response time is better :)
 This desire for simplicity led to the single script option "sympad.py" which I could plop down on the desktop and execute when needed.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
-Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
+Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for fast entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
 
@@ -118,9 +118,10 @@ The single-click native and double-click Python formats should always be pasteab
 <p>
 This is the input mode SymPad was born in and still my preferred mode for quick calculations due to the ease and speed of input.
 SymPad normally allows long variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
-This can be turned off by switching into quick input mode using the function "<b>quick()</b>" or by using the "<b>--quick</b>" option on the command line.
+This can be turned off by switching into quick input mode using the function "<b>env(quick)</b>" or by using the "<b>--quick</b>" option on the command line.
 When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between recognized function and variable names.
 This means that an expression entered in normal mode like this "<b>x y sin z**2</b>" can be entered in quick mode like this "<b>xysinz**2</b>".
+For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
 </p>
 
 <h2>Types</h2>
@@ -149,8 +150,8 @@ The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respe
 Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
 By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
-This is objectively prettier, but can be changed via the "<b>sympyEI (True)</b>" and "<b>sympyEI (False)</b>" function.
-The SymPy constant usage can also be activated via the command line switch "<b>--sympyEI</b>".
+This is objectively prettier, but can be changed via the "<b>env (EI)</b>" and "<b>env (noEI)</b>" function.
+The SymPy constant usage can also be activated via the command line switch "<b>--EI</b>".
 </p><p>
 Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>", "<b>\partial x</b>" or "<b>∂x</b>" and are treated as a single variable.
 If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
@@ -295,7 +296,7 @@ and matrices if commas are present, but that is a different syntactic usage, cur
 <h4>Indexing</h4>
 
 <p>
-Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>{{1, 2, 3}, {4, 5, 6}} [1, 2]</b>" = "<b>6</b>" and "<b>{{1, 2, 3}, {4, 5, 6}} [:,1]</b>" = "<b>{{2,}, {5,}}</b>".
+Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>{{1, 2, 3}, {4, 5, 6}} [1, 2]</b>" = "<b>6</b>" and "<b>{{1, 2, 3}, {4, 5, 6}} [:, 1]</b>" = "<b>{{2,}, {5,}}</b>".
 </p>
 
 <h4>Member Access</h4>
@@ -344,7 +345,7 @@ All functions may take multiple comma-separated arguments and the SymPy function
 Almost all SymPy function and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
 Though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$oct (10)</b>".
 Only the "safe" __builtin__ functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
-The reason for excluding single letter functions is that all natively recognized function names are permanently excluded from being used as variables but since very often single letters are used as variable names this would be problematic.
+The reason for excluding single letter functions is that due to the way the grammar works all natively recognized function names are permanently excluded from being used as variables and since very often single letters are used as variable names this would be problematic.
 A workaround is in place and described further down.
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
@@ -352,7 +353,7 @@ The inverses are entered as Pythonic functions without a slash like "<b>atan</b>
 The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
 This form of exponentiating a function is extended as an input shortcut for all top-level functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
 This does not apply to member functions or user created lambda functions.
-Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
+Keep in mind that the "<b>-1</b>" exponent in those contexts is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
 Top-level and user lambda functions also don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin**-1x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
 Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" always require explicit parentheses.
@@ -397,16 +398,50 @@ If you try to do this with regular parentheses then a function call will be atte
 The meaning of parentheses for assigned user variables is inferred from whether the variable is a lambda or not, for lambdas parentheses are a function call and for other types they indicate multiplication.
 </p><p>
 In a roundabout sort of way this all led to a peculiar delima.
-There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
+There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>gamma</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy "<b>gamma()</b>" really, but it is represented normally with the uppercase Greek letter).
 This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
 This was not very elegant so the workaround is as follows:
-The function names have been left out of the grammar but user lambdas are created for them on startup so that they may be used as functions.
-If you wish to use those letters as variables instead then simply delete the defined lambdas and those letters will behave as variables once more.
-You can always redefine the lambdas yourself if you want them back, the format is as follows - "<b>beta = lambda x, y: %$beta (x, y)</b>".
-This same mechanism is used to make the functions "<b>N()</b>", "<b>O()</b>" and "<b>S()</b>" available for calling without the use of "<b>$</b>".
+The function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
+These lambda functions do not appear in the normal list of functions shown by "<b>funcs()</b>" but their status can be checked by using the "<b>env()</b>" function.
+When these functions are mapped they are treated exactly like variables mapped to a lambda so if you want to be able to use these names as free variables you need to disable them, for example to disable the "<b>gamma()</b>" function mapping enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>". Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are only available if the "<b>S()</b>" function is mapped.
+Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
 </p>
 
-<h2>Notes</h2>
+<h2>Appendix</h2>
+
+<h4>Special Characters</h4>
+
+<p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.</p>
+<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad, it also bypasses all user-defined lambda functions.</p>
+<p>"<b>@(expr)</b>" - Ampersand technically stops variable remapping for any expression it encapsulates which means that your global assigned variables can not be accessed from within the expression.</p>
+<p>"<b>%(expr)</b>" - Percent prevents expression evaluation for the expression it encapsulates for one round of evaluation. An optional second argument is a count of the number of rounds to prevent evaluations, it can be infinity.</p>
+
+<h4>Admin Functions</h4>
+
+<p>"<b>vars()</b>" - Show all currently mapped non-lambda user variables.</p>
+<p>"<b>funcs()</b>" - Show all currently mapped lambda user variables (callable functions).</p>
+<p>"<b>del(var1, var2, ...)</b>" - Delete variable assignments, lambda or non-lambda.</p>
+<p>"<b>delvars()</b>" - Delete all non-lambda variables.</p>
+<p>"<b>delall()</b>" - Delete ALL variables, lambda and non-lambda.</p>
+<p>"<b>env()</b>" - Show or change current SymPad runtime environment. Called without any arguments it will show the current state of the environment. If arguments are present they specify turning on or off a certain aspect of SymPad functionality. For example the functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
+
+<h4>Environment Settings for env()</h4>
+
+<p>"<b>EI</b>" - The use of "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".</p>
+<p>"<b>quick</b>" - Quick single letter variable name input mode.</p>
+<p>"<b>eval</b>" - Expression evaluation. Normally when you enter "<b>1 + 2</b>" it is evaluated for an answer of "<b>3</b>". If you turn this option off then this evaluation will not happen and the expression will stay as "<b>1 + 2</b>".</p>
+<p>"<b>doit</b>" - Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off. Note that turning off the previous option "<b>eval</b>" implies turning off "<b>doit</b>".</p>
+<p>"<b>N</b>" - Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</p>
+<p>"<b>O</b>" - Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</p>
+<p>"<b>S</b>" - Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</p>
+<p>"<b>beta</b>" - Mapping access to the SymPy "<b>beta()</b>" function via the "<b>beta</b>" variable.</p>
+<p>"<b>gamma</b>" - Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</p>
+<p>"<b>Gamma</b>" - Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</p>
+<p>"<b>zeta</b>" - Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</p>
+
+</b></p>
+
+<h4>Notes</h4>
 
 <p>
 <b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should never leave this server open to the internet by serving on an IP address visible to the external world.

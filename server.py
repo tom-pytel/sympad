@@ -37,7 +37,7 @@ __name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		'[-h | --help] [-v | --version] \n' \
 		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
-		f'{__name_indent} [-E | --sympyEI] [-q | --quick] [-u | --ugly] \n' \
+		f'{__name_indent} [-E | --EI] [-q | --quick] [-u | --ugly] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
 		f'{__name_indent} [-b | --nobeta] [-g | --nogamma] \n' \
 		f'{__name_indent} [-G | --noGamma] [-z | --nozeta] \n' \
@@ -47,7 +47,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
   -v, --version   - Show version string
   -d, --debug     - Dump debug info to server output
   -n, --nobrowser - Don't start system browser to SymPad page
-  -E, --sympyEI   - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
+  -E, --EI        - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
   -q, --quick     - Start in quick input mode
   -u, --ugly      - Start in draft display style (only on command line)
   -N, --noN       - Start without "N()" lambda function
@@ -68,15 +68,18 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 	_SYS_STDOUT   = sys.stdout
-	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
 	_HISTORY      = []  # persistent history across browser closings
-	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True)])
+
+	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True), \
+			('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
 	_PARSER       = sparser.Parser ()
+	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_ONE_VARS     = {}
 
-	_START_FUNCS  = OrderedDict ([
+	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
 		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
 		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
@@ -118,7 +121,12 @@ def _ast_remap (ast, map_, recurse = True):
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
+	global _ONE_VARS
+
+	_ONE_VARS  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
 	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
+
+	user_funcs.update (_ONE_VARS)
 
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
@@ -139,7 +147,6 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 				lhss.append (c.var)
 			elif not c.is_ass or not c.lhs.is_var:
 				break
-
 			else:
 				t    = (c.rhs,) + tuple (itr)
 				ast  = t [0] if len (t) == 1 else AST (',', t)
@@ -150,7 +157,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 			if AST ('@', var) in AST.CONSTS:
 				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
-	return _ast_remap (ast, _VARS), vars
+	return _ast_remap (ast, {**_ONE_VARS, **_VARS}), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars):
@@ -212,20 +219,32 @@ def _admin_funcs (*args):
 
 	return asts
 
-def _admin_del (var):
-	# var = ast.args [0] if ast.args else AST.VarNull
+def _admin_del (*args):
+	vars = OrderedDict ()
+	msgs = []
 
-	try:
-		ast = _VARS [var.var]
+	for arg in args:
+		var = arg.as_identifier ()
 
-		del _VARS [var.var]
+		if var is None:
+			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
 
-		_update_user_funcs ()
+		vars [var] = _VARS.get (var)
 
-	except KeyError:
-		raise AE35UnitError (f'Variable {sym.ast2nat (var)!r} is not defined, it can only be attributable to human error.')
+		if vars [var] is None:
+			raise AE35UnitError (f'Variable {var!r} is not defined, it can only be attributable to human error.')
 
-	return f'{"Function" if ast.is_lamb else "Variable"} {sym.ast2nat (var)!r} deleted.'
+	for var, ast in vars.items ():
+		msgs.append (f'{"Function" if ast.is_lamb else "Variable"} {var!r} deleted.')
+
+		del _VARS [var]
+
+	_update_user_funcs ()
+
+	if not msgs:
+		msgs.append ('No variables specified!')
+
+	return msgs
 
 def _admin_delvars (*args):
 	for v, e in list (_VARS.items ()):
@@ -260,11 +279,9 @@ def _admin_env (*args):
 				if apply:
 					sast.sympyEI (state)
 
-					if AST.E.var in _VARS:
-						del _VARS [AST.E.var]
-
-					if AST.I.var in _VARS:
-						del _VARS [AST.I.var]
+					for var in (AST.E.var, AST.I.var):
+						if var in _VARS:
+							del _VARS [var]
 
 			elif var == 'quick':
 				msgs.append (f'Quick input mode is {"on" if state else "off"}.')
@@ -276,13 +293,19 @@ def _admin_env (*args):
 				msgs.append (f'Expression evaluation is {"on" if state else "off"}.')
 
 				if apply:
-					sym.ast2spt.set_eval (state)
+					sym.set_eval (state)
 
 			elif var == 'doit':
 				msgs.append (f'Expression doit() is {"on" if state else "off"}.')
 
 				if apply:
-					sym.ast2spt.set_doit (state)
+					sym.set_doit (state)
+
+			elif var in _ONE_FUNCS:
+				msgs.append (f'Function {var}() is {"on" if state else "off"}.')
+
+				if apply:
+					_update_user_funcs ()
 
 		return msgs
 
@@ -302,15 +325,15 @@ def _admin_env (*args):
 		else:
 			var = arg.as_identifier ()
 
-			if var is None:
-				raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
+			if var:
+				if var [:2] == 'no':
+					var, state = var [2:], False
+				else:
+					state = True
 
-			if var [:2] == 'no':
-				var, state = var [2:], False
-			else:
-				state = True
-
-		if var not in {'EI', 'quick', 'eval', 'doit'}:
+		if var is None:
+			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
+		elif var not in {'EI', 'quick', 'eval', 'doit', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
@@ -407,8 +430,10 @@ class Handler (SimpleHTTPRequestHandler):
 			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (*ast.args)
 
-				if isinstance (asts, (str, list)):
-					return {'msg': [asts] if isinstance (asts, str) else asts}
+				if isinstance (asts, str):
+					return {'msg': [asts]}
+				elif isinstance (asts, list) and isinstance (asts [0], str):
+					return {'msg': asts}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
@@ -456,9 +481,9 @@ _MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnEqltuNOSbgGz',
-				['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'noeval', 'nodoit',
-				'ugly', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqltNOSbgGz',
+				['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'noeval', 'nodoit',
+				'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.lstrip ())
@@ -483,30 +508,40 @@ if __name__ == '__main__':
 					sys.exit (0)
 
 		# child starts here
-		if ('--sympyEI', '') in opts or ('-E', '') in opts:
-			_admin_env (AST ('@', 'EI'))
+		# if ('--EI', '') in opts or ('-E', '') in opts:
+		# 	_admin_env (AST ('@', 'EI'))
 
-		if ('--quick', '') in opts or ('-q', '') in opts:
-			_admin_env (AST ('@', 'quick'))
+		# if ('--quick', '') in opts or ('-q', '') in opts:
+		# 	_admin_env (AST ('@', 'quick'))
 
-		if ('--noeval', '') in opts or ('-l', '') in opts:
-			_admin_env (AST ('@', 'noeval'))
+		# if ('--noeval', '') in opts or ('-l', '') in opts:
+		# 	_admin_env (AST ('@', 'noeval'))
 
-		if ('--nodoit', '') in opts or ('-t', '') in opts:
-			_admin_env (AST ('@', 'nodoit'))
+		# if ('--nodoit', '') in opts or ('-t', '') in opts:
+		# 	_admin_env (AST ('@', 'nodoit'))
+
+		# if ('--ugly', '') in opts or ('-u', '') in opts:
+		# 	_DISPLAYSTYLE [0] = 0
+
+		# funcs = {}
+
+		# for opt, (func, ast) in zip ('NOSbgGz', _START_FUNCS.items ()):
+		# 	if (f'--no{func}', '') not in opts and (f'-{opt}', '') not in opts:
+		# 		funcs [func] = ast
+
+		# _VARS.update (funcs)
+		# sym.set_user_funcs (set (funcs))
+		# _PARSER.set_user_funcs (set (funcs))
+
+		_update_user_funcs ()
 
 		if ('--ugly', '') in opts or ('-u', '') in opts:
 			_DISPLAYSTYLE [0] = 0
 
-		funcs = {}
-
-		for opt, (func, ast) in zip ('NOSbgGz', _START_FUNCS.items ()):
-			if (f'--no{func}', '') not in opts and (f'-{opt}', '') not in opts:
-				funcs [func] = ast
-
-		_VARS.update (funcs)
-		sym.set_user_funcs (set (funcs))
-		_PARSER.set_user_funcs (set (funcs))
+		for short, long in zip ('EqltNOSbgGz', \
+				['EI', 'quick', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta']):
+			if (f'--{long}', '') in opts or (f'-{short}', '') in opts:
+				_admin_env (AST ('@', long))
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS

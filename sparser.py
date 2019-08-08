@@ -391,7 +391,7 @@ class Parser (lalr1.LALR1):
 
 	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
 
-	def set_user_funcs  (self, user_funcs):
+	def set_user_funcs (self, user_funcs):
 		self._USER_FUNCS = user_funcs
 
 	_PARSER_TABLES = \
@@ -565,10 +565,10 @@ class Parser (lalr1.LALR1):
 		('MAPSTO',       fr'\\mapsto'),
 		('IF',            r'if'),
 		('ELSE',          r'else'),
-		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR_QUICK})|({_VAR_QUICK}))('*)"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR_QUICK})|(partial|zoo|oo|True|False|None|{_VAR_QUICK}))('*)"),
 	])
 
-	TOKENS_LONG  = OrderedDict () # initialized in __init__()
+	TOKENS_LONG    = OrderedDict () # initialized in __init__()
 
 	def expr_commas_1      (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
 	def expr_commas_2      (self, expr_comma):                                     return expr_comma

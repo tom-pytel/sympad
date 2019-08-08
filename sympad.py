@@ -873,7 +873,7 @@ r"""<!DOCTYPE html>
 <style>
 	body { margin: 3em 4em; }
 	h2 { margin: 2em 0 1em 0; }
-	h4 { margin: 1.5em 0 0.5em 0; }
+	h4 { margin: 1.5em 0 0.75em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
 	i { color: #0008; }
 	del { color: red; }
@@ -906,7 +906,7 @@ SymPad is a simple single script symbolic calculator / scratchpad using SymPy fo
 It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally that last bit is exactly what happens but the response time is better :)
 This desire for simplicity led to the single script option "sympad.py" which I could plop down on the desktop and execute when needed.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
-Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for quick entry, or a mix of all of these.
+Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for fast entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
 
@@ -980,9 +980,10 @@ The single-click native and double-click Python formats should always be pasteab
 <p>
 This is the input mode SymPad was born in and still my preferred mode for quick calculations due to the ease and speed of input.
 SymPad normally allows long variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
-This can be turned off by switching into quick input mode using the function "<b>quick()</b>" or by using the "<b>--quick</b>" option on the command line.
+This can be turned off by switching into quick input mode using the function "<b>env(quick)</b>" or by using the "<b>--quick</b>" option on the command line.
 When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between recognized function and variable names.
 This means that an expression entered in normal mode like this "<b>x y sin z**2</b>" can be entered in quick mode like this "<b>xysinz**2</b>".
+For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
 </p>
 
 <h2>Types</h2>
@@ -1011,8 +1012,8 @@ The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respe
 Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
 Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
 By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
-This is objectively prettier, but can be changed via the "<b>sympyEI (True)</b>" and "<b>sympyEI (False)</b>" function.
-The SymPy constant usage can also be activated via the command line switch "<b>--sympyEI</b>".
+This is objectively prettier, but can be changed via the "<b>env (EI)</b>" and "<b>env (noEI)</b>" function.
+The SymPy constant usage can also be activated via the command line switch "<b>--EI</b>".
 </p><p>
 Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>", "<b>\partial x</b>" or "<b>∂x</b>" and are treated as a single variable.
 If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
@@ -1157,7 +1158,7 @@ and matrices if commas are present, but that is a different syntactic usage, cur
 <h4>Indexing</h4>
 
 <p>
-Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>{{1, 2, 3}, {4, 5, 6}} [1, 2]</b>" = "<b>6</b>" and "<b>{{1, 2, 3}, {4, 5, 6}} [:,1]</b>" = "<b>{{2,}, {5,}}</b>".
+Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>{{1, 2, 3}, {4, 5, 6}} [1, 2]</b>" = "<b>6</b>" and "<b>{{1, 2, 3}, {4, 5, 6}} [:, 1]</b>" = "<b>{{2,}, {5,}}</b>".
 </p>
 
 <h4>Member Access</h4>
@@ -1206,7 +1207,7 @@ All functions may take multiple comma-separated arguments and the SymPy function
 Almost all SymPy function and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
 Though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$oct (10)</b>".
 Only the "safe" __builtin__ functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
-The reason for excluding single letter functions is that all natively recognized function names are permanently excluded from being used as variables but since very often single letters are used as variable names this would be problematic.
+The reason for excluding single letter functions is that due to the way the grammar works all natively recognized function names are permanently excluded from being used as variables and since very often single letters are used as variable names this would be problematic.
 A workaround is in place and described further down.
 </p><p>
 The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
@@ -1214,7 +1215,7 @@ The inverses are entered as Pythonic functions without a slash like "<b>atan</b>
 The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
 This form of exponentiating a function is extended as an input shortcut for all top-level functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
 This does not apply to member functions or user created lambda functions.
-Keep in mind that the "<b>-1</b>" exponent in this context is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
+Keep in mind that the "<b>-1</b>" exponent in those contexts is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
 Top-level and user lambda functions also don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin**-1x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
 Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" always require explicit parentheses.
@@ -1259,16 +1260,50 @@ If you try to do this with regular parentheses then a function call will be atte
 The meaning of parentheses for assigned user variables is inferred from whether the variable is a lambda or not, for lambdas parentheses are a function call and for other types they indicate multiplication.
 </p><p>
 In a roundabout sort of way this all led to a peculiar delima.
-There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy gamma() really, but it is represented normally with the uppercase letter).
+There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>gamma</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy "<b>gamma()</b>" really, but it is represented normally with the uppercase Greek letter).
 This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
 This was not very elegant so the workaround is as follows:
-The function names have been left out of the grammar but user lambdas are created for them on startup so that they may be used as functions.
-If you wish to use those letters as variables instead then simply delete the defined lambdas and those letters will behave as variables once more.
-You can always redefine the lambdas yourself if you want them back, the format is as follows - "<b>beta = lambda x, y: %$beta (x, y)</b>".
-This same mechanism is used to make the functions "<b>N()</b>", "<b>O()</b>" and "<b>S()</b>" available for calling without the use of "<b>$</b>".
+The function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
+These lambda functions do not appear in the normal list of functions shown by "<b>funcs()</b>" but their status can be checked by using the "<b>env()</b>" function.
+When these functions are mapped they are treated exactly like variables mapped to a lambda so if you want to be able to use these names as free variables you need to disable them, for example to disable the "<b>gamma()</b>" function mapping enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>". Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are only available if the "<b>S()</b>" function is mapped.
+Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
 </p>
 
-<h2>Notes</h2>
+<h2>Appendix</h2>
+
+<h4>Special Characters</h4>
+
+<p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.</p>
+<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad, it also bypasses all user-defined lambda functions.</p>
+<p>"<b>@(expr)</b>" - Ampersand technically stops variable remapping for any expression it encapsulates which means that your global assigned variables can not be accessed from within the expression.</p>
+<p>"<b>%(expr)</b>" - Percent prevents expression evaluation for the expression it encapsulates for one round of evaluation. An optional second argument is a count of the number of rounds to prevent evaluations, it can be infinity.</p>
+
+<h4>Admin Functions</h4>
+
+<p>"<b>vars()</b>" - Show all currently mapped non-lambda user variables.</p>
+<p>"<b>funcs()</b>" - Show all currently mapped lambda user variables (callable functions).</p>
+<p>"<b>del(var1, var2, ...)</b>" - Delete variable assignments, lambda or non-lambda.</p>
+<p>"<b>delvars()</b>" - Delete all non-lambda variables.</p>
+<p>"<b>delall()</b>" - Delete ALL variables, lambda and non-lambda.</p>
+<p>"<b>env()</b>" - Show or change current SymPad runtime environment. Called without any arguments it will show the current state of the environment. If arguments are present they specify turning on or off a certain aspect of SymPad functionality. For example the functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
+
+<h4>Environment Settings for env()</h4>
+
+<p>"<b>EI</b>" - The use of "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".</p>
+<p>"<b>quick</b>" - Quick single letter variable name input mode.</p>
+<p>"<b>eval</b>" - Expression evaluation. Normally when you enter "<b>1 + 2</b>" it is evaluated for an answer of "<b>3</b>". If you turn this option off then this evaluation will not happen and the expression will stay as "<b>1 + 2</b>".</p>
+<p>"<b>doit</b>" - Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off. Note that turning off the previous option "<b>eval</b>" implies turning off "<b>doit</b>".</p>
+<p>"<b>N</b>" - Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</p>
+<p>"<b>O</b>" - Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</p>
+<p>"<b>S</b>" - Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</p>
+<p>"<b>beta</b>" - Mapping access to the SymPy "<b>beta()</b>" function via the "<b>beta</b>" variable.</p>
+<p>"<b>gamma</b>" - Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</p>
+<p>"<b>Gamma</b>" - Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</p>
+<p>"<b>zeta</b>" - Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</p>
+
+</b></p>
+
+<h4>Notes</h4>
 
 <p>
 <b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should never leave this server open to the internet by serving on an IP address visible to the external world.
@@ -1286,6 +1321,8 @@ You can always tell whether SymPad will treat an identifier as a function or a v
 Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name (this only works for top-level functions).
 </p><p>
 If you are getting results which are just plain wrong, check to see if you have any variables or lambdas mapped which would be changing the evaluation.
+</p><p>
+If you are unable to use a keyword argument identifier in a function call because it is a reserved name then you can wrap it in quotes, Python strings are allowed as keyword identifiers specifically for this purpose.
 </p><p>
 SymPad inserts the current working directory at the beginning of the Python module search path which means that for example if you run SymPad in the SymPy development directory then the SymPy module used will be the development version.
 </p><p>
@@ -1307,6 +1344,8 @@ SymPad on GitHub: <a target="_blank" href="https://github.com/Pristine-Cat/SymPa
 </body>
 </html>""".encode ("utf8"),
 }
+
+# Parser for PLY generated LALR1 grammar.
 
 import re
 import types
@@ -1926,9 +1965,9 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	ADMIN           = {'vars', 'funcs', 'del', 'delvars', 'delall', 'sympyEI', 'quick'}
+	ADMIN           = {'vars', 'funcs', 'del', 'delvars', 'delall', 'env'}
 	PSEUDO          = {NOREMAP, NOEVAL}
-	BUILTINS        = {'max', 'min', 'abs', 'pow', 'str', 'sum', 'print'}
+	BUILTINS        = {'max', 'min', 'abs', 'pow', 'print', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
@@ -2309,6 +2348,8 @@ import sympy as sp
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
+_EVAL                  = True
+_DOIT                  = True
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
@@ -2324,6 +2365,9 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
+
+def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
+	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
 
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
@@ -2352,7 +2396,10 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 		else:
 			pyargs.append (_ast2spt (arg))
 
-	spt = func (*pyargs, **pykw)
+	try:
+		spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
+	except: # 'evaluate' keyword not supported?
+		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func:
 		try:
@@ -2929,10 +2976,11 @@ class ast2spt:
 		self = super ().__new__ (cls)
 		spt  = self._ast2spt (ast)
 
-		try:
-			spt = spt.doit ()
-		except:
-			pass
+		if _DOIT and _EVAL:
+			try:
+				spt = spt.doit (deep = True)
+			except:
+				pass
 
 		return spt
 
@@ -2995,7 +3043,7 @@ class ast2spt:
 				for n in ast.dvs \
 				), ())
 
-		return sp.Derivative (self._ast2spt (ast [1]), *args)
+		return sp.Derivative (self._ast2spt (ast [1]), *args, evaluate = _EVAL)
 
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
@@ -3040,25 +3088,25 @@ class ast2spt:
 		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.comma),
 		'(': lambda self, ast: self._ast2spt (ast.paren),
 		'[': lambda self, ast: [self._ast2spt (b) for b in ast.brack],
-		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs)),
+		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), evaluate = _EVAL),
 		'-': lambda self, ast: -self._ast2spt (ast.minus),
-		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact)),
-		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add)),
-		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul)),
-		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), sp.Pow (self._ast2spt (ast.denom), -1)),
-		'^': lambda self, ast: sp.Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp)),
-		'log': lambda self, ast: sp.log (self._ast2spt (ast.log)) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base)),
-		'sqrt': lambda self, ast: sp.Pow (self._ast2spt (ast.rad), sp.Pow (2, -1)) if ast.idx is None else sp.Pow (self._ast2spt (ast.rad), sp.Pow (self._ast2spt (ast.idx), -1)),
+		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), evaluate = _EVAL),
+		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add), evaluate = _EVAL),
+		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul), evaluate = _EVAL),
+		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
+		'^': lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), evaluate = _EVAL),
+		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), evaluate = _EVAL) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), evaluate = _EVAL),
+		'sqrt': lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (2, -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
 		'func': _ast2spt_func,
 		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
 		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
 		'diff': _ast2spt_diff,
 		'intg': _ast2spt_intg,
-		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
-		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
-		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
+		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], evaluate = _EVAL),
+		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], evaluate = _EVAL),
+		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece), evaluate = _EVAL),
 		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
-		'idx': _ast2spt_idx, # lambda self, ast: self._ast2spt (ast.obj) [self._ast2spt (ast.idx [0]) if len (ast.idx) == 1 else tuple (self._ast2spt (i) for i in ast.idx)], #
+		'idx': _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
 
 		'text': lambda self, ast: ast.spt,
@@ -3116,17 +3164,17 @@ def _spt2ast_Add (spt):
 
 def _spt2ast_Mul (spt):
 	if spt.args [0] == -1:
-		return AST ('-', spt2ast (sp.Mul (*spt.args [1:])))
+		return AST ('-', spt2ast (sp.Mul (*spt.args [1:], evaluate = _EVAL)))
 
 	if spt.args [0].is_negative and isinstance (spt, sp.Number):
-		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:])))
+		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:], evaluate = _EVAL)))
 
 	numer = []
 	denom = []
 
 	for arg in spt.args:
 		if isinstance (arg, sp.Pow) and arg.args [1].is_negative:
-			denom.append (spt2ast (sp.Pow (arg.args [0], -arg.args [1])))
+			denom.append (spt2ast (arg.args [0] if arg.args [1] is sp.S.NegativeOne else _Pow (arg.args [0], -arg.args [1], evaluate = _EVAL)))
 		else:
 			numer.append (spt2ast (arg))
 
@@ -3141,7 +3189,7 @@ def _spt2ast_Mul (spt):
 
 def _spt2ast_Pow (spt):
 	if spt.args [1].is_negative:
-		return AST ('/', AST.One, spt2ast (sp.Pow (spt.args [0], -spt.args [1])))
+		return AST ('/', AST.One, spt2ast (spt.args [0] if spt.args [1] is sp.S.NegativeOne else _Pow (spt.args [0], -spt.args [1], evaluate = _EVAL)))
 
 	if spt.args [1] == 0.5:
 		return AST ('sqrt', spt2ast (spt.args [0]))
@@ -3150,7 +3198,7 @@ def _spt2ast_Pow (spt):
 
 def _spt2ast_MatPow (spt):
 	try: # compensate for some MatPow.doit() != mat**pow
-		return spt2ast (spt.args [0] ** spt.args [1])
+		return spt2ast (spt.args [0]**spt.args [1])
 	except:
 		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
 
@@ -3264,31 +3312,34 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 
 def set_user_funcs (user_funcs):
 	global _USER_FUNCS
-
 	_USER_FUNCS = user_funcs
+
+def set_eval (eval):
+	global _EVAL
+	_EVAL = eval
+
+def set_doit (doit):
+	global _DOIT
+	_DOIT = doit
 
 class sym: # for single script
 	set_precision  = set_precision
 	set_user_funcs = set_user_funcs
+	set_eval       = set_eval
+	set_doit       = set_doit
 	ast2tex        = ast2tex
 	ast2nat        = ast2nat
 	ast2py         = ast2py
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	ast = AST ('*', (('#', '-1'), ('@', 'x')))
-	res = ast2nat (ast)
-	# res = spt2ast (res)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	_EVAL = False
+	ast = AST ('/', ('#', '1'), ('#', '4'))
+	res = ast2spt (ast)
+	res = spt2ast (res)
 	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
-#
-# Time and interest permitting:
-# sets
-# var assumptions
-# importing modules to allow custom code execution
-# Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
-# systems of equations, ODEs, graphical plots (using matplotlib?)...
 
 import ast as py_ast
 from collections import OrderedDict
@@ -3678,7 +3729,7 @@ class Parser (lalr1.LALR1):
 
 	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
 
-	def set_user_funcs  (self, user_funcs):
+	def set_user_funcs (self, user_funcs):
 		self._USER_FUNCS = user_funcs
 
 	_PARSER_TABLES = \
@@ -3852,10 +3903,10 @@ class Parser (lalr1.LALR1):
 		('MAPSTO',       fr'\\mapsto'),
 		('IF',            r'if'),
 		('ELSE',          r'else'),
-		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR_QUICK})|({_VAR_QUICK}))('*)"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR_QUICK})|(partial|zoo|oo|True|False|None|{_VAR_QUICK}))('*)"),
 	])
 
-	TOKENS_LONG  = OrderedDict () # initialized in __init__()
+	TOKENS_LONG    = OrderedDict () # initialized in __init__()
 
 	def expr_commas_1      (self, expr_comma, COMMA):                              return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))
 	def expr_commas_2      (self, expr_comma):                                     return expr_comma
@@ -4226,6 +4277,8 @@ class sparser: # for single script
 #!/usr/bin/env python
 # python 3.6+
 
+# Server and state machine for expressions.
+
 import getopt
 import io
 import json
@@ -4253,41 +4306,50 @@ _SYMPAD_CHILD    = os.environ.get ('SYMPAD_CHILD')
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
-_DISPLAYSTYLE    = [1]
 
+__name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
-		'[-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-E | --sympyEI] [-q | --quick] [-u | --ugly] ' \
-		'[-N | --noN] [-O | --noO] [-S | --noS] [-b | --nobeta] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] ' \
-		'[host:port]' '''
+		'[-h | --help] [-v | --version] \n' \
+		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
+		f'{__name_indent} [-E | --EI] [-q | --quick] [-u | --ugly] \n' \
+		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
+		f'{__name_indent} [-b | --nobeta] [-g | --nogamma] \n' \
+		f'{__name_indent} [-G | --noGamma] [-z | --nozeta] \n' \
+		f'{__name_indent} [host:port | host | :port]' '''
 
-  -h | --help      - This
-  -v | --version   - Show version string
-  -d | --debug     - Dump debug info to server output
-  -n | --nobrowser - Don't start system browser to SymPad page
-  -E | --sympyEI   - Start with SymPy constant letters 'E' and 'I'
-  -q | --quick     - Start in quick input mode
-  -u | --ugly      - Start in draft display style (can only set on command line)
-  -N | --noN       - Start without "N()" lambda function
-  -S | --noS       - Start without "S()" lambda function
-  -O | --noO       - Start without "O()" lambda function
-  -b | --nobeta    - Start without "beta()" lambda function
-  -g | --nogamma   - Start without "gamma()" lambda function
-  -G | --noGamma   - Start without "Gamma()" lambda function
-  -z | --nozeta    - Start without "zeta()" lambda function
+  -h, --help      - This
+  -v, --version   - Show version string
+  -d, --debug     - Dump debug info to server output
+  -n, --nobrowser - Don't start system browser to SymPad page
+  -E, --EI        - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
+  -q, --quick     - Start in quick input mode
+  -u, --ugly      - Start in draft display style (only on command line)
+  -N, --noN       - Start without "N()" lambda function
+  -S, --noS       - Start without "S()" lambda function
+  -O, --noO       - Start without "O()" lambda function
+  -b, --nobeta    - Start without "beta()" lambda function
+  -g, --nogamma   - Start without "gamma()" lambda function
+  -G, --noGamma   - Start without "Gamma()" lambda function
+  -z, --nozeta    - Start without "zeta()" lambda function
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
 
-	_SYS_STDOUT  = sys.stdout
-	_VAR_LAST    = '_' # name of last evaluated expression variable
-	_HISTORY     = [] # persistent history across browser closings
+	_SYS_STDOUT   = sys.stdout
+	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
+	_HISTORY      = []  # persistent history across browser closings
 
-	_PARSER      = sparser.Parser ()
-	_VARS        = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True), \
+			('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
-	_START_FUNCS = OrderedDict ([
+	_PARSER       = sparser.Parser ()
+	_VAR_LAST     = '_' # name of last evaluated expression variable
+	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_ONE_VARS     = {}
+
+	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
 		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
 		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
@@ -4329,7 +4391,12 @@ def _ast_remap (ast, map_, recurse = True):
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
+	global _ONE_VARS
+
+	_ONE_VARS  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
 	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
+
+	user_funcs.update (_ONE_VARS)
 
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
@@ -4350,7 +4417,6 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 				lhss.append (c.var)
 			elif not c.is_ass or not c.lhs.is_var:
 				break
-
 			else:
 				t    = (c.rhs,) + tuple (itr)
 				ast  = t [0] if len (t) == 1 else AST (',', t)
@@ -4361,7 +4427,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 			if AST ('@', var) in AST.CONSTS:
 				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
-	return _ast_remap (ast, _VARS), vars
+	return _ast_remap (ast, {**_ONE_VARS, **_VARS}), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars):
@@ -4399,7 +4465,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 	return asts
 
-def _admin_vars (ast):
+def _admin_vars (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
@@ -4411,7 +4477,7 @@ def _admin_vars (ast):
 
 	return asts
 
-def _admin_funcs (ast):
+def _admin_funcs (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
@@ -4423,22 +4489,34 @@ def _admin_funcs (ast):
 
 	return asts
 
-def _admin_del (ast):
-	var = ast.args [0] if ast.args else AST.VarNull
+def _admin_del (*args):
+	vars = OrderedDict ()
+	msgs = []
 
-	try:
-		ast = _VARS [var.var]
+	for arg in args:
+		var = arg.as_identifier ()
 
-		del _VARS [var.var]
+		if var is None:
+			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
 
-		_update_user_funcs ()
+		vars [var] = _VARS.get (var)
 
-	except KeyError:
-		raise AE35UnitError (f'Variable {sym.ast2nat (var)!r} is not defined, it can only be attributable to human error.')
+		if vars [var] is None:
+			raise AE35UnitError (f'Variable {var!r} is not defined, it can only be attributable to human error.')
 
-	return f'{"Function" if ast.is_lamb else "Variable"} {sym.ast2nat (var)!r} deleted.'
+	for var, ast in vars.items ():
+		msgs.append (f'{"Function" if ast.is_lamb else "Variable"} {var!r} deleted.')
 
-def _admin_delvars (ast):
+		del _VARS [var]
+
+	_update_user_funcs ()
+
+	if not msgs:
+		msgs.append ('No variables specified!')
+
+	return msgs
+
+def _admin_delvars (*args):
 	for v, e in list (_VARS.items ()):
 		if not e.is_lamb and v != _VAR_LAST:
 			del _VARS [v]
@@ -4447,7 +4525,7 @@ def _admin_delvars (ast):
 
 	return 'All variables deleted.'
 
-def _admin_delall (ast):
+def _admin_delall (*args):
 	last_var = _VARS [_VAR_LAST]
 
 	_VARS.clear ()
@@ -4457,23 +4535,80 @@ def _admin_delall (ast):
 
 	return 'All assignments deleted.'
 
-def _admin_sympyEI (ast):
-	sast.sympyEI (bool (sym.ast2spt (ast.args [0])) if ast.args else True)
+def _admin_env (*args):
+	def _envop (env, apply):
+		msgs = []
 
-	if AST.E.var in _VARS:
-		del _VARS [AST.E.var]
+		for var, state in env.items ():
+			if apply:
+				_ENV [var] = state
 
-	if AST.I.var in _VARS:
-		del _VARS [AST.I.var]
+			if var == 'EI':
+				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.')
 
-	return f'Constant representation set to {AST.E.var!r} and {AST.I.var!r}.'
+				if apply:
+					sast.sympyEI (state)
 
-def _admin_quick (ast):
-	yes = bool (sym.ast2spt (ast.args [0])) if ast.args else True
+					for var in (AST.E.var, AST.I.var):
+						if var in _VARS:
+							del _VARS [var]
 
-	_PARSER.set_quick (yes)
+			elif var == 'quick':
+				msgs.append (f'Quick input mode is {"on" if state else "off"}.')
 
-	return f'Quick input mode is {"on" if yes else "off"}.'
+				if apply:
+					_PARSER.set_quick (state)
+
+			elif var == 'eval':
+				msgs.append (f'Expression evaluation is {"on" if state else "off"}.')
+
+				if apply:
+					sym.set_eval (state)
+
+			elif var == 'doit':
+				msgs.append (f'Expression doit() is {"on" if state else "off"}.')
+
+				if apply:
+					sym.set_doit (state)
+
+			elif var in _ONE_FUNCS:
+				msgs.append (f'Function {var}() is {"on" if state else "off"}.')
+
+				if apply:
+					_update_user_funcs ()
+
+		return msgs
+
+	# start here
+	if not args:
+		return _envop (_ENV, False)
+
+	env = OrderedDict ()
+
+	for arg in args:
+		if arg.is_ass:
+			var = arg.lhs.as_identifier ()
+
+			if var:
+				state = bool (sym.ast2spt (arg.rhs))
+
+		else:
+			var = arg.as_identifier ()
+
+			if var:
+				if var [:2] == 'no':
+					var, state = var [2:], False
+				else:
+					state = True
+
+		if var is None:
+			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
+		elif var not in {'EI', 'quick', 'eval', 'doit', *_ONE_FUNCS}:
+			raise NameError (f'invalid environment setting {var!r}')
+
+		env [var] = state
+
+	return _envop (env, True)
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -4563,10 +4698,12 @@ class Handler (SimpleHTTPRequestHandler):
 			ast, _, _  = _PARSER.parse (request ['text'])
 
 			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
-				asts = globals () [f'_admin_{ast.func}'] (ast)
+				asts = globals () [f'_admin_{ast.func}'] (*ast.args)
 
 				if isinstance (asts, str):
 					return {'msg': [asts]}
+				elif isinstance (asts, list) and isinstance (asts [0], str):
+					return {'msg': asts}
 
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
@@ -4614,11 +4751,12 @@ _MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnEquNOSbgGz', \
-				['help', 'version', 'debug', 'nobrowser', 'sympyEI', 'quick', 'ugly', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqltNOSbgGz',
+				['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'noeval', 'nodoit',
+				'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
-			print (_HELP.strip ())
+			print (_HELP.lstrip ())
 			sys.exit (0)
 
 		if ('--version', '') in opts or ('-v', '') in opts:
@@ -4640,24 +4778,40 @@ if __name__ == '__main__':
 					sys.exit (0)
 
 		# child starts here
-		if ('--sympyEI', '') in opts or ('-E', '') in opts:
-			sast.sympyEI ()
+		# if ('--EI', '') in opts or ('-E', '') in opts:
+		# 	_admin_env (AST ('@', 'EI'))
 
-		if ('--quick', '') in opts or ('-q', '') in opts:
-			_PARSER.set_quick ()
+		# if ('--quick', '') in opts or ('-q', '') in opts:
+		# 	_admin_env (AST ('@', 'quick'))
+
+		# if ('--noeval', '') in opts or ('-l', '') in opts:
+		# 	_admin_env (AST ('@', 'noeval'))
+
+		# if ('--nodoit', '') in opts or ('-t', '') in opts:
+		# 	_admin_env (AST ('@', 'nodoit'))
+
+		# if ('--ugly', '') in opts or ('-u', '') in opts:
+		# 	_DISPLAYSTYLE [0] = 0
+
+		# funcs = {}
+
+		# for opt, (func, ast) in zip ('NOSbgGz', _START_FUNCS.items ()):
+		# 	if (f'--no{func}', '') not in opts and (f'-{opt}', '') not in opts:
+		# 		funcs [func] = ast
+
+		# _VARS.update (funcs)
+		# sym.set_user_funcs (set (funcs))
+		# _PARSER.set_user_funcs (set (funcs))
+
+		_update_user_funcs ()
 
 		if ('--ugly', '') in opts or ('-u', '') in opts:
 			_DISPLAYSTYLE [0] = 0
 
-		funcs = {}
-
-		for opt, (func, ast) in zip ('NOSbgGz', _START_FUNCS.items ()):
-			if (f'--no{func}', '') not in opts and (f'-{opt}', '') not in opts:
-				funcs [func] = ast
-
-		_VARS.update (funcs)
-		sym.set_user_funcs (set (funcs))
-		_PARSER.set_user_funcs (set (funcs))
+		for short, long in zip ('EqltNOSbgGz', \
+				['EI', 'quick', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'nozeta']):
+			if (f'--{long}', '') in opts or (f'-{short}', '') in opts:
+				_admin_env (AST ('@', long))
 
 		if not argv:
 			host, port = _DEFAULT_ADDRESS
