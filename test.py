@@ -1498,8 +1498,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\binom96')), ('#', '84'))
 		self.assertEqual (ast2spt2ast (p ('binomial (x, y)')), ('func', 'binomial', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('-', ('@', 'x')))))
-		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x')), (('domain', ('"', 'ZZ')),)))
-		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('*', (('#', '1'), ('^', ('@', 'x'), ('#', '2')))), ('*', (('#', '1'), ('^', ('@', 'y'), ('#', '2')))), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y')), (('domain', ('"', 'RR')),)))
+		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
+		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('*', (('#', '1'), ('^', ('@', 'x'), ('#', '2')))), ('*', (('#', '1'), ('^', ('@', 'y'), ('#', '2')))), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('=', '=', ('@', 'domain'), ('"', 'RR')))))
 
 _EXPRESSIONS = """
 1

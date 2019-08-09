@@ -318,8 +318,8 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast.strip (strip)),) + args [iparm + 1:])))
 
 def _expr_func_func (FUNC, expr_neg_func, expr_super = None):
-	func          = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
-	expr_neg_func = expr_neg_func.strip_curlys ()
+	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
+	# expr_neg_func = expr_neg_func.strip_curlys ()
 
 	if expr_super is None:
 		return _expr_func (2, 'func', func, expr_neg_func)

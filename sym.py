@@ -34,12 +34,6 @@ def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evalua
 def _tuple2ast (args):
 	return args [0] if len (args) == 1 else AST (',', args)
 
-def _funcargs2ast (ast): # ast.is_func
-	if ast.kws:
-		return _tuple2ast (ast.args + tuple (AST ('=', '=', ('@', kw), a) for kw, a in ast.kws))
-	else:
-		return _tuple2ast (ast.args)
-
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
 
@@ -237,11 +231,11 @@ def _ast2tex_log (ast):
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
 _ast2tex_xlat_func2text = {
-	'beta'    : lambda ast: f'\\beta\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
-	'gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
-	'Gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
-	'Lambda'  : lambda ast: f'\\Lambda\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
-	'zeta'    : lambda ast: f'\\zeta\\left({_ast2tex (_funcargs2ast (ast))} \\right)',
+	'beta'    : lambda ast: f'\\beta\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'Gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'Lambda'  : lambda ast: f'\\Lambda\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
+	'zeta'    : lambda ast: f'\\zeta\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
 	'binomial': lambda ast: f'\\binom{{{_ast2tex (ast.args [0])}}}{{{_ast2tex (ast.args [1])}}}' if len (ast.args) == 2 else None,
 }
 
@@ -253,7 +247,7 @@ def _ast2tex_func (ast):
 				if ast.func [0] == 'a' else \
 				(f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}')
 
-		return f'{n}\\left({_ast2tex (_funcargs2ast (ast))} \\right)'
+		return f'{n}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
 
 	xact = _ast2tex_xlat_func2text.get (ast.func)
 
@@ -264,9 +258,9 @@ def _ast2tex_func (ast):
 			return text
 
 	if ast.func in AST.Func.TEX:
-		return f'\\{ast.func}\\left({_ast2tex (_funcargs2ast (ast))} \\right)'
+		return f'\\{ast.func}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
 	else:
-		return '\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({_ast2tex (_funcargs2ast (ast))} \\right)'
+		return '\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
 
 def _ast2tex_lim (ast):
 	s = _ast2tex (ast.to) if ast.dir is None else (_ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -504,7 +498,7 @@ _ast2nat_funcs = {
 	'^': _ast2nat_pow,
 	'log': _ast2nat_log,
 	'sqrt': lambda ast: f'sqrt{_ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{_ast2nat (ast.idx)}]{{{_ast2nat_wrap (ast.rad, 0, {","})}}}',
-	'func': lambda ast: f'{ast.func}({_ast2nat (_funcargs2ast (ast))})',
+	'func': lambda ast: f'{ast.func}({_ast2nat (_tuple2ast (ast.args))})',
 	'lim': _ast2nat_lim,
 	'sum': _ast2nat_sum,
 	'diff': _ast2nat_diff,
@@ -602,7 +596,7 @@ _ast2py_funcs = {
 	'^': _ast2py_pow,
 	'log': _ast2py_log,
 	'sqrt': lambda ast: f'sqrt{_ast2py_paren (ast.rad)}' if ast.idx is None else ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-	'func': lambda ast: f'{ast.unescaped}({ast2py (_funcargs2ast (ast))})',
+	'func': lambda ast: f'{ast.unescaped}({ast2py (_tuple2ast (ast.args))})',
 	'lim': _ast2py_lim,
 	'sum': lambda ast: f'Sum({ast2py (ast.sum)}, ({ast2py (ast.svar)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))',
 	'diff': _ast2py_diff,
@@ -682,6 +676,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
 		except: # unresolved symbols should not raise but be returned as origninal attribute access op
+			# if obj.op not in {'@', '.', 'idx'}: # not obj.is_var and not obj.is_attr: # obj.free_vars ():
 			if not obj.free_vars ():
 				raise
 
@@ -730,6 +725,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except: # unresolved symbols should not raise but be returned as origninal indexing op
+			# if ast.obj.op not in {'@', '.', 'idx'}: # not ast.obj.is_var: # ast.free_vars ():
 			if not ast.free_vars ():
 				raise
 
@@ -880,9 +876,9 @@ def _spt2ast_Function (spt, name = None, args = None, kws = None):
 		args = spt.args
 
 	if kws:
-		return AST ('func', name, tuple (spt2ast (arg) for arg in args), kws)
+		return AST ('func', name, tuple (spt2ast (arg) for arg in spt.args) + tuple (AST ('=', '=', ('@', kw), a) for kw, a in kws))
 	else:
-		return AST ('func', name, tuple (spt2ast (arg) for arg in args))
+		return AST ('func', name, tuple (spt2ast (arg) for arg in spt.args))
 
 def _spt2ast_Derivative (spt):
 	return AST ('diff', spt2ast (spt.args [0]), tuple ( \
@@ -1007,10 +1003,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	_EVAL = False
-# 	ast = AST ('/', ('#', '1'), ('#', '4'))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	_EVAL = False
+	# ast = AST ('.', ('.', ('@', 'a'), 'b'), 'c')
+	ast = AST ('idx', ('@', 'a'), (('#', '1'),))
+	res = ast2spt (ast)
+	# res = spt2ast (res)
+	print (res)
