@@ -210,6 +210,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\binom96'), ('func', 'binomial', (('#', '9'), ('#', '6'))))
 		self.assertEqual (p ('binomial (x, y)'), ('func', 'binomial', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (p ('y - 1*x'), ('+', (('@', 'y'), ('*', (('#', '-1'), ('@', 'x'))))))
+		self.assertEqual (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')"), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
+		self.assertEqual (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')"), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -392,6 +394,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\binom96')), '\\binom{9}{6}')
 		self.assertEqual (ast2tex (p ('binomial (x, y)')), '\\binom{x}{y}')
 		self.assertEqual (ast2tex (p ('y - 1*x')), 'y - 1 x')
+		self.assertEqual (ast2tex (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "\\operatorname{Poly}\\left(x^2 + 2 x + 1, x, domain = \\text{'ZZ'} \\right)")
+		self.assertEqual (ast2tex (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "\\operatorname{Poly}\\left(x^2 + y^2 + 2 x y, x, y, domain = \\text{'CC'} \\right)")
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -574,6 +578,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\binom96')), 'binomial(9, 6)')
 		self.assertEqual (ast2nat (p ('binomial (x, y)')), 'binomial(x, y)')
 		self.assertEqual (ast2nat (p ('y - 1*x')), 'y - 1 x')
+		self.assertEqual (ast2nat (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")
+		self.assertEqual (ast2nat (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -756,6 +762,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\binom96')), 'binomial(9, 6)')
 		self.assertEqual (ast2py (p ('binomial (x, y)')), 'binomial(x, y)')
 		self.assertEqual (ast2py (p ('y - 1*x')), 'y - 1*x')
+		self.assertEqual (ast2py (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "Poly(x**2 + 2*x + 1, x, domain = 'ZZ')")
+		self.assertEqual (ast2py (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "Poly(x**2 + y**2 + 2*x*y, x, y, domain = 'CC')")
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -938,6 +946,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\binom96')), ('func', 'binomial', (('#', '9'), ('#', '6'))))
 		self.assertEqual (ast2tex2ast (p ('binomial (x, y)')), ('func', 'binomial', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2tex2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('*', (('#', '-1'), ('@', 'x'))))))
+		self.assertEqual (ast2tex2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
+		self.assertEqual (ast2tex2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1120,6 +1130,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\binom96')), ('func', 'binomial', (('#', '9'), ('#', '6'))))
 		self.assertEqual (ast2nat2ast (p ('binomial (x, y)')), ('func', 'binomial', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2nat2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('*', (('#', '-1'), ('@', 'x'))))))
+		self.assertEqual (ast2nat2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
+		self.assertEqual (ast2nat2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1302,6 +1314,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\binom96')), ('func', 'binomial', (('#', '9'), ('#', '6'))))
 		self.assertEqual (ast2py2ast (p ('binomial (x, y)')), ('func', 'binomial', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2py2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('*', (('#', '-1'), ('@', 'x'))))))
+		self.assertEqual (ast2py2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
+		self.assertEqual (ast2py2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1345,8 +1359,8 @@ class Test (unittest.TestCase):
 		self.assertRaises (SympifyError, ast2spt2ast, p ("x' 'string'"))
 		self.assertEqual (ast2spt2ast (p ('|x|')), ('|', ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('x!')), ('!', ('@', 'x')))
-		self.assertEqual (ast2spt2ast (p ('x+y')), ('+', (('@', 'y'), ('@', 'x'))))
-		self.assertEqual (ast2spt2ast (p ('x-y')), ('+', (('-', ('@', 'y')), ('@', 'x'))))
+		self.assertEqual (ast2spt2ast (p ('x+y')), ('+', (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('x-y')), ('+', (('@', 'x'), ('-', ('@', 'y')))))
 		self.assertEqual (ast2spt2ast (p ('x*y')), ('*', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('x y')), ('*', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('x(y)')), ('*', (('@', 'x'), ('@', 'y'))))
@@ -1426,7 +1440,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ()')), ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))))
 		self.assertEqual (ast2spt2ast (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().transpose ()')), ('mat', ((('#', '1'), ('#', '4')), (('#', '2'), ('#', '5')), (('#', '3'), ('#', '6')))))
 		self.assertEqual (ast2spt2ast (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().T.T.transpose ().transpose ()')), ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))))
-		self.assertEqual (ast2spt2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), ('vec', (('+', (('*', (('@', 'B'), ('@', 'y'))), ('*', (('@', 'A'), ('@', 'x'))))), ('+', (('*', (('@', 'D'), ('@', 'y'))), ('*', (('@', 'C'), ('@', 'x'))))))))
+		self.assertEqual (ast2spt2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), ('vec', (('+', (('*', (('@', 'A'), ('@', 'x'))), ('*', (('@', 'B'), ('@', 'y'))))), ('+', (('*', (('@', 'C'), ('@', 'x'))), ('*', (('@', 'D'), ('@', 'y'))))))))
 		self.assertEqual (ast2spt2ast (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), ('*', (('@', 'Delta'), ('@', 'Lambda'), ('@', 'Omega'), ('@', 'Phi'), ('@', 'Pi'), ('@', 'Psi'), ('@', 'Sigma'), ('@', 'Theta'), ('@', 'Upsilon'), ('@', 'Xi'), ('@', 'alpha'), ('@', 'beta'), ('@', 'chi'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'eta'), ('@', 'gamma'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'omega'), ('@', 'phi'), ('@', 'psi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'theta'), ('@', 'upsilon'), ('@', 'xi'))))
 		self.assertEqual (ast2spt2ast (p ('1 if x < y')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))),)))
 		self.assertEqual (ast2spt2ast (p ('1 if x < y else 3')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '3'), True))))
@@ -1456,16 +1470,16 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('x**y.a ()**2')), ('^', ('@', 'x'), ('^', ('.', ('@', 'y'), 'a', ()), ('#', '2'))))
 		self.assertEqual (ast2spt2ast (p ('lambda: x')), ('lamb', ('@', 'x'), ()))
 		self.assertEqual (ast2spt2ast (p ('lambda x: x**2')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
-		self.assertEqual (ast2spt2ast (p ('lambda x, y: x + y')), ('lamb', ('+', (('@', 'y'), ('@', 'x'))), (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('lambda x, y: x + y')), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('1, lambda: x')), ('(', (',', (('#', '1'), ('lamb', ('@', 'x'), ())))))
 		self.assertEqual (ast2spt2ast (p ('1, lambda x: x**2')), ('(', (',', (('#', '1'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))))
-		self.assertEqual (ast2spt2ast (p ('1, lambda x, y: x + y')), ('(', (',', (('#', '1'), ('lamb', ('+', (('@', 'y'), ('@', 'x'))), (('@', 'x'), ('@', 'y')))))))
+		self.assertEqual (ast2spt2ast (p ('1, lambda x, y: x + y')), ('(', (',', (('#', '1'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))))
 		self.assertEqual (ast2spt2ast (p ('f = lambda: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), ())))
 		self.assertEqual (ast2spt2ast (p ('f = lambda x: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'),))))
 		self.assertEqual (ast2spt2ast (p ('f = lambda x, y: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y')))))
 		self.assertEqual (ast2spt2ast (p ('\\left(\\left(\\right) \\mapsto x \\right)')), ('lamb', ('@', 'x'), ()))
 		self.assertEqual (ast2spt2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
-		self.assertEqual (ast2spt2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('lamb', ('+', (('@', 'y'), ('@', 'x'))), (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('eye (2).is_diagonal ()')), ('@', 'True'))
 		self.assertEqual (ast2spt2ast (p ('a [2]')), ('idx', ('@', 'a'), (('#', '2'),)))
 		self.assertEqual (ast2spt2ast (p ('a [2,3]')), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
@@ -1484,6 +1498,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\binom96')), ('#', '84'))
 		self.assertEqual (ast2spt2ast (p ('binomial (x, y)')), ('func', 'binomial', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('-', ('@', 'x')))))
+		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x')), (('domain', ('"', 'ZZ')),)))
+		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('*', (('#', '1'), ('^', ('@', 'x'), ('#', '2')))), ('*', (('#', '1'), ('^', ('@', 'y'), ('#', '2')))), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y')), (('domain', ('"', 'RR')),)))
 
 _EXPRESSIONS = """
 1
@@ -1666,6 +1682,8 @@ o [i]!
 \\binom96
 binomial (x, y)
 y - 1*x
+Poly(x**2 + 2 x + 1, x, domain = 'ZZ')
+Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')
 """
 
 if __name__ == '__main__':

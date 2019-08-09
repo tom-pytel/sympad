@@ -818,13 +818,14 @@ def _spt2ast_MatrixBase (spt):
  			spt2ast (spt [0])
 
 def _spt2ast_Add (spt):
-	args = spt._sorted_args
+	args = spt.args
 
 	for arg in args:
 		if isinstance (arg, sp.Order):
 			break
 	else:
-		args = args [::-1]
+		if args [0].is_number:
+			args = spt.args [1:] + (spt.args [0],)
 
 	return AST ('+', tuple (spt2ast (arg) for arg in args))
 
