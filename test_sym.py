@@ -195,7 +195,7 @@ def expr_func ():
 	while 1:
 		py = choice (list (AST.Func.PY))
 
-		if py not in sxlat.XLAT_TEX_FUNC2AST: # and py not in sxlat.XLAT_NAT_FUNC2AST:
+		if py not in sxlat.XLAT_FUNC2AST_TEX:
 			break
 
 	return \

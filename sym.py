@@ -189,7 +189,8 @@ def _ast2tex_mul (ast, ret_has = False):
 				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/'}) or _ast_is_neg (n) or \
 				(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or \
 				(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
-				(n.is_idx and n.obj.op in {'[', 'idx'})):
+				(n.is_idx and n.obj.op in {'[', 'idx'}) or \
+				n.strip_paren ().is_comma):
 			t.append (f' \\cdot {s}')
 			has = True
 
@@ -383,7 +384,8 @@ def _ast2nat_mul (ast, ret_has = False):
 				(n.is_pow and n.base.is_pos_num) or \
 				n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'} or \
 				(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
-				(n.is_idx and n.obj.op in {'[', 'idx'})):
+				(n.is_idx and n.obj.op in {'[', 'idx'}) or \
+				n.strip_paren ().is_comma):
 			t.append (f' * {s}')
 			has = True
 
