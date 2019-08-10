@@ -39,8 +39,8 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
 		f'{__name_indent} [-E | --EI] [-q | --quick] [-u | --ugly] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
-		f'{__name_indent} [-b | --nobeta] [-g | --nogamma] \n' \
-		f'{__name_indent} [-G | --noGamma] [-L | --Lambda] [-z | --nozeta] \n' \
+		f'{__name_indent} [-g | --nogamma] [-G | --noGamma] \n' \
+		f'{__name_indent} [-z | --nozeta] \n' \
 		f'{__name_indent} [host:port | host | :port]' '''
 
   -h, --help      - This
@@ -53,10 +53,8 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
   -N, --noN       - Start without "N()" lambda function
   -S, --noS       - Start without "S()" lambda function
   -O, --noO       - Start without "O()" lambda function
-  -b, --nobeta    - Start without "beta()" lambda function
   -g, --nogamma   - Start without "gamma()" lambda function
   -G, --noGamma   - Start without "Gamma()" lambda function
-  -L, --Lambda    - Start with "Lambda()" lambda function
   -z, --nozeta    - Start without "zeta()" lambda function
 '''
 
@@ -71,8 +69,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
 	_HISTORY      = []  # persistent history across browser closings
 
-	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True), \
-			('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('Lambda', False), ('zeta', True)])
+	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True),
+		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
@@ -80,14 +78,12 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_ONE_VARS     = {}
 
 	_ONE_FUNCS    = OrderedDict ([
-		('N',      AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
-		('O',      AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
-		('S',      AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
-		('beta',   AST ('lamb', ('func', '$beta', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))),
-		('gamma',  AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
-		('Gamma',  AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
-		('Lambda', AST ('lamb', ('func', '$Lambda', (('@', 'a'), ('@', 'b'))), (('@', 'a'), ('@', 'b')))),
-		('zeta',   AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),))),
+		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
+		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
+		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
+		('gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
+		('Gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
+		('zeta',  AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),))),
 	])
 
 #...............................................................................................
@@ -479,9 +475,9 @@ _MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqltNOSbgGLz',
-				['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'noeval', 'nodoit',
-				'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'Lambda', 'nozeta'])
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqltNOSgGz',
+			['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'noeval', 'nodoit',
+			'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
 			print (_HELP.lstrip ())
@@ -511,8 +507,8 @@ if __name__ == '__main__':
 		if ('--ugly', '') in opts or ('-u', '') in opts:
 			_DISPLAYSTYLE [0] = 0
 
-		for short, long in zip ('EqltNOSbgGLz', \
-				['EI', 'quick', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'Lambda', 'nozeta']):
+		for short, long in zip ('EqltNOSgGz', \
+				['EI', 'quick', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
 			if (f'--{long}', '') in opts or (f'-{short}', '') in opts:
 				_admin_env (AST ('@', long))
 

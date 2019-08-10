@@ -54,8 +54,8 @@ def _Mul (*args, evaluate = True):
 def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
 	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
 
-def _tuple2ast (args):
-	return args [0] if len (args) == 1 else AST (',', args)
+def _tuple2ast (args, paren = False):
+	return args [0] if len (args) == 1 else AST ('(', (',', args)) if paren else AST (',', args)
 
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
@@ -584,7 +584,7 @@ _ast2py_funcs = {
 	'vec': lambda ast: 'Matrix([' + ', '.join (f'[{ast2py (e)}]' for e in ast.vec) + '])',
 	'mat': lambda ast: 'Matrix([' + ', '.join (f'[{", ".join (ast2py (e) for e in row)}]' for row in ast.mat) + '])',
 	'piece': lambda ast: 'Piecewise(' + ', '.join (f'({ast2py (p [0])}, {True if p [1] is True else ast2py (p [1])})' for p in ast.piece) + ')',
-	'lamb': lambda ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {ast2py (ast.lamb)}',
+	'lamb': lambda ast: f'Lambda({ast2py (_tuple2ast (ast.vars, paren = True))}, {ast2py (ast.lamb)})',
 	'idx': lambda ast: f'{_ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {",", "=", "lamb", "piece", "+", "*", "/", "-", "diff", "intg", "lim", "sum"} else ast2py (ast.obj)}[{ast2py (_tuple2ast (ast.idx))}]',
 	'slice': lambda ast: ':'.join (_ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 
