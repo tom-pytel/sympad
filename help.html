@@ -401,7 +401,8 @@ In a roundabout sort of way this all led to a peculiar delima.
 There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>gamma</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy "<b>gamma()</b>" really, but it is represented normally with the uppercase Greek letter).
 This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
 This was not very elegant so the workaround is as follows:
-The function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
+This is not a problem for "<b>beta</b>" and "<b>Lambda</b>" since they require multiple arguments and can be recognized as function calls from an implicit multiplication with a tuple of size 2, but the others can not be recognized this way.
+These function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
 These lambda functions do not appear in the normal list of functions shown by "<b>funcs()</b>" but their status can be checked by using the "<b>env()</b>" function.
 When these functions are mapped they are treated exactly like variables mapped to a lambda so if you want to be able to use these names as free variables you need to disable them, for example to disable the "<b>gamma()</b>" function mapping enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>". Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are only available if the "<b>S()</b>" function is mapped.
 Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
@@ -435,10 +436,8 @@ Also remember that these functions are always available for calling using the "<
 <p>"<b>N</b>" - Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</p>
 <p>"<b>O</b>" - Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</p>
 <p>"<b>S</b>" - Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</p>
-<p>"<b>beta</b>" - Mapping access to the SymPy "<b>beta()</b>" function via the "<b>beta</b>" variable.</p>
 <p>"<b>gamma</b>" - Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</p>
 <p>"<b>Gamma</b>" - Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</p>
-<p>"<b>Lambda</b>" - Mapping access to the SymPy "<b>Lambda()</b>" function via the "<b>Lambda</b>" variable.</p>
 <p>"<b>zeta</b>" - Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</p>
 
 </b></p>

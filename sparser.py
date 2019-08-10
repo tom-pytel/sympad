@@ -14,7 +14,7 @@ def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
 			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\', '') or FUNC.text
 
-def _ast_from_tok_digit_or_var (tok, i = 0):
+def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
@@ -497,10 +497,10 @@ class Parser (lalr1.LALR1):
 		('END_CASES',     r'\\end\s*{\s*cases\s*}'),
 		('FRAC2',        fr'\\frac\s*{_VARTEX1}\s*{_VARTEX1}'),
 		('FRAC1',        fr'\\frac\s*{_VARTEX1}'),
-		('FRAC',          r'\\frac'),
+		('FRAC',          r'\\frac(?!{_LETTERU})'),
 		('BINOM2',       fr'\\binom\s*{_VARTEX1}\s*{_VARTEX1}'),
 		('BINOM1',       fr'\\binom\s*{_VARTEX1}'),
-		('BINOM',         r'\\binom'),
+		('BINOM',         r'\\binom(?!{_LETTERU})'),
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
