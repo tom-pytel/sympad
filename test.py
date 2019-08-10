@@ -219,6 +219,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('(1,) * 2'), ('*', (('(', (',', (('#', '1'),))), ('#', '2'))))
 		self.assertEqual (p ('[1] * 2'), ('*', (('[', (('#', '1'),)), ('#', '2'))))
 		self.assertEqual (p ("'a' * 2"), ('*', (('"', 'a'), ('#', '2'))))
+		self.assertEqual (p ('Lambda (x, x**2)'), ('func', 'Lambda', (('@', 'x'), ('^', ('@', 'x'), ('#', '2')))))
+		self.assertEqual (p ('beta (2, 3)'), ('func', 'beta', (('#', '2'), ('#', '3'))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -410,6 +412,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('(1,) * 2')), '\\left(1, \\right) \\cdot 2')
 		self.assertEqual (ast2tex (p ('[1] * 2')), '\\left[1 \\right] \\cdot 2')
 		self.assertEqual (ast2tex (p ("'a' * 2")), "\\text{'a'} \\cdot 2")
+		self.assertEqual (ast2tex (p ('Lambda (x, x**2)')), '\\left(x \\mapsto x^2 \\right)')
+		self.assertEqual (ast2tex (p ('beta (2, 3)')), '\\beta\\left(2, 3 \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -601,6 +605,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('(1,) * 2')), '(1,) * 2')
 		self.assertEqual (ast2nat (p ('[1] * 2')), '[1] * 2')
 		self.assertEqual (ast2nat (p ("'a' * 2")), "'a' * 2")
+		self.assertEqual (ast2nat (p ('Lambda (x, x**2)')), 'lambda x: x**2')
+		self.assertEqual (ast2nat (p ('beta (2, 3)')), 'beta(2, 3)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -792,6 +798,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('(1,) * 2')), '(1,)*2')
 		self.assertEqual (ast2py (p ('[1] * 2')), '[1]*2')
 		self.assertEqual (ast2py (p ("'a' * 2")), "'a'*2")
+		self.assertEqual (ast2py (p ('Lambda (x, x**2)')), 'Lambda(x, x**2)')
+		self.assertEqual (ast2py (p ('beta (2, 3)')), 'beta(2, 3)')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -983,6 +991,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('(1,) * 2')), ('*', (('(', (',', (('#', '1'),))), ('#', '2'))))
 		self.assertEqual (ast2tex2ast (p ('[1] * 2')), ('*', (('[', (('#', '1'),)), ('#', '2'))))
 		self.assertEqual (ast2tex2ast (p ("'a' * 2")), ('*', (('"', 'a'), ('#', '2'))))
+		self.assertEqual (ast2tex2ast (p ('Lambda (x, x**2)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
+		self.assertEqual (ast2tex2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1174,6 +1184,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('(1,) * 2')), ('*', (('(', (',', (('#', '1'),))), ('#', '2'))))
 		self.assertEqual (ast2nat2ast (p ('[1] * 2')), ('*', (('[', (('#', '1'),)), ('#', '2'))))
 		self.assertEqual (ast2nat2ast (p ("'a' * 2")), ('*', (('"', 'a'), ('#', '2'))))
+		self.assertEqual (ast2nat2ast (p ('Lambda (x, x**2)')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
+		self.assertEqual (ast2nat2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1365,6 +1377,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('(1,) * 2')), ('*', (('(', (',', (('#', '1'),))), ('#', '2'))))
 		self.assertEqual (ast2py2ast (p ('[1] * 2')), ('*', (('[', (('#', '1'),)), ('#', '2'))))
 		self.assertEqual (ast2py2ast (p ("'a' * 2")), ('*', (('"', 'a'), ('#', '2'))))
+		self.assertEqual (ast2py2ast (p ('Lambda (x, x**2)')), ('func', 'Lambda', (('@', 'x'), ('^', ('@', 'x'), ('#', '2')))))
+		self.assertEqual (ast2py2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1556,6 +1570,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('(1,) * 2')), ('(', (',', (('#', '1'), ('#', '1')))))
 		self.assertEqual (ast2spt2ast (p ('[1] * 2')), ('[', (('#', '1'), ('#', '1'))))
 		self.assertEqual (ast2spt2ast (p ("'a' * 2")), ('"', 'aa'))
+		self.assertEqual (ast2spt2ast (p ('Lambda (x, x**2)')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
+		self.assertEqual (ast2spt2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 
 _EXPRESSIONS = """
 1
@@ -1747,6 +1763,8 @@ $oct(10)
 (1,) * 2
 [1] * 2
 'a' * 2
+Lambda (x, x**2)
+beta (2, 3)
 """
 
 if __name__ == '__main__':

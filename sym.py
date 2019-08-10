@@ -186,11 +186,14 @@ def _ast2tex_mul (ast, ret_has = False):
 			s = _ast2tex_wrap (s, 1)
 
 		if p and (n.op in {'#', '[', '!', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
-				(n.is_pow and n.base.is_pos_num) or (n.op in {'/', 'diff'} and p.op in {'#', '/'}) or _ast_is_neg (n) or \
-				(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or \
+				_ast_is_neg (n) or \
+				n.strip_paren ().is_comma or \
+				(n.op in {'/', 'diff'} and p.op in {'#', '/'}) or \
 				(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
-				(n.is_idx and n.obj.op in {'[', 'idx'}) or \
-				n.strip_paren ().is_comma):
+				(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
+				(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or \
+				(n.is_pow and (n.base.is_pos_num or n.base.strip_paren ().is_comma)) or \
+				(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren ().is_comma))):
 			t.append (f' \\cdot {s}')
 			has = True
 
@@ -381,11 +384,12 @@ def _ast2nat_mul (ast, ret_has = False):
 				n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.mul [-1]))
 
 		if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
-				(n.is_pow and n.base.is_pos_num) or \
 				n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'} or \
+				n.strip_paren ().is_comma or (n.is_pow and n.base.strip_paren ().is_comma) or \
 				(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
-				(n.is_idx and n.obj.op in {'[', 'idx'}) or \
-				n.strip_paren ().is_comma):
+				(n.is_pow and n.base.is_pos_num) or \
+				(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
+				(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren ().is_comma))):
 			t.append (f' * {s}')
 			has = True
 

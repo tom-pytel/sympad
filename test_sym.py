@@ -133,6 +133,9 @@ sqrt(1, 2)
 x*[][y]
 lambda: x:
 a*[x][y][z]
+a*()**2
+a*().t
+a*()[2]
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

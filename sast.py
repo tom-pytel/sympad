@@ -145,6 +145,15 @@ class AST (tuple):
 
 		return self
 
+	def strip_attr (self, count = None):
+		count = 999999999 if count is None else count
+
+		while self.op == '.' and count:
+			self   = self.obj
+			count -= 1
+
+		return self
+
 	def strip_minus (self, count = None, retneg = False):
 		count       = 999999999 if count is None else count
 		neg         = lambda ast: ast
