@@ -118,7 +118,7 @@ def _ast_remap (ast, map_, recurse = True):
 			if len (ast.args) != len (lamb.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), recurse = False) # remap lambda vars only once to avoid circular varname references
+			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), recurse = False) # remap lambda arg vars only once
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 

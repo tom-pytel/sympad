@@ -60,6 +60,12 @@ def _xlat_func_Integral (ast = None, dvab = None, *args):
 
 _xlat_func_Limit_dirs = {AST ('"', '+'): ('+',), AST ('"', '-'): ('-',), AST ('"', '+-'): ()}
 
+def _xlat_func_Lambda (args, expr):
+	args = args.strip_paren ()
+	args = args.comma if args.is_comma else (args,)
+
+	return AST ('lamb', expr, args)
+
 def _xlat_func_Limit (ast = AST.VarNull, var = AST.VarNull, to = AST.VarNull, dir = AST ('"', '+')):
 	return AST ('lim', ast, var, to, *_xlat_func_Limit_dirs [dir])
 
@@ -158,17 +164,20 @@ XLAT_FUNC_NAT = {
 	'factorial'            : lambda ast: AST ('!', ast),
 	'Integral'             : _xlat_func_Integral,
 	'integrate'            : _xlat_func_Integral,
+	'Lambda'               : _xlat_func_Lambda,
 	'Limit'                : _xlat_func_Limit,
 	'limit'                : _xlat_func_Limit,
 	'Matrix'               : _xlat_func_Matrix,
+	'MutableDenseMatrix'   : _xlat_func_Matrix,
 	'Piecewise'            : _xlat_func_Piecewise,
 	'Pow'                  : _xlat_func_Pow,
 	'pow'                  : _xlat_func_Pow,
 	'Sum'                  : _xlat_func_Sum,
+	'Tuple'                : lambda *args: AST ('(', (',', args)),
 }
 
 XLAT_FUNC_TEX = {**XLAT_FUNC_NAT,
-	'MutableDenseMatrix'   : _xlat_func_Matrix,
+	'SparseMatrix'         : _xlat_func_Matrix,
 	'MutableSparseMatrix'  : _xlat_func_Matrix,
 	'ImmutableDenseMatrix' : _xlat_func_Matrix,
 	'ImmutableSparseMatrix': _xlat_func_Matrix,

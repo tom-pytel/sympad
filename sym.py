@@ -28,6 +28,30 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
+def _Add (*args, evaluate = True):
+	if not evaluate:
+		return sp.Add (*args, evaluate = False)
+
+	itr = iter (args)
+	res = next (itr)
+
+	for arg in itr:
+		res = res + arg
+
+	return res
+
+def _Mul (*args, evaluate = True):
+	if not evaluate:
+		return sp.Mul (*args, evaluate = False)
+
+	itr = iter (args)
+	res = next (itr)
+
+	for arg in itr:
+		res = res * arg
+
+	return res
+
 def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
 	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
 
@@ -612,24 +636,13 @@ _ast2py_funcs = {
 }
 
 #...............................................................................................
-_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
-	'pi'   : sp.pi,
-	'oo'   : sp.oo,
-	'zoo'  : sp.zoo,
-	'None' : None,
-	'True' : sp.boolalg.true,
-	'False': sp.boolalg.false,
-	'nan'  : sp.nan,
-}
-
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
 _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
 		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
 		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
-		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
-
-_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
+		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip'
+		]
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __new__ (cls, ast):
@@ -647,8 +660,18 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt (self, ast):
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
+	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
+			'pi'   : sp.pi,
+			'oo'   : sp.oo,
+			'zoo'  : sp.zoo,
+			'None' : None,
+			'True' : sp.boolalg.true,
+			'False': sp.boolalg.false,
+			'nan'  : sp.nan,
+			}
+
 	def _ast2spt_var (self, ast):
-		spt = {**_ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
 
 		if spt is None:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
@@ -682,6 +705,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), sp.S.One)
 
+	_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
+
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
@@ -689,7 +714,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped)
+		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
 
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
@@ -753,9 +778,9 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), evaluate = _EVAL),
 		'-': lambda self, ast: -self._ast2spt (ast.minus),
 		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), evaluate = _EVAL),
-		'+': lambda self, ast: sp.Add (*(self._ast2spt (n) for n in ast.add), evaluate = _EVAL),
-		'*': lambda self, ast: sp.Mul (*(self._ast2spt (n) for n in ast.mul), evaluate = _EVAL),
-		'/': lambda self, ast: sp.Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
+		'+': lambda self, ast: _Add (*(self._ast2spt (n) for n in ast.add), evaluate = _EVAL),
+		'*': lambda self, ast: _Mul (*(self._ast2spt (n) for n in ast.mul), evaluate = _EVAL),
+		'/': lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
 		'^': lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), evaluate = _EVAL),
 		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), evaluate = _EVAL) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), evaluate = _EVAL),
 		'sqrt': lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (2, -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
@@ -1003,11 +1028,9 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	_EVAL = False
-	# ast = AST ('.', ('.', ('@', 'a'), 'b'), 'c')
-	ast = AST ('idx', ('@', 'a'), (('#', '1'),))
-	res = ast2spt (ast)
-	# res = spt2ast (res)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	ast = AST ('func', 'Tuple', (('#', '1'),))
+# 	res = ast2nat (ast)
+# 	# res = spt2ast (res)
+# 	print (res)

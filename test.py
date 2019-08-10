@@ -212,6 +212,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('y - 1*x'), ('+', (('@', 'y'), ('*', (('#', '-1'), ('@', 'x'))))))
 		self.assertEqual (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')"), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')"), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
+		self.assertEqual (p ('$oct(10)'), ('func', '$oct', (('#', '10'),)))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -396,6 +397,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('y - 1*x')), 'y - 1 x')
 		self.assertEqual (ast2tex (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "\\operatorname{Poly}\\left(x^2 + 2 x + 1, x, domain = \\text{'ZZ'} \\right)")
 		self.assertEqual (ast2tex (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "\\operatorname{Poly}\\left(x^2 + y^2 + 2 x y, x, y, domain = \\text{'CC'} \\right)")
+		self.assertEqual (ast2tex (p ('$oct(10)')), '\\operatorname{$oct}\\left(10 \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -580,6 +582,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('y - 1*x')), 'y - 1 x')
 		self.assertEqual (ast2nat (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")
 		self.assertEqual (ast2nat (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")
+		self.assertEqual (ast2nat (p ('$oct(10)')), '$oct(10)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -764,6 +767,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('y - 1*x')), 'y - 1*x')
 		self.assertEqual (ast2py (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "Poly(x**2 + 2*x + 1, x, domain = 'ZZ')")
 		self.assertEqual (ast2py (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "Poly(x**2 + y**2 + 2*x*y, x, y, domain = 'CC')")
+		self.assertEqual (ast2py (p ('$oct(10)')), 'oct(10)')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -948,6 +952,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('*', (('#', '-1'), ('@', 'x'))))))
 		self.assertEqual (ast2tex2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (ast2tex2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
+		self.assertEqual (ast2tex2ast (p ('$oct(10)')), ('func', '$oct', (('#', '10'),)))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1132,6 +1137,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('*', (('#', '-1'), ('@', 'x'))))))
 		self.assertEqual (ast2nat2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (ast2nat2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
+		self.assertEqual (ast2nat2ast (p ('$oct(10)')), ('func', '$oct', (('#', '10'),)))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1316,6 +1322,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('*', (('#', '-1'), ('@', 'x'))))))
 		self.assertEqual (ast2py2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (ast2py2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
+		self.assertEqual (ast2py2ast (p ('$oct(10)')), ('*', (('@', 'oct'), ('(', ('#', '10')))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1500,6 +1507,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('-', ('@', 'x')))))
 		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('*', (('#', '1'), ('^', ('@', 'x'), ('#', '2')))), ('*', (('#', '1'), ('^', ('@', 'y'), ('#', '2')))), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('=', '=', ('@', 'domain'), ('"', 'RR')))))
+		self.assertEqual (ast2spt2ast (p ('$oct(10)')), ('"', '0o12'))
 
 _EXPRESSIONS = """
 1
@@ -1684,6 +1692,7 @@ binomial (x, y)
 y - 1*x
 Poly(x**2 + 2 x + 1, x, domain = 'ZZ')
 Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')
+$oct(10)
 """
 
 if __name__ == '__main__':
