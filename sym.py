@@ -97,7 +97,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 #...............................................................................................
 def ast2tex (ast, xlat = True): # abstract syntax tree -> LaTeX text
-	return _ast2tex (sxlat.xlat_func2asts (ast, sxlat.XLAT_FUNC2AST_TEX) if xlat else ast)
+	return _ast2tex (sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX) if xlat else ast)
 
 def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
@@ -328,7 +328,7 @@ _ast2tex_funcs = {
 
 #...............................................................................................
 def ast2nat (ast, xlat = True): # abstract syntax tree -> native text
-	return _ast2nat (sxlat.xlat_func2asts (ast, sxlat.XLAT_FUNC2AST_NAT) if xlat else ast)
+	return _ast2nat (sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_NAT) if xlat else ast)
 
 def _ast2nat (ast):
 	return _ast2nat_funcs [ast.op] (ast)

@@ -204,7 +204,7 @@ def _xlat_func2ast (xact, args):
 
 	return xact (*xargs, **xkw)
 
-def xlat_func2asts (ast, xlat): # translate eligible functions in tree to other AST representations
+def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
 		return ast
 
@@ -212,7 +212,7 @@ def xlat_func2asts (ast, xlat): # translate eligible functions in tree to other 
 		xact = xlat.get (ast.func)
 
 		if xact is not None:
-			args = AST (*(xlat_func2asts (arg, xlat) for arg in ast.args))
+			args = AST (*(xlat_funcs2asts (arg, xlat) for arg in ast.args))
 
 			if xact is True: # True means execute function and use return value for ast
 				return sym.spt2ast (sym._ast_func_call (getattr (sp, ast.func), args))
@@ -228,7 +228,7 @@ def xlat_func2asts (ast, xlat): # translate eligible functions in tree to other 
 
 			return AST ('func', ast.func, args)
 
-	return AST (*(xlat_func2asts (e, xlat) for e in ast))
+	return AST (*(xlat_funcs2asts (e, xlat) for e in ast))
 
 _XLAT_FUNC2TEX = {
 	'beta'    : lambda args: f'\\beta\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
@@ -250,7 +250,7 @@ def xlat_func2tex (ast):
 class sxlat: # for single script
 	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
-	xlat_func2asts    = xlat_func2asts
+	xlat_funcs2asts   = xlat_funcs2asts
 	xlat_func2tex     = xlat_func2tex
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
