@@ -7,7 +7,6 @@ from getopt import getopt
 from random import random, randrange, choice
 import sys
 
-import sast
 from sast import AST
 import sxlat
 import sym

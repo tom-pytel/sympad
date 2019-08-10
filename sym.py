@@ -4,7 +4,6 @@ from ast import literal_eval
 import re
 import sympy as sp
 
-import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -19,7 +18,7 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 	def _init (self, tex = None, nat = None, py = None, spt = None):
 		self.tex, self.nat, self.py, self.spt = tex, nat, py, spt
 
-sast.register_AST (AST_Text)
+AST.register_AST (AST_Text)
 
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
 	is_number  = False

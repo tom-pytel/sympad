@@ -1622,13 +1622,18 @@ _SYMPY_FUNCS   = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and c
 
 #...............................................................................................
 class AST (tuple):
-	op     = None
-	CONSTS = set () # will be filled in after all classes defined
+	op      = None
+
+	OPS     = set () # these will be filled in after all classes defined
+	CONSTS  = set ()
+
+	_OP2CLS = {}
+	_CLS2OP = {}
 
 	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
 
 	def __new__ (cls, *args):
-		op       = _AST_CLS2OP.get (cls)
+		op       = AST._CLS2OP.get (cls)
 		cls_args = tuple (AST (*arg) if arg.__class__ is tuple else arg for arg in args)
 
 		if op:
@@ -1636,7 +1641,7 @@ class AST (tuple):
 
 		elif args:
 			args = cls_args
-			cls2 = _AST_OP2CLS.get (args [0])
+			cls2 = AST._OP2CLS.get (args [0])
 
 			if cls2:
 				cls      = cls2
@@ -1786,6 +1791,23 @@ class AST (tuple):
 				return AST (op, (ast0,) + ast1 [-1])
 			else:
 				return AST (op, (ast0, ast1))
+
+	@staticmethod
+	def register_AST (cls):
+		AST._CLS2OP [cls]    = cls.op
+		AST._OP2CLS [cls.op] = cls
+
+		AST.OPS.add (cls.op)
+
+		setattr (AST, cls.__name__ [4:], cls)
+
+	@staticmethod
+	def EI (state = True):
+		AST.CONSTS.difference_update ((AST.E, AST.I))
+
+		AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if state else (AST ('@', 'e'), AST ('@', 'i'))
+
+		AST.CONSTS.update ((AST.E, AST.I))
 
 #...............................................................................................
 class AST_Eq (AST):
@@ -2067,44 +2089,21 @@ class AST_Slice (AST):
 		self.start, self.stop, self.step = start, stop, step
 
 #...............................................................................................
-_AST_OP2CLS = {
-	'=': AST_Eq,
-	'#': AST_Num,
-	'@': AST_Var,
-	'.': AST_Attr,
-	'"': AST_Str,
-	',': AST_Comma,
-	'{': AST_Curly,
-	'(': AST_Paren,
-	'[': AST_Brack,
-	'|': AST_Abs,
-	'-': AST_Minus,
-	'!': AST_Fact,
-	'+': AST_Add,
-	'*': AST_Mul,
-	'/': AST_Div,
-	'^': AST_Pow,
-	'log': AST_Log,
-	'sqrt': AST_Sqrt,
-	'func': AST_Func,
-	'lim': AST_Lim,
-	'sum': AST_Sum,
-	'diff': AST_Diff,
-	'intg': AST_Intg,
-	'vec': AST_Vec,
-	'mat': AST_Mat,
-	'piece': AST_Piece,
-	'lamb': AST_Lamb,
-	'idx': AST_Idx,
-	'slice': AST_Slice,
-}
+_AST_CLASSES   = [AST_Eq, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul,
+		AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum, AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice]
 
-_AST_CLS2OP = dict ((b, a) for (a, b) in _AST_OP2CLS.items ())
+for _cls in _AST_CLASSES:
+	AST.register_AST (_cls)
 
-for cls in _AST_CLS2OP:
-	setattr (AST, cls.__name__ [4:], cls)
+_AST_CONSTS    = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
+		('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
 
-AST.OPS        = set (_AST_OP2CLS)
+for _vp, _vv in _AST_CONSTS:
+	ast = AST ('@', _vv)
+
+	AST.CONSTS.add (ast)
+	setattr (AST, _vp, ast)
+
 AST.Zero       = AST ('#', '0')
 AST.One        = AST ('#', '1')
 AST.NegOne     = AST ('#', '-1')
@@ -2112,38 +2111,8 @@ AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
 AST.MatEmpty   = AST ('func', 'Matrix', ('[', ()))
 
-_CONSTS        = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
-		('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
-
-for _vp, _vv in _CONSTS:
-	ast = AST ('@', _vv)
-
-	AST.CONSTS.add (ast)
-	setattr (AST, _vp, ast)
-
-def register_AST (cls):
-	_AST_OP2CLS [cls.op] = cls
-	_AST_CLS2OP [cls]    = cls.op
-
-	AST.OPS.add (cls.op)
-
-	setattr (AST, cls.__name__ [4:], cls)
-
-def sympyEI (yes = True):
-	AST.CONSTS.difference_update ((AST.E, AST.I))
-
-	AST.E, AST.I = (AST ('@', 'E'), AST ('@', 'I')) if yes else (AST ('@', 'e'), AST ('@', 'i'))
-
-	AST.CONSTS.update ((AST.E, AST.I))
-
 class sast: # for single script
-	AST          = AST
-	register_AST = register_AST
-	sympyEI      = sympyEI
-
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	ast = AST ('func', 'exp', AST (('@', 'x'),))
-# 	print (ast)
+	AST = AST
 # Translate SymPy functions to other ASTs or text for further use or just display.
 
 import sympy as sp
@@ -2419,7 +2388,7 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 	def _init (self, tex = None, nat = None, py = None, spt = None):
 		self.tex, self.nat, self.py, self.spt = tex, nat, py, spt
 
-sast.register_AST (AST_Text)
+AST.register_AST (AST_Text)
 
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
 	is_number  = False
@@ -4587,7 +4556,7 @@ def _admin_env (*args):
 				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.')
 
 				if apply:
-					sast.sympyEI (state)
+					AST.EI (state)
 
 					for var in (AST.E.var, AST.I.var):
 						if var in _VARS:

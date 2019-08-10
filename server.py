@@ -63,7 +63,6 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
-	import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -276,7 +275,7 @@ def _admin_env (*args):
 				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.')
 
 				if apply:
-					sast.sympyEI (state)
+					AST.EI (state)
 
 					for var in (AST.E.var, AST.I.var):
 						if var in _VARS:
