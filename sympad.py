@@ -2287,7 +2287,7 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 
 	return None
 
-XLAT_FUNC_NAT = {
+XLAT_FUNC2AST_NAT = {
 	'abs'                  : lambda ast: AST ('|', ast),
 	'Abs'                  : lambda ast: AST ('|', ast),
 	'Derivative'           : _xlat_func_Derivative,
@@ -2305,7 +2305,7 @@ XLAT_FUNC_NAT = {
 	'Sum'                  : _xlat_func_Sum,
 }
 
-XLAT_FUNC_TEX = {**XLAT_FUNC_NAT,
+XLAT_FUNC2AST_TEX = {**XLAT_FUNC2AST_NAT,
 	'MutableDenseMatrix'   : _xlat_func_Matrix,
 	'MutableSparseMatrix'  : _xlat_func_Matrix,
 	'ImmutableDenseMatrix' : _xlat_func_Matrix,
@@ -2331,13 +2331,13 @@ def xlat_func (xact, args):
 	return xact (*xargs, **xkw)
 
 class xlat: # for single script
-	XLAT_FUNC_NAT = XLAT_FUNC_NAT
-	XLAT_FUNC_TEX = XLAT_FUNC_TEX
+	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
+	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
 	xlat_func         = xlat_func
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	ast = AST ('(', (',', (('#', '1'), ('#', '2'))))
-# 	res = XLAT_FUNC_NAT ['Piecewise'] (ast)
+# 	res = XLAT_FUNC2AST_NAT ['Piecewise'] (ast)
 # 	print (res)
 # Convert between internal AST and sympy expressions and write out LaTeX, simple and python code
 
@@ -2437,7 +2437,7 @@ def _ast_xlat_funcs (ast, XLAT): # translate eligible functions in tree to other
 
 #...............................................................................................
 def ast2tex (ast, xlat = True): # abstract syntax tree -> LaTeX text
-	return _ast2tex (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_TEX) if xlat else ast)
+	return _ast2tex (_ast_xlat_funcs (ast, xlat.XLAT_FUNC2AST_TEX) if xlat else ast)
 
 def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
@@ -2685,7 +2685,7 @@ _ast2tex_funcs = {
 
 #...............................................................................................
 def ast2nat (ast, xlat = True): # abstract syntax tree -> simple text
-	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_NAT) if xlat else ast)
+	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC2AST_NAT) if xlat else ast)
 
 def _ast2nat (ast):
 	return _ast2nat_funcs [ast.op] (ast)

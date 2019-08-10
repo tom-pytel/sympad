@@ -6,7 +6,7 @@ import sympy as sp
 
 import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
-import astxlat       # AUTO_REMOVE_IN_SINGLE_SCRIPT
+import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
@@ -84,7 +84,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 	try:
 		spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
-	except (ValueError, TypeError, NameError, AttributeError): # maybe 'evaluate' keyword not supported?
+	except (ValueError, TypeError, NameError, AttributeError, sp.OptionError): # maybe 'evaluate' keyword not supported?
 		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func:
@@ -95,35 +95,9 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 	return spt
 
-def _ast_xlat_funcs (ast, XLAT): # translate eligible functions in tree to other AST representations
-	if not isinstance (ast, AST):
-		return ast
-
-	if ast.is_func:
-		xact = XLAT.get (ast.func)
-
-		if xact is not None:
-			args = AST (*(_ast_xlat_funcs (arg, XLAT) for arg in ast.args))
-
-			if xact is True: # True means execute function and use return value for ast
-				return spt2ast (_ast_func_call (getattr (sp, ast.func), args))
-
-			try:
-				ast2 = astxlat.xlat_func (xact, args)
-
-				if ast2 is not None:
-					return ast2
-
-			except:
-				pass
-
-			return AST ('func', ast.func, args)
-
-	return AST (*(_ast_xlat_funcs (e, XLAT) for e in ast))
-
 #...............................................................................................
 def ast2tex (ast, xlat = True): # abstract syntax tree -> LaTeX text
-	return _ast2tex (_ast_xlat_funcs (ast, astxlat.XLAT_FUNC_TEX) if xlat else ast)
+	return _ast2tex (sxlat.xlat_funcs (ast, sxlat.XLAT_FUNC2AST_TEX) if xlat else ast)
 
 def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
@@ -371,7 +345,7 @@ _ast2tex_funcs = {
 
 #...............................................................................................
 def ast2nat (ast, xlat = True): # abstract syntax tree -> native text
-	return _ast2nat (_ast_xlat_funcs (ast, astxlat.XLAT_FUNC_NAT) if xlat else ast)
+	return _ast2nat (sxlat.xlat_funcs (ast, sxlat.XLAT_FUNC2AST_NAT) if xlat else ast)
 
 def _ast2nat (ast):
 	return _ast2nat_funcs [ast.op] (ast)
@@ -641,8 +615,7 @@ _builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __
 _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
 		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
 		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
-		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip'
-		]
+		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __new__ (cls, ast):
@@ -668,7 +641,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			'True' : sp.boolalg.true,
 			'False': sp.boolalg.false,
 			'nan'  : sp.nan,
-			}
+	}
 
 	def _ast2spt_var (self, ast):
 		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)

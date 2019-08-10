@@ -600,20 +600,20 @@ class Parser (lalr1.LALR1):
 	def expr_ineq_3        (self, expr_add):                                       return expr_add
 
 	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp)) # TODO: DELETEME: AST.flatcat ('+', expr_add, expr_mul_exp.neg (stack = True))
+	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
 	def expr_add_3         (self, expr_mul_exp):                                   return expr_mul_exp
 
 	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
 
-	def expr_neg_1         (self, MINUS, expr_neg):                                return _expr_neg (expr_neg) # TODO: DELETEME: expr_neg.neg (stack = True)
+	def expr_neg_1         (self, MINUS, expr_neg):                                return _expr_neg (expr_neg)
 	def expr_neg_2         (self, expr_diff):                                      return expr_diff
 
 	def expr_diff          (self, expr_div):                                       return _expr_diff (expr_div)
 
 	def expr_div_1         (self, expr_div, DIVIDE, expr_mul_imp):                 return AST ('/', expr_div, expr_mul_imp)
-	def expr_div_2         (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, _expr_neg (expr_mul_imp)) # TODO: DELETEME: AST ('/', expr_div, expr_mul_imp.neg (stack = True))
+	def expr_div_2         (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, _expr_neg (expr_mul_imp))
 	def expr_div_3         (self, expr_mul_imp):                                   return expr_mul_imp
 
 	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                        return _expr_mul_imp (expr_mul_imp, expr_intg, self._USER_FUNCS)
@@ -716,7 +716,7 @@ class Parser (lalr1.LALR1):
 	def expr_super_3       (self, CARET, expr_frac):                               return expr_frac
 	def expr_super_4       (self, CARET1):                                         return _ast_from_tok_digit_or_var (CARET1)
 
-	def expr_neg_func_1    (self, MINUS, expr_neg_func):                           return _expr_neg (expr_neg_func) # TODO: DELETEME: expr_neg_func.neg (stack = True)
+	def expr_neg_func_1    (self, MINUS, expr_neg_func):                           return _expr_neg (expr_neg_func)
 	def expr_neg_func_2    (self, expr_func):                                      return expr_func
 
 	def caret_or_dblstar_1 (self, DBLSTAR):                                        return '**'
@@ -881,7 +881,7 @@ class Parser (lalr1.LALR1):
 			return self._parse_autocomplete_expr_commas (rule, pos)
 
 		if pos >= len (rule [1]): # end of rule
-			if rule [0] == 'expr_intg': # TODO: Fix this! Fix what?
+			if rule [0] == 'expr_intg':
 				return self._parse_autocomplete_expr_intg ()
 
 			return False

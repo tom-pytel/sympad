@@ -523,7 +523,7 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'astxlat.py', 'sast.py', 'lalr1.py')
+		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
 		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler)

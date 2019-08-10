@@ -241,7 +241,7 @@ class AST_Num (AST):
 	_mant_and_exp = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (1, 2)
 
 class AST_Var (AST):
-	op, is_var = '@', True
+	op, is_var  = '@', True
 
 	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
 			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
