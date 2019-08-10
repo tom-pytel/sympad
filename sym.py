@@ -97,7 +97,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 #...............................................................................................
 def ast2tex (ast, xlat = True): # abstract syntax tree -> LaTeX text
-	return _ast2tex (sxlat.xlat_funcs (ast, sxlat.XLAT_FUNC2AST_TEX) if xlat else ast)
+	return _ast2tex (sxlat.xlat_func2asts (ast, sxlat.XLAT_FUNC2AST_TEX) if xlat else ast)
 
 def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
@@ -140,14 +140,9 @@ def _ast2tex_num (ast):
 
 	return f'{m}{{e}}{{{e}}}' if e else m
 
-_ast2tex_var_xlat = {'Naturals', 'Naturals0', 'Integers', 'Reals', 'Complexes'}
-
 def _ast2tex_var (ast):
 	if not ast.var:
 		return '{}' # Null var
-
-	if ast.var in _ast2tex_var_xlat:
-		return sp.latex (getattr (sp, ast.var))
 
 	v = ast.as_var.var
 	p = ''
@@ -228,15 +223,6 @@ def _ast2tex_log (ast):
 			if ast.base is None else \
 			f'\\log_{_ast2tex_curly (ast.base)}{_ast2tex_paren (ast.log)}'
 
-_ast2tex_xlat_func2text = {
-	'beta'    : lambda ast: f'\\beta\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
-	'gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
-	'Gamma'   : lambda ast: f'\\Gamma\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
-	'Lambda'  : lambda ast: f'\\Lambda\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
-	'zeta'    : lambda ast: f'\\zeta\\left({_ast2tex (_tuple2ast (ast.args))} \\right)',
-	'binomial': lambda ast: f'\\binom{{{_ast2tex (ast.args [0])}}}{{{_ast2tex (ast.args [1])}}}' if len (ast.args) == 2 else None,
-}
-
 def _ast2tex_func (ast):
 	if ast.is_trigh_func:
 		n = (f'\\operatorname{{{ast.func [1:]}}}^{{-1}}' \
@@ -247,13 +233,10 @@ def _ast2tex_func (ast):
 
 		return f'{n}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
 
-	xact = _ast2tex_xlat_func2text.get (ast.func)
+	tex = sxlat.xlat_func2tex (ast)
 
-	if xact:
-		text = xact (ast)
-
-		if text is not None:
-			return text
+	if tex is not None:
+		return tex
 
 	if ast.func in AST.Func.TEX:
 		return f'\\{ast.func}\\left({_ast2tex (_tuple2ast (ast.args))} \\right)'
@@ -345,7 +328,7 @@ _ast2tex_funcs = {
 
 #...............................................................................................
 def ast2nat (ast, xlat = True): # abstract syntax tree -> native text
-	return _ast2nat (sxlat.xlat_funcs (ast, sxlat.XLAT_FUNC2AST_NAT) if xlat else ast)
+	return _ast2nat (sxlat.xlat_func2asts (ast, sxlat.XLAT_FUNC2AST_NAT) if xlat else ast)
 
 def _ast2nat (ast):
 	return _ast2nat_funcs [ast.op] (ast)

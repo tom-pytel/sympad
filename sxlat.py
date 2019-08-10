@@ -190,7 +190,7 @@ XLAT_FUNC2AST_TEX = {**XLAT_FUNC2AST_NAT,
 	'zeros'                : True,
 }
 
-def xlat_func (xact, args):
+def _xlat_func2ast (xact, args):
 	xargs = []
 	xkw   = {}
 
@@ -204,7 +204,7 @@ def xlat_func (xact, args):
 
 	return xact (*xargs, **xkw)
 
-def xlat_funcs (ast, xlat): # translate eligible functions in tree to other AST representations
+def xlat_func2asts (ast, xlat): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
 		return ast
 
@@ -212,13 +212,13 @@ def xlat_funcs (ast, xlat): # translate eligible functions in tree to other AST 
 		xact = xlat.get (ast.func)
 
 		if xact is not None:
-			args = AST (*(xlat_funcs (arg, xlat) for arg in ast.args))
+			args = AST (*(xlat_func2asts (arg, xlat) for arg in ast.args))
 
 			if xact is True: # True means execute function and use return value for ast
 				return sym.spt2ast (sym._ast_func_call (getattr (sp, ast.func), args))
 
 			try:
-				ast2 = xlat_func (xact, args)
+				ast2 = _xlat_func2ast (xact, args)
 
 				if ast2 is not None:
 					return ast2
@@ -228,16 +228,33 @@ def xlat_funcs (ast, xlat): # translate eligible functions in tree to other AST 
 
 			return AST ('func', ast.func, args)
 
-	return AST (*(xlat_funcs (e, xlat) for e in ast))
+	return AST (*(xlat_func2asts (e, xlat) for e in ast))
+
+_XLAT_FUNC2TEX = {
+	'beta'    : lambda args: f'\\beta\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
+	'gamma'   : lambda args: f'\\Gamma\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
+	'Gamma'   : lambda args: f'\\Gamma\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
+	'Lambda'  : lambda args: f'\\Lambda\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
+	'zeta'    : lambda args: f'\\zeta\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
+	'binomial': lambda args: f'\\binom{{{sym._ast2tex (args [0])}}}{{{sym._ast2tex (args [1])}}}' if len (args) == 2 else None,
+}
+
+def xlat_func2tex (ast):
+	xact = _XLAT_FUNC2TEX.get (ast.func)
+
+	if xact:
+		return xact (ast.args)
+
+	return None
 
 class sxlat: # for single script
 	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
-	xlat_func     = xlat_func
-	xlat_funcs    = xlat_funcs
+	xlat_func2asts    = xlat_func2asts
+	xlat_func2tex     = xlat_func2tex
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	ast = AST ('(', (',', (('#', '1'), ('#', '2'))))
-# 	res = XLAT_FUNC2AST_NAT ['Piecewise'] (ast)
+# 	res = _XLAT_FUNC2AST_NAT ['Piecewise'] (ast)
 # 	print (res)
