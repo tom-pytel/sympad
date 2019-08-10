@@ -365,13 +365,11 @@ def _expr_num (NUM):
 	else:
 		return AST ('#', f'{num}{g2 [0].lower ()}+{g2 [1:]}')
 
-def _expr_var (VAR, var_tex_xlat):
+def _expr_var (VAR):
 	if VAR.grp [0]:
 		var = 'partial' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_'))
 	elif VAR.grp [1]:
 		var = 'd' + AST.Var.ANY2PY.get (VAR.grp [2], VAR.grp [2].replace ('\\_', '_'))
-	elif VAR.grp [3] in var_tex_xlat:
-		var = var_tex_xlat [VAR.grp [3]]
 	else:
 		var = AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
@@ -457,25 +455,15 @@ class Parser (lalr1.LALR1):
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
 
-	_VAR_TEX_XLAT = {
-		r'\mathbb{R}'  : 'Reals',
-		r'\mathbb{C}'  : 'Complexes',
-		r'\mathbb{N}'  : 'Naturals',
-		r'\mathbb{N}_0': 'Naturals0',
-		r'\mathbb{Z}'  : 'Integers',
-	}
-
 	_UPARTIAL = '\u2202'
 	_USUM     = '\u2211'
 	_UINTG    = '\u222b'
 	_LETTER   = fr'[a-zA-Z]'
 	_LETTERU  = fr'[a-zA-Z_]'
 
-	_TEXGREEK = '(?:' + '|'.join (reversed (sorted (f'\\\\{g}' for g in AST.Var.GREEK))) + ')'
-	_TEXXLAT  = '(?:' + '|'.join (reversed (sorted (x.replace ('\\', '\\\\') for x in _VAR_TEX_XLAT))) + ')'
+	_VARTEX   = '(?:' + '|'.join (reversed (sorted (x.replace ('\\', '\\\\').replace ('+', '\\+').replace ('*', '\\*').replace ('^', '\\^') for x in AST.Var.TEX2PY))) + ')'
+	_VARTEX1  = fr'(?:(\d)|({_LETTER})|(\\partial|\\infty))'
 	_VARPY    = fr'(?:{_LETTER}(?:\w|\\_)*)'
-	_VARTEX   = fr'(?:{_TEXGREEK}|{_TEXXLAT}|\\partial|(?:(?:\\overline|\\bar|\\widetilde|\\tilde)\s*)?\\infty)'
-	_VARTEX1  = fr'(?:(\d)|({_LETTER})|({_VARTEX}))'
 	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'
 	_VAR      = fr'(?:{_VARPY}|{_VARTEX}(?!{_LETTERU})|{_VARUNI})'
 
@@ -547,6 +535,7 @@ class Parser (lalr1.LALR1):
 	])
 
 	_PYGREEK_QUICK = '(?:' + '|'.join (reversed (sorted (g for g in AST.Var.GREEK))) + ')'
+	_PYMULTI_QUICK = '(?:' + '|'.join (reversed (sorted (g for g in AST.Var.PY2TEXMULTI))) + ')'
 	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}|{_LETTER})'
 	_VAR_QUICK     = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
 
@@ -565,7 +554,7 @@ class Parser (lalr1.LALR1):
 		('MAPSTO',       fr'\\mapsto'),
 		('IF',            r'if'),
 		('ELSE',          r'else'),
-		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR_QUICK})|(partial|zoo|oo|None|True|False|{_VAR_QUICK}))('*)"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))('*)"),
 	])
 
 	TOKENS_LONG    = OrderedDict () # initialized in __init__()
@@ -707,7 +696,7 @@ class Parser (lalr1.LALR1):
 	def expr_term_4        (self, SUB):                                            return AST ('@', '_') # for last expression variable
 
 	def expr_num           (self, NUM):                                            return _expr_num (NUM)
-	def expr_var           (self, VAR):                                            return _expr_var (VAR, self._VAR_TEX_XLAT)
+	def expr_var           (self, VAR):                                            return _expr_var (VAR)
 
 	def expr_sub_1         (self, SUB, expr_frac):                                 return expr_frac
 	def expr_sub_2         (self, SUB1):                                           return _ast_from_tok_digit_or_var (SUB1)
