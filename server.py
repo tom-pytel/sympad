@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '0.5.6'
+_VERSION         = '0.5.7'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -61,7 +61,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
-	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
+	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version) # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT

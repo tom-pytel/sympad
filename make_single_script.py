@@ -38,6 +38,8 @@ _HEADER = '''
 
 _RUNNING_AS_SINGLE_SCRIPT = True
 
+import sys
+sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 '''.lstrip ()
 
 if __name__ == '__main__':

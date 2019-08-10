@@ -533,6 +533,3 @@ AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
 AST.MatEmpty   = AST ('func', 'Matrix', ('[', ()))
-
-class sast: # for single script
-	AST = AST

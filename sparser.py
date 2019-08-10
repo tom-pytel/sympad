@@ -135,7 +135,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 			elif rhs.is_attr:
 				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, rhs.obj), rhs.attr))
 
-	elif last.is_var: # user_func *imp* () -> user_func ()
+	elif last.is_var: # user_func *imp* () -> user_func (), var (tuple) -> func ()
 		if last.var in user_funcs:
 			if arg.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))

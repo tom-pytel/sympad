@@ -29,6 +29,8 @@
 
 _RUNNING_AS_SINGLE_SCRIPT = True
 
+import sys
+sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
 _FILES = {
 
@@ -2110,9 +2112,6 @@ AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
 AST.MatEmpty   = AST ('func', 'Matrix', ('[', ()))
-
-class sast: # for single script
-	AST = AST
 # Translate SymPy functions to other ASTs or text for further use or just display.
 
 import sympy as sp
@@ -2819,15 +2818,15 @@ def _ast2nat_diff (ast):
 
 def _ast2nat_intg (ast):
 	if ast.from_ is None:
-		return \
-				f'\\int {_ast2nat (ast.dv)}' \
-				if ast.intg is None else \
-				f'\\int {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {_ast2nat (ast.dv)}'
+		if ast.intg is None:
+			return f'\\int {_ast2nat (ast.dv)}'
+		else:
+			return f'\\int {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {_ast2nat (ast.dv)}'
 	else:
-		return \
-				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat (ast.dv)}' \
-				if ast.intg is None else \
-				f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {_ast2nat (ast.dv)}'
+		if ast.intg is None:
+			return f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat (ast.dv)}'
+		else:
+			return f'\\int_{_ast2nat_curly (ast.from_)}^{_ast2nat_curly (ast.to)} {_ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {_ast2nat (ast.dv)}'
 
 _ast2nat_funcs = {
 	'=': lambda ast: f'{_ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {_ast2nat_eq_hs (ast, ast.rhs, False)}',
@@ -2918,15 +2917,15 @@ def _ast2py_diff (ast):
 
 def _ast2py_intg (ast):
 	if ast.from_ is None:
-		return \
-				f'Integral(1, {ast2py (ast.dv.as_var)})' \
-				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, {ast2py (ast.dv.as_var)})'
+		if ast.intg is None:
+			return f'Integral(1, {ast2py (ast.dv.as_var)})'
+		else:
+			return f'Integral({ast2py (ast.intg)}, {ast2py (ast.dv.as_var)})'
 	else:
-		return \
-				f'Integral(1, ({ast2py (ast.dv.as_var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))' \
-				if ast.intg is None else \
-				f'Integral({ast2py (ast.intg)}, ({ast2py (ast.dv.as_var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
+		if ast.intg is None:
+			return f'Integral(1, ({ast2py (ast.dv.as_var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
+		else:
+			return f'Integral({ast2py (ast.intg)}, ({ast2py (ast.dv.as_var)}, {ast2py (ast.from_)}, {ast2py (ast.to)}))'
 
 _ast2py_funcs = {
 	'=': lambda ast: f'{_ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else ast2py (ast.lhs)} {ast.rel} {ast2py (ast.rhs)}',
@@ -3058,15 +3057,15 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
-			return \
-					sp.Integral (1, self._ast2spt (ast.dv.as_var)) \
-					if ast.intg is None else \
-					sp.Integral (self._ast2spt (ast.intg), self._ast2spt (ast.dv.as_var))
+			if ast.intg is None:
+				return sp.Integral (1, self._ast2spt (ast.dv.as_var))
+			else:
+				return sp.Integral (self._ast2spt (ast.intg), self._ast2spt (ast.dv.as_var))
 		else:
-			return \
-					sp.Integral (1, (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to))) \
-					if ast.intg is None else \
-					sp.Integral (self._ast2spt (ast [1]), (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+			if ast.intg is None:
+				return sp.Integral (1, (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+			else:
+				return sp.Integral (self._ast2spt (ast [1]), (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
 	def _ast2spt_idx (self, ast):
 		spt = self._ast2spt (ast.obj)
@@ -3492,7 +3491,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 			elif rhs.is_attr:
 				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, rhs.obj), rhs.attr))
 
-	elif last.is_var: # user_func *imp* () -> user_func ()
+	elif last.is_var: # user_func *imp* () -> user_func (), var (tuple) -> func ()
 		if last.var in user_funcs:
 			if arg.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
@@ -4307,7 +4306,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.5.6'
+_VERSION         = '0.5.7'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -4345,7 +4344,6 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
-	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version)
 
 
 	_SYS_STDOUT   = sys.stdout
