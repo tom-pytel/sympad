@@ -7,7 +7,7 @@
 # ('.', expr, 'name', (a1, a2, ...))               - method member call
 # ('"', 'str')                                     - string
 # (',', (expr1, expr2, ...))                       - comma expression (tuple)
-# ('{', expr)                                      - invilible parentheses for grouping
+# ('{', expr)                                      - invisible implicit parentheses for grouping
 # ('(', expr)                                      - explicit parentheses (not tuple)
 # ('[', (expr1, expr2, ...))                       - brackets (list, not index)
 # ('|', expr)                                      - absolute value

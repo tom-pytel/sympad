@@ -188,6 +188,7 @@ def _ast2tex_mul (ast, ret_has = False):
 		if p and (n.op in {'#', '[', '!', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 				_ast_is_neg (n) or \
 				n.strip_paren ().is_comma or \
+				p.is_var_lambda or \
 				(n.op in {'/', 'diff'} and p.op in {'#', '/'}) or \
 				(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
 				(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
@@ -386,6 +387,7 @@ def _ast2nat_mul (ast, ret_has = False):
 		if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
 				n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'} or \
 				n.strip_paren ().is_comma or (n.is_pow and n.base.strip_paren ().is_comma) or \
+				p.is_var_lambda or \
 				(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
 				(n.is_pow and n.base.is_pos_num) or \
 				(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \

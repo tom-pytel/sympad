@@ -136,6 +136,8 @@ a*[x][y][z]
 a*()**2
 a*().t
 a*()[2]
+lambda*x:2
+lambda*x, y:2
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

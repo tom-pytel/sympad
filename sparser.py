@@ -110,6 +110,12 @@ def _expr_piece (expr, expr_if, expr_else):
 	else:
 		return AST ('piece', ((expr, expr_if), (expr_else, True)))
 
+def _expr_mul_exp (lhs, rhs): # isolate explicit multiplication so it doesn't trigger imp mul grammar reductions
+	if lhs.is_curly:
+		return AST ('{', AST.flatcat ('*', lhs.curly, rhs))
+
+	return AST ('{', AST.flatcat ('*', lhs, rhs))
+
 def _expr_neg (expr):
 	if expr.is_mul:
 		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
@@ -592,8 +598,8 @@ class Parser (lalr1.LALR1):
 	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
 	def expr_add_3         (self, expr_mul_exp):                                   return expr_mul_exp
 
-	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
-	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return AST.flatcat ('*', expr_mul_exp, expr_neg)
+	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg) # AST.flatcat ('*', expr_mul_exp, expr_neg)
+	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg) # AST.flatcat ('*', expr_mul_exp, expr_neg)
 	def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
 
 	def expr_neg_1         (self, MINUS, expr_neg):                                return _expr_neg (expr_neg)
