@@ -9,7 +9,7 @@ import sys
 
 import sast
 from sast import AST
-import xlat
+import astxlat
 import sym
 import sparser
 
@@ -196,7 +196,7 @@ def expr_func ():
 	while 1:
 		py = choice (list (AST.Func.PY))
 
-		if py not in xlat.XLAT_FUNC_TEX: # and py not in xlat.XLAT_FUNC_NAT:
+		if py not in astxlat.XLAT_FUNC_TEX: # and py not in astxlat.XLAT_FUNC_NAT:
 			break
 
 	return \
@@ -410,8 +410,8 @@ def test ():
 
 				ast = fix_rest (ast)
 
-			tex = dotex and sym.ast2tex (ast, doxlat = False)
-			nat = donat and sym.ast2nat (ast, doxlat = False)
+			tex = dotex and sym.ast2tex (ast, xlat = False)
+			nat = donat and sym.ast2nat (ast, xlat = False)
 			py  = dopy and sym.ast2py (ast)
 
 			if ('--show', '') in opts:

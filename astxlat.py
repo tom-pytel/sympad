@@ -201,7 +201,7 @@ def xlat_func (xact, args):
 
 	return xact (*xargs, **xkw)
 
-class xlat: # for single script
+class astxlat: # for single script
 	XLAT_FUNC_NAT = XLAT_FUNC_NAT
 	XLAT_FUNC_TEX = XLAT_FUNC_TEX
 	xlat_func         = xlat_func

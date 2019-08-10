@@ -2436,8 +2436,8 @@ def _ast_xlat_funcs (ast, XLAT): # translate eligible functions in tree to other
 	return AST (*(_ast_xlat_funcs (e, XLAT) for e in ast))
 
 #...............................................................................................
-def ast2tex (ast, doxlat = True): # abstract syntax tree -> LaTeX text
-	return _ast2tex (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_TEX) if doxlat else ast)
+def ast2tex (ast, xlat = True): # abstract syntax tree -> LaTeX text
+	return _ast2tex (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_TEX) if xlat else ast)
 
 def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
@@ -2684,8 +2684,8 @@ _ast2tex_funcs = {
 }
 
 #...............................................................................................
-def ast2nat (ast, doxlat = True): # abstract syntax tree -> simple text
-	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_NAT) if doxlat else ast)
+def ast2nat (ast, xlat = True): # abstract syntax tree -> simple text
+	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_NAT) if xlat else ast)
 
 def _ast2nat (ast):
 	return _ast2nat_funcs [ast.op] (ast)

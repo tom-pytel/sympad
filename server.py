@@ -226,15 +226,21 @@ def _admin_del (*args):
 	msgs = []
 
 	for arg in args:
-		var = arg.as_identifier ()
+		if arg.is_func_vars: # delete all vars?
+			vars.update (filter (lambda va: not va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
+		elif arg.is_func_funcs: # delete all funcs?
+			vars.update (filter (lambda va: va [1].is_lamb, _VARS.items ()))
 
-		if var is None:
-			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
+		else:
+			var = arg.as_identifier ()
 
-		vars [var] = _VARS.get (var)
+			if var is None:
+				raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
 
-		if vars [var] is None:
-			raise AE35UnitError (f'Variable {var!r} is not defined, it can only be attributable to human error.')
+			vars [var] = _VARS.get (var)
+
+			if vars [var] is None:
+				raise AE35UnitError (f'Variable {var!r} is not defined, it can only be attributable to human error.')
 
 	for var, ast in vars.items ():
 		msgs.append (f'{"Function" if ast.is_lamb else "Variable"} {var!r} deleted.')
@@ -247,15 +253,6 @@ def _admin_del (*args):
 		msgs.append ('No variables specified!')
 
 	return msgs
-
-def _admin_delvars (*args):
-	for v, e in list (_VARS.items ()):
-		if not e.is_lamb and v != _VAR_LAST:
-			del _VARS [v]
-
-	_update_user_funcs ()
-
-	return 'All variables deleted.'
 
 def _admin_delall (*args):
 	last_var = _VARS [_VAR_LAST]
@@ -526,7 +523,7 @@ if __name__ == '__main__':
 			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
 			host, port = host.strip ('[]'), int (port)
 
-		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'xlat.py', 'sast.py', 'lalr1.py')
+		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'astxlat.py', 'sast.py', 'lalr1.py')
 		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 		httpd   = HTTPServer ((host, port), Handler)

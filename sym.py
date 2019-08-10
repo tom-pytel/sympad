@@ -6,7 +6,7 @@ import sympy as sp
 
 import sast          # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
-import xlat          # AUTO_REMOVE_IN_SINGLE_SCRIPT
+import astxlat       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
@@ -84,7 +84,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 	try:
 		spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
-	except: # 'evaluate' keyword not supported?
+	except (ValueError, TypeError, NameError, AttributeError): # maybe 'evaluate' keyword not supported?
 		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func:
@@ -109,7 +109,7 @@ def _ast_xlat_funcs (ast, XLAT): # translate eligible functions in tree to other
 				return spt2ast (_ast_func_call (getattr (sp, ast.func), args))
 
 			try:
-				ast2 = xlat.xlat_func (xact, args)
+				ast2 = astxlat.xlat_func (xact, args)
 
 				if ast2 is not None:
 					return ast2
@@ -122,8 +122,8 @@ def _ast_xlat_funcs (ast, XLAT): # translate eligible functions in tree to other
 	return AST (*(_ast_xlat_funcs (e, XLAT) for e in ast))
 
 #...............................................................................................
-def ast2tex (ast, doxlat = True): # abstract syntax tree -> LaTeX text
-	return _ast2tex (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_TEX) if doxlat else ast)
+def ast2tex (ast, xlat = True): # abstract syntax tree -> LaTeX text
+	return _ast2tex (_ast_xlat_funcs (ast, astxlat.XLAT_FUNC_TEX) if xlat else ast)
 
 def _ast2tex (ast):
 	return _ast2tex_funcs [ast.op] (ast)
@@ -370,8 +370,8 @@ _ast2tex_funcs = {
 }
 
 #...............................................................................................
-def ast2nat (ast, doxlat = True): # abstract syntax tree -> native text
-	return _ast2nat (_ast_xlat_funcs (ast, xlat.XLAT_FUNC_NAT) if doxlat else ast)
+def ast2nat (ast, xlat = True): # abstract syntax tree -> native text
+	return _ast2nat (_ast_xlat_funcs (ast, astxlat.XLAT_FUNC_NAT) if xlat else ast)
 
 def _ast2nat (ast):
 	return _ast2nat_funcs [ast.op] (ast)

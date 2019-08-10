@@ -313,7 +313,7 @@ For example, two ways to get the transpose of a matrix are "<b>{{1, 2, 3}, {4, 5
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
 Anything can be assigned to any valid variable like mathematical expressions, Python objects like strings or lists, user lambda functions or even references to other variables.
-To delete an assignment use the "<b>del var</b>" function, to delete all non-lambda variables do "<b>delvars</b>", to delete all assignments (including lambdas) use "<b>delall</b>".
+To delete an assignment use the "<b>del var</b>" function, to delete all non-lambda variables do "<b>del vars</b>", to delete all user defined lambda functions do "<b>del funcs</b>" and to delete ALL assignments use "<b>delall</b>".
 To see what variables are currently assigned to, use the "<b>vars</b>" function.
 This will not show lambda assignments though, to see those use "<b>funcs</b>".
 </p><p>
@@ -421,7 +421,8 @@ Also remember that these functions are always available for calling using the "<
 <p>"<b>vars()</b>" - Show all currently mapped non-lambda user variables.</p>
 <p>"<b>funcs()</b>" - Show all currently mapped lambda user variables (callable functions).</p>
 <p>"<b>del(var1, var2, ...)</b>" - Delete variable assignments, lambda or non-lambda.</p>
-<p>"<b>delvars()</b>" - Delete all non-lambda variables.</p>
+<p>"<b>del(vars())</b>" - Delete all non-lambda variables.</p>
+<p>"<b>del(funcs())</b>" - Delete all lambda functions.</p>
 <p>"<b>delall()</b>" - Delete ALL variables, lambda and non-lambda.</p>
 <p>"<b>env()</b>" - Show or change current SymPad runtime environment. Called without any arguments it will show the current state of the environment. If arguments are present they specify turning on or off a certain aspect of SymPad functionality. For example the functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
 
