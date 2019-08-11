@@ -118,54 +118,18 @@ class AST (tuple):
 		else:
 			return AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
 
-	# def strip (self, count = None, ops = {'{', '('}, idx = 1):
-	# 	count = -1 if count is None else count
+	def strip (self, count = None, ops = {'{', '('}, idx = 1):
+		count = -1 if count is None else count
 
-	# 	while self.op in ops and count:
-	# 		self   = self [idx]
-	# 		count -= 1
-
-	# 	return self
-
-	# strip_curlys = lambda self, count = None: self.strip (count, ('{',))
-	# strip_paren  = lambda self, count = None: self.strip (count, ('(',))
-	# strip_attr   = lambda self, count = None: self.strip (count, ('.',))
-
-	def strip (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op in {'{', '('} and count:
-			self   = self [1]
+		while self.op in ops and count:
+			self   = self [idx]
 			count -= 1
 
 		return self
 
-	def strip_curlys (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op == '{' and count:
-			self   = self.curly
-			count -= 1
-
-		return self
-
-	def strip_paren (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op == '(' and count:
-			self   = self.paren
-			count -= 1
-
-		return self
-
-	def strip_attr (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op == '.' and count:
-			self   = self.obj
-			count -= 1
-
-		return self
+	strip_curlys = lambda self, count = None: self.strip (count, ('{',))
+	strip_paren  = lambda self, count = None: self.strip (count, ('(',))
+	strip_attr   = lambda self, count = None: self.strip (count, ('.',))
 
 	def strip_minus (self, count = None, retneg = False):
 		count       = 999999999 if count is None else count
@@ -319,8 +283,8 @@ class AST_Var (AST):
 	_grp                  = lambda self: AST_Var._rec_groups.match (self.var).groups ()
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
-	_is_const_var         = lambda self: self.var in AST.CONSTS
-	_is_nonconst_var      = lambda self: self.var not in AST.CONSTS
+	_is_const_var         = lambda self: self in AST.CONSTS
+	_is_nonconst_var      = lambda self: self not in AST.CONSTS
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]

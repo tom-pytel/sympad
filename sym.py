@@ -680,8 +680,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			'oo'   : sp.oo,
 			'zoo'  : sp.zoo,
 			'None' : None,
-			'True' : sp.boolalg.true,
-			'False': sp.boolalg.false,
+			'True' : True, # sp.boolalg.true,
+			'False': False, # sp.boolalg.false,
 			'nan'  : sp.nan,
 	}
 
@@ -1043,7 +1043,7 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('func', 'Tuple', (('#', '1'),))
-# 	res = ast2nat (ast)
+# 	ast = AST ('^', ('func', 'Matrix', (('[', (('[', (('+', (('@', 'x'), ('#', '1'))), ('+', (('@', 'x'), ('#', '-1'))))), ('[', (('+', (('@', 'x'), ('#', '-1'))), ('+', (('@', 'x'), ('#', '1'))))))), ('=', '=', ('@', 'simplified'), ('@', 'True')))), ('#', '4'))
+# 	res = ast2spt (ast)
 # 	# res = spt2ast (res)
 # 	print (res)
