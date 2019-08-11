@@ -132,7 +132,7 @@ class AST (tuple):
 	strip_attr   = lambda self, count = None: self.strip (count, ('.',))
 
 	def strip_minus (self, count = None, retneg = False):
-		count       = 999999999 if count is None else count
+		count       = -1 if count is None else count
 		neg         = lambda ast: ast
 		neg.has_neg = False
 
@@ -145,7 +145,7 @@ class AST (tuple):
 		return (self, neg) if retneg else self
 
 	def strip_mls (self, count = None):
-		count = 999999999 if count is None else count
+		count = -1 if count is None else count
 
 		while self.op in {'*', 'lim', 'sum'} and count:
 			self   = self.mul [-1] if self.is_mul else self [1]

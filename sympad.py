@@ -1696,57 +1696,21 @@ class AST (tuple):
 		else:
 			return AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
 
-	# def strip (self, count = None, ops = {'{', '('}, idx = 1):
-	# 	count = -1 if count is None else count
+	def strip (self, count = None, ops = {'{', '('}, idx = 1):
+		count = -1 if count is None else count
 
-	# 	while self.op in ops and count:
-	# 		self   = self [idx]
-	# 		count -= 1
-
-	# 	return self
-
-	# strip_curlys = lambda self, count = None: self.strip (count, ('{',))
-	# strip_paren  = lambda self, count = None: self.strip (count, ('(',))
-	# strip_attr   = lambda self, count = None: self.strip (count, ('.',))
-
-	def strip (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op in {'{', '('} and count:
-			self   = self [1]
+		while self.op in ops and count:
+			self   = self [idx]
 			count -= 1
 
 		return self
 
-	def strip_curlys (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op == '{' and count:
-			self   = self.curly
-			count -= 1
-
-		return self
-
-	def strip_paren (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op == '(' and count:
-			self   = self.paren
-			count -= 1
-
-		return self
-
-	def strip_attr (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op == '.' and count:
-			self   = self.obj
-			count -= 1
-
-		return self
+	strip_curlys = lambda self, count = None: self.strip (count, ('{',))
+	strip_paren  = lambda self, count = None: self.strip (count, ('(',))
+	strip_attr   = lambda self, count = None: self.strip (count, ('.',))
 
 	def strip_minus (self, count = None, retneg = False):
-		count       = 999999999 if count is None else count
+		count       = -1 if count is None else count
 		neg         = lambda ast: ast
 		neg.has_neg = False
 
@@ -1759,7 +1723,7 @@ class AST (tuple):
 		return (self, neg) if retneg else self
 
 	def strip_mls (self, count = None):
-		count = 999999999 if count is None else count
+		count = -1 if count is None else count
 
 		while self.op in {'*', 'lim', 'sum'} and count:
 			self   = self.mul [-1] if self.is_mul else self [1]
@@ -1897,8 +1861,8 @@ class AST_Var (AST):
 	_grp                  = lambda self: AST_Var._rec_groups.match (self.var).groups ()
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
-	_is_const_var         = lambda self: self.var in AST.CONSTS
-	_is_nonconst_var      = lambda self: self.var not in AST.CONSTS
+	_is_const_var         = lambda self: self in AST.CONSTS
+	_is_nonconst_var      = lambda self: self not in AST.CONSTS
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]
@@ -3070,15 +3034,15 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			'oo'   : sp.oo,
 			'zoo'  : sp.zoo,
 			'None' : None,
-			'True' : sp.boolalg.true,
-			'False': sp.boolalg.false,
+			'True' : True, # sp.boolalg.true,
+			'False': False, # sp.boolalg.false,
 			'nan'  : sp.nan,
 	}
 
 	def _ast2spt_var (self, ast):
-		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None)
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, 0)
 
-		if spt is None:
+		if spt is 0:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
 				spt = getattr (sp, ast.var, None)
 
@@ -3431,11 +3395,11 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('func', 'Tuple', (('#', '1'),))
-# 	res = ast2nat (ast)
-# 	# res = spt2ast (res)
-# 	print (res)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	ast = AST ('.', ('@', 'None'), 'evalf', ())
+	res = ast2spt (ast)
+	# res = spt2ast (res)
+	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 
 import ast as py_ast
