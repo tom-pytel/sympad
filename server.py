@@ -22,11 +22,10 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '0.5.7'
+_VERSION         = '0.5.8'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
-_SYMPAD_FIRSTRUN = os.environ.get ('SYMPAD_FIRSTRUN')
 _SYMPAD_CHILD    = os.environ.get ('SYMPAD_CHILD')
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
@@ -532,7 +531,7 @@ if __name__ == '__main__':
 			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
-		if _SYMPAD_FIRSTRUN:
+		if os.environ.get ('SYMPAD_FIRSTRUN'):
 			print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
 
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')

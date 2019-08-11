@@ -165,7 +165,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			p = 1
 			v = ast.numer
 
-		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int:
+		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int_num:
 			p = int (ast.numer.exp.remove_curlys ().num)
 			v = ast.numer.base
 
@@ -183,7 +183,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if ast_dv_check (n):
 				dec = 1
-			elif n.is_pow and ast_dv_check (n.base) and n.exp.remove_curlys ().is_pos_int:
+			elif n.is_pow and ast_dv_check (n.base) and n.exp.remove_curlys ().is_pos_int_num:
 				dec = int (n.exp.remove_curlys ().num)
 			else:
 				return None
@@ -509,7 +509,7 @@ class Parser (lalr1.LALR1):
 		('BINOM',         r'\\binom(?!{_LETTERU})'),
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
-		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
+		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))('*)"),
 		('ATTR',         fr'\.(?:({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"({_STR})|\\text\s*{{\s*({_STR})\s*}}"),

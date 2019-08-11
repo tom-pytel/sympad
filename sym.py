@@ -9,6 +9,7 @@ import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = set () # set or dict of user function names
+_PYS                   = True
 _EVAL                  = True
 _DOIT                  = True
 
@@ -338,7 +339,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'!': lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
 		'+': _ast2tex_add,
 		'*': _ast2tex_mul,
-		'/': lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{self._ast2tex (ast.denom)}}}',
+		'/': lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int_num) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{self._ast2tex (ast.denom)}}}',
 		'^': _ast2tex_pow,
 		'log': _ast2tex_log,
 		'sqrt': lambda self, ast: f'\\sqrt{{{self._ast2tex_wrap (ast.rad, 0, {","})}}}' if ast.idx is None else f'\\sqrt[{self._ast2tex (ast.idx)}]{{{self._ast2tex_wrap (ast.rad, 0, {","})}}}',
@@ -454,7 +455,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_div (self, ast):
 		n, ns = (self._ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
-			(self._ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
+			(self._ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int_num) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
 			self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
 
 		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
@@ -1018,17 +1019,21 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 
 	_SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
+def set_pyS (state):
+	global _PYS
+	_PYS = state
+
 def set_user_funcs (user_funcs):
 	global _USER_FUNCS
 	_USER_FUNCS = user_funcs
 
-def set_eval (eval):
+def set_eval (state):
 	global _EVAL
-	_EVAL = eval
+	_EVAL = state
 
-def set_doit (doit):
+def set_doit (state):
 	global _DOIT
-	_DOIT = doit
+	_DOIT = state
 
 class sym: # for single script
 	set_precision  = set_precision

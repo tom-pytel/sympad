@@ -228,7 +228,7 @@ class AST_Eq (AST):
 	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'} # , '<': '\\lt', '>': '\\gt'}
 
 	def _init (self, rel, lhs, rhs):
-		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
+		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be py form
 
 	_is_ass = lambda self: self.rel == '='
 
@@ -242,11 +242,11 @@ class AST_Num (AST):
 	def _init (self, num):
 		self.num = num
 
-	_is_pos_num   = lambda self: self.num [0] != '-'
-	_is_neg_num   = lambda self: self.num [0] == '-'
-	_is_pos_int   = lambda self: AST_Num._rec_pos_int.match (self.num)
-	_num_exp      = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (2)
-	_mant_and_exp = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (1, 2)
+	_is_pos_num     = lambda self: self.num [0] != '-'
+	_is_neg_num     = lambda self: self.num [0] == '-'
+	_is_pos_int_num = lambda self: AST_Num._rec_pos_int.match (self.num)
+	_mant_and_exp   = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (1, 2)
+	_num_exp        = lambda self: self.mant_and_exp [1] # AST_Num._rec_mant_and_exp.match (self.num).group (2)
 
 class AST_Var (AST):
 	op, is_var  = '@', True

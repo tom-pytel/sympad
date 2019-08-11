@@ -1822,7 +1822,7 @@ class AST_Num (AST):
 
 	_is_pos_num   = lambda self: self.num [0] != '-'
 	_is_neg_num   = lambda self: self.num [0] == '-'
-	_is_pos_int   = lambda self: AST_Num._rec_pos_int.match (self.num)
+	_is_pos_int_num   = lambda self: AST_Num._rec_pos_int.match (self.num)
 	_num_exp      = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (2)
 	_mant_and_exp = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (1, 2)
 
@@ -2119,7 +2119,7 @@ def _xlat_func_Derivative (ast = AST.VarNull, *dvs):
 
 			if not v.is_var:
 				return None
-			elif dvs and dvs [-1].is_pos_int:
+			elif dvs and dvs [-1].is_pos_int_num:
 				ds.append (AST ('^', ('@', f'd{v.var}'), dvs.pop ()))
 			else:
 				ds.append (AST ('@', f'd{v.var}'))
@@ -2692,7 +2692,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'!': lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
 		'+': _ast2tex_add,
 		'*': _ast2tex_mul,
-		'/': lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{self._ast2tex (ast.denom)}}}',
+		'/': lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int_num) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{self._ast2tex (ast.denom)}}}',
 		'^': _ast2tex_pow,
 		'log': _ast2tex_log,
 		'sqrt': lambda self, ast: f'\\sqrt{{{self._ast2tex_wrap (ast.rad, 0, {","})}}}' if ast.idx is None else f'\\sqrt[{self._ast2tex (ast.idx)}]{{{self._ast2tex_wrap (ast.rad, 0, {","})}}}',
@@ -2808,7 +2808,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_div (self, ast):
 		n, ns = (self._ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
-			(self._ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
+			(self._ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int_num) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
 			self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
 
 		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
@@ -3564,7 +3564,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			p = 1
 			v = ast.numer
 
-		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int:
+		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int_num:
 			p = int (ast.numer.exp.remove_curlys ().num)
 			v = ast.numer.base
 
@@ -3582,7 +3582,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if ast_dv_check (n):
 				dec = 1
-			elif n.is_pow and ast_dv_check (n.base) and n.exp.remove_curlys ().is_pos_int:
+			elif n.is_pow and ast_dv_check (n.base) and n.exp.remove_curlys ().is_pos_int_num:
 				dec = int (n.exp.remove_curlys ().num)
 			else:
 				return None

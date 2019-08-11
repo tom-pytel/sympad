@@ -22,7 +22,7 @@ def _xlat_func_Derivative (ast = AST.VarNull, *dvs):
 
 			if not v.is_var:
 				return None
-			elif dvs and dvs [-1].is_pos_int:
+			elif dvs and dvs [-1].is_pos_int_num:
 				ds.append (AST ('^', ('@', f'd{v.var}'), dvs.pop ()))
 			else:
 				ds.append (AST ('@', f'd{v.var}'))
