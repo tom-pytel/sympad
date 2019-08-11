@@ -661,12 +661,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 			return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
 
-		except: # unresolved symbols should not raise but be returned as origninal attribute access op
-			# if obj.op not in {'@', '.', 'idx'}: # not obj.is_var and not obj.is_attr: # obj.free_vars ():
+		except AttributeError: # unresolved attributes of expressions with free vars remaining should not raise
 			if not obj.free_vars ():
 				raise
 
-		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), sp.S.One)
+		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
 
 	_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
@@ -685,7 +684,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
 	def _ast2spt_diff (self, ast):
-		args = sum ((
+		args = sum (( \
 				(self._ast2spt (n.as_var),) \
 				if n.is_var else \
 				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.num)) \
@@ -712,12 +711,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		try:
 			return spt [idx]
-		except: # unresolved symbols should not raise but be returned as origninal indexing op
-			# if ast.obj.op not in {'@', '.', 'idx'}: # not ast.obj.is_var: # ast.free_vars ():
+		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
 			if not ast.free_vars ():
 				raise
 
-		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), sp.S.One)
+		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)
 
 	_ast2spt_eq = {
 		'=':  sp.Eq,

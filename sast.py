@@ -112,6 +112,34 @@ class AST (tuple):
 			else:
 				return AST ('#', f'-{self.num}')
 
+	def remove_curlys (self):
+		if self.is_curly:
+			return self.curly.remove_curlys ()
+		else:
+			return AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
+
+	# def strip (self, count = None, ops = {'{', '('}, idx = 1):
+	# 	count = -1 if count is None else count
+
+	# 	while self.op in ops and count:
+	# 		self   = self [idx]
+	# 		count -= 1
+
+	# 	return self
+
+	# strip_curlys = lambda self, count = None: self.strip (count, ('{',))
+	# strip_paren  = lambda self, count = None: self.strip (count, ('(',))
+	# strip_attr   = lambda self, count = None: self.strip (count, ('.',))
+
+	def strip (self, count = None):
+		count = 999999999 if count is None else count
+
+		while self.op in {'{', '('} and count:
+			self   = self [1]
+			count -= 1
+
+		return self
+
 	def strip_curlys (self, count = None):
 		count = 999999999 if count is None else count
 
@@ -121,26 +149,11 @@ class AST (tuple):
 
 		return self
 
-	def remove_curlys (self):
-		if self.is_curly:
-			return self.curly.remove_curlys ()
-		else:
-			return AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
-
 	def strip_paren (self, count = None):
 		count = 999999999 if count is None else count
 
 		while self.op == '(' and count:
 			self   = self.paren
-			count -= 1
-
-		return self
-
-	def strip (self, count = None):
-		count = 999999999 if count is None else count
-
-		while self.op in {'{', '('} and count:
-			self   = self [1]
 			count -= 1
 
 		return self
