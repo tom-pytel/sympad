@@ -3044,9 +3044,9 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		if spt is 0:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
-				spt = getattr (sp, ast.var, None)
+				spt = getattr (sp, ast.var, 0)
 
-			if spt is None:
+			if spt is 0:
 				spt = sp.Symbol (ast.var)
 
 		return spt
@@ -3396,7 +3396,7 @@ class sym: # for single script
 	spt2ast        = spt2ast
 
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	ast = AST ('.', ('@', 'None'), 'evalf', ())
+	ast = AST ('sum', ('/', ('^', ('@', 'x'), ('@', 'n')), ('!', ('@', 'n'))), ('@', 'n'), ('#', '0'), ('@', 'oo'))
 	res = ast2spt (ast)
 	# res = spt2ast (res)
 	print (res)
