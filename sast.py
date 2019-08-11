@@ -54,6 +54,9 @@ class AST (tuple):
 	_CLS2OP = {}
 
 	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
+	_rec_int        = re.compile (r'^-?\d+$')
+	# _rec_pos_int      = re.compile (r'^\d+$')
+	# _rec_num_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)(?:[eE]([+-]?\d+))?$')
 
 	def __new__ (cls, *args):
 		op       = AST._CLS2OP.get (cls)
@@ -185,7 +188,7 @@ class AST (tuple):
 
 	@staticmethod
 	def is_int_text (text):
-		return AST_Num._rec_int.match (text)
+		return AST._rec_int.match (text)
 
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
@@ -225,7 +228,7 @@ class AST_Eq (AST):
 	TEX2PY = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!='}
 	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>='}
 	ANY2PY = {**UNI2PY, **TEX2PY}
-	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'} # , '<': '\\lt', '>': '\\gt'}
+	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
 
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be py form
@@ -235,18 +238,19 @@ class AST_Eq (AST):
 class AST_Num (AST):
 	op, is_num = '#', True
 
-	_rec_int          = re.compile (r'^-?\d+$')
-	_rec_pos_int      = re.compile (r'^\d+$')
-	_rec_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)(?:[eE]([+-]?\d+))?$')
+	_rec_num   = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?)(\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+) (123)
 
 	def _init (self, num):
 		self.num = num
 
-	_is_pos_num     = lambda self: self.num [0] != '-'
-	_is_neg_num     = lambda self: self.num [0] == '-'
-	_is_pos_int_num = lambda self: AST_Num._rec_pos_int.match (self.num)
-	_mant_and_exp   = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (1, 2)
-	_num_exp        = lambda self: self.mant_and_exp [1] # AST_Num._rec_mant_and_exp.match (self.num).group (2)
+	_grp              = lambda self: [g or '' for g in AST_Num._rec_num.match (self.num).groups ()]
+	_is_pos_num       = lambda self: not self.grp [0]
+	_is_neg_num       = lambda self: bool (self.grp [0])
+	_is_int_num       = lambda self: not self.grp [3] and self.num_exp_val >= -len (self.grp [2])
+	_is_pos_int_num   = lambda self: self.is_int_num and not self.is_neg_num
+	_num_exp          = lambda self: self.grp [8] + self.grp [9]
+	_num_mant_and_exp = lambda self: (''.join (self.grp [:7]), self.num_exp)
+	_num_exp_val      = lambda self: int (self.num_exp) if self.num_exp else 0
 
 class AST_Var (AST):
 	op, is_var  = '@', True
@@ -280,7 +284,7 @@ class AST_Var (AST):
 		if AST._rec_identifier.match (var):
 			self.__dict__ [f'is_var_{var}'] = True
 
-	_grp                  = lambda self: AST_Var._rec_groups.match (self.var).groups ()
+	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
 	_is_const_var         = lambda self: self in AST.CONSTS

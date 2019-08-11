@@ -357,12 +357,12 @@ def parse (text):
 
 	return ret
 
-def test ():
+def test (argv = None):
 	global DEPTH, CURLYS
 
 	_DEPTH  = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:], 'tnpid:x:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth=', 'expr='])
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpid:x:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth=', 'expr='])
 
 	for opt, arg in opts:
 		if opt in ('-d', '--depth'):
@@ -471,12 +471,11 @@ def test ():
 				print ()
 				print ('FAILED!')
 
-				sys.exit (0)
+				break
 
 	except (Exception, KeyboardInterrupt) as e:
 		if isinstance (e, StopIteration):
-			print ("ALL GOOD...")
-			sys.exit (0)
+			return True
 
 		print ()
 		print ('!' * 78)

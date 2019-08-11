@@ -8,6 +8,8 @@ from sast import AST
 from sym import *
 from sparser import Parser
 
+import test_sym as _test_sym
+
 SympifyError = sp.SympifyError
 parser       = Parser ()
 
@@ -29,13 +31,16 @@ def ast2spt2ast (ast):
 p = sparser
 
 class Test (unittest.TestCase):
+	def test_sym (self):
+		self.assertEqual (_test_sym.test ([]), True)
+
 	def test_sparser (self):
 		self.assertEqual (p ('1'), ('#', '1'))
-		self.assertEqual (p ('1.'), ('#', '1'))
+		self.assertEqual (p ('1.'), ('#', '1.'))
 		self.assertEqual (p ('.1'), ('#', '0.1'))
 		self.assertEqual (p ('1e20'), ('#', '1e+20'))
 		self.assertEqual (p ('1E-20'), ('#', '1e-20'))
-		self.assertEqual (p ('1.e+20'), ('#', '1e+20'))
+		self.assertEqual (p ('1.e+20'), ('#', '1.e+20'))
 		self.assertEqual (p ('.1e-20'), ('#', '0.1e-20'))
 		self.assertEqual (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (p ('x'), ('@', 'x'))
@@ -120,6 +125,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('d^2/dx^2 x^2y**2z'), ('diff', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z'))), (('^', ('@', 'dx'), ('#', '2')),)))
 		self.assertEqual (p ('d^3/dx^2dy x^2y**2z'), ('diff', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z'))), (('^', ('@', 'dx'), ('#', '2')), ('@', 'dy'))))
 		self.assertEqual (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z'), ('diff', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z'))), (('^', ('@', 'partialx'), ('#', '2')), ('@', 'partialy'), ('@', 'partialz'))))
+		self.assertEqual (p ('d**1.5 / dx dy x**2y**2'), ('/', ('^', ('@', 'd'), ('#', '1.5')), ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
+		self.assertEqual (p ('d**-2 / dx dy x**2y**2'), ('/', ('^', ('@', 'd'), ('#', '-2')), ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
+		self.assertEqual (p ('d**2 / dx**1.5 x**2y**2'), ('/', ('^', ('@', 'd'), ('#', '2')), ('*', (('^', ('@', 'dx'), ('#', '1.5')), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
 		self.assertEqual (p ('Derivative (x^2y**2z, x, 2, y, z)'), ('func', 'Derivative', (('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z'))), ('@', 'x'), ('#', '2'), ('@', 'y'), ('@', 'z'))))
 		self.assertEqual (p ('\\int dx'), ('intg', None, ('@', 'dx')))
 		self.assertEqual (p ('\\int x dx'), ('intg', ('@', 'x'), ('@', 'dx')))
@@ -224,11 +232,11 @@ class Test (unittest.TestCase):
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
-		self.assertEqual (ast2tex (p ('1.')), '1')
+		self.assertEqual (ast2tex (p ('1.')), '1.')
 		self.assertEqual (ast2tex (p ('.1')), '0.1')
 		self.assertEqual (ast2tex (p ('1e20')), '1{e}{+20}')
 		self.assertEqual (ast2tex (p ('1E-20')), '1{e}{-20}')
-		self.assertEqual (ast2tex (p ('1.e+20')), '1{e}{+20}')
+		self.assertEqual (ast2tex (p ('1.e+20')), '1.{e}{+20}')
 		self.assertEqual (ast2tex (p ('.1e-20')), '0.1{e}{-20}')
 		self.assertEqual (ast2tex (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')
 		self.assertEqual (ast2tex (p ('x')), 'x')
@@ -313,6 +321,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('d^2/dx^2 x^2y**2z')), '\\frac{d^2}{dx^2}\\left(x^2 y^2 z \\right)')
 		self.assertEqual (ast2tex (p ('d^3/dx^2dy x^2y**2z')), '\\frac{\\partial^3}{\\partial x^2\\partial y}\\left(x^2 y^2 z \\right)')
 		self.assertEqual (ast2tex (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), '\\frac{\\partial^4}{\\partial x^2\\partial y\\partial z}\\left(x^2 y^2 z \\right)')
+		self.assertEqual (ast2tex (p ('d**1.5 / dx dy x**2y**2')), '\\frac{d^{1.5}}{dx\\ dy\\ x^2 y^2}')
+		self.assertEqual (ast2tex (p ('d**-2 / dx dy x**2y**2')), '\\frac{d^{-2}}{dx\\ dy\\ x^2 y^2}')
+		self.assertEqual (ast2tex (p ('d**2 / dx**1.5 x**2y**2')), '\\frac{\\left(d^2 \\right)}{dx^{1.5} x^2 y^2}')
 		self.assertEqual (ast2tex (p ('Derivative (x^2y**2z, x, 2, y, z)')), '\\frac{\\partial^4}{\\partial x^2\\partial y\\partial z}\\left(x^2 y^2 z \\right)')
 		self.assertEqual (ast2tex (p ('\\int dx')), '\\int \\ dx')
 		self.assertEqual (ast2tex (p ('\\int x dx')), '\\int x \\ dx')
@@ -346,7 +357,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().T.T.transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right).T.T.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), '\\begin{bmatrix} A & B \\\\ C & D \\end{bmatrix} \\cdot \\begin{bmatrix} x \\\\ y \\end{bmatrix}')
-		# self.assertEqual (ast2tex (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), '\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\cdot \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')
+		self.assertEqual (ast2tex (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), '\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')
 		self.assertEqual (ast2tex (p ('1 if x < y')), '\\begin{cases} 1 & \\text{for}\\: x < y \\end{cases}')
 		self.assertEqual (ast2tex (p ('1 if x < y else 3')), '\\begin{cases} 1 & \\text{for}\\: x < y \\\\ 3 & \\text{otherwise} \\end{cases}')
 		self.assertEqual (ast2tex (p ('1 if x < y else 3 if x < z')), '\\begin{cases} 1 & \\text{for}\\: x < y \\\\ 3 & \\text{for}\\: x < z \\end{cases}')
@@ -417,11 +428,11 @@ class Test (unittest.TestCase):
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
-		self.assertEqual (ast2nat (p ('1.')), '1')
+		self.assertEqual (ast2nat (p ('1.')), '1.')
 		self.assertEqual (ast2nat (p ('.1')), '0.1')
 		self.assertEqual (ast2nat (p ('1e20')), '1e+20')
 		self.assertEqual (ast2nat (p ('1E-20')), '1e-20')
-		self.assertEqual (ast2nat (p ('1.e+20')), '1e+20')
+		self.assertEqual (ast2nat (p ('1.e+20')), '1.e+20')
 		self.assertEqual (ast2nat (p ('.1e-20')), '0.1e-20')
 		self.assertEqual (ast2nat (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')
 		self.assertEqual (ast2nat (p ('x')), 'x')
@@ -506,6 +517,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('d^2/dx^2 x^2y**2z')), 'd^2 / dx**2 (x**2 y**2 z)')
 		self.assertEqual (ast2nat (p ('d^3/dx^2dy x^2y**2z')), 'd^3 / dx**2 dy (x**2 y**2 z)')
 		self.assertEqual (ast2nat (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), 'partial^4 / partialx**2 partialy partialz (x**2 y**2 z)')
+		self.assertEqual (ast2nat (p ('d**1.5 / dx dy x**2y**2')), 'd**1.5 / dx dy x**2 y**2')
+		self.assertEqual (ast2nat (p ('d**-2 / dx dy x**2y**2')), 'd**-2 / dx dy x**2 y**2')
+		self.assertEqual (ast2nat (p ('d**2 / dx**1.5 x**2y**2')), '(d**2) / dx**1.5 x**2 y**2')
 		self.assertEqual (ast2nat (p ('Derivative (x^2y**2z, x, 2, y, z)')), 'd^4 / dx**2 dy dz (x**2 y**2 z)')
 		self.assertEqual (ast2nat (p ('\\int dx')), '\\int dx')
 		self.assertEqual (ast2nat (p ('\\int x dx')), '\\int x dx')
@@ -539,7 +553,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().transpose ()')), '{{1, 2, 3}, {4, 5, 6}}.transpose().transpose().transpose()')
 		self.assertEqual (ast2nat (p ('{{1,2,3},{4,5,6}}.transpose ().transpose ().T.T.transpose ().transpose ()')), '{{1, 2, 3}, {4, 5, 6}}.transpose().transpose().T.T.transpose().transpose()')
 		self.assertEqual (ast2nat (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), '{{A, B}, {C, D}} {x, y}')
-		# self.assertEqual (ast2nat (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), 'Theta Lambda xi Omega alpha theta Phi gamma nu delta rho lambda * iota chi psi Psi Xi tau mu sigma omega kappa upsilon eta Pi epsilon Delta Upsilon beta phi Sigma')
+		self.assertEqual (ast2nat (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), 'Theta Lambda xi Omega alpha theta Phi gamma nu delta rho lambda iota chi psi Psi Xi tau mu sigma omega kappa upsilon eta Pi epsilon Delta Upsilon beta phi Sigma')
 		self.assertEqual (ast2nat (p ('1 if x < y')), '1 if x < y')
 		self.assertEqual (ast2nat (p ('1 if x < y else 3')), '1 if x < y else 3')
 		self.assertEqual (ast2nat (p ('1 if x < y else 3 if x < z')), '1 if x < y else 3 if x < z')
@@ -610,11 +624,11 @@ class Test (unittest.TestCase):
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
-		self.assertEqual (ast2py (p ('1.')), '1')
+		self.assertEqual (ast2py (p ('1.')), '1.')
 		self.assertEqual (ast2py (p ('.1')), '0.1')
 		self.assertEqual (ast2py (p ('1e20')), '1e+20')
 		self.assertEqual (ast2py (p ('1E-20')), '1e-20')
-		self.assertEqual (ast2py (p ('1.e+20')), '1e+20')
+		self.assertEqual (ast2py (p ('1.e+20')), '1.e+20')
 		self.assertEqual (ast2py (p ('.1e-20')), '0.1e-20')
 		self.assertEqual (ast2py (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')
 		self.assertEqual (ast2py (p ('x')), 'x')
@@ -699,6 +713,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('d^2/dx^2 x^2y**2z')), 'Derivative(x**2*y**2*z, x, 2)')
 		self.assertEqual (ast2py (p ('d^3/dx^2dy x^2y**2z')), 'Derivative(x**2*y**2*z, x, 2, y)')
 		self.assertEqual (ast2py (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), 'Derivative(x**2*y**2*z, x, 2, y, z)')
+		self.assertEqual (ast2py (p ('d**1.5 / dx dy x**2y**2')), 'd**1.5 / (dx*dy*x**2*y**2)')
+		self.assertEqual (ast2py (p ('d**-2 / dx dy x**2y**2')), 'd**-2 / (dx*dy*x**2*y**2)')
+		self.assertEqual (ast2py (p ('d**2 / dx**1.5 x**2y**2')), 'd**2 / (dx**1.5*x**2*y**2)')
 		self.assertEqual (ast2py (p ('Derivative (x^2y**2z, x, 2, y, z)')), 'Derivative(x**2*y**2*z, x, 2, y, z)')
 		self.assertEqual (ast2py (p ('\\int dx')), 'Integral(1, x)')
 		self.assertEqual (ast2py (p ('\\int x dx')), 'Integral(x, x)')
@@ -803,11 +820,11 @@ class Test (unittest.TestCase):
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
-		self.assertEqual (ast2tex2ast (p ('1.')), ('#', '1'))
+		self.assertEqual (ast2tex2ast (p ('1.')), ('#', '1.'))
 		self.assertEqual (ast2tex2ast (p ('.1')), ('#', '0.1'))
 		self.assertEqual (ast2tex2ast (p ('1e20')), ('#', '1e+20'))
 		self.assertEqual (ast2tex2ast (p ('1E-20')), ('#', '1e-20'))
-		self.assertEqual (ast2tex2ast (p ('1.e+20')), ('#', '1e+20'))
+		self.assertEqual (ast2tex2ast (p ('1.e+20')), ('#', '1.e+20'))
 		self.assertEqual (ast2tex2ast (p ('.1e-20')), ('#', '0.1e-20'))
 		self.assertEqual (ast2tex2ast (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (ast2tex2ast (p ('x')), ('@', 'x'))
@@ -892,6 +909,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('d^2/dx^2 x^2y**2z')), ('diff', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), (('^', ('@', 'dx'), ('#', '2')),)))
 		self.assertEqual (ast2tex2ast (p ('d^3/dx^2dy x^2y**2z')), ('diff', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), (('^', ('@', 'partialx'), ('#', '2')), ('@', 'partialy'))))
 		self.assertEqual (ast2tex2ast (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), ('diff', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), (('^', ('@', 'partialx'), ('#', '2')), ('@', 'partialy'), ('@', 'partialz'))))
+		self.assertEqual (ast2tex2ast (p ('d**1.5 / dx dy x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '1.5')), ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
+		self.assertEqual (ast2tex2ast (p ('d**-2 / dx dy x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '-2')), ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
+		self.assertEqual (ast2tex2ast (p ('d**2 / dx**1.5 x**2y**2')), ('/', ('(', ('^', ('@', 'd'), ('#', '2'))), ('*', (('^', ('@', 'dx'), ('#', '1.5')), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
 		self.assertEqual (ast2tex2ast (p ('Derivative (x^2y**2z, x, 2, y, z)')), ('diff', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), (('^', ('@', 'partialx'), ('#', '2')), ('@', 'partialy'), ('@', 'partialz'))))
 		self.assertEqual (ast2tex2ast (p ('\\int dx')), ('intg', None, ('@', 'dx')))
 		self.assertEqual (ast2tex2ast (p ('\\int x dx')), ('intg', ('@', 'x'), ('@', 'dx')))
@@ -996,11 +1016,11 @@ class Test (unittest.TestCase):
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
-		self.assertEqual (ast2nat2ast (p ('1.')), ('#', '1'))
+		self.assertEqual (ast2nat2ast (p ('1.')), ('#', '1.'))
 		self.assertEqual (ast2nat2ast (p ('.1')), ('#', '0.1'))
 		self.assertEqual (ast2nat2ast (p ('1e20')), ('#', '1e+20'))
 		self.assertEqual (ast2nat2ast (p ('1E-20')), ('#', '1e-20'))
-		self.assertEqual (ast2nat2ast (p ('1.e+20')), ('#', '1e+20'))
+		self.assertEqual (ast2nat2ast (p ('1.e+20')), ('#', '1.e+20'))
 		self.assertEqual (ast2nat2ast (p ('.1e-20')), ('#', '0.1e-20'))
 		self.assertEqual (ast2nat2ast (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (ast2nat2ast (p ('x')), ('@', 'x'))
@@ -1085,6 +1105,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('d^2/dx^2 x^2y**2z')), ('diff', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), (('^', ('@', 'dx'), ('#', '2')),)))
 		self.assertEqual (ast2nat2ast (p ('d^3/dx^2dy x^2y**2z')), ('diff', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), (('^', ('@', 'dx'), ('#', '2')), ('@', 'dy'))))
 		self.assertEqual (ast2nat2ast (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), ('diff', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), (('^', ('@', 'partialx'), ('#', '2')), ('@', 'partialy'), ('@', 'partialz'))))
+		self.assertEqual (ast2nat2ast (p ('d**1.5 / dx dy x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '1.5')), ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
+		self.assertEqual (ast2nat2ast (p ('d**-2 / dx dy x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '-2')), ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
+		self.assertEqual (ast2nat2ast (p ('d**2 / dx**1.5 x**2y**2')), ('/', ('(', ('^', ('@', 'd'), ('#', '2'))), ('*', (('^', ('@', 'dx'), ('#', '1.5')), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
 		self.assertEqual (ast2nat2ast (p ('Derivative (x^2y**2z, x, 2, y, z)')), ('diff', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), (('^', ('@', 'dx'), ('#', '2')), ('@', 'dy'), ('@', 'dz'))))
 		self.assertEqual (ast2nat2ast (p ('\\int dx')), ('intg', None, ('@', 'dx')))
 		self.assertEqual (ast2nat2ast (p ('\\int x dx')), ('intg', ('@', 'x'), ('@', 'dx')))
@@ -1189,11 +1212,11 @@ class Test (unittest.TestCase):
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
-		self.assertEqual (ast2py2ast (p ('1.')), ('#', '1'))
+		self.assertEqual (ast2py2ast (p ('1.')), ('#', '1.'))
 		self.assertEqual (ast2py2ast (p ('.1')), ('#', '0.1'))
 		self.assertEqual (ast2py2ast (p ('1e20')), ('#', '1e+20'))
 		self.assertEqual (ast2py2ast (p ('1E-20')), ('#', '1e-20'))
-		self.assertEqual (ast2py2ast (p ('1.e+20')), ('#', '1e+20'))
+		self.assertEqual (ast2py2ast (p ('1.e+20')), ('#', '1.e+20'))
 		self.assertEqual (ast2py2ast (p ('.1e-20')), ('#', '0.1e-20'))
 		self.assertEqual (ast2py2ast (p ('-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901')), ('#', '-1.23456789012345678901234567890123456789012345678901234567890123456789012345678901'))
 		self.assertEqual (ast2py2ast (p ('x')), ('@', 'x'))
@@ -1278,6 +1301,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('d^2/dx^2 x^2y**2z')), ('func', 'Derivative', (('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z'))), ('@', 'x'), ('#', '2'))))
 		self.assertEqual (ast2py2ast (p ('d^3/dx^2dy x^2y**2z')), ('func', 'Derivative', (('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z'))), ('@', 'x'), ('#', '2'), ('@', 'y'))))
 		self.assertEqual (ast2py2ast (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), ('func', 'Derivative', (('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z'))), ('@', 'x'), ('#', '2'), ('@', 'y'), ('@', 'z'))))
+		self.assertEqual (ast2py2ast (p ('d**1.5 / dx dy x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '1.5')), ('(', ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')))))))
+		self.assertEqual (ast2py2ast (p ('d**-2 / dx dy x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '-2')), ('(', ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')))))))
+		self.assertEqual (ast2py2ast (p ('d**2 / dx**1.5 x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '2')), ('(', ('*', (('^', ('@', 'dx'), ('#', '1.5')), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')))))))
 		self.assertEqual (ast2py2ast (p ('Derivative (x^2y**2z, x, 2, y, z)')), ('func', 'Derivative', (('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z'))), ('@', 'x'), ('#', '2'), ('@', 'y'), ('@', 'z'))))
 		self.assertEqual (ast2py2ast (p ('\\int dx')), ('func', 'Integral', (('#', '1'), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('\\int x dx')), ('func', 'Integral', (('@', 'x'), ('@', 'x'))))
@@ -1471,6 +1497,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('d^2/dx^2 x^2y**2z')), ('*', (('#', '2'), ('@', 'z'), ('^', ('@', 'y'), ('#', '2')))))
 		self.assertEqual (ast2spt2ast (p ('d^3/dx^2dy x^2y**2z')), ('*', (('#', '4'), ('@', 'y'), ('@', 'z'))))
 		self.assertEqual (ast2spt2ast (p ('\\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z')), ('*', (('#', '4'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('d**1.5 / dx dy x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '1.5')), ('*', (('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
+		self.assertEqual (ast2spt2ast (p ('d**-2 / dx dy x**2y**2')), ('/', ('#', '1'), ('*', (('^', ('@', 'd'), ('#', '2')), ('@', 'dx'), ('@', 'dy'), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
+		self.assertEqual (ast2spt2ast (p ('d**2 / dx**1.5 x**2y**2')), ('/', ('^', ('@', 'd'), ('#', '2')), ('*', (('^', ('@', 'dx'), ('#', '1.5')), ('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2'))))))
 		self.assertEqual (ast2spt2ast (p ('Derivative (x^2y**2z, x, 2, y, z)')), ('*', (('#', '4'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('\\int dx')), ('@', 'x'))
 		self.assertEqual (ast2spt2ast (p ('\\int x dx')), ('*', (('/', ('#', '1'), ('#', '2')), ('^', ('@', 'x'), ('#', '2')))))
@@ -1664,6 +1693,9 @@ d/dx x**2y**2z
 d^2/dx^2 x^2y**2z
 d^3/dx^2dy x^2y**2z
 \\partial^4 / \\partial x^2\\partial y\\partial z x^2 y**2 z
+d**1.5 / dx dy x**2y**2
+d**-2 / dx dy x**2y**2
+d**2 / dx**1.5 x**2y**2
 Derivative (x^2y**2z, x, 2, y, z)
 \\int dx
 \\int x dx

@@ -1815,7 +1815,7 @@ class AST_Num (AST):
 
 	_rec_int          = re.compile (r'^-?\d+$')
 	_rec_pos_int      = re.compile (r'^\d+$')
-	_rec_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)(?:[eE]([+-]?\d+))?$')
+	_rec_num_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)(?:[eE]([+-]?\d+))?$')
 
 	def _init (self, num):
 		self.num = num
@@ -1823,8 +1823,8 @@ class AST_Num (AST):
 	_is_pos_num   = lambda self: self.num [0] != '-'
 	_is_neg_num   = lambda self: self.num [0] == '-'
 	_is_pos_int_num   = lambda self: AST_Num._rec_pos_int.match (self.num)
-	_num_exp      = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (2)
-	_mant_and_exp = lambda self: AST_Num._rec_mant_and_exp.match (self.num).group (1, 2)
+	_num_exp      = lambda self: AST_Num._rec_num_mant_and_exp.match (self.num).group (2)
+	_num_mant_and_exp = lambda self: AST_Num._rec_num_mant_and_exp.match (self.num).group (1, 2)
 
 class AST_Var (AST):
 	op, is_var  = '@', True
@@ -2516,7 +2516,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return self._ast2tex_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {',', 'piece'})) if ast.is_ass else {'=', 'piece'})
 
 	def _ast2tex_num (self, ast):
-		m, e = ast.mant_and_exp
+		m, e = ast.num_mant_and_exp
 
 		return f'{m}{{e}}{{{e}}}' if e else m
 

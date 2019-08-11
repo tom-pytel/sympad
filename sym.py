@@ -163,7 +163,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return self._ast2tex_wrap (hs, 0, (hs.is_ass or (lhs and hs.op in {',', 'piece'})) if ast.is_ass else {'=', 'piece'})
 
 	def _ast2tex_num (self, ast):
-		m, e = ast.mant_and_exp
+		m, e = ast.num_mant_and_exp
 
 		return f'{m}{{e}}{{{e}}}' if e else m
 
@@ -828,21 +828,18 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 	return AST ('text', tex, str (spt), str (spt), spt)
 
-_rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
-
 def _spt2ast_num (spt):
-	m = _rec_num_deconstructed.match (str (spt))
-	g = [g or '' for g in m.groups ()]
+	num = AST ('#', str (spt))
 
-	if g [5]:
-		return AST ('#', ''.join (g [:6] + g [7:]))
+	if num.grp [5]:
+		return AST ('#', ''.join (num.grp [:6] + num.grp [7:]))
 
-	e = len (g [2]) + (int (g [8]) if g [8] else 0)
+	e = len (num.grp [2]) + num.num_exp_val
 
 	return AST ('#', \
-			f'{g [0]}{g [1]}e+{e}'     if e >= 16 else \
-			f'{g [0]}{g [1]}{"0" * e}' if e >= 0 else \
-			f'{g [0]}{g [1]}e{e}')
+			f'{num.grp [0]}{num.grp [1]}e+{e}'     if e >= 16 else \
+			f'{num.grp [0]}{num.grp [1]}{"0" * e}' if e >= 0 else \
+			f'{num.grp [0]}{num.grp [1]}e{e}')
 
 def _spt2ast_MatrixBase (spt):
 	return \
