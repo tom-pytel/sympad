@@ -3,9 +3,12 @@
 
 # Randomized consistency testing of parsing: text -> ast -> tex/nat/py -> text -> ast
 
+# test_sym.py -i --show --nc
+
 from getopt import getopt
 from random import random, randrange, choice
 import sys
+import time
 
 from sast import AST
 import sxlat
@@ -342,8 +345,17 @@ def flatten (ast):
 
 #...............................................................................................
 CURLYS = True
+parser = sparser.Parser ()
 
-# test_sym.py -i --show --nc
+def parse (text):
+	t0  = time.process_time ()
+	ret = parser.parse (text)
+	t   = time.process_time () - t0
+
+	if t > 2:
+		print (f'\n{text}', file = sys.stderr)
+
+	return ret
 
 def test ():
 	global DEPTH, CURLYS
@@ -351,7 +363,6 @@ def test ():
 	_DEPTH  = 3
 	single  = None
 	opts, _ = getopt (sys.argv [1:], 'tnpid:x:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth=', 'expr='])
-	parser  = sparser.Parser ()
 
 	for opt, arg in opts:
 		if opt in ('-d', '--depth'):
@@ -384,7 +395,7 @@ def test ():
 	try:
 		while 1:
 			text              = expr_func ()
-			ast, erridx, auto = parser.parse (text)
+			ast, erridx, auto = parse (text)
 
 			if not ast or erridx or auto:
 				print ()
@@ -405,7 +416,7 @@ def test ():
 					ast = fix_vars (ast)
 
 				text              = sym.ast2py (ast)
-				ast, erridx, auto = parser.parse (text)
+				ast, erridx, auto = parse (text)
 
 				if not ast or erridx or auto:
 					print ()
@@ -430,9 +441,9 @@ def test ():
 				print ()
 				print ('py:  ', py)
 
-			ast_tex = dotex and parser.parse (tex) [0]
-			ast_nat = donat and parser.parse (nat) [0]
-			ast_py  = dopy and parser.parse (py) [0]
+			ast_tex = dotex and parse (tex) [0]
+			ast_nat = donat and parse (nat) [0]
+			ast_py  = dopy and parse (py) [0]
 			ast_srp = process (ast)
 			ast_tex = dotex and process (ast_tex)
 			ast_nat = donat and process (ast_nat)

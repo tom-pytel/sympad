@@ -112,7 +112,7 @@ def _expr_piece (expr, expr_if, expr_else):
 
 def _expr_mul_exp (lhs, rhs): # isolate explicit multiplication so it doesn't trigger imp mul grammar reductions
 	if lhs.is_curly:
-		return AST ('{', AST.flatcat ('*', lhs.curly, rhs))
+		lhs = lhs.curly
 
 	return AST ('{', AST.flatcat ('*', lhs, rhs))
 
@@ -931,6 +931,6 @@ class sparser: # for single script
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	a = p.parse (r'|x') [0]
+# 	a = p.parse (r'''{Limit ({[True] if \fraca'"str" else \int True dx if Determinant() else ()  \left|\sqrt['str']partial\right|  \int_\left|\tilde\infty \right|^\partial x! dx if partial dx}, x, ({{log"str"^oo^partial,['str' <= None,"str" [partial]],\left|(1e-100,'str',a)\right|,},}))+[sqrt\log_1.0'str',({{({1,}),{'str'  1e100},1e-100 if a else \tilde\infty  if partialx else 'str' if 0,},})]^\sum_{x = [dx,dx,1e-100]**{1e-100*partial*1.0}}^1 == oo**\fracoo\tilde\infty  -\partial !+\int_\log_d [None]!{dx*\partial x} [\sinh(-1.0,"str")]^lambda x, y, z: {{oo \cdot \partial } \cdot Float(\partial ,\tilde\infty ) \cdot \sqrt\infty zoo} \int d^\partialx [\frac\partial 1.0] dx dx}''')
 # 	# a = sym.ast2spt (a)
 # 	print (a)
