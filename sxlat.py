@@ -231,19 +231,19 @@ def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other
 	return AST (*(xlat_funcs2asts (e, xlat) for e in ast))
 
 _XLAT_FUNC2TEX = {
-	'beta'    : lambda args: f'\\beta\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
-	'gamma'   : lambda args: f'\\Gamma\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
-	'Gamma'   : lambda args: f'\\Gamma\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
-	'Lambda'  : lambda args: f'\\Lambda\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
-	'zeta'    : lambda args: f'\\zeta\\left({sym._ast2tex (sym._tuple2ast (args))} \\right)',
-	'binomial': lambda args: f'\\binom{{{sym._ast2tex (args [0])}}}{{{sym._ast2tex (args [1])}}}' if len (args) == 2 else None,
+	'beta'    : lambda args, _ast2tex: f'\\beta\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+	'gamma'   : lambda args, _ast2tex: f'\\Gamma\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+	'Gamma'   : lambda args, _ast2tex: f'\\Gamma\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+	'Lambda'  : lambda args, _ast2tex: f'\\Lambda\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+	'zeta'    : lambda args, _ast2tex: f'\\zeta\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+	'binomial': lambda args, _ast2tex: f'\\binom{{{_ast2tex (args [0])}}}{{{_ast2tex (args [1])}}}' if len (args) == 2 else None,
 }
 
-def xlat_func2tex (ast):
+def xlat_func2tex (ast, _ast2tex):
 	xact = _XLAT_FUNC2TEX.get (ast.func)
 
 	if xact:
-		return xact (ast.args)
+		return xact (ast.args, _ast2tex)
 
 	return None
 

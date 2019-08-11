@@ -598,8 +598,8 @@ class Parser (lalr1.LALR1):
 	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
 	def expr_add_3         (self, expr_mul_exp):                                   return expr_mul_exp
 
-	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg) # AST.flatcat ('*', expr_mul_exp, expr_neg)
-	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg) # AST.flatcat ('*', expr_mul_exp, expr_neg)
+	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg)
+	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg)
 	def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
 
 	def expr_neg_1         (self, MINUS, expr_neg):                                return _expr_neg (expr_neg)
@@ -675,12 +675,12 @@ class Parser (lalr1.LALR1):
 	def casessc_1          (self, expr1, AMP, expr2):                              return (expr1, expr2)
 	def casessc_2          (self, expr, AMP):                                      return (expr, True)
 
-	def expr_mat_1         (self, LEFT, BRACKL, BEG_MAT, mat_rows, END_MAT, RIGHT, BRACKR):  return _expr_mat (mat_rows)
-	def expr_mat_2         (self, BEG_MAT, mat_rows, END_MAT):                               return _expr_mat (mat_rows)
-	def expr_mat_3         (self, BEG_BMAT, mat_rows, END_BMAT):                             return _expr_mat (mat_rows)
-	def expr_mat_4         (self, BEG_VMAT, mat_rows, END_VMAT):                             return _expr_mat (mat_rows)
-	def expr_mat_5         (self, BEG_PMAT, mat_rows, END_PMAT):                             return _expr_mat (mat_rows)
-	def expr_mat_6         (self, expr_curly):                                               return expr_curly
+	def expr_mat_1         (self, LEFT, BRACKL, BEG_MAT, mat_rows, END_MAT, RIGHT, BRACKR): return _expr_mat (mat_rows)
+	def expr_mat_2         (self, BEG_MAT, mat_rows, END_MAT):                     return _expr_mat (mat_rows)
+	def expr_mat_3         (self, BEG_BMAT, mat_rows, END_BMAT):                   return _expr_mat (mat_rows)
+	def expr_mat_4         (self, BEG_VMAT, mat_rows, END_VMAT):                   return _expr_mat (mat_rows)
+	def expr_mat_5         (self, BEG_PMAT, mat_rows, END_PMAT):                   return _expr_mat (mat_rows)
+	def expr_mat_6         (self, expr_curly):                                     return expr_curly
 	def mat_rows_1         (self, mat_row, DBLSLASH):                              return mat_row
 	def mat_rows_2         (self, mat_row):                                        return mat_row
 	def mat_rows_3         (self):                                                 return ()

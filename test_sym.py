@@ -44,6 +44,7 @@ TERMS = [
 	'False',
 ]
 
+# \int 2x*-dx
 # previously problematic static test expressions
 _EXPRESSIONS = r"""
 \sqrt[{{1} / {1.0}}]{({oo},{partial})}
@@ -121,7 +122,6 @@ log(partialx*'str'*partialx) / log(Derivative(a, z, 3, y, 2))
 dpartial
 a, lambda: b = 1
 \exp({a},{-1},{1})
-\int 2x*-dx
 x, y = lambda: 1, lambda: 2
 doo
 partial'
