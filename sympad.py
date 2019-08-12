@@ -1692,9 +1692,9 @@ class AST (tuple):
 
 	def remove_curlys (self):
 		if self.is_curly:
-			return self.curly.remove_curlys ()
+			return self.curly.no_curlys
 		else:
-			return AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
+			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
 	def strip (self, count = None, ops = {'{', '('}, idx = 1):
 		count = -1 if count is None else count
@@ -3564,8 +3564,8 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			p = 1
 			v = ast.numer
 
-		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.remove_curlys ().is_pos_int_num:
-			p = int (ast.numer.exp.remove_curlys ().num)
+		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.no_curlys.is_pos_int_num:
+			p = int (ast.numer.exp.no_curlys.num)
 			v = ast.numer.base
 
 		else:
@@ -3582,8 +3582,8 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if ast_dv_check (n):
 				dec = 1
-			elif n.is_pow and ast_dv_check (n.base) and n.exp.remove_curlys ().is_pos_int_num:
-				dec = int (n.exp.remove_curlys ().num)
+			elif n.is_pow and ast_dv_check (n.base) and n.exp.no_curlys.is_pos_int_num:
+				dec = int (n.exp.no_curlys.num)
 			else:
 				return None
 
@@ -3728,7 +3728,7 @@ def _expr_func_func (FUNC, expr_neg_func, expr_super = None):
 
 	if expr_super is None:
 		return _expr_func (2, 'func', func, expr_neg_func)
-	elif expr_super.remove_curlys () != AST.NegOne or not AST ('func', func, ()).is_trigh_func_noninv:
+	elif expr_super.no_curlys != AST.NegOne or not AST ('func', func, ()).is_trigh_func_noninv:
 		return AST ('^', _expr_func_func (FUNC, expr_neg_func), expr_super)
 	else:
 		return _expr_func_func (f'a{func}', expr_neg_func)
@@ -4055,13 +4055,13 @@ class Parser (lalr1.LALR1):
 	def expr_paren_3       (self, IGNORE_CURLY, CURLYL, expr, CURLYR):             return AST ('{', expr)
 	def expr_paren_4       (self, expr_frac):                                      return expr_frac
 
-	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                 return AST ('/', expr_binom1.remove_curlys (), expr_binom2.remove_curlys ())
-	def expr_frac_2        (self, FRAC1, expr_binom):                              return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_binom.remove_curlys ())
+	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                 return AST ('/', expr_binom1.no_curlys, expr_binom2.no_curlys)
+	def expr_frac_2        (self, FRAC1, expr_binom):                              return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_binom.no_curlys)
 	def expr_frac_3        (self, FRAC2):                                          return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
 	def expr_frac_4        (self, expr_binom):                                     return expr_binom
 
-	def expr_binom_1       (self, BINOM, expr_cases1, expr_cases2):                return AST ('func', 'binomial', (expr_cases1.remove_curlys (), expr_cases2.remove_curlys ()))
-	def expr_binom_2       (self, BINOM1, expr_cases):                             return AST ('func', 'binomial', (_ast_from_tok_digit_or_var (BINOM1), expr_cases.remove_curlys ()))
+	def expr_binom_1       (self, BINOM, expr_cases1, expr_cases2):                return AST ('func', 'binomial', (expr_cases1.no_curlys, expr_cases2.no_curlys))
+	def expr_binom_2       (self, BINOM1, expr_cases):                             return AST ('func', 'binomial', (_ast_from_tok_digit_or_var (BINOM1), expr_cases.no_curlys))
 	def expr_binom_3       (self, BINOM2):                                         return AST ('func', 'binomial', (_ast_from_tok_digit_or_var (BINOM2), _ast_from_tok_digit_or_var (BINOM2, 3)))
 	def expr_binom_4       (self, expr_cases):                                     return expr_cases
 
@@ -4311,7 +4311,7 @@ class Parser (lalr1.LALR1):
 
 			for res in rated [:32]:
 				res = res [-1]
-				res = (res [0].remove_curlys (),) + res [1:] if isinstance (res [0], AST) else res
+				res = (res [0].no_curlys,) + res [1:] if isinstance (res [0], AST) else res
 
 				print ('parse:', res, file = sys.stderr)
 
@@ -4322,7 +4322,7 @@ class Parser (lalr1.LALR1):
 
 		res = next (iter (rated)) [-1]
 
-		return (res [0].remove_curlys (),) + res [1:] if isinstance (res [0], AST) else res
+		return (res [0].no_curlys,) + res [1:] if isinstance (res [0], AST) else res
 
 class sparser: # for single script
 	Parser = Parser

@@ -1799,6 +1799,7 @@ $oct(10)
 'a' * 2
 Lambda (x, x**2)
 beta (2, 3)
+{x d} y
 """
 
 if __name__ == '__main__':

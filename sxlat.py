@@ -247,7 +247,7 @@ def xlat_func2tex (ast, _ast2tex):
 
 	return None
 
-def _xlat_pyS (ast, need = False):
+def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 	if not isinstance (ast, AST):
 		return ast, False
 

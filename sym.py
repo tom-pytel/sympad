@@ -694,14 +694,13 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	}
 
 	def _ast2spt_var (self, ast):
-		None_ = ast
-		spt   = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None_)
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # self being used for as unique None
 
-		if spt is None_:
+		if spt is self:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
-				spt = getattr (sp, ast.var, None_)
+				spt = getattr (sp, ast.var, self)
 
-			if spt is None_:
+			if spt is self:
 				spt = sp.Symbol (ast.var)
 
 		return spt

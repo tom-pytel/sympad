@@ -96,6 +96,35 @@ class AST (tuple):
 	def _len (self):
 		return len (self)
 
+	def _no_curlys (self):
+		if self.is_curly:
+			return self.curly.no_curlys
+		else:
+			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
+
+	def flat (self, op = None, seq = None): # flatten trees of '+' or '*' into single AST
+		if self.is_add or self.is_mul:
+			if self.op == op:
+				for e in self [1]:
+					e.flat (op, seq)
+
+				return
+
+			seq2 = []
+
+			for e in self [1]:
+				e.flat (self.op, seq2)
+
+			ast = AST (self.op, tuple (seq2))
+
+		else:
+			ast = AST (*tuple (a.flat () if isinstance (a, AST) else a for a in self))
+
+		if op:
+			seq.append (ast)
+		else:
+			return ast
+
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
 			if not self.is_pos_num:
@@ -112,12 +141,6 @@ class AST (tuple):
 				return AST ('#', self.num [1:])
 			else:
 				return AST ('#', f'-{self.num}')
-
-	def remove_curlys (self):
-		if self.is_curly:
-			return self.curly.remove_curlys ()
-		else:
-			return AST (*tuple (a.remove_curlys () if isinstance (a, AST) else a for a in self))
 
 	def strip (self, count = None, ops = {'{', '('}, idx = 1):
 		count = -1 if count is None else count
@@ -521,3 +544,9 @@ AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
 AST.MatEmpty   = AST ('func', 'Matrix', ('[', ()))
+
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('*', (('*', (('@', 'x'), ('@', 'd'))), ('@', 'y')))
+# 	res = ast.flat ()
+# 	print (res)
