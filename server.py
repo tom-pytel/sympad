@@ -96,7 +96,7 @@ def _ast_remap (ast, map_, recurse = True):
 	if not isinstance (ast, AST) or ast.is_lamb or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 		return ast
 
-	if ast.is_var:
+	elif ast.is_var:
 		var = map_.get (ast.var)
 
 		if var: # user var

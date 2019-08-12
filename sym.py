@@ -738,7 +738,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
 
-		if func is None:
+		if not func:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
 
 		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
