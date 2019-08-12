@@ -272,6 +272,7 @@ class AST_Num (AST):
 	_num_exp          = lambda self: self.grp [8] + self.grp [9]
 	_num_mant_and_exp = lambda self: (''.join (self.grp [:7]), self.num_exp)
 	_num_exp_val      = lambda self: int (self.num_exp) if self.num_exp else 0
+	_as_int           = lambda self: int (float (self.num))
 
 class AST_Var (AST):
 	op, is_var  = '@', True

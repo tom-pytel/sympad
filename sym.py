@@ -299,7 +299,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					ds.add (n)
 
 			else: # n = ('^', ('@', 'diff or part'), ('#', 'int'))
-				p += int (n.exp.num)
+				p += n.exp.as_int
 				ds.add (n.base)
 
 		if not ds:
@@ -502,7 +502,7 @@ class ast2nat: # abstract syntax tree -> native text
 				p += 1
 			else: # n = ('^', ('@', 'differential'), ('#', 'int'))
 				d  = n.base.diff_or_part_type
-				p += int (n.exp.num)
+				p += n.exp.as_int
 
 		return f'{d.strip () if d else "d"}{"" if p == 1 else f"^{p}"} / {" ".join (self._ast2nat (n) for n in ast.dvs)} {self._ast2nat_paren (ast.diff)}'
 
@@ -608,7 +608,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		args = sum ((
 				(self._ast2py (n.as_var),)
 				if n.is_var else
-				(self._ast2py (n.base.as_var), str (n.exp.num))
+				(self._ast2py (n.base.as_var), str (n.exp.as_int))
 				for n in ast.dvs
 				), ())
 
@@ -747,7 +747,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		args = sum (( \
 				(self._ast2spt (n.as_var),) \
 				if n.is_var else \
-				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.num)) \
+				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.as_int)) \
 				for n in ast.dvs \
 				), ())
 

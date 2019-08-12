@@ -141,6 +141,7 @@ a*().t
 a*()[2]
 lambda*x:2
 lambda*x, y:2
+d**2e0/dx**2e0 x**3
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

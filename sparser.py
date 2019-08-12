@@ -166,7 +166,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			v = ast.numer
 
 		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.no_curlys.is_pos_int_num:
-			p = int (ast.numer.exp.no_curlys.num)
+			p = ast.numer.exp.no_curlys.as_int
 			v = ast.numer.base
 
 		else:
@@ -184,7 +184,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			if ast_dv_check (n):
 				dec = 1
 			elif n.is_pow and ast_dv_check (n.base) and n.exp.no_curlys.is_pos_int_num:
-				dec = int (n.exp.no_curlys.num)
+				dec = n.exp.no_curlys.as_int
 			else:
 				return None
 
