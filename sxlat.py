@@ -1,4 +1,4 @@
-# Translate SymPy functions to other ASTs or text for further use or just display.
+# AST translations for display or S escaping.
 
 import sympy as sp
 
@@ -247,11 +247,56 @@ def xlat_func2tex (ast, _ast2tex):
 
 	return None
 
+def _xlat_pyS (ast, need = False):
+	if not isinstance (ast, AST):
+		return ast, False
+
+	if ast.is_num:
+		if need:
+			return AST ('func', 'S', (ast,)), True
+		else:
+			return ast, False
+
+	if ast.is_comma or ast.is_brack:
+		return AST (ast.op, tuple (_xlat_pyS (a) [0] for a in ast [1])), False
+
+	if ast.is_curly or ast.is_paren or ast.is_minus:
+		expr, has = _xlat_pyS (ast [1], need)
+
+		return AST (ast.op, expr), has
+
+	if ast.is_add or ast.is_mul:
+		es  = [_xlat_pyS (a) for a in ast [1] [1:]]
+		has = any (e [1] for e in es)
+		e0  = _xlat_pyS (ast [1] [0], need and not has)
+
+		return AST (ast.op, (e0 [0],) + tuple (e [0] for e in es)), has or e0 [1]
+
+	if ast.is_div:
+		denom, has = _xlat_pyS (ast.denom)
+		numer      = _xlat_pyS (ast.numer, not has) [0]
+
+		return AST ('/', numer, denom), True
+
+	if ast.is_pow:
+		exp, has = _xlat_pyS (ast.exp)
+		base     = _xlat_pyS (ast.base, not (has or exp.is_pos_num)) [0]
+
+		return AST ('^', base, exp), True
+
+	es = [_xlat_pyS (a) for a in ast]
+
+	return AST (*tuple (e [0] for e in es)), \
+			ast.op in {'=', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'vec', 'mat', 'piece', 'lamb'} or any (e [1] for e in es)
+
+xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
+
 class sxlat: # for single script
 	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
 	xlat_funcs2asts   = xlat_funcs2asts
 	xlat_func2tex     = xlat_func2tex
+	xlat_pyS          = xlat_pyS
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!

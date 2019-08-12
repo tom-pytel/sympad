@@ -108,7 +108,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	def __init__ (self): self.parent = self.ast = None # pylint medication
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
-		self.parents = []
+		self.parents = [None]
 		self.parent  = self.ast = AST ()
 
 		if xlat:
@@ -117,15 +117,17 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return self._ast2tex (ast)
 
 	def _ast2tex (self, ast):
-		self.parents.append (self.parent)
+		self.parents.append (self.ast)
 
 		self.parent = self.ast
 		self.ast    = ast
 
 		ast         = self._ast2tex_funcs [ast.op] (self, ast)
 
+		del self.parents [-1]
+
 		self.ast    = self.parent
-		self.parent = self.parents.pop ()
+		self.parent = self.parents [-1]
 
 		return ast
 
@@ -363,7 +365,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def __init__ (self): self.parent = self.ast = None # pylint medication
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
-		self.parents = []
+		self.parents = [None]
 		self.parent  = self.ast = AST ()
 
 		if xlat:
@@ -372,15 +374,17 @@ class ast2nat: # abstract syntax tree -> native text
 		return self._ast2nat (ast)
 
 	def _ast2nat (self, ast):
-		self.parents.append (self.parent)
+		self.parents.append (self.ast)
 
 		self.parent = self.ast
 		self.ast    = ast
 
 		ast         = self._ast2nat_funcs [ast.op] (self, ast)
 
+		del self.parents [-1]
+
 		self.ast    = self.parent
-		self.parent = self.parents.pop ()
+		self.parent = self.parents [-1]
 
 		return ast
 
@@ -554,6 +558,9 @@ class ast2py: # abstract syntax tree -> Python code text
 	def __new__ (cls, ast):
 		self = super ().__new__ (cls)
 
+		if _PYS:
+			ast = sxlat.xlat_pyS (ast)
+
 		return self._ast2py (ast)
 
 	def _ast2py (self, ast):
@@ -587,22 +594,22 @@ class ast2py: # abstract syntax tree -> Python code text
 		return f'{b}**{e}'
 
 	def _ast2py_log (self, ast):
-		return \
-				f'ln{self._ast2py_paren (ast.log)}' \
-				if ast.base is None else \
-				f'log{self._ast2py_paren (ast.log)} / log{self._ast2py_paren (ast.base)}' \
+		if ast.base is None:
+			return f'ln{self._ast2py_paren (ast.log)}'
+		else:
+			return f'log{self._ast2py_paren (ast.log)} / log{self._ast2py_paren (ast.base)}'
 
 	def _ast2py_lim (self, ast):
 		return \
-			f'''Limit({self._ast2py (ast.lim)}, {self._ast2py (ast.lvar)}, {self._ast2py (ast.to)}''' \
-			f'''{", dir='+-'" if ast.dir is None else ", dir='-'" if ast.dir == '-' else ""})'''
+				f'''Limit({self._ast2py (ast.lim)}, {self._ast2py (ast.lvar)}, {self._ast2py (ast.to)}''' \
+				f'''{", dir='+-'" if ast.dir is None else ", dir='-'" if ast.dir == '-' else ""})'''
 
 	def _ast2py_diff (self, ast):
 		args = sum ((
-				(self._ast2py (n.as_var),) \
-				if n.is_var else \
-				(self._ast2py (n.base.as_var), str (n.exp.num)) \
-				for n in ast.dvs \
+				(self._ast2py (n.as_var),)
+				if n.is_var else
+				(self._ast2py (n.base.as_var), str (n.exp.num))
+				for n in ast.dvs
 				), ())
 
 		return f'Derivative({self._ast2py (ast.diff)}, {", ".join (args)})'
@@ -653,12 +660,12 @@ class ast2py: # abstract syntax tree -> Python code text
 	}
 
 #...............................................................................................
-# Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
+# Potentially bad __builtins__: eval, exec, globals, locals, vars, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict  = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
-_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
-		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
-		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
-		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
+_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
+	'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
+	'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
+	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __new__ (cls, ast):
@@ -677,23 +684,24 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
 	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
-			'pi'   : sp.pi,
-			'oo'   : sp.oo,
-			'zoo'  : sp.zoo,
-			'None' : None,
-			'True' : True, # sp.boolalg.true,
-			'False': False, # sp.boolalg.false,
-			'nan'  : sp.nan,
+		'pi'   : sp.pi,
+		'oo'   : sp.oo,
+		'zoo'  : sp.zoo,
+		'None' : None,
+		'True' : True, # sp.boolalg.true,
+		'False': False, # sp.boolalg.false,
+		'nan'  : sp.nan,
 	}
 
 	def _ast2spt_var (self, ast):
-		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, 0)
+		None_ = ast
+		spt   = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, None_)
 
-		if spt is 0:
+		if spt is None_:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
-				spt = getattr (sp, ast.var, 0)
+				spt = getattr (sp, ast.var, None_)
 
-			if spt is 0:
+			if spt is None_:
 				spt = sp.Symbol (ast.var)
 
 		return spt
@@ -1016,13 +1024,13 @@ def set_precision (ast): # recurse through ast to set sympy float precision acco
 
 	_SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
-def set_pyS (state):
-	global _PYS
-	_PYS = state
-
 def set_user_funcs (user_funcs):
 	global _USER_FUNCS
 	_USER_FUNCS = user_funcs
+
+def set_pyS (state):
+	global _PYS
+	_PYS = state
 
 def set_eval (state):
 	global _EVAL
@@ -1035,6 +1043,7 @@ def set_doit (state):
 class sym: # for single script
 	set_precision  = set_precision
 	set_user_funcs = set_user_funcs
+	set_pyS        = set_pyS
 	set_eval       = set_eval
 	set_doit       = set_doit
 	ast2tex        = ast2tex
@@ -1045,7 +1054,7 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('sum', ('/', ('^', ('@', 'x'), ('@', 'n')), ('!', ('@', 'n'))), ('@', 'n'), ('#', '0'), ('@', 'oo'))
-# 	res = ast2spt (ast)
+# 	ast = AST ('/', ('(', ('+', (('#', '1'), ('#', '2')))), ('#', '2'))
+# 	res = ast2py (ast)
 # 	# res = spt2ast (res)
 # 	print (res)

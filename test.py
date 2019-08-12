@@ -13,6 +13,8 @@ import test_sym as _test_sym
 SympifyError = sp.SympifyError
 parser       = Parser ()
 
+sym.set_pyS (False)
+
 def sparser (text):
 	return parser.parse (text) [0]
 

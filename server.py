@@ -36,7 +36,8 @@ __name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		'[-h | --help] [-v | --version] \n' \
 		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
-		f'{__name_indent} [-E | --EI] [-q | --quick] [-u | --ugly] \n' \
+		f'{__name_indent} [-u | --ugly] \n' \
+		f'{__name_indent} [-E | --EI] [-q | --quick] [-y | --nopyS] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
 		f'{__name_indent} [-g | --nogamma] [-G | --noGamma] \n' \
 		f'{__name_indent} [-z | --nozeta] \n' \
@@ -46,15 +47,16 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
   -v, --version   - Show version string
   -d, --debug     - Dump debug info to server output
   -n, --nobrowser - Don't start system browser to SymPad page
+  -u, --ugly      - Start in draft display style (only on command line)
   -E, --EI        - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
   -q, --quick     - Start in quick input mode
-  -u, --ugly      - Start in draft display style (only on command line)
-  -N, --noN       - Start without "N()" lambda function
-  -S, --noS       - Start without "S()" lambda function
-  -O, --noO       - Start without "O()" lambda function
-  -g, --nogamma   - Start without "gamma()" lambda function
-  -G, --noGamma   - Start without "Gamma()" lambda function
-  -z, --nozeta    - Start without "zeta()" lambda function
+  -y, --nopyS     - Start without Python S escaping
+  -N, --noN       - Start without N lambda function
+  -S, --noS       - Start without S lambda function
+  -O, --noO       - Start without O lambda function
+  -g, --nogamma   - Start without gamma lambda function
+  -G, --noGamma   - Start without Gamma lambda function
+  -z, --nozeta    - Start without zeta lambda function
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
@@ -68,7 +70,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
 	_HISTORY      = []  # persistent history across browser closings
 
-	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True),
+	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
 		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
 	_PARSER       = sparser.Parser ()
@@ -282,20 +284,27 @@ def _admin_env (*args):
 				if apply:
 					_PARSER.set_quick (state)
 
+			elif var == 'pyS':
+				msgs.append (f'Python S escaping {"on" if state else "off"}.')
+
+				if apply:
+					sym.set_pyS (state)
+
 			elif var == 'eval':
+
 				msgs.append (f'Expression evaluation is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_eval (state)
 
 			elif var == 'doit':
-				msgs.append (f'Expression doit() is {"on" if state else "off"}.')
+				msgs.append (f'Expression doit is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_doit (state)
 
 			elif var in _ONE_FUNCS:
-				msgs.append (f'Function {var}() is {"on" if state else "off"}.')
+				msgs.append (f'Function {var} is {"on" if state else "off"}.')
 
 				if apply:
 					_update_user_funcs ()
@@ -326,7 +335,7 @@ def _admin_env (*args):
 
 		if var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
-		elif var not in {'EI', 'quick', 'eval', 'doit', *_ONE_FUNCS}:
+		elif var not in {'EI', 'quick', 'pyS', 'eval', 'doit', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
@@ -474,8 +483,8 @@ _MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqltNOSgGz',
-			['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'noeval', 'nodoit',
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz',
+			['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
 			'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
@@ -506,8 +515,8 @@ if __name__ == '__main__':
 		if ('--ugly', '') in opts or ('-u', '') in opts:
 			_DISPLAYSTYLE [0] = 0
 
-		for short, long in zip ('EqltNOSgGz', \
-				['EI', 'quick', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
+		for short, long in zip ('EqyltNOSgGz', \
+				['EI', 'quick', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
 			if (f'--{long}', '') in opts or (f'-{short}', '') in opts:
 				_admin_env (AST ('@', long))
 

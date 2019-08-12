@@ -347,6 +347,8 @@ def flatten (ast):
 CURLYS = True
 parser = sparser.Parser ()
 
+sym.set_pyS (False)
+
 def parse (text):
 	t0  = time.process_time ()
 	ret = parser.parse (text)
@@ -358,6 +360,7 @@ def parse (text):
 	return ret
 
 def test (argv = None):
+
 	global DEPTH, CURLYS
 
 	_DEPTH  = 3

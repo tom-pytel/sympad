@@ -7,7 +7,7 @@
 # ('.', expr, 'name', (a1, a2, ...))               - method member call
 # ('"', 'str')                                     - string
 # (',', (expr1, expr2, ...))                       - comma expression (tuple)
-# ('{', expr)                                      - invisible implicit parentheses for grouping
+# ('{', expr)                                      - invisible implicit parentheses for grouping and isolation during parsing
 # ('(', expr)                                      - explicit parentheses (not tuple)
 # ('[', (expr1, expr2, ...))                       - brackets (list, not index)
 # ('|', expr)                                      - absolute value
@@ -55,8 +55,6 @@ class AST (tuple):
 
 	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
 	_rec_int        = re.compile (r'^-?\d+$')
-	# _rec_pos_int      = re.compile (r'^\d+$')
-	# _rec_num_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)(?:[eE]([+-]?\d+))?$')
 
 	def __new__ (cls, *args):
 		op       = AST._CLS2OP.get (cls)
@@ -255,10 +253,10 @@ class AST_Num (AST):
 class AST_Var (AST):
 	op, is_var  = '@', True
 
-	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
-			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
-	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
-			'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
+	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma',
+		'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
+	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3',
+		'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
 
 	PY2TEXMULTI = {
 		'partial'  : ('\\partial',),
@@ -509,7 +507,7 @@ for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)
 
 _AST_CONSTS    = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
-		('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
+	('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
 
 for _vp, _vv in _AST_CONSTS:
 	ast = AST ('@', _vv)
