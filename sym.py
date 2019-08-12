@@ -789,7 +789,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 	_ast2spt_funcs = {
 		'=': lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
-		'#': lambda self, ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
+		'#': lambda self, ast: sp.Integer (ast.num) if ast.is_pure_int_num else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 		'@': _ast2spt_var,
 		'.': _ast2spt_attr,
 		'"': lambda self, ast: ast.str_,
@@ -804,7 +804,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'/': lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
 		'^': lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), evaluate = _EVAL),
 		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), evaluate = _EVAL) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), evaluate = _EVAL),
-		'sqrt': lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (2, -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
+		'sqrt': lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (sp.S (2), -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
 		'func': _ast2spt_func,
 		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
 		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
@@ -1051,9 +1051,9 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('/', ('(', ('+', (('#', '1'), ('#', '2')))), ('#', '2'))
-# 	res = ast2py (ast)
-# 	# res = spt2ast (res)
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	ast = AST ('sqrt', ('#', '2'))
+	res = ast2spt (ast)
+	# res = spt2ast (res)
+	print (res)

@@ -65,7 +65,11 @@ class AST (tuple):
 
 		elif args:
 			args = cls_args
-			cls2 = AST._OP2CLS.get (args [0])
+
+			try:
+				cls2 = AST._OP2CLS.get (args [0])
+			except TypeError: # for unhashable types
+				cls2 = None
 
 			if cls2:
 				cls      = cls2
@@ -268,6 +272,7 @@ class AST_Num (AST):
 	_is_pos_num       = lambda self: not self.grp [0]
 	_is_neg_num       = lambda self: bool (self.grp [0])
 	_is_int_num       = lambda self: not self.grp [3] and self.num_exp_val >= -len (self.grp [2])
+	_is_pure_int_num  = lambda self: not self.grp [3] and not self.grp [7]
 	_is_pos_int_num   = lambda self: self.is_int_num and not self.is_neg_num
 	_num_exp          = lambda self: self.grp [8] + self.grp [9]
 	_num_mant_and_exp = lambda self: (''.join (self.grp [:7]), self.num_exp)
