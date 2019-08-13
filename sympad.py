@@ -1231,8 +1231,6 @@ Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>"
 <p>
 User created lambda functions are supported and are specified the same way as Python lambdas - "<b>lambda x, y: (x+y)**2</b>".
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
-When created, lambda functions will copy the global value of any variables which are not lambda arguments and this will be fixed for the life of the lambda.
-If you want a lambda to use the value of a global variable at the time the lambda is evaluated, rather than when it is defined, then wrap the instance of the variable in the lambda using the "<b>@()</b>" pseudo-function.
 Lambda functions may reference other lambda functions as long as those are defined at the time of creation, though in that case they copy the expression from the target lambdas.
 Lambda recursion is not currently supported.
 </p><p>
@@ -1242,6 +1240,7 @@ This means that if you do "<b>f = lambda x: \int x dx</b>" you will wind up with
 In order to prevent evaluation of the integral on assignment and embed the operation itself within the lambda use the "<b>%()</b>" stop evaluation pseudo-function.
 This function essentially defers evaluation of an expression for one round.
 This will result in an assignment of "<b>f = lambda x: \int x dx</b>" if you define it as "<b>f = lambda x: %(\int x dx)</b>" instead of the result of the integral and this integral itself will be evaluated any time the lambda function is invoked.
+This applies to function calls as well, in order to defer an actual function call until the time the lambda is evaluated wrap it with "<b>%()</b>" like "<b>p = lambda s: %print(s)</b>"
 </p><p>
 This pseudo-function takes an optional count as a second argument.
 The default count is 1 round of evaluation, but you may set it to 2 or more to defer evaluation for that many rounds, though I'm not sure if a finite count would be useful for anything.
@@ -1295,6 +1294,7 @@ Also remember that these functions are always available for calling using the "<
 
 <p>"<b>EI</b>" - The use of "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".</p>
 <p>"<b>quick</b>" - Quick single letter variable name input mode.</p>
+<p>"<b>pyS</b>" - Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</p>
 <p>"<b>eval</b>" - Expression evaluation. Normally when you enter "<b>1 + 2</b>" it is evaluated for an answer of "<b>3</b>". If you turn this option off then this evaluation will not happen and the expression will stay as "<b>1 + 2</b>".</p>
 <p>"<b>doit</b>" - Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off. Note that turning off the previous option "<b>eval</b>" implies turning off "<b>doit</b>".</p>
 <p>"<b>N</b>" - Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</p>
@@ -1585,7 +1585,7 @@ class lalr1: # for single script
 # ('.', expr, 'name', (a1, a2, ...))               - method member call
 # ('"', 'str')                                     - string
 # (',', (expr1, expr2, ...))                       - comma expression (tuple)
-# ('{', expr)                                      - invisible implicit parentheses for grouping
+# ('{', expr)                                      - invisible implicit parentheses for grouping and isolation during parsing
 # ('(', expr)                                      - explicit parentheses (not tuple)
 # ('[', (expr1, expr2, ...))                       - brackets (list, not index)
 # ('|', expr)                                      - absolute value
@@ -1632,6 +1632,7 @@ class AST (tuple):
 	_CLS2OP = {}
 
 	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
+	_rec_int        = re.compile (r'^-?\d+$')
 
 	def __new__ (cls, *args):
 		op       = AST._CLS2OP.get (cls)
@@ -1642,7 +1643,11 @@ class AST (tuple):
 
 		elif args:
 			args = cls_args
-			cls2 = AST._OP2CLS.get (args [0])
+
+			try:
+				cls2 = AST._OP2CLS.get (args [0])
+			except TypeError: # for unhashable types
+				cls2 = None
 
 			if cls2:
 				cls      = cls2
@@ -1673,6 +1678,35 @@ class AST (tuple):
 	def _len (self):
 		return len (self)
 
+	def _no_curlys (self):
+		if self.is_curly:
+			return self.curly.no_curlys
+		else:
+			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
+
+	def flat (self, op = None, seq = None): # flatten trees of '+' or '*' into single AST
+		if self.is_add or self.is_mul:
+			if self.op == op:
+				for e in self [1]:
+					e.flat (op, seq)
+
+				return
+
+			seq2 = []
+
+			for e in self [1]:
+				e.flat (self.op, seq2)
+
+			ast = AST (self.op, tuple (seq2))
+
+		else:
+			ast = AST (*tuple (a.flat () if isinstance (a, AST) else a for a in self))
+
+		if op:
+			seq.append (ast)
+		else:
+			return ast
+
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
 			if not self.is_pos_num:
@@ -1689,12 +1723,6 @@ class AST (tuple):
 				return AST ('#', self.num [1:])
 			else:
 				return AST ('#', f'-{self.num}')
-
-	def remove_curlys (self):
-		if self.is_curly:
-			return self.curly.no_curlys
-		else:
-			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
 	def strip (self, count = None, ops = {'{', '('}, idx = 1):
 		count = -1 if count is None else count
@@ -1763,7 +1791,7 @@ class AST (tuple):
 
 	@staticmethod
 	def is_int_text (text):
-		return AST_Num._rec_int.match (text)
+		return AST._rec_int.match (text)
 
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
@@ -1803,36 +1831,38 @@ class AST_Eq (AST):
 	TEX2PY = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!='}
 	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>='}
 	ANY2PY = {**UNI2PY, **TEX2PY}
-	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'} # , '<': '\\lt', '>': '\\gt'}
+	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
 
 	def _init (self, rel, lhs, rhs):
-		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be short form
+		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be py form
 
 	_is_ass = lambda self: self.rel == '='
 
 class AST_Num (AST):
 	op, is_num = '#', True
 
-	_rec_int          = re.compile (r'^-?\d+$')
-	_rec_pos_int      = re.compile (r'^\d+$')
-	_rec_num_mant_and_exp = re.compile (r'^(-?\d*\.?\d*)(?:[eE]([+-]?\d+))?$')
+	_rec_num   = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?)(\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+) (123)
 
 	def _init (self, num):
 		self.num = num
 
-	_is_pos_num   = lambda self: self.num [0] != '-'
-	_is_neg_num   = lambda self: self.num [0] == '-'
-	_is_pos_int_num   = lambda self: AST_Num._rec_pos_int.match (self.num)
-	_num_exp      = lambda self: AST_Num._rec_num_mant_and_exp.match (self.num).group (2)
-	_num_mant_and_exp = lambda self: AST_Num._rec_num_mant_and_exp.match (self.num).group (1, 2)
+	_grp              = lambda self: [g or '' for g in AST_Num._rec_num.match (self.num).groups ()]
+	_is_pos_num       = lambda self: not self.grp [0]
+	_is_neg_num       = lambda self: bool (self.grp [0])
+	_is_int_num       = lambda self: not self.grp [3] and not self.grp [7] # self.num_exp_val >= -len (self.grp [2])
+	_is_pos_int_num   = lambda self: self.is_int_num and not self.is_neg_num
+	_num_exp          = lambda self: self.grp [8] + self.grp [9]
+	_num_mant_and_exp = lambda self: (''.join (self.grp [:7]), self.num_exp)
+	_num_exp_val      = lambda self: int (self.num_exp) if self.num_exp else 0
+	_as_int           = lambda self: int (self.num)
 
 class AST_Var (AST):
 	op, is_var  = '@', True
 
-	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', \
-			'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
-	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3', \
-			'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
+	GREEK       = {'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma',
+		'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega', 'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega'}
+	GREEKUNI    = {'\u03b1', '\u03b2', '\u03b3', '\u03b4', '\u03b5', '\u03b6', '\u03b7', '\u03b8', '\u03b9', '\u03ba', '\u03bb', '\u03bc', '\u03bd', '\u03be', '\u03c0', '\u03c1', '\u03c3',
+		'\u03c4', '\u03c5', '\u03c6', '\u03c7', '\u03c8', '\u03c9', '\u0393', '\u0394', '\u0398', '\u0398', '\u039e', '\u03a0', '\u03a3', '\u03a5', '\u03a6', '\u03a8', '\u03a9'}
 
 	PY2TEXMULTI = {
 		'partial'  : ('\\partial',),
@@ -1858,7 +1888,7 @@ class AST_Var (AST):
 		if AST._rec_identifier.match (var):
 			self.__dict__ [f'is_var_{var}'] = True
 
-	_grp                  = lambda self: AST_Var._rec_groups.match (self.var).groups ()
+	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
 	_is_const_var         = lambda self: self in AST.CONSTS
@@ -2083,7 +2113,7 @@ for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)
 
 _AST_CONSTS    = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
-		('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
+	('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
 
 for _vp, _vv in _AST_CONSTS:
 	ast = AST ('@', _vv)
@@ -2097,7 +2127,12 @@ AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
 AST.MatEmpty   = AST ('func', 'Matrix', ('[', ()))
-# Translate SymPy functions to other ASTs or text for further use or just display.
+
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	ast = AST ('*', (('*', (('@', 'x'), ('@', 'd'))), ('@', 'y')))
+# 	res = ast.flat ()
+# 	print (res)
+# AST translations for display or S escaping.
 
 import sympy as sp
 
@@ -2344,11 +2379,56 @@ def xlat_func2tex (ast, _ast2tex):
 
 	return None
 
+def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
+	if not isinstance (ast, AST):
+		return ast, False
+
+	if ast.is_num:
+		if need:
+			return AST ('func', 'S', (ast,)), True
+		else:
+			return ast, False
+
+	if ast.is_comma or ast.is_brack:
+		return AST (ast.op, tuple (_xlat_pyS (a) [0] for a in ast [1])), False
+
+	if ast.is_curly or ast.is_paren or ast.is_minus:
+		expr, has = _xlat_pyS (ast [1], need)
+
+		return AST (ast.op, expr), has
+
+	if ast.is_add or ast.is_mul:
+		es  = [_xlat_pyS (a) for a in ast [1] [1:]]
+		has = any (e [1] for e in es)
+		e0  = _xlat_pyS (ast [1] [0], need and not has)
+
+		return AST (ast.op, (e0 [0],) + tuple (e [0] for e in es)), has or e0 [1]
+
+	if ast.is_div:
+		denom, has = _xlat_pyS (ast.denom)
+		numer      = _xlat_pyS (ast.numer, not has) [0]
+
+		return AST ('/', numer, denom), True
+
+	if ast.is_pow:
+		exp, has = _xlat_pyS (ast.exp)
+		base     = _xlat_pyS (ast.base, not (has or exp.is_pos_num)) [0]
+
+		return AST ('^', base, exp), True
+
+	es = [_xlat_pyS (a) for a in ast]
+
+	return AST (*tuple (e [0] for e in es)), \
+			ast.op in {'=', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'vec', 'mat', 'piece', 'lamb'} or any (e [1] for e in es)
+
+xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
+
 class sxlat: # for single script
 	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
 	xlat_funcs2asts   = xlat_funcs2asts
 	xlat_func2tex     = xlat_func2tex
+	xlat_pyS          = xlat_pyS
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	ast = AST ('(', (',', (('#', '1'), ('#', '2'))))
@@ -2362,7 +2442,8 @@ import sympy as sp
 
 
 _SYMPY_FLOAT_PRECISION = None
-_USER_FUNCS            = set () # set or dict of user function names
+_USER_FUNCS            = {} # dict of user functions
+_PYS                   = True
 _EVAL                  = True
 _DOIT                  = True
 
@@ -2461,7 +2542,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	def __init__ (self): self.parent = self.ast = None # pylint medication
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
-		self.parents = []
+		self.parents = [None]
 		self.parent  = self.ast = AST ()
 
 		if xlat:
@@ -2470,15 +2551,17 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return self._ast2tex (ast)
 
 	def _ast2tex (self, ast):
-		self.parents.append (self.parent)
+		self.parents.append (self.ast)
 
 		self.parent = self.ast
 		self.ast    = ast
 
 		ast         = self._ast2tex_funcs [ast.op] (self, ast)
 
+		del self.parents [-1]
+
 		self.ast    = self.parent
-		self.parent = self.parents.pop ()
+		self.parent = self.parents [-1]
 
 		return ast
 
@@ -2650,7 +2733,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					ds.add (n)
 
 			else: # n = ('^', ('@', 'diff or part'), ('#', 'int'))
-				p += int (n.exp.num)
+				p += n.exp.as_int
 				ds.add (n.base)
 
 		if not ds:
@@ -2716,7 +2799,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def __init__ (self): self.parent = self.ast = None # pylint medication
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
-		self.parents = []
+		self.parents = [None]
 		self.parent  = self.ast = AST ()
 
 		if xlat:
@@ -2725,15 +2808,17 @@ class ast2nat: # abstract syntax tree -> native text
 		return self._ast2nat (ast)
 
 	def _ast2nat (self, ast):
-		self.parents.append (self.parent)
+		self.parents.append (self.ast)
 
 		self.parent = self.ast
 		self.ast    = ast
 
 		ast         = self._ast2nat_funcs [ast.op] (self, ast)
 
+		del self.parents [-1]
+
 		self.ast    = self.parent
-		self.parent = self.parents.pop ()
+		self.parent = self.parents [-1]
 
 		return ast
 
@@ -2851,7 +2936,7 @@ class ast2nat: # abstract syntax tree -> native text
 				p += 1
 			else: # n = ('^', ('@', 'differential'), ('#', 'int'))
 				d  = n.base.diff_or_part_type
-				p += int (n.exp.num)
+				p += n.exp.as_int
 
 		return f'{d.strip () if d else "d"}{"" if p == 1 else f"^{p}"} / {" ".join (self._ast2nat (n) for n in ast.dvs)} {self._ast2nat_paren (ast.diff)}'
 
@@ -2907,6 +2992,9 @@ class ast2py: # abstract syntax tree -> Python code text
 	def __new__ (cls, ast):
 		self = super ().__new__ (cls)
 
+		if _PYS:
+			ast = sxlat.xlat_pyS (ast)
+
 		return self._ast2py (ast)
 
 	def _ast2py (self, ast):
@@ -2940,22 +3028,22 @@ class ast2py: # abstract syntax tree -> Python code text
 		return f'{b}**{e}'
 
 	def _ast2py_log (self, ast):
-		return \
-				f'ln{self._ast2py_paren (ast.log)}' \
-				if ast.base is None else \
-				f'log{self._ast2py_paren (ast.log)} / log{self._ast2py_paren (ast.base)}' \
+		if ast.base is None:
+			return f'ln{self._ast2py_paren (ast.log)}'
+		else:
+			return f'log{self._ast2py_paren (ast.log)} / log{self._ast2py_paren (ast.base)}'
 
 	def _ast2py_lim (self, ast):
 		return \
-			f'''Limit({self._ast2py (ast.lim)}, {self._ast2py (ast.lvar)}, {self._ast2py (ast.to)}''' \
-			f'''{", dir='+-'" if ast.dir is None else ", dir='-'" if ast.dir == '-' else ""})'''
+				f'''Limit({self._ast2py (ast.lim)}, {self._ast2py (ast.lvar)}, {self._ast2py (ast.to)}''' \
+				f'''{", dir='+-'" if ast.dir is None else ", dir='-'" if ast.dir == '-' else ""})'''
 
 	def _ast2py_diff (self, ast):
 		args = sum ((
-				(self._ast2py (n.as_var),) \
-				if n.is_var else \
-				(self._ast2py (n.base.as_var), str (n.exp.num)) \
-				for n in ast.dvs \
+				(self._ast2py (n.as_var),)
+				if n.is_var else
+				(self._ast2py (n.base.as_var), str (n.exp.as_int))
+				for n in ast.dvs
 				), ())
 
 		return f'Derivative({self._ast2py (ast.diff)}, {", ".join (args)})'
@@ -3006,12 +3094,12 @@ class ast2py: # abstract syntax tree -> Python code text
 	}
 
 #...............................................................................................
-# Potentially bad __builtins__: eval, exec, globals, locals, vars, hasattr, getattr, setattr, delattr, exit, help, input, license, open, quit, __import__
+# Potentially bad __builtins__: eval, exec, globals, locals, vars, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict  = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
-_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'hash', 'hex', 'id',
-		'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
-		'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
-		'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
+_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
+	'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
+	'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
+	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __new__ (cls, ast):
@@ -3030,23 +3118,23 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return self._ast2spt_funcs [ast.op] (self, ast)
 
 	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
-			'pi'   : sp.pi,
-			'oo'   : sp.oo,
-			'zoo'  : sp.zoo,
-			'None' : None,
-			'True' : True, # sp.boolalg.true,
-			'False': False, # sp.boolalg.false,
-			'nan'  : sp.nan,
+		'pi'   : sp.pi,
+		'oo'   : sp.oo,
+		'zoo'  : sp.zoo,
+		'None' : None,
+		'True' : True, # sp.boolalg.true,
+		'False': False, # sp.boolalg.false,
+		'nan'  : sp.nan,
 	}
 
 	def _ast2spt_var (self, ast):
-		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, 0)
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # self being used for as unique None
 
-		if spt is 0:
+		if spt is self:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
-				spt = getattr (sp, ast.var, 0)
+				spt = getattr (sp, ast.var, self)
 
-			if spt is 0:
+			if spt is self:
 				spt = sp.Symbol (ast.var)
 
 		return spt
@@ -3082,7 +3170,16 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
+		func = getattr (sp, ast.unescaped, None) # try SymPad object
+
+		if func is None: # user lambda?
+			func = _USER_FUNCS.get (ast.func)
+
+			if func:
+				func = self._ast2spt (func)
+
+		if func is None: # builtin?
+			func = self._ast2spt_func_builtins.get (ast.unescaped)
 
 		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
@@ -3093,7 +3190,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		args = sum (( \
 				(self._ast2spt (n.as_var),) \
 				if n.is_var else \
-				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.num)) \
+				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.as_int)) \
 				for n in ast.dvs \
 				), ())
 
@@ -3135,7 +3232,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 	_ast2spt_funcs = {
 		'=': lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
-		'#': lambda self, ast: sp.Integer (ast [1]) if ast.is_int_text (ast.num) else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
+		'#': lambda self, ast: sp.Integer (ast.num) if ast.is_int_num else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 		'@': _ast2spt_var,
 		'.': _ast2spt_attr,
 		'"': lambda self, ast: ast.str_,
@@ -3150,7 +3247,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'/': lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
 		'^': lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), evaluate = _EVAL),
 		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), evaluate = _EVAL) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), evaluate = _EVAL),
-		'sqrt': lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (2, -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
+		'sqrt': lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (sp.S (2), -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
 		'func': _ast2spt_func,
 		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
 		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
@@ -3181,21 +3278,18 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 
 	return AST ('text', tex, str (spt), str (spt), spt)
 
-_rec_num_deconstructed = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+123)
-
 def _spt2ast_num (spt):
-	m = _rec_num_deconstructed.match (str (spt))
-	g = [g or '' for g in m.groups ()]
+	num = AST ('#', str (spt))
 
-	if g [5]:
-		return AST ('#', ''.join (g [:6] + g [7:]))
+	if num.grp [5]:
+		return AST ('#', ''.join (num.grp [:6] + num.grp [7:]))
 
-	e = len (g [2]) + (int (g [8]) if g [8] else 0)
+	e = len (num.grp [2]) + num.num_exp_val
 
 	return AST ('#', \
-			f'{g [0]}{g [1]}e+{e}'     if e >= 16 else \
-			f'{g [0]}{g [1]}{"0" * e}' if e >= 0 else \
-			f'{g [0]}{g [1]}e{e}')
+			f'{num.grp [0]}{num.grp [1]}e+{e}'     if e >= 16 else \
+			f'{num.grp [0]}{num.grp [1]}{"0" * e}' if e >= 0 else \
+			f'{num.grp [0]}{num.grp [1]}e{e}')
 
 def _spt2ast_MatrixBase (spt):
 	return \
@@ -3376,17 +3470,22 @@ def set_user_funcs (user_funcs):
 	global _USER_FUNCS
 	_USER_FUNCS = user_funcs
 
-def set_eval (eval):
-	global _EVAL
-	_EVAL = eval
+def set_pyS (state):
+	global _PYS
+	_PYS = state
 
-def set_doit (doit):
+def set_eval (state):
+	global _EVAL
+	_EVAL = state
+
+def set_doit (state):
 	global _DOIT
-	_DOIT = doit
+	_DOIT = state
 
 class sym: # for single script
 	set_precision  = set_precision
 	set_user_funcs = set_user_funcs
+	set_pyS        = set_pyS
 	set_eval       = set_eval
 	set_doit       = set_doit
 	ast2tex        = ast2tex
@@ -3396,7 +3495,7 @@ class sym: # for single script
 	spt2ast        = spt2ast
 
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	ast = AST ('sum', ('/', ('^', ('@', 'x'), ('@', 'n')), ('!', ('@', 'n'))), ('@', 'n'), ('#', '0'), ('@', 'oo'))
+	ast = AST ('log', ('#', '2'))
 	res = ast2spt (ast)
 	# res = spt2ast (res)
 	print (res)
@@ -3565,7 +3664,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			v = ast.numer
 
 		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.no_curlys.is_pos_int_num:
-			p = int (ast.numer.exp.no_curlys.num)
+			p = ast.numer.exp.no_curlys.as_int
 			v = ast.numer.base
 
 		else:
@@ -3583,7 +3682,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			if ast_dv_check (n):
 				dec = 1
 			elif n.is_pow and ast_dv_check (n.base) and n.exp.no_curlys.is_pos_int_num:
-				dec = int (n.exp.no_curlys.num)
+				dec = n.exp.no_curlys.as_int
 			else:
 				return None
 
@@ -3792,7 +3891,7 @@ class Parser (lalr1.LALR1):
 
 		self.set_tokens (self.TOKENS)
 
-	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
+	_USER_FUNCS = {} # dict of user functions by variable name
 
 	def set_user_funcs (self, user_funcs):
 		self._USER_FUNCS = user_funcs
@@ -3908,7 +4007,7 @@ class Parser (lalr1.LALR1):
 		('BINOM',         r'\\binom(?!{_LETTERU})'),
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
-		('NUM',           r'(?:(\d*\.\d+)|(\d+)\.?)((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
+		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))('*)"),
 		('ATTR',         fr'\.(?:({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"({_STR})|\\text\s*{{\s*({_STR})\s*}}"),
@@ -4311,7 +4410,7 @@ class Parser (lalr1.LALR1):
 
 			for res in rated [:32]:
 				res = res [-1]
-				res = (res [0].no_curlys,) + res [1:] if isinstance (res [0], AST) else res
+				res = (res [0].no_curlys.flat (),) + res [1:] if isinstance (res [0], AST) else res
 
 				print ('parse:', res, file = sys.stderr)
 
@@ -4322,7 +4421,7 @@ class Parser (lalr1.LALR1):
 
 		res = next (iter (rated)) [-1]
 
-		return (res [0].no_curlys,) + res [1:] if isinstance (res [0], AST) else res
+		return (res [0].no_curlys.flat (),) + res [1:] if isinstance (res [0], AST) else res
 
 class sparser: # for single script
 	Parser = Parser
@@ -4355,11 +4454,10 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.5.7'
+_VERSION         = '0.5.8'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
-_SYMPAD_FIRSTRUN = os.environ.get ('SYMPAD_FIRSTRUN')
 _SYMPAD_CHILD    = os.environ.get ('SYMPAD_CHILD')
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
@@ -4369,7 +4467,8 @@ __name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		'[-h | --help] [-v | --version] \n' \
 		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
-		f'{__name_indent} [-E | --EI] [-q | --quick] [-u | --ugly] \n' \
+		f'{__name_indent} [-u | --ugly] \n' \
+		f'{__name_indent} [-E | --EI] [-q | --quick] [-y | --nopyS] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
 		f'{__name_indent} [-g | --nogamma] [-G | --noGamma] \n' \
 		f'{__name_indent} [-z | --nozeta] \n' \
@@ -4379,15 +4478,16 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
   -v, --version   - Show version string
   -d, --debug     - Dump debug info to server output
   -n, --nobrowser - Don't start system browser to SymPad page
+  -u, --ugly      - Start in draft display style (only on command line)
   -E, --EI        - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
   -q, --quick     - Start in quick input mode
-  -u, --ugly      - Start in draft display style (only on command line)
-  -N, --noN       - Start without "N()" lambda function
-  -S, --noS       - Start without "S()" lambda function
-  -O, --noO       - Start without "O()" lambda function
-  -g, --nogamma   - Start without "gamma()" lambda function
-  -G, --noGamma   - Start without "Gamma()" lambda function
-  -z, --nozeta    - Start without "zeta()" lambda function
+  -y, --nopyS     - Start without Python S escaping
+  -N, --noN       - Start without N lambda function
+  -S, --noS       - Start without S lambda function
+  -O, --noO       - Start without O lambda function
+  -g, --nogamma   - Start without gamma lambda function
+  -G, --noGamma   - Start without Gamma lambda function
+  -z, --nozeta    - Start without zeta lambda function
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
@@ -4397,7 +4497,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
 	_HISTORY      = []  # persistent history across browser closings
 
-	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('eval', True), ('doit', True),
+	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
 		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
 	_PARSER       = sparser.Parser ()
@@ -4423,7 +4523,7 @@ def _ast_remap (ast, map_, recurse = True):
 	if not isinstance (ast, AST) or ast.is_lamb or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 		return ast
 
-	if ast.is_var:
+	elif ast.is_var:
 		var = map_.get (ast.var)
 
 		if var: # user var
@@ -4449,7 +4549,8 @@ def _update_user_funcs ():
 	global _ONE_VARS
 
 	_ONE_VARS  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
-	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
+	# user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
+	user_funcs = dict (filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
 
 	user_funcs.update (_ONE_VARS)
 
@@ -4611,20 +4712,27 @@ def _admin_env (*args):
 				if apply:
 					_PARSER.set_quick (state)
 
+			elif var == 'pyS':
+				msgs.append (f'Python S escaping {"on" if state else "off"}.')
+
+				if apply:
+					sym.set_pyS (state)
+
 			elif var == 'eval':
+
 				msgs.append (f'Expression evaluation is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_eval (state)
 
 			elif var == 'doit':
-				msgs.append (f'Expression doit() is {"on" if state else "off"}.')
+				msgs.append (f'Expression doit is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_doit (state)
 
 			elif var in _ONE_FUNCS:
-				msgs.append (f'Function {var}() is {"on" if state else "off"}.')
+				msgs.append (f'Function {var} is {"on" if state else "off"}.')
 
 				if apply:
 					_update_user_funcs ()
@@ -4655,7 +4763,7 @@ def _admin_env (*args):
 
 		if var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
-		elif var not in {'EI', 'quick', 'eval', 'doit', *_ONE_FUNCS}:
+		elif var not in {'EI', 'quick', 'pyS', 'eval', 'doit', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
@@ -4803,8 +4911,8 @@ _MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 
 if __name__ == '__main__':
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqltNOSgGz',
-			['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'noeval', 'nodoit',
+		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz',
+			['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
 			'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
 		if ('--help', '') in opts or ('-h', '') in opts:
@@ -4835,8 +4943,8 @@ if __name__ == '__main__':
 		if ('--ugly', '') in opts or ('-u', '') in opts:
 			_DISPLAYSTYLE [0] = 0
 
-		for short, long in zip ('EqltNOSgGz', \
-				['EI', 'quick', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
+		for short, long in zip ('EqyltNOSgGz', \
+				['EI', 'quick', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
 			if (f'--{long}', '') in opts or (f'-{short}', '') in opts:
 				_admin_env (AST ('@', long))
 
@@ -4860,7 +4968,7 @@ if __name__ == '__main__':
 			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
-		if _SYMPAD_FIRSTRUN:
+		if os.environ.get ('SYMPAD_FIRSTRUN'):
 			print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
 
 		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
