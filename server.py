@@ -122,7 +122,8 @@ def _update_user_funcs ():
 	global _ONE_VARS
 
 	_ONE_VARS  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
-	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
+	# user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
+	user_funcs = dict (filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
 
 	user_funcs.update (_ONE_VARS)
 

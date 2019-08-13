@@ -393,7 +393,7 @@ class Parser (lalr1.LALR1):
 
 		self.set_tokens (self.TOKENS)
 
-	_USER_FUNCS = set () # set or dict of variable names to be translated into 'func' ASTs if variable followed by parentheses
+	_USER_FUNCS = {} # dict of user functions by variable name
 
 	def set_user_funcs (self, user_funcs):
 		self._USER_FUNCS = user_funcs

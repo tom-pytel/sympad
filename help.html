@@ -367,8 +367,6 @@ Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>"
 <p>
 User created lambda functions are supported and are specified the same way as Python lambdas - "<b>lambda x, y: (x+y)**2</b>".
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
-When created, lambda functions will copy the global value of any variables which are not lambda arguments and this will be fixed for the life of the lambda.
-If you want a lambda to use the value of a global variable at the time the lambda is evaluated, rather than when it is defined, then wrap the instance of the variable in the lambda using the "<b>@()</b>" pseudo-function.
 Lambda functions may reference other lambda functions as long as those are defined at the time of creation, though in that case they copy the expression from the target lambdas.
 Lambda recursion is not currently supported.
 </p><p>
@@ -378,6 +376,7 @@ This means that if you do "<b>f = lambda x: \int x dx</b>" you will wind up with
 In order to prevent evaluation of the integral on assignment and embed the operation itself within the lambda use the "<b>%()</b>" stop evaluation pseudo-function.
 This function essentially defers evaluation of an expression for one round.
 This will result in an assignment of "<b>f = lambda x: \int x dx</b>" if you define it as "<b>f = lambda x: %(\int x dx)</b>" instead of the result of the integral and this integral itself will be evaluated any time the lambda function is invoked.
+This applies to function calls as well, in order to defer an actual function call until the time the lambda is evaluated wrap it with "<b>%()</b>" like "<b>p = lambda s: %print(s)</b>"
 </p><p>
 This pseudo-function takes an optional count as a second argument.
 The default count is 1 round of evaluation, but you may set it to 2 or more to defer evaluation for that many rounds, though I'm not sure if a finite count would be useful for anything.

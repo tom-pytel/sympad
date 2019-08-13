@@ -8,7 +8,7 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
-_USER_FUNCS            = set () # set or dict of user function names
+_USER_FUNCS            = {} # dict of user functions
 _PYS                   = True
 _EVAL                  = True
 _DOIT                  = True
@@ -736,9 +736,18 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
 
-		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
+		func = getattr (sp, ast.unescaped, None) # try SymPad object
 
-		if not func:
+		if func is None: # user lambda?
+			func = _USER_FUNCS.get (ast.func)
+
+			if func:
+				func = self._ast2spt (func)
+
+		if func is None: # builtin?
+			func = self._ast2spt_func_builtins.get (ast.unescaped)
+
+		if func is None:
 			raise NameError (f'function {ast.unescaped!r} is not defined')
 
 		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
@@ -789,7 +798,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 	_ast2spt_funcs = {
 		'=': lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
-		'#': lambda self, ast: sp.Integer (ast.num) if ast.is_pure_int_num else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
+		'#': lambda self, ast: sp.Integer (ast.num) if ast.is_int_num else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 		'@': _ast2spt_var,
 		'.': _ast2spt_attr,
 		'"': lambda self, ast: ast.str_,
@@ -1053,7 +1062,7 @@ class sym: # for single script
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	ast = AST ('sqrt', ('#', '2'))
+	ast = AST ('log', ('#', '2'))
 	res = ast2spt (ast)
 	# res = spt2ast (res)
 	print (res)

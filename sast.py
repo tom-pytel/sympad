@@ -271,13 +271,12 @@ class AST_Num (AST):
 	_grp              = lambda self: [g or '' for g in AST_Num._rec_num.match (self.num).groups ()]
 	_is_pos_num       = lambda self: not self.grp [0]
 	_is_neg_num       = lambda self: bool (self.grp [0])
-	_is_int_num       = lambda self: not self.grp [3] and self.num_exp_val >= -len (self.grp [2])
-	_is_pure_int_num  = lambda self: not self.grp [3] and not self.grp [7]
+	_is_int_num       = lambda self: not self.grp [3] and not self.grp [7] # self.num_exp_val >= -len (self.grp [2])
 	_is_pos_int_num   = lambda self: self.is_int_num and not self.is_neg_num
 	_num_exp          = lambda self: self.grp [8] + self.grp [9]
 	_num_mant_and_exp = lambda self: (''.join (self.grp [:7]), self.num_exp)
 	_num_exp_val      = lambda self: int (self.num_exp) if self.num_exp else 0
-	_as_int           = lambda self: int (float (self.num))
+	_as_int           = lambda self: int (self.num)
 
 class AST_Var (AST):
 	op, is_var  = '@', True
