@@ -21,6 +21,9 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 AST.register_AST (AST_Text)
 
+class EqAss (sp.Eq):
+	pass
+
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
 	is_number  = False
 	SYMPAD_ast = lambda self: AST (*literal_eval (self.args [0]))
@@ -837,7 +840,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)
 
 	_ast2spt_eq = {
-		'=':  sp.Eq,
+		'=':  EqAss,
 		'==': sp.Eq,
 		'!=': sp.Ne,
 		'<':  sp.Lt,
@@ -1023,7 +1026,8 @@ _spt2ast_funcs = {
 
 	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
 	sp.boolalg.BooleanFalse: lambda spt: AST.False_,
-	sp.Eq: lambda spt: AST ('=', '=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	EqAss: lambda spt: AST ('=', '=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	sp.Eq: lambda spt: AST ('=', '==', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ne: lambda spt: AST ('=', '!=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Lt: lambda spt: AST ('=', '<', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Le: lambda spt: AST ('=', '<=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),

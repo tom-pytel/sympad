@@ -76,13 +76,6 @@ def _expr_comma (lhs, rhs):
 
 					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
 
-
-				# if lhs.comma [i].mul.len == 2 and lhs.comma [i].mul [0].is_var_lambda and lhs.comma [i].mul [1].is_var:
-				# 	if i:
-				# 		return AST (',', lhs.comma [:i] + (('lamb', rhs.stop, (lhs.comma [i].mul [1], *lhs.comma [i + 1:], rhs.start)),))
-				# 	else:
-				# 		return AST ('lamb', rhs.stop, (lhs.comma [0].mul [1], *lhs.comma [1:], rhs.start))
-
 			if not lhs.comma [i].is_var:
 				break
 
@@ -123,7 +116,7 @@ def _expr_piece (expr, expr_if, expr_else):
 	else:
 		return AST ('piece', ((expr, expr_if), (expr_else, True)))
 
-def _expr_mul_exp (lhs, rhs): # isolate explicit multiplication so it doesn't trigger imp mul grammar reductions
+def _expr_mul_exp (lhs, rhs): # isolate explicit multiplication so it doesn't trigger imp mul grammar rewriting
 	if lhs.is_curly:
 		lhs = lhs.curly
 
@@ -941,9 +934,9 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-	p = Parser ()
-	a = p.parse (r'f = lambda x, y, z: 1')
-	# a = sym.ast2spt (a)
-	print (a)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# 	p = Parser ()
+# 	a = p.parse (r'log = 2')
+# 	# a = sym.ast2spt (a)
+# 	print (a)
