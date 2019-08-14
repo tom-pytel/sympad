@@ -8,7 +8,7 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
-_USER_FUNCS            = {} # dict of user functions
+_USER_FUNCS            = {} # set of names to treat as user functions
 _PYS                   = True
 _EVAL                  = True
 _DOIT                  = True
@@ -362,7 +362,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 #...............................................................................................
 class ast2nat: # abstract syntax tree -> native text
-	def __init__ (self): self.parent = self.ast = None # pylint medication
+	def __init__ (self): self.parent = self.ast = None # pylint droppings
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
@@ -668,32 +668,43 @@ _builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir'
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
-	def __new__ (cls, ast):
-		self = super ().__new__ (cls)
-		spt  = self._ast2spt (ast)
+	def __init__ (self): self.vars = self.remap = self.eval = None # pylint kibble
+	def __new__ (cls, ast, vars = {}):
+		self       = super ().__new__ (cls)
+		self.vars  = vars
+		self.remap = True
+		self.eval  = True
 
-		if _DOIT and _EVAL:
+		return self._ast2spt (ast)
+
+	def _ast2spt (self, ast):
+		spt = self._ast2spt_funcs [ast.op] (self, ast)
+
+		if _DOIT and _EVAL and self.eval:
 			try:
-				spt = spt.doit (deep = True)
+				spt = spt.doit (deep = False)
 			except:
 				pass
 
 		return spt
-
-	def _ast2spt (self, ast):
-		return self._ast2spt_funcs [ast.op] (self, ast)
 
 	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
 		'pi'   : sp.pi,
 		'oo'   : sp.oo,
 		'zoo'  : sp.zoo,
 		'None' : None,
-		'True' : True, # sp.boolalg.true,
-		'False': False, # sp.boolalg.false,
+		'True' : True,
+		'False': False,
 		'nan'  : sp.nan,
 	}
 
 	def _ast2spt_var (self, ast):
+		if self.remap:
+			varast = self.vars.get (ast.var)
+
+			if varast:
+				return self._ast2spt (varast)
+
 		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # self being used for as unique None
 
 		if spt is self:
@@ -730,25 +741,37 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
 	def _ast2spt_func (self, ast):
-		if ast.func == AST.Func.NOREMAP: # special reference meta-function
+		if ast.func == AST.Func.NOREMAP: # special no-dereference meta-function
+			self.remap = not self.remap
+
 			return self._ast2spt (ast.args [0])
 
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
-			return ExprNoEval (str (ast.args [0]), self._ast2spt (ast.args [1]) if len (ast.args) > 1 else sp.S.One)
+			self.eval = not self.eval
 
-		func = getattr (sp, ast.unescaped, None) # try SymPad object
+			return self._ast2spt (ast.args [0])
 
-		if func is None: # user lambda?
-			func = _USER_FUNCS.get (ast.func)
+		varast = self.vars.get (ast.func)
 
-			if func:
-				func = self._ast2spt (func)
+		if varast and varast.is_lamb:
+			if len (ast.args) != len (varast.vars):
+				raise TypeError (f"lambda function '{ast.func}()' takes {len (varast.vars)} argument(s)")
 
-		if func is None: # builtin?
-			func = self._ast2spt_func_builtins.get (ast.unescaped)
 
-		if func is None:
-			raise NameError (f'function {ast.unescaped!r} is not defined')
+
+
+			# remap lambda vars only once
+			return self._ast2spt_lamb (varast, vars = dict (zip ((v.var for v in varast.vars), ast.args)))
+
+
+
+
+
+		else:
+			func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
+
+			if func is None:
+				raise NameError (f'function {ast.unescaped!r} is not defined')
 
 		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
@@ -765,14 +788,37 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
 			if ast.intg is None:
-				return sp.Integral (1, self._ast2spt (ast.dv.as_var))
+				return sp.Integral (1, sp.Symbol (ast.dv.as_var.var))
 			else:
-				return sp.Integral (self._ast2spt (ast.intg), self._ast2spt (ast.dv.as_var))
+				return sp.Integral (self._ast2spt (ast.intg), sp.Symbol (ast.dv.as_var.var))
+
 		else:
 			if ast.intg is None:
-				return sp.Integral (1, (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+				return sp.Integral (1, (sp.Symbol (ast.dv.as_var.var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 			else:
-				return sp.Integral (self._ast2spt (ast [1]), (self._ast2spt (ast.dv.as_var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.as_var.var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+
+	def _ast2spt_lamb (self, ast, vars = None):
+		oldvars    = self.vars
+		oldremap   = self.remap
+		oldeval    = self.eval
+		eval       = vars is not None
+		self.remap = eval and self.remap
+		self.eval  = eval and self.eval
+
+		if eval:
+			self.vars = {**self.vars, **vars}
+		else:
+			lambvars  = {v.var for v in ast.vars}
+			self.vars = dict (filter (lambda va: va [0] not in lambvars, self.vars.items ()))
+
+		spt        = sp.Lambda (tuple (sp.Symbol (v.var) for v in ast.vars), self._ast2spt (ast.lamb))
+
+		self.vars  = oldvars
+		self.remap = oldremap
+		self.eval  = oldeval
+
+		return spt
 
 	def _ast2spt_idx (self, ast):
 		spt = self._ast2spt (ast.obj)
@@ -822,7 +868,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], evaluate = _EVAL),
 		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], evaluate = _EVAL),
 		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece), evaluate = _EVAL),
-		'lamb': lambda self, ast: sp.Lambda (tuple (self._ast2spt (v) for v in ast.vars), self._ast2spt (ast.lamb)),
+		'lamb': _ast2spt_lamb,
 		'idx': _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
 
@@ -968,6 +1014,7 @@ _spt2ast_funcs = {
 	sp.numbers.NegativeInfinity: lambda spt: AST ('-', AST.Infty),
 	sp.numbers.ComplexInfinity: lambda spt: AST.CInfty,
 	sp.numbers.NaN: lambda spt: AST.NaN,
+
 	sp.Symbol: lambda spt: AST ('@', spt.name),
 
 	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
@@ -1062,7 +1109,8 @@ class sym: # for single script
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	ast = AST ('log', ('#', '2'))
-	res = ast2spt (ast)
+	vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+	ast = AST ('func', 'f', (('@', 'x'),))
+	res = ast2spt (ast, vars)
 	# res = spt2ast (res)
 	print (res)

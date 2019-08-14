@@ -76,7 +76,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_ONE_VARS     = {}
+	_ONE_FUNCS     = {}
 
 	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
@@ -92,7 +92,7 @@ class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
-def _ast_remap (ast, map_, recurse = True):
+def _ast_remap (ast, map_, recurse = True): # legacy variable remapper now just used for detecting circular references
 	if not isinstance (ast, AST) or ast.is_lamb or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 		return ast
 
@@ -119,13 +119,12 @@ def _ast_remap (ast, map_, recurse = True):
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
-	global _ONE_VARS
+	global _ONE_FUNCS
 
-	_ONE_VARS  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
-	# user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
-	user_funcs = dict (filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
+	_ONE_FUNCS = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
+	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
 
-	user_funcs.update (_ONE_VARS)
+	user_funcs.update (_ONE_FUNCS)
 
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
@@ -146,6 +145,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 				lhss.append (c.var)
 			elif not c.is_ass or not c.lhs.is_var:
 				break
+
 			else:
 				t    = (c.rhs,) + tuple (itr)
 				ast  = t [0] if len (t) == 1 else AST (',', t)
@@ -156,7 +156,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 			if AST ('@', var) in AST.CONSTS:
 				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
-	return _ast_remap (ast, {**_ONE_VARS, **_VARS}), vars
+	return ast, vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars):
@@ -403,7 +403,7 @@ class Handler (SimpleHTTPRequestHandler):
 		tex = nat = py            = None
 
 		if ast is not None:
-			ast = _ast_remap (ast, {_VAR_LAST: _VARS [_VAR_LAST]}) # just remap last evaluated _
+			# ast = _ast_remap (ast, {_VAR_LAST: _VARS [_VAR_LAST]}) # just remap last evaluated _
 			tex = sym.ast2tex (ast)
 			nat = sym.ast2nat (ast)
 			py  = sym.ast2py (ast)
@@ -441,9 +441,11 @@ class Handler (SimpleHTTPRequestHandler):
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
 
+				print (vars, file = sys.stderr)
+
 				sym.set_precision (ast)
 
-				spt = sym.ast2spt (ast)
+				spt = sym.ast2spt (ast, _VARS)
 				ast = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
