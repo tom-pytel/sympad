@@ -64,11 +64,24 @@ def _expr_comma (lhs, rhs):
 
 	elif lhs.is_comma:
 		for i in range (lhs.comma.len - 1, -1, -1):
-			if lhs.comma [i].is_mul and lhs.comma [i].mul.len == 2 and lhs.comma [i].mul [0].is_var_lambda and lhs.comma [i].mul [1].is_var:
-				if i:
-					return AST (',', lhs.comma [:i] + (('lamb', rhs.stop, (lhs.comma [i].mul [1], *lhs.comma [i + 1:], rhs.start)),))
-				else:
-					return AST ('lamb', rhs.stop, (lhs.comma [0].mul [1], *lhs.comma [1:], rhs.start))
+			if lhs.comma [i].is_mul:
+				if lhs.comma [i].mul.len == 2 and lhs.comma [i].mul [0].is_var_lambda and lhs.comma [i].mul [1].is_var:
+					ast = AST ('lamb', rhs.stop, (lhs.comma [i].mul [1], *lhs.comma [i + 1:], rhs.start))
+
+					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
+
+			elif lhs.comma [i].is_ass:
+				if lhs.comma [i].rhs.is_mul and lhs.comma [i].rhs.mul.len == 2 and lhs.comma [i].rhs.mul [0].is_var_lambda and lhs.comma [i].rhs.mul [1].is_var:
+					ast = AST ('=', '=', lhs.comma [i].lhs, ('lamb', rhs.stop, (lhs.comma [i].rhs.mul [1], *lhs.comma [i + 1:], rhs.start)))
+
+					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
+
+
+				# if lhs.comma [i].mul.len == 2 and lhs.comma [i].mul [0].is_var_lambda and lhs.comma [i].mul [1].is_var:
+				# 	if i:
+				# 		return AST (',', lhs.comma [:i] + (('lamb', rhs.stop, (lhs.comma [i].mul [1], *lhs.comma [i + 1:], rhs.start)),))
+				# 	else:
+				# 		return AST ('lamb', rhs.stop, (lhs.comma [0].mul [1], *lhs.comma [1:], rhs.start))
 
 			if not lhs.comma [i].is_var:
 				break
@@ -928,9 +941,9 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
-# 	p = Parser ()
-# 	a = p.parse (r'''{Limit ({[True] if \fraca'"str" else \int True dx if Determinant() else ()  \left|\sqrt['str']partial\right|  \int_\left|\tilde\infty \right|^\partial x! dx if partial dx}, x, ({{log"str"^oo^partial,['str' <= None,"str" [partial]],\left|(1e-100,'str',a)\right|,},}))+[sqrt\log_1.0'str',({{({1,}),{'str'  1e100},1e-100 if a else \tilde\infty  if partialx else 'str' if 0,},})]^\sum_{x = [dx,dx,1e-100]**{1e-100*partial*1.0}}^1 == oo**\fracoo\tilde\infty  -\partial !+\int_\log_d [None]!{dx*\partial x} [\sinh(-1.0,"str")]^lambda x, y, z: {{oo \cdot \partial } \cdot Float(\partial ,\tilde\infty ) \cdot \sqrt\infty zoo} \int d^\partialx [\frac\partial 1.0] dx dx}''')
-# 	# a = sym.ast2spt (a)
-# 	print (a)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+	p = Parser ()
+	a = p.parse (r'f = lambda x, y, z: 1')
+	# a = sym.ast2spt (a)
+	print (a)

@@ -193,12 +193,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('lambda: x'), ('lamb', ('@', 'x'), ()))
 		self.assertEqual (p ('lambda x: x**2'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (p ('lambda x, y: x + y'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (p ('lambda x, y, z: x + y + z'), ('lamb', ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))), (('@', 'x'), ('@', 'y'), ('@', 'z'))))
 		self.assertEqual (p ('1, lambda: x'), (',', (('#', '1'), ('lamb', ('@', 'x'), ()))))
 		self.assertEqual (p ('1, lambda x: x**2'), (',', (('#', '1'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))))
 		self.assertEqual (p ('1, lambda x, y: x + y'), (',', (('#', '1'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (p ('1, lambda x, y, z: x + y + z'), (',', (('#', '1'), ('lamb', ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))), (('@', 'x'), ('@', 'y'), ('@', 'z'))))))
 		self.assertEqual (p ('f = lambda: 0'), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), ())))
 		self.assertEqual (p ('f = lambda x: 0'), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'),))))
 		self.assertEqual (p ('f = lambda x, y: 0'), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y')))))
+		self.assertEqual (p ('f = lambda x, y, z: 0'), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y'), ('@', 'z')))))
 		self.assertEqual (p ('\\left(\\left(\\right) \\mapsto x \\right)'), ('(', ('lamb', ('@', 'x'), ())))
 		self.assertEqual (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)'), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)'), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
@@ -232,7 +235,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('Lambda (x, x**2)'), ('func', 'Lambda', (('@', 'x'), ('^', ('@', 'x'), ('#', '2')))))
 		self.assertEqual (p ('beta (2, 3)'), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (p ('{x d} y'), ('*', (('@', 'x'), ('@', 'd'), ('@', 'y'))))
-		# self.assertEqual (p ('d**2e0/dx**2e0 x**3'), ('diff', ('^', ('@', 'x'), ('#', '3')), (('^', ('@', 'dx'), ('#', '2e+0')),)))
+		self.assertEqual (p ('d**2e0/dx**2e0 x**3'), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -391,12 +394,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('lambda: x')), '\\left(\\left( \\right) \\mapsto x \\right)')
 		self.assertEqual (ast2tex (p ('lambda x: x**2')), '\\left(x \\mapsto x^2 \\right)')
 		self.assertEqual (ast2tex (p ('lambda x, y: x + y')), '\\left(\\left(x, y \\right) \\mapsto x + y \\right)')
+		self.assertEqual (ast2tex (p ('lambda x, y, z: x + y + z')), '\\left(\\left(x, y, z \\right) \\mapsto x + y + z \\right)')
 		self.assertEqual (ast2tex (p ('1, lambda: x')), '1, \\left(\\left( \\right) \\mapsto x \\right)')
 		self.assertEqual (ast2tex (p ('1, lambda x: x**2')), '1, \\left(x \\mapsto x^2 \\right)')
 		self.assertEqual (ast2tex (p ('1, lambda x, y: x + y')), '1, \\left(\\left(x, y \\right) \\mapsto x + y \\right)')
+		self.assertEqual (ast2tex (p ('1, lambda x, y, z: x + y + z')), '1, \\left(\\left(x, y, z \\right) \\mapsto x + y + z \\right)')
 		self.assertEqual (ast2tex (p ('f = lambda: 0')), 'f = \\left(\\left( \\right) \\mapsto 0 \\right)')
 		self.assertEqual (ast2tex (p ('f = lambda x: 0')), 'f = \\left(x \\mapsto 0 \\right)')
 		self.assertEqual (ast2tex (p ('f = lambda x, y: 0')), 'f = \\left(\\left(x, y \\right) \\mapsto 0 \\right)')
+		self.assertEqual (ast2tex (p ('f = lambda x, y, z: 0')), 'f = \\left(\\left(x, y, z \\right) \\mapsto 0 \\right)')
 		self.assertEqual (ast2tex (p ('\\left(\\left(\\right) \\mapsto x \\right)')), '\\left(\\left( \\right) \\mapsto x \\right)')
 		self.assertEqual (ast2tex (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), '\\left(x \\mapsto x^2 \\right)')
 		self.assertEqual (ast2tex (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), '\\left(\\left(x, y \\right) \\mapsto x + y \\right)')
@@ -430,7 +436,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('Lambda (x, x**2)')), '\\left(x \\mapsto x^2 \\right)')
 		self.assertEqual (ast2tex (p ('beta (2, 3)')), '\\beta\\left(2, 3 \\right)')
 		self.assertEqual (ast2tex (p ('{x d} y')), 'x\\ d\\ y')
-		# self.assertEqual (ast2tex (p ('d**2e0/dx**2e0 x**3')), '\\frac{d^2}{dx^{2{e}{+0}}}\\left(x^3 \\right)')
+		self.assertEqual (ast2tex (p ('d**2e0/dx**2e0 x**3')), '\\frac{d^{2{e}{+0}}}{dx^{2{e}{+0}} x^3}')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -589,12 +595,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('lambda: x')), 'lambda: x')
 		self.assertEqual (ast2nat (p ('lambda x: x**2')), 'lambda x: x**2')
 		self.assertEqual (ast2nat (p ('lambda x, y: x + y')), 'lambda x, y: x + y')
+		self.assertEqual (ast2nat (p ('lambda x, y, z: x + y + z')), 'lambda x, y, z: x + y + z')
 		self.assertEqual (ast2nat (p ('1, lambda: x')), '1, lambda: x')
 		self.assertEqual (ast2nat (p ('1, lambda x: x**2')), '1, lambda x: x**2')
 		self.assertEqual (ast2nat (p ('1, lambda x, y: x + y')), '1, lambda x, y: x + y')
+		self.assertEqual (ast2nat (p ('1, lambda x, y, z: x + y + z')), '1, lambda x, y, z: x + y + z')
 		self.assertEqual (ast2nat (p ('f = lambda: 0')), 'f = lambda: 0')
 		self.assertEqual (ast2nat (p ('f = lambda x: 0')), 'f = lambda x: 0')
 		self.assertEqual (ast2nat (p ('f = lambda x, y: 0')), 'f = lambda x, y: 0')
+		self.assertEqual (ast2nat (p ('f = lambda x, y, z: 0')), 'f = lambda x, y, z: 0')
 		self.assertEqual (ast2nat (p ('\\left(\\left(\\right) \\mapsto x \\right)')), '(lambda: x)')
 		self.assertEqual (ast2nat (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), '(lambda x: x**2)')
 		self.assertEqual (ast2nat (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), '(lambda x, y: x + y)')
@@ -628,7 +637,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('Lambda (x, x**2)')), 'lambda x: x**2')
 		self.assertEqual (ast2nat (p ('beta (2, 3)')), 'beta(2, 3)')
 		self.assertEqual (ast2nat (p ('{x d} y')), 'x d y')
-		# self.assertEqual (ast2nat (p ('d**2e0/dx**2e0 x**3')), 'd^2 / dx**2e+0 (x**3)')
+		self.assertEqual (ast2nat (p ('d**2e0/dx**2e0 x**3')), 'd**2e+0 / dx**2e+0 x**3')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -787,12 +796,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('lambda: x')), 'Lambda((), x)')
 		self.assertEqual (ast2py (p ('lambda x: x**2')), 'Lambda(x, x**2)')
 		self.assertEqual (ast2py (p ('lambda x, y: x + y')), 'Lambda((x, y), x + y)')
+		self.assertEqual (ast2py (p ('lambda x, y, z: x + y + z')), 'Lambda((x, y, z), x + y + z)')
 		self.assertEqual (ast2py (p ('1, lambda: x')), '1, Lambda((), x)')
 		self.assertEqual (ast2py (p ('1, lambda x: x**2')), '1, Lambda(x, x**2)')
 		self.assertEqual (ast2py (p ('1, lambda x, y: x + y')), '1, Lambda((x, y), x + y)')
+		self.assertEqual (ast2py (p ('1, lambda x, y, z: x + y + z')), '1, Lambda((x, y, z), x + y + z)')
 		self.assertEqual (ast2py (p ('f = lambda: 0')), 'f = Lambda((), 0)')
 		self.assertEqual (ast2py (p ('f = lambda x: 0')), 'f = Lambda(x, 0)')
 		self.assertEqual (ast2py (p ('f = lambda x, y: 0')), 'f = Lambda((x, y), 0)')
+		self.assertEqual (ast2py (p ('f = lambda x, y, z: 0')), 'f = Lambda((x, y, z), 0)')
 		self.assertEqual (ast2py (p ('\\left(\\left(\\right) \\mapsto x \\right)')), '(Lambda((), x))')
 		self.assertEqual (ast2py (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), '(Lambda(x, x**2))')
 		self.assertEqual (ast2py (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), '(Lambda((x, y), x + y))')
@@ -826,7 +838,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('Lambda (x, x**2)')), 'Lambda(x, x**2)')
 		self.assertEqual (ast2py (p ('beta (2, 3)')), 'beta(2, 3)')
 		self.assertEqual (ast2py (p ('{x d} y')), 'x*d*y')
-		# self.assertEqual (ast2py (p ('d**2e0/dx**2e0 x**3')), 'Derivative(x**3, x, 2)')
+		self.assertEqual (ast2py (p ('d**2e0/dx**2e0 x**3')), 'd**2e+0 / (dx**2e+0*x**3)')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -985,12 +997,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('lambda: x')), ('(', ('lamb', ('@', 'x'), ())))
 		self.assertEqual (ast2tex2ast (p ('lambda x: x**2')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2tex2ast (p ('lambda x, y: x + y')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
+		self.assertEqual (ast2tex2ast (p ('lambda x, y, z: x + y + z')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))), (('@', 'x'), ('@', 'y'), ('@', 'z')))))
 		self.assertEqual (ast2tex2ast (p ('1, lambda: x')), (',', (('#', '1'), ('(', ('lamb', ('@', 'x'), ())))))
 		self.assertEqual (ast2tex2ast (p ('1, lambda x: x**2')), (',', (('#', '1'), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))))
 		self.assertEqual (ast2tex2ast (p ('1, lambda x, y: x + y')), (',', (('#', '1'), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))))
+		self.assertEqual (ast2tex2ast (p ('1, lambda x, y, z: x + y + z')), (',', (('#', '1'), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))), (('@', 'x'), ('@', 'y'), ('@', 'z')))))))
 		self.assertEqual (ast2tex2ast (p ('f = lambda: 0')), ('=', '=', ('@', 'f'), ('(', ('lamb', ('#', '0'), ()))))
 		self.assertEqual (ast2tex2ast (p ('f = lambda x: 0')), ('=', '=', ('@', 'f'), ('(', ('lamb', ('#', '0'), (('@', 'x'),)))))
 		self.assertEqual (ast2tex2ast (p ('f = lambda x, y: 0')), ('=', '=', ('@', 'f'), ('(', ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (ast2tex2ast (p ('f = lambda x, y, z: 0')), ('=', '=', ('@', 'f'), ('(', ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y'), ('@', 'z'))))))
 		self.assertEqual (ast2tex2ast (p ('\\left(\\left(\\right) \\mapsto x \\right)')), ('(', ('lamb', ('@', 'x'), ())))
 		self.assertEqual (ast2tex2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2tex2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
@@ -1024,7 +1039,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('Lambda (x, x**2)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2tex2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2tex2ast (p ('{x d} y')), ('*', (('@', 'x'), ('@', 'd'), ('@', 'y'))))
-		# self.assertEqual (ast2tex2ast (p ('d**2e0/dx**2e0 x**3')), ('diff', ('(', ('^', ('@', 'x'), ('#', '3'))), (('^', ('@', 'dx'), ('#', '2e+0')),)))
+		self.assertEqual (ast2tex2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1183,12 +1198,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('lambda: x')), ('lamb', ('@', 'x'), ()))
 		self.assertEqual (ast2nat2ast (p ('lambda x: x**2')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (ast2nat2ast (p ('lambda x, y: x + y')), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2nat2ast (p ('lambda x, y, z: x + y + z')), ('lamb', ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))), (('@', 'x'), ('@', 'y'), ('@', 'z'))))
 		self.assertEqual (ast2nat2ast (p ('1, lambda: x')), (',', (('#', '1'), ('lamb', ('@', 'x'), ()))))
 		self.assertEqual (ast2nat2ast (p ('1, lambda x: x**2')), (',', (('#', '1'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))))
 		self.assertEqual (ast2nat2ast (p ('1, lambda x, y: x + y')), (',', (('#', '1'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (ast2nat2ast (p ('1, lambda x, y, z: x + y + z')), (',', (('#', '1'), ('lamb', ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))), (('@', 'x'), ('@', 'y'), ('@', 'z'))))))
 		self.assertEqual (ast2nat2ast (p ('f = lambda: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), ())))
 		self.assertEqual (ast2nat2ast (p ('f = lambda x: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'),))))
 		self.assertEqual (ast2nat2ast (p ('f = lambda x, y: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y')))))
+		self.assertEqual (ast2nat2ast (p ('f = lambda x, y, z: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y'), ('@', 'z')))))
 		self.assertEqual (ast2nat2ast (p ('\\left(\\left(\\right) \\mapsto x \\right)')), ('(', ('lamb', ('@', 'x'), ())))
 		self.assertEqual (ast2nat2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2nat2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
@@ -1222,7 +1240,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('Lambda (x, x**2)')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (ast2nat2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2nat2ast (p ('{x d} y')), ('*', (('@', 'x'), ('@', 'd'), ('@', 'y'))))
-		# self.assertEqual (ast2nat2ast (p ('d**2e0/dx**2e0 x**3')), ('diff', ('(', ('^', ('@', 'x'), ('#', '3'))), (('^', ('@', 'dx'), ('#', '2e+0')),)))
+		self.assertEqual (ast2nat2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1381,12 +1399,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('lambda: x')), ('func', 'Lambda', (('(', (',', ())), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('lambda x: x**2')), ('func', 'Lambda', (('@', 'x'), ('^', ('@', 'x'), ('#', '2')))))
 		self.assertEqual (ast2py2ast (p ('lambda x, y: x + y')), ('func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y')))), ('+', (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (ast2py2ast (p ('lambda x, y, z: x + y + z')), ('func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))))))
 		self.assertEqual (ast2py2ast (p ('1, lambda: x')), (',', (('#', '1'), ('func', 'Lambda', (('(', (',', ())), ('@', 'x'))))))
 		self.assertEqual (ast2py2ast (p ('1, lambda x: x**2')), (',', (('#', '1'), ('func', 'Lambda', (('@', 'x'), ('^', ('@', 'x'), ('#', '2')))))))
 		self.assertEqual (ast2py2ast (p ('1, lambda x, y: x + y')), (',', (('#', '1'), ('func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y')))), ('+', (('@', 'x'), ('@', 'y'))))))))
+		self.assertEqual (ast2py2ast (p ('1, lambda x, y, z: x + y + z')), (',', (('#', '1'), ('func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))))))))
 		self.assertEqual (ast2py2ast (p ('f = lambda: 0')), ('=', '=', ('@', 'f'), ('func', 'Lambda', (('(', (',', ())), ('#', '0')))))
 		self.assertEqual (ast2py2ast (p ('f = lambda x: 0')), ('=', '=', ('@', 'f'), ('func', 'Lambda', (('@', 'x'), ('#', '0')))))
 		self.assertEqual (ast2py2ast (p ('f = lambda x, y: 0')), ('=', '=', ('@', 'f'), ('func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y')))), ('#', '0')))))
+		self.assertEqual (ast2py2ast (p ('f = lambda x, y, z: 0')), ('=', '=', ('@', 'f'), ('func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('#', '0')))))
 		self.assertEqual (ast2py2ast (p ('\\left(\\left(\\right) \\mapsto x \\right)')), ('(', ('func', 'Lambda', (('(', (',', ())), ('@', 'x')))))
 		self.assertEqual (ast2py2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('(', ('func', 'Lambda', (('@', 'x'), ('^', ('@', 'x'), ('#', '2'))))))
 		self.assertEqual (ast2py2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('(', ('func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y')))), ('+', (('@', 'x'), ('@', 'y')))))))
@@ -1420,7 +1441,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('Lambda (x, x**2)')), ('func', 'Lambda', (('@', 'x'), ('^', ('@', 'x'), ('#', '2')))))
 		self.assertEqual (ast2py2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2py2ast (p ('{x d} y')), ('*', (('@', 'x'), ('@', 'd'), ('@', 'y'))))
-		# self.assertEqual (ast2py2ast (p ('d**2e0/dx**2e0 x**3')), ('func', 'Derivative', (('^', ('@', 'x'), ('#', '3')), ('@', 'x'), ('#', '2'))))
+		self.assertEqual (ast2py2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('(', ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3')))))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1579,12 +1600,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('lambda: x')), ('lamb', ('@', 'x'), ()))
 		self.assertEqual (ast2spt2ast (p ('lambda x: x**2')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (ast2spt2ast (p ('lambda x, y: x + y')), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('lambda x, y, z: x + y + z')), ('lamb', ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))), (('@', 'x'), ('@', 'y'), ('@', 'z'))))
 		self.assertEqual (ast2spt2ast (p ('1, lambda: x')), ('(', (',', (('#', '1'), ('lamb', ('@', 'x'), ())))))
 		self.assertEqual (ast2spt2ast (p ('1, lambda x: x**2')), ('(', (',', (('#', '1'), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))))
 		self.assertEqual (ast2spt2ast (p ('1, lambda x, y: x + y')), ('(', (',', (('#', '1'), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))))
+		self.assertEqual (ast2spt2ast (p ('1, lambda x, y, z: x + y + z')), ('(', (',', (('#', '1'), ('lamb', ('+', (('@', 'x'), ('@', 'y'), ('@', 'z'))), (('@', 'x'), ('@', 'y'), ('@', 'z')))))))
 		self.assertEqual (ast2spt2ast (p ('f = lambda: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), ())))
 		self.assertEqual (ast2spt2ast (p ('f = lambda x: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'),))))
 		self.assertEqual (ast2spt2ast (p ('f = lambda x, y: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y')))))
+		self.assertEqual (ast2spt2ast (p ('f = lambda x, y, z: 0')), ('=', '=', ('@', 'f'), ('lamb', ('#', '0'), (('@', 'x'), ('@', 'y'), ('@', 'z')))))
 		self.assertEqual (ast2spt2ast (p ('\\left(\\left(\\right) \\mapsto x \\right)')), ('lamb', ('@', 'x'), ()))
 		self.assertEqual (ast2spt2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (ast2spt2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y'))))
@@ -1607,7 +1631,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('binomial (x, y)')), ('func', 'binomial', (('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('-', ('@', 'x')))))
 		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('=', '=', ('@', 'domain'), ('"', 'ZZ')))))
-		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('*', (('#', '1'), ('^', ('@', 'x'), ('#', '2')))), ('*', (('#', '1'), ('^', ('@', 'y'), ('#', '2')))), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('=', '=', ('@', 'domain'), ('"', 'RR')))))
+		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('func', 'Poly', (('+', (('*', (('#', '1'), ('^', ('@', 'x'), ('#', '2')))), ('*', (('#', '1'), ('^', ('@', 'y'), ('#', '2')))), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('=', '=', ('@', 'domain'), ('"', 'CC')))))
 		self.assertEqual (ast2spt2ast (p ('$oct(10)')), ('"', '0o12'))
 		self.assertEqual (ast2spt2ast (p ('(1,) + (2,)')), ('(', (',', (('#', '1'), ('#', '2')))))
 		self.assertEqual (ast2spt2ast (p ('[1] + [2]')), ('[', (('#', '1'), ('#', '2'))))
@@ -1618,7 +1642,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('Lambda (x, x**2)')), ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),)))
 		self.assertEqual (ast2spt2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2spt2ast (p ('{x d} y')), ('*', (('@', 'd'), ('@', 'x'), ('@', 'y'))))
-		# self.assertEqual (ast2spt2ast (p ('d**2e0/dx**2e0 x**3')), ('*', (('#', '6'), ('@', 'x'))))
+		self.assertEqual (ast2spt2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2')), ('*', (('^', ('@', 'dx'), ('#', '2')), ('^', ('@', 'x'), ('#', '3'))))))
 
 _EXPRESSIONS = """
 1
@@ -1777,12 +1801,15 @@ x**y.a ()**2
 lambda: x
 lambda x: x**2
 lambda x, y: x + y
+lambda x, y, z: x + y + z
 1, lambda: x
 1, lambda x: x**2
 1, lambda x, y: x + y
+1, lambda x, y, z: x + y + z
 f = lambda: 0
 f = lambda x: 0
 f = lambda x, y: 0
+f = lambda x, y, z: 0
 \\left(\\left(\\right) \\mapsto x \\right)
 \\left(\\left(x \\right) \\mapsto x^2 \\right)
 \\left(\\left(x, y \\right) \\mapsto x + y \\right)

@@ -668,10 +668,10 @@ _builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir'
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
-	def __init__ (self): self.vars = self.remap = self.eval = None # pylint kibble
+	def __init__ (self): self.vars = self.remap = self.eval = [] # pylint kibble
 	def __new__ (cls, ast, vars = {}):
 		self       = super ().__new__ (cls)
-		self.vars  = vars
+		self.vars  = [vars]
 		self.remap = True
 		self.eval  = True
 
@@ -700,10 +700,16 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 	def _ast2spt_var (self, ast):
 		if self.remap:
-			varast = self.vars.get (ast.var)
+			varast = self.vars [-1].get (ast.var)
 
 			if varast:
-				return self._ast2spt (varast)
+				topvars = self.vars.pop () if len (self.vars) > 1 else None
+				spt     = self._ast2spt (varast)
+
+				if topvars is not None:
+					self.vars.append (topvars)
+
+				return spt
 
 		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # self being used for as unique None
 
@@ -743,29 +749,28 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special no-dereference meta-function
 			self.remap = not self.remap
+			spt        = self._ast2spt (ast.args [0])
+			self.remap = not self.remap
 
-			return self._ast2spt (ast.args [0])
+			return spt
 
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			self.eval = not self.eval
+			spt       = self._ast2spt (ast.args [0])
+			self.eval = not self.eval
 
-			return self._ast2spt (ast.args [0])
+			return spt
 
-		varast = self.vars.get (ast.func)
+		if not self.eval:
+			return ExprNoEval (str (AST ('func', ast.func, tuple (spt2ast (self._ast2spt (a)) for a in ast.args))), 1)
+
+		varast = self.vars [-1].get (ast.func)
 
 		if varast and varast.is_lamb:
 			if len (ast.args) != len (varast.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (varast.vars)} argument(s)")
 
-
-
-
-			# remap lambda vars only once
-			return self._ast2spt_lamb (varast, vars = dict (zip ((v.var for v in varast.vars), ast.args)))
-
-
-
-
+			return self._ast2spt_lamb (varast, args = ast.args)
 
 		else:
 			func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
@@ -798,25 +803,24 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			else:
 				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.as_var.var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
-	def _ast2spt_lamb (self, ast, vars = None):
-		oldvars    = self.vars
+	def _ast2spt_lamb (self, ast, args = None):
 		oldremap   = self.remap
 		oldeval    = self.eval
-		eval       = vars is not None
+		eval       = args is not None
 		self.remap = eval and self.remap
 		self.eval  = eval and self.eval
 
 		if eval:
-			self.vars = {**self.vars, **vars}
+			self.vars.append ({**self.vars [-1], **dict (zip ((v.var for v in ast.vars), args))})
+			spt = self._ast2spt (ast.lamb)
 		else:
-			lambvars  = {v.var for v in ast.vars}
-			self.vars = dict (filter (lambda va: va [0] not in lambvars, self.vars.items ()))
+			self.vars.append ({**self.vars [-1], **{v.var: False for v in ast.vars}})
+			spt = sp.Lambda (tuple (sp.Symbol (v.var) for v in ast.vars), self._ast2spt (ast.lamb))
 
-		spt        = sp.Lambda (tuple (sp.Symbol (v.var) for v in ast.vars), self._ast2spt (ast.lamb))
-
-		self.vars  = oldvars
 		self.remap = oldremap
 		self.eval  = oldeval
+
+		del self.vars [-1]
 
 		return spt
 
@@ -1107,10 +1111,16 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-	ast = AST ('func', 'f', (('@', 'x'),))
-	res = ast2spt (ast, vars)
-	# res = spt2ast (res)
-	print (res)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('lamb', ('func', '@', (('@', 'x'),)), ()), (('@', 'x'),))}
+# 	# ast = AST ('func', 'f', (('@', 'y'),))
+# 	# res = ast2spt (ast, vars)
+
+# 	ast = AST ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC'))))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	print (res)
