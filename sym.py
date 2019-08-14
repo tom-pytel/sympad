@@ -702,19 +702,27 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	}
 
 	def _ast2spt_var (self, ast):
-		if self.remap:
-			varast = self.vars [-1].get (ast.var)
+		oldvars = self.vars [:]
+
+		# while len (self.vars) > 1 or (self.remap and self.vars):
+		while self.vars:
+			vars   = self.vars.pop ()
+			varast = vars.get (ast.var)
+
+			if varast is False:
+				break
 
 			if varast:
-				topvars = self.vars.pop () if len (self.vars) > 1 else None
-				spt     = self._ast2spt (varast)
+				if not self.vars:
+					self.vars.append (vars)
 
-				if topvars is not None:
-					self.vars.append (topvars)
+				spt       = self._ast2spt (varast)
+				self.vars = oldvars
 
 				return spt
 
-		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # self being used for as unique None
+		self.vars = oldvars
+		spt       = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # self being used for as unique None
 
 		if spt is self:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
@@ -767,19 +775,30 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if not self.eval:
 			return ExprNoEval (str (AST ('func', ast.func, tuple (spt2ast (self._ast2spt (a)) for a in ast.args))), 1)
 
-		varast = self.vars [-1].get (ast.func)
+		var = ast.unescaped
 
-		if varast and varast.is_lamb:
-			if len (ast.args) != len (varast.vars):
-				raise TypeError (f"lambda function '{ast.func}()' takes {len (varast.vars)} argument(s)")
+		for i in range (len (self.vars) - 1, -1, -1):
+			varast = self.vars [i].get (var)
 
-			return self._ast2spt_lamb (varast, args = ast.args)
+			if varast and varast.is_var:
+				var = varast.var
+			elif varast is not None:
+				break
 
-		else:
-			func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
+		if varast:
+			if varast.is_lamb:
+				if len (ast.args) != len (varast.vars):
+					raise TypeError (f"lambda function '{ast.unescaped}' takes {len (varast.vars)} argument(s)")
 
-			if func is None:
-				raise NameError (f'function {ast.unescaped!r} is not defined')
+				return self._ast2spt_lamb (varast, args = ast.args)
+
+			elif var != ast.unescaped:
+				raise TypeError (f"expecting lambda function for '{ast.unescaped}', got {ast2py (varast)!r}")
+
+		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
+
+		if func is None:
+			raise NameError (f'function {ast.unescaped!r} is not defined')
 
 		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
@@ -814,10 +833,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		self.eval  = eval and self.eval
 
 		if eval:
-			self.vars.append ({**self.vars [-1], **dict (zip ((v.var for v in ast.vars), args))})
+			self.vars.append (dict (zip ((v.var for v in ast.vars), args)))
 			spt = self._ast2spt (ast.lamb)
+
 		else:
-			self.vars.append ({**self.vars [-1], **{v.var: False for v in ast.vars}})
+			self.vars.append ({v.var: False for v in ast.vars})
 			spt = sp.Lambda (tuple (sp.Symbol (v.var) for v in ast.vars), self._ast2spt (ast.lamb))
 
 		self.remap = oldremap
@@ -1115,16 +1135,17 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('lamb', ('func', '@', (('@', 'x'),)), ()), (('@', 'x'),))}
-# 	# ast = AST ('func', 'f', (('@', 'y'),))
-# 	# res = ast2spt (ast, vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
+	vars = {'f': AST ('lamb', ('func', '$f', (('@', 'x'),)), (('@', 'f'), ('@', 'x'))), 'g': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+	ast = AST ('func', 'f', (('@', 'g'), ('#', '2')))
+	res = ast2spt (ast, vars)
 
-# 	ast = AST ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC'))))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
-# 	print (res)
+	# ast = AST ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC'))))
+	# res = ast2spt (ast)
+	# res = spt2ast (res)
+
+	print (res)

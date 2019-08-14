@@ -367,20 +367,11 @@ Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>"
 <p>
 User created lambda functions are supported and are specified the same way as Python lambdas - "<b>lambda x, y: (x+y)**2</b>".
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
-Lambda functions may reference other lambda functions as long as those are defined at the time of creation, though in that case they copy the expression from the target lambdas.
+When a lambda function is defined no variables are mapped and no functions are called or expressions doit()-ed, this means that if a lambda references an assigned global variable the variable will be bound upon execution, not definition of the lambda.
+This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed.
+This can be overridden with the "<b>@()</b>" pseudo-function to force mapping of global variables upon lambda definition and the "<b>%()</b>" pseudo-function to force evaluation (see appendix).
+Lambda functions may reference other lambda functions as long as those are defined at the time of creation, or they may force a definition of a function call to an unmapped lambda by use of the "<b>$</b>" function override, that lambda can be defined afterwards.
 Lambda recursion is not currently supported.
-</p><p>
-Normally when you enter an expression into SymPad and hit Enter that expression is evaluated and "<b>doit()</b>" is called on it to attempt to symbolically evaluate a result.
-This may not always be desirable, like for example when defining lambda functions, since when you enter a lambda function it is evaluated before it is assigned to a variable.
-This means that if you do "<b>f = lambda x: \int x dx</b>" you will wind up with a lambda function which is equivalent to "<b>f = lambda x: 1/2 x**2</b>" instead of the integral expression.
-In order to prevent evaluation of the integral on assignment and embed the operation itself within the lambda use the "<b>%()</b>" stop evaluation pseudo-function.
-This function essentially defers evaluation of an expression for one round.
-This will result in an assignment of "<b>f = lambda x: \int x dx</b>" if you define it as "<b>f = lambda x: %(\int x dx)</b>" instead of the result of the integral and this integral itself will be evaluated any time the lambda function is invoked.
-This applies to function calls as well, in order to defer an actual function call until the time the lambda is evaluated wrap it with "<b>%()</b>" like "<b>p = lambda s: %print(s)</b>"
-</p><p>
-This pseudo-function takes an optional count as a second argument.
-The default count is 1 round of evaluation, but you may set it to 2 or more to defer evaluation for that many rounds, though I'm not sure if a finite count would be useful for anything.
-What could be useful is a count of infinity, this would freeze the expression as it is and never evaluate.
 </p>
 
 <h4>Functions, Parentheses and Implicit Multiplication</h4>
@@ -412,9 +403,9 @@ Also remember that these functions are always available for calling using the "<
 <h4>Special Characters</h4>
 
 <p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.</p>
-<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad, it also bypasses all user-defined lambda functions.</p>
-<p>"<b>@(expr)</b>" - Ampersand technically stops variable remapping for any expression it encapsulates which means that your global assigned variables can not be accessed from within the expression.</p>
-<p>"<b>%(expr)</b>" - Percent prevents expression evaluation for the expression it encapsulates for one round of evaluation. An optional second argument is a count of the number of rounds to prevent evaluations, it can be infinity.</p>
+<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad. It can be used inside of a lambda definition to force a function call of an argument which is expected to be another lambda function of a single parameter.</p>
+<p>"<b>@(expr)</b>" - Ampersand technically toggles variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value. Otherwise inside a lambda definition where variables are not normally remapped this will allow you to insert the value of a globally defined variable directly in the lambda definition instead of leaving it as a reference.</p>
+<p>"<b>%(expr)</b>" - Percent works similar to the "<b>@</b>" function but rather than variables it toggles evaluation for the expression it encapsulates. This is useful for forcing the evaluation of a function or operation inside a lambda definition where they are not normally done.</p>
 
 <h4>Admin Functions</h4>
 
