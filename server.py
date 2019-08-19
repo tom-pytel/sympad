@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '0.5.9'
+_VERSION         = '0.6.0'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -76,7 +76,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_ONE_FUNCS     = {}
+	_ONE_FUNCS    = {}
 
 	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
@@ -119,12 +119,10 @@ def _ast_remap (ast, map_, recurse = True): # legacy variable remapper now just 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
-	global _ONE_FUNCS
-
-	_ONE_FUNCS = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
+	_one_funcs = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
 	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
 
-	user_funcs.update (_ONE_FUNCS)
+	user_funcs.update (_one_funcs)
 
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
@@ -440,8 +438,6 @@ class Handler (SimpleHTTPRequestHandler):
 
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
-
-				print (vars, file = sys.stderr)
 
 				sym.set_precision (ast)
 

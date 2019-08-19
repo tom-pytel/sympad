@@ -3147,7 +3147,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				return spt
 
 		self.vars = oldvars
-		spt       = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # self being used for as unique None
+		spt       = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # 'self' being used for as unique None
 
 		if spt is self:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
@@ -3160,22 +3160,24 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 	def _ast2spt_attr (self, ast):
 		obj = ast.obj
+		spt = None
 
-		while obj.is_func and obj.func == AST.Func.NOEVAL and obj.args:
+		while obj.is_func and obj.args and (obj.func == AST.Func.NOEVAL or obj.func == AST.Func.NOREMAP):
 			obj = obj.args [0]
 
-		if obj.is_lamb and obj.lamb.is_func: # support S.Half and other lambdified SymPy function or class attributes
-			spt = getattr (sp, obj.lamb.unescaped)
-		else:
+		if obj.is_var and obj.var not in self.vars: # support S.Half
+			spt = getattr (sp, obj.var, None)
+
+		if spt is None:
 			spt = self._ast2spt (ast.obj)
 
 		try:
-			mbr = getattr (spt, ast.attr)
+			attr = getattr (spt, ast.attr)
 
-			return mbr if ast.args is None else _ast_func_call (mbr, ast.args, self._ast2spt)
+			return attr if ast.args is None else _ast_func_call (attr, ast.args, self._ast2spt)
 
 		except AttributeError: # unresolved attributes of expressions with free vars remaining should not raise
-			if not obj.free_vars ():
+			if not obj.free_vars (): # spt.free_symbols: #
 				raise
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
@@ -3279,7 +3281,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not ast.free_vars ():
+			if not ast.free_vars (): # spt.free_symbols: #
 				raise
 
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)
@@ -3564,8 +3566,8 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
 	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
-	vars = {'f': AST ('lamb', ('func', '$f', (('@', 'x'),)), (('@', 'f'), ('@', 'x'))), 'g': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-	ast = AST ('func', 'f', (('@', 'g'), ('#', '2')))
+	vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+	ast = AST ('.', ('@', 'S'), 'Half')
 	res = ast2spt (ast, vars)
 
 	# ast = AST ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC'))))
@@ -4534,7 +4536,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.5.9'
+_VERSION         = '0.6.0'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -4583,7 +4585,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_ONE_FUNCS     = {}
+	_ONE_FUNCS    = {}
 
 	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
@@ -4626,12 +4628,10 @@ def _ast_remap (ast, map_, recurse = True): # legacy variable remapper now just 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
-	global _ONE_FUNCS
-
-	_ONE_FUNCS = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
+	_one_funcs = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
 	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
 
-	user_funcs.update (_ONE_FUNCS)
+	user_funcs.update (_one_funcs)
 
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
@@ -4947,8 +4947,6 @@ class Handler (SimpleHTTPRequestHandler):
 
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
-
-				print (vars, file = sys.stderr)
 
 				sym.set_precision (ast)
 
