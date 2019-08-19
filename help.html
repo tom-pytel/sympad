@@ -394,7 +394,9 @@ This was not very elegant so the workaround is as follows:
 This is not a problem for "<b>beta</b>" and "<b>Lambda</b>" since they require multiple arguments and can be recognized as function calls from an implicit multiplication with a tuple of size 2, but the others can not be recognized this way.
 These function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
 These lambda functions do not appear in the normal list of functions shown by "<b>funcs()</b>" but their status can be checked by using the "<b>env()</b>" function.
-When these functions are mapped they are treated exactly like variables mapped to a lambda so if you want to be able to use these names as free variables you need to disable them, for example to disable the "<b>gamma()</b>" function mapping enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>". Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are only available if the "<b>S()</b>" function is mapped.
+When these functions are mapped they are treated exactly like variables mapped to a lambda for the purposes of calling them, but they are still available as free variables to use and even assign to.
+To enable or disable environment mapping of these functions like "<b>gamma()</b>" enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>" to disable and "<b>env (gamma)</b>" or "<b>env (gamma=True)</b>" to enable.
+Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always available because they are special cased, even if "<b>S()</b>" is not mapped or is assigned to something else.
 Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
 </p>
 

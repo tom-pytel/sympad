@@ -4,6 +4,8 @@ from ast import literal_eval
 import re
 import sympy as sp
 
+sp.Gamma = sp.gamma # HACK for LaTeX Gamma function representation
+
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -1137,17 +1139,17 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
-	vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-	ast = AST ('.', ('@', 'S'), 'Half')
-	res = ast2spt (ast, vars)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
+# 	vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+# 	ast = AST ('.', ('@', 'S'), 'Half')
+# 	res = ast2spt (ast, vars)
 
-	# ast = AST ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC'))))
-	# res = ast2spt (ast)
-	# res = spt2ast (res)
+# 	# ast = AST ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC'))))
+# 	# res = ast2spt (ast)
+# 	# res = spt2ast (res)
 
-	print (res)
+# 	print (res)
