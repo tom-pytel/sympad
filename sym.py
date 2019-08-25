@@ -706,7 +706,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_var (self, ast):
 		oldvars = self.vars [:]
 
-		# while len (self.vars) > 1 or (self.remap and self.vars):
 		while self.vars:
 			vars   = self.vars.pop ()
 			varast = vars.get (ast.var)

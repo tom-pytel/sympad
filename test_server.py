@@ -104,7 +104,8 @@ def get (text):
 
 _SESSIONS = (
 
-	('vars', """
+('vars', """
+
 x
 x = 2
 x
@@ -125,9 +126,9 @@ x, y
 delvars
 x
 y
-	"""),
 
-	('lambdas', """
+"""), ('lambdas', """
+
 f = lambda: 2
 f
 f ()
@@ -164,9 +165,9 @@ f = lambda x, y, z, w: x + y + z + w
 f (1, 2, 3, 4)
 f (1, 2, 3)
 f (1, 2, 3, 4, 5)
-	"""),
 
-	('env', """
+"""), ('env', """
+
 env (quick)
 env (noquick)
 env
@@ -174,7 +175,8 @@ env(EI, quick, nopyS, noeval, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)
 env
 envreset
 env
-	"""),
+
+"""),
 
 )
 
