@@ -1849,6 +1849,7 @@ if __name__ == '__main__':
 
 	if len (sys.argv) == 1:
 		subprocess.run ([sys.executable, '-m', 'unittest', '-v', os.path.basename (sys.argv [0])])
+		subprocess.run ([sys.executable, '-m', 'unittest', '-v', os.path.abspath ('test_server.py')])
 		sys.exit (0)
 
 	elif sys.argv [1] == '--print':
