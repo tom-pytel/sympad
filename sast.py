@@ -433,7 +433,7 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env'}
+	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset'}
 	PSEUDO          = {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'print', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd'}

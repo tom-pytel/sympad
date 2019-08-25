@@ -29,15 +29,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('del (x, y)'), {'msg': ["Variable 'x' deleted.", "Variable 'y' deleted."]})
 		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
 		self.assertEqual (get ('y'), {'math': ('y', 'y', 'y')})
-		self.assertEqual (get ('x = x'), {'err': "CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
-		self.assertEqual (get ('x, y = x, y'), {'err': "CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
-		self.assertEqual (get ('x, y = y, x'), {'err': "CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
+		self.assertEqual (get ('x = x'), {'err': "server.CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
+		self.assertEqual (get ('x, y = x, y'), {'err': "server.CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
+		self.assertEqual (get ('x, y = y, x'), {'err': "server.CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
 		self.assertEqual (get ('x, y = 1, 2'), {'math': [('x = 1', 'x = 1', 'x = 1'), ('y = 2', 'y = 2', 'y = 2')]})
 		self.assertEqual (get ('x, y = y, x'), {'math': [('x = 2', 'x = 2', 'x = 2'), ('y = 1', 'y = 1', 'y = 1')]})
 		self.assertEqual (get ('x, y'), {'math': ('(2, 1)', '(2, 1)', '\\left(2, 1 \\right)')})
-		self.assertEqual (get ('delvars'), {'msg': ["Variable 'x' deleted.", "Variable 'y' deleted."]})
-		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
-		self.assertEqual (get ('y'), {'math': ('y', 'y', 'y')})
+		self.assertEqual (get ('delvars'), {'math': ('delvars', 'delvars', 'delvars')})
+		self.assertEqual (get ('x'), {'math': ('2', '2', '2')})
+		self.assertEqual (get ('y'), {'math': ('1', '1', '1')})
 
 	def test_lambdas (self):
 		self.assertEqual (get ('f = lambda: 2'), {'math': ('f = lambda: 2', 'f = Lambda((), 2)', 'f = \\left(\\left( \\right) \\mapsto 2 \\right)')})
@@ -76,6 +76,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (1, 2, 3, 4)'), {'math': ('10', '10', '10')})
 		self.assertEqual (get ('f (1, 2, 3)'), {'err': "TypeError: lambda function 'f' takes 4 argument(s)"})
 		self.assertEqual (get ('f (1, 2, 3, 4, 5)'), {'err': "TypeError: lambda function 'f' takes 4 argument(s)"})
+
+	def test_env (self):
+		self.assertEqual (get ('env (quick)'), {'msg': ['Quick input mode is on.']})
+		self.assertEqual (get ('env (noquick)'), {'msg': ['Quick input mode is off.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env(EI, quick, nopyS, noeval, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping off.', 'Expression evaluation is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping off.', 'Expression evaluation is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
+		self.assertEqual (get ('envreset'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.', 'Environment has been reset.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
 
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ()
@@ -156,6 +165,17 @@ f (1, 2, 3, 4)
 f (1, 2, 3)
 f (1, 2, 3, 4, 5)
 	"""),
+
+	('env', """
+env (quick)
+env (noquick)
+env
+env(EI, quick, nopyS, noeval, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)
+env
+envreset
+env
+	"""),
+
 )
 
 SYSARGV  = sys.argv [:]
@@ -163,7 +183,7 @@ sys.argv = [os.path.abspath ('server.py'), '--child']
 
 import server
 
-HTTPD = server.start_server ()
+HTTPD = server.start_server (logging = False)
 URL   = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
 
 if __name__ == '__main__':

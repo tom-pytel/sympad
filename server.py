@@ -319,8 +319,7 @@ def _admin_env (*args):
 	if not args:
 		return _envop (_ENV, False)
 
-	premsgs = []
-	env     = OrderedDict ()
+	env = OrderedDict ()
 
 	for arg in args:
 		if arg.is_ass:
@@ -338,22 +337,17 @@ def _admin_env (*args):
 				else:
 					state = True
 
-		if var == 'reset':
-			premsgs = ['Environment has been reset.']
-
-			_ENV.update (_START_ENV)
-			_update_user_funcs ()
-
-			continue
-
-		elif var is None:
+		if var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
 		elif var not in {'EI', 'quick', 'pyS', 'eval', 'doit', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
 
-	return premsgs + _envop (env, True)
+	return _envop (env, True)
+
+def _admin_envreset (*args):
+	return _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ())) + ['Environment has been reset.']
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -492,7 +486,10 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = _SYS_STDOUT
 
 #...............................................................................................
-def start_server ():
+def start_server (logging = True):
+	if not logging:
+		Handler.log_message = lambda *args, **kwargs: None
+
 	_update_user_funcs ()
 
 	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
