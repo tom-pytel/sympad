@@ -31,6 +31,7 @@ __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz', ['child', '
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
 _SYMPAD_CHILD    = ('--child', '') in __OPTS
+_SYMPAD_FIRSTRUN = ('--firstrun', '') in __OPTS
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
@@ -482,77 +483,30 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = _SYS_STDOUT
 
 #...............................................................................................
-_MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+def start_server ():
+	_update_user_funcs ()
 
-if __name__ == '__main__':
+	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
+		_DISPLAYSTYLE [0] = 0
+
+	for short, long in zip ('EqyltNOSgGz', \
+			['EI', 'quick', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
+		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
+			_admin_env (AST ('@', long))
+
+	if not __ARGV:
+		host, port = _DEFAULT_ADDRESS
+	else:
+		host, port = (re.split (r'(?<=\]):' if __ARGV [0].startswith ('[') else ':', __ARGV [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
+		host, port = host.strip ('[]'), int (port)
+
 	try:
-		if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:
-			os.environ ['SYMPAD_DEBUG'] = '1'
-
-		if not _SYMPAD_CHILD: # watcher parent
-			if ('--help', '') in __OPTS or ('-h', '') in __OPTS:
-				print (_HELP.lstrip ())
-				sys.exit (0)
-
-			if ('--version', '') in __OPTS or ('-v', '') in __OPTS:
-				print (_VERSION)
-				sys.exit (0)
-
-			args      = [sys.executable] + sys.argv + ['--child']
-			first_run = ['--firstrun']
-
-			while 1:
-				ret       = subprocess.run (args + first_run)
-				first_run = []
-
-				if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
-					sys.exit (0)
-
-		# child starts here
-		_update_user_funcs ()
-
-		if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
-			_DISPLAYSTYLE [0] = 0
-
-		for short, long in zip ('EqyltNOSgGz', \
-				['EI', 'quick', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
-			if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
-				_admin_env (AST ('@', long))
-
-		if not __ARGV:
-			host, port = _DEFAULT_ADDRESS
-		else:
-			host, port = (re.split (r'(?<=\]):' if __ARGV [0].startswith ('[') else ':', __ARGV [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
-			host, port = host.strip ('[]'), int (port)
-
-		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
-		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
-		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
-		httpd   = HTTPServer ((host, port), Handler)
-		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
+		httpd  = HTTPServer ((host, port), Handler)
+		thread = threading.Thread (target = httpd.serve_forever, daemon = True)
 
 		thread.start ()
 
-		def log_message (msg):
-			y, m, d, hh, mm, ss, _, _, _ = time.localtime (time.time ())
-
-			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
-					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
-
-		if ('--firstrun', '') in __OPTS:
-			print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
-
-		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
-
-		if os.environ.get ('SYMPAD_FIRSTRUN') and ('--nobrowser', '') not in __OPTS and ('-n', '') not in __OPTS:
-			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
-
-		while 1:
-			time.sleep (0.5)
-
-			if [os.stat (fnm).st_mtime for fnm in watch] != tstamps:
-				log_message ('Files changed, restarting...')
-				sys.exit (0)
+		return httpd
 
 	except OSError as e:
 		if e.errno != 98:
@@ -560,7 +514,73 @@ if __name__ == '__main__':
 
 		print (f'Port {port} seems to be in use, try specifying different port as a command line parameter, e.g. localhost:8001')
 
+		sys.exit (-1)
+
+_MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+
+def child ():
+	httpd = start_server ()
+
+	def log_message (msg):
+		y, m, d, hh, mm, ss, _, _, _ = time.localtime (time.time ())
+
+		sys.stderr.write (f'{httpd.server_address [0]} - - ' \
+				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
+
+	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
+	watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
+	tstamps = [os.stat (fnm).st_mtime for fnm in watch]
+
+	if _SYMPAD_FIRSTRUN:
+		print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
+
+	log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
+
+	if _SYMPAD_FIRSTRUN and ('--nobrowser', '') not in __OPTS and ('-n', '') not in __OPTS:
+		webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
+
+	try:
+		while 1:
+			time.sleep (0.5)
+
+			if [os.stat (fnm).st_mtime for fnm in watch] != tstamps:
+				log_message ('Files changed, restarting...')
+				sys.exit (0)
+
 	except KeyboardInterrupt:
 		sys.exit (0)
 
 	sys.exit (-1)
+
+def parent (): # watcher parent
+	if ('--help', '') in __OPTS or ('-h', '') in __OPTS:
+		print (_HELP.lstrip ())
+		sys.exit (0)
+
+	if ('--version', '') in __OPTS or ('-v', '') in __OPTS:
+		print (_VERSION)
+		sys.exit (0)
+
+	args      = [sys.executable] + sys.argv + ['--child']
+	first_run = ['--firstrun']
+
+	try:
+		while 1:
+			ret       = subprocess.run (args + first_run)
+			first_run = []
+
+			if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
+				sys.exit (0)
+
+	except KeyboardInterrupt:
+		sys.exit (0)
+
+#...............................................................................................
+if __name__ == '__main__':
+	if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:
+		os.environ ['SYMPAD_DEBUG'] = '1'
+
+	if _SYMPAD_CHILD:
+		child ()
+	else:
+		parent ()
