@@ -75,13 +75,13 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
 	_HISTORY      = []  # persistent history across browser closings
 
-	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
-		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
-
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
+	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
+		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
+
+	_ENV          = _START_ENV.copy ()
 	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_ONE_FUNCS    = {}
 
 	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
@@ -319,7 +319,8 @@ def _admin_env (*args):
 	if not args:
 		return _envop (_ENV, False)
 
-	env = OrderedDict ()
+	premsgs = []
+	env     = OrderedDict ()
 
 	for arg in args:
 		if arg.is_ass:
@@ -337,14 +338,22 @@ def _admin_env (*args):
 				else:
 					state = True
 
-		if var is None:
+		if var == 'reset':
+			premsgs = ['Environment has been reset.']
+
+			_ENV.update (_START_ENV)
+			_update_user_funcs ()
+
+			continue
+
+		elif var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
 		elif var not in {'EI', 'quick', 'pyS', 'eval', 'doit', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
 
-	return _envop (env, True)
+	return premsgs + _envop (env, True)
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -494,6 +503,8 @@ def start_server ():
 		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
 			_admin_env (AST ('@', long))
 
+	_START_ENV.update (_ENV)
+
 	if not __ARGV:
 		host, port = _DEFAULT_ADDRESS
 	else:
@@ -552,7 +563,7 @@ def child ():
 
 	sys.exit (-1)
 
-def parent (): # watcher parent
+def parent ():
 	if ('--help', '') in __OPTS or ('-h', '') in __OPTS:
 		print (_HELP.lstrip ())
 		sys.exit (0)
