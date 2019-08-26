@@ -18,6 +18,7 @@ if __name__ == '__main__':
 
 class Test (unittest.TestCase):
 	def test_vars (self):
+		reset ()
 		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
 		self.assertEqual (get ('x = 2'), {'math': ('x = 2', 'x = 2', 'x = 2')})
 		self.assertEqual (get ('x'), {'math': ('2', '2', '2')})
@@ -40,6 +41,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('y'), {'math': ('1', '1', '1')})
 
 	def test_lambdas (self):
+		reset ()
 		self.assertEqual (get ('f = lambda: 2'), {'math': ('f = lambda: 2', 'f = Lambda((), 2)', 'f = \\left(\\left( \\right) \\mapsto 2 \\right)')})
 		self.assertEqual (get ('f'), {'math': ('lambda: 2', 'Lambda((), 2)', '\\left(\\left( \\right) \\mapsto 2 \\right)')})
 		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
@@ -78,6 +80,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (1, 2, 3, 4, 5)'), {'err': "TypeError: lambda function 'f' takes 4 argument(s)"})
 
 	def test_env (self):
+		reset ()
 		self.assertEqual (get ('env (quick)'), {'msg': ['Quick input mode is on.']})
 		self.assertEqual (get ('env (noquick)'), {'msg': ['Quick input mode is off.']})
 		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
@@ -85,6 +88,21 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping off.', 'Expression evaluation is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
 		self.assertEqual (get ('envreset'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.', 'Environment has been reset.']})
 		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
+
+	def test_idx_and_attr (self):
+		reset ()
+		self.assertEqual (get ('x [y]'), {'math': ('x[y]', 'x[y]', 'x\\left[y \\right]')})
+		self.assertEqual (get ('x.y'), {'math': ('x.y', 'x.y', 'x.y')})
+		self.assertEqual (get ('x = [1, 2, 3]'), {'math': ('x = [1, 2, 3]', 'x = [1, 2, 3]', 'x = \\left[1, 2, 3 \\right]')})
+		self.assertEqual (get ('x [y]'), {'math': ('[1, 2, 3][y]', '[1, 2, 3][y]', '\\left[1, 2, 3 \\right]\\left[y \\right]')})
+		self.assertEqual (get ('x.y'), {'math': ('[1, 2, 3].y', '[1, 2, 3].y', '\\left[1, 2, 3 \\right].y')})
+		self.assertEqual (get ('[1, 2, 3] [y]'), {'math': ('[1, 2, 3][y]', '[1, 2, 3][y]', '\\left[1, 2, 3 \\right]\\left[y \\right]')})
+		self.assertEqual (get ('[1, 2, 3].y'), {'err': "AttributeError: 'list' object has no attribute 'y'"})
+		self.assertEqual (get ('y = 2'), {'math': ('y = 2', 'y = 2', 'y = 2')})
+		self.assertEqual (get ('x [y]'), {'math': ('3', '3', '3')})
+		self.assertEqual (get ('x.y'), {'math': ('[1, 2, 3].y', '[1, 2, 3].y', '\\left[1, 2, 3 \\right].y')})
+		self.assertEqual (get ('[1, 2, 3] [y]'), {'math': ('3', '3', '3')})
+		self.assertEqual (get ('[1, 2, 3].y'), {'err': "AttributeError: 'list' object has no attribute 'y'"})
 
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ()
@@ -101,6 +119,11 @@ def get (text):
 		ret ['err'] = resp ['err'] [-1]
 
 	return ret
+
+def reset ():
+	get ('envreset')
+	get ('delall')
+	get ('0')
 
 _SESSIONS = (
 
@@ -176,6 +199,21 @@ env
 envreset
 env
 
+"""), ('idx_and_attr', """
+
+x [y]
+x.y
+x = [1, 2, 3]
+x [y]
+x.y
+[1, 2, 3] [y]
+[1, 2, 3].y
+y = 2
+x [y]
+x.y
+[1, 2, 3] [y]
+[1, 2, 3].y
+
 """),
 
 )
@@ -190,13 +228,11 @@ URL   = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
 
 if __name__ == '__main__':
 	for name, texts in _SESSIONS:
-		get ('env (reset)')
-		get ('delall')
-		get ('0')
+		reset ()
+
+		print (f'\n\tdef test_{name} (self):\n\t\treset ()')
 
 		texts = [s.strip () for s in texts.strip ().split ('\n')]
-
-		print (f'\n\tdef test_{name} (self):')
 
 		for text in texts:
 			print (f'\t\tself.assertEqual (get ({text!r}), {get (text)!r})')
