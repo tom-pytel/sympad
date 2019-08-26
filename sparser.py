@@ -129,7 +129,7 @@ def _expr_neg (expr):
 		return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
-	last      = lhs.mul [-1] if lhs.is_mul else lhs
+	last      = lhs.mul [-1] if lhs.is_mul else lhs.exp if lhs.is_pow else lhs
 	arg, wrap = _ast_func_reorder (rhs)
 	ast       = None
 
@@ -161,7 +161,12 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 		ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
-		return AST ('*', lhs.mul [:-1] + (ast,)) if lhs.is_mul else ast
+		if lhs.is_mul:
+			return AST ('*', lhs.mul [:-1] + (ast,))
+		elif lhs.is_pow:
+			return AST ('^', lhs.base, ast)
+		else:
+			return ast
 
 	return AST.flatcat ('*', lhs, rhs)
 
