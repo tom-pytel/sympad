@@ -219,7 +219,7 @@ x.y
 )
 
 SYSARGV  = sys.argv [:]
-sys.argv = [os.path.abspath ('server.py'), '--child']
+sys.argv = [os.path.abspath ('server.py'), '--child', '127.0.0.1:8001']
 
 import server
 

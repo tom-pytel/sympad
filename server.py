@@ -80,8 +80,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
 		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
-	_ENV          = _START_ENV.copy ()
-	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_VARS         = {_VAR_LAST: AST.Zero} # This also!
 
 	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
