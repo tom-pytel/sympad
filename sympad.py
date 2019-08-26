@@ -827,7 +827,7 @@ r"""<!DOCTYPE html>
 		Type or click any of the following to get started:
 	</div>
 	<br><br>
-	<a class="GreetingA" href="javascript:inputting ('cos**-1 x + \\log_2{8}', true)">cos**-1 x + \log_2{8}</a>
+	<a class="GreetingA" href="javascript:inputting ('cos**-1 0 + \log_2{8}', true)">cos**-1 0 + \log_2{8}</a>
 	<a class="GreetingA" href="javascript:inputting ('\\lim_{x\\to\\infty} 1/x', true)">\lim_{x\to\infty} 1/x</a>
 	<a class="GreetingA" href="javascript:inputting ('Limit (\\frac1x, x, 0, dir=\'-\')', true)">Limit (\frac1x, x, 0, dir='-')</a>
 	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}**oo x^n / n!', true)">\sum_{n=0}**oo x^n / n!</a>
@@ -835,14 +835,13 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('Derivative (\\int dx, x)', true)">Derivative (\int dx, x)</a>
 	<a class="GreetingA" href="javascript:inputting ('Integral (e^{-x^2}, (x, 0, \\infty))', true)">Integral (e^{-x^2}, (x, 0, \infty))</a>
 	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\infty e^{-s t} dt', true)">\int_0^\infty e^{-s t} dt</a>
-	<a class="GreetingA" href="javascript:inputting ('{{1, 2}, {3, 4}}**-1', true)">{{1, 2}, {3, 4}}**-1</a>
-	<a class="GreetingA" href="javascript:inputting ('{{1, 2, 3}, {4, 5, 6}}.transpose ()', true)">{{1, 2, 3}, {4, 5, 6}}.transpose ()</a>
-	<a class="GreetingA" href="javascript:inputting ('expand {x+1}**4', true)">expand {x+1}**4</a>
-	<a class="GreetingA" href="javascript:inputting ('factor (x^3 + 3x^2 + 3x + 1)', true)">factor (x^3 + 3x^2 + 3x + 1)</a>
-	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 0, 5)', true)">series (e^x, x, 0, 5)</a>
+	<a class="GreetingA" href="javascript:inputting ('({{1, 2}, {3, 4}}**-1).transpose()', true)">({{1, 2}, {3, 4}}**-1).transpose()</a>
+	<a class="GreetingA" href="javascript:inputting ('{{1, 2, 3}, {4, 5, 6}}[:,1].T', true)">{{1, 2, 3}, {4, 5, 6}}[:,1].T</a>
+	<a class="GreetingA" href="javascript:inputting ('series(e^x, x, 0, 5)', true)">series(e^x, x, 0, 5)</a>
+	<a class="GreetingA" href="javascript:inputting ('factor(x^3 + 3x^2 + 3x + 1)', true)">factor(x^3 + 3x^2 + 3x + 1)</a>
+	<a class="GreetingA" href="javascript:inputting ('expand((((1 + x)**2) + 1)**2, deep = False)', true)">expand((((1 + x)**2) + 1)**2, deep = False)</a>
 	<a class="GreetingA" href="javascript:inputting ('x if 1 &lt; 2 else y', true)">x if 1 &lt; 2 else y</a>
-	<a class="GreetingA" href="javascript:inputting ('Matrix (4, 4, lambda r, c: c + r if c > r else 0)', true)">Matrix (4, 4, lambda r, c: c + r if c > r else 0)</a>
-
+	<a class="GreetingA" href="javascript:inputting ('Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)', true)">Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)</a>
 	<br><br>
 	<div align="center">
 	Copyright (c) 2019 Tomasz Pytel. <a href="https://github.com/Pristine-Cat/SymPad" target="_blank" style="color: #0007">SymPad on GitHub</a>
@@ -917,21 +916,21 @@ The input will be evaluated symbolically or numerically with the results being c
 <p>
 The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad:
 </p><p>
-cos**-1 x + \log_2{8}<br>
+cos**-1 0 + \log_2{8}<br>
 \lim_{x\to\infty} 1/x<br>
-Limit (\frac1x, x, 0, dir='-')<br>
+Limit(\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
 d**6 / dx dy**2 dz**3 x^3 y^3 z^3<br>
-Derivative (\int dx, x)<br>
-Integral (e^{-x^2}, (x, 0, \infty))<br>
+Derivative(\int dx, x)<br>
+Integral(e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\infty e^{-s t} dt<br>
-{{1, 2}, {3, 4}}**-1<br>
-{{1, 2, 3}, {4, 5, 6}}.transpose ()<br>
-expand {x+1}**4<br>
-factor (x^3 + 3x^2 + 3x + 1)<br>
+({{1, 2}, {3, 4}}**-1).transpose()<br>
+{{1, 2, 3}, {4, 5, 6}}[:,1].T<br>
 series (e^x, x, 0, 5)<br>
+factor (x^3 + 3x^2 + 3x + 1)<br>
+expand((((1 + x)**2) + 1)**2, deep = False)<br>
 x if 1 &lt; 2 else y<br>
-Matrix (4, 4, lambda r, c: c + r if c > r else 0)
+Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 </p>
 
 <h4>Multiline examples</h4>
@@ -1258,7 +1257,9 @@ This was not very elegant so the workaround is as follows:
 This is not a problem for "<b>beta</b>" and "<b>Lambda</b>" since they require multiple arguments and can be recognized as function calls from an implicit multiplication with a tuple of size 2, but the others can not be recognized this way.
 These function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
 These lambda functions do not appear in the normal list of functions shown by "<b>funcs()</b>" but their status can be checked by using the "<b>env()</b>" function.
-When these functions are mapped they are treated exactly like variables mapped to a lambda so if you want to be able to use these names as free variables you need to disable them, for example to disable the "<b>gamma()</b>" function mapping enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>". Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are only available if the "<b>S()</b>" function is mapped.
+When these functions are mapped they are treated exactly like variables mapped to a lambda for the purposes of calling them, but they are still available as free variables to use and even assign to.
+To enable or disable environment mapping of these functions like "<b>gamma()</b>" enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>" to disable and "<b>env (gamma)</b>" or "<b>env (gamma=True)</b>" to enable.
+Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always available because they are special cased, even if "<b>S()</b>" is not mapped or is assigned to something else.
 Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
 </p>
 
@@ -1280,6 +1281,7 @@ Also remember that these functions are always available for calling using the "<
 <p>"<b>del(funcs())</b>" - Delete all lambda functions.</p>
 <p>"<b>delall()</b>" - Delete ALL variables, lambda and non-lambda.</p>
 <p>"<b>env()</b>" - Show or change current SymPad runtime environment. Called without any arguments it will show the current state of the environment. If arguments are present they specify turning on or off a certain aspect of SymPad functionality. For example the functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
+<p>"<b>envreset()</b>" - Reset environment to what it was at startup.</p>
 
 <h4>Environment Settings for env()</h4>
 
@@ -2002,7 +2004,7 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env'}
+	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset'}
 	PSEUDO          = {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'print', 'str', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd'}
@@ -2012,7 +2014,7 @@ class AST_Func (AST):
 	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
 	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
 
-	PY              = ADMIN | PSEUDO | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'sqrt', 'log', 'ln', 'evaluate', 'beta', 'gamma', 'zeta', 'Lambda'}
+	PY              = ADMIN | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS - {'sqrt', 'log', 'ln', 'evaluate', 'beta', 'gamma', 'zeta', 'Lambda'}
 	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
@@ -2430,6 +2432,8 @@ class sxlat: # for single script
 from ast import literal_eval
 import re
 import sympy as sp
+
+sp.Gamma = sp.gamma # HACK for LaTeX Gamma function representation
 
 
 _SYMPY_FLOAT_PRECISION = None
@@ -3129,7 +3133,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_var (self, ast):
 		oldvars = self.vars [:]
 
-		# while len (self.vars) > 1 or (self.remap and self.vars):
 		while self.vars:
 			vars   = self.vars.pop ()
 			varast = vars.get (ast.var)
@@ -3562,19 +3565,19 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
-	vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-	ast = AST ('.', ('@', 'S'), 'Half')
-	res = ast2spt (ast, vars)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
+# 	vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+# 	ast = AST ('.', ('@', 'S'), 'Half')
+# 	res = ast2spt (ast, vars)
 
-	# ast = AST ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC'))))
-	# res = ast2spt (ast)
-	# res = spt2ast (res)
+# 	# ast = AST ('func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', '=', ('@', 'domain'), ('"', 'CC'))))
+# 	# res = ast2spt (ast)
+# 	# res = spt2ast (res)
 
-	print (res)
+# 	print (res)
 # Builds expression tree from text, nodes are nested AST tuples.
 
 import ast as py_ast
@@ -4036,7 +4039,7 @@ class Parser (lalr1.LALR1):
 			b'fJ/SHMXwgPJYee00aJ5mP3fpNY17JXsnj0U6DnzGY/fdxsiOgr0x7KyvH9OhUu0Mzxn5nOnROc9cG/PxLGhq8E3Ubf8LGp7PHD3TaNBgBwaVJVyI9ljAi666oInzvb2xUD93JxjSV6dv0F7d4RFQMUvG5ihizDmyhmowNFFPH5eaqJU4EDHTJwhF+rvAwaxJ' \
 			b'OnmD9vI3iINZO3c9BrQId4J3++r0DfRc9U3iXV9dkwEt5qZPt493Q3X6Bu3VXALv7hvW9gU8zFxxVMMtPOPrm10pQJs7MS3jtaeTN2gve+Lt1VG8zpS2W1OdijFMKJoK7I6C9nOFetwjwtGMtOymuKv2G15ZPBipxEwyms0VBCuY9l0rwUJ1MwyoVbpOdE3U' \
 			b'4sX+G2FArYIJ2amsqvEeigKDvRPjf2GyfVmUZzcbAy1xRctbV9ISvjodg+0IBZO7k6F+qE7HgPrm9lCfN3CdjAH1CyaHJ0N9U52OAfX5SzY9bwpRJLLxWWWDvz/AZGE/+e6IxqNRYdpERD+O0PIdhMHL/VE4usfb1eZi2ioxiOi3InJTcGRXpcZ45ZyQbivj' \
-			b'6RDKxtcxpsyyt909UvPGRo6pGxqHTYgzGxC1uHyfXXbI0MgeWdk7IK/sxtfwDknHbAJtHt/zZUInq79Umddn/w802pXr' 
+			b'6RDKxtcxpsyyt909UvPGRo6pGxqHTYgzGxC1uHyfXXbI0MgeWdk7IK/sxtfwDknHbAJtHt/zZUInq79Umddn/w802pXr'
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -4055,7 +4058,7 @@ class Parser (lalr1.LALR1):
 
 	_STR      = r'\'(?:\\.|[^\'])*\'|"(?:\\.|[^"])*["]'
 
-	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY - AST.Func.PSEUDO)))})"
+	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY)))})"
 	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
 
 	TOKENS    = OrderedDict ([ # order matters
@@ -4536,11 +4539,16 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.6.0'
+_VERSION         = '0.6.1'
+
+__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz', ['child', 'firstrun',
+	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
+	'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
-_SYMPAD_CHILD    = os.environ.get ('SYMPAD_CHILD')
+_SYMPAD_CHILD    = ('--child', '') in __OPTS
+_SYMPAD_FIRSTRUN = ('--firstrun', '') in __OPTS
 
 _DEFAULT_ADDRESS = ('localhost', 8000)
 _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
@@ -4579,13 +4587,13 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
 	_HISTORY      = []  # persistent history across browser closings
 
-	_ENV          = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
-		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
-
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
+	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
+		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
+
+	_ENV          = _START_ENV.copy ()
 	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_ONE_FUNCS    = {}
 
 	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
@@ -4850,6 +4858,9 @@ def _admin_env (*args):
 
 	return _envop (env, True)
 
+def _admin_envreset (*args):
+	return _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ())) + ['Environment has been reset.']
+
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
 	def do_GET (self):
@@ -4987,81 +4998,35 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = _SYS_STDOUT
 
 #...............................................................................................
-_MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+def start_server (logging = True):
+	if not logging:
+		Handler.log_message = lambda *args, **kwargs: None
 
-if __name__ == '__main__':
+	_update_user_funcs ()
+
+	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
+		_DISPLAYSTYLE [0] = 0
+
+	for short, long in zip ('EqyltNOSgGz', \
+			['EI', 'quick', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
+		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
+			_admin_env (AST ('@', long))
+
+	_START_ENV.update (_ENV)
+
+	if not __ARGV:
+		host, port = _DEFAULT_ADDRESS
+	else:
+		host, port = (re.split (r'(?<=\]):' if __ARGV [0].startswith ('[') else ':', __ARGV [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
+		host, port = host.strip ('[]'), int (port)
+
 	try:
-		opts, argv = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz',
-			['help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
-			'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
-
-		if ('--help', '') in opts or ('-h', '') in opts:
-			print (_HELP.lstrip ())
-			sys.exit (0)
-
-		if ('--version', '') in opts or ('-v', '') in opts:
-			print (_VERSION)
-			sys.exit (0)
-
-		if ('--debug', '') in opts or ('-d', '') in opts:
-			os.environ ['SYMPAD_DEBUG'] = '1'
-
-		if not _SYMPAD_CHILD: # watcher parent
-			args      = [sys.executable] + sys.argv
-			first_run = '1'
-
-			while 1:
-				ret       = subprocess.run (args, env = {**os.environ, 'SYMPAD_CHILD': '1', 'SYMPAD_FIRSTRUN': first_run})
-				first_run = ''
-
-				if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
-					sys.exit (0)
-
-		# child starts here
-		_update_user_funcs ()
-
-		if ('--ugly', '') in opts or ('-u', '') in opts:
-			_DISPLAYSTYLE [0] = 0
-
-		for short, long in zip ('EqyltNOSgGz', \
-				['EI', 'quick', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
-			if (f'--{long}', '') in opts or (f'-{short}', '') in opts:
-				_admin_env (AST ('@', long))
-
-		if not argv:
-			host, port = _DEFAULT_ADDRESS
-		else:
-			host, port = (re.split (r'(?<=\]):' if argv [0].startswith ('[') else ':', argv [0]) + [_DEFAULT_ADDRESS [1]]) [:2]
-			host, port = host.strip ('[]'), int (port)
-
-		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
-		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
-		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
-		httpd   = HTTPServer ((host, port), Handler)
-		thread  = threading.Thread (target = httpd.serve_forever, daemon = True)
+		httpd  = HTTPServer ((host, port), Handler)
+		thread = threading.Thread (target = httpd.serve_forever, daemon = True)
 
 		thread.start ()
 
-		def log_message (msg):
-			y, m, d, hh, mm, ss, _, _, _ = time.localtime (time.time ())
-
-			sys.stderr.write (f'{httpd.server_address [0]} - - ' \
-					f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
-
-		if os.environ.get ('SYMPAD_FIRSTRUN'):
-			print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
-
-		log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
-
-		if os.environ.get ('SYMPAD_FIRSTRUN') and ('--nobrowser', '') not in opts and ('-n', '') not in opts:
-			webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
-
-		while 1:
-			time.sleep (0.5)
-
-			if [os.stat (fnm).st_mtime for fnm in watch] != tstamps:
-				log_message ('Files changed, restarting...')
-				sys.exit (0)
+		return httpd
 
 	except OSError as e:
 		if e.errno != 98:
@@ -5069,7 +5034,73 @@ if __name__ == '__main__':
 
 		print (f'Port {port} seems to be in use, try specifying different port as a command line parameter, e.g. localhost:8001')
 
+		sys.exit (-1)
+
+_MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+
+def child ():
+	httpd = start_server ()
+
+	def log_message (msg):
+		y, m, d, hh, mm, ss, _, _, _ = time.localtime (time.time ())
+
+		sys.stderr.write (f'{httpd.server_address [0]} - - ' \
+				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
+
+	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
+	watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
+	tstamps = [os.stat (fnm).st_mtime for fnm in watch]
+
+	if _SYMPAD_FIRSTRUN:
+		print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
+
+	log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
+
+	if _SYMPAD_FIRSTRUN and ('--nobrowser', '') not in __OPTS and ('-n', '') not in __OPTS:
+		webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
+
+	try:
+		while 1:
+			time.sleep (0.5)
+
+			if [os.stat (fnm).st_mtime for fnm in watch] != tstamps:
+				log_message ('Files changed, restarting...')
+				sys.exit (0)
+
 	except KeyboardInterrupt:
 		sys.exit (0)
 
 	sys.exit (-1)
+
+def parent ():
+	if ('--help', '') in __OPTS or ('-h', '') in __OPTS:
+		print (_HELP.lstrip ())
+		sys.exit (0)
+
+	if ('--version', '') in __OPTS or ('-v', '') in __OPTS:
+		print (_VERSION)
+		sys.exit (0)
+
+	args      = [sys.executable] + sys.argv + ['--child']
+	first_run = ['--firstrun']
+
+	try:
+		while 1:
+			ret       = subprocess.run (args + first_run)
+			first_run = []
+
+			if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
+				sys.exit (0)
+
+	except KeyboardInterrupt:
+		sys.exit (0)
+
+#...............................................................................................
+if __name__ == '__main__':
+	if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:
+		os.environ ['SYMPAD_DEBUG'] = '1'
+
+	if _SYMPAD_CHILD:
+		child ()
+	else:
+		parent ()
