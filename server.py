@@ -97,7 +97,7 @@ class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
-def _ast_remap (ast, map_, recurse = True): # legacy variable remapper now just used for detecting circular references
+def _ast_remap (ast, map_, recurse = True):
 	if not isinstance (ast, AST) or ast.is_lamb or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 		return ast
 
@@ -105,27 +105,22 @@ def _ast_remap (ast, map_, recurse = True): # legacy variable remapper now just 
 		var = map_.get (ast.var)
 
 		if var: # user var
-			if var.is_lamb:
-				return AST ('func', AST.Func.NOEVAL, (var,))
-			elif recurse:
-				return _ast_remap (var, map_, recurse)
-			else:
-				return var
+			return var if var.is_lamb or not recurse else _ast_remap (var, map_)
 
 	elif ast.is_func:
 		lamb = map_.get (ast.func)
 
-		if lamb and lamb.is_lamb: # user function
+		if lamb and lamb.is_lamb: # execute user function
 			if len (ast.args) != len (lamb.vars):
 				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
 
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), recurse = False) # remap lambda arg vars only once
+			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), False) # remap lambda vars to func args
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
 	_one_funcs = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
-	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
+	user_funcs = dict (va for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
 
 	user_funcs.update (_one_funcs)
 
@@ -159,7 +154,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 			if AST ('@', var) in AST.CONSTS:
 				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
-	return ast, vars
+	return _ast_remap (ast, _VARS), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars):
@@ -584,6 +579,13 @@ def parent ():
 		sys.exit (0)
 
 #...............................................................................................
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	vars = {'f': AST ('lamb', ('@', 'x'), (('@', 'x'),)), 'g': AST ('lamb', ('func', 'f', (('@', 'x'),)), (('@', 'x'),))}
+# 	ast = AST ('func', 'g', (('#', '1'),))
+# 	res = _ast_remap (ast, vars)
+# 	print (res)
+
 if __name__ == '__main__':
 	if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:
 		os.environ ['SYMPAD_DEBUG'] = '1'

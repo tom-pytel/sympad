@@ -10,7 +10,7 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
-_USER_FUNCS            = {} # set of names to treat as user functions
+_USER_FUNCS            = {} # dict user funcs {name: AST, ...}
 _PYS                   = True
 _EVAL                  = True
 _DOIT                  = True
@@ -704,26 +704,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	}
 
 	def _ast2spt_var (self, ast):
-		oldvars = self.vars [:]
-
-		while self.vars:
-			vars   = self.vars.pop ()
-			varast = vars.get (ast.var)
-
-			if varast is False:
-				break
-
-			if varast:
-				if not self.vars:
-					self.vars.append (vars)
-
-				spt       = self._ast2spt (varast)
-				self.vars = oldvars
-
-				return spt
-
-		self.vars = oldvars
-		spt       = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # 'self' being used for as unique None
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # 'self' being used for as unique None
 
 		if spt is self:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
@@ -761,42 +742,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
 	def _ast2spt_func (self, ast):
-		if ast.func == AST.Func.NOREMAP: # special no-dereference meta-function
-			self.remap = not self.remap
-			spt        = self._ast2spt (ast.args [0])
-			self.remap = not self.remap
-
-			return spt
-
-		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
-			self.eval = not self.eval
-			spt       = self._ast2spt (ast.args [0])
-			self.eval = not self.eval
-
-			return spt
-
-		if not self.eval:
-			return ExprNoEval (str (AST ('func', ast.func, tuple (spt2ast (self._ast2spt (a)) for a in ast.args))), 1)
-
-		var = ast.unescaped
-
-		for i in range (len (self.vars) - 1, -1, -1):
-			varast = self.vars [i].get (var)
-
-			if varast and varast.is_var:
-				var = varast.var
-			elif varast is not None:
-				break
-
-		if varast:
-			if varast.is_lamb:
-				if len (ast.args) != len (varast.vars):
-					raise TypeError (f"lambda function '{ast.unescaped}' takes {len (varast.vars)} argument(s)")
-
-				return self._ast2spt_lamb (varast, args = ast.args)
-
-			elif var != ast.unescaped:
-				raise TypeError (f"expecting lambda function for '{ast.unescaped}', got {ast2py (varast)!r}")
+		if ast.func == AST.Func.NOREMAP: # special reference meta-function
+			return self._ast2spt (ast.args [0])
 
 		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
 
@@ -828,25 +775,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			else:
 				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.as_var.var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
-	def _ast2spt_lamb (self, ast, args = None):
-		oldremap   = self.remap
-		oldeval    = self.eval
-		eval       = args is not None
-		self.remap = eval and self.remap
-		self.eval  = eval and self.eval
-
-		if eval:
-			self.vars.append (dict (zip ((v.var for v in ast.vars), args)))
-			spt = self._ast2spt (ast.lamb)
-
-		else:
-			self.vars.append ({v.var: False for v in ast.vars})
-			spt = sp.Lambda (tuple (sp.Symbol (v.var) for v in ast.vars), self._ast2spt (ast.lamb))
-
-		self.remap = oldremap
-		self.eval  = oldeval
-
-		del self.vars [-1]
+	def _ast2spt_lamb (self, ast):
+		oldeval   = self.eval
+		self.eval = False
+		spt       = sp.Lambda (tuple (sp.Symbol (v.var) for v in ast.vars), self._ast2spt (ast.lamb))
+		self.eval = oldeval
 
 		return spt
 

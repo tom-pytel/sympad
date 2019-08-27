@@ -404,7 +404,7 @@ class Parser (lalr1.LALR1):
 
 		self.set_tokens (self.TOKENS)
 
-	_USER_FUNCS = set () # set of names of user functions to map to AST ('func', ...)
+	_USER_FUNCS = set () # set or dict of names of user functions to map to AST ('func', ...)
 
 	def set_user_funcs (self, user_funcs):
 		self._USER_FUNCS = user_funcs
