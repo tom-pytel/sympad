@@ -110,11 +110,13 @@ def _ast_remap (ast, map_, recurse = True):
 	elif ast.is_func:
 		lamb = map_.get (ast.func)
 
-		if lamb and lamb.is_lamb: # execute user function
+		if lamb and lamb.is_lamb: # 'execute' user lambda
 			if len (ast.args) != len (lamb.vars):
-				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
+				raise TypeError (f"lambda function '{ast.func}' takes {len (lamb.vars)} argument(s)")
 
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), False) # remap lambda vars to func args
+			args = dict (zip ((v.var for v in lamb.vars), ast.args))
+
+			return _ast_remap (_ast_remap (lamb.lamb, args, False), map_) # remap lambda vars to func args then global remap
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
@@ -585,6 +587,7 @@ def parent ():
 # 	ast = AST ('func', 'g', (('#', '1'),))
 # 	res = _ast_remap (ast, vars)
 # 	print (res)
+# 	sys.exit (0)
 
 if __name__ == '__main__':
 	if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:

@@ -747,10 +747,13 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
 
-		if func is None:
-			raise NameError (f'function {ast.unescaped!r} is not defined')
+		if func is not None:
+			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
-		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
+		if ast.unescaped in _USER_FUNCS: # user lambda, within other lambda if it got here
+			return ExprNoEval (str (ast), 1)
+
+		raise NameError (f'function {ast.unescaped!r} is not defined')
 
 	def _ast2spt_diff (self, ast):
 		args = sum (( \
