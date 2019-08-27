@@ -827,7 +827,7 @@ r"""<!DOCTYPE html>
 		Type or click any of the following to get started:
 	</div>
 	<br><br>
-	<a class="GreetingA" href="javascript:inputting ('cos**-1 0 + \log_2{8}', true)">cos**-1 0 + \log_2{8}</a>
+	<a class="GreetingA" href="javascript:inputting ('cos**-1 0 + \\log_2{8}', true)">cos**-1 0 + \log_2{8}</a>
 	<a class="GreetingA" href="javascript:inputting ('\\lim_{x\\to\\infty} 1/x', true)">\lim_{x\to\infty} 1/x</a>
 	<a class="GreetingA" href="javascript:inputting ('Limit (\\frac1x, x, 0, dir=\'-\')', true)">Limit (\frac1x, x, 0, dir='-')</a>
 	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}**oo x^n / n!', true)">\sum_{n=0}**oo x^n / n!</a>
@@ -1232,9 +1232,9 @@ User created lambda functions are supported and are specified the same way as Py
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
 When a lambda function is defined no variables are mapped and no functions are called or expressions doit()-ed, this means that if a lambda references an assigned global variable the variable will be bound upon execution, not definition of the lambda.
 This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed.
-This can be overridden with the "<b>@()</b>" pseudo-function to force mapping of global variables upon lambda definition and the "<b>%()</b>" pseudo-function to force evaluation (see appendix).
-Lambda functions may reference other lambda functions as long as those are defined at the time of creation, or they may force a definition of a function call to an unmapped lambda by use of the "<b>$</b>" function override, that lambda can be defined afterwards.
-Lambda recursion is not currently supported.
+Lambda functions may reference other lambda functions as long as those are defined at the time of creation.
+Lambdas may be passed to SymPy functions which take those and use them for something but these may not reference other user lambdas.
+Lambda recursion is not supported.
 </p>
 
 <h4>Functions, Parentheses and Implicit Multiplication</h4>
@@ -1268,9 +1268,8 @@ Also remember that these functions are always available for calling using the "<
 <h4>Special Characters</h4>
 
 <p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.</p>
-<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad. It can be used inside of a lambda definition to force a function call of an argument which is expected to be another lambda function of a single parameter.</p>
-<p>"<b>@(expr)</b>" - Ampersand technically toggles variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value. Otherwise inside a lambda definition where variables are not normally remapped this will allow you to insert the value of a globally defined variable directly in the lambda definition instead of leaving it as a reference.</p>
-<p>"<b>%(expr)</b>" - Percent works similar to the "<b>@</b>" function but rather than variables it toggles evaluation for the expression it encapsulates. This is useful for forcing the evaluation of a function or operation inside a lambda definition where they are not normally done.</p>
+<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
+<p>"<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value.
 
 <h4>Admin Functions</h4>
 
@@ -2437,7 +2436,7 @@ sp.Gamma = sp.gamma # HACK for LaTeX Gamma function representation
 
 
 _SYMPY_FLOAT_PRECISION = None
-_USER_FUNCS            = {} # set of names to treat as user functions
+_USER_FUNCS            = {} # dict user funcs {name: AST, ...}
 _PYS                   = True
 _EVAL                  = True
 _DOIT                  = True
@@ -3131,26 +3130,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	}
 
 	def _ast2spt_var (self, ast):
-		oldvars = self.vars [:]
-
-		while self.vars:
-			vars   = self.vars.pop ()
-			varast = vars.get (ast.var)
-
-			if varast is False:
-				break
-
-			if varast:
-				if not self.vars:
-					self.vars.append (vars)
-
-				spt       = self._ast2spt (varast)
-				self.vars = oldvars
-
-				return spt
-
-		self.vars = oldvars
-		spt       = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # 'self' being used for as unique None
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # 'self' being used for as unique None
 
 		if spt is self:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
@@ -3168,7 +3148,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		while obj.is_func and obj.args and (obj.func == AST.Func.NOEVAL or obj.func == AST.Func.NOREMAP):
 			obj = obj.args [0]
 
-		if obj.is_var and obj.var not in self.vars: # support S.Half
+		if obj.is_var and obj.var not in self.vars: # always support S.Half and the like
 			spt = getattr (sp, obj.var, None)
 
 		if spt is None:
@@ -3188,49 +3168,18 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
 	def _ast2spt_func (self, ast):
-		if ast.func == AST.Func.NOREMAP: # special no-dereference meta-function
-			self.remap = not self.remap
-			spt        = self._ast2spt (ast.args [0])
-			self.remap = not self.remap
-
-			return spt
-
-		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
-			self.eval = not self.eval
-			spt       = self._ast2spt (ast.args [0])
-			self.eval = not self.eval
-
-			return spt
-
-		if not self.eval:
-			return ExprNoEval (str (AST ('func', ast.func, tuple (spt2ast (self._ast2spt (a)) for a in ast.args))), 1)
-
-		var = ast.unescaped
-
-		for i in range (len (self.vars) - 1, -1, -1):
-			varast = self.vars [i].get (var)
-
-			if varast and varast.is_var:
-				var = varast.var
-			elif varast is not None:
-				break
-
-		if varast:
-			if varast.is_lamb:
-				if len (ast.args) != len (varast.vars):
-					raise TypeError (f"lambda function '{ast.unescaped}' takes {len (varast.vars)} argument(s)")
-
-				return self._ast2spt_lamb (varast, args = ast.args)
-
-			elif var != ast.unescaped:
-				raise TypeError (f"expecting lambda function for '{ast.unescaped}', got {ast2py (varast)!r}")
+		if ast.func == AST.Func.NOREMAP: # special reference meta-function
+			return self._ast2spt (ast.args [0])
 
 		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
 
-		if func is None:
-			raise NameError (f'function {ast.unescaped!r} is not defined')
+		if func is not None:
+			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
-		return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
+		if ast.unescaped in _USER_FUNCS: # user lambda, within other lambda if it got here
+			return ExprNoEval (str (ast), 1)
+
+		raise NameError (f'function {ast.unescaped!r} is not defined')
 
 	def _ast2spt_diff (self, ast):
 		args = sum (( \
@@ -3255,25 +3204,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			else:
 				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.as_var.var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
-	def _ast2spt_lamb (self, ast, args = None):
-		oldremap   = self.remap
-		oldeval    = self.eval
-		eval       = args is not None
-		self.remap = eval and self.remap
-		self.eval  = eval and self.eval
-
-		if eval:
-			self.vars.append (dict (zip ((v.var for v in ast.vars), args)))
-			spt = self._ast2spt (ast.lamb)
-
-		else:
-			self.vars.append ({v.var: False for v in ast.vars})
-			spt = sp.Lambda (tuple (sp.Symbol (v.var) for v in ast.vars), self._ast2spt (ast.lamb))
-
-		self.remap = oldremap
-		self.eval  = oldeval
-
-		del self.vars [-1]
+	def _ast2spt_lamb (self, ast):
+		oldeval   = self.eval
+		self.eval = False
+		spt       = sp.Lambda (tuple (sp.Symbol (v.var) for v in ast.vars), self._ast2spt (ast.lamb))
+		self.eval = oldeval
 
 		return spt
 
@@ -3706,7 +3641,7 @@ def _expr_neg (expr):
 		return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}):
-	last      = lhs.mul [-1] if lhs.is_mul else lhs
+	last      = lhs.mul [-1] if lhs.is_mul else lhs.exp if lhs.is_pow else lhs
 	arg, wrap = _ast_func_reorder (rhs)
 	ast       = None
 
@@ -3738,7 +3673,12 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 		ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
-		return AST ('*', lhs.mul [:-1] + (ast,)) if lhs.is_mul else ast
+		if lhs.is_mul:
+			return AST ('*', lhs.mul [:-1] + (ast,))
+		elif lhs.is_pow:
+			return AST ('^', lhs.base, ast)
+		else:
+			return ast
 
 	return AST.flatcat ('*', lhs, rhs)
 
@@ -3976,7 +3916,7 @@ class Parser (lalr1.LALR1):
 
 		self.set_tokens (self.TOKENS)
 
-	_USER_FUNCS = set () # set of names of user functions to map to AST ('func', ...)
+	_USER_FUNCS = set () # set or dict of names of user functions to map to AST ('func', ...)
 
 	def set_user_funcs (self, user_funcs):
 		self._USER_FUNCS = user_funcs
@@ -4539,7 +4479,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.6.1'
+_VERSION         = '0.6.2'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
@@ -4592,8 +4532,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
 		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
-	_ENV          = _START_ENV.copy ()
-	_VARS         = {_VAR_LAST: AST.Zero} # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_VARS         = {_VAR_LAST: AST.Zero} # This also!
 
 	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
@@ -4609,7 +4549,7 @@ class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
-def _ast_remap (ast, map_, recurse = True): # legacy variable remapper now just used for detecting circular references
+def _ast_remap (ast, map_, recurse = True):
 	if not isinstance (ast, AST) or ast.is_lamb or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 		return ast
 
@@ -4617,27 +4557,24 @@ def _ast_remap (ast, map_, recurse = True): # legacy variable remapper now just 
 		var = map_.get (ast.var)
 
 		if var: # user var
-			if var.is_lamb:
-				return AST ('func', AST.Func.NOEVAL, (var,))
-			elif recurse:
-				return _ast_remap (var, map_, recurse)
-			else:
-				return var
+			return var if var.is_lamb or not recurse else _ast_remap (var, map_)
 
 	elif ast.is_func:
 		lamb = map_.get (ast.func)
 
-		if lamb and lamb.is_lamb: # user function
+		if lamb and lamb.is_lamb: # 'execute' user lambda
 			if len (ast.args) != len (lamb.vars):
-				raise TypeError (f"lambda function '{ast.func}()' takes {len (lamb.vars)} argument(s)")
+				raise TypeError (f"lambda function '{ast.func}' takes {len (lamb.vars)} argument(s)")
 
-			ast = _ast_remap (lamb.lamb, dict (zip ((v.var for v in lamb.vars), ast.args)), recurse = False) # remap lambda arg vars only once
+			args = dict (zip ((v.var for v in lamb.vars), ast.args))
+
+			return _ast_remap (_ast_remap (lamb.lamb, args, False), map_) # remap lambda vars to func args then global remap
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():
 	_one_funcs = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
-	user_funcs = {va [0] for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ())}
+	user_funcs = dict (va for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
 
 	user_funcs.update (_one_funcs)
 
@@ -4671,7 +4608,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 			if AST ('@', var) in AST.CONSTS:
 				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
 
-	return ast, vars
+	return _ast_remap (ast, _VARS), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars):
@@ -5096,6 +5033,13 @@ def parent ():
 		sys.exit (0)
 
 #...............................................................................................
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	vars = {'f': AST ('lamb', ('@', 'x'), (('@', 'x'),)), 'g': AST ('lamb', ('func', 'f', (('@', 'x'),)), (('@', 'x'),))}
+# 	ast = AST ('func', 'g', (('#', '1'),))
+# 	res = _ast_remap (ast, vars)
+# 	print (res)
+# 	sys.exit (0)
+
 if __name__ == '__main__':
 	if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:
 		os.environ ['SYMPAD_DEBUG'] = '1'

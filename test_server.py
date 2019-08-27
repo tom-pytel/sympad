@@ -207,6 +207,7 @@ import server
 
 HTTPD = server.start_server (logging = False)
 URL   = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
+# URL   = f'http://127.0.0.1:8000/'
 
 if __name__ == '__main__':
 	for name, texts in _SESSIONS:
