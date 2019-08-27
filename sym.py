@@ -722,7 +722,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		while obj.is_func and obj.args and (obj.func == AST.Func.NOEVAL or obj.func == AST.Func.NOREMAP):
 			obj = obj.args [0]
 
-		if obj.is_var and obj.var not in self.vars: # support S.Half
+		if obj.is_var and obj.var not in self.vars: # always support S.Half and the like
 			spt = getattr (sp, obj.var, None)
 
 		if spt is None:

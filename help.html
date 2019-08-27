@@ -369,9 +369,9 @@ User created lambda functions are supported and are specified the same way as Py
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
 When a lambda function is defined no variables are mapped and no functions are called or expressions doit()-ed, this means that if a lambda references an assigned global variable the variable will be bound upon execution, not definition of the lambda.
 This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed.
-This can be overridden with the "<b>@()</b>" pseudo-function to force mapping of global variables upon lambda definition and the "<b>%()</b>" pseudo-function to force evaluation (see appendix).
-Lambda functions may reference other lambda functions as long as those are defined at the time of creation, or they may force a definition of a function call to an unmapped lambda by use of the "<b>$</b>" function override, that lambda can be defined afterwards.
-Lambda recursion is not currently supported.
+Lambda functions may reference other lambda functions as long as those are defined at the time of creation.
+Lambdas may be passed to SymPy functions which take those and use them for something but these may not reference other user lambdas.
+Lambda recursion is not supported.
 </p>
 
 <h4>Functions, Parentheses and Implicit Multiplication</h4>
@@ -405,9 +405,8 @@ Also remember that these functions are always available for calling using the "<
 <h4>Special Characters</h4>
 
 <p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.</p>
-<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad. It can be used inside of a lambda definition to force a function call of an argument which is expected to be another lambda function of a single parameter.</p>
-<p>"<b>@(expr)</b>" - Ampersand technically toggles variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value. Otherwise inside a lambda definition where variables are not normally remapped this will allow you to insert the value of a globally defined variable directly in the lambda definition instead of leaving it as a reference.</p>
-<p>"<b>%(expr)</b>" - Percent works similar to the "<b>@</b>" function but rather than variables it toggles evaluation for the expression it encapsulates. This is useful for forcing the evaluation of a function or operation inside a lambda definition where they are not normally done.</p>
+<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
+<p>"<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value.
 
 <h4>Admin Functions</h4>
 
