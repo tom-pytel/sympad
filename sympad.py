@@ -4479,7 +4479,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '0.6.2'
+_VERSION         = '1.0'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
