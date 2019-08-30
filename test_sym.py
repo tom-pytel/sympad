@@ -67,7 +67,6 @@ Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
 \int_{partial^{6} / partialy^{2} partialx^{2} partialz^{2} {partialx}}^{partial^{4} / partialz^{1} partialz^{2} partialx^{1} {0}} {{a} != {'str'}} dx
 {{{oo}**{'str'}}+{\int {oo} dx}+{partial^{7} / partialz^{3} partialx^{2} partialx^{2} {0}}}
 [{{{-1} \cdot {oo}}},{{{dx},{1.0},{oo}}},{partial^{8} / partialx^{3} partialx^{2} partialz^{3} {oo}}]
-('-', ('lamb', ('@', 'dx'), (('@', 'x'), ('@', 'y'), ('@', 'z'))))
 {{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'str'}}}
 {{lambda: {-1}} \cdot {\frac{partialx}{oo}} \cdot {{1.0} if {1} else {a'} if {0}}}
 {{{a'} / {-1}} {\lim_{x \to partial} {-1}} * [lambda x, y, z: {partialx}]}
@@ -85,7 +84,6 @@ lambda x: {{dx} = {dx}}
 \int {{{{d}+{partialx}+{1}}} if {lambda x, y, z: {a}} else {{1} / {partialx}}} dx
 |{\log_{partial^{1} / partialy^{1} {{{0}*{'str'}}}}{[{{-1.0} / {'str'}}]}}|
 |{Limit ({\frac{1}{-1.0}}!, x, ({{{{-1.0},},{{1},},}},{{{'str'} \cdot {1} \cdot {dx}}},{-{1}}))}|
-('|', ('lim', ('!', ('/', ('#', '1'), ('#', '-1.0'))), ('@', 'x'), ('(', (',', (('vec', (('#', '-1.0'), ('#', '1'))), ('*', (('"', 'str'), ('#', '1'), ('@', 'dx'))), ('-', ('#', '1'))))), '+'))
 {\lim_{x \to -1.0} {dx}} > {{oo} if {-1.0} else {d} if {d} else {1}}
 \frac{{-1.0} > {oo}}{\ln{-1.0}}
 {{{{{{0},},}},{|{d}|},},{{({1.0},{1})},{[{oo}]},},}

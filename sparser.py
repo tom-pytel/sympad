@@ -128,10 +128,17 @@ def _expr_neg (expr):
 	else:
 		return expr.neg (stack = True)
 
-def _expr_mul_imp (lhs, rhs, user_funcs = {}):
-	last      = lhs.mul [-1] if lhs.is_mul else lhs.exp if lhs.is_pow else lhs
-	arg, wrap = _ast_func_reorder (rhs)
-	ast       = None
+def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjacent terms not handled by grammar
+	# last      = lhs.mul [-1] if lhs.is_mul else lhs.exp if lhs.is_pow else lhs
+	ast         = None
+	arg, wrap   = _ast_func_reorder (rhs)
+	last, wrapl = lhs, lambda ast: ast
+
+	if last.is_mul:
+		last, wrapl = last.mul [-1], lambda ast, last=last: AST ('*', last.mul [:-1] + (ast,))
+
+	if last.is_pow:
+		last, wrapl = last.exp, lambda ast, last=last, wrapl=wrapl: wrapl (AST ('^', last.base, ast))
 
 	if last.is_attr: # {x.y} *imp* () -> x.y(), x.{y.z} -> {x.y}.z
 		if last.args is None:
@@ -161,12 +168,13 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}):
 		ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
-		if lhs.is_mul:
-			return AST ('*', lhs.mul [:-1] + (ast,))
-		elif lhs.is_pow:
-			return AST ('^', lhs.base, ast)
-		else:
-			return ast
+		# if lhs.is_mul:
+		# 	return AST ('*', lhs.mul [:-1] + (ast,))
+		# elif lhs.is_pow:
+		# 	return AST ('^', lhs.base, ast)
+		# else:
+		# 	return ast
+		return wrapl (ast)
 
 	return AST.flatcat ('*', lhs, rhs)
 
