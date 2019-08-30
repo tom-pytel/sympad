@@ -2523,7 +2523,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 	try:
 		spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
-	except (ValueError, TypeError, NameError, AttributeError, sp.OptionError): # maybe 'evaluate' keyword not supported?
+	except: # (ValueError, TypeError, NameError, AttributeError, sp.OptionError): # maybe 'evaluate' keyword not supported?
 		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func:
@@ -3503,8 +3503,8 @@ class sym: # for single script
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
 # 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
-# 	vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
+# 	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
 # 	ast = AST ('.', ('@', 'S'), 'Half')
 # 	res = ast2spt (ast, vars)
 
@@ -4569,6 +4569,11 @@ def _ast_remap (ast, map_, recurse = True):
 			args = dict (zip ((v.var for v in lamb.vars), ast.args))
 
 			return _ast_remap (_ast_remap (lamb.lamb, args, False), map_) # remap lambda vars to func args then global remap
+
+		return AST ('func', ast.func, \
+				tuple (('(', _ast_remap (a, map_, recurse)) \
+				if (a.is_var and map_.get (a.var, AST.VarNull).is_ass) \
+				else _ast_remap (a, map_, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 

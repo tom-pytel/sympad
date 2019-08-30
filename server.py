@@ -118,6 +118,11 @@ def _ast_remap (ast, map_, recurse = True):
 
 			return _ast_remap (_ast_remap (lamb.lamb, args, False), map_) # remap lambda vars to func args then global remap
 
+		return AST ('func', ast.func, \
+				tuple (('(', _ast_remap (a, map_, recurse)) \
+				if (a.is_var and map_.get (a.var, AST.VarNull).is_ass) \
+				else _ast_remap (a, map_, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
 def _update_user_funcs ():

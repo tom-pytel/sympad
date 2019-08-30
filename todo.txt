@@ -1,3 +1,5 @@
+> x = Eq (y, z)
+
 > sets
 > dictionaries
 > change matrices to \[[1,2], [3,4]]

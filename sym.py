@@ -97,7 +97,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 	try:
 		spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
-	except (ValueError, TypeError, NameError, AttributeError, sp.OptionError): # maybe 'evaluate' keyword not supported?
+	except: # (ValueError, TypeError, NameError, AttributeError, sp.OptionError): # maybe 'evaluate' keyword not supported?
 		spt = func (*pyargs, **pykw)
 
 	if type (spt) is func:
@@ -1078,8 +1078,8 @@ class sym: # for single script
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
 # 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('lamb', ('+', (('@', 'x'), ('#', '1'))), ()), (('@', 'x'),))}
-# 	vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
+# 	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
 # 	ast = AST ('.', ('@', 'S'), 'Half')
 # 	res = ast2spt (ast, vars)
 
