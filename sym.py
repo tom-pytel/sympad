@@ -103,7 +103,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if type (spt) is func:
 		try:
 			spt.SYMPAD_ESCAPED = is_escaped
-		except AttributeError: # couldn't assign to Python object (probably because is built-in type)
+		except (AttributeError, TypeError): # couldn't assign to Python object (probably because is built-in type)
 			pass
 
 	return spt

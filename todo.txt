@@ -1,22 +1,19 @@
+> change matrices to \[[1,2], [3,4]]
+> multiple vector weirdness
+
 > sets
 > dictionaries
-> change matrices to \[[1,2], [3,4]]
 
-> admin funcs as normal funcs? (1, admin()) raises
+> no-evaluate version of Add and Mul (for tuples, lists and strings)?
 > extended comparison 0 <= x < 1
-> xlat different types and initializations of matrices?
-> flush sys.stdout to msg before sending exception?
-> multiple vector weirdness
-> function names allowed as variables on assignment?
-
-> no-evaluate version of Add and Mul (for tuples, lists and strings)
-> sympy add/multiplicable Tuple object
-> sympy add/multiplicable List object
 
 > display subscripts
 > parse subscripts
 
-> integral dx placement?
+> flush sys.stdout to msg before sending exception?
+> function names allowed as variables on assignment?
+> xlat different types and initializations of matrices?
+
 > long variable name shortcut?
 > Remove sp.Integer()?
 
