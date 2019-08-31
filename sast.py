@@ -34,6 +34,8 @@
 # ('lamb', expr, (v1, v2, ...))                    - lambda expression: v? = ('@', 'var')
 # ('idx', expr, (i0, i1, ...))                     - indexing: expr [i0, i1, ...]
 # ('slice', start, stop, step)                     - indexing slice object: obj [start : stop : step], None or False indicates not specified
+# ('set', (expr1, expr2, ...))                     - set
+# ('dict', ((k1, v1), (k2, v2), ...))              - python dict
 
 import re
 import types
@@ -435,7 +437,7 @@ class AST_Func (AST):
 
 	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset'}
 	PSEUDO          = {NOREMAP, NOEVAL}
-	BUILTINS        = {'max', 'min', 'abs', 'pow', 'sum'}
+	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
@@ -527,14 +529,27 @@ class AST_Slice (AST):
 	def _init (self, start, stop, step):
 		self.start, self.stop, self.step = start, stop, step
 
+class AST_Set (AST):
+	op, is_set = 'set', True
+
+	def _init (self, set):
+		self.set = set
+
+class AST_Dict (AST):
+	op, is_dict = 'dict', True
+
+	def _init (self, dict):
+		self.dict = dict
+
 #...............................................................................................
-_AST_CLASSES   = [AST_Eq, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul,
-		AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum, AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice]
+_AST_CLASSES = [AST_Eq, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
+	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
+	AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict]
 
 for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)
 
-_AST_CONSTS    = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
+_AST_CONSTS = (('E', 'e'), ('I', 'i'), ('Pi', 'pi'), ('Infty', 'oo'), ('CInfty', 'zoo'), ('None_', 'None'), ('True_', 'True'), ('False_', 'False'), ('NaN', 'nan'),
 	('Naturals', 'Naturals'), ('Naturals0', 'Naturals0'), ('Integers', 'Integers'), ('Reals', 'Reals'), ('Complexes', 'Complexes'))
 
 for _vp, _vv in _AST_CONSTS:
@@ -548,7 +563,9 @@ AST.One        = AST ('#', '1')
 AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
-AST.MatEmpty   = AST ('func', 'Matrix', ('[', ()))
+AST.MatEmpty   = AST ('mat', ())
+AST.SetEmpty   = AST ('set', ())
+AST.DictEmpty  = AST ('dict', ())
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!

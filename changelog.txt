@@ -1,3 +1,4 @@
-v1.0.1
-------
-* Changed native vector and matrix representation from {} to \[] to make room for sets and dictionaries.
+v1.0.1:
+-------
+* Changed native vector and matrix representation from {} to \[] to make grammatical room for sets and dictionaries.
+* Added Python sets and dictionaries.

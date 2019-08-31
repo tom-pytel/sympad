@@ -44,6 +44,7 @@ TERMS = [
 	'None',
 	'True',
 	'False',
+	'\\emptyset',
 ]
 
 # previously problematic static test expressions

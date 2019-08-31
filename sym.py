@@ -15,6 +15,11 @@ _PYS                   = True
 _EVAL                  = True
 _DOIT                  = True
 
+
+# def __new__(cls, b, e, evaluate=None):
+#     obj = Expr.__new__(cls, b, e)
+
+
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
 
@@ -33,29 +38,26 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
-def _Add (*args, evaluate = True):
+def _EvalOp (op, func, args, evaluate = True):
 	if not evaluate:
-		return sp.Add (*args, evaluate = False)
+		return ExprNoEval (str (AST (op, tuple (spt2ast (a) for a in args))), 1)
 
 	itr = iter (args)
 	res = next (itr)
 
 	for arg in itr:
-		res = res + arg
+		try:
+			res = func (res, arg)
+		except:
+			res = func (sp.sympify (res), sp.sympify (arg))
 
 	return res
+
+def _Add (*args, evaluate = True):
+	return _EvalOp ('+', lambda a, b: a + b, args, evaluate)
 
 def _Mul (*args, evaluate = True):
-	if not evaluate:
-		return sp.Mul (*args, evaluate = False)
-
-	itr = iter (args)
-	res = next (itr)
-
-	for arg in itr:
-		res = res * arg
-
-	return res
+	return _EvalOp ('*', lambda a, b: a * b, args, evaluate)
 
 def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
 	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
@@ -103,7 +105,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if type (spt) is func:
 		try:
 			spt.SYMPAD_ESCAPED = is_escaped
-		except (AttributeError, TypeError): # couldn't assign to Python object (probably because is built-in type)
+		except (AttributeError, TypeError): # couldn't assign to Python object (probably because is built-in type or otherwise has no __dict__)
 			pass
 
 	return spt
@@ -149,8 +151,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_curly (self, ast):
 		return \
-				f'{self._ast2tex (ast)}'                     if ast.is_single_unit else \
-				f'{{{self._ast2tex (ast)}}}'                 if not ast.is_comma else \
+				f'{self._ast2tex (ast)}'     if ast.is_single_unit else \
+				f'{{{self._ast2tex (ast)}}}' if not ast.is_comma else \
 				f'{{\\left({self._ast2tex (ast)}\\right)}}'
 
 	def _ast2tex_paren (self, ast, ops = {}):
@@ -205,7 +207,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return ' + '.join (self._ast2tex_wrap (n, \
 				((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
 				(n.op in ("piece") and n is not ast.add [-1]) or n.op in {'='})
-				for n in ast.add).replace (' + -', ' - ').replace (' + {-', ' - {')
+				for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
 	def _ast2tex_mul (self, ast, ret_has = False):
 		t   = []
@@ -246,7 +248,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return (''.join (t), has) if ret_has else ''.join (t)
 
 	def _ast2tex_pow (self, ast, trighpow = True):
-		b = self._ast2tex_wrap (ast.base, {'mat'}, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat', 'lamb'} or ast.base.is_pos_num))
+		b = self._ast2tex_wrap (ast.base, {'mat'}, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat', 'lamb', 'set'} or ast.base.is_pos_num))
 		p = self._ast2tex_curly (ast.exp)
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -361,6 +363,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'lamb': lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 		'idx': lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "lamb"})}\\left[{self._ast2tex (_tuple2ast (ast.idx))} \\right]',
 		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and (a.is_ass or a.op in {',', 'lamb', 'slice'})) for a in _ast_slice_bounds (ast, '')),
+		'set': lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)}{_trail_comma (ast.set)} \\right\\}}' if ast.set else '\\emptyset',
+		'dict': lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex (k)}{{:}} {self._ast2tex (v)}" for k, v in ast.dict)} \\right\\}}',
 
 		'text': lambda self, ast: ast.tex,
 	}
@@ -428,7 +432,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return ' + '.join (self._ast2nat_wrap (n, \
 				n.is_piece or ((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
 				(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', 'lamb'} \
-				) for n in ast.add).replace (' + -', ' - ').replace (' + {-', ' - {')
+				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
 	def _ast2nat_mul (self, ast, ret_has = False):
 		t   = []
@@ -473,7 +477,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'{n}{" / " if s else "/"}{d}'
 
 	def _ast2nat_pow (self, ast, trighpow = True):
-		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat'} or ast.base.is_pos_num))
+		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat', 'set'} or ast.base.is_pos_num))
 		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'}, {","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -554,6 +558,8 @@ class ast2nat: # abstract syntax tree -> native text
 		'lamb': lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
 		'idx': lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb"})}[{self._ast2nat (_tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
+		'set': lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}',
+		'dict': lambda self, ast: f'{{{", ".join (f"{self._ast2nat (k)}: {self._ast2nat (v)}" for k, v in ast.dict)}}}',
 
 		'text': lambda self, ast: ast.nat,
 	}
@@ -660,6 +666,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'lamb': lambda self, ast: f'Lambda({self._ast2py (_tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
 		'idx': lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece", "lamb"} else self._ast2py (ast.obj)}[{self._ast2py (_tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
+		'set': lambda self, ast: f'{{{", ".join (self._ast2py (c) for c in ast.set)}{_trail_comma (ast.set)}}}',
+		'dict': lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
 
 		'text': lambda self, ast: ast.py,
 	}
@@ -673,12 +681,11 @@ _builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir'
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
-	def __init__ (self): self.vars = self.remap = self.eval = [] # pylint kibble
+	def __init__ (self): self.vars = self.eval = [] # pylint kibble
 	def __new__ (cls, ast, vars = {}):
-		self       = super ().__new__ (cls)
-		self.vars  = [vars]
-		self.remap = True
-		self.eval  = True
+		self      = super ().__new__ (cls)
+		self.vars = [vars]
+		self.eval = True
 
 		return self._ast2spt (ast)
 
@@ -722,7 +729,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		while obj.is_func and obj.args and (obj.func == AST.Func.NOEVAL or obj.func == AST.Func.NOREMAP):
 			obj = obj.args [0]
 
-		if obj.is_var and obj.var not in self.vars: # always support S.Half and the like
+		if obj.is_var and obj.var not in self.vars: # always support S.Half and the like unless base object redefined by assignment
 			spt = getattr (sp, obj.var, None)
 
 		if spt is None:
@@ -837,6 +844,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'lamb': _ast2spt_lamb,
 		'idx': _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
+		'set': lambda self, ast: frozenset ((self._ast2spt (a) for a in ast.set)), # sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)), #
+		'dict': lambda self, ast: dict ((self._ast2spt (k), self._ast2spt (v)) for k, v in ast.dict),
 
 		'text': lambda self, ast: ast.spt,
 	}
@@ -963,13 +972,15 @@ _spt2ast_funcs = {
 	ExprNoEval: lambda spt: spt.SYMPAD_eval (),
 
 	None.__class__: lambda spt: AST.None_,
-	True.__class__: lambda spt: AST.True_,
-	False.__class__: lambda spt: AST.False_,
+	bool: lambda spt: AST.True_ if spt else AST.False_,
 	int: lambda spt: AST ('#', str (spt)),
 	str: lambda spt: AST ('"', spt),
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
-	bool: lambda spt: AST.True_ if spt else AST.False_,
+	set: lambda spt: AST ('set', tuple (spt2ast (e) for e in spt)),
+	frozenset: lambda spt: AST ('set', tuple (spt2ast (e) for e in spt)),
+	dict: lambda spt: AST ('dict', tuple ((spt2ast (k), spt2ast (v)) for k, v in spt.items ())),
+	slice: lambda spt: AST ('slice', False if spt.start is None else spt2ast (spt.start), False if spt.stop is None else spt2ast (spt.stop), None if spt.step is None else spt2ast (spt.step)),
 	sp.Tuple: lambda spt: spt2ast (spt.args),
 
 	sp.Integer: _spt2ast_num,
@@ -995,7 +1006,9 @@ _spt2ast_funcs = {
 	sp.Gt: lambda spt: AST ('=', '>', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 
+	sp.EmptySet: lambda spt: AST.SetEmpty,
 	sp.fancysets.Complexes: lambda spt: AST.Complexes,
+	sp.FiniteSet: lambda spt: AST ('set', tuple (spt2ast (arg) for arg in spt.args)),
 
 	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 
@@ -1085,8 +1098,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('*', (('@', 'x'), ('idx', ('(', ('^', ('@', 'y'), ('@', 'z'))), (('@', 'w'),))))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
+# 	ast = AST ('+', (('#', '1'), ('set', (('#', '-1'),))))
+# 	res = ast2nat (ast)
+# 	# res = spt2ast (res)
 
 # 	print (res)

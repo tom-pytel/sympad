@@ -145,6 +145,17 @@ def _xlat_func_Piecewise (*args):
 
 	return None
 
+def _xlat_func_set (*args):
+	if not args:
+		return AST.SetEmpty
+
+	arg = args [0].strip_paren ()
+
+	if arg.op in {',', '[', 'vec', 'set'}:
+		return AST ('set', tuple (arg [1]))
+
+	return None
+
 def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 	if ab is None:
 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
@@ -163,8 +174,10 @@ XLAT_FUNC2AST_NAT = {
 	'Abs'                  : lambda ast: AST ('|', ast),
 	'Derivative'           : _xlat_func_Derivative,
 	'diff'                 : _xlat_func_Derivative,
+	'EmptySet'             : lambda *args: AST.SetEmpty,
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
 	'factorial'            : lambda ast: AST ('!', ast),
+	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
 	'Integral'             : _xlat_func_Integral,
 	'integrate'            : _xlat_func_Integral,
 	'Lambda'               : _xlat_func_Lambda,
@@ -175,6 +188,7 @@ XLAT_FUNC2AST_NAT = {
 	'Piecewise'            : _xlat_func_Piecewise,
 	'Pow'                  : _xlat_func_Pow,
 	'pow'                  : _xlat_func_Pow,
+	'set'                  : _xlat_func_set,
 	'Sum'                  : _xlat_func_Sum,
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
 }
@@ -236,6 +250,7 @@ _XLAT_FUNC2TEX = {
 	'Gamma'   : lambda args, _ast2tex: f'\\Gamma\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
 	'Lambda'  : lambda args, _ast2tex: f'\\Lambda\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
 	'zeta'    : lambda args, _ast2tex: f'\\zeta\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+
 	'binomial': lambda args, _ast2tex: f'\\binom{{{_ast2tex (args [0])}}}{{{_ast2tex (args [1])}}}' if len (args) == 2 else None,
 }
 
@@ -301,5 +316,5 @@ class sxlat: # for single script
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	ast = AST ('(', (',', (('#', '1'), ('#', '2'))))
-# 	res = _XLAT_FUNC2AST_NAT ['Piecewise'] (ast)
+# 	res = XLAT_FUNC2AST_NAT ['set'] (ast)
 # 	print (res)

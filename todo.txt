@@ -1,5 +1,7 @@
-> sets
-> dictionaries
+> dict ([(1, 2), (3, 4)], evaluate = True)
+> set operations
+
+> \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
 
 > no-evaluate version of Add and Mul (for tuples, lists and strings)?
 > extended comparison 0 <= x < 1
