@@ -1,6 +1,3 @@
-> change matrices to \[[1,2], [3,4]]
-> multiple vector weirdness
-
 > sets
 > dictionaries
 
@@ -29,6 +26,7 @@
 
 
 Errors:
+
 
 Slow:
 

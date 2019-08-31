@@ -1,0 +1,3 @@
+v1.0.1
+------
+* Changed native vector and matrix representation from {} to \[] to make room for sets and dictionaries.

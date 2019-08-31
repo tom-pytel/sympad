@@ -459,6 +459,8 @@ If you are unable to use a keyword argument identifier in a function call becaus
 If you want to pass an equation to a function, like for example "<b>solveset(x**2 = 2, x)</b>", it won't work in this format as it will be treated as a keyword argument assignment.
 In this case you need to pass the equation in one of these manners: "<b>solveset((x**2 = 2), x)</b>", "<b>solveset(x**2 == 2, x)</b>" or assign the equation to a variable first and pass the variable.
 </p><p>
+The LaTeX parsing is not comprehensive, it is geared towards always being able to read back the LaTeX created by SymPad correctly.
+</p><p>
 SymPad inserts the current working directory at the beginning of the Python module search path which means that for example if you run SymPad in the SymPy development directory then the SymPy module used will be the development version.
 </p><p>
 The server runs a single thread for consistency and keeps a single global state (variables), this means that if have two browser windows open the results of calculations in one will be reflected in the other.
