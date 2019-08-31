@@ -129,7 +129,6 @@ def _expr_neg (expr):
 		return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjacent terms not handled by grammar
-	# last      = lhs.mul [-1] if lhs.is_mul else lhs.exp if lhs.is_pow else lhs
 	ast         = None
 	arg, wrap   = _ast_func_reorder (rhs)
 	last, wrapl = lhs, lambda ast: ast
@@ -168,12 +167,6 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 		ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
-		# if lhs.is_mul:
-		# 	return AST ('*', lhs.mul [:-1] + (ast,))
-		# elif lhs.is_pow:
-		# 	return AST ('^', lhs.base, ast)
-		# else:
-		# 	return ast
 		return wrapl (ast)
 
 	return AST.flatcat ('*', lhs, rhs)

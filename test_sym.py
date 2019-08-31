@@ -123,13 +123,13 @@ a, lambda: b = 1
 x, y = lambda: 1, lambda: 2
 doo
 partial'
+Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
+(dx**p*artial)*Limit(sqrt(-1), x, 0**d)[(Matrix([[partialx]])), lcm_list()]
 ln((a)**b)
 a * \int dx + {\int dx dx}
-Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 1 if {a = x if z} else 0 if y
 a, lambda: b = 1
 a * [2]
-(dx**p*artial)*Limit(sqrt(-1), x, 0**d)[(Matrix([[partialx]])), lcm_list()]
 sqrt(1, 2)
 x*[][y]
 lambda: x:
@@ -140,6 +140,10 @@ a*()[2]
 lambda*x:2
 lambda*x, y:2
 d**2e0/dx**2e0 x**3
+y**z [w]
+{y**z} [w]
+x {y**z} [w]
+{x y**z} [w]
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

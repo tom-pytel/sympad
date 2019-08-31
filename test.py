@@ -235,6 +235,24 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('beta (2, 3)'), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (p ('{x d} y'), ('*', (('@', 'x'), ('@', 'd'), ('@', 'y'))))
 		self.assertEqual (p ('d**2e0/dx**2e0 x**3'), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
+		self.assertEqual (p ('ln((a)**b)'), ('log', ('^', ('(', ('@', 'a')), ('@', 'b'))))
+		self.assertEqual (p ('a * \\int dx + {\\int dx dx}'), ('+', (('*', (('@', 'a'), ('intg', None, ('@', 'dx')))), ('intg', ('@', 'dx'), ('@', 'dx')))))
+		self.assertEqual (p ('1 if {a = x if z} else 0 if y'), ('piece', ((('#', '1'), ('=', '=', ('@', 'a'), ('piece', ((('@', 'x'), ('@', 'z')),)))), (('#', '0'), ('@', 'y')))))
+		self.assertEqual (p ('a, lambda: b = 1'), (',', (('@', 'a'), ('lamb', ('=', '=', ('@', 'b'), ('#', '1')), ()))))
+		self.assertEqual (p ('a * [2]'), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
+		self.assertEqual (p ('sqrt(1, 2)'), ('sqrt', (',', (('#', '1'), ('#', '2')))))
+		self.assertEqual (p ('x*[][y]'), ('*', (('@', 'x'), ('idx', ('[', ()), (('@', 'y'),)))))
+		self.assertEqual (p ('lambda: x:'), ('lamb', ('slice', ('@', 'x'), False, None), ()))
+		self.assertEqual (p ('a*[x][y][z]'), ('*', (('@', 'a'), ('idx', ('idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),)))))
+		self.assertEqual (p ('a*()**2'), ('*', (('@', 'a'), ('^', ('(', (',', ())), ('#', '2')))))
+		self.assertEqual (p ('a*().t'), ('*', (('@', 'a'), ('.', ('(', (',', ())), 't'))))
+		self.assertEqual (p ('a*()[2]'), ('*', (('@', 'a'), ('idx', ('(', (',', ())), (('#', '2'),)))))
+		self.assertEqual (p ('lambda*x, y:2'), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('slice', ('@', 'y'), ('#', '2'), None))))
+		self.assertEqual (p ('d**2e0/dx**2e0 x**3'), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
+		self.assertEqual (p ('y**z [w]'), ('^', ('@', 'y'), ('idx', ('@', 'z'), (('@', 'w'),))))
+		self.assertEqual (p ('{y**z} [w]'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))
+		self.assertEqual (p ('x {y**z} [w]'), ('*', (('@', 'x'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))))
+		self.assertEqual (p ('{x y**z} [w]'), ('idx', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z')))), (('@', 'w'),)))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -435,6 +453,24 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('beta (2, 3)')), '\\beta\\left(2, 3 \\right)')
 		self.assertEqual (ast2tex (p ('{x d} y')), 'x\\ d\\ y')
 		self.assertEqual (ast2tex (p ('d**2e0/dx**2e0 x**3')), '\\frac{d^{2{e}{+0}}}{dx^{2{e}{+0}} x^3}')
+		self.assertEqual (ast2tex (p ('ln((a)**b)')), '\\ln\\left(\\left(a \\right)^b \\right)')
+		self.assertEqual (ast2tex (p ('a * \\int dx + {\\int dx dx}')), '{a \\int \\ dx} + \\int dx \\ dx')
+		self.assertEqual (ast2tex (p ('1 if {a = x if z} else 0 if y')), '\\begin{cases} 1 & \\text{for}\\: a = \\begin{cases} x & \\text{for}\\: z \\end{cases} \\\\ 0 & \\text{for}\\: y \\end{cases}')
+		self.assertEqual (ast2tex (p ('a, lambda: b = 1')), 'a, \\left(\\left( \\right) \\mapsto \\left(b = 1 \\right) \\right)')
+		self.assertEqual (ast2tex (p ('a * [2]')), 'a \\cdot \\left[2 \\right]')
+		self.assertEqual (ast2tex (p ('sqrt(1, 2)')), '\\sqrt{\\left(1, 2 \\right)}')
+		self.assertEqual (ast2tex (p ('x*[][y]')), 'x \\cdot \\left[ \\right]\\left[y \\right]')
+		self.assertEqual (ast2tex (p ('lambda: x:')), '\\left(\\left( \\right) \\mapsto x{:} \\right)')
+		self.assertEqual (ast2tex (p ('a*[x][y][z]')), 'a \\cdot \\left[x \\right]\\left[y \\right]\\left[z \\right]')
+		self.assertEqual (ast2tex (p ('a*()**2')), 'a \\cdot \\left( \\right)^2')
+		self.assertEqual (ast2tex (p ('a*().t')), 'a \\cdot \\left( \\right).t')
+		self.assertEqual (ast2tex (p ('a*()[2]')), 'a \\cdot \\left( \\right)\\left[2 \\right]')
+		self.assertEqual (ast2tex (p ('lambda*x, y:2')), '\\lambda \\cdot x, y{:}2')
+		self.assertEqual (ast2tex (p ('d**2e0/dx**2e0 x**3')), '\\frac{d^{2{e}{+0}}}{dx^{2{e}{+0}} x^3}')
+		self.assertEqual (ast2tex (p ('y**z [w]')), 'y^{z\\left[w \\right]}')
+		self.assertEqual (ast2tex (p ('{y**z} [w]')), '{y^z}\\left[w \\right]')
+		self.assertEqual (ast2tex (p ('x {y**z} [w]')), 'x {y^z}\\left[w \\right]')
+		self.assertEqual (ast2tex (p ('{x y**z} [w]')), '\\left(x y^z \\right)\\left[w \\right]')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -635,6 +671,24 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('beta (2, 3)')), 'beta(2, 3)')
 		self.assertEqual (ast2nat (p ('{x d} y')), 'x d y')
 		self.assertEqual (ast2nat (p ('d**2e0/dx**2e0 x**3')), 'd**2e+0 / dx**2e+0 x**3')
+		self.assertEqual (ast2nat (p ('ln((a)**b)')), 'ln((a)**b)')
+		self.assertEqual (ast2nat (p ('a * \\int dx + {\\int dx dx}')), '{a * \\int dx} + \\int dx dx')
+		self.assertEqual (ast2nat (p ('1 if {a = x if z} else 0 if y')), '1 if {a = x if z} else 0 if y')
+		self.assertEqual (ast2nat (p ('a, lambda: b = 1')), 'a, lambda: (b = 1)')
+		self.assertEqual (ast2nat (p ('a * [2]')), 'a * [2]')
+		self.assertEqual (ast2nat (p ('sqrt(1, 2)')), 'sqrt(1, 2)')
+		self.assertEqual (ast2nat (p ('x*[][y]')), 'x * [][y]')
+		self.assertEqual (ast2nat (p ('lambda: x:')), 'lambda: x:')
+		self.assertEqual (ast2nat (p ('a*[x][y][z]')), 'a * [x][y][z]')
+		self.assertEqual (ast2nat (p ('a*()**2')), 'a * ()**2')
+		self.assertEqual (ast2nat (p ('a*().t')), 'a * ().t')
+		self.assertEqual (ast2nat (p ('a*()[2]')), 'a * ()[2]')
+		self.assertEqual (ast2nat (p ('lambda*x, y:2')), 'lambda * x, y:2')
+		self.assertEqual (ast2nat (p ('d**2e0/dx**2e0 x**3')), 'd**2e+0 / dx**2e+0 x**3')
+		self.assertEqual (ast2nat (p ('y**z [w]')), 'y**z[w]')
+		self.assertEqual (ast2nat (p ('{y**z} [w]')), '{y**z}[w]')
+		self.assertEqual (ast2nat (p ('x {y**z} [w]')), 'x {y**z}[w]')
+		self.assertEqual (ast2nat (p ('{x y**z} [w]')), '(x y**z)[w]')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -835,6 +889,24 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('beta (2, 3)')), 'beta(2, 3)')
 		self.assertEqual (ast2py (p ('{x d} y')), 'x*d*y')
 		self.assertEqual (ast2py (p ('d**2e0/dx**2e0 x**3')), 'd**2e+0 / (dx**2e+0*x**3)')
+		self.assertEqual (ast2py (p ('ln((a)**b)')), 'ln((a)**b)')
+		self.assertEqual (ast2py (p ('a * \\int dx + {\\int dx dx}')), 'a*Integral(1, x) + Integral(dx, x)')
+		self.assertEqual (ast2py (p ('1 if {a = x if z} else 0 if y')), 'Piecewise((1, a = Piecewise((x, z))), (0, y))')
+		self.assertEqual (ast2py (p ('a, lambda: b = 1')), 'a, Lambda((), b = 1)')
+		self.assertEqual (ast2py (p ('a * [2]')), 'a*[2]')
+		self.assertEqual (ast2py (p ('sqrt(1, 2)')), 'sqrt(1, 2)')
+		self.assertEqual (ast2py (p ('x*[][y]')), 'x*[][y]')
+		self.assertEqual (ast2py (p ('lambda: x:')), 'Lambda((), x:)')
+		self.assertEqual (ast2py (p ('a*[x][y][z]')), 'a*[x][y][z]')
+		self.assertEqual (ast2py (p ('a*()**2')), 'a*()**2')
+		self.assertEqual (ast2py (p ('a*().t')), 'a*().t')
+		self.assertEqual (ast2py (p ('a*()[2]')), 'a*()[2]')
+		self.assertEqual (ast2py (p ('lambda*x, y:2')), 'lambda*x, y:2')
+		self.assertEqual (ast2py (p ('d**2e0/dx**2e0 x**3')), 'd**2e+0 / (dx**2e+0*x**3)')
+		self.assertEqual (ast2py (p ('y**z [w]')), 'y**z[w]')
+		self.assertEqual (ast2py (p ('{y**z} [w]')), '(y**z)[w]')
+		self.assertEqual (ast2py (p ('x {y**z} [w]')), 'x*(y**z)[w]')
+		self.assertEqual (ast2py (p ('{x y**z} [w]')), '(x*y**z)[w]')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -1035,6 +1107,24 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2tex2ast (p ('{x d} y')), ('*', (('@', 'x'), ('@', 'd'), ('@', 'y'))))
 		self.assertEqual (ast2tex2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
+		self.assertEqual (ast2tex2ast (p ('ln((a)**b)')), ('log', ('^', ('(', ('@', 'a')), ('@', 'b'))))
+		self.assertEqual (ast2tex2ast (p ('a * \\int dx + {\\int dx dx}')), ('+', (('*', (('@', 'a'), ('intg', None, ('@', 'dx')))), ('intg', ('@', 'dx'), ('@', 'dx')))))
+		self.assertEqual (ast2tex2ast (p ('1 if {a = x if z} else 0 if y')), ('piece', ((('#', '1'), ('=', '=', ('@', 'a'), ('piece', ((('@', 'x'), ('@', 'z')),)))), (('#', '0'), ('@', 'y')))))
+		self.assertEqual (ast2tex2ast (p ('a, lambda: b = 1')), (',', (('@', 'a'), ('(', ('lamb', ('(', ('=', '=', ('@', 'b'), ('#', '1'))), ())))))
+		self.assertEqual (ast2tex2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
+		self.assertEqual (ast2tex2ast (p ('sqrt(1, 2)')), ('sqrt', ('(', (',', (('#', '1'), ('#', '2'))))))
+		self.assertEqual (ast2tex2ast (p ('x*[][y]')), ('*', (('@', 'x'), ('idx', ('[', ()), (('@', 'y'),)))))
+		self.assertEqual (ast2tex2ast (p ('lambda: x:')), ('(', ('lamb', ('slice', ('@', 'x'), False, None), ())))
+		self.assertEqual (ast2tex2ast (p ('a*[x][y][z]')), ('*', (('@', 'a'), ('idx', ('idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),)))))
+		self.assertEqual (ast2tex2ast (p ('a*()**2')), ('*', (('@', 'a'), ('^', ('(', (',', ())), ('#', '2')))))
+		self.assertEqual (ast2tex2ast (p ('a*().t')), ('*', (('@', 'a'), ('.', ('(', (',', ())), 't'))))
+		self.assertEqual (ast2tex2ast (p ('a*()[2]')), ('*', (('@', 'a'), ('idx', ('(', (',', ())), (('#', '2'),)))))
+		self.assertEqual (ast2tex2ast (p ('lambda*x, y:2')), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('slice', ('@', 'y'), ('#', '2'), None))))
+		self.assertEqual (ast2tex2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
+		self.assertEqual (ast2tex2ast (p ('y**z [w]')), ('^', ('@', 'y'), ('idx', ('@', 'z'), (('@', 'w'),))))
+		self.assertEqual (ast2tex2ast (p ('{y**z} [w]')), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))
+		self.assertEqual (ast2tex2ast (p ('x {y**z} [w]')), ('*', (('@', 'x'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))))
+		self.assertEqual (ast2tex2ast (p ('{x y**z} [w]')), ('idx', ('(', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z'))))), (('@', 'w'),)))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1235,6 +1325,24 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2nat2ast (p ('{x d} y')), ('*', (('@', 'x'), ('@', 'd'), ('@', 'y'))))
 		self.assertEqual (ast2nat2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
+		self.assertEqual (ast2nat2ast (p ('ln((a)**b)')), ('log', ('^', ('(', ('@', 'a')), ('@', 'b'))))
+		self.assertEqual (ast2nat2ast (p ('a * \\int dx + {\\int dx dx}')), ('+', (('*', (('@', 'a'), ('intg', None, ('@', 'dx')))), ('intg', ('@', 'dx'), ('@', 'dx')))))
+		self.assertEqual (ast2nat2ast (p ('1 if {a = x if z} else 0 if y')), ('piece', ((('#', '1'), ('=', '=', ('@', 'a'), ('piece', ((('@', 'x'), ('@', 'z')),)))), (('#', '0'), ('@', 'y')))))
+		self.assertEqual (ast2nat2ast (p ('a, lambda: b = 1')), (',', (('@', 'a'), ('lamb', ('(', ('=', '=', ('@', 'b'), ('#', '1'))), ()))))
+		self.assertEqual (ast2nat2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
+		self.assertEqual (ast2nat2ast (p ('sqrt(1, 2)')), ('sqrt', (',', (('#', '1'), ('#', '2')))))
+		self.assertEqual (ast2nat2ast (p ('x*[][y]')), ('*', (('@', 'x'), ('idx', ('[', ()), (('@', 'y'),)))))
+		self.assertEqual (ast2nat2ast (p ('lambda: x:')), ('lamb', ('slice', ('@', 'x'), False, None), ()))
+		self.assertEqual (ast2nat2ast (p ('a*[x][y][z]')), ('*', (('@', 'a'), ('idx', ('idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),)))))
+		self.assertEqual (ast2nat2ast (p ('a*()**2')), ('*', (('@', 'a'), ('^', ('(', (',', ())), ('#', '2')))))
+		self.assertEqual (ast2nat2ast (p ('a*().t')), ('*', (('@', 'a'), ('.', ('(', (',', ())), 't'))))
+		self.assertEqual (ast2nat2ast (p ('a*()[2]')), ('*', (('@', 'a'), ('idx', ('(', (',', ())), (('#', '2'),)))))
+		self.assertEqual (ast2nat2ast (p ('lambda*x, y:2')), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('slice', ('@', 'y'), ('#', '2'), None))))
+		self.assertEqual (ast2nat2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3'))))))
+		self.assertEqual (ast2nat2ast (p ('y**z [w]')), ('^', ('@', 'y'), ('idx', ('@', 'z'), (('@', 'w'),))))
+		self.assertEqual (ast2nat2ast (p ('{y**z} [w]')), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))
+		self.assertEqual (ast2nat2ast (p ('x {y**z} [w]')), ('*', (('@', 'x'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))))
+		self.assertEqual (ast2nat2ast (p ('{x y**z} [w]')), ('idx', ('(', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z'))))), (('@', 'w'),)))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1435,6 +1543,24 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2py2ast (p ('{x d} y')), ('*', (('@', 'x'), ('@', 'd'), ('@', 'y'))))
 		self.assertEqual (ast2py2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('(', ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3')))))))
+		self.assertEqual (ast2py2ast (p ('ln((a)**b)')), ('log', ('^', ('(', ('@', 'a')), ('@', 'b'))))
+		self.assertEqual (ast2py2ast (p ('a * \\int dx + {\\int dx dx}')), ('+', (('*', (('@', 'a'), ('func', 'Integral', (('#', '1'), ('@', 'x'))))), ('func', 'Integral', (('@', 'dx'), ('@', 'x'))))))
+		self.assertEqual (ast2py2ast (p ('1 if {a = x if z} else 0 if y')), ('func', 'Piecewise', (('(', (',', (('#', '1'), ('=', '=', ('@', 'a'), ('func', 'Piecewise', (('(', (',', (('@', 'x'), ('@', 'z')))),)))))), ('(', (',', (('#', '0'), ('@', 'y')))))))
+		self.assertEqual (ast2py2ast (p ('a, lambda: b = 1')), (',', (('@', 'a'), ('func', 'Lambda', (('(', (',', ())), ('=', '=', ('@', 'b'), ('#', '1')))))))
+		self.assertEqual (ast2py2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
+		self.assertEqual (ast2py2ast (p ('sqrt(1, 2)')), ('sqrt', (',', (('#', '1'), ('#', '2')))))
+		self.assertEqual (ast2py2ast (p ('x*[][y]')), ('*', (('@', 'x'), ('idx', ('[', ()), (('@', 'y'),)))))
+		self.assertEqual (ast2py2ast (p ('lambda: x:')), ('func', 'Lambda', (('(', (',', ())), ('slice', ('@', 'x'), False, None))))
+		self.assertEqual (ast2py2ast (p ('a*[x][y][z]')), ('*', (('@', 'a'), ('idx', ('idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),)))))
+		self.assertEqual (ast2py2ast (p ('a*()**2')), ('*', (('@', 'a'), ('^', ('(', (',', ())), ('#', '2')))))
+		self.assertEqual (ast2py2ast (p ('a*().t')), ('*', (('@', 'a'), ('.', ('(', (',', ())), 't'))))
+		self.assertEqual (ast2py2ast (p ('a*()[2]')), ('*', (('@', 'a'), ('idx', ('(', (',', ())), (('#', '2'),)))))
+		self.assertEqual (ast2py2ast (p ('lambda*x, y:2')), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('slice', ('@', 'y'), ('#', '2'), None))))
+		self.assertEqual (ast2py2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2e+0')), ('(', ('*', (('^', ('@', 'dx'), ('#', '2e+0')), ('^', ('@', 'x'), ('#', '3')))))))
+		self.assertEqual (ast2py2ast (p ('y**z [w]')), ('^', ('@', 'y'), ('idx', ('@', 'z'), (('@', 'w'),))))
+		self.assertEqual (ast2py2ast (p ('{y**z} [w]')), ('idx', ('(', ('^', ('@', 'y'), ('@', 'z'))), (('@', 'w'),)))
+		self.assertEqual (ast2py2ast (p ('x {y**z} [w]')), ('*', (('@', 'x'), ('idx', ('(', ('^', ('@', 'y'), ('@', 'z'))), (('@', 'w'),)))))
+		self.assertEqual (ast2py2ast (p ('{x y**z} [w]')), ('idx', ('(', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z'))))), (('@', 'w'),)))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1635,6 +1761,23 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('beta (2, 3)')), ('func', 'beta', (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2spt2ast (p ('{x d} y')), ('*', (('@', 'd'), ('@', 'x'), ('@', 'y'))))
 		self.assertEqual (ast2spt2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2')), ('*', (('^', ('@', 'dx'), ('#', '2')), ('^', ('@', 'x'), ('#', '3'))))))
+		self.assertEqual (ast2spt2ast (p ('ln((a)**b)')), ('log', ('^', ('@', 'a'), ('@', 'b'))))
+		self.assertEqual (ast2spt2ast (p ('a * \\int dx + {\\int dx dx}')), ('+', (('*', (('@', 'a'), ('@', 'x'))), ('*', (('@', 'dx'), ('@', 'x'))))))
+		self.assertRaises (TypeError, ast2spt2ast, p ('1 if {a = x if z} else 0 if y'))
+		self.assertEqual (ast2spt2ast (p ('a, lambda: b = 1')), ('(', (',', (('@', 'a'), ('lamb', ('=', '=', ('@', 'b'), ('#', '1')), ())))))
+		self.assertRaises (TypeError, ast2spt2ast, p ('a * [2]'))
+		self.assertRaises (AttributeError, ast2spt2ast, p ('sqrt(1, 2)'))
+		self.assertEqual (ast2spt2ast (p ('x*[][y]')), ('*', (('@', 'x'), ('idx', ('[', ()), (('@', 'y'),)))))
+		self.assertRaises (AttributeError, ast2spt2ast, p ('lambda: x:'))
+		self.assertEqual (ast2spt2ast (p ('a*[x][y][z]')), ('*', (('@', 'a'), ('idx', ('idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),)))))
+		self.assertRaises (AttributeError, ast2spt2ast, p ('a*()**2'))
+		self.assertRaises (AttributeError, ast2spt2ast, p ('a*().t'))
+		self.assertRaises (IndexError, ast2spt2ast, p ('a*()[2]'))
+		self.assertEqual (ast2spt2ast (p ('d**2e0/dx**2e0 x**3')), ('/', ('^', ('@', 'd'), ('#', '2')), ('*', (('^', ('@', 'dx'), ('#', '2')), ('^', ('@', 'x'), ('#', '3'))))))
+		self.assertEqual (ast2spt2ast (p ('y**z [w]')), ('^', ('@', 'y'), ('idx', ('@', 'z'), (('@', 'w'),))))
+		self.assertEqual (ast2spt2ast (p ('{y**z} [w]')), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))
+		self.assertEqual (ast2spt2ast (p ('x {y**z} [w]')), ('*', (('@', 'x'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))))
+		self.assertEqual (ast2spt2ast (p ('{x y**z} [w]')), ('idx', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z')))), (('@', 'w'),)))
 
 _EXPRESSIONS = """
 1
@@ -1835,6 +1978,23 @@ Lambda (x, x**2)
 beta (2, 3)
 {x d} y
 d**2e0/dx**2e0 x**3
+ln((a)**b)
+a * \int dx + {\int dx dx}
+1 if {a = x if z} else 0 if y
+a, lambda: b = 1
+a * [2]
+sqrt(1, 2)
+x*[][y]
+lambda: x:
+a*[x][y][z]
+a*()**2
+a*().t
+a*()[2]
+d**2e0/dx**2e0 x**3
+y**z [w]
+{y**z} [w]
+x {y**z} [w]
+{x y**z} [w]
 """
 
 if __name__ == '__main__':
