@@ -73,7 +73,6 @@ Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
 {{{a'} / {-1}} {\lim_{x \to partial} {-1}} * [lambda x, y, z: {partialx}]}
 \int_{\sqrt[{a}]{1.0}}^{[]} {lambda x: {partialx}} dx
 lambda x: {{dx} = {dx}}
-{{\lim_{x \to {{oo},}} {\frac{d}{d}}}  {{{{{partialx} \cdot {a'}}} \cdot {{{a'}*{'str'}}}}}}
 \int {{{{a} / {dx}}  {partial^{2} / partialz^{2} {partialx}}}} dx
 \int \frac{d}{dx} x dx
 \int d / dx x dx
@@ -84,17 +83,16 @@ lambda x: {{dx} = {dx}}
 -{{{{{\sum_{x = 0}^{-1.0} {oo}} \cdot {({0})}}},}}
 \int {{{{d}+{partialx}+{1}}} if {lambda x, y, z: {a}} else {{1} / {partialx}}} dx
 |{\log_{partial^{1} / partialy^{1} {{{0}*{'str'}}}}{[{{-1.0} / {'str'}}]}}|
-|{Limit ({\frac{1}{-1.0}}!, x, ({{{{-1.0},},{{1},},}},{{{'str'} \cdot {1} \cdot {dx}}},{-{1}}))}|
 {\lim_{x \to -1.0} {dx}} > {{oo} if {-1.0} else {d} if {d} else {1}}
 \frac{{-1.0} > {oo}}{\ln{-1.0}}
-{{{{{{0},},}},{|{d}|},},{{({1.0},{1})},{[{oo}]},},}
+{|{d}|{{({1.0},{1})},{[{oo}]},},}
 1/2 * {a+b} [lambda: {d}]
 {{{'str'} < {1.0}} \cdot {({a'})} \cdot {{1} if {a'}}}
 -{1.0 if partial else d if 1 else oo if 1.0 else 'str'}
 {partial^{5} / partialy^{2} partialy^{2} partialy^{1} {partial}}^{{-1.0} > {d}}
 {lambda x: {a}} if {{{'str'}*{a}*{1}}}
 \int_{{-1.0} <= {1}}^{-{1}} {{-1.0} <= {1.0}} dx
-{{({{{a'},},{{1.0},},})}+{{a}!}+{{d} if {1} else {dx}}}
+{{({a'1.0})}+{{a}!}+{{d} if {1} else {dx}}}
 \int_{{{a}+{a}+{0}}}^{{'str'} / {a}} {\int {1} dx} dx
 lambda x: {lambda x, y: {oo}}
 \sqrt[3]{({oo},{a'})}
@@ -116,7 +114,7 @@ cofactors( 1 , {lambda x: 1 = lambda: 2} )
 {\left|{a}\right|} if {\int {'str'} dx} else {({-1},{-1},{a})} if {\left|{1.0}\right|}
 {lambda x: {{1.0} if {oo} else {1.0} if {oo}}} = {{{{partial} \cdot {partialx}}}**{{a}!}}
 {Sum (\int {1} dx, (x, 0, 1))} dx
-{{\sum_{x = \left|{0}\right|}^{\tan({-1.0})} {\int_{partialx}^{oo} {d} dx}}+{{{\lim_{x \to 1} {d}} \cdot {{{a'}+{-1}+{dx}}}}}+{{{{a} = {a'}}+{({{{dx},},{{0},},{{d},},})}+{{{dx}*{dx}*{a'}}}}}}
+{{\sum_{x = \left|{0}\right|}^{\tan({-1.0})} {\int_{partialx}^{oo} {d} dx}}+{{{\lim_{x \to 1} {d}} \cdot {{{a'}+{-1}+{dx}}}}}+{{{{a} = {a'}}+{({dx0d})}+{{{dx}*{dx}*{a'}}}}}}
 log(partialx*'str'*partialx) / log(Derivative(a, z, 3, y, 2))
 dpartial
 a, lambda: b = 1
@@ -151,6 +149,9 @@ _ALLOW_LAMB = 1
 
 def expr_eq (): ## BROKEN!
 	return f'{expr (_ALLOW_LAMB)} {choice (["=", "==", "!=", "<", "<=", ">", ">="])} {expr (_ALLOW_LAMB)}'
+
+def expr_curly ():
+	return '{' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + '}'
 
 def expr_paren ():
 	return '(' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + ')'
@@ -250,12 +251,12 @@ def expr_intg ():
 			f'\\int {expr (_ALLOW_LAMB)} dx'
 
 def expr_vec ():
-	return '({' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + ',})'
+	return '\[' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + ',]'
 
 def expr_mat ():
 	cols = randrange (1, 4)
 
-	return '({' + ','.join ('{' + ','.join (f'{expr (1)}' for j in range (cols)) + ',}' for i in range (randrange (1, 4))) + ',})'
+	return '\[' + ','.join ('[' + ','.join (f'{expr (1)}' for j in range (cols)) + ',]' for i in range (randrange (1, 4))) + ',]'
 
 def expr_piece ():
 	p = [f'{expr (1)} if {expr (_ALLOW_LAMB)}']

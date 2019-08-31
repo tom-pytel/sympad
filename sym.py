@@ -547,8 +547,8 @@ class ast2nat: # abstract syntax tree -> native text
 		'sum': _ast2nat_sum,
 		'diff': _ast2nat_diff,
 		'intg': _ast2nat_intg,
-		'vec': lambda self, ast: f'{{{", ".join (self._ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}}}',
-		'mat': lambda self, ast: ('{' + ', '.join (f'{{{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}}}' for row in ast.mat) + f'{_trail_comma (ast.mat)}}}') if ast.mat else 'Matrix([])',
+		'vec': lambda self, ast: f'\\[{", ".join (self._ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}]',
+		'mat': lambda self, ast: ('\\[' + ', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}]' for row in ast.mat) + f'{_trail_comma (ast.mat)}]') if ast.mat else 'Matrix([])',
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {self._ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.piece),
 		'lamb': lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
@@ -654,7 +654,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'sum': lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
 		'diff': _ast2py_diff,
 		'intg': _ast2py_intg,
-		'vec': lambda self, ast: 'Matrix([' + ', '.join (f'[{self._ast2py (e)}]' for e in ast.vec) + '])',
+		'vec': lambda self, ast: 'Matrix([' + ', '.join (f'{self._ast2py (e)}' for e in ast.vec) + '])',
 		'mat': lambda self, ast: 'Matrix([' + ', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat) + '])',
 		'piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
 		'lamb': lambda self, ast: f'Lambda({self._ast2py (_tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
@@ -870,12 +870,14 @@ def _spt2ast_num (spt):
 			f'{num.grp [0]}{num.grp [1]}e{e}')
 
 def _spt2ast_MatrixBase (spt):
-	return \
-			AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) for row in range (spt.rows))) \
-			if spt.cols > 1 else \
-			AST ('vec', tuple (spt2ast (e) for e in spt)) \
-			if spt.rows > 1 else \
- 			spt2ast (spt [0])
+	if not spt.cols or not spt.rows:
+		return AST ('vec', ())
+	if spt.cols > 1:
+		return AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) for row in range (spt.rows)))
+	elif spt.rows > 1:
+		return AST ('vec', tuple (spt2ast (e) for e in spt))
+	else:
+		return spt2ast (spt [0])
 
 def _spt2ast_Add (spt):
 	args = spt.args
