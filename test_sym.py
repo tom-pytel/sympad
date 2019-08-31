@@ -21,6 +21,8 @@ TERMS = [
 	'-1',
 	'1.0',
 	'-1.0',
+	'.1',
+	'1.',
 	'1e-100',
 	'1e100',
 	'1e+100',
@@ -44,7 +46,6 @@ TERMS = [
 	'False',
 ]
 
-# \int 2x*-dx
 # previously problematic static test expressions
 _EXPRESSIONS = r"""
 \sqrt[{{1} / {1.0}}]{({oo},{partial})}
@@ -271,13 +272,18 @@ def expr_lamb ():
 	return f'lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr (_ALLOW_LAMB)}'
 
 def expr_idx ():
-	return f'{expr (1)} [{expr (1)}]'
+	if random () >= 0.5:
+		return f'{expr (1)} [{expr (1)}]'
+	elif random () >= 0.5:
+		return f'{expr (1)} [{expr (1)}, {expr (1)}]'
+	else:
+		return f'{expr (1)} [{expr (1)}, {expr (1)}, {expr (1)}]'
 
 def expr_slice ():
-	return \
-			f'{expr (1)} : {expr (1)}' \
-			if random () >= 0.5 else \
-			f'{expr (1)} : {expr (1)} : {expr (1)}'
+	if random () >= 0.5:
+		return f'{expr (1)} : {expr (1)}'
+	else:
+		return f'{expr (1)} : {expr (1)} : {expr (1)}'
 
 #...............................................................................................
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
