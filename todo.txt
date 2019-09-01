@@ -1,4 +1,4 @@
-> set operations: in, ||, &&, ^^
+> set operations: ||, &&, ^^
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
 

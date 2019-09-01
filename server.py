@@ -349,7 +349,7 @@ def _admin_env (*args):
 	return _envop (env, True)
 
 def _admin_envreset (*args):
-	return _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ())) + ['Environment has been reset.']
+	return ['Environment has been reset.'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
