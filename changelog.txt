@@ -1,4 +1,6 @@
 v1.0.1:
 -------
 * Changed native vector and matrix representation from {} to \[] to make grammatical room for sets and dictionaries.
-* Added Python sets and dictionaries.
+* Added sets and set operations.
+* Added Python dictionaries.
+* Added LaTeX \Re and \Im functions and translation.

@@ -447,7 +447,7 @@ def test (argv = None):
 
 			tex = dotex and sym.ast2tex (ast, xlat = False)
 			nat = donat and sym.ast2nat (ast, xlat = False)
-			py  = dopy and sym.ast2py (ast)
+			py  = dopy and sym.ast2py (ast, xlat = False)
 
 			if ('--show', '') in opts:
 				print ()

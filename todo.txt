@@ -1,8 +1,5 @@
 > set operations: in, ||, &&, ^^
 
-> \Re(z), \Im(z)
-> fix Gamma(z) to Python
-
 > def __new__(cls, b, e, evaluate=None): obj = Expr.__new__(cls, b, e)
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)

@@ -4,8 +4,6 @@ from ast import literal_eval
 import re
 import sympy as sp
 
-sp.Gamma = sp.gamma # HACK for LaTeX Gamma function representation
-
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -563,8 +561,11 @@ class ast2nat: # abstract syntax tree -> native text
 
 #...............................................................................................
 class ast2py: # abstract syntax tree -> Python code text
-	def __new__ (cls, ast):
+	def __new__ (cls, ast, xlat = True):
 		self = super ().__new__ (cls)
+
+		if xlat:
+			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
 
 		if _PYS:
 			ast = sxlat.xlat_pyS (ast)

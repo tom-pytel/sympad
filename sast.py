@@ -441,7 +441,7 @@ class AST_Func (AST):
 	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset'}
 	PSEUDO          = {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum'}
-	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd'}
+	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
 	PY_TRIGHINV     = {f'a{f}' for f in TRIGH}

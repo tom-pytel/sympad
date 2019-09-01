@@ -169,7 +169,7 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 
 	return None
 
-XLAT_FUNC2AST_NAT = {
+_XLAT_FUNC2AST_BASE = {
 	'abs'                  : lambda ast: AST ('|', ast),
 	'Abs'                  : lambda ast: AST ('|', ast),
 	'Derivative'           : _xlat_func_Derivative,
@@ -178,7 +178,6 @@ XLAT_FUNC2AST_NAT = {
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
 	'factorial'            : lambda ast: AST ('!', ast),
 	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
-	# 'Gamma'                : lambda *args: AST ('func', 'gamma', tuple (args)),
 	'Integral'             : _xlat_func_Integral,
 	'integrate'            : _xlat_func_Integral,
 	'Lambda'               : _xlat_func_Lambda,
@@ -194,7 +193,12 @@ XLAT_FUNC2AST_NAT = {
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
 }
 
-XLAT_FUNC2AST_TEX = {**XLAT_FUNC2AST_NAT,
+_XLAT_FUNC2AST_REIM = {
+	'Re'                   : lambda *args: AST ('func', 're', tuple (args)),
+	'Im'                   : lambda *args: AST ('func', 'im', tuple (args)),
+}
+
+XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_BASE,
 	'SparseMatrix'         : _xlat_func_Matrix,
 	'MutableSparseMatrix'  : _xlat_func_Matrix,
 	'ImmutableDenseMatrix' : _xlat_func_Matrix,
@@ -203,6 +207,12 @@ XLAT_FUNC2AST_TEX = {**XLAT_FUNC2AST_NAT,
 	'eye'                  : True,
 	'ones'                 : True,
 	'zeros'                : True,
+}
+
+XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2AST_BASE}
+
+XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_REIM,
+	'Gamma'                : lambda *args: AST ('func', 'gamma', tuple (args)),
 }
 
 def _xlat_func2ast (xact, args):
@@ -253,6 +263,8 @@ _XLAT_FUNC2TEX = {
 	'zeta'    : lambda args, _ast2tex: f'\\zeta\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
 
 	'binomial': lambda args, _ast2tex: f'\\binom{{{_ast2tex (args [0])}}}{{{_ast2tex (args [1])}}}' if len (args) == 2 else None,
+	're'      : lambda args, _ast2tex: f'\\Re\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+	'im'      : lambda args, _ast2tex: f'\\Im\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
 }
 
 def xlat_func2tex (ast, _ast2tex):
@@ -308,8 +320,9 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 
 class sxlat: # for single script
-	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
+	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
+	XLAT_FUNC2AST_PY  = XLAT_FUNC2AST_PY
 	xlat_funcs2asts   = xlat_funcs2asts
 	xlat_func2tex     = xlat_func2tex
 	xlat_pyS          = xlat_pyS

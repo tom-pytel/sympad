@@ -162,7 +162,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ()'), ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()'), ('.', ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()'), ('.', ('.', ('.', ('.', ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
-		# self.assertEqual (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}'), ('*', (('mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('set', (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]'), ('*', (('mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('vec', (('@', 'x'), ('@', 'y'))))))
 		self.assertEqual (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma'), ('*', (('@', 'Theta'), ('@', 'Lambda'), ('@', 'xi'), ('@', 'Omega'), ('@', 'alpha'), ('@', 'theta'), ('@', 'Phi'), ('@', 'gamma'), ('@', 'nu'), ('@', 'delta'), ('@', 'rho'), ('@', 'lambda'), ('@', 'iota'), ('@', 'chi'), ('@', 'psi'), ('@', 'Psi'), ('@', 'Xi'), ('@', 'tau'), ('@', 'mu'), ('@', 'sigma'), ('@', 'omega'), ('@', 'kappa'), ('@', 'upsilon'), ('@', 'eta'), ('@', 'Pi'), ('@', 'epsilon'), ('@', 'Delta'), ('@', 'Upsilon'), ('@', 'beta'), ('@', 'phi'), ('@', 'Sigma'))))
 		self.assertEqual (p ('1 if x < y'), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))),)))
 		self.assertEqual (p ('1 if x < y else 3'), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '3'), True))))
@@ -252,6 +252,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('{y**z} [w]'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))
 		self.assertEqual (p ('x {y**z} [w]'), ('*', (('@', 'x'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))))
 		self.assertEqual (p ('{x y**z} [w]'), ('idx', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z')))), (('@', 'w'),)))
+		self.assertEqual (p ('{}'), ('dict', ()))
+		self.assertEqual (p ('{1: 2}'), ('dict', ((('#', '1'), ('#', '2')),)))
+		self.assertEqual (p ('{1: 2, 3: 4}'), ('dict', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4')))))
+		self.assertEqual (p ('\\Re(z)'), ('func', 'Re', (('@', 'z'),)))
+		self.assertEqual (p ('\\Im(z)'), ('func', 'Im', (('@', 'z'),)))
+		self.assertEqual (p ('re(z)'), ('func', 're', (('@', 'z'),)))
+		self.assertEqual (p ('im(z)'), ('func', 'im', (('@', 'z'),)))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -379,7 +386,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right).T.T.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right)')
-		# self.assertEqual (ast2tex (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), '\\begin{bmatrix} A & B \\\\ C & D \\end{bmatrix} \\cdot \\left\\{x, y \\right\\}')
+		self.assertEqual (ast2tex (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), '\\begin{bmatrix} A & B \\\\ C & D \\end{bmatrix} \\cdot \\begin{bmatrix} x \\\\ y \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), '\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')
 		self.assertEqual (ast2tex (p ('1 if x < y')), '\\begin{cases} 1 & \\text{for}\\: x < y \\end{cases}')
 		self.assertEqual (ast2tex (p ('1 if x < y else 3')), '\\begin{cases} 1 & \\text{for}\\: x < y \\\\ 3 & \\text{otherwise} \\end{cases}')
@@ -469,6 +476,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{y**z} [w]')), '{y^z}\\left[w \\right]')
 		self.assertEqual (ast2tex (p ('x {y**z} [w]')), 'x {y^z}\\left[w \\right]')
 		self.assertEqual (ast2tex (p ('{x y**z} [w]')), '\\left(x y^z \\right)\\left[w \\right]')
+		self.assertEqual (ast2tex (p ('{}')), '\\left\\{ \\right\\}')
+		self.assertEqual (ast2tex (p ('{1: 2}')), '\\left\\{1{:} 2 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1: 2, 3: 4}')), '\\left\\{1{:} 2, 3{:} 4 \\right\\}')
+		self.assertEqual (ast2tex (p ('\\Re(z)')), '\\Re\\left(z \\right)')
+		self.assertEqual (ast2tex (p ('\\Im(z)')), '\\Im\\left(z \\right)')
+		self.assertEqual (ast2tex (p ('re(z)')), '\\Re\\left(z \\right)')
+		self.assertEqual (ast2tex (p ('im(z)')), '\\Im\\left(z \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -596,7 +610,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ()')), '\\[[1, 2, 3], [4, 5, 6]].transpose().transpose()')
 		self.assertEqual (ast2nat (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), '\\[[1, 2, 3], [4, 5, 6]].transpose().transpose().transpose()')
 		self.assertEqual (ast2nat (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), '\\[[1, 2, 3], [4, 5, 6]].transpose().transpose().T.T.transpose().transpose()')
-		# self.assertEqual (ast2nat (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), '\\[[A, B], [C, D]] {x, y}')
+		self.assertEqual (ast2nat (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), '\\[[A, B], [C, D]] \\[x, y]')
 		self.assertEqual (ast2nat (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), 'Theta Lambda xi Omega alpha theta Phi gamma nu delta rho lambda iota chi psi Psi Xi tau mu sigma omega kappa upsilon eta Pi epsilon Delta Upsilon beta phi Sigma')
 		self.assertEqual (ast2nat (p ('1 if x < y')), '1 if x < y')
 		self.assertEqual (ast2nat (p ('1 if x < y else 3')), '1 if x < y else 3')
@@ -686,6 +700,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('{y**z} [w]')), '{y**z}[w]')
 		self.assertEqual (ast2nat (p ('x {y**z} [w]')), 'x {y**z}[w]')
 		self.assertEqual (ast2nat (p ('{x y**z} [w]')), '(x y**z)[w]')
+		self.assertEqual (ast2nat (p ('{}')), '{}')
+		self.assertEqual (ast2nat (p ('{1: 2}')), '{1: 2}')
+		self.assertEqual (ast2nat (p ('{1: 2, 3: 4}')), '{1: 2, 3: 4}')
+		self.assertEqual (ast2nat (p ('\\Re(z)')), 're(z)')
+		self.assertEqual (ast2nat (p ('\\Im(z)')), 'im(z)')
+		self.assertEqual (ast2nat (p ('re(z)')), 're(z)')
+		self.assertEqual (ast2nat (p ('im(z)')), 'im(z)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -813,7 +834,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ()')), 'Matrix([[1, 2, 3], [4, 5, 6]]).transpose().transpose()')
 		self.assertEqual (ast2py (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), 'Matrix([[1, 2, 3], [4, 5, 6]]).transpose().transpose().transpose()')
 		self.assertEqual (ast2py (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), 'Matrix([[1, 2, 3], [4, 5, 6]]).transpose().transpose().T.T.transpose().transpose()')
-		# self.assertEqual (ast2py (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), 'Matrix([[A, B], [C, D]])*{x, y}')
+		self.assertEqual (ast2py (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), 'Matrix([[A, B], [C, D]])*Matrix([x, y])')
 		self.assertEqual (ast2py (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), 'Theta*Lambda*xi*Omega*alpha*theta*Phi*gamma*nu*delta*rho*lambda*iota*chi*psi*Psi*Xi*tau*mu*sigma*omega*kappa*upsilon*eta*Pi*epsilon*Delta*Upsilon*beta*phi*Sigma')
 		self.assertEqual (ast2py (p ('1 if x < y')), 'Piecewise((1, x < y))')
 		self.assertEqual (ast2py (p ('1 if x < y else 3')), 'Piecewise((1, x < y), (3, True))')
@@ -903,6 +924,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('{y**z} [w]')), '(y**z)[w]')
 		self.assertEqual (ast2py (p ('x {y**z} [w]')), 'x*(y**z)[w]')
 		self.assertEqual (ast2py (p ('{x y**z} [w]')), '(x*y**z)[w]')
+		self.assertEqual (ast2py (p ('{}')), '{}')
+		self.assertEqual (ast2py (p ('{1: 2}')), '{1: 2}')
+		self.assertEqual (ast2py (p ('{1: 2, 3: 4}')), '{1: 2, 3: 4}')
+		self.assertEqual (ast2py (p ('\\Re(z)')), 're(z)')
+		self.assertEqual (ast2py (p ('\\Im(z)')), 'im(z)')
+		self.assertEqual (ast2py (p ('re(z)')), 're(z)')
+		self.assertEqual (ast2py (p ('im(z)')), 'im(z)')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -1030,7 +1058,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ()')), ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2tex2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), ('.', ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2tex2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
-		# self.assertEqual (ast2tex2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), ('*', (('mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('set', (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (ast2tex2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('vec', (('@', 'x'), ('@', 'y'))))))
 		self.assertEqual (ast2tex2ast (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), ('*', (('@', 'Theta'), ('@', 'Lambda'), ('@', 'xi'), ('@', 'Omega'), ('@', 'alpha'), ('@', 'theta'), ('@', 'Phi'), ('@', 'gamma'), ('@', 'nu'), ('@', 'delta'), ('@', 'rho'), ('@', 'lambda'), ('@', 'iota'), ('@', 'chi'), ('@', 'psi'), ('@', 'Psi'), ('@', 'Xi'), ('@', 'tau'), ('@', 'mu'), ('@', 'sigma'), ('@', 'omega'), ('@', 'kappa'), ('@', 'upsilon'), ('@', 'eta'), ('@', 'Pi'), ('@', 'epsilon'), ('@', 'Delta'), ('@', 'Upsilon'), ('@', 'beta'), ('@', 'phi'), ('@', 'Sigma'))))
 		self.assertEqual (ast2tex2ast (p ('1 if x < y')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))),)))
 		self.assertEqual (ast2tex2ast (p ('1 if x < y else 3')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '3'), True))))
@@ -1120,6 +1148,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('{y**z} [w]')), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))
 		self.assertEqual (ast2tex2ast (p ('x {y**z} [w]')), ('*', (('@', 'x'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))))
 		self.assertEqual (ast2tex2ast (p ('{x y**z} [w]')), ('idx', ('(', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z'))))), (('@', 'w'),)))
+		self.assertEqual (ast2tex2ast (p ('{}')), ('dict', ()))
+		self.assertEqual (ast2tex2ast (p ('{1: 2}')), ('dict', ((('#', '1'), ('#', '2')),)))
+		self.assertEqual (ast2tex2ast (p ('{1: 2, 3: 4}')), ('dict', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4')))))
+		self.assertEqual (ast2tex2ast (p ('\\Re(z)')), ('func', 'Re', (('@', 'z'),)))
+		self.assertEqual (ast2tex2ast (p ('\\Im(z)')), ('func', 'Im', (('@', 'z'),)))
+		self.assertEqual (ast2tex2ast (p ('re(z)')), ('func', 'Re', (('@', 'z'),)))
+		self.assertEqual (ast2tex2ast (p ('im(z)')), ('func', 'Im', (('@', 'z'),)))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1247,7 +1282,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ()')), ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2nat2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), ('.', ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2nat2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
-		# self.assertEqual (ast2nat2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), ('*', (('mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('set', (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (ast2nat2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('vec', (('@', 'x'), ('@', 'y'))))))
 		self.assertEqual (ast2nat2ast (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), ('*', (('@', 'Theta'), ('@', 'Lambda'), ('@', 'xi'), ('@', 'Omega'), ('@', 'alpha'), ('@', 'theta'), ('@', 'Phi'), ('@', 'gamma'), ('@', 'nu'), ('@', 'delta'), ('@', 'rho'), ('@', 'lambda'), ('@', 'iota'), ('@', 'chi'), ('@', 'psi'), ('@', 'Psi'), ('@', 'Xi'), ('@', 'tau'), ('@', 'mu'), ('@', 'sigma'), ('@', 'omega'), ('@', 'kappa'), ('@', 'upsilon'), ('@', 'eta'), ('@', 'Pi'), ('@', 'epsilon'), ('@', 'Delta'), ('@', 'Upsilon'), ('@', 'beta'), ('@', 'phi'), ('@', 'Sigma'))))
 		self.assertEqual (ast2nat2ast (p ('1 if x < y')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))),)))
 		self.assertEqual (ast2nat2ast (p ('1 if x < y else 3')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '3'), True))))
@@ -1337,6 +1372,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('{y**z} [w]')), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))
 		self.assertEqual (ast2nat2ast (p ('x {y**z} [w]')), ('*', (('@', 'x'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))))
 		self.assertEqual (ast2nat2ast (p ('{x y**z} [w]')), ('idx', ('(', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z'))))), (('@', 'w'),)))
+		self.assertEqual (ast2nat2ast (p ('{}')), ('dict', ()))
+		self.assertEqual (ast2nat2ast (p ('{1: 2}')), ('dict', ((('#', '1'), ('#', '2')),)))
+		self.assertEqual (ast2nat2ast (p ('{1: 2, 3: 4}')), ('dict', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4')))))
+		self.assertEqual (ast2nat2ast (p ('\\Re(z)')), ('func', 're', (('@', 'z'),)))
+		self.assertEqual (ast2nat2ast (p ('\\Im(z)')), ('func', 'im', (('@', 'z'),)))
+		self.assertEqual (ast2nat2ast (p ('re(z)')), ('func', 're', (('@', 'z'),)))
+		self.assertEqual (ast2nat2ast (p ('im(z)')), ('func', 'im', (('@', 'z'),)))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1464,7 +1506,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ()')), ('.', ('.', ('func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))),)), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2py2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), ('.', ('.', ('.', ('func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))),)), 'transpose', ()), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2py2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))),)), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
-		# self.assertEqual (ast2py2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}')), ('*', (('func', 'Matrix', (('[', (('[', (('@', 'A'), ('@', 'B'))), ('[', (('@', 'C'), ('@', 'D'))))),)), ('set', (('@', 'x'), ('@', 'y'))))))
+		self.assertEqual (ast2py2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('func', 'Matrix', (('[', (('[', (('@', 'A'), ('@', 'B'))), ('[', (('@', 'C'), ('@', 'D'))))),)), ('func', 'Matrix', (('[', (('@', 'x'), ('@', 'y'))),)))))
 		self.assertEqual (ast2py2ast (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), ('*', (('@', 'Theta'), ('@', 'Lambda'), ('@', 'xi'), ('@', 'Omega'), ('@', 'alpha'), ('@', 'theta'), ('@', 'Phi'), ('@', 'gamma'), ('@', 'nu'), ('@', 'delta'), ('@', 'rho'), ('@', 'lambda'), ('@', 'iota'), ('@', 'chi'), ('@', 'psi'), ('@', 'Psi'), ('@', 'Xi'), ('@', 'tau'), ('@', 'mu'), ('@', 'sigma'), ('@', 'omega'), ('@', 'kappa'), ('@', 'upsilon'), ('@', 'eta'), ('@', 'Pi'), ('@', 'epsilon'), ('@', 'Delta'), ('@', 'Upsilon'), ('@', 'beta'), ('@', 'phi'), ('@', 'Sigma'))))
 		self.assertEqual (ast2py2ast (p ('1 if x < y')), ('func', 'Piecewise', (('(', (',', (('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))))),)))
 		self.assertEqual (ast2py2ast (p ('1 if x < y else 3')), ('func', 'Piecewise', (('(', (',', (('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))))), ('(', (',', (('#', '3'), ('@', 'True')))))))
@@ -1554,6 +1596,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('{y**z} [w]')), ('idx', ('(', ('^', ('@', 'y'), ('@', 'z'))), (('@', 'w'),)))
 		self.assertEqual (ast2py2ast (p ('x {y**z} [w]')), ('*', (('@', 'x'), ('idx', ('(', ('^', ('@', 'y'), ('@', 'z'))), (('@', 'w'),)))))
 		self.assertEqual (ast2py2ast (p ('{x y**z} [w]')), ('idx', ('(', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z'))))), (('@', 'w'),)))
+		self.assertEqual (ast2py2ast (p ('{}')), ('dict', ()))
+		self.assertEqual (ast2py2ast (p ('{1: 2}')), ('dict', ((('#', '1'), ('#', '2')),)))
+		self.assertEqual (ast2py2ast (p ('{1: 2, 3: 4}')), ('dict', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4')))))
+		self.assertEqual (ast2py2ast (p ('\\Re(z)')), ('func', 're', (('@', 'z'),)))
+		self.assertEqual (ast2py2ast (p ('\\Im(z)')), ('func', 'im', (('@', 'z'),)))
+		self.assertEqual (ast2py2ast (p ('re(z)')), ('func', 're', (('@', 'z'),)))
+		self.assertEqual (ast2py2ast (p ('im(z)')), ('func', 'im', (('@', 'z'),)))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1594,7 +1643,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('"x\\x20\\n"')), ('"', 'x \n'))
 		self.assertEqual (ast2spt2ast (p ("'x\\x20\\n'")), ('"', 'x \n'))
 		self.assertEqual (ast2spt2ast (p ("x''string'")), ('*', (('@', 'string_prime'), ('@', 'x_prime_prime'))))
-		# self.assertRaises (TypeError, ast2spt2ast, p ("x' 'string'"))
+		self.assertEqual (ast2spt2ast (p ("x' 'string'")), ('*', (('@', 'string'), ('@', 'x_prime'))))
 		self.assertEqual (ast2spt2ast (p ('|x|')), ('|', ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('x!')), ('!', ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('x+y')), ('+', (('@', 'x'), ('@', 'y'))))
@@ -1681,7 +1730,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ()')), ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))))
 		self.assertEqual (ast2spt2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), ('mat', ((('#', '1'), ('#', '4')), (('#', '2'), ('#', '5')), (('#', '3'), ('#', '6')))))
 		self.assertEqual (ast2spt2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))))
-		# self.assertRaises (TypeError, ast2spt2ast, p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * {x, y}'))
+		self.assertEqual (ast2spt2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('vec', (('+', (('*', (('@', 'A'), ('@', 'x'))), ('*', (('@', 'B'), ('@', 'y'))))), ('+', (('*', (('@', 'C'), ('@', 'x'))), ('*', (('@', 'D'), ('@', 'y'))))))))
 		self.assertEqual (ast2spt2ast (p ('\\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma')), ('*', (('@', 'Delta'), ('@', 'Lambda'), ('@', 'Omega'), ('@', 'Phi'), ('@', 'Pi'), ('@', 'Psi'), ('@', 'Sigma'), ('@', 'Theta'), ('@', 'Upsilon'), ('@', 'Xi'), ('@', 'alpha'), ('@', 'beta'), ('@', 'chi'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'eta'), ('@', 'gamma'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'omega'), ('@', 'phi'), ('@', 'psi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'theta'), ('@', 'upsilon'), ('@', 'xi'))))
 		self.assertEqual (ast2spt2ast (p ('1 if x < y')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))),)))
 		self.assertEqual (ast2spt2ast (p ('1 if x < y else 3')), ('piece', ((('#', '1'), ('=', '<', ('@', 'x'), ('@', 'y'))), (('#', '3'), True))))
@@ -1771,6 +1820,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('{y**z} [w]')), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))
 		self.assertEqual (ast2spt2ast (p ('x {y**z} [w]')), ('*', (('@', 'x'), ('idx', ('^', ('@', 'y'), ('@', 'z')), (('@', 'w'),)))))
 		self.assertEqual (ast2spt2ast (p ('{x y**z} [w]')), ('idx', ('*', (('@', 'x'), ('^', ('@', 'y'), ('@', 'z')))), (('@', 'w'),)))
+		self.assertEqual (ast2spt2ast (p ('{}')), ('dict', ()))
+		self.assertEqual (ast2spt2ast (p ('{1: 2}')), ('dict', ((('#', '1'), ('#', '2')),)))
+		self.assertEqual (ast2spt2ast (p ('{1: 2, 3: 4}')), ('dict', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4')))))
+		self.assertRaises (NameError, ast2spt2ast, p ('\\Re(z)'))
+		self.assertRaises (NameError, ast2spt2ast, p ('\\Im(z)'))
+		self.assertEqual (ast2spt2ast (p ('re(z)')), ('func', 're', (('@', 'z'),)))
+		self.assertEqual (ast2spt2ast (p ('im(z)')), ('func', 'im', (('@', 'z'),)))
 
 _EXPRESSIONS = """
 1
@@ -1991,6 +2047,10 @@ x {y**z} [w]
 {}
 {1: 2}
 {1: 2, 3: 4}
+\\Re(z)
+\\Im(z)
+re(z)
+im(z)
 """
 
 if __name__ == '__main__':
