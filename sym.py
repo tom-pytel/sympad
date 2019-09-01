@@ -40,7 +40,8 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 
 def _EvalOp (op, func, args, evaluate = True):
 	if not evaluate:
-		return ExprNoEval (str (AST (op, tuple (spt2ast (a) for a in args))), 1)
+		# return ExprNoEval (str (AST (op, tuple (spt2ast (a) for a in args))), 1)
+		return op (*args, evaluate = False)
 
 	itr = iter (args)
 	res = next (itr)
@@ -54,10 +55,12 @@ def _EvalOp (op, func, args, evaluate = True):
 	return res
 
 def _Add (*args, evaluate = True):
-	return _EvalOp ('+', lambda a, b: a + b, args, evaluate)
+	# return _EvalOp ('+', lambda a, b: a + b, args, evaluate)
+	return _EvalOp (sp.Add, lambda a, b: a + b, args, evaluate)
 
 def _Mul (*args, evaluate = True):
-	return _EvalOp ('*', lambda a, b: a * b, args, evaluate)
+	# return _EvalOp ('*', lambda a, b: a * b, args, evaluate)
+	return _EvalOp (sp.Mul, lambda a, b: a * b, args, evaluate)
 
 def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
 	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
@@ -230,7 +233,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
 					(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
 					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or \
-					(n.is_pow and (n.base.is_pos_num or n.base.strip_paren ().is_comma)) or \
+					(n.is_pow and (n.base.is_pos_num or n.base.strip_paren ().is_comma or n.base.is_brack)) or \
 					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren ().is_comma))):
 				t.append (f' \\cdot {s}')
 				has = True
@@ -248,7 +251,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return (''.join (t), has) if ret_has else ''.join (t)
 
 	def _ast2tex_pow (self, ast, trighpow = True):
-		b = self._ast2tex_wrap (ast.base, {'mat'}, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat', 'lamb', 'set'} or ast.base.is_pos_num))
+		b = self._ast2tex_wrap (ast.base, {'mat'}, not (ast.base.op in {'@', '"', '(', '[', '|', 'func', 'mat', 'lamb', 'set', 'dict'} or ast.base.is_pos_num))
 		p = self._ast2tex_curly (ast.exp)
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -449,7 +452,7 @@ class ast2nat: # abstract syntax tree -> native text
 					n.strip_paren ().is_comma or (n.is_pow and n.base.strip_paren ().is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
-					(n.is_pow and n.base.is_pos_num) or \
+					(n.is_pow and (n.base.is_pos_num or n.base.is_brack)) or \
 					(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
 					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren ().is_comma))):
 				t.append (f' * {s}')
@@ -477,7 +480,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'{n}{" / " if s else "/"}{d}'
 
 	def _ast2nat_pow (self, ast, trighpow = True):
-		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '|', 'func', 'mat', 'set'} or ast.base.is_pos_num))
+		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '[', '|', 'func', 'mat', 'set', 'dict'} or ast.base.is_pos_num))
 		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'}, {","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:

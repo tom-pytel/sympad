@@ -152,7 +152,7 @@ def expr_eq (): ## BROKEN!
 	return f'{expr (_ALLOW_LAMB)} {choice (["=", "==", "!=", "<", "<=", ">", ">="])} {expr (_ALLOW_LAMB)}'
 
 def expr_curly ():
-	return '{' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + '}'
+	return '{' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + '}'
 
 def expr_paren ():
 	return '(' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + ')'

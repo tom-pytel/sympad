@@ -55,18 +55,19 @@ The best way to see what SymPad can do is by doing, so try entering any of the f
 </p><p>
 cos**-1 0 + \log_2{8}<br>
 \lim_{x\to\infty} 1/x<br>
-Limit(\frac1x, x, 0, dir='-')<br>
+Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
 d**6 / dx dy**2 dz**3 x^3 y^3 z^3<br>
-Derivative(\int dx, x)<br>
-Integral(e^{-x^2}, (x, 0, \infty))<br>
+Derivative (\int dx, x)<br>
+Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\infty e^{-s t} dt<br>
-({{1, 2}, {3, 4}}**-1).transpose()<br>
-{{1, 2, 3}, {4, 5, 6}}[:,1].T<br>
+\int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi<br>
+\[[1, 2], [3, 4]]**-1<br>
+Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
 series (e^x, x, 0, 5)<br>
 factor (x^3 + 3x^2 + 3x + 1)<br>
-expand((((1 + x)**2) + 1)**2, deep = False)<br>
-x if 1 &lt; 2 else y<br>
+expand ((((1 + x)**2) + 1)**2)<br>
+prime2 if randprime(1, 4) == 2 else prime3<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 </p>
 
@@ -272,7 +273,7 @@ power2, ...)</b>".
 <p>
 The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b>\int z dx</b>" = $\int z\ dx$. The definite integral from "<b>a</b>" to
 "<b>b</b>" is "<b>\int_a^b z dx</b>" = $\int_a^b z\ dx$. "<b>\int dx/x</b>" = $\int \frac1x\ dx$. Iterated and improper integrals also work. Integrals
-may also be entered using the standard SymPy syntax "<b>Integral (expression, (variable, from, to))</b>".
+may also be entered using the standard SymPy syntax "<b>Integral (expression, (variable, from, to), ...)</b>".
 </p>
 
 <h4>(In)equalities</h4>
