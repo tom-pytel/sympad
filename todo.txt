@@ -2,9 +2,9 @@
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
 
-> no spacing for nums?
-> quick mode no spacing for vars?
-> non-quick mode explicit spacing for vars?
+> no spacing for nums - 3 x -> 3x?
+> quick mode no spacing for vars x y z -> xyz?
+> non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
 
 > no-evaluate version of Add and Mul (for tuples, lists and strings)?
 > extended comparison 0 <= x < 1
@@ -20,7 +20,6 @@
 > Remove sp.Integer()?
 
 > sequence(factorial(k), (k,1,oo))
-> MatrixSymbol ('A', 2, 2)**n
 > ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
 
 > var assumptions
