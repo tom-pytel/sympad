@@ -8,6 +8,10 @@ import sympy as sp
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+_SYM_PY_BOR            = ' | '
+_SYM_PY_BXOR           = ' ^ '
+_SYM_PY_BAND           = ' & '
+
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = {} # dict user funcs {name: AST, ...}
 _PYS                   = True
@@ -673,9 +677,9 @@ class ast2py: # abstract syntax tree -> Python code text
 		'slice': lambda self, ast: ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 		'set'  : lambda self, ast: f'{{{", ".join (self._ast2py (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else 'set()',
 		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
-		'||'   : lambda self, ast: ' || '.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb'}) for a in ast.bor),
-		'^^'   : lambda self, ast: ' ^^ '.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||'}) for a in ast.bxor),
-		'&&'   : lambda self, ast: ' && '.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.band),
+		'||'   : lambda self, ast: _SYM_PY_BOR.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb'}) for a in ast.bor),
+		'^^'   : lambda self, ast: _SYM_PY_BXOR.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||'}) for a in ast.bxor),
+		'&&'   : lambda self, ast: _SYM_PY_BAND.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.band),
 
 		'text' : lambda self, ast: ast.py,
 	}

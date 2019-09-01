@@ -12,6 +12,8 @@
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
 
+> sym cleanup!
+
 > no spacing for nums - 3 x -> 3x?
 > quick mode no spacing for vars x y z -> xyz?
 > non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?

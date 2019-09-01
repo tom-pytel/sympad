@@ -15,6 +15,10 @@ import sxlat
 import sym
 import sparser
 
+sym._SYM_PY_BOR  = ' || ' # make py symbols symmetric so these operators can be tested
+sym._SYM_PY_BXOR = ' ^^ '
+sym._SYM_PY_BAND = ' && '
+
 _TERMS = [
 	'0',
 	'1',
@@ -300,6 +304,15 @@ def expr_set ():
 
 def expr_dict ():
 	return '{' + ','.join (f'{choice (_TERMS)} : {expr (1)}' for i in range (randrange (4))) + '}'
+
+def expr_bor ():
+	return '{' + '||'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+
+def expr_bxor ():
+	return '{' + '^^'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+
+def expr_band ():
+	return '{' + '&&'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
 #...............................................................................................
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
