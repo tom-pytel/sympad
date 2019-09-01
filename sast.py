@@ -36,6 +36,9 @@
 # ('slice', start, stop, step)                     - indexing slice object: obj [start : stop : step], None or False indicates not specified
 # ('set', (expr1, expr2, ...))                     - set
 # ('dict', ((k1, v1), (k2, v2), ...))              - python dict
+# ('||', (expr1, expr2, ...))                      - bitwise or, set union
+# ('^^', (expr1, expr2, ...))                      - bitwise xor, set symmetric difference
+# ('&&', (expr1, expr2, ...))                      - bitwise and, set intersection
 
 import re
 import types
@@ -545,10 +548,29 @@ class AST_Dict (AST):
 	def _init (self, dict):
 		self.dict = dict
 
+class AST_BOr (AST):
+	op, is_bor = '||', True
+
+	def _init (self, bor):
+		self.bor = bor
+
+class AST_BXor (AST):
+	op, is_bxor = '^^', True
+
+	def _init (self, bxor):
+		self.bxor = bxor
+
+class AST_BAnd (AST):
+	op, is_band = '&&', True
+
+	def _init (self, band):
+		self.band = band
+
 #...............................................................................................
 _AST_CLASSES = [AST_Eq, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
 	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
-	AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict]
+	AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
+	AST_BOr, AST_BXor, AST_BAnd]
 
 for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)

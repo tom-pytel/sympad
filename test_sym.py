@@ -205,7 +205,7 @@ def expr_sqrt ():
 			if random () >= 0.5 else \
 			f'\\sqrt[{expr (_ALLOW_LAMB)}]{expr (_ALLOW_LAMB)}'
 
-_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX)
+_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma'}
 
 def expr_func ():
 	while 1:

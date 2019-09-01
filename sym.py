@@ -1,6 +1,7 @@
 # Convert between internal AST and SymPy expressions and write out LaTeX, native shorthand and Python code
 
 from ast import literal_eval
+from functools import reduce
 import re
 import sympy as sp
 
@@ -196,12 +197,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		a = ast.attr.replace ('_', '\\_')
 		a = a if ast.args is None else f'\\operatorname{{{a}}}{self._ast2tex_paren (_tuple2ast (ast.args))}'
 
-		return f'{self._ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece"})}.{a}'
+		return f'{self._ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "||", "^^", "&&"})}.{a}'
 
 	def _ast2tex_add (self, ast):
 		return ' + '.join (self._ast2tex_wrap (n, \
 				((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
-				(n.op in ("piece") and n is not ast.add [-1]) or n.op in {'='})
+				(n.op in ("piece") and n is not ast.add [-1]) or n.op in {'=', '||', '^^', '&&'})
 				for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
 	def _ast2tex_mul (self, ast, ret_has = False):
@@ -212,7 +213,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		for n in ast.mul:
 			s = self._ast2tex_wrap (n, \
 					(p and _ast_is_neg (n)) or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
-					n.op in {'=', '+'} or (n.is_piece and n is not ast.mul [-1]))
+					n.op in {'=', '+', '||', '^^', '&&'} or (n.is_piece and n is not ast.mul [-1]))
 
 			if p and p.is_attr and s [:6] == '\\left(':
 				s = self._ast2tex_wrap (s, 1)
@@ -330,38 +331,41 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)} {self._ast2tex_wrap (ast.intg, {"diff"}, {"="})} \\ {self._ast2tex (ast.dv)}'
 
 	_ast2tex_funcs = {
-		'=': lambda self, ast: f'{self._ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {self._ast2tex_eq_hs (ast, ast.rhs, False)}',
-		'#': _ast2tex_num,
-		'@': _ast2tex_var,
-		'.': _ast2tex_attr,
-		'"': lambda self, ast: f'\\text{{{repr (ast.str_)}}}',
-		',': lambda self, ast: f'{", ".join (self._ast2tex (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
-		'(': lambda self, ast: self._ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
-		'[': lambda self, ast: f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
-		'|': lambda self, ast: f'\\left|{self._ast2tex (ast.abs)} \\right|',
-		'-': lambda self, ast: f'-{self._ast2tex_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.is_mul, {"=", "+"})}',
-		'!': lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
-		'+': _ast2tex_add,
-		'*': _ast2tex_mul,
-		'/': lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int_num) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{self._ast2tex (ast.denom)}}}',
-		'^': _ast2tex_pow,
-		'log': _ast2tex_log,
-		'sqrt': lambda self, ast: f'\\sqrt{{{self._ast2tex_wrap (ast.rad, 0, {","})}}}' if ast.idx is None else f'\\sqrt[{self._ast2tex (ast.idx)}]{{{self._ast2tex_wrap (ast.rad, 0, {","})}}}',
-		'func': _ast2tex_func,
-		'lim': _ast2tex_lim,
-		'sum': _ast2tex_sum,
-		'diff': _ast2tex_diff,
-		'intg': _ast2tex_intg,
-		'vec': lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (self._ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
-		'mat': lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
+		'='    : lambda self, ast: f'{self._ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {self._ast2tex_eq_hs (ast, ast.rhs, False)}',
+		'#'    : _ast2tex_num,
+		'@'    : _ast2tex_var,
+		'.'    : _ast2tex_attr,
+		'"'    : lambda self, ast: f'\\text{{{repr (ast.str_)}}}',
+		','    : lambda self, ast: f'{", ".join (self._ast2tex (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
+		'('    : lambda self, ast: self._ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
+		'['    : lambda self, ast: f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
+		'|'    : lambda self, ast: f'\\left|{self._ast2tex (ast.abs)} \\right|',
+		'-'    : lambda self, ast: f'-{self._ast2tex_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.is_mul, {"=", "+", "||", "^^", "&&"})}',
+		'!'    : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num)) + '!',
+		'+'    : _ast2tex_add,
+		'*'    : _ast2tex_mul,
+		'/'    : lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int_num) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)}}}{{{self._ast2tex (ast.denom)}}}',
+		'^'    : _ast2tex_pow,
+		'log'  : _ast2tex_log,
+		'sqrt' : lambda self, ast: f'\\sqrt{{{self._ast2tex_wrap (ast.rad, 0, {","})}}}' if ast.idx is None else f'\\sqrt[{self._ast2tex (ast.idx)}]{{{self._ast2tex_wrap (ast.rad, 0, {","})}}}',
+		'func' : _ast2tex_func,
+		'lim'  : _ast2tex_lim,
+		'sum'  : _ast2tex_sum,
+		'diff' : _ast2tex_diff,
+		'intg' : _ast2tex_intg,
+		'vec'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (self._ast2tex (e) for e in ast.vec) + ' \\end{bmatrix}',
+		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {self._ast2tex (p [1])}' for p in ast.piece) + ' \\end{cases}',
-		'lamb': lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
-		'idx': lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "lamb"})}\\left[{self._ast2tex (_tuple2ast (ast.idx))} \\right]',
+		'lamb' : lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
+		'idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&"})}\\left[{self._ast2tex (_tuple2ast (ast.idx))} \\right]',
 		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and (a.is_ass or a.op in {',', 'lamb', 'slice'})) for a in _ast_slice_bounds (ast, '')),
-		'set': lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)}{_trail_comma (ast.set)} \\right\\}}' if ast.set else '\\emptyset',
-		'dict': lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex (k)}{{:}} {self._ast2tex (v)}" for k, v in ast.dict)} \\right\\}}',
+		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)}{_trail_comma (ast.set)} \\right\\}}' if ast.set else '\\emptyset',
+		'dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex (k)}{{:}} {self._ast2tex (v)}" for k, v in ast.dict)} \\right\\}}',
+		'||'   : lambda self, ast: ' \\cup '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ','} or (a.is_piece and a is not ast.bor [-1])) for a in ast.bor),
+		'^^'   : lambda self, ast: ' \\ominus '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '||'} or (a.is_piece and a is not ast.bxor [-1])) for a in ast.bxor),
+		'&&'   : lambda self, ast: ' \\cap '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '||', '^^'} or (a.is_piece and a is not ast.band [-1])) for a in ast.band),
 
-		'text': lambda self, ast: ast.tex,
+		'text' : lambda self, ast: ast.tex,
 	}
 
 #...............................................................................................
@@ -426,7 +430,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_add (self, ast):
 		return ' + '.join (self._ast2nat_wrap (n, \
 				n.is_piece or ((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
-				(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', 'lamb'} \
+				(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', 'lamb', '||', '^^', '&&'} \
 				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
 	def _ast2nat_mul (self, ast, ret_has = False):
@@ -437,7 +441,7 @@ class ast2nat: # abstract syntax tree -> native text
 		for n in ast.mul:
 			s = self._ast2nat_wrap (n, \
 					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
-					n.op in {'=', '+', 'lamb'} or (n.is_piece and n is not ast.mul [-1]))
+					n.op in {'=', '+', 'lamb', '||', '^^', '&&'} or (n.is_piece and n is not ast.mul [-1]))
 
 			if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
 					n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'} or \
@@ -464,16 +468,16 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_div (self, ast):
 		n, ns = (self._ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
 			(self._ast2nat_wrap (ast.numer, 0, 1), True) if ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_pos_int_num) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo) else \
-			self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
+			self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&'})
 
-		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'})
+		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&'})
 		s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
 
 		return f'{n}{" / " if s else "/"}{d}'
 
 	def _ast2nat_pow (self, ast, trighpow = True):
 		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '[', '|', 'func', 'mat', 'set', 'dict'} or ast.base.is_pos_num))
-		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb'}, {","})
+		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&'}, {","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
 			i = len (ast.base.func)
@@ -491,10 +495,10 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_lim (self, ast):
 		s = self._ast2nat_wrap (ast.to, {'piece'}) if ast.dir is None else (self._ast2nat_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
 
-		return f'\\lim_{{{self._ast2nat (ast.lvar)} \\to {s}}} {self._ast2nat_curly_mul_exp (ast.lim, False, ast.lim.op in {"=", "+", "piece", "lamb"} or ast.lim.is_mul_has_abs)}'
+		return f'\\lim_{{{self._ast2nat (ast.lvar)} \\to {s}}} {self._ast2nat_curly_mul_exp (ast.lim, False, ast.lim.op in {"=", "+", "piece", "lamb", "||", "^^", "&&"} or ast.lim.is_mul_has_abs)}'
 
 	def _ast2nat_sum (self, ast):
-		return f'\\sum_{{{self._ast2nat (ast.svar)}={self._ast2nat_curly (ast.from_, {"piece"})}}}^{self._ast2nat_curly (ast.to)} {self._ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "+", "piece", "lamb"} or ast.sum.is_mul_has_abs)}' \
+		return f'\\sum_{{{self._ast2nat (ast.svar)}={self._ast2nat_curly (ast.from_, {"piece"})}}}^{self._ast2nat_curly (ast.to)} {self._ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "+", "piece", "lamb", "||", "^^", "&&"} or ast.sum.is_mul_has_abs)}'
 
 	def _ast2nat_diff (self, ast):
 		p = 0
@@ -515,48 +519,51 @@ class ast2nat: # abstract syntax tree -> native text
 			if ast.intg is None:
 				return f'\\int {self._ast2nat (ast.dv)}'
 			else:
-				return f'\\int {self._ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {self._ast2nat (ast.dv)}'
+				return f'\\int {self._ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb", "||", "^^", "&&"})} {self._ast2nat (ast.dv)}'
 		else:
 			if ast.intg is None:
 				return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)} {self._ast2nat (ast.dv)}'
 			else:
-				return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)} {self._ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {self._ast2nat (ast.dv)}'
+				return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)} {self._ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb", "||", "^^", "&&"})} {self._ast2nat (ast.dv)}'
 
 	_ast2nat_funcs = {
-		'=': lambda self, ast: f'{self._ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2nat_eq_hs (ast, ast.rhs, False)}',
-		'#': lambda self, ast: ast.num,
-		'@': lambda self, ast: ast.var,
-		'.': lambda self, ast: f'{self._ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb"})}.{ast.attr}' \
+		'='    : lambda self, ast: f'{self._ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2nat_eq_hs (ast, ast.rhs, False)}',
+		'#'    : lambda self, ast: ast.num,
+		'@'    : lambda self, ast: ast.var,
+		'.'    : lambda self, ast: f'{self._ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb", "||", "^^", "&&"})}.{ast.attr}' \
 				if ast.args is None else f'{self._ast2nat (ast.obj)}.{ast.attr}{self._ast2nat_paren (_tuple2ast (ast.args))}',
-		'"': lambda self, ast: repr (ast.str_),
-		',': lambda self, ast: f'{", ".join (self._ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
-		'(': lambda self, ast: f'({self._ast2nat (ast.paren)})',
-		'[': lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
-		'|': lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
-		'-': lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.op in {"*", "piece"}, {"=", "+", "lamb"})}',
-		'!': lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) + '!',
-		'+': _ast2nat_add,
-		'*': _ast2nat_mul,
-		'/': _ast2nat_div,
-		'^': _ast2nat_pow,
-		'log': _ast2nat_log,
-		'sqrt': lambda self, ast: f'sqrt{self._ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{self._ast2nat (ast.idx)}]{{{self._ast2nat_wrap (ast.rad, 0, {","})}}}',
-		'func': lambda self, ast: f'{ast.func}({self._ast2nat (_tuple2ast (ast.args))})',
-		'lim': _ast2nat_lim,
-		'sum': _ast2nat_sum,
-		'diff': _ast2nat_diff,
-		'intg': _ast2nat_intg,
-		'vec': lambda self, ast: f'\\[{", ".join (self._ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}]',
-		'mat': lambda self, ast: ('\\[' + ', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}]' for row in ast.mat) + f'{_trail_comma (ast.mat)}]') if ast.mat else 'Matrix([])',
+		'"'    : lambda self, ast: repr (ast.str_),
+		','    : lambda self, ast: f'{", ".join (self._ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
+		'('    : lambda self, ast: f'({self._ast2nat (ast.paren)})',
+		'['    : lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
+		'|'    : lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
+		'-'    : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.is_pos_num or ast.minus.op in {"*", "piece"}, {"=", "+", "lamb", "||", "^^", "&&"})}',
+		'!'    : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_neg_num) + '!',
+		'+'    : _ast2nat_add,
+		'*'    : _ast2nat_mul,
+		'/'    : _ast2nat_div,
+		'^'    : _ast2nat_pow,
+		'log'  : _ast2nat_log,
+		'sqrt' : lambda self, ast: f'sqrt{self._ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{self._ast2nat (ast.idx)}]{{{self._ast2nat_wrap (ast.rad, 0, {","})}}}',
+		'func' : lambda self, ast: f'{ast.func}({self._ast2nat (_tuple2ast (ast.args))})',
+		'lim'  : _ast2nat_lim,
+		'sum'  : _ast2nat_sum,
+		'diff' : _ast2nat_diff,
+		'intg' : _ast2nat_intg,
+		'vec'  : lambda self, ast: f'\\[{", ".join (self._ast2nat (e) for e in ast.vec)}{_trail_comma (ast.vec)}]',
+		'mat'  : lambda self, ast: ('\\[' + ', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}]' for row in ast.mat) + f'{_trail_comma (ast.mat)}]') if ast.mat else 'Matrix([])',
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {self._ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.piece),
-		'lamb': lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
-		'idx': lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb"})}[{self._ast2nat (_tuple2ast (ast.idx))}]',
+		'lamb' : lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
+		'idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&"})}[{self._ast2nat (_tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
-		'set': lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
-		'dict': lambda self, ast: f'{{{", ".join (f"{self._ast2nat (k)}: {self._ast2nat (v)}" for k, v in ast.dict)}}}',
+		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
+		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2nat (k)}: {self._ast2nat (v)}" for k, v in ast.dict)}}}',
+		'||'   : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb'}) for a in ast.bor),
+		'^^'   : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb', '||'}) for a in ast.bxor),
+		'&&'   : lambda self, ast: ' && '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.band),
 
-		'text': lambda self, ast: ast.nat,
+		'text' : lambda self, ast: ast.nat,
 	}
 
 #...............................................................................................
@@ -578,7 +585,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_curly (self, ast):
 		return \
 				self._ast2py_paren (ast) \
-				if ast.strip_minus ().op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
+				if ast.strip_minus ().op in {',', '+', '*', '/', '||', '^^', '&&'} or (ast.is_log and ast.base is not None) else \
 				self._ast2py (ast)
 
 	def _ast2py_paren (self, ast, paren = None):
@@ -636,38 +643,41 @@ class ast2py: # abstract syntax tree -> Python code text
 				return f'Integral({self._ast2py (ast.intg)}, ({self._ast2py (ast.dv.as_var)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))'
 
 	_ast2py_funcs = {
-		'=': lambda self, ast: f'{self._ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else self._ast2py (ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2py (ast.rhs)}',
-		'#': lambda self, ast: ast.num,
-		'@': lambda self, ast: ast.var,
-		'.': lambda self, ast: f'{self._ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{self._ast2py (ast.obj)}.{ast.attr}{self._ast2py_paren (_tuple2ast (ast.args))}',
-		'"': lambda self, ast: repr (ast.str_),
-		',': lambda self, ast: f'{", ".join (self._ast2py (parm) for parm in ast.comma)}{_trail_comma (ast.comma)}',
-		'(': lambda self, ast: f'({self._ast2py (ast.paren)})',
-		'[': lambda self, ast: f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
-		'|': lambda self, ast: f'abs({self._ast2py (ast.abs)})',
-		'-': lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+", "lamb"})}',
-		'!': lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
-		'+': lambda self, ast: ' + '.join (self._ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
-		'*': lambda self, ast: '*'.join (self._ast2py_paren (n) if n.is_add else self._ast2py (n) for n in ast.mul),
-		'/': _ast2py_div,
-		'^': _ast2py_pow,
-		'log': _ast2py_log,
-		'sqrt': lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-		'func': lambda self, ast: f'{ast.unescaped}({self._ast2py (_tuple2ast (ast.args))})',
-		'lim': _ast2py_lim,
-		'sum': lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
-		'diff': _ast2py_diff,
-		'intg': _ast2py_intg,
-		'vec': lambda self, ast: 'Matrix([' + ', '.join (f'{self._ast2py (e)}' for e in ast.vec) + '])',
-		'mat': lambda self, ast: 'Matrix([' + ', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat) + '])',
+		'='    : lambda self, ast: f'{self._ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else self._ast2py (ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2py (ast.rhs)}',
+		'#'    : lambda self, ast: ast.num,
+		'@'    : lambda self, ast: ast.var,
+		'.'    : lambda self, ast: f'{self._ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{self._ast2py (ast.obj)}.{ast.attr}{self._ast2py_paren (_tuple2ast (ast.args))}',
+		'"'    : lambda self, ast: repr (ast.str_),
+		','    : lambda self, ast: f'{", ".join (self._ast2py (parm) for parm in ast.comma)}{_trail_comma (ast.comma)}',
+		'('    : lambda self, ast: f'({self._ast2py (ast.paren)})',
+		'['    : lambda self, ast: f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
+		'|'    : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
+		'-'    : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+", "lamb"})}',
+		'!'    : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
+		'+'    : lambda self, ast: ' + '.join (self._ast2py_paren (n) if n.op in {'||', '^^', '&&'} else self._ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
+		'*'    : lambda self, ast: '*'.join (self._ast2py_paren (n) if n.op in {'+', '||', '^^', '&&'} else self._ast2py (n) for n in ast.mul),
+		'/'    : _ast2py_div,
+		'^'    : _ast2py_pow,
+		'log'  : _ast2py_log,
+		'sqrt' : lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
+		'func' : lambda self, ast: f'{ast.unescaped}({self._ast2py (_tuple2ast (ast.args))})',
+		'lim'  : _ast2py_lim,
+		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
+		'diff' : _ast2py_diff,
+		'intg' : _ast2py_intg,
+		'vec'  : lambda self, ast: 'Matrix([' + ', '.join (f'{self._ast2py (e)}' for e in ast.vec) + '])',
+		'mat'  : lambda self, ast: 'Matrix([' + ', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat) + '])',
 		'piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
-		'lamb': lambda self, ast: f'Lambda({self._ast2py (_tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
-		'idx': lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece", "lamb"} else self._ast2py (ast.obj)}[{self._ast2py (_tuple2ast (ast.idx))}]',
+		'lamb' : lambda self, ast: f'Lambda({self._ast2py (_tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
+		'idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece", "lamb"} else self._ast2py (ast.obj)}[{self._ast2py (_tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
-		'set': lambda self, ast: f'{{{", ".join (self._ast2py (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else 'set()',
-		'dict': lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
+		'set'  : lambda self, ast: f'{{{", ".join (self._ast2py (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else 'set()',
+		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
+		'||'   : lambda self, ast: ' || '.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb'}) for a in ast.bor),
+		'^^'   : lambda self, ast: ' ^^ '.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||'}) for a in ast.bxor),
+		'&&'   : lambda self, ast: ' && '.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.band),
 
-		'text': lambda self, ast: ast.py,
+		'text' : lambda self, ast: ast.py,
 	}
 
 #...............................................................................................
@@ -834,38 +844,41 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	}
 
 	_ast2spt_funcs = {
-		'=': lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
-		'#': lambda self, ast: sp.Integer (ast.num) if ast.is_int_num else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
-		'@': _ast2spt_var,
-		'.': _ast2spt_attr,
-		'"': lambda self, ast: ast.str_,
-		',': lambda self, ast: tuple (self._ast2spt (p) for p in ast.comma),
-		'(': lambda self, ast: self._ast2spt (ast.paren),
-		'[': lambda self, ast: [self._ast2spt (b) for b in ast.brack],
-		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), evaluate = _EVAL),
-		'-': lambda self, ast: -self._ast2spt (ast.minus),
-		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), evaluate = _EVAL),
-		'+': _ast2spt_add, # lambda self, ast: _Add (*(self._ast2spt (n) for n in ast.add), evaluate = _EVAL),
-		'*': lambda self, ast: _Mul (*(self._ast2spt (n) for n in ast.mul), evaluate = _EVAL),
-		'/': lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
-		'^': lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), evaluate = _EVAL),
-		'log': lambda self, ast: sp.log (self._ast2spt (ast.log), evaluate = _EVAL) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), evaluate = _EVAL),
-		'sqrt': lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (sp.S (2), -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
-		'func': _ast2spt_func,
-		'lim': lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
-		'sum': lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
-		'diff': _ast2spt_diff,
-		'intg': _ast2spt_intg,
-		'vec': lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], evaluate = _EVAL),
-		'mat': lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], evaluate = _EVAL),
+		'='    : lambda self, ast: self._ast2spt_eq [ast.rel] (self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)),
+		'#'    : lambda self, ast: sp.Integer (ast.num) if ast.is_int_num else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
+		'@'    : _ast2spt_var,
+		'.'    : _ast2spt_attr,
+		'"'    : lambda self, ast: ast.str_,
+		','    : lambda self, ast: tuple (self._ast2spt (p) for p in ast.comma),
+		'('    : lambda self, ast: self._ast2spt (ast.paren),
+		'['    : lambda self, ast: [self._ast2spt (b) for b in ast.brack],
+		'|'    : lambda self, ast: sp.Abs (self._ast2spt (ast.abs), evaluate = _EVAL),
+		'-'    : lambda self, ast: -self._ast2spt (ast.minus),
+		'!'    : lambda self, ast: sp.factorial (self._ast2spt (ast.fact), evaluate = _EVAL),
+		'+'    : _ast2spt_add,
+		'*'    : lambda self, ast: _Mul (*(self._ast2spt (n) for n in ast.mul), evaluate = _EVAL),
+		'/'    : lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
+		'^'    : lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), evaluate = _EVAL),
+		'log'  : lambda self, ast: sp.log (self._ast2spt (ast.log), evaluate = _EVAL) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), evaluate = _EVAL),
+		'sqrt' : lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (sp.S (2), -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
+		'func' : _ast2spt_func,
+		'lim'  : lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
+		'sum'  : lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
+		'diff' : _ast2spt_diff,
+		'intg' : _ast2spt_intg,
+		'vec'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], evaluate = _EVAL),
+		'mat'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], evaluate = _EVAL),
 		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece), evaluate = _EVAL),
-		'lamb': _ast2spt_lamb,
-		'idx': _ast2spt_idx,
+		'lamb' : _ast2spt_lamb,
+		'idx'  : _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
-		'set': lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)), # frozenset ((self._ast2spt (a) for a in ast.set)), #
-		'dict': lambda self, ast: dict ((self._ast2spt (k), self._ast2spt (v)) for k, v in ast.dict),
+		'set'  : lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)), # frozenset ((self._ast2spt (a) for a in ast.set)), #
+		'dict' : lambda self, ast: dict ((self._ast2spt (k), self._ast2spt (v)) for k, v in ast.dict),
+		'||'   : lambda self, ast: reduce (lambda a, b: a | b, (self._ast2spt (a) for a in ast.bor)),
+		'^^'   : lambda self, ast: reduce (lambda a, b: a ^ b, (self._ast2spt (a) for a in ast.bxor)),
+		'&&'   : lambda self, ast: reduce (lambda a, b: a & b, (self._ast2spt (a) for a in ast.band)),
 
-		'text': lambda self, ast: ast.spt,
+		'text' : lambda self, ast: ast.spt,
 	}
 
 #...............................................................................................

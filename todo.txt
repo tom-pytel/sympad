@@ -1,6 +1,14 @@
+> ast2py: ||, ^^, &&
+
 > set operations: ||, &&, ^^
 
+> d/dx set ops
+> \int set ops
+
 > emptyset unicode symbol
+
+> var_prime in quick mode
+> Gamma -> gamma no xlat when Gamma lambda present?
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
 
@@ -8,18 +16,16 @@
 > quick mode no spacing for vars x y z -> xyz?
 > non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
 
-> no-evaluate version of Add and Mul (for tuples, lists and strings)?
-> extended comparison 0 <= x < 1
-
 > display subscripts
 > parse subscripts
+
+> no-evaluate version of Add and Mul (for tuples, lists and strings)?
+> extended comparison 0 <= x < 1
 
 > flush sys.stdout to msg before sending exception?
 > function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?
-
 > long variable name shortcut?
-> Remove sp.Integer()?
 
 > sequence(factorial(k), (k,1,oo))
 > ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
@@ -36,4 +42,3 @@ Misc:
 
 
 Errors:
-
