@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# Randomized consistency testing of parsing: text -> ast -> tex/nat/py -> text -> ast
+# Randomized CONSISTENCY testing of parsing: text -> ast -> tex/nat/py -> text -> ast
 
 # test_sym.py -i --show --nc
 
@@ -205,15 +205,23 @@ def expr_sqrt ():
 			if random () >= 0.5 else \
 			f'\\sqrt[{expr (_ALLOW_LAMB)}]{expr (_ALLOW_LAMB)}'
 
+_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX)
+
 def expr_func ():
 	while 1:
 		py = choice (list (AST.Func.PY))
 
-		if py not in sxlat.XLAT_FUNC2AST_TEX:
+		if py not in _FORBIDDEN_FUNCS:
+			break
+
+	while 1:
+		tex = choice (list (AST.Func.TEX))
+
+		if tex not in _FORBIDDEN_FUNCS:
 			break
 
 	return \
-			'\\' + f'{choice (list (AST.Func.TEX))}{expr_paren ()}' \
+			'\\' + f'{tex}{expr_paren ()}' \
 			if random () >= 0.5 else \
 			f'{py}{expr_paren ()}' \
 
