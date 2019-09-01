@@ -178,6 +178,7 @@ XLAT_FUNC2AST_NAT = {
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
 	'factorial'            : lambda ast: AST ('!', ast),
 	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
+	# 'Gamma'                : lambda *args: AST ('func', 'gamma', tuple (args)),
 	'Integral'             : _xlat_func_Integral,
 	'integrate'            : _xlat_func_Integral,
 	'Lambda'               : _xlat_func_Lambda,
