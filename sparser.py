@@ -370,7 +370,7 @@ def _expr_curly (ast):
 
 	for kv in e:
 		if not kv.is_slice or kv.step is not None or kv.start is False or kv.stop is False:
-			if len (e) != 1:
+			if ast.is_comma:
 				return AST ('set', ast.comma)
 			else:
 				return AST ('{', ast)
@@ -569,7 +569,7 @@ class Parser (lalr1.LALR1):
 		('DBLSLASH',      r'\\\\'),
 		('COMMA',         r','),
 		('IGNORE_CURLY',  r'\\underline|\\mathcal|\\mathbb|\\mathfrak|\\mathsf|\\mathbf|\\textbf'),
-		('ignore',        r'\\,|\\:|\\?\s+|\\text\s*{\s*[^}]*\s*}'),
+		('ignore',        r'\\[,:;]|\\?\s+|\\text\s*{\s*[^}]*\s*}'),
 	])
 
 	_PYGREEK_QUICK = '(?:' + '|'.join (reversed (sorted (g for g in AST.Var.GREEK))) + ')'

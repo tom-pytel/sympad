@@ -42,9 +42,6 @@ import types
 
 import sympy as sp
 
-_SYMPY_OBJECTS = dict ((name, obj) for name, obj in filter (lambda no: no [0] [0] != '_', sp.__dict__.items ()))
-_SYMPY_FUNCS   = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and callable (no [1]), _SYMPY_OBJECTS.items ()))
-
 #...............................................................................................
 class AST (tuple):
 	op      = None
@@ -165,12 +162,15 @@ class AST (tuple):
 		count       = -1 if count is None else count
 		neg         = lambda ast: ast
 		neg.has_neg = False
+		neg.is_neg  = False
 
 		while self.op == '-' and count:
 			self         = self.minus
 			count       -= 1
+			is_neg       = neg.is_neg
 			neg          = lambda ast, neg = neg: neg (ast.neg (stack = True))
 			neg.has_neg  = True
+			neg.is_neg   = not is_neg
 
 		return (self, neg) if retneg else self
 
@@ -430,6 +430,9 @@ class AST_Sqrt (AST):
 
 class AST_Func (AST):
 	op, is_func = 'func', True
+
+	_SYMPY_OBJECTS  = dict ((name, obj) for name, obj in filter (lambda no: no [0] [0] != '_', sp.__dict__.items ()))
+	_SYMPY_FUNCS    = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and callable (no [1]), _SYMPY_OBJECTS.items ()))
 
 	ESCAPE          = '$'
 	NOREMAP         = '@'

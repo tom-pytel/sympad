@@ -54,19 +54,18 @@ The input will be evaluated symbolically or numerically with the results being c
 The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad:
 </p><p>
 cos**-1 0 + \log_2{8}<br>
+expand ((1 + x)**4)<br>
+factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)<br>
+series (e^x, x, 0, 5)<br>
 \lim_{x\to\infty} 1/x<br>
 Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
+Derivative (x**2y**2, x, y, 2)<br>
 d**6 / dx dy**2 dz**3 x^3 y^3 z^3<br>
-Derivative (\int dx, x)<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
-\int_0^\infty e^{-s t} dt<br>
 \int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi<br>
 \[[1, 2], [3, 4]]**-1<br>
 Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
-series (e^x, x, 0, 5)<br>
-factor (x^3 + 3x^2 + 3x + 1)<br>
-expand ((((1 + x)**2) + 1)**2)<br>
 prime2 if randprime(1, 4) == 2 else prime3<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 </p>
@@ -111,7 +110,7 @@ The symbolic expressions can be copied to the clipboard in various formats.
 Single-click for a simple native format meant to be pasted back into the input field.
 A double click-copies the expression in Python format suitable for pasting into a Python shell or source file.
 Finally, a triple-click will copy the expression in LaTeX format.
-The single-click native and double-click Python formats should always be pasteable back into SymPad whereas the LaTeX format may or may not be depending on what elements are present.
+The single-click native and double-click Python formats should almost always be pasteable back into SymPad, exceptions are rare and will be noted in this documentation, whereas the LaTeX format may or may not be depending on what elements are present.
 </p>
 
 <h4>Quick Input Mode</h4>
@@ -422,7 +421,8 @@ Also remember that these functions are always available for calling using the "<
 
 <h4>Environment Settings for env()</h4>
 
-<p>"<b>EI</b>" - The use of "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".</p>
+<p>"<b>EI</b>" - Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
+This allows the Python code copied from SymPad to work directly with SymPy where the uppercase constants are used.</p>
 <p>"<b>quick</b>" - Quick single letter variable name input mode.</p>
 <p>"<b>pyS</b>" - Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</p>
 <p>"<b>eval</b>" - Expression evaluation. Normally when you enter "<b>1 + 2</b>" it is evaluated for an answer of "<b>3</b>". If you turn this option off then this evaluation will not happen and the expression will stay as "<b>1 + 2</b>".</p>
@@ -441,14 +441,10 @@ Also remember that these functions are always available for calling using the "<
 <p>
 <b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should never leave this server open to the internet by serving on an IP address visible to the external world.
 </p><p>
-There is a special use for the "<b>_</b>" underscore character which is the same as in the Python interactive shell in that it represents the last expression successfully evaluated.
-To see this in action type in "<b>1</b>" and hit Enter, then type in "<b>expand ((x+1)*_)</b>" and hit Enter.
-Repeat this several times using the up arrow.
+Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
 After filling up the browser with many pretty mathematical expressions you may note that it starts to get slower, simply reload the page, all your variables and history will be preserved.
 Or try adding "<b>--ugly</b>" to the command line, this will use a quicker draft rendering for the math.
-</p><p>
-Due to mixing operators from Python and LaTeX the grammar may be a little wonky in places so if something doesn't seem to work as it should try wrapping it in parentheses or putting a space between the problematic elements.
 </p><p>
 You can always tell whether SymPad will treat an identifier as a function or a variable by looking at the font which is used for the name, it is different for functions vs. variables.
 Also, SymPad will give you an empty set of parentheses as an autocomplete option when it recognizes a function name (this only works for top-level functions).
@@ -466,6 +462,8 @@ SymPad inserts the current working directory at the beginning of the Python modu
 </p><p>
 The server runs a single thread for consistency and keeps a single global state (variables), this means that if have two browser windows open the results of calculations in one will be reflected in the other.
 If you want a completely separate context then you can run another SymPad on a different port.
+</p><p>
+Keep in mind that if you copy to Python code and want it to run in SymPy you must be in uppercase "<b>EI</b>" mode or have the variables "<b>e</b>" and "<b>i</b>" in Python assigned to "<b>E</b>" and "<b>I</b>".
 </p><p>
 There are many SymPy objects which SymPad does not understand natively yet.
 In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the element will be used in the native representation string.

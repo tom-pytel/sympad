@@ -15,11 +15,6 @@ _PYS                   = True
 _EVAL                  = True
 _DOIT                  = True
 
-
-# def __new__(cls, b, e, evaluate=None):
-#     obj = Expr.__new__(cls, b, e)
-
-
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
 
@@ -38,29 +33,20 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
-def _EvalOp (op, func, args, evaluate = True):
+def _Mul (*args, evaluate = True):
 	if not evaluate:
-		# return ExprNoEval (str (AST (op, tuple (spt2ast (a) for a in args))), 1)
-		return op (*args, evaluate = False)
+		return sp.Mul (*args, evaluate = False)
 
 	itr = iter (args)
 	res = next (itr)
 
 	for arg in itr:
 		try:
-			res = func (res, arg)
+			res = res * arg
 		except:
-			res = func (sp.sympify (res), sp.sympify (arg))
+			res = sp.sympify (res) * sp.sympify (arg)
 
 	return res
-
-def _Add (*args, evaluate = True):
-	# return _EvalOp ('+', lambda a, b: a + b, args, evaluate)
-	return _EvalOp (sp.Add, lambda a, b: a + b, args, evaluate)
-
-def _Mul (*args, evaluate = True):
-	# return _EvalOp ('*', lambda a, b: a * b, args, evaluate)
-	return _EvalOp (sp.Mul, lambda a, b: a * b, args, evaluate)
 
 def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
 	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
@@ -85,6 +71,8 @@ def _ast_followed_by_slice (ast, seq):
 
 	return False
 
+_ast_func_call_spobjs = set (id (o) for o in sp.__dict__.values ()) # for testing to see if obj belongs to SymPy
+
 def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
@@ -100,12 +88,18 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 		else:
 			pyargs.append (_ast2spt (arg))
 
-	try:
-		spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
-	except: # (ValueError, TypeError, NameError, AttributeError, sp.OptionError): # maybe 'evaluate' keyword not supported?
+	spt = None
+
+	if id (func) in _ast_func_call_spobjs: # if SymPy object try applying 'evaluate' flag
+		try:
+			spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
+		except: # (ValueError, TypeError, NameError, AttributeError, sp.OptionError): # maybe 'evaluate' keyword not supported?
+			pass
+
+	if spt is None:
 		spt = func (*pyargs, **pykw)
 
-	if type (spt) is func:
+	if type (spt) is func: # try to pass func name escaped status through SymPy object
 		try:
 			spt.SYMPAD_ESCAPED = is_escaped
 		except (AttributeError, TypeError): # couldn't assign to Python object (probably because is built-in type or otherwise has no __dict__)
@@ -561,7 +555,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'lamb': lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
 		'idx': lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb"})}[{self._ast2nat (_tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
-		'set': lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}',
+		'set': lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'dict': lambda self, ast: f'{{{", ".join (f"{self._ast2nat (k)}: {self._ast2nat (v)}" for k, v in ast.dict)}}}',
 
 		'text': lambda self, ast: ast.nat,
@@ -669,7 +663,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'lamb': lambda self, ast: f'Lambda({self._ast2py (_tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
 		'idx': lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece", "lamb"} else self._ast2py (ast.obj)}[{self._ast2py (_tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
-		'set': lambda self, ast: f'{{{", ".join (self._ast2py (c) for c in ast.set)}{_trail_comma (ast.set)}}}',
+		'set': lambda self, ast: f'{{{", ".join (self._ast2py (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else 'set()',
 		'dict': lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
 
 		'text': lambda self, ast: ast.py,
@@ -748,6 +742,24 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				raise
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
+
+	def _ast2spt_add (self, ast): # specifically try to subtract negated objects (because of sets)
+		if not _EVAL:
+			return sp.Add (*(self._ast2spt (n) for n in ast.add), evaluate = False)
+
+		itr = iter (ast.add)
+		res = self._ast2spt (next (itr))
+
+		for arg in itr:
+			arg, neg    = arg.strip_minus (retneg = True)
+			arg, is_neg = self._ast2spt (arg), neg.is_neg
+
+			try:
+				res = res - arg if is_neg else res + arg
+			except:
+				res = sp.sympify (res) - sp.sympify (arg) if is_neg else sp.sympify (res) + sp.sympify (arg)
+
+		return res
 
 	_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
 
@@ -830,7 +842,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'|': lambda self, ast: sp.Abs (self._ast2spt (ast.abs), evaluate = _EVAL),
 		'-': lambda self, ast: -self._ast2spt (ast.minus),
 		'!': lambda self, ast: sp.factorial (self._ast2spt (ast.fact), evaluate = _EVAL),
-		'+': lambda self, ast: _Add (*(self._ast2spt (n) for n in ast.add), evaluate = _EVAL),
+		'+': _ast2spt_add, # lambda self, ast: _Add (*(self._ast2spt (n) for n in ast.add), evaluate = _EVAL),
 		'*': lambda self, ast: _Mul (*(self._ast2spt (n) for n in ast.mul), evaluate = _EVAL),
 		'/': lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
 		'^': lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), evaluate = _EVAL),
@@ -847,7 +859,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'lamb': _ast2spt_lamb,
 		'idx': _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
-		'set': lambda self, ast: frozenset ((self._ast2spt (a) for a in ast.set)), # sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)), #
+		'set': lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)), # frozenset ((self._ast2spt (a) for a in ast.set)), #
 		'dict': lambda self, ast: dict ((self._ast2spt (k), self._ast2spt (v)) for k, v in ast.dict),
 
 		'text': lambda self, ast: ast.spt,
@@ -862,6 +874,9 @@ def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
 			return func (spt)
 
 	tex = sp.latex (spt)
+
+	if tex == str (spt): # no native latex representation?
+		tex = tex.replace ('_', '\\_')
 
 	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
 		tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'

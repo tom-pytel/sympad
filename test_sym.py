@@ -15,7 +15,7 @@ import sxlat
 import sym
 import sparser
 
-TERMS = [
+_TERMS = [
 	'0',
 	'1',
 	'-1',
@@ -287,6 +287,12 @@ def expr_slice ():
 	else:
 		return f'{expr (1)} : {expr (1)} : {expr (1)}'
 
+def expr_set ():
+	return '\\{' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + '}'
+
+def expr_dict ():
+	return '{' + ','.join (f'{choice (_TERMS)} : {expr (1)}' for i in range (randrange (4))) + '}'
+
 #...............................................................................................
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
 
@@ -297,7 +303,7 @@ def expr (allow_lamb = 0, depth = None):
 		DEPTH = depth
 
 	if DEPTH <= 0:
-		ret = choice (TERMS)
+		ret = choice (_TERMS)
 
 	else:
 		DEPTH -= 1
