@@ -256,6 +256,7 @@ class AST_Eq (AST):
 	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>=', '\u2208': 'in', '\u2209': 'notin'}
 	ANY2PY = {**UNI2PY, **TEX2PY}
 	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge', 'in': '\\in', 'notin': '\\notin'}
+	PYFMT  = {'notin': 'not in'}
 
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be py form
@@ -300,7 +301,7 @@ class AST_Var (AST):
 	}
 
 	PY2TEX      = {**dict ((g, f'\\{g}') for g in GREEK), **dict ((p, ts [0]) for p, ts in PY2TEXMULTI.items ())}
-	TEX2PY      = {**dict ((f'\\{g}', g) for g in GREEK), **dict ((t, p) for p, ts in PY2TEXMULTI.items () for t in  ts)}
+	TEX2PY      = {**dict ((f'\\{g}', g) for g in GREEK), **dict ((t, p) for p, ts in PY2TEXMULTI.items () for t in ts)}
 	UNI2PY      = {**dict (zip (GREEKUNI, GREEK)), '\u2202': 'partial', '\u221e': 'oo'}
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 

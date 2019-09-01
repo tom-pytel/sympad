@@ -538,7 +538,7 @@ class Parser (lalr1.LALR1):
 		('BINOM',         r'\\binom(?!{_LETTERU})'),
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
-		('INEQ',         fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in|\\notin)(?!{_LETTERU})|{"|".join (AST.Eq.UNI2PY)}'),
+		('INEQ',         fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LETTERU})|{"|".join (AST.Eq.UNI2PY)}'),
 		('EQ',            r'='),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))('*)"),
@@ -591,7 +591,7 @@ class Parser (lalr1.LALR1):
 		('TO',           fr'\\to'),
 		('MAPSTO',       fr'\\mapsto'),
 		('EMPTYSET',     fr'\\emptyset'),
-		('INEQ',         fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in|\\notin)|{"|".join (AST.Eq.UNI2PY)}'),
+		('INEQ',         fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)|{"|".join (AST.Eq.UNI2PY)}'),
 		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))('*)"),
 	])
 

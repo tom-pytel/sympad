@@ -44,7 +44,7 @@ SymPad is a simple single script symbolic calculator / scratchpad using SymPy fo
 It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally that last bit is exactly what happens but the response time is better :)
 This desire for simplicity led to the single script option "sympad.py" which I could plop down on the desktop and execute when needed.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
-Sympad will accept Python expressions, LaTeX formatting, unicode math symbols and a native shorthand intended for fast entry, or a mix of all of these.
+Sympad will accept Python expressions, LaTeX formatting, Unicode math symbols and a native shorthand intended for fast entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
 
@@ -101,7 +101,7 @@ y<br>
 
 <p>
 You enter expresstions and they get evaluated.
-The expressions may be in normal Pythonic style like "<b>a * (b + sin (x)**2 + 3/4) / 2</b>", LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin**x{2} + \frac34) / 2</b>".
+The expressions may be in normal Pythonic style like "<b>a * (b + sin (x)**2 + 3/4) / 2</b>", LaTeX such as "<b>a\frac{b+\sin^2{x}+\frac34}{2}</b>" or a mix "<b>a * (b + \sin**2{x} + \frac34) / 2</b>".
 The input is displayed symbolically as you type.
 Input history is supported with the up and down arrows.
 SymPad will give some limited options for autocompletion for certain expressions sometimes, this mostly means that you will not have to close parentheses.
@@ -131,7 +131,7 @@ For convenience certain multi-character variables are accepted in quick mode - G
 
 <p>
 Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
-The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits.
+The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation or referenced variables, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits.
 </p><p>
 Keep in mind that "<b>e</b>" or "<b>E</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be "<b>2 * 10^22</b>".
 Instead, use spaces and/or explicit multiplication: "<b>2 * e + 22</b>".
@@ -144,7 +144,7 @@ Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" 
 Variable names can be a mix of Python and LaTeX format, they can be multi-character but cannot start with an underscore "<b>_</b>" or a number though they may contain those.
 Standard identifiers are accepted as well as single Greek letters optionally preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$).
 The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters.
-Those Greek letters are accepted in unicode as well along with a few mathematical symbols (∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉).
+Those Greek letters are accepted in Unicode as well along with a few mathematical symbols (∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉).
 </p><p>
 The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
 "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
@@ -165,11 +165,9 @@ They may also be assigned a user function which allows you to use them as macro 
 <h4>Vectors and Matrices</h4>
 
 <p>
-These are specified using curly braces with commas.
-Vectors are passed as a single level of curlys such as "<b>{1, 2}</b>" or "<b>{x, y, z}</b>" and these are interpreted as column matrices.
-Matrices are passed as nested rows of curlys.
-A 2x3 matrix would be specified as  "<b>{{1, 2, 3}, {4, 5, 6}}</b>", a 1x3 would be "<b>{{1, 2, 3},}</b>" and a 3x1 would be either "<b>{{1,}, {2,}, {3,}}</b>" or just "<b>{1, 2, 3}</b>" since this is equivalent.
-Note the trailing commas which are needed for the same reason as in Python for tuples of one element (otherwise the curlys would be treated as parenteses instead of vectors / matrices).
+Vectors are passed as a single level of brackets such as "<b>\[1, 2]</b>" or "<b>\[x, y, z]</b>" and these are interpreted as column matrices.
+Matrices are passed as nested rows of brackets with the first bracket being preceeded by a slash.
+A 2x3 matrix would be specified as  "<b>\[[1, 2, 3], [4, 5, 6]]</b>", a 1x3 would be "<b>\[[1, 2, 3]]</b>" and a 3x1 would be either "<b>\[[1], [2], [3]]</b>" or the easier to write "<b>\[1, 2, 3]</b>" since this is equivalent.
 These can also be entered using LaTeX "<b>\<span></span>begin{(v|b|p|)matrix} \<span></span>end{(v|b|p|)matrix}</b>" format.
 </p>
 
@@ -192,6 +190,22 @@ supporting escape sequences. For example "<b>Limit (1/x, x, 0, '-')</b>".
 <p>
 Standard Python bracket enclosed lists and optionally parentheses enclosed tuples are accepted.
 Like strings these exist for the purpose of passing parameters to functions like "<b>Matrix ([[1, 2], [3, 4]])</b>".
+</p>
+
+<h4>Dictionaries</h4>
+
+<p>
+Standard Python dictionaries entered using the same format "<b>{a: b, c: d}</b>".
+Like strings, lists and tuples these exist for the purpose of passing and recieving parameters to and from functions.
+</p>
+
+<h4>Sets</h4>
+
+<p>
+These are not the standard Python sets but rather are represented internally by the SymPy object "<b>FiniteSet</b>".
+There can be entered via said "<b>FiniteSet</b>" function or via standard Python syntax for sets containing more than one element like "<b>{a, b, c}</b>".
+To enter a set of zero or one element use the slashed-curly set override to open the set as such "<b>\{1}</b>" or "<b>\{}</b>" for the empty set, otherwise for one element the curlys would be interpreted as parentheses and just like in Python the "<b>{}</b>" string is an empty dictionary, not a set.
+As said these are converted to "<b>FiniteSet</b>" for evaluation, if however you need a true Python set for some reason then wrap the set or any other iterable in the Python "<b>set()</b>" function, this will always result in a Python set inside the calculations.
 </p>
 
 <h2>Operations</h2>
@@ -276,12 +290,16 @@ The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b
 may also be entered using the standard SymPy syntax "<b>Integral (expression, (variable, from, to), ...)</b>".
 </p>
 
-<h4>(In)equalities</h4>
+<h4>Comparison</h4>
 
 <p>
 Are parsed from the standard Python "<b>=, ==, !=, &lt;, &lt;=, &gt;, &gt;=</b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" symbols.
 Currently only a single comparison is allowed so an expression like "<b>0 &lt;= x &lt;= 2</b>" is not valid.
 Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and mapped to the same "<b>Eq</b>" object in expressions but the single "<b>=</b>" operator has a lower precedence than the others and is used by SymPad for variable assignment whereas the double "<b>==</b>" only ever implies comparison.
+The comparison operators can be applied to sets to test for subset "<b>&lt;</b>", proper subset "<b>&lt;=</b>", superset "<b>&gt;</b>" or proper superset "<b>&gt;=</b>".
+</p><p>
+The membership test "<b>in</b>" and "<b>not in</b>" are related to the comparison operators in that they generate a boolean value and just like in Python they live on the same precedence level.
+These may be entered like in Python, using the LaTeX versions "<b>\in</b>" and "<b>\notin</b>" or directly using the Unicode characters "<b>∈</b>" and "<b>∉</b>".
 </p>
 
 <h4>Parentheses</h4>
@@ -290,14 +308,14 @@ Note that the "<b>=</b>" and "<b>==</b>" operators are equivalent for SymPy and 
 Explicit "<b>( )</b>" or implicit curly "<b>{ }</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
 delineate an expression as an input to a function. They may be used interchangeably for single expressions, the only difference being that the implicit
 version is not drawn if it does not need to be. The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions
-in general and always when calling functions which take multiple parameters like "<b>max(1, 2, 3)</b>". The curly braces are used as shorthand for vectors
-and matrices if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
+in general and always when calling functions which take multiple parameters like "<b>max(1, 2, 3)</b>". The curly braces are used as shorthand for sets
+and dictionaries if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
 </p>
 
 <h4>Indexing</h4>
 
 <p>
-Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>{{1, 2, 3}, {4, 5, 6}} [1, 2]</b>" = "<b>6</b>" and "<b>{{1, 2, 3}, {4, 5, 6}} [:, 1]</b>" = "<b>{{2,}, {5,}}</b>".
+Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>\[[1, 2, 3], [4, 5, 6]] [1, 2]</b>" = "<b>6</b>" and "<b>\[[1, 2, 3], [4, 5, 6]] [:, 1]</b>" = "<b>\[[2], [5]]</b>".
 </p>
 
 <h4>Member Access</h4>
@@ -305,7 +323,7 @@ Python style bracket indexing is natively supported for all objects using single
 <p>
 You can access member data or functions of an expression just like in Python with the "<b>.</b>" operator.
 If the attribute name following the dot is followed by a parenthesized expression then it will be treated as a function call instead of an implicit multiplication, otherwise it is a data member.
-For example, two ways to get the transpose of a matrix are "<b>{{1, 2, 3}, {4, 5, 6}}.T</b>" and "<b>{{1, 2, 3}, {4, 5, 6}}.transpose ()</b>".
+For example, two ways to get the transpose of a matrix are "<b>\[[1, 2, 3], [4, 5, 6]].T</b>" and "<b>\[[1, 2, 3], [4, 5, 6]].transpose ()</b>".
 </p>
 
 <h4>Variable Assignment</h4>
@@ -357,7 +375,7 @@ This does not apply to member functions or user created lambda functions.
 Keep in mind that the "<b>-1</b>" exponent in those contexts is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
 Top-level and user lambda functions also don't require explicit parentheses in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin**-1x</b>" but for any parameter more complicated than another function or variable to a power they will be needed.
-Functions which take zero or more than one single parameter, as well as member functions such as "<b>{{1, 1}, {0, 1}}.det()</b>" always require explicit parentheses.
+Functions which take zero or more than one single parameter, as well as member functions such as "<b>\[[1, 1], [0, 1]].det()</b>" always require explicit parentheses.
 Many functions which have a common mathematical display style are translated on the fly for rendering in that style.
 These include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
 Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>", and more...
@@ -384,7 +402,7 @@ SymPad solves this by recognizing all top-level SymPy package function names and
 This brings along its own set of peculiarities such as removing those names from the possible namespace pool of variables, this means that you can never redefine "<b>sin</b>" as anything else, but why would you want to?
 </p><p>
 This recognition only works on top-level objects, for members of an object the presence of a parenthesized expression after the attribute name will imply a function call.
-If that is not the intent and you instead want to treat the member as a data variable and multiply it with something then you must use explicit "<b>*</b>" multiplication or the curly parentheses as such "<b>{1, 2, 3}.T * (a + b)</b>" or "<b>{1, 2, 3}.T {a + b}</b>".
+If that is not the intent and you instead want to treat the member as a data variable and multiply it with something then you must use explicit "<b>*</b>" multiplication or the curly parentheses as such "<b>\[1, 2, 3].T * (a + b)</b>" or "<b>\[1, 2, 3].T {a + b}</b>".
 If you try to do this with regular parentheses then a function call will be attempted with "<b>a + b</b>" as the argument.
 The meaning of parentheses for assigned user variables is inferred from whether the variable is a lambda or not, for lambdas parentheses are a function call and for other types they indicate multiplication.
 </p><p>
@@ -457,7 +475,7 @@ If you are unable to use a keyword argument identifier in a function call becaus
 If you want to pass an equation to a function, like for example "<b>solveset(x**2 = 2, x)</b>", it won't work in this format as it will be treated as a keyword argument assignment.
 In this case you need to pass the equation in one of these manners: "<b>solveset((x**2 = 2), x)</b>", "<b>solveset(x**2 == 2, x)</b>" or assign the equation to a variable first and pass the variable.
 </p><p>
-The LaTeX parsing is not even really close to comprehensive, it is geared towards always being able to read back the LaTeX emitted by SymPad correctly.
+The LaTeX parsing is not really comprehensive, it is geared towards being able to read back the LaTeX emitted by SymPad correctly.
 </p><p>
 SymPad inserts the current working directory at the beginning of the Python module search path which means that for example if you run SymPad in the SymPy development directory then the SymPy module used will be the development version.
 </p><p>

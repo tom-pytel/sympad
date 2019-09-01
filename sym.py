@@ -523,7 +523,7 @@ class ast2nat: # abstract syntax tree -> native text
 				return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)} {self._ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece"} or ast.intg.is_mul_has_abs, {"=", "lamb"})} {self._ast2nat (ast.dv)}'
 
 	_ast2nat_funcs = {
-		'=': lambda self, ast: f'{self._ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {self._ast2nat_eq_hs (ast, ast.rhs, False)}',
+		'=': lambda self, ast: f'{self._ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2nat_eq_hs (ast, ast.rhs, False)}',
 		'#': lambda self, ast: ast.num,
 		'@': lambda self, ast: ast.var,
 		'.': lambda self, ast: f'{self._ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb"})}.{ast.attr}' \
@@ -636,7 +636,7 @@ class ast2py: # abstract syntax tree -> Python code text
 				return f'Integral({self._ast2py (ast.intg)}, ({self._ast2py (ast.dv.as_var)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))'
 
 	_ast2py_funcs = {
-		'=': lambda self, ast: f'{self._ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else self._ast2py (ast.lhs)} {ast.rel} {self._ast2py (ast.rhs)}',
+		'=': lambda self, ast: f'{self._ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else self._ast2py (ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2py (ast.rhs)}',
 		'#': lambda self, ast: ast.num,
 		'@': lambda self, ast: ast.var,
 		'.': lambda self, ast: f'{self._ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{self._ast2py (ast.obj)}.{ast.attr}{self._ast2py_paren (_tuple2ast (ast.args))}',
