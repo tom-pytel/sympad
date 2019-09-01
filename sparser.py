@@ -761,7 +761,8 @@ class Parser (lalr1.LALR1):
 	def caret_or_dblstar_2 (self, CARET):                                          return '^'
 
 	#...............................................................................................
-	_AUTOCOMPLETE_SUBSTITUTE = { # autocomplete means autocomplete AST tree so it can be rendered, not necessarily expression
+	# autocomplete means autocomplete AST tree so it can be rendered, not necessarily expression
+	_AUTOCOMPLETE_SUBSTITUTE = {
 		'CARET1'          : 'CARET',
 		'SUB1'            : 'SUB',
 		'FRAC2'           : 'FRAC',
@@ -798,10 +799,12 @@ class Parser (lalr1.LALR1):
 				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.tok.pos))
 
 				if self.autocompleting:
-					if sym in self._AUTOCOMPLETE_CONTINUE:
-						self.autocomplete.append (self._AUTOCOMPLETE_CONTINUE [sym])
-					else:
+					if sym not in self._AUTOCOMPLETE_CONTINUE:
 						self.autocompleting = False
+					elif self.autocomplete and self.autocomplete [-1] in {'|', ' \\right'}:
+						self.autocomplete [-1] = self.autocomplete [-1] + self._AUTOCOMPLETE_CONTINUE [sym]
+					else:
+						self.autocomplete.append (self._AUTOCOMPLETE_CONTINUE [sym])
 
 			else:
 				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, ('', '', '', '', '')))

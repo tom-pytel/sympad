@@ -504,14 +504,16 @@ function inputKeydown (e) {
 		if (JQInput.get (0).selectionStart === JQInput.val ().length && Autocomplete.length) {
 			let text = JQInput.val ();
 
-			if ((Autocomplete [0] === ' \\right') || (Autocomplete [0] === '|')) {
-				text         = text + Autocomplete.slice (0, 2).join ('');
-				Autocomplete = Autocomplete.slice (2);
+			// if ((Autocomplete [0] === ' \\right') || (Autocomplete [0] === '|')) {
+			// 	text         = text + Autocomplete.slice (0, 2).join ('');
+			// 	Autocomplete = Autocomplete.slice (2);
 
-			} else {
-				text         = text + Autocomplete [0];
-				Autocomplete = Autocomplete.slice (1);
-			}
+			// } else {
+			// 	text         = text + Autocomplete [0];
+			// 	Autocomplete = Autocomplete.slice (1);
+			// }
+			text         = text + Autocomplete [0];
+			Autocomplete = Autocomplete.slice (1);
 
 			JQInput.val (text);
 			inputting (text);
