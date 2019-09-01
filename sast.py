@@ -252,10 +252,10 @@ class AST (tuple):
 class AST_Eq (AST):
 	op, is_eq  = '=', True
 
-	TEX2PY = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!='}
-	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>='}
+	TEX2PY = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!=', '\\in': 'in', '\\notin': 'notin'}
+	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>=', '\u2208': 'in', '\u2209': 'notin'}
 	ANY2PY = {**UNI2PY, **TEX2PY}
-	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge'}
+	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge', 'in': '\\in', 'notin': '\\notin'}
 
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be py form

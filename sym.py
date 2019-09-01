@@ -822,13 +822,15 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)
 
 	_ast2spt_eq = {
-		'=':  EqAss,
-		'==': sp.Eq,
-		'!=': sp.Ne,
-		'<':  sp.Lt,
-		'<=': sp.Le,
-		'>':  sp.Gt,
-		'>=': sp.Ge,
+		'='    : EqAss,
+		'=='   : sp.Eq,
+		'!='   : sp.Ne,
+		'<'    : sp.Lt,
+		'<='   : sp.Le,
+		'>'    : sp.Gt,
+		'>='   : sp.Ge,
+		'in'   : lambda a, b: a in b,
+		'notin': lambda a, b: a not in b,
 	}
 
 	_ast2spt_funcs = {

@@ -538,6 +538,8 @@ class Parser (lalr1.LALR1):
 		('BINOM',         r'\\binom(?!{_LETTERU})'),
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
+		('INEQ',         fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in|\\notin)(?!{_LETTERU})|{"|".join (AST.Eq.UNI2PY)}'),
+		('EQ',            r'='),
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))('*)"),
 		('ATTR',         fr'\.(?:({_LETTERU}\w*)|\\operatorname\s*{{\s*({_LETTER}(?:\w|\\_)*)\s*}})'),
@@ -561,8 +563,6 @@ class Parser (lalr1.LALR1):
 		('PLUS',          r'\+'),
 		('MINUS',         r'-'),
 		('STAR',          r'\*'),
-		('INEQ',         fr'==|!=|\\neq?|<=|\\le|<|\\lt|>=|\\ge|>|\\gt|{"|".join (AST.Eq.UNI2PY)}'),
-		('EQ',            r'='),
 		('DIVIDE',        r'/'),
 		('EXCL',          r'!'),
 		('AMP',           r'&'),
@@ -579,9 +579,9 @@ class Parser (lalr1.LALR1):
 
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens
 		('FUNC',         fr'(@|\%|{_FUNCPY})|\\({_FUNCTEX})|(\${_LETTERU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LETTER}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
-		('SQRT',          r'sqrt|\\sqrt'),
-		('LOG',           r'log|\\log'),
-		('LN',            r'ln|\\ln'),
+		('SQRT',          r'sqrt\b|\\sqrt'),
+		('LOG',           r'log\b|\\log'),
+		('LN',            r'ln\b|\\ln'),
 		('LIM',          fr'\\lim'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?|{_UINTG}'),
@@ -591,8 +591,7 @@ class Parser (lalr1.LALR1):
 		('TO',           fr'\\to'),
 		('MAPSTO',       fr'\\mapsto'),
 		('EMPTYSET',     fr'\\emptyset'),
-		('IF',            r'if'),
-		('ELSE',          r'else'),
+		('INEQ',         fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in|\\notin)|{"|".join (AST.Eq.UNI2PY)}'),
 		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))('*)"),
 	])
 
@@ -624,7 +623,7 @@ class Parser (lalr1.LALR1):
 	def expr_piece_2       (self, expr_ineq, IF, expr_eq):                         return AST ('piece', ((expr_ineq, expr_eq),))
 	def expr_piece_3       (self, expr_ineq):                                      return expr_ineq
 
-	def expr_ineq_2        (self, expr_add1, INEQ, expr_add2):                     return AST ('=', AST.Eq.ANY2PY.get (INEQ.text, INEQ.text), expr_add1, expr_add2)
+	def expr_ineq_2        (self, expr_add1, INEQ, expr_add2):                     return AST ('=', AST.Eq.ANY2PY.get (INEQ.text.replace (' ', ''), INEQ.text.replace (' ', '')), expr_add1, expr_add2)
 	def expr_ineq_3        (self, expr_add):                                       return expr_add
 
 	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, expr_mul_exp)
