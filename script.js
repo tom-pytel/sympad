@@ -504,7 +504,7 @@ function inputKeydown (e) {
 		if (JQInput.get (0).selectionStart === JQInput.val ().length && Autocomplete.length) {
 			let text = JQInput.val ();
 
-			if (Autocomplete [0] === ' \\right') {
+			if ((Autocomplete [0] === ' \\right') || (Autocomplete [0] === '|')) {
 				text         = text + Autocomplete.slice (0, 2).join ('');
 				Autocomplete = Autocomplete.slice (2);
 

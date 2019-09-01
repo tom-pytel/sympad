@@ -119,9 +119,9 @@ The single-click native and double-click Python formats should almost always be 
 This is the input mode SymPad was born in and still my preferred mode for quick calculations due to the ease and speed of input.
 SymPad normally allows long variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
 This can be turned off by switching into quick input mode using the function "<b>env(quick)</b>" or by using the "<b>--quick</b>" option on the command line.
-When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between variables and recognized function names.
-This means that an expression entered in normal mode like this "<b>x y z sin w**2</b>" can be entered in quick mode like this "<b>xyzsinw**2</b>".
-Note that a grammatical break is still required AFTER text operators like "<b>if</b>", "<b>else</b>", "<b>in</b>", "<b>not in</b>", etc... otherwise they would make inaccessible too many functions by being recognized as part of a word.
+When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between variables and recognized function names, though they are required AFTER function names.
+This means that an expression entered in normal mode like this "<b>x y z sin w**2</b>" can be entered in quick mode like this "<b>xyzsin w**2</b>".
+Note that a grammatical break is also still required AFTER text operators like "<b>if</b>", "<b>else</b>", "<b>in</b>", "<b>not in</b>", etc... otherwise they would make too many functions inaccessible by being recognized as part of a word.
 For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
 </p>
 
@@ -143,8 +143,7 @@ Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" 
 <p>
 Variable names can be a mix of Python and LaTeX format, they can be multi-character but cannot start with an underscore "<b>_</b>" or a number though they may contain those.
 Standard identifiers are accepted as well as single Greek letters optionally preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$).
-The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters.
-Those Greek letters are accepted in Unicode as well along with a few mathematical symbols (∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉).
+The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters, those Greek letters are accepted in Unicode as well.
 </p><p>
 The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
 "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
@@ -315,7 +314,7 @@ and dictionaries if commas are present, but that is a different syntactic usage,
 <h4>Indexing</h4>
 
 <p>
-Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>\[[1, 2, 3], [4, 5, 6]] [1, 2]</b>" = "<b>6</b>" and "<b>\[[1, 2, 3], [4, 5, 6]] [:, 1]</b>" = "<b>\[[2], [5]]</b>".
+Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>\[[1, 2, 3], [4, 5, 6]] [1, 2]</b>" = "<b>6</b>" and "<b>\[[1, 2, 3], [4, 5, 6]] [:, 1:]</b>" = "<b>\[[2, 3], [5, 6]]</b>".
 </p>
 
 <h4>Member Access</h4>
@@ -424,8 +423,10 @@ Also remember that these functions are always available for calling using the "<
 <h4>Special Characters</h4>
 
 <p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.</p>
-<p>"<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
-<p>"<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value.
+<p>"<b>$</b>" - "<b>$name</b>", dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
+<p>"<b>@</b>" - "<b>@(expr)</b>", ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value.
+<p><b>Unicode Greek</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
+<p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
 
 <h4>Admin Functions</h4>
 

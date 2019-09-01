@@ -83,10 +83,10 @@ lambda x: {{dx} = {dx}}
 -{{{{{{partialx},{partial},{oo},},{{dx},{-1.0},{a},},}}**{StrictGreaterThan({1.0})}} > {partial^{4} / partialz^{1} partialx^{2} partialy^{1} {{1.0}^{1}}}}
 -{{{{{\sum_{x = 0}^{-1.0} {oo}} \cdot {({0})}}},}}
 \int {{{{d}+{partialx}+{1}}} if {lambda x, y, z: {a}} else {{1} / {partialx}}} dx
-|{\log_{partial^{1} / partialy^{1} {{{0}*{'str'}}}}{[{{-1.0} / {'str'}}]}}|
+{|{\log_{partial^{1} / partialy^{1} {{{0}*{'str'}}}}{[{{-1.0} / {'str'}}]}}|}
 {\lim_{x \to -1.0} {dx}} > {{oo} if {-1.0} else {d} if {d} else {1}}
 \frac{{-1.0} > {oo}}{\ln{-1.0}}
-{|{d}|{{({1.0},{1})},{[{oo}]},},}
+{{|{d}|}{{({1.0},{1})},{[{oo}]},},}
 1/2 * {a+b} [lambda: {d}]
 {{{'str'} < {1.0}} \cdot {({a'})} \cdot {{1} if {a'}}}
 -{1.0 if partial else d if 1 else oo if 1.0 else 'str'}
