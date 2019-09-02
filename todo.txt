@@ -1,6 +1,6 @@
 > ProductSet?
 
-> emptyset unicode symbol
+> emptyset Unicode symbol
 
 > var_prime in quick mode
 

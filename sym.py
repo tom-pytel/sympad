@@ -8,7 +8,7 @@ import sympy as sp
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SYM_PY_UNION          = ' | ' # non-parseable python set operations
+_SYM_PY_UNION          = ' | ' # HACK! non-parseable python set operations
 _SYM_PY_SDIFF          = ' ^ '
 _SYM_PY_XSECT          = ' & '
 
@@ -26,7 +26,7 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 AST.register_AST (AST_Text)
 
-class EqAss (sp.Eq):
+class EqAss (sp.Eq): # assignment instead of equality comparison
 	pass
 
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
