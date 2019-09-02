@@ -15,10 +15,6 @@ import sxlat
 import sym
 import sparser
 
-sym._SYM_PY_UNION = ' || ' # make py symbols symmetric so these operators can be tested
-sym._SYM_PY_SDIFF = ' ^^ '
-sym._SYM_PY_XSECT = ' && '
-
 _TERMS = [
 	'0',
 	'1',
@@ -398,6 +394,9 @@ def parse (text):
 	return ret
 
 def test (argv = None):
+	sym._SYM_PY_UNION = ' || ' # make py symbols symmetric so these operators can be tested
+	sym._SYM_PY_SDIFF = ' ^^ '
+	sym._SYM_PY_XSECT = ' && '
 
 	global DEPTH, CURLYS
 
@@ -530,6 +529,10 @@ def test (argv = None):
 
 		if not isinstance (e, KeyboardInterrupt):
 			raise
+
+	sym._SYM_PY_UNION = ' | ' # return py symbols to normal
+	sym._SYM_PY_SDIFF = ' ^ '
+	sym._SYM_PY_XSECT = ' & '
 
 if __name__ == '__main__':
 	# parser = sparser.Parser ()

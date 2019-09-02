@@ -675,7 +675,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'lamb' : lambda self, ast: f'Lambda({self._ast2py (_tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
 		'idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece", "lamb"} else self._ast2py (ast.obj)}[{self._ast2py (_tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
-		'set'  : lambda self, ast: f'{{{", ".join (self._ast2py (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else 'set()',
+		'set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
 		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
 		'||'   : lambda self, ast: _SYM_PY_UNION.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb'}) for a in ast.union),
 		'^^'   : lambda self, ast: _SYM_PY_SDIFF.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||'}) for a in ast.sdiff),
@@ -1130,17 +1130,17 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
-# 	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-# 	# ast = AST ('.', ('@', 'S'), 'Half')
-# 	# res = ast2spt (ast, vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
+	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+	# ast = AST ('.', ('@', 'S'), 'Half')
+	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('set', (('slice', ('#', '1'), ('#', '2'), ('#', '3')),))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
+	ast = AST ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3')))))
+	res = ast2py (ast)
+	# res = spt2ast (res)
 
-# 	print (res)
+	print (res)
