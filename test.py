@@ -496,7 +496,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('im (z)')), '\\Im\\left(z \\right)')
 		self.assertEqual (ast2tex (p ('set ()')), '\\emptyset')
 		self.assertEqual (ast2tex (p ('\\{}')), '\\emptyset')
-		self.assertEqual (ast2tex (p ('\\{1}')), '\\left\\{1, \\right\\}')
+		self.assertEqual (ast2tex (p ('\\{1}')), '\\left\\{1 \\right\\}')
 		self.assertEqual (ast2tex (p ('\\{1,2}')), '\\left\\{1, 2 \\right\\}')
 		self.assertEqual (ast2tex (p ('{1,2}')), '\\left\\{1, 2 \\right\\}')
 		self.assertEqual (ast2tex (p ('1 in {1,2,3}')), '1 \\in \\left\\{1, 2, 3 \\right\\}')
