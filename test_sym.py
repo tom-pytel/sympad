@@ -301,14 +301,14 @@ def expr_set ():
 def expr_dict ():
 	return '{' + ','.join (f'{choice (_TERMS)} : {expr (1)}' for i in range (randrange (4))) + '}'
 
-def expr_bor ():
-	return '{' + '||'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+# def expr_bor ():
+# 	return '{' + '||'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
-def expr_bxor ():
-	return '{' + '^^'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+# def expr_bxor ():
+# 	return '{' + '^^'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
-def expr_band ():
-	return '{' + '&&'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+# def expr_band ():
+# 	return '{' + '&&'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
 #...............................................................................................
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
@@ -394,10 +394,6 @@ def parse (text):
 	return ret
 
 def test (argv = None):
-	sym._SYM_PY_UNION = ' || ' # make py symbols symmetric so these operators can be tested
-	sym._SYM_PY_SDIFF = ' ^^ '
-	sym._SYM_PY_XSECT = ' && '
-
 	global DEPTH, CURLYS
 
 	_DEPTH  = 3
@@ -529,10 +525,6 @@ def test (argv = None):
 
 		if not isinstance (e, KeyboardInterrupt):
 			raise
-
-	sym._SYM_PY_UNION = ' | ' # return py symbols to normal
-	sym._SYM_PY_SDIFF = ' ^ '
-	sym._SYM_PY_XSECT = ' & '
 
 if __name__ == '__main__':
 	# parser = sparser.Parser ()

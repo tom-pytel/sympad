@@ -321,6 +321,10 @@ These basic set operations are supported: "<b>+</b>", "<b>||</b>" or "<b>\cup</b
 This is one of the rare cases where the Python code generated will not work when pasted back into SymPad as the corresponding Python operations which are written out are "<b>|</b>", "<b>^</b>" and "<b>&</b>" - these could not be used in SymPad as they already have other meanings.
 The comparison operators can be applied to sets to test for subset "<b>&lt;</b>", proper subset "<b>&lt;=</b>", superset "<b>&gt;</b>" or proper superset "<b>&gt;=</b>".
 The membership test operators "<b>in</b>" and "<b>not in</b>" work on sets as expected.
+</p><p>
+SymPy sets are a little broken in that the set operations will not accept undefined variables as stand-ins for sets to be evaluated later, which would mean that lambda functions using sets would not normally be possible.
+A partial fix is to wrap the set operations in a lambda or variable assignment using the no-evaluate pseudo function like this "<b>f = lambda a, b: %(a || b)</b>", this will allow you to use the lambda but will still error out if you try to assign it to another
+variable or view it.
 </p>
 
 <h4>Parentheses</h4>
@@ -370,6 +374,10 @@ The reference assignment happens if you try to assign variables which do not exi
 Otherwise you can force a reference by using the "<b>@()</b>" pseudo-function.
 Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of copying the value if it exists.
 The "<b>@(expr)</b>" function technically prevents variable remapping for the expression it encompasses, so if you have the variable "<b>x = 2</b>" set and you do "<b>@(x)</b>" then you will get "<b>x</b>" and not "<b>2</b>".
+</p><p>
+Another potentially useful meta-function for assignment is "<b>%(expr)</b>".
+This function defers evaluation of the expression for one round thus allowing things like assigning an integral operation to a variable instead of the result of the integral - "<b>f = %(\int a dx)</b>".
+In this way you can assign different values to "<b>a</b>" and have the integration happen automatically any time you access the "<b>f</b>" variable instead of just using the result of whatever variables were defined at the time of definition.
 </p>
 
 <h2>Functions</h2>
@@ -447,6 +455,7 @@ Also remember that these functions are always available for calling using the "<
 <p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.</p>
 <p>"<b>$</b>" - "<b>$name</b>", dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
 <p>"<b>@</b>" - "<b>@(expr)</b>", ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value.
+<p>"<b>%</b>" - "<b>%(expr)</b>", percent prevents evaluation for the expression it encapsulates for one round. An optional second argument is a count of the number of rounds to prevent evaluations, it can be infinity.</p>
 <p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
 <p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
 

@@ -1,6 +1,8 @@
-> ProductSet?
+> solveset(x**2 = 2, x)
 
 > emptyset Unicode symbol
+
+> ProductSet?
 
 > var_prime in quick mode
 

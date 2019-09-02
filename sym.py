@@ -8,10 +8,6 @@ import sympy as sp
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SYM_PY_UNION          = ' | ' # HACK! non-parseable python set operations
-_SYM_PY_SDIFF          = ' ^ '
-_SYM_PY_XSECT          = ' & '
-
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = {} # dict user funcs {name: AST, ...}
 _PYS                   = True
@@ -646,6 +642,15 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return intg
 
+	def _ast2py_sdiff (self, ast):
+		sdiff = self._ast2py (ast.sdiff [0])
+
+		for a in ast.sdiff [1:]:
+			a     = self._ast2py (a)
+			sdiff = f'Union(Complement({sdiff}, {a}), Complement({a}, {sdiff}))'
+
+		return sdiff
+
 	_ast2py_funcs = {
 		'='    : lambda self, ast: f'{self._ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else self._ast2py (ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2py (ast.rhs)}',
 		'#'    : lambda self, ast: ast.num,
@@ -677,9 +682,9 @@ class ast2py: # abstract syntax tree -> Python code text
 		'slice': lambda self, ast: ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 		'set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
 		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
-		'||'   : lambda self, ast: _SYM_PY_UNION.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb'}) for a in ast.union),
-		'^^'   : lambda self, ast: _SYM_PY_SDIFF.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||'}) for a in ast.sdiff),
-		'&&'   : lambda self, ast: _SYM_PY_XSECT.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.xsect),
+		'||'   : lambda self, ast: f'Union({", ".join (self._ast2py (a) for a in ast.union)})',
+		'^^'   : _ast2py_sdiff,
+		'&&'   : lambda self, ast: f'Intersection({", ".join (self._ast2py (a) for a in ast.xsect)})',
 
 		'text' : lambda self, ast: ast.py,
 	}
@@ -782,6 +787,9 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
 
+		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
+			return ExprNoEval (str (ast.args [0]), 1 if len (ast.args) == 1 else self._ast2spt (ast.args [1]))
+
 		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
 
 		if func is not None:
@@ -835,6 +843,15 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)
 
+	def _ast2spt_sdiff (self, ast):
+		sdiff = self._ast2spt (ast.sdiff [0])
+
+		for a in ast.sdiff [1:]:
+			a     = self._ast2spt (a)
+			sdiff = sp.Union (sp.Complement (sdiff, a), sp.Complement (a, sdiff))
+
+		return sdiff
+
 	_ast2spt_eq = {
 		'='    : EqAss,
 		'=='   : sp.Eq,
@@ -878,9 +895,9 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
 		'set'  : lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)),
 		'dict' : lambda self, ast: dict ((self._ast2spt (k), self._ast2spt (v)) for k, v in ast.dict),
-		'||'   : lambda self, ast: reduce (lambda a, b: a | b, (self._ast2spt (a) for a in ast.union)),
-		'^^'   : lambda self, ast: reduce (lambda a, b: a ^ b, (self._ast2spt (a) for a in ast.sdiff)),
-		'&&'   : lambda self, ast: reduce (lambda a, b: a & b, (self._ast2spt (a) for a in ast.xsect)),
+		'||'   : lambda self, ast: sp.Union (*(self._ast2spt (a) for a in ast.union)),
+		'^^'   : _ast2spt_sdiff,
+		'&&'   : lambda self, ast: sp.Intersection (*(self._ast2spt (a) for a in ast.xsect)),
 
 		'text' : lambda self, ast: ast.spt,
 	}
