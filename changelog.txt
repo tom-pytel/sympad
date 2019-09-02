@@ -4,3 +4,4 @@ v1.0.1:
 * Added basic sets and operations.
 * Added Python dictionaries.
 * Added LaTeX \Re and \Im functions and translation.
+* Integral now concatenates iterated integrals into one function call.

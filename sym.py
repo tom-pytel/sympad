@@ -8,7 +8,7 @@ import sympy as sp
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SYM_PY_UNION          = ' | '
+_SYM_PY_UNION          = ' | ' # non-parseable python set operations
 _SYM_PY_SDIFF          = ' ^ '
 _SYM_PY_XSECT          = ' & '
 
@@ -190,11 +190,11 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		t = AST.Var.PY2TEX.get (n)
 
 		return \
-				f'{t or n}{p}'       if not ast.diff_or_part_type else \
-				f'd{t or n}{p}'		   if ast.is_diff_any else \
-				f'\\partial{p}'      if ast.is_part_solo else \
-				f'\\partial{t}{p}'   if t else \
-				f'\\partial {n}{p}'  if n else \
+				f'{t or n}{p}'      if not ast.diff_or_part_type else \
+				f'd{t or n}{p}'		  if ast.is_diff_any else \
+				f'\\partial{p}'     if ast.is_part_solo else \
+				f'\\partial{t}{p}'  if t else \
+				f'\\partial {n}{p}' if n else \
 				f'\\partial{p}'
 
 	def _ast2tex_attr (self, ast):
@@ -635,16 +635,17 @@ class ast2py: # abstract syntax tree -> Python code text
 		return f'Derivative({self._ast2py (ast.diff)}, {", ".join (args)})'
 
 	def _ast2py_intg (self, ast):
-		if ast.from_ is None:
-			if ast.intg is None:
-				return f'Integral(1, {self._ast2py (ast.dv.as_var)})'
-			else:
-				return f'Integral({self._ast2py (ast.intg)}, {self._ast2py (ast.dv.as_var)})'
+		if ast.intg is not None and ast.intg.is_intg:
+			intg = self._ast2py_intg (ast.intg)
 		else:
-			if ast.intg is None:
-				return f'Integral(1, ({self._ast2py (ast.dv.as_var)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))'
-			else:
-				return f'Integral({self._ast2py (ast.intg)}, ({self._ast2py (ast.dv.as_var)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))'
+			intg = f'Integral({1 if ast.intg is None else self._ast2py (ast.intg)})'
+
+		if ast.from_ is None:
+			intg = intg [:-1] + f', {self._ast2py (ast.dv.as_var)})'
+		else:
+			intg = intg [:-1] + f', ({self._ast2py (ast.dv.as_var)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))'
+
+		return intg
 
 	_ast2py_funcs = {
 		'='    : lambda self, ast: f'{self._ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else self._ast2py (ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2py (ast.rhs)}',
