@@ -629,10 +629,9 @@ class ast2py: # abstract syntax tree -> Python code text
 				(self._ast2py (n.as_var),)
 				if n.is_var else
 				(self._ast2py (n.base.as_var), str (n.exp.as_int))
-				for n in ast.dvs
-				), ())
+				for n in ast.dvs), ())
 
-		return f'Derivative({self._ast2py (ast.diff)}, {", ".join (args)})'
+		return f'Derivative({self._ast2py (ast.diff.strip_paren (keeptuple = True))}, {", ".join (args)})'
 
 	def _ast2py_intg (self, ast):
 		if ast.intg is not None and ast.intg.is_intg:

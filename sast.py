@@ -148,18 +148,18 @@ class AST (tuple):
 			else:
 				return AST ('#', f'-{self.num}')
 
-	def strip (self, count = None, ops = {'{', '('}, idx = 1):
+	def strip (self, count = None, ops = {'{', '('}, idx = 1, keeptuple = False):
 		count = -1 if count is None else count
 
-		while self.op in ops and count:
+		while count and self.op in ops and not (keeptuple and self [idx].is_comma):
 			self   = self [idx]
 			count -= 1
 
 		return self
 
-	strip_curlys = lambda self, count = None: self.strip (count, ('{',))
-	strip_paren  = lambda self, count = None: self.strip (count, ('(',))
 	strip_attr   = lambda self, count = None: self.strip (count, ('.',))
+	strip_curlys = lambda self, count = None: self.strip (count, ('{',))
+	strip_paren  = lambda self, count = None, keeptuple = False: self.strip (count, ('(',), keeptuple = keeptuple)
 
 	def strip_minus (self, count = None, retneg = False):
 		count       = -1 if count is None else count
@@ -177,7 +177,7 @@ class AST (tuple):
 
 		return (self, neg) if retneg else self
 
-	def strip_mls (self, count = None):
+	def strip_mls (self, count = None): # mls = mul, lim, sum
 		count = -1 if count is None else count
 
 		while self.op in {'*', 'lim', 'sum'} and count:

@@ -1,5 +1,3 @@
-> Integral(Integral(Integral(rho**2*sin(phi), (rho, 0, 1)), (theta, 0, 2*pi)), (phi, 0, pi))
-
 > ProductSet?
 
 > emptyset unicode symbol
@@ -8,7 +6,7 @@
 > Gamma -> gamma no xlat when Gamma lambda present?
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
-> {1:2:3,} -> {slice(1, 2, 3),}?
+> {1:2:3,} -> {slice(1, 2, 3),} (SymPy creating dynamic class of slice)?
 
 > no spacing for nums - 3 x -> 3x?
 > quick mode no spacing for vars x y z -> xyz?
