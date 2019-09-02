@@ -15,9 +15,9 @@ import sxlat
 import sym
 import sparser
 
-sym._SYM_PY_BOR  = ' || ' # make py symbols symmetric so these operators can be tested
-sym._SYM_PY_BXOR = ' ^^ '
-sym._SYM_PY_BAND = ' && '
+sym._SYM_PY_UNION = ' || ' # make py symbols symmetric so these operators can be tested
+sym._SYM_PY_SDIFF = ' ^^ '
+sym._SYM_PY_XSECT = ' && '
 
 _TERMS = [
 	'0',

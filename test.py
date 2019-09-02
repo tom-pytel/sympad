@@ -271,6 +271,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('4 \\in {1,2,3}'), ('=', 'in', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
 		self.assertEqual (p ('4 not in {1,2,3}'), ('=', 'notin', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
 		self.assertEqual (p ('4 \\notin {1,2,3}'), ('=', 'notin', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
+		self.assertEqual (p ('{1,2} - {2,3}'), ('+', (('set', (('#', '1'), ('#', '2'))), ('-', ('set', (('#', '2'), ('#', '3')))))))
+		self.assertEqual (p ('{1,2} || {2,3}'), ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (p ('{1,2} ^^ {2,3}'), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (p ('{1,2} && {2,3}'), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (p ('{1,2} || {2,3} || {3,4}'), ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (p ('{1,2} ^^ {2,3} ^^ {3,4}'), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (p ('{1,2} && {2,3} && {3,4}'), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}'), ('||', (('set', (('#', '1'), ('#', '2'))), ('^^', (('set', (('#', '2'), ('#', '3'))), ('&&', (('set', (('#', '3'), ('#', '4'))), ('set', (('#', '4'), ('#', '5'))))))))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -496,7 +504,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{}')), '\\left\\{ \\right\\}')
 		self.assertEqual (ast2tex (p ('{1: 2}')), '\\left\\{1{:} 2 \\right\\}')
 		self.assertEqual (ast2tex (p ('{1: 2, 3: 4}')), '\\left\\{1{:} 2, 3{:} 4 \\right\\}')
-		self.assertEqual (ast2tex (p ('set ()')), '\\emptyset')
+		self.assertEqual (ast2tex (p ('set ()')), '\\operatorname{set}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('\\{}')), '\\emptyset')
 		self.assertEqual (ast2tex (p ('\\{1}')), '\\left\\{1 \\right\\}')
 		self.assertEqual (ast2tex (p ('\\{1,2}')), '\\left\\{1, 2 \\right\\}')
@@ -507,6 +515,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('4 \\in {1,2,3}')), '4 \\in \\left\\{1, 2, 3 \\right\\}')
 		self.assertEqual (ast2tex (p ('4 not in {1,2,3}')), '4 \\notin \\left\\{1, 2, 3 \\right\\}')
 		self.assertEqual (ast2tex (p ('4 \\notin {1,2,3}')), '4 \\notin \\left\\{1, 2, 3 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1,2} - {2,3}')), '\\left\\{1, 2 \\right\\} - \\left\\{2, 3 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1,2} || {2,3}')), '\\left\\{1, 2 \\right\\} \\cup \\left\\{2, 3 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1,2} ^^ {2,3}')), '\\left\\{1, 2 \\right\\} \\ominus \\left\\{2, 3 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1,2} && {2,3}')), '\\left\\{1, 2 \\right\\} \\cap \\left\\{2, 3 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1,2} || {2,3} || {3,4}')), '\\left\\{1, 2 \\right\\} \\cup \\left\\{2, 3 \\right\\} \\cup \\left\\{3, 4 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1,2} ^^ {2,3} ^^ {3,4}')), '\\left\\{1, 2 \\right\\} \\ominus \\left\\{2, 3 \\right\\} \\ominus \\left\\{3, 4 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1,2} && {2,3} && {3,4}')), '\\left\\{1, 2 \\right\\} \\cap \\left\\{2, 3 \\right\\} \\cap \\left\\{3, 4 \\right\\}')
+		self.assertEqual (ast2tex (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), '\\left\\{1, 2 \\right\\} \\cup \\left\\{2, 3 \\right\\} \\ominus \\left\\{3, 4 \\right\\} \\cap \\left\\{4, 5 \\right\\}')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -732,7 +748,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('{}')), '{}')
 		self.assertEqual (ast2nat (p ('{1: 2}')), '{1: 2}')
 		self.assertEqual (ast2nat (p ('{1: 2, 3: 4}')), '{1: 2, 3: 4}')
-		self.assertEqual (ast2nat (p ('set ()')), '\\{}')
+		self.assertEqual (ast2nat (p ('set ()')), 'set()')
 		self.assertEqual (ast2nat (p ('\\{}')), '\\{}')
 		self.assertEqual (ast2nat (p ('\\{1}')), '{1,}')
 		self.assertEqual (ast2nat (p ('\\{1,2}')), '{1, 2}')
@@ -743,6 +759,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('4 \\in {1,2,3}')), '4 in {1, 2, 3}')
 		self.assertEqual (ast2nat (p ('4 not in {1,2,3}')), '4 not in {1, 2, 3}')
 		self.assertEqual (ast2nat (p ('4 \\notin {1,2,3}')), '4 not in {1, 2, 3}')
+		self.assertEqual (ast2nat (p ('{1,2} - {2,3}')), '{1, 2} - {2, 3}')
+		self.assertEqual (ast2nat (p ('{1,2} || {2,3}')), '{1, 2} || {2, 3}')
+		self.assertEqual (ast2nat (p ('{1,2} ^^ {2,3}')), '{1, 2} ^^ {2, 3}')
+		self.assertEqual (ast2nat (p ('{1,2} && {2,3}')), '{1, 2} && {2, 3}')
+		self.assertEqual (ast2nat (p ('{1,2} || {2,3} || {3,4}')), '{1, 2} || {2, 3} || {3, 4}')
+		self.assertEqual (ast2nat (p ('{1,2} ^^ {2,3} ^^ {3,4}')), '{1, 2} ^^ {2, 3} ^^ {3, 4}')
+		self.assertEqual (ast2nat (p ('{1,2} && {2,3} && {3,4}')), '{1, 2} && {2, 3} && {3, 4}')
+		self.assertEqual (ast2nat (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), '{1, 2} || {2, 3} ^^ {3, 4} && {4, 5}')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -979,6 +1003,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('4 \\in {1,2,3}')), '4 in {1, 2, 3}')
 		self.assertEqual (ast2py (p ('4 not in {1,2,3}')), '4 not in {1, 2, 3}')
 		self.assertEqual (ast2py (p ('4 \\notin {1,2,3}')), '4 not in {1, 2, 3}')
+		self.assertEqual (ast2py (p ('{1,2} - {2,3}')), '{1, 2} - {2, 3}')
+		self.assertEqual (ast2py (p ('{1,2} || {2,3}')), '{1, 2} || {2, 3}')
+		self.assertEqual (ast2py (p ('{1,2} ^^ {2,3}')), '{1, 2} ^^ {2, 3}')
+		self.assertEqual (ast2py (p ('{1,2} && {2,3}')), '{1, 2} && {2, 3}')
+		self.assertEqual (ast2py (p ('{1,2} || {2,3} || {3,4}')), '{1, 2} || {2, 3} || {3, 4}')
+		self.assertEqual (ast2py (p ('{1,2} ^^ {2,3} ^^ {3,4}')), '{1, 2} ^^ {2, 3} ^^ {3, 4}')
+		self.assertEqual (ast2py (p ('{1,2} && {2,3} && {3,4}')), '{1, 2} && {2, 3} && {3, 4}')
+		self.assertEqual (ast2py (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), '{1, 2} || {2, 3} ^^ {3, 4} && {4, 5}')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -1204,7 +1236,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('{}')), ('dict', ()))
 		self.assertEqual (ast2tex2ast (p ('{1: 2}')), ('dict', ((('#', '1'), ('#', '2')),)))
 		self.assertEqual (ast2tex2ast (p ('{1: 2, 3: 4}')), ('dict', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4')))))
-		self.assertEqual (ast2tex2ast (p ('set ()')), ('set', ()))
+		self.assertEqual (ast2tex2ast (p ('set ()')), ('func', 'set', ()))
 		self.assertEqual (ast2tex2ast (p ('\\{}')), ('set', ()))
 		self.assertEqual (ast2tex2ast (p ('\\{1}')), ('set', (('#', '1'),)))
 		self.assertEqual (ast2tex2ast (p ('\\{1,2}')), ('set', (('#', '1'), ('#', '2'))))
@@ -1215,6 +1247,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('4 \\in {1,2,3}')), ('=', 'in', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
 		self.assertEqual (ast2tex2ast (p ('4 not in {1,2,3}')), ('=', 'notin', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
 		self.assertEqual (ast2tex2ast (p ('4 \\notin {1,2,3}')), ('=', 'notin', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
+		self.assertEqual (ast2tex2ast (p ('{1,2} - {2,3}')), ('+', (('set', (('#', '1'), ('#', '2'))), ('-', ('set', (('#', '2'), ('#', '3')))))))
+		self.assertEqual (ast2tex2ast (p ('{1,2} || {2,3}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2tex2ast (p ('{1,2} ^^ {2,3}')), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2tex2ast (p ('{1,2} && {2,3}')), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2tex2ast (p ('{1,2} || {2,3} || {3,4}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2tex2ast (p ('{1,2} ^^ {2,3} ^^ {3,4}')), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2tex2ast (p ('{1,2} && {2,3} && {3,4}')), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2tex2ast (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('^^', (('set', (('#', '2'), ('#', '3'))), ('&&', (('set', (('#', '3'), ('#', '4'))), ('set', (('#', '4'), ('#', '5'))))))))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1440,7 +1480,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('{}')), ('dict', ()))
 		self.assertEqual (ast2nat2ast (p ('{1: 2}')), ('dict', ((('#', '1'), ('#', '2')),)))
 		self.assertEqual (ast2nat2ast (p ('{1: 2, 3: 4}')), ('dict', ((('#', '1'), ('#', '2')), (('#', '3'), ('#', '4')))))
-		self.assertEqual (ast2nat2ast (p ('set ()')), ('set', ()))
+		self.assertEqual (ast2nat2ast (p ('set ()')), ('func', 'set', ()))
 		self.assertEqual (ast2nat2ast (p ('\\{}')), ('set', ()))
 		self.assertEqual (ast2nat2ast (p ('\\{1}')), ('set', (('#', '1'),)))
 		self.assertEqual (ast2nat2ast (p ('\\{1,2}')), ('set', (('#', '1'), ('#', '2'))))
@@ -1451,6 +1491,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('4 \\in {1,2,3}')), ('=', 'in', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
 		self.assertEqual (ast2nat2ast (p ('4 not in {1,2,3}')), ('=', 'notin', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
 		self.assertEqual (ast2nat2ast (p ('4 \\notin {1,2,3}')), ('=', 'notin', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
+		self.assertEqual (ast2nat2ast (p ('{1,2} - {2,3}')), ('+', (('set', (('#', '1'), ('#', '2'))), ('-', ('set', (('#', '2'), ('#', '3')))))))
+		self.assertEqual (ast2nat2ast (p ('{1,2} || {2,3}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2nat2ast (p ('{1,2} ^^ {2,3}')), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2nat2ast (p ('{1,2} && {2,3}')), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2nat2ast (p ('{1,2} || {2,3} || {3,4}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2nat2ast (p ('{1,2} ^^ {2,3} ^^ {3,4}')), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2nat2ast (p ('{1,2} && {2,3} && {3,4}')), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2nat2ast (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('^^', (('set', (('#', '2'), ('#', '3'))), ('&&', (('set', (('#', '3'), ('#', '4'))), ('set', (('#', '4'), ('#', '5'))))))))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1687,6 +1735,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('4 \\in {1,2,3}')), ('=', 'in', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
 		self.assertEqual (ast2py2ast (p ('4 not in {1,2,3}')), ('=', 'notin', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
 		self.assertEqual (ast2py2ast (p ('4 \\notin {1,2,3}')), ('=', 'notin', ('#', '4'), ('set', (('#', '1'), ('#', '2'), ('#', '3')))))
+		self.assertEqual (ast2py2ast (p ('{1,2} - {2,3}')), ('+', (('set', (('#', '1'), ('#', '2'))), ('-', ('set', (('#', '2'), ('#', '3')))))))
+		self.assertEqual (ast2py2ast (p ('{1,2} || {2,3}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2py2ast (p ('{1,2} ^^ {2,3}')), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2py2ast (p ('{1,2} && {2,3}')), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))))))
+		self.assertEqual (ast2py2ast (p ('{1,2} || {2,3} || {3,4}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2py2ast (p ('{1,2} ^^ {2,3} ^^ {3,4}')), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2py2ast (p ('{1,2} && {2,3} && {3,4}')), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
+		self.assertEqual (ast2py2ast (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('^^', (('set', (('#', '2'), ('#', '3'))), ('&&', (('set', (('#', '3'), ('#', '4'))), ('set', (('#', '4'), ('#', '5'))))))))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -1923,6 +1979,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('4 \\in {1,2,3}')), ('@', 'False'))
 		self.assertEqual (ast2spt2ast (p ('4 not in {1,2,3}')), ('@', 'True'))
 		self.assertEqual (ast2spt2ast (p ('4 \\notin {1,2,3}')), ('@', 'True'))
+		self.assertEqual (ast2spt2ast (p ('{1,2} - {2,3}')), ('set', (('#', '1'),)))
+		self.assertEqual (ast2spt2ast (p ('{1,2} || {2,3}')), ('set', (('#', '1'), ('#', '2'), ('#', '3'))))
+		self.assertEqual (ast2spt2ast (p ('{1,2} ^^ {2,3}')), ('set', (('#', '1'), ('#', '3'))))
+		self.assertEqual (ast2spt2ast (p ('{1,2} && {2,3}')), ('set', (('#', '2'),)))
+		self.assertEqual (ast2spt2ast (p ('{1,2} || {2,3} || {3,4}')), ('set', (('#', '1'), ('#', '2'), ('#', '3'), ('#', '4'))))
+		self.assertEqual (ast2spt2ast (p ('{1,2} ^^ {2,3} ^^ {3,4}')), ('set', (('#', '1'), ('#', '4'))))
+		self.assertEqual (ast2spt2ast (p ('{1,2} && {2,3} && {3,4}')), ('set', ()))
+		self.assertEqual (ast2spt2ast (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), ('set', (('#', '1'), ('#', '2'), ('#', '3'), ('#', '4'))))
 
 _EXPRESSIONS = """
 1
@@ -2159,17 +2223,20 @@ set ()
 4 \\in {1,2,3}
 4 not in {1,2,3}
 4 \\notin {1,2,3}
+{1,2} - {2,3}
+{1,2} || {2,3}
+{1,2} ^^ {2,3}
+{1,2} && {2,3}
+{1,2} || {2,3} || {3,4}
+{1,2} ^^ {2,3} ^^ {3,4}
+{1,2} && {2,3} && {3,4}
+{1,2} || {2,3} ^^ {3,4} && {4,5}
 """
 
 if __name__ == '__main__':
 	import os.path
 	import subprocess
 	import sys
-
-	# ast = p ('Limit (1/x, x, 0, dir="+-")')
-	# spt = ast2spt (ast)
-	# ast = spt2ast (spt)
-	# sys.exit (0)
 
 	if len (sys.argv) == 1:
 		subprocess.run ([sys.executable, '-m', 'unittest', '-v', os.path.basename (sys.argv [0])])
@@ -2192,5 +2259,3 @@ if __name__ == '__main__':
 
 				except Exception as e:
 					print (f'\t\tself.assertRaises ({e.__class__.__name__}, {func.__name__}, p ({expr!r}))')
-
-# \Theta \Lambda \xi \Omega \alpha \theta \Phi \gamma \nu \Gamma \delta \rho \lambda \iota \chi \psi \Psi \Xi \tau \mu \sigma \omega \kappa \upsilon \eta \Pi \epsilon \Delta \Upsilon \zeta \beta \phi \Sigma

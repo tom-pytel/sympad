@@ -8,9 +8,9 @@ import sympy as sp
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SYM_PY_BOR            = ' | '
-_SYM_PY_BXOR           = ' ^ '
-_SYM_PY_BAND           = ' & '
+_SYM_PY_UNION          = ' | '
+_SYM_PY_SDIFF          = ' ^ '
+_SYM_PY_XSECT          = ' & '
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = {} # dict user funcs {name: AST, ...}
@@ -363,12 +363,11 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'lamb' : lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 		'idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&"})}\\left[{self._ast2tex (_tuple2ast (ast.idx))} \\right]',
 		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and (a.is_ass or a.op in {',', 'lamb', 'slice'})) for a in _ast_slice_bounds (ast, '')),
-		# 'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)}{_trail_comma (ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex (k)}{{:}} {self._ast2tex (v)}" for k, v in ast.dict)} \\right\\}}',
-		'||'   : lambda self, ast: ' \\cup '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ','} or (a.is_piece and a is not ast.bor [-1])) for a in ast.bor),
-		'^^'   : lambda self, ast: ' \\ominus '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '||'} or (a.is_piece and a is not ast.bxor [-1])) for a in ast.bxor),
-		'&&'   : lambda self, ast: ' \\cap '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '||', '^^'} or (a.is_piece and a is not ast.band [-1])) for a in ast.band),
+		'||'   : lambda self, ast: ' \\cup '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ','} or (a.is_piece and a is not ast.union [-1])) for a in ast.union),
+		'^^'   : lambda self, ast: ' \\ominus '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '||'} or (a.is_piece and a is not ast.sdiff [-1])) for a in ast.sdiff),
+		'&&'   : lambda self, ast: ' \\cap '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '||', '^^'} or (a.is_piece and a is not ast.xsect [-1])) for a in ast.xsect),
 
 		'text' : lambda self, ast: ast.tex,
 	}
@@ -564,9 +563,9 @@ class ast2nat: # abstract syntax tree -> native text
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2nat (k)}: {self._ast2nat (v)}" for k, v in ast.dict)}}}',
-		'||'   : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb'}) for a in ast.bor),
-		'^^'   : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb', '||'}) for a in ast.bxor),
-		'&&'   : lambda self, ast: ' && '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.band),
+		'||'   : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb'}) for a in ast.union),
+		'^^'   : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb', '||'}) for a in ast.sdiff),
+		'&&'   : lambda self, ast: ' && '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.xsect),
 
 		'text' : lambda self, ast: ast.nat,
 	}
@@ -678,9 +677,9 @@ class ast2py: # abstract syntax tree -> Python code text
 		'slice': lambda self, ast: ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 		'set'  : lambda self, ast: f'{{{", ".join (self._ast2py (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else 'set()',
 		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
-		'||'   : lambda self, ast: _SYM_PY_BOR.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb'}) for a in ast.bor),
-		'^^'   : lambda self, ast: _SYM_PY_BXOR.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||'}) for a in ast.bxor),
-		'&&'   : lambda self, ast: _SYM_PY_BAND.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.band),
+		'||'   : lambda self, ast: _SYM_PY_UNION.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb'}) for a in ast.union),
+		'^^'   : lambda self, ast: _SYM_PY_SDIFF.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||'}) for a in ast.sdiff),
+		'&&'   : lambda self, ast: _SYM_PY_XSECT.join (self._ast2py_paren (a, {'=', ',', 'piece', 'lamb', '||', '^^'}) for a in ast.xsect),
 
 		'text' : lambda self, ast: ast.py,
 	}
@@ -879,9 +878,9 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
 		'set'  : lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)),
 		'dict' : lambda self, ast: dict ((self._ast2spt (k), self._ast2spt (v)) for k, v in ast.dict),
-		'||'   : lambda self, ast: reduce (lambda a, b: a | b, (self._ast2spt (a) for a in ast.bor)),
-		'^^'   : lambda self, ast: reduce (lambda a, b: a ^ b, (self._ast2spt (a) for a in ast.bxor)),
-		'&&'   : lambda self, ast: reduce (lambda a, b: a & b, (self._ast2spt (a) for a in ast.band)),
+		'||'   : lambda self, ast: reduce (lambda a, b: a | b, (self._ast2spt (a) for a in ast.union)),
+		'^^'   : lambda self, ast: reduce (lambda a, b: a ^ b, (self._ast2spt (a) for a in ast.sdiff)),
+		'&&'   : lambda self, ast: reduce (lambda a, b: a & b, (self._ast2spt (a) for a in ast.xsect)),
 
 		'text' : lambda self, ast: ast.spt,
 	}

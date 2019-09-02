@@ -188,7 +188,6 @@ _XLAT_FUNC2AST_BASE = {
 	'Piecewise'            : _xlat_func_Piecewise,
 	'Pow'                  : _xlat_func_Pow,
 	'pow'                  : _xlat_func_Pow,
-	'set'                  : _xlat_func_set,
 	'Sum'                  : _xlat_func_Sum,
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
 }

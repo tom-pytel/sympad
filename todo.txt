@@ -8,7 +8,7 @@
 > Gamma -> gamma no xlat when Gamma lambda present?
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
-> {1:2:3,}
+> {1:2:3,} -> {slice(1, 2, 3),}?
 
 > no spacing for nums - 3 x -> 3x?
 > quick mode no spacing for vars x y z -> xyz?
@@ -40,24 +40,7 @@ Misc:
 
 > def __new__(cls, b, e, evaluate=None): obj = Expr.__new__(cls, b, e)
 
+FiniteSet (x, y) ^ FiniteSet (y, z) = Union({x} \ {z}, {z} \ {x})
 
 Errors:
 
-Union({g}, {b} \ {d, f}, Intersection({c, d, f} \ Intersection({a}, {d}), {d, f}) \ {b, d})
-Union({g}, {b} \ {d, f}, Intersection({c, d, f} \ Intersection({a}, {d}), {d, f}) \ {b, d})
-Union({g}, Complement ({b}, {d, f}), Intersection(Complement ({c, d, f}, Intersection({a}, {d})), Complement ({d, f}), {b, d}))
-Union(FiniteSet(g), Complement (FiniteSet(b), FiniteSet(d, f)), Intersection(Complement (FiniteSet(c, d, f), Intersection(FiniteSet(a), FiniteSet(d))), Complement (FiniteSet(d, f)), FiniteSet(b, d)))
-Union(
-  FiniteSet (g),
-  Complement (FiniteSet (b), FiniteSet (d, f)),
-  Complement (
-    Intersection(
-      Complement (FiniteSet (c, d, f), Intersection(FiniteSet (a), FiniteSet (d))),
-      FiniteSet (d, f)
-    ),
-    FiniteSet (b, d)
-  )
-)
-
-
-Union(FiniteSet (g), Complement (FiniteSet (b), FiniteSet (d, f)), Complement (Intersection(Complement (FiniteSet (c, d, f), Intersection(FiniteSet (a), FiniteSet (d))), FiniteSet (d, f)), FiniteSet (b, d)))

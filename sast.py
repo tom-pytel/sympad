@@ -548,29 +548,29 @@ class AST_Dict (AST):
 	def _init (self, dict):
 		self.dict = dict
 
-class AST_BOr (AST):
+class AST_Union (AST):
 	op, is_bor = '||', True
 
-	def _init (self, bor):
-		self.bor = bor
+	def _init (self, union):
+		self.union = union
 
-class AST_BXor (AST):
+class AST_Sdiff (AST): # symmetric difference
 	op, is_bxor = '^^', True
 
-	def _init (self, bxor):
-		self.bxor = bxor
+	def _init (self, sdiff):
+		self.sdiff = sdiff
 
-class AST_BAnd (AST):
+class AST_Xsect (AST): # intersection
 	op, is_band = '&&', True
 
-	def _init (self, band):
-		self.band = band
+	def _init (self, xsect):
+		self.xsect = xsect
 
 #...............................................................................................
 _AST_CLASSES = [AST_Eq, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
 	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
 	AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
-	AST_BOr, AST_BXor, AST_BAnd]
+	AST_Union, AST_Sdiff, AST_Xsect]
 
 for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)
