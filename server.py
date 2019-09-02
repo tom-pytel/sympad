@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.0.1'
+_VERSION         = '1.0.2'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
@@ -71,8 +71,6 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
-
-	sp.Gamma      = sp.gamma # Greek letter call gamma function hack
 
 	_SYS_STDOUT   = sys.stdout
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax

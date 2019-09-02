@@ -201,6 +201,28 @@ class AST (tuple):
 		return name if AST._rec_identifier.match (name) else None
 
 	@staticmethod
+	def args2kwargs (args, func = None):
+		func  = (lambda x: x) if func is None else func
+		_args = []
+		kw    = {}
+
+		for arg in args:
+			if arg.is_ass:
+				ident = arg.lhs.as_identifier ()
+
+				if ident is not None:
+					kw [ident] = func (arg.rhs)
+
+					continue
+
+			if kw:
+				raise SyntaxError ('positional argument follows keyword argument')
+
+			_args.append (func (arg))
+
+		return _args, kw
+
+	@staticmethod
 	def _free_vars (ast, vars):
 		if isinstance (ast, AST):
 			if ast.is_const_var is False and ast.var:

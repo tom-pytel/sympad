@@ -245,7 +245,8 @@ def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other
 				if xact is True: # True means execute function and use return value for ast
 					return sym.spt2ast (sym._ast_func_call (getattr (sp, ast.func), args))
 
-				ast2 = _xlat_func2ast (xact, args)
+				xargs, xkw = AST.args2kwargs (args)
+				ast2       = xact (*xargs, **xkw)
 
 				if ast2 is not None:
 					return ast2

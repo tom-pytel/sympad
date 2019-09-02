@@ -76,18 +76,8 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
-	pyargs = []
-	pykw   = {}
-
-	for arg in args:
-		if arg.is_ass:
-			pykw [arg.lhs.as_identifier ()] = _ast2spt (arg.rhs)
-		elif pykw:
-			raise SyntaxError ('positional argument follows keyword argument')
-		else:
-			pyargs.append (_ast2spt (arg))
-
-	spt = None
+	pyargs, pykw = AST.args2kwargs (args, _ast2spt)
+	spt          = None
 
 	if id (func) in _ast_func_call_spobjs: # if SymPy object try applying 'evaluate' flag
 		try:
@@ -699,10 +689,13 @@ _builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir'
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __init__ (self): self.vars = self.eval = [] # pylint kibble
-	def __new__ (cls, ast, vars = {}):
+	def __new__ (cls, ast, vars = {}, xlat = True):
 		self      = super ().__new__ (cls)
 		self.vars = [vars]
 		self.eval = True
+
+		if xlat:
+			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
 
 		return self._ast2spt (ast)
 
@@ -758,7 +751,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return attr if ast.args is None else _ast_func_call (attr, ast.args, self._ast2spt)
 
 		except AttributeError: # unresolved attributes of expressions with free vars remaining should not raise
-			if not obj.free_vars (): # spt.free_symbols: #
+			if not obj.free_vars ():
 				raise
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
@@ -838,7 +831,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not ast.free_vars (): # spt.free_symbols: #
+			if not ast.free_vars ():
 				raise
 
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)
