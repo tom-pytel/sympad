@@ -3,7 +3,6 @@
 > emptyset unicode symbol
 
 > var_prime in quick mode
-> Gamma -> gamma no xlat when Gamma lambda present?
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
 > {1:2:3,} -> {slice(1, 2, 3),} (SymPy creating dynamic class of slice)?

@@ -67,9 +67,12 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version) # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+	import sympy as sp   # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
+
+	sp.Gamma      = sp.gamma # Greek letter call gamma function hack
 
 	_SYS_STDOUT   = sys.stdout
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
@@ -125,11 +128,11 @@ def _ast_remap (ast, map_, recurse = True):
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
 
-def _update_user_funcs ():
-	_one_funcs = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
+def _update_vars ():
+	one_funcs  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
 	user_funcs = dict (va for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
 
-	user_funcs.update (_one_funcs)
+	user_funcs.update (one_funcs)
 
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
@@ -195,7 +198,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 		asts = [AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
 
-	_update_user_funcs ()
+	_update_vars ()
 
 	return asts
 
@@ -249,7 +252,7 @@ def _admin_del (*args):
 
 		del _VARS [var]
 
-	_update_user_funcs ()
+	_update_vars ()
 
 	if not msgs:
 		msgs.append ('No variables specified!')
@@ -260,7 +263,7 @@ def _admin_delall (*args):
 	last_var = _VARS [_VAR_LAST]
 
 	_VARS.clear ()
-	_update_user_funcs ()
+	_update_vars ()
 
 	_VARS [_VAR_LAST] = last_var
 
@@ -313,7 +316,7 @@ def _admin_env (*args):
 				msgs.append (f'Function {var} is {"on" if state else "off"}.')
 
 				if apply:
-					_update_user_funcs ()
+					_update_vars ()
 
 		return msgs
 
@@ -492,7 +495,7 @@ def start_server (logging = True):
 	if not logging:
 		Handler.log_message = lambda *args, **kwargs: None
 
-	_update_user_funcs ()
+	_update_vars ()
 
 	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
 		_DISPLAYSTYLE [0] = 0
