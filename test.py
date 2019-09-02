@@ -2150,6 +2150,8 @@ set ()
 4 \\in {1,2,3}
 4 not in {1,2,3}
 4 \\notin {1,2,3}
+Min (x, y, z)
+Max (x, y, z)
 """
 
 if __name__ == '__main__':

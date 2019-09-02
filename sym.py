@@ -1071,8 +1071,10 @@ _spt2ast_funcs = {
 	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
 	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
 	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Min: lambda spt: AST ('func', 'Min', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
-	sp.Max: lambda spt: AST ('func', 'Max', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
+	# sp.Min: lambda spt: AST ('func', 'Min', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
+	# sp.Max: lambda spt: AST ('func', 'Max', ((spt2ast (spt.args [0]) if len (spt.args) == 1 else spt2ast (spt.args)),)),
+	sp.Min: lambda spt: AST ('func', 'Min', tuple (spt2ast (arg) for arg in spt.args)),
+	sp.Max: lambda spt: AST ('func', 'Max', tuple (spt2ast (arg) for arg in spt.args)),
 
 	sp.Limit: lambda spt: AST (*(('lim', spt2ast (spt.args [0]), spt2ast (spt.args [1]), spt2ast (spt.args [2])) + _spt2ast_Limit_dirs [spt.args [3].name])),
 	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
