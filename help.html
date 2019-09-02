@@ -113,7 +113,7 @@ The symbolic expressions can be copied to the clipboard in various formats.
 Single-click for a simple native format meant to be pasted back into the input field.
 A double click-copies the expression in Python format suitable for pasting into a Python shell or source file.
 Finally, a triple-click will copy the expression in LaTeX format.
-The single-click native and double-click Python formats should almost always be pasteable back into SymPad, exceptions are rare and will be noted in this documentation, whereas the LaTeX format may or may not be depending on what elements are present.
+The single-click native and double-click Python formats should almost always be pasteable back into SymPad, whereas the LaTeX format may or may not be depending on what elements are present.
 </p>
 
 <h4>Quick Input Mode</h4>
@@ -318,7 +318,6 @@ These basic set operations are supported: "<b>+</b>", "<b>||</b>" or "<b>\cup</b
 "<b>&&</b>" or "<b>\cap</b>" for intersection - "<b>{1, 2} && {2, 3} = {2,}</b>".
 "<b>^^</b>" or "<b>\ominus</b>" for symmetric difference - "<b>{1, 2} ^^ {2, 3} = {1, 3}</b>".
 "<b>-</b>" for relative complement - "<b>{1, 2} - {2, 3} = {1,}</b>".
-This is one of the rare cases where the Python code generated will not work when pasted back into SymPad as the corresponding Python operations which are written out are "<b>|</b>", "<b>^</b>" and "<b>&</b>" - these could not be used in SymPad as they already have other meanings.
 The comparison operators can be applied to sets to test for subset "<b>&lt;</b>", proper subset "<b>&lt;=</b>", superset "<b>&gt;</b>" or proper superset "<b>&gt;=</b>".
 The membership test operators "<b>in</b>" and "<b>not in</b>" work on sets as expected.
 </p><p>

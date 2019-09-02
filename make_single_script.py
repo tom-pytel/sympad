@@ -43,7 +43,7 @@ sys.path.insert (0, '') # allow importing from current directory first (for SymP
 '''.lstrip ()
 
 if __name__ == '__main__':
-	fdout = open ('sympad.py', 'w', newline = '')
+	fdout = open ('sympad.py', 'w', newline = '', encoding="utf8")
 
 	fdout.write (_HEADER)
 	fdout.write ('\n_FILES = {\n')
@@ -51,7 +51,7 @@ if __name__ == '__main__':
 	for fnm in _OTHER_FILES:
 		fdout.write (f'''\n\t'{fnm}': # {fnm}\n\nr"""''')
 
-		for line in open (fnm):
+		for line in open (fnm, encoding="utf8"):
 			fdout.write (line)
 
 		fdout.write ('""".encode ("utf8"),\n')
