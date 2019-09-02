@@ -877,7 +877,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'lamb' : _ast2spt_lamb,
 		'idx'  : _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
-		'set'  : lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)), # frozenset ((self._ast2spt (a) for a in ast.set)), #
+		'set'  : lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)),
 		'dict' : lambda self, ast: dict ((self._ast2spt (k), self._ast2spt (v)) for k, v in ast.dict),
 		'||'   : lambda self, ast: reduce (lambda a, b: a | b, (self._ast2spt (a) for a in ast.bor)),
 		'^^'   : lambda self, ast: reduce (lambda a, b: a ^ b, (self._ast2spt (a) for a in ast.bxor)),
@@ -1140,8 +1140,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('+', (('#', '1'), ('set', (('#', '-1'),))))
-# 	res = ast2nat (ast)
-# 	# res = spt2ast (res)
+# 	ast = AST ('set', (('slice', ('#', '1'), ('#', '2'), ('#', '3')),))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
 
 # 	print (res)
