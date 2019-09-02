@@ -205,9 +205,9 @@ Like strings, lists and tuples these exist for the purpose of passing and reciev
 
 <p>
 These are not the standard Python sets but rather are represented internally by the SymPy object "<b>FiniteSet</b>".
-There can be entered via said "<b>FiniteSet</b>" function or via standard Python syntax for sets containing more than one element like "<b>{a, b, c}</b>".
+They can be entered via said "<b>FiniteSet</b>" function or via standard Python syntax for sets containing more than one element like "<b>{a, b, c}</b>".
 To enter a set of zero or one element use the slashed-curly set override to open the set as such "<b>\{1}</b>" or "<b>{1,}</b>" for a one-element set or "<b>\{}</b>" for the empty set, otherwise for one element the curlys would be interpreted as parentheses and just like in Python the "<b>{}</b>" string is an empty dictionary, not a set.
-As said these are converted to "<b>FiniteSet</b>" for evaluation, if however you need a true Python set for some reason then wrap the set or any other iterable in the Python "<b>set()</b>" function, this will always result in a Python set inside the calculations.
+As said these are converted to "<b>FiniteSet</b>" for evaluation, if however you need a true Python set for some reason then wrap the set or any other iterable in the Python "<b>set()</b>" function, this will always result in a Python set inside the calculations, though it will be returned to SymPy as a "<b>FiniteSet</b>" after the calculation completes.
 </p><p>
 The following default sets are available at the top level: "<b>Complexes</b>", "<b>Reals</b>", "<b>Naturals</b>", "<b>Naturals0</b>" and "<b>Integers</b>".
 </p>
@@ -318,7 +318,7 @@ These basic set operations are supported: "<b>+</b>", "<b>||</b>" or "<b>\cup</b
 "<b>&&</b>" or "<b>\cap</b>" for intersection - "<b>{1, 2} && {2, 3} = {2,}</b>".
 "<b>^^</b>" or "<b>\ominus</b>" for symmetric difference - "<b>{1, 2} ^^ {2, 3} = {1, 3}</b>".
 "<b>-</b>" for relative complement - "<b>{1, 2} - {2, 3} = {1,}</b>".
-This is one of the rare cases where the Python code generated will not work when pasted back into SymPad as the corresponding Python operations which are written out are "<b>|</b>", "<b>^</b>" and "<b>&</b>" (these could not be used in SymPad as they already have other meanings).
+This is one of the rare cases where the Python code generated will not work when pasted back into SymPad as the corresponding Python operations which are written out are "<b>|</b>", "<b>^</b>" and "<b>&</b>" - these could not be used in SymPad as they already have other meanings.
 The comparison operators can be applied to sets to test for subset "<b>&lt;</b>", proper subset "<b>&lt;=</b>", superset "<b>&gt;</b>" or proper superset "<b>&gt;=</b>".
 The membership test operators "<b>in</b>" and "<b>not in</b>" work on sets as expected.
 </p>

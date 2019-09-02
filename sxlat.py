@@ -172,6 +172,7 @@ def _xlat_func_Sum (ast = AST.VarNull, ab = None):
 _XLAT_FUNC2AST_BASE = {
 	'abs'                  : lambda ast: AST ('|', ast),
 	'Abs'                  : lambda ast: AST ('|', ast),
+	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
 	'Derivative'           : _xlat_func_Derivative,
 	'diff'                 : _xlat_func_Derivative,
 	'EmptySet'             : lambda *args: AST.SetEmpty,
@@ -180,6 +181,7 @@ _XLAT_FUNC2AST_BASE = {
 	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
 	'Integral'             : _xlat_func_Integral,
 	'integrate'            : _xlat_func_Integral,
+	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
 	'Lambda'               : _xlat_func_Lambda,
 	'Limit'                : _xlat_func_Limit,
 	'limit'                : _xlat_func_Limit,
@@ -190,6 +192,7 @@ _XLAT_FUNC2AST_BASE = {
 	'pow'                  : _xlat_func_Pow,
 	'Sum'                  : _xlat_func_Sum,
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
+	'Union'                : lambda *args: AST ('||', tuple (args)),
 }
 
 _XLAT_FUNC2AST_REIM = {
