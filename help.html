@@ -57,7 +57,7 @@ cos**-1 0 + \log_2{8}<br>
 expand ((1 + x)**4)<br>
 factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)<br>
 series (e^x, x, 0, 5)<br>
-solveset (x**2 + y == 4, x)<br>
+solveset (x**2 + y = 4, x)<br>
 \lim_{x\to\infty} 1/x<br>
 Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
@@ -503,8 +503,9 @@ If you are getting results which are just plain wrong, check to see if you have 
 </p><p>
 If you are unable to use a keyword argument identifier in a function call because it is a reserved name then you can wrap it in quotes, Python strings are allowed as keyword identifiers specifically for this purpose.
 </p><p>
-If you want to pass an equation to a function, like for example "<b>solveset(x**2 = 2, x)</b>", it won't work in this format as it will be treated as a keyword argument assignment.
-In this case you need to pass the equation in one of these manners: "<b>solveset((x**2 = 2), x)</b>", "<b>solveset(x**2 == 2, x)</b>" or assign the equation to a variable first and pass the variable.
+Usually SymPad should be smart enough to figure out when a function argument is and equation and when it is a keyword assignment like in this function "<b>solveset(x**2 = i)</b>".
+However some room for ambiguity remains like in this function "<b>solveset(i = x**2)</b>".
+In cases like these you need to pass the equation followed by an explicit non-keyword argument like "<b>solveset(i = x**2, x)</b>" or by using the strict comparison double equals "<b>solveset(i == x**2)</b>".
 </p><p>
 The LaTeX parsing is not really comprehensive, it is geared towards being able to read back the LaTeX emitted by SymPad correctly.
 </p><p>

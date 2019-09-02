@@ -1,3 +1,7 @@
+v1.0.2:
+-------
+* Changed keyword argument recognition to be more friendly to equations.
+
 v1.0.1:
 -------
 * Changed native vector and matrix representation from {} to \[] to make grammatical room for sets and dictionaries.

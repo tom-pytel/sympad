@@ -200,13 +200,29 @@ class AST (tuple):
 
 		return name if AST._rec_identifier.match (name) else None
 
+	def free_vars (self): # return set of unique unbound variables found in tree
+		def _free_vars (ast, vars):
+			if isinstance (ast, AST):
+				if ast.is_const_var is False and ast.var:
+					vars.add (ast)
+
+				for e in ast:
+					_free_vars (e, vars)
+
+		vars = set ()
+
+		_free_vars (self, vars)
+
+		return vars
+
 	@staticmethod
 	def args2kwargs (args, func = None):
 		func  = (lambda x: x) if func is None else func
-		_args = []
+		rargs = []
 		kw    = {}
+		itr   = reversed (args)
 
-		for arg in args:
+		for arg in itr:
 			if arg.is_ass:
 				ident = arg.lhs.as_identifier ()
 
@@ -215,28 +231,9 @@ class AST (tuple):
 
 					continue
 
-			if kw:
-				raise SyntaxError ('positional argument follows keyword argument')
+			rargs = [func (arg)] + [func (arg) for arg in itr]
 
-			_args.append (func (arg))
-
-		return _args, kw
-
-	@staticmethod
-	def _free_vars (ast, vars):
-		if isinstance (ast, AST):
-			if ast.is_const_var is False and ast.var:
-				vars.add (ast)
-
-			for e in ast:
-				AST._free_vars (e, vars)
-
-	def free_vars (self): # return set of unique unbound variables found in tree
-		vars = set ()
-
-		AST._free_vars (self, vars)
-
-		return vars
+		return rargs [::-1], kw
 
 	@staticmethod
 	def is_int_text (text):
