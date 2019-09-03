@@ -1,4 +1,3 @@
-> symmetric difference parse from union of complements
 > emptyset Unicode symbol
 
 > var_prime in quick mode

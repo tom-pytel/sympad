@@ -936,6 +936,13 @@ def _spt2ast_num (spt):
 			f'{num.grp [0]}{num.grp [1]}{"0" * e}' if e >= 0 else \
 			f'{num.grp [0]}{num.grp [1]}e{e}')
 
+def _spt2ast_Union (spt): # convert union of complements to symmetric difference if present
+	if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
+			spt.args [0].args [0] == spt.args [1].args [1] and spt.args [0].args [1] == spt.args [1].args [0]:
+		return AST ('^^', (spt2ast (spt.args [0].args [0]), spt2ast (spt.args [0].args [1])))
+
+	return spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (spt2ast (a) for a in spt.args))
+
 def _spt2ast_MatrixBase (spt):
 	if not spt.cols or not spt.rows:
 		return AST ('vec', ())
@@ -1067,7 +1074,7 @@ _spt2ast_funcs = {
 	sp.EmptySet: lambda spt: AST.SetEmpty,
 	sp.fancysets.Complexes: lambda spt: AST.Complexes,
 	sp.FiniteSet: lambda spt: AST ('set', tuple (spt2ast (arg) for arg in spt.args)),
-	sp.Union: lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (spt2ast (a) for a in spt.args)),
+	sp.Union: _spt2ast_Union, # lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (spt2ast (a) for a in spt.args)),
 	sp.Intersection: lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST.flatcat ('&&', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Complement: lambda spt: AST ('+', (spt2ast (spt.args [0]), ('-', spt2ast (spt.args [1])))),
 

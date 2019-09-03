@@ -1,8 +1,9 @@
 v1.0.2:
 -------
-* Changed keyword argument recognition to be more friendly to equations.
+* Changed function keyword argument recognition to be more friendly to equations.
 * Added automatic post-evaluation simplification (optional through env).
-* Added SymPy matrix multiplication intermediate simplification patch to control matrix expression blowup.
+* Added SymPy matrix multiplication intermediate simplification patch to control matrix expression blowup (optional through env).
+* Union of symmetric Complement sets converted back to symmetric difference after evaluation where applicable.
 
 v1.0.1:
 -------

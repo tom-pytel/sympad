@@ -835,11 +835,11 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 0, 5)', true)">series (e^x, x, 0, 5)</a>
 	<a class="GreetingA" href="javascript:inputting ('solveset (x**2 + y = 4, x)', true)">solveset (x**2 + y = 4, x)</a>
 	<a class="GreetingA" href="javascript:inputting ('\\lim_{x\\to\\infty} 1/x', true)">\lim_{x\to\infty} 1/x</a>
-	<a class="GreetingA" href="javascript:inputting ('Limit (\\frac1x, x, 0, dir='-')', true)">Limit (\frac1x, x, 0, dir='-')</a>
+	<a class="GreetingA" href="javascript:inputting ('Limit (\\frac1x, x, 0, dir=\'-\')', true)">Limit (\frac1x, x, 0, dir='-')</a>
 	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}**oo x^n / n!', true)">\sum_{n=0}**oo x^n / n!</a>
 	<a class="GreetingA" href="javascript:inputting ('Derivative (x**2y**2, x, y, 2)', true)">Derivative (x**2y**2, x, y, 2)</a>
 	<a class="GreetingA" href="javascript:inputting ('d**6 / dx dy**2 dz**3 x^3 y^3 z^3', true)">d**6 / dx dy**2 dz**3 x^3 y^3 z^3</a>
-	<a class="GreetingA" href="javascript:inputting ('Integral (e^{-x^2}, (x, 0, \\infty), y)', true)">Integral (e^{-x^2}, (x, 0, \infty), y)</a>
+	<a class="GreetingA" href="javascript:inputting ('Integral (e^{-x^2}, (x, 0, \\infty))', true)">Integral (e^{-x^2}, (x, 0, \infty))</a>
 	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\pi \\int_0^{2pi} \\int_0^1 rho**2 sin\\phi drho dtheta dphi', true)">\int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi</a>
 	<a class="GreetingA" href="javascript:inputting ('\\[[1, 2], [3, 4]]**-1', true)">\[[1, 2], [3, 4]]**-1</a>
 	<a class="GreetingA" href="javascript:inputting ('Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()', true)">Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()</a>
@@ -936,7 +936,7 @@ Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
 Derivative (x**2y**2, x, y, 2)<br>
 d**6 / dx dy**2 dz**3 x^3 y^3 z^3<br>
-Integral (e^{-x^2}, (x, 0, \infty), y)<br>
+Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi<br>
 \[[1, 2], [3, 4]]**-1<br>
 Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
@@ -1251,6 +1251,19 @@ This function defers evaluation of the expression for one round thus allowing th
 In this way you can assign different values to "<b>a</b>" and have the integration happen automatically any time you access the "<b>f</b>" variable instead of just using the result of whatever variables were defined at the time of definition.
 </p>
 
+<h4>Simplification</h4>
+
+<p>
+Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, by default SymPy will try to simplify the result of any calculation before returning it.
+This is due to the fact that many times SymPy prefers to return results quicker and leaves the option to simplify to the user - in this case SymPad, whereas SymPad is the kind of application which should always present the simplest possible representation of a result.
+This behavior can be turned off by calling "<b>env(nosimplify)</b>"" and turned back on via "<b>env('simplify')</b>", note the string quotes since "<b>simplify</b>" is a reserved SymPy function name.
+</p><p>
+A separate type of simplification is done for matrix operations since native SymPy matrix operations tend to blow up fairly quickly.
+This simplification is on by default and simplifies matrices any time they are multiplied which helps control intermediate results in complex matrix operations and gives an already simplified answer once the operation completes.
+This tends to slow down normal matrix operations a little but prevents the kind of lockup that can occur if a complex operation leaves a matrix in a state which is impossible for the normal "<b>simplify()</b>" function to correct.
+This simplification can be turned off and on via "<b>env(nomatsimp)</b>" and "<b>env(matsimp)</b>".
+</p>
+
 <h2>Functions</h2>
 <p>
 There are two types of functions made available in SymPad - all the SymPy native functions are available directly just by typing their name (a few escaped with "<b>$</b>"), as well as user created lambda functions assigned to variables.
@@ -1311,11 +1324,12 @@ There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta
 This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
 This was not very elegant so the workaround is as follows:
 This is not a problem for "<b>beta</b>" and "<b>Lambda</b>" since they require multiple arguments and can be recognized as function calls from an implicit multiplication with a tuple of size 2, but the others can not be recognized this way.
+</p><p>
 These function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
 These lambda functions do not appear in the normal list of functions shown by "<b>funcs()</b>" but their status can be checked by using the "<b>env()</b>" function.
 When these functions are mapped they are treated exactly like variables mapped to a lambda for the purposes of calling them, but they are still available as free variables to use and even assign to.
 To enable or disable environment mapping of these functions like "<b>gamma()</b>" enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>" to disable and "<b>env (gamma)</b>" or "<b>env (gamma=True)</b>" to enable.
-Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always available because they are special cased, even if "<b>S()</b>" is not mapped or is assigned to something else.
+Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always available because they are special cased, even if "<b>S()</b>" is not mapped, though if it is assigned to something else then these attributes are lost.
 Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
 </p>
 
@@ -3527,6 +3541,13 @@ def _spt2ast_num (spt):
 			f'{num.grp [0]}{num.grp [1]}{"0" * e}' if e >= 0 else \
 			f'{num.grp [0]}{num.grp [1]}e{e}')
 
+def _spt2ast_Union (spt): # convert union of complements to symmetric difference if present
+	if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
+			spt.args [0].args [0] == spt.args [1].args [1] and spt.args [0].args [1] == spt.args [1].args [0]:
+		return AST ('^^', (spt2ast (spt.args [0].args [0]), spt2ast (spt.args [0].args [1])))
+
+	return spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (spt2ast (a) for a in spt.args))
+
 def _spt2ast_MatrixBase (spt):
 	if not spt.cols or not spt.rows:
 		return AST ('vec', ())
@@ -3658,7 +3679,7 @@ _spt2ast_funcs = {
 	sp.EmptySet: lambda spt: AST.SetEmpty,
 	sp.fancysets.Complexes: lambda spt: AST.Complexes,
 	sp.FiniteSet: lambda spt: AST ('set', tuple (spt2ast (arg) for arg in spt.args)),
-	sp.Union: lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (spt2ast (a) for a in spt.args)),
+	sp.Union: _spt2ast_Union, # lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (spt2ast (a) for a in spt.args)),
 	sp.Intersection: lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST.flatcat ('&&', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Complement: lambda spt: AST ('+', (spt2ast (spt.args [0]), ('-', spt2ast (spt.args [1])))),
 
