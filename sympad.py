@@ -833,7 +833,7 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('expand ((1 + x)**4)', true)">expand ((1 + x)**4)</a>
 	<a class="GreetingA" href="javascript:inputting ('factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)', true)">factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)</a>
 	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 0, 5)', true)">series (e^x, x, 0, 5)</a>
-	<a class="GreetingA" href="javascript:inputting ('solveset (x**2 + y == 4, x)', true)">solveset (x**2 + y == 4, x)</a>
+	<a class="GreetingA" href="javascript:inputting ('solveset (x**2 + y = 4, x)', true)">solveset (x**2 + y = 4, x)</a>
 	<a class="GreetingA" href="javascript:inputting ('\\lim_{x\\to\\infty} 1/x', true)">\lim_{x\to\infty} 1/x</a>
 	<a class="GreetingA" href="javascript:inputting ('Limit (\\frac1x, x, 0, dir='-')', true)">Limit (\frac1x, x, 0, dir='-')</a>
 	<a class="GreetingA" href="javascript:inputting ('\\sum_{n=0}**oo x^n / n!', true)">\sum_{n=0}**oo x^n / n!</a>
@@ -846,7 +846,6 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('a if randprime(1, 4) == 2 else b', true)">a if randprime(1, 4) == 2 else b</a>
 	<a class="GreetingA" href="javascript:inputting ('Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)', true)">Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)</a>
 	<a class="GreetingA" href="javascript:inputting ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}', true)">(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}</a>
-	<a class="GreetingA" href="javascript:inputting ('{x, y} && {y, z}', true)">{x, y} && {y, z}</a>
 
 <!--
 <a class="GreetingA" href="javascript:inputting ('
@@ -931,7 +930,7 @@ cos**-1 0 + \log_2{8}<br>
 expand ((1 + x)**4)<br>
 factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)<br>
 series (e^x, x, 0, 5)<br>
-solveset (x**2 + y == 4, x)<br>
+solveset (x**2 + y = 4, x)<br>
 \lim_{x\to\infty} 1/x<br>
 Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
@@ -944,7 +943,6 @@ Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
 a if randprime(1, 4) == 2 else b<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
-{x, y} && {y, z}
 </p>
 
 <h4>Multiline examples</h4>
@@ -1340,16 +1338,23 @@ Also remember that these functions are always available for calling using the "<
 <p>"<b>del(vars())</b>" - Delete all non-lambda variables.</p>
 <p>"<b>del(funcs())</b>" - Delete all lambda functions.</p>
 <p>"<b>delall()</b>" - Delete ALL variables, lambda and non-lambda.</p>
-<p>"<b>env()</b>" - Show or change current SymPad runtime environment. Called without any arguments it will show the current state of the environment. If arguments are present they specify turning on or off a certain aspect of SymPad functionality. For example the functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
+<p>"<b>env()</b>" - Show or change current SymPad runtime environment.
+Called without any arguments it will show the current state of the environment.
+If arguments are present they specify turning on or off a certain aspect of SymPad functionality.
+For example the quick input functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>", "<b>env('quick')</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
 <p>"<b>envreset()</b>" - Reset environment to what it was at startup.</p>
 
 <h4>Environment Settings for env()</h4>
 
+<p>In quick input mode you should always use parentheses and in the case of the "<b>simplify</b>" option you need to use the quoted version "<b>env('simplify')</b>" due to that being a function name and how letters are parsed in quick mode.</p>
+
 <p>"<b>EI</b>" - Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
 This allows the Python code copied from SymPad to work directly with SymPy where the uppercase constants are used.</p>
 <p>"<b>quick</b>" - Quick single letter variable name input mode.</p>
+<p>"<b>simplify</b>" - Post-evaluation simplification, this can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</p>
+<p>"<b>matsimp</b>" - Matrix simplification, this turns on a patch to SymPy which does a basic simplification step on intermediate matrix multiplication products which prevents matrix operations from blowing up.</p>
 <p>"<b>pyS</b>" - Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</p>
-<p>"<b>eval</b>" - Expression evaluation. Normally when you enter "<b>1 + 2</b>" it is evaluated for an answer of "<b>3</b>". If you turn this option off then this evaluation will not happen and the expression will stay as "<b>1 + 2</b>".</p>
+<p>"<b>eval</b>" - Expression evaluation. Normally when you enter "<b>1 + 2</b>" it is evaluated for an answer of "<b>3</b>". If you turn this option off then this evaluation will not happen and the expression will stay as "<b>1 + 2</b>". The option technically controls whether an "<b>evaluate=False</b>" flag is passed to SymPy objects.</p>
 <p>"<b>doit</b>" - Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off. Note that turning off the previous option "<b>eval</b>" implies turning off "<b>doit</b>".</p>
 <p>"<b>N</b>" - Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</p>
 <p>"<b>O</b>" - Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</p>
@@ -1377,8 +1382,9 @@ If you are getting results which are just plain wrong, check to see if you have 
 </p><p>
 If you are unable to use a keyword argument identifier in a function call because it is a reserved name then you can wrap it in quotes, Python strings are allowed as keyword identifiers specifically for this purpose.
 </p><p>
-If you want to pass an equation to a function, like for example "<b>solveset(x**2 = 2, x)</b>", it won't work in this format as it will be treated as a keyword argument assignment.
-In this case you need to pass the equation in one of these manners: "<b>solveset((x**2 = 2), x)</b>", "<b>solveset(x**2 == 2, x)</b>" or assign the equation to a variable first and pass the variable.
+Usually SymPad should be smart enough to figure out when a function argument is and equation and when it is a keyword assignment like in this function "<b>solveset(x**2 = i)</b>".
+However some room for ambiguity remains like in this function "<b>solveset(i = x**2)</b>".
+In cases like these you need to pass the equation followed by an explicit non-keyword argument like "<b>solveset(i = x**2, x)</b>" or by using the strict comparison double equals "<b>solveset(i == x**2)</b>".
 </p><p>
 The LaTeX parsing is not really comprehensive, it is geared towards being able to read back the LaTeX emitted by SymPad correctly.
 </p><p>
@@ -1835,21 +1841,40 @@ class AST (tuple):
 
 		return name if AST._rec_identifier.match (name) else None
 
-	@staticmethod
-	def _free_vars (ast, vars):
-		if isinstance (ast, AST):
-			if ast.is_const_var is False and ast.var:
-				vars.add (ast)
-
-			for e in ast:
-				AST._free_vars (e, vars)
-
 	def free_vars (self): # return set of unique unbound variables found in tree
+		def _free_vars (ast, vars):
+			if isinstance (ast, AST):
+				if ast.is_const_var is False and ast.var:
+					vars.add (ast)
+
+				for e in ast:
+					_free_vars (e, vars)
+
 		vars = set ()
 
-		AST._free_vars (self, vars)
+		_free_vars (self, vars)
 
 		return vars
+
+	@staticmethod
+	def args2kwargs (args, func = None):
+		func  = (lambda x: x) if func is None else func
+		rargs = []
+		kw    = {}
+		itr   = reversed (args)
+
+		for arg in itr:
+			if arg.is_ass:
+				ident = arg.lhs.as_identifier ()
+
+				if ident is not None:
+					kw [ident] = func (arg.rhs)
+
+					continue
+
+			rargs = [func (arg)] + [func (arg) for arg in itr]
+
+		return rargs [::-1], kw
 
 	@staticmethod
 	def is_int_text (text):
@@ -2477,7 +2502,8 @@ def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other
 				if xact is True: # True means execute function and use return value for ast
 					return sym.spt2ast (sym._ast_func_call (getattr (sp, ast.func), args))
 
-				ast2 = _xlat_func2ast (xact, args)
+				xargs, xkw = AST.args2kwargs (args)
+				ast2       = xact (*xargs, **xkw)
 
 				if ast2 is not None:
 					return ast2
@@ -2575,9 +2601,10 @@ import sympy as sp
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = {} # dict user funcs {name: AST, ...}
-_PYS                   = True
-_EVAL                  = True
-_DOIT                  = True
+_POST_SIMPLIFY         = True # post-evaluation simplification
+_PYS                   = True # Python S() escaping
+_EVAL                  = True # expression evaluation via 'evaluate' flag
+_DOIT                  = True # expression doit()
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
@@ -2641,18 +2668,8 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
-	pyargs = []
-	pykw   = {}
-
-	for arg in args:
-		if arg.is_ass:
-			pykw [arg.lhs.as_identifier ()] = _ast2spt (arg.rhs)
-		elif pykw:
-			raise SyntaxError ('positional argument follows keyword argument')
-		else:
-			pyargs.append (_ast2spt (arg))
-
-	spt = None
+	pyargs, pykw = AST.args2kwargs (args, _ast2spt)
+	spt          = None
 
 	if id (func) in _ast_func_call_spobjs: # if SymPy object try applying 'evaluate' flag
 		try:
@@ -3264,12 +3281,24 @@ _builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir'
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __init__ (self): self.vars = self.eval = [] # pylint kibble
-	def __new__ (cls, ast, vars = {}):
+	def __new__ (cls, ast, vars = {}, xlat = True):
 		self      = super ().__new__ (cls)
 		self.vars = [vars]
 		self.eval = True
 
-		return self._ast2spt (ast)
+		if xlat:
+			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
+
+		spt = self._ast2spt (ast)
+
+		if _POST_SIMPLIFY:
+			if not isinstance (spt, (bool, int, float, str, tuple, list, set, frozenset, dict, slice)):
+				try:
+					spt = sp.simplify (spt)
+				except:
+					pass
+
+		return spt
 
 	def _ast2spt (self, ast):
 		spt = self._ast2spt_funcs [ast.op] (self, ast)
@@ -3323,7 +3352,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return attr if ast.args is None else _ast_func_call (attr, ast.args, self._ast2spt)
 
 		except AttributeError: # unresolved attributes of expressions with free vars remaining should not raise
-			if not obj.free_vars (): # spt.free_symbols: #
+			if not obj.free_vars ():
 				raise
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
@@ -3403,7 +3432,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not ast.free_vars (): # spt.free_symbols: #
+			if not ast.free_vars ():
 				raise
 
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)
@@ -3692,6 +3721,10 @@ def set_pyS (state):
 	global _PYS
 	_PYS = state
 
+def set_simplify (state):
+	global _POST_SIMPLIFY
+	_POST_SIMPLIFY = state
+
 def set_eval (state):
 	global _EVAL
 	_EVAL = state
@@ -3704,6 +3737,7 @@ class sym: # for single script
 	set_precision  = set_precision
 	set_user_funcs = set_user_funcs
 	set_pyS        = set_pyS
+	set_simplify   = set_simplify
 	set_eval       = set_eval
 	set_doit       = set_doit
 	ast2tex        = ast2tex
@@ -4708,6 +4742,167 @@ class sparser: # for single script
 # 	a = p.parse (r'\left\{1')
 # 	# a = sym.ast2spt (a)
 # 	print (a)
+# Patch SymPy matrix multiplication for intermediate simplification step to control expression blowup.
+
+from collections import defaultdict
+
+SPATCHED = False
+
+try: # try to patch and fail silently if SymPy has changed too much since this was written
+	from sympy import S, count_ops, cancel, together, SparseMatrix
+	from sympy.matrices.common import MatrixArithmetic, classof
+	from sympy.matrices.dense import DenseMatrix
+	from sympy.matrices.sparse import SparseMatrix
+
+	_DEFAULT_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
+	_DEFAULT_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
+	_DEFAULT_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
+
+	SPATCHED = True
+
+except:
+	pass
+
+def _dotprodsimp (a, b, simplify = True):
+	"""Sum-of-products with optional intermediate product simplification
+	targeted at the kind of blowup that occurs during summation of products.
+	Intended to reduce expression blowup during matrix multiplication or other
+	similar operations.
+
+	Parameters
+	==========
+
+	a, b : iterable
+		These will be multiplied then summed together either normally or
+		using simplification on the intermediate products and cancelling at
+		the end according to the 'simplify' flag. The elements must already be
+		sympyfied and the sequences need not be of the same length, the shorter
+		will be used.
+
+	simplify : bool
+		When set intermediate and final simplification will be used, not set
+		will indicate a normal sum of products.
+	"""
+
+	expr = S.Zero
+	itra = iter (a)
+	itrb = iter (b)
+
+	# simple non-simplified sum of products
+	if not simplify:
+		try:
+			expr = next (itra) * next (itrb)
+
+			for a in itra:
+				expr += a * next (itrb)
+
+		except StopIteration:
+			pass
+
+		return expr
+
+	# part 1, the expanded summation
+	try:
+		prod    = next (itra) * next (itrb)
+		_expand = getattr (prod, 'expand', None)
+		expr    = _expand (power_base = False, power_exp = False, log = False, \
+				multinomial = False, basic = False) if _expand else prod
+
+		for a in itra:
+			prod     = a * next (itrb)
+			_expand  = getattr (prod, 'expand', None)
+			expr    += _expand (power_base = False, power_exp = False, log = False, \
+					multinomial = False, basic = False) if _expand else prod
+
+	except StopIteration:
+		pass
+
+	# part 2, the cancelation and grouping
+	exprops  = count_ops (expr)
+	expr2    = expr.expand (power_base = False, power_exp = False, log = False, multinomial = True, basic = False)
+	expr2ops = count_ops (expr2)
+
+	if expr2ops < exprops:
+		expr    = expr2
+		exprops = expr2ops
+
+	if exprops < 6: # empirically tested cutoff for expensive simplification
+		return expr
+
+	expr2    = cancel (expr)
+	expr2ops = count_ops (expr2)
+
+	if expr2ops < exprops:
+		expr    = expr2
+		exprops = expr2ops
+
+	expr3    = together (expr2, deep = True)
+	expr3ops = count_ops (expr3)
+
+	if expr3ops < exprops:
+		return expr3
+
+	return expr
+
+def _MatrixArithmetic_eval_matrix_mul (self, other):
+	return self._new (self.rows, other.cols, lambda i, j:
+			_dotprodsimp ((self [i,k] for k in range (self.cols)),
+						(other [k,j] for k in range (self.cols))))
+
+def _DenseMatrix_eval_matrix_mul (self, other):
+	other_len = other.rows * other.cols
+	new_len   = self.rows * other.cols
+	new_mat   = [S.Zero] * new_len
+
+	# if we multiply an n x 0 with a 0 x m, the
+	# expected behavior is to produce an n x m matrix of zeros
+	if self.cols != 0 and other.rows != 0:
+		for i in range (new_len):
+			row, col    = i // other.cols, i % other.cols
+			row_indices = range (self.cols * row, self.cols * (row + 1))
+			col_indices = range (col, other_len, other.cols)
+			new_mat [i] = _dotprodsimp (
+					(self._mat [a] for a in row_indices),
+					(other._mat [b] for b in col_indices))
+
+	return classof (self, other)._new (self.rows, other.cols, new_mat, copy = False)
+
+def _SparseMatrix_eval_matrix_mul (self, other):
+	"""Fast multiplication exploiting the sparsity of the matrix."""
+	if not isinstance (other, SparseMatrix):
+		return self.mul (self._new (other))
+
+	# if we made it here, we're both sparse matrices
+	# create quick lookups for rows and cols
+	row_lookup = defaultdict (dict)
+	for (i,j), val in self._smat.items ():
+		row_lookup [i][j] = val
+	col_lookup = defaultdict (dict)
+	for (i,j), val in other._smat.items ():
+		col_lookup [j][i] = val
+
+	smat = {}
+	for row in row_lookup.keys ():
+		for col in col_lookup.keys ():
+			# find the common indices of non-zero entries.
+			# these are the only things that need to be multiplied.
+			indices = set (col_lookup [col].keys ()) & set (row_lookup [row].keys ())
+			if indices:
+				smat [row, col] = _dotprodsimp ((row_lookup [row][k] for k in indices),
+						(col_lookup [col][k] for k in indices))
+
+	return self._new (self.rows, other.cols, smat)
+
+def set_matmulsimp (state):
+	if SPATCHED:
+		idx                               = bool (state)
+		MatrixArithmetic._eval_matrix_mul = (_DEFAULT_MatrixArithmetic_eval_matrix_mul, _MatrixArithmetic_eval_matrix_mul) [idx]
+		DenseMatrix._eval_matrix_mul      = (_DEFAULT_DenseMatrix_eval_matrix_mul, _DenseMatrix_eval_matrix_mul) [idx]
+		SparseMatrix._eval_matrix_mul     = (_DEFAULT_SparseMatrix_eval_matrix_mul, _SparseMatrix_eval_matrix_mul) [idx]
+
+class spatch: # for single script
+	SPATCHED       = SPATCHED
+	set_matmulsimp = set_matmulsimp
 #!/usr/bin/env python
 # python 3.6+
 
@@ -4731,11 +4926,11 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.1'
+_VERSION         = '1.0.2'
 
-__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz', ['child', 'firstrun',
-	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
-	'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
+__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmltNOSgGz', ['child', 'firstrun',
+	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
+	'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -4749,33 +4944,34 @@ __name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		'[-h | --help] [-v | --version] \n' \
 		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
-		f'{__name_indent} [-u | --ugly] \n' \
-		f'{__name_indent} [-E | --EI] [-q | --quick] [-y | --nopyS] \n' \
+		f'{__name_indent} [-u | --ugly] [-E | --EI] \n' \
+		f'{__name_indent} [-q | --quick] [-y | --nopyS] \n' \
+		f'{__name_indent} [-s | --nosimplify] [-m | -nomatsimp] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
 		f'{__name_indent} [-g | --nogamma] [-G | --noGamma] \n' \
 		f'{__name_indent} [-z | --nozeta] \n' \
 		f'{__name_indent} [host:port | host | :port]' '''
 
-  -h, --help      - This
-  -v, --version   - Show version string
-  -d, --debug     - Dump debug info to server output
-  -n, --nobrowser - Don't start system browser to SymPad page
-  -u, --ugly      - Start in draft display style (only on command line)
-  -E, --EI        - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
-  -q, --quick     - Start in quick input mode
-  -y, --nopyS     - Start without Python S escaping
-  -N, --noN       - Start without N lambda function
-  -S, --noS       - Start without S lambda function
-  -O, --noO       - Start without O lambda function
-  -g, --nogamma   - Start without gamma lambda function
-  -G, --noGamma   - Start without Gamma lambda function
-  -z, --nozeta    - Start without zeta lambda function
+  -h, --help       - This
+  -v, --version    - Show version string
+  -d, --debug      - Dump debug info to server output
+  -n, --nobrowser  - Don't start system browser to SymPad page
+  -u, --ugly       - Start in draft display style (only on command line)
+  -E, --EI         - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
+  -q, --quick      - Start in quick input mode
+  -y, --nopyS      - Start without Python S escaping
+  -s, --nosimplify - Start without post-evaluation simplification
+  -m, --nomatsimp  - Start without matrix simplification
+  -N, --noN        - Start without N lambda function
+  -S, --noS        - Start without S lambda function
+  -O, --noO        - Start without O lambda function
+  -g, --nogamma    - Start without gamma lambda function
+  -G, --noGamma    - Start without Gamma lambda function
+  -z, --nozeta     - Start without zeta lambda function
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 
-
-	sp.Gamma      = sp.gamma # Greek letter call gamma function hack
 
 	_SYS_STDOUT   = sys.stdout
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
@@ -4783,8 +4979,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
-	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
-		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
+	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', True), ('matsimp', True),
+		('eval', True), ('doit', True),('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS         = {_VAR_LAST: AST.Zero} # This also!
@@ -5002,8 +5198,19 @@ def _admin_env (*args):
 				if apply:
 					sym.set_pyS (state)
 
-			elif var == 'eval':
+			elif var == 'simplify':
+				msgs.append (f'Post-evaluation simplification is {"on" if state else "off"}.')
 
+				if apply:
+					sym.set_simplify (state)
+
+			elif var == 'matsimp':
+				msgs.append (f'Matrix simplification is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.')
+
+				if apply:
+					spatch.set_matmulsimp (state)
+
+			elif var == 'eval':
 				msgs.append (f'Expression evaluation is {"on" if state else "off"}.')
 
 				if apply:
@@ -5047,7 +5254,7 @@ def _admin_env (*args):
 
 		if var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
-		elif var not in {'EI', 'quick', 'pyS', 'eval', 'doit', *_ONE_FUNCS}:
+		elif var not in {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'eval', 'doit', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
@@ -5198,15 +5405,18 @@ def start_server (logging = True):
 	if not logging:
 		Handler.log_message = lambda *args, **kwargs: None
 
-	_update_vars ()
+	# _update_vars ()
 
 	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
 		_DISPLAYSTYLE [0] = 0
 
-	for short, long in zip ('EqyltNOSgGz', \
-			['EI', 'quick', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
+	# make sure all env options are initialized according to command line options
+	for short, long in zip ('EqysmltNOSgGz', \
+			['EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
 		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
 			_admin_env (AST ('@', long))
+		else:
+			_admin_env (AST ('@', long [2:] if long [:2] == 'no' else f'no{long}'))
 
 	_START_ENV.update (_ENV)
 
@@ -5243,7 +5453,7 @@ def child ():
 		sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
-	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
+	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'spatch.py', 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
 	watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 	tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 

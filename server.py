@@ -556,7 +556,7 @@ def child ():
 		sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
-	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
+	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'spatch.py', 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
 	watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 	tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 

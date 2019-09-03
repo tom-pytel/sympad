@@ -112,6 +112,20 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, nu, xi, pi, rho, sigma, tau, upsilon, phi, chi, psi, omega, Gamma, Delta, Theta, Lambda, Xi, Pi, Sigma, Upsilon, Phi, Psi, Omega'), {'math': ('(alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, nu, xi, pi, rho, sigma, tau, upsilon, phi, chi, psi, omega, Gamma, Delta, Theta, Lambda, Xi, Pi, Sigma, Upsilon, Phi, Psi, Omega)', '(alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, nu, xi, pi, rho, sigma, tau, upsilon, phi, chi, psi, omega, Gamma, Delta, Theta, Lambda, Xi, Pi, Sigma, Upsilon, Phi, Psi, Omega)', '\\left(\\alpha, \\beta, \\gamma, \\delta, \\epsilon, \\zeta, \\eta, \\theta, \\iota, \\kappa, \\lambda, \\mu, \\nu, \\xi, \\pi, \\rho, \\sigma, \\tau, \\upsilon, \\phi, \\chi, \\psi, \\omega, \\Gamma, \\Delta, \\Theta, \\Lambda, \\Xi, \\Pi, \\Sigma, \\Upsilon, \\Phi, \\Psi, \\Omega \\right)')})
 		self.assertEqual (get ('\\alpha, \\beta, \\gamma, \\delta, \\epsilon, \\zeta, \\eta, \\theta, \\iota, \\kappa, \\lambda, \\mu, \\nu, \\xi, \\pi, \\rho, \\sigma, \\tau, \\upsilon, \\phi, \\chi, \\psi, \\omega, \\Gamma, \\Delta, \\Theta, \\Lambda, \\Xi, \\Pi, \\Sigma, \\Upsilon, \\Phi, \\Psi, \\Omega'), {'math': ('(alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, nu, xi, pi, rho, sigma, tau, upsilon, phi, chi, psi, omega, Gamma, Delta, Theta, Lambda, Xi, Pi, Sigma, Upsilon, Phi, Psi, Omega)', '(alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, nu, xi, pi, rho, sigma, tau, upsilon, phi, chi, psi, omega, Gamma, Delta, Theta, Lambda, Xi, Pi, Sigma, Upsilon, Phi, Psi, Omega)', '\\left(\\alpha, \\beta, \\gamma, \\delta, \\epsilon, \\zeta, \\eta, \\theta, \\iota, \\kappa, \\lambda, \\mu, \\nu, \\xi, \\pi, \\rho, \\sigma, \\tau, \\upsilon, \\phi, \\chi, \\psi, \\omega, \\Gamma, \\Delta, \\Theta, \\Lambda, \\Xi, \\Pi, \\Sigma, \\Upsilon, \\Phi, \\Psi, \\Omega \\right)')})
 
+	def test_simplification (self):
+		reset ()
+		self.assertEqual (get ('env (nosimplify, nomatsimp)'), {'msg': ['Post-evaluation simplification is off.', 'Matrix simplification is off.']})
+		self.assertEqual (get ('\\[[x + 1, x - 1], [x - 1, x + 1]]**2'), {'math': ('\\[[(x + 1)**2 + (x - 1)**2, 2 (x + 1) (x - 1)], [2 (x + 1) (x - 1), (x + 1)**2 + (x - 1)**2]]', 'Matrix([[(x + 1)**2 + (x - 1)**2, 2*(x + 1)*(x - 1)], [2*(x + 1)*(x - 1), (x + 1)**2 + (x - 1)**2]])', '\\begin{bmatrix} \\left(x + 1 \\right)^2 + \\left(x - 1 \\right)^2 & 2 \\left(x + 1 \\right) \\left(x - 1 \\right) \\\\ 2 \\left(x + 1 \\right) \\left(x - 1 \\right) & \\left(x + 1 \\right)^2 + \\left(x - 1 \\right)^2 \\end{bmatrix}')})
+		self.assertEqual (get ('solveset(x**3 = 5)'), {'math': ('{5**{1/3}, -1/2 * i sqrt(3) * 5**{1/3} - 1/2 * 5**{1/3}, 1/2 * i sqrt(3) * 5**{1/3} - 1/2 * 5**{1/3}}', 'FiniteSet(5**(S(1) / 3), -S(1) / 2*i*sqrt(3)*5**(S(1) / 3) - S(1) / 2*5**(S(1) / 3), S(1) / 2*i*sqrt(3)*5**(S(1) / 3) - S(1) / 2*5**(S(1) / 3))', '\\left\\{5^\\frac{1}{3}, -\\frac{1}{2} i \\sqrt{3} \\cdot 5^\\frac{1}{3} - \\frac{1}{2} \\cdot 5^\\frac{1}{3}, \\frac{1}{2} i \\sqrt{3} \\cdot 5^\\frac{1}{3} - \\frac{1}{2} \\cdot 5^\\frac{1}{3} \\right\\}')})
+		self.assertEqual (get ("env ('simplify', nomatsimp)"), {'msg': ['Post-evaluation simplification is on.', 'Matrix simplification is off.']})
+		self.assertEqual (get ('\\[[x + 1, x - 1], [x - 1, x + 1]]**2'), {'math': ('\\[[2x**2 + 2, 2x**2 - 2], [2x**2 - 2, 2x**2 + 2]]', 'Matrix([[2*x**2 + 2, 2*x**2 - 2], [2*x**2 - 2, 2*x**2 + 2]])', '\\begin{bmatrix} 2 x^2 + 2 & 2 x^2 - 2 \\\\ 2 x^2 - 2 & 2 x^2 + 2 \\end{bmatrix}')})
+		self.assertEqual (get ('solveset(x**3 = 5)'), {'math': ('{5**{1/3}, 1/2 * 5**{1/3} (i sqrt(3) - 1), -1/2 * 5**{1/3} (i sqrt(3) + 1)}', 'FiniteSet(5**(S(1) / 3), S(1) / 2*5**(S(1) / 3)*(i*sqrt(3) - 1), -S(1) / 2*5**(S(1) / 3)*(i*sqrt(3) + 1))', '\\left\\{5^\\frac{1}{3}, \\frac{1}{2} \\cdot 5^\\frac{1}{3} \\left(i \\sqrt{3} - 1 \\right), -\\frac{1}{2} \\cdot 5^\\frac{1}{3} \\left(i \\sqrt{3} + 1 \\right) \\right\\}')})
+		self.assertEqual (get ('env (nosimplify, matsimp)'), {'msg': ['Post-evaluation simplification is off.', 'Matrix simplification is on.']})
+		self.assertEqual (get ('\\[[x + 1, x - 1], [x - 1, x + 1]]**2'), {'math': ('\\[[2x**2 + 2, 2x**2 - 2], [2x**2 - 2, 2x**2 + 2]]', 'Matrix([[2*x**2 + 2, 2*x**2 - 2], [2*x**2 - 2, 2*x**2 + 2]])', '\\begin{bmatrix} 2 x^2 + 2 & 2 x^2 - 2 \\\\ 2 x^2 - 2 & 2 x^2 + 2 \\end{bmatrix}')})
+		self.assertEqual (get ("env ('simplify', matsimp)"), {'msg': ['Post-evaluation simplification is on.', 'Matrix simplification is on.']})
+		self.assertEqual (get ('\\[[x + 1, x - 1], [x - 1, x + 1]]**2'), {'math': ('\\[[2x**2 + 2, 2x**2 - 2], [2x**2 - 2, 2x**2 + 2]]', 'Matrix([[2*x**2 + 2, 2*x**2 - 2], [2*x**2 - 2, 2*x**2 + 2]])', '\\begin{bmatrix} 2 x^2 + 2 & 2 x^2 - 2 \\\\ 2 x^2 - 2 & 2 x^2 + 2 \\end{bmatrix}')})
+		self.assertEqual (get ('solveset(x**3 = 5)'), {'math': ('{5**{1/3}, 1/2 * 5**{1/3} (i sqrt(3) - 1), -1/2 * 5**{1/3} (i sqrt(3) + 1)}', 'FiniteSet(5**(S(1) / 3), S(1) / 2*5**(S(1) / 3)*(i*sqrt(3) - 1), -S(1) / 2*5**(S(1) / 3)*(i*sqrt(3) + 1))', '\\left\\{5^\\frac{1}{3}, \\frac{1}{2} \\cdot 5^\\frac{1}{3} \\left(i \\sqrt{3} - 1 \\right), -\\frac{1}{2} \\cdot 5^\\frac{1}{3} \\left(i \\sqrt{3} + 1 \\right) \\right\\}')})
+
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ()
 	ret  = {}
@@ -221,6 +235,20 @@ alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, n
 env (noquick)
 alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, nu, xi, pi, rho, sigma, tau, upsilon, phi, chi, psi, omega, Gamma, Delta, Theta, Lambda, Xi, Pi, Sigma, Upsilon, Phi, Psi, Omega
 \\alpha, \\beta, \\gamma, \\delta, \\epsilon, \\zeta, \\eta, \\theta, \\iota, \\kappa, \\lambda, \\mu, \\nu, \\xi, \\pi, \\rho, \\sigma, \\tau, \\upsilon, \\phi, \\chi, \\psi, \\omega, \\Gamma, \\Delta, \\Theta, \\Lambda, \\Xi, \\Pi, \\Sigma, \\Upsilon, \\Phi, \\Psi, \\Omega
+
+"""), ('simplification', """
+
+env (nosimplify, nomatsimp)
+\[[x + 1, x - 1], [x - 1, x + 1]]**2
+solveset(x**3 = 5)
+env ('simplify', nomatsimp)
+\[[x + 1, x - 1], [x - 1, x + 1]]**2
+solveset(x**3 = 5)
+env (nosimplify, matsimp)
+\[[x + 1, x - 1], [x - 1, x + 1]]**2
+env ('simplify', matsimp)
+\[[x + 1, x - 1], [x - 1, x + 1]]**2
+solveset(x**3 = 5)
 
 """),
 

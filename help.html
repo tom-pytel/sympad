@@ -478,7 +478,8 @@ For example the quick input functionality "<b>quick</b>" may be turned on by spe
 <p>"<b>EI</b>" - Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
 This allows the Python code copied from SymPad to work directly with SymPy where the uppercase constants are used.</p>
 <p>"<b>quick</b>" - Quick single letter variable name input mode.</p>
-<p>"<b>simplify</b>" - Post-evaluation simplification. This can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</p>
+<p>"<b>simplify</b>" - Post-evaluation simplification, this can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</p>
+<p>"<b>matsimp</b>" - Matrix simplification, this turns on a patch to SymPy which does a basic simplification step on intermediate matrix multiplication products which prevents matrix operations from blowing up.</p>
 <p>"<b>pyS</b>" - Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</p>
 <p>"<b>eval</b>" - Expression evaluation. Normally when you enter "<b>1 + 2</b>" it is evaluated for an answer of "<b>3</b>". If you turn this option off then this evaluation will not happen and the expression will stay as "<b>1 + 2</b>". The option technically controls whether an "<b>evaluate=False</b>" flag is passed to SymPy objects.</p>
 <p>"<b>doit</b>" - Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off. Note that turning off the previous option "<b>eval</b>" implies turning off "<b>doit</b>".</p>

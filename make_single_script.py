@@ -3,7 +3,7 @@
 
 # Collect all source and data files into single stand-alone sympad.py script file.
 
-_PY_FILES    = ('lalr1.py', 'sast.py', 'sxlat.py', 'sym.py', 'sparser.py', 'server.py')
+_PY_FILES    = ('lalr1.py', 'sast.py', 'sxlat.py', 'sym.py', 'sparser.py', 'spatch.py', 'server.py')
 _OTHER_FILES = ('style.css', 'script.js', 'index.html', 'help.html')
 
 _HEADER = '''
