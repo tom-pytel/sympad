@@ -1,6 +1,7 @@
 v1.0.2:
 -------
 * Changed keyword argument recognition to be more friendly to equations.
+* Added automatic post-evaluation simplification (optional through env).
 
 v1.0.1:
 -------

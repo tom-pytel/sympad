@@ -10,9 +10,10 @@ import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = {} # dict user funcs {name: AST, ...}
-_PYS                   = True
-_EVAL                  = True
-_DOIT                  = True
+_POST_SIMPLIFY         = True # post-evaluation simplification
+_PYS                   = True # Python S() escaping
+_EVAL                  = True # expression evaluation via 'evaluate' flag
+_DOIT                  = True # expression doit()
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op = 'text'
@@ -697,7 +698,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
 
-		return self._ast2spt (ast)
+		spt = self._ast2spt (ast)
+
+		if _POST_SIMPLIFY:
+			spt = sp.simplify (spt)
+
+		return spt
 
 	def _ast2spt (self, ast):
 		spt = self._ast2spt_funcs [ast.op] (self, ast)
@@ -1116,6 +1122,10 @@ def set_user_funcs (user_funcs):
 	global _USER_FUNCS
 	_USER_FUNCS = user_funcs
 
+def set_simplify (state):
+	global _POST_SIMPLIFY
+	_POST_SIMPLIFY = state
+
 def set_pyS (state):
 	global _PYS
 	_PYS = state
@@ -1131,6 +1141,7 @@ def set_doit (state):
 class sym: # for single script
 	set_precision  = set_precision
 	set_user_funcs = set_user_funcs
+	set_simplify   = set_simplify
 	set_pyS        = set_pyS
 	set_eval       = set_eval
 	set_doit       = set_doit

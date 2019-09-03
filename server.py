@@ -24,9 +24,9 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _VERSION         = '1.0.2'
 
-__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqyltNOSgGz', ['child', 'firstrun',
-	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'noeval', 'nodoit',
-	'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
+__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqsyltNOSgGz', ['child', 'firstrun',
+	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nosimplify',
+	'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -41,27 +41,29 @@ __name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		'[-h | --help] [-v | --version] \n' \
 		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
-		f'{__name_indent} [-u | --ugly] \n' \
-		f'{__name_indent} [-E | --EI] [-q | --quick] [-y | --nopyS] \n' \
+		f'{__name_indent} [-u | --ugly] [-E | --EI] \n' \
+		f'{__name_indent} [-q | --quick] [-s | --nosimplify] \n' \
+		f'{__name_indent} [-y | --nopyS] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
 		f'{__name_indent} [-g | --nogamma] [-G | --noGamma] \n' \
 		f'{__name_indent} [-z | --nozeta] \n' \
 		f'{__name_indent} [host:port | host | :port]' '''
 
-  -h, --help      - This
-  -v, --version   - Show version string
-  -d, --debug     - Dump debug info to server output
-  -n, --nobrowser - Don't start system browser to SymPad page
-  -u, --ugly      - Start in draft display style (only on command line)
-  -E, --EI        - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
-  -q, --quick     - Start in quick input mode
-  -y, --nopyS     - Start without Python S escaping
-  -N, --noN       - Start without N lambda function
-  -S, --noS       - Start without S lambda function
-  -O, --noO       - Start without O lambda function
-  -g, --nogamma   - Start without gamma lambda function
-  -G, --noGamma   - Start without Gamma lambda function
-  -z, --nozeta    - Start without zeta lambda function
+  -h, --help       - This
+  -v, --version    - Show version string
+  -d, --debug      - Dump debug info to server output
+  -n, --nobrowser  - Don't start system browser to SymPad page
+  -u, --ugly       - Start in draft display style (only on command line)
+  -E, --EI         - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
+  -q, --quick      - Start in quick input mode
+  -s, --nosimplify - Start without post-evaluation simplification
+  -y, --nopyS      - Start without Python S escaping
+  -N, --noN        - Start without N lambda function
+  -S, --noS        - Start without S lambda function
+  -O, --noO        - Start without O lambda function
+  -g, --nogamma    - Start without gamma lambda function
+  -G, --noGamma    - Start without Gamma lambda function
+  -z, --nozeta     - Start without zeta lambda function
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
@@ -78,8 +80,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
-	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('eval', True), ('doit', True),
-		('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
+	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('simplify', True), ('pyS', True), ('eval', True),
+		('doit', True),('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS         = {_VAR_LAST: AST.Zero} # This also!
@@ -291,6 +293,12 @@ def _admin_env (*args):
 				if apply:
 					_PARSER.set_quick (state)
 
+			elif var == 'simplify':
+				msgs.append (f'Post-evaluation simplification is {"on" if state else "off"}.')
+
+				if apply:
+					sym.set_simplify (state)
+
 			elif var == 'pyS':
 				msgs.append (f'Python S escaping {"on" if state else "off"}.')
 
@@ -342,7 +350,7 @@ def _admin_env (*args):
 
 		if var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
-		elif var not in {'EI', 'quick', 'pyS', 'eval', 'doit', *_ONE_FUNCS}:
+		elif var not in {'EI', 'quick', 'simplify', 'pyS', 'eval', 'doit', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
@@ -498,8 +506,8 @@ def start_server (logging = True):
 	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
 		_DISPLAYSTYLE [0] = 0
 
-	for short, long in zip ('EqyltNOSgGz', \
-			['EI', 'quick', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
+	for short, long in zip ('EqsyltNOSgGz', \
+			['EI', 'quick', 'nosimplify', 'nopyS', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
 		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
 			_admin_env (AST ('@', long))
 

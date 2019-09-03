@@ -1,13 +1,11 @@
-> solveset(x**2 = 2, x)
-
+> auto simplify on calc
+> matrix mul simplify
+> symmetric difference parse from union of complements
 > emptyset Unicode symbol
-
-> ProductSet?
 
 > var_prime in quick mode
 
 > \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
-> {1:2:3,} -> {slice(1, 2, 3),} (SymPy creating dynamic class of slice)?
 
 > no spacing for nums - 3 x -> 3x?
 > quick mode no spacing for vars x y z -> xyz?
@@ -16,15 +14,16 @@
 > display subscripts
 > parse subscripts
 
-> sym cleanup!
+> SYM CLEANUP!
 
+> ProductSet?
 > no-evaluate version of Add and Mul (for tuples, lists and strings)?
 > extended comparison 0 <= x < 1
-
 > flush sys.stdout to msg before sending exception?
 > function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?
-> long variable name shortcut?
+> long variable name shortcut? $?
+> {1:2:3,} -> {slice(1, 2, 3),} (SymPy creating dynamic class of slice)?
 
 > sequence(factorial(k), (k,1,oo))
 > ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
@@ -38,8 +37,6 @@
 Misc:
 
 > def __new__(cls, b, e, evaluate=None): obj = Expr.__new__(cls, b, e)
-
-FiniteSet (x, y) ^ FiniteSet (y, z) = Union({x} \ {z}, {z} \ {x})
 
 Errors:
 
