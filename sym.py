@@ -54,6 +54,23 @@ def _Mul (*args, evaluate = True):
 def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
 	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
 
+def _simplify (spt):
+	if isinstance (spt, (bool, int, float, complex, str, slice)):
+		return spt
+
+	if isinstance (spt, (tuple, list, set, frozenset)):
+		return spt.__class__ (_simplify (a) for a in spt)
+
+	if isinstance (spt, dict):
+		return dict ((_simplify (k), _simplify (v)) for k, v in spt.items ())
+
+	try:
+		spt = sp.simplify (spt)
+	except:
+		pass
+
+	return spt
+
 def _tuple2ast (args, paren = False):
 	return args [0] if len (args) == 1 else AST ('(', (',', args)) if paren else AST (',', args)
 
@@ -704,11 +721,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		spt = self._ast2spt (ast)
 
 		if _POST_SIMPLIFY:
-			if not isinstance (spt, (bool, int, float, str, tuple, list, set, frozenset, dict, slice)):
-				try:
-					spt = sp.simplify (spt)
-				except:
-					pass
+			spt = _simplify (spt)
 
 		return spt
 
@@ -975,7 +988,7 @@ def _spt2ast_Mul (spt):
 	if spt.args [0].is_negative and isinstance (spt, sp.Number):
 		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:], evaluate = _EVAL)))
 
-	args = spt.args [1:] if spt.args [0] == 1 else spt.args
+	args = spt.args [1:] if spt.args [0] == 1 else spt.args # sometimes we get Mul (1, ...), strip the 1
 
 	if len (spt.args) == 1:
 		return spt2ast (args [0])
