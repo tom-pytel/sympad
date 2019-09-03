@@ -33,6 +33,9 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
+def _fltoint (num):
+	return int (num) if isinstance (num, int) or num.is_integer () else num
+
 def _Mul (*args, evaluate = True):
 	if not evaluate:
 		return sp.Mul (*args, evaluate = False)
@@ -972,10 +975,15 @@ def _spt2ast_Mul (spt):
 	if spt.args [0].is_negative and isinstance (spt, sp.Number):
 		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:], evaluate = _EVAL)))
 
+	args = spt.args [1:] if spt.args [0] == 1 else spt.args
+
+	if len (spt.args) == 1:
+		return spt2ast (args [0])
+
 	numer = []
 	denom = []
 
-	for arg in spt.args:
+	for arg in args:
 		if isinstance (arg, sp.Pow) and arg.args [1].is_negative:
 			denom.append (spt2ast (arg.args [0] if arg.args [1] is sp.S.NegativeOne else _Pow (arg.args [0], -arg.args [1], evaluate = _EVAL)))
 		else:
@@ -1039,6 +1047,8 @@ _spt2ast_funcs = {
 	None.__class__: lambda spt: AST.None_,
 	bool: lambda spt: AST.True_ if spt else AST.False_,
 	int: lambda spt: AST ('#', str (spt)),
+	float: lambda spt: AST ('#', str (_fltoint (spt))),
+	complex: lambda spt: AST ('#', str (_fltoint (spt.real))) if not spt.imag else AST ('+', (('#', str (_fltoint (spt.real))), AST.I if spt.imag == 1 else ('*', (('#', str (_fltoint (spt.imag))), AST.I)))),
 	str: lambda spt: AST ('"', spt),
 	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
 	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
@@ -1074,7 +1084,7 @@ _spt2ast_funcs = {
 	sp.EmptySet: lambda spt: AST.SetEmpty,
 	sp.fancysets.Complexes: lambda spt: AST.Complexes,
 	sp.FiniteSet: lambda spt: AST ('set', tuple (spt2ast (arg) for arg in spt.args)),
-	sp.Union: _spt2ast_Union, # lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (spt2ast (a) for a in spt.args)),
+	sp.Union: _spt2ast_Union,
 	sp.Intersection: lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST.flatcat ('&&', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Complement: lambda spt: AST ('+', (spt2ast (spt.args [0]), ('-', spt2ast (spt.args [1])))),
 

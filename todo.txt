@@ -1,3 +1,5 @@
+> (-1)**0.5 -> 1i
+> extend simplification into basic containers
 > emptyset Unicode symbol
 
 > var_prime in quick mode
