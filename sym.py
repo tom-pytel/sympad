@@ -1054,6 +1054,10 @@ def _spt2ast_Integral (spt):
 
 _spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
+dict_keys   = {}.keys ().__class__
+dict_values = {}.values ().__class__
+dict_items  = {}.items ().__class__
+
 _spt2ast_funcs = {
 	ExprNoEval: lambda spt: spt.SYMPAD_eval (),
 
@@ -1069,6 +1073,9 @@ _spt2ast_funcs = {
 	frozenset: lambda spt: AST ('set', tuple (spt2ast (e) for e in spt)),
 	dict: lambda spt: AST ('dict', tuple ((spt2ast (k), spt2ast (v)) for k, v in spt.items ())),
 	slice: lambda spt: AST ('slice', False if spt.start is None else spt2ast (spt.start), False if spt.stop is None else spt2ast (spt.stop), None if spt.step is None else spt2ast (spt.step)),
+	dict_keys: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
+	dict_values: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
+	dict_items: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
 	sp.Tuple: lambda spt: spt2ast (spt.args),
 
 	sp.Integer: _spt2ast_num,

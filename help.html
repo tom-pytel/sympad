@@ -57,7 +57,7 @@ cos**-1 0 + \log_2{8}<br>
 expand ((1 + x)**4)<br>
 factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)<br>
 series (e^x, x, 0, 5)<br>
-solveset (x**2 + y = 4, x)<br>
+solve (x**2 + y = 4, x)<br>
 \lim_{x\to\infty} 1/x<br>
 Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
@@ -72,7 +72,7 @@ Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
 </p>
 
-<h4>Multiline examples</h4>
+<h4>Multiline Examples</h4>
 
 <p>
 Enter the lines that follow one by one to see the effect:
@@ -97,6 +97,10 @@ x = 2<br>
 y<br>
 del x<br>
 y<br>
+</p>
+
+<p>
+For more examples see the appendix.
 </p>
 
 <h4>Usage</h4>
@@ -464,10 +468,11 @@ Also remember that these functions are always available for calling using the "<
 
 <h4>Special Characters</h4>
 
-<p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.</p>
-<p>"<b>$</b>" - "<b>$name</b>", dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
-<p>"<b>@</b>" - "<b>@(expr)</b>", ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value.
-<p>"<b>%</b>" - "<b>%(expr)</b>", percent prevents evaluation for the expression it encapsulates for one round. An optional second argument is a count of the number of rounds to prevent evaluations, it can be infinity.</p>
+<p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.
+Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</p>
+<p>"<b>$</b>" - "<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
+<p>"<b>@</b>" - "<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be user and not its value.
+<p>"<b>%</b>" - "<b>%(expr)</b>" - Percent prevents evaluation for the expression it encapsulates for one round. An optional second argument is a count of the number of rounds to prevent evaluations, it can be infinity.</p>
 <p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
 <p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
 
@@ -506,6 +511,27 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 
 </b></p>
 
+<h4>More Examples</h4>
+
+<p>
+Calculating eigenvalues and eigenvectors of a matrix by "hand":
+</p><p>
+m = \[[1, 2], [3, 4<i>&emsp;don't need to complete here</i><br>
+l = m - lambda eye 2<br>
+l.det()<br>
+solve(_<i>&emsp;this will give the eigenvalues</i><br>
+a, b = _<i>&emsp;assign to vars</i><br>
+m.eigenvals()<i>&emsp;verify eigenvalues</i><br>
+Subs(l, lambda, a) \[x, y]<br>
+solve(_ [0], _ [1], x, y<i>&emsp;relation between x and y</i><br>
+\[_ [0] [x].subs (y, 1), 1<i>&emsp;first eigenvector for eigenvalue a</i><br>
+Subs(l, lambda, b) \[x, y<br>
+solve(_ [0], _ [1], x, y<i>&emsp;relation between x and y</i><br>
+\[_ [0] [x].subs (y, 1), 1<i>&emsp;second eigenvector for eigenvalue b</i><br>
+m.eigenvects()<i>&emsp;verify eigenvectors</i><br>
+</p>
+
+
 <h4>Notes</h4>
 
 <p>
@@ -523,9 +549,9 @@ If you are getting results which are just plain wrong, check to see if you have 
 </p><p>
 If you are unable to use a keyword argument identifier in a function call because it is a reserved name then you can wrap it in quotes, Python strings are allowed as keyword identifiers specifically for this purpose.
 </p><p>
-Usually SymPad should be smart enough to figure out when a function argument is and equation and when it is a keyword assignment like in this function "<b>solveset(x**2 = i)</b>".
-However some room for ambiguity remains like in this function "<b>solveset(i = x**2)</b>".
-In cases like these you need to pass the equation followed by an explicit non-keyword argument like "<b>solveset(i = x**2, x)</b>" or by using the strict comparison double equals "<b>solveset(i == x**2)</b>".
+Usually SymPad should be smart enough to figure out when a function argument is and equation and when it is a keyword assignment like in this function "<b>solve(x**2 = i)</b>".
+However some room for ambiguity remains like in this function "<b>solve(i = x**2)</b>".
+In cases like these you need to pass the equation followed by an explicit non-keyword argument like "<b>solve(i = x**2, x)</b>" or by using the strict comparison double equals "<b>solve(i == x**2)</b>".
 </p><p>
 The LaTeX parsing is not really comprehensive, it is geared towards being able to read back the LaTeX emitted by SymPad correctly.
 </p><p>

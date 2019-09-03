@@ -1,5 +1,4 @@
-> (-1)**0.5 -> 1i
-> extend simplification into basic containers
+> autocomplete member function parens
 > emptyset Unicode symbol
 
 > var_prime in quick mode
