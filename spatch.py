@@ -1,11 +1,23 @@
-# Patch SymPy matrix multiplication for intermediate simplification step.
+# Patch SymPy matrix multiplication for intermediate simplification step to control expression blowup.
 
 from collections import defaultdict
 
-from sympy import S, count_ops, cancel, together, SparseMatrix
-from sympy.matrices.common import MatrixArithmetic, classof
-from sympy.matrices.dense import DenseMatrix
-from sympy.matrices.sparse import SparseMatrix
+SPATCHED = False
+
+try: # try to patch and fail silently if SymPy has changed too much since this was written
+	from sympy import S, count_ops, cancel, together, SparseMatrix
+	from sympy.matrices.common import MatrixArithmetic, classof
+	from sympy.matrices.dense import DenseMatrix
+	from sympy.matrices.sparse import SparseMatrix
+
+	_DEFAULT_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
+	_DEFAULT_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
+	_DEFAULT_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
+
+	SPATCHED = True
+
+except:
+	pass
 
 def _dotprodsimp (a, b, simplify = True):
 	"""Sum-of-products with optional intermediate product simplification
@@ -137,16 +149,13 @@ def _SparseMatrix_eval_matrix_mul (self, other):
 
 	return self._new (self.rows, other.cols, smat)
 
-_DEFAULT_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
-_DEFAULT_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
-_DEFAULT_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
-
 def set_matmulsimp (state):
-	idx = bool (state)
-
-	MatrixArithmetic._eval_matrix_mul = (_DEFAULT_MatrixArithmetic_eval_matrix_mul, _MatrixArithmetic_eval_matrix_mul) [idx]
-	DenseMatrix._eval_matrix_mul      = (_DEFAULT_DenseMatrix_eval_matrix_mul, _DenseMatrix_eval_matrix_mul) [idx]
-	SparseMatrix._eval_matrix_mul     = (_DEFAULT_SparseMatrix_eval_matrix_mul, _SparseMatrix_eval_matrix_mul) [idx]
+	if SPATCHED:
+		idx                               = bool (state)
+		MatrixArithmetic._eval_matrix_mul = (_DEFAULT_MatrixArithmetic_eval_matrix_mul, _MatrixArithmetic_eval_matrix_mul) [idx]
+		DenseMatrix._eval_matrix_mul      = (_DEFAULT_DenseMatrix_eval_matrix_mul, _DenseMatrix_eval_matrix_mul) [idx]
+		SparseMatrix._eval_matrix_mul     = (_DEFAULT_SparseMatrix_eval_matrix_mul, _SparseMatrix_eval_matrix_mul) [idx]
 
 class spatch: # for single script
+	SPATCHED       = SPATCHED
 	set_matmulsimp = set_matmulsimp

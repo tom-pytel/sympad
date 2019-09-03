@@ -82,11 +82,11 @@ class Test (unittest.TestCase):
 		reset ()
 		self.assertEqual (get ('env (quick)'), {'msg': ['Quick input mode is on.']})
 		self.assertEqual (get ('env (noquick)'), {'msg': ['Quick input mode is off.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
-		self.assertEqual (get ('env(EI, quick, nopyS, noeval, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping off.', 'Expression evaluation is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping off.', 'Expression evaluation is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
-		self.assertEqual (get ('envreset'), {'msg': ['Environment has been reset.', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Post-evaluation simplification is on.', 'Matrix simplification is on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env (EI, quick, nopyS, nosimplify, nomatsimp, noeval, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping off.', 'Post-evaluation simplification is off.', 'Matrix simplification is off.', 'Expression evaluation is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping off.', 'Post-evaluation simplification is off.', 'Matrix simplification is off.', 'Expression evaluation is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
+		self.assertEqual (get ('envreset'), {'msg': ['Environment has been reset.', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Post-evaluation simplification is on.', 'Matrix simplification is on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping on.', 'Post-evaluation simplification is on.', 'Matrix simplification is on.', 'Expression evaluation is on.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function zeta is on.']})
 
 	def test_idx_and_attr (self):
 		reset ()
@@ -193,7 +193,7 @@ f (1, 2, 3, 4, 5)
 env (quick)
 env (noquick)
 env
-env(EI, quick, nopyS, noeval, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)
+env (EI, quick, nopyS, nosimplify, nomatsimp, noeval, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)
 env
 envreset
 env

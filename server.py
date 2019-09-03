@@ -74,7 +74,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
-	import spatch
+	import spatch        # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 	_SYS_STDOUT   = sys.stdout
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
@@ -308,7 +308,7 @@ def _admin_env (*args):
 					sym.set_simplify (state)
 
 			elif var == 'matsimp':
-				msgs.append (f'Matrix simplification is {"on" if state else "off"}.')
+				msgs.append (f'Matrix simplification is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.')
 
 				if apply:
 					spatch.set_matmulsimp (state)

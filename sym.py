@@ -701,7 +701,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		spt = self._ast2spt (ast)
 
 		if _POST_SIMPLIFY:
-			spt = sp.simplify (spt)
+			if not isinstance (spt, (bool, int, float, str, tuple, list, set, frozenset, dict, slice)):
+				try:
+					spt = sp.simplify (spt)
+				except:
+					pass
 
 		return spt
 
@@ -1122,13 +1126,13 @@ def set_user_funcs (user_funcs):
 	global _USER_FUNCS
 	_USER_FUNCS = user_funcs
 
-def set_simplify (state):
-	global _POST_SIMPLIFY
-	_POST_SIMPLIFY = state
-
 def set_pyS (state):
 	global _PYS
 	_PYS = state
+
+def set_simplify (state):
+	global _POST_SIMPLIFY
+	_POST_SIMPLIFY = state
 
 def set_eval (state):
 	global _EVAL
@@ -1141,8 +1145,8 @@ def set_doit (state):
 class sym: # for single script
 	set_precision  = set_precision
 	set_user_funcs = set_user_funcs
-	set_simplify   = set_simplify
 	set_pyS        = set_pyS
+	set_simplify   = set_simplify
 	set_eval       = set_eval
 	set_doit       = set_doit
 	ast2tex        = ast2tex

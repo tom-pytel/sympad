@@ -1,5 +1,3 @@
-> auto simplify on calc
-> matrix mul simplify
 > symmetric difference parse from union of complements
 > emptyset Unicode symbol
 

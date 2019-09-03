@@ -14,6 +14,7 @@ SympifyError = sp.SympifyError
 parser       = Parser ()
 
 sym.set_pyS (False)
+sym.set_simplify (False)
 
 def sparser (text):
 	return parser.parse (text) [0]
