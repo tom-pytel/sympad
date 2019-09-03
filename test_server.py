@@ -126,6 +126,22 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('\\[[x + 1, x - 1], [x - 1, x + 1]]**2'), {'math': ('\\[[2x**2 + 2, 2x**2 - 2], [2x**2 - 2, 2x**2 + 2]]', 'Matrix([[2*x**2 + 2, 2*x**2 - 2], [2*x**2 - 2, 2*x**2 + 2]])', '\\begin{bmatrix} 2 x^2 + 2 & 2 x^2 - 2 \\\\ 2 x^2 - 2 & 2 x^2 + 2 \\end{bmatrix}')})
 		self.assertEqual (get ('solveset(x**3 = 5)'), {'math': ('{5**{1/3}, 1/2 * 5**{1/3} (i sqrt(3) - 1), -1/2 * 5**{1/3} (i sqrt(3) + 1)}', 'FiniteSet(5**(S(1) / 3), S(1) / 2*5**(S(1) / 3)*(i*sqrt(3) - 1), -S(1) / 2*5**(S(1) / 3)*(i*sqrt(3) + 1))', '\\left\\{5^\\frac{1}{3}, \\frac{1}{2} \\cdot 5^\\frac{1}{3} \\left(i \\sqrt{3} - 1 \\right), -\\frac{1}{2} \\cdot 5^\\frac{1}{3} \\left(i \\sqrt{3} + 1 \\right) \\right\\}')})
 
+	def test_calculate_eigen (self):
+		reset ()
+		self.assertEqual (get ('m = \\[[1, 2], [3, 4'), {'math': ('m = \\[[1, 2], [3, 4]]', 'm = Matrix([[1, 2], [3, 4]])', 'm = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}')})
+		self.assertEqual (get ('l = m - lambda eye 2'), {'math': ('l = \\[[-lambda + 1, 2], [3, -lambda + 4]]', 'l = Matrix([[-lambda + 1, 2], [3, -lambda + 4]])', 'l = \\begin{bmatrix} -\\lambda + 1 & 2 \\\\ 3 & -\\lambda + 4 \\end{bmatrix}')})
+		self.assertEqual (get ('l.det('), {'math': ('(lambda - 1) (lambda - 4) - 6', '(lambda - 1)*(lambda - 4) - 6', '\\left(\\lambda - 1 \\right) \\left(\\lambda - 4 \\right) - 6')})
+		self.assertEqual (get ('solve(_'), {'math': ('[-1/2 * sqrt(33) + 5/2, 1/2 * sqrt(33) + 5/2]', '[-S(1) / 2*sqrt(33) + S(5) / 2, S(1) / 2*sqrt(33) + S(5) / 2]', '\\left[-\\frac{1}{2} \\sqrt{33} + \\frac{5}{2}, \\frac{1}{2} \\sqrt{33} + \\frac{5}{2} \\right]')})
+		self.assertEqual (get ('a, b = _'), {'math': [('a = -1/2 * sqrt(33) + 5/2', 'a = -S(1) / 2*sqrt(33) + S(5) / 2', 'a = -\\frac{1}{2} \\sqrt{33} + \\frac{5}{2}'), ('b = 1/2 * sqrt(33) + 5/2', 'b = S(1) / 2*sqrt(33) + S(5) / 2', 'b = \\frac{1}{2} \\sqrt{33} + \\frac{5}{2}')]})
+		self.assertEqual (get ('m.eigenvals('), {'math': ('{-1/2 * sqrt(33) + 5/2: 1, 1/2 * sqrt(33) + 5/2: 1}', '{-S(1) / 2*sqrt(33) + S(5) / 2: 1, S(1) / 2*sqrt(33) + S(5) / 2: 1}', '\\left\\{-\\frac{1}{2} \\sqrt{33} + \\frac{5}{2}{:} 1, \\frac{1}{2} \\sqrt{33} + \\frac{5}{2}{:} 1 \\right\\}')})
+		self.assertEqual (get ('Subs(l, lambda, a) \\[x, y'), {'math': ('\\[2 y - 3/2 * x + 1/2 * x sqrt(33), 3 x + 3/2 * y + 1/2 * y sqrt(33)]', 'Matrix([2*y - S(3) / 2*x + S(1) / 2*x*sqrt(33), 3*x + S(3) / 2*y + S(1) / 2*y*sqrt(33)])', '\\begin{bmatrix} 2 y - \\frac{3}{2} x + \\frac{1}{2} x \\sqrt{33} \\\\ 3 x + \\frac{3}{2} y + \\frac{1}{2} y \\sqrt{33} \\end{bmatrix}')})
+		self.assertEqual (get ('solve(_ [0], _ [1], x, y'), {'math': ('[{x: -1/6 * y (sqrt(33) + 3)}]', '[{x: -S(1) / 6*y*(sqrt(33) + 3)}]', '\\left[\\left\\{x{:} -\\frac{1}{6} y \\left(\\sqrt{33} + 3 \\right) \\right\\} \\right]')})
+		self.assertEqual (get ('\\[_ [0] [x].subs (y, 1), 1'), {'math': ('\\[-1/6 * sqrt(33) - 1/2, 1]', 'Matrix([-S(1) / 6*sqrt(33) - S(1) / 2, 1])', '\\begin{bmatrix} -\\frac{1}{6} \\sqrt{33} - \\frac{1}{2} \\\\ 1 \\end{bmatrix}')})
+		self.assertEqual (get ('Subs(l, lambda, b) \\[x, y'), {'math': ('\\[2 y - 3/2 * x - 1/2 * x sqrt(33), 3 x + 3/2 * y - 1/2 * y sqrt(33)]', 'Matrix([2*y - S(3) / 2*x - S(1) / 2*x*sqrt(33), 3*x + S(3) / 2*y - S(1) / 2*y*sqrt(33)])', '\\begin{bmatrix} 2 y - \\frac{3}{2} x - \\frac{1}{2} x \\sqrt{33} \\\\ 3 x + \\frac{3}{2} y - \\frac{1}{2} y \\sqrt{33} \\end{bmatrix}')})
+		self.assertEqual (get ('solve(_ [0], _ [1], x, y'), {'math': ('[{x: 1/6 * y (sqrt(33) - 3)}]', '[{x: S(1) / 6*y*(sqrt(33) - 3)}]', '\\left[\\left\\{x{:} \\frac{1}{6} y \\left(\\sqrt{33} - 3 \\right) \\right\\} \\right]')})
+		self.assertEqual (get ('\\[_ [0] [x].subs (y, 1), 1'), {'math': ('\\[1/6 * sqrt(33) - 1/2, 1]', 'Matrix([S(1) / 6*sqrt(33) - S(1) / 2, 1])', '\\begin{bmatrix} \\frac{1}{6} \\sqrt{33} - \\frac{1}{2} \\\\ 1 \\end{bmatrix}')})
+		self.assertEqual (get ('m.eigenvects('), {'math': ('[(-1/2 * sqrt(33) + 5/2, 1, [\\[-1/6 * sqrt(33) - 1/2, 1]]), (1/2 * sqrt(33) + 5/2, 1, [\\[1/6 * sqrt(33) - 1/2, 1]])]', '[(-S(1) / 2*sqrt(33) + S(5) / 2, 1, [Matrix([-S(1) / 6*sqrt(33) - S(1) / 2, 1])]), (S(1) / 2*sqrt(33) + S(5) / 2, 1, [Matrix([S(1) / 6*sqrt(33) - S(1) / 2, 1])])]', '\\left[\\left(-\\frac{1}{2} \\sqrt{33} + \\frac{5}{2}, 1, \\left[\\begin{bmatrix} -\\frac{1}{6} \\sqrt{33} - \\frac{1}{2} \\\\ 1 \\end{bmatrix} \\right] \\right), \\left(\\frac{1}{2} \\sqrt{33} + \\frac{5}{2}, 1, \\left[\\begin{bmatrix} \\frac{1}{6} \\sqrt{33} - \\frac{1}{2} \\\\ 1 \\end{bmatrix} \\right] \\right) \\right]')})
+
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ()
 	ret  = {}
@@ -249,6 +265,22 @@ env (nosimplify, matsimp)
 env ('simplify', matsimp)
 \[[x + 1, x - 1], [x - 1, x + 1]]**2
 solveset(x**3 = 5)
+
+"""), ('calculate_eigen', """
+
+m = \[[1, 2], [3, 4
+l = m - lambda eye 2
+l.det(
+solve(_
+a, b = _
+m.eigenvals(
+Subs(l, lambda, a) \[x, y
+solve(_ [0], _ [1], x, y
+\[_ [0] [x].subs (y, 1), 1
+Subs(l, lambda, b) \[x, y
+solve(_ [0], _ [1], x, y
+\[_ [0] [x].subs (y, 1), 1
+m.eigenvects(
 
 """),
 

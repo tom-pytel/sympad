@@ -2,6 +2,7 @@ v1.0.3:
 -------
 * Extended post-evaluation simplification into basic Python containers.
 * dict_keys, dict_values and dict_items converted to lists.
+* Autocompletion parentheses of member function calls.
 
 v1.0.2:
 -------
