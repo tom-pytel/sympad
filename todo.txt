@@ -1,4 +1,3 @@
-> autocomplete member function parens
 > emptyset Unicode symbol
 
 > var_prime in quick mode
