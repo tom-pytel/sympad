@@ -516,18 +516,18 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <p>
 Calculating eigenvalues and eigenvectors of a matrix by "hand":
 </p><p>
-m = \[[1, 2], [3, 4<i>&emsp;don't need to complete here</i><br>
+m = \[[1, 2], [3, 4<i>&emsp;don't need to close brackets</i><br>
 l = m - lambda eye 2<br>
 l.det(<br>
-solve(_<i>&emsp;this will give the eigenvalues</i><br>
+solve _<i>&emsp;this will give the eigenvalues</i><br>
 a, b = _<i>&emsp;assign to vars</i><br>
 m.eigenvals(<i>&emsp;verify eigenvalues</i><br>
 Subs(l, lambda, a) \[x, y<br>
 solve(_ [0], _ [1], x, y<i>&emsp;relation between x and y</i><br>
-\[_ [0] [x].subs (y, 1), 1<i>&emsp;first eigenvector for eigenvalue a</i><br>
+\[_ [0] [x], y].subs(y, 1<i>&emsp;first eigenvector for eigenvalue a</i><br>
 Subs(l, lambda, b) \[x, y<br>
 solve(_ [0], _ [1], x, y<i>&emsp;relation between x and y</i><br>
-\[_ [0] [x].subs (y, 1), 1<i>&emsp;second eigenvector for eigenvalue b</i><br>
+\[_ [0] [x], y].subs(y, 1<i>&emsp;second eigenvector for eigenvalue b</i><br>
 m.eigenvects(<i>&emsp;verify eigenvectors</i><br>
 </p>
 

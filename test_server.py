@@ -276,10 +276,10 @@ a, b = _
 m.eigenvals(
 Subs(l, lambda, a) \[x, y
 solve(_ [0], _ [1], x, y
-\[_ [0] [x].subs (y, 1), 1
+\[_ [0] [x], y].subs (y, 1
 Subs(l, lambda, b) \[x, y
 solve(_ [0], _ [1], x, y
-\[_ [0] [x].subs (y, 1), 1
+\[_ [0] [x], y].subs (y, 1
 m.eigenvects(
 
 """),
