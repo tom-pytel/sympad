@@ -216,6 +216,10 @@ class AST (tuple):
 		return vars
 
 	@staticmethod
+	def tuple2ast (args, paren = False):
+		return args [0] if len (args) == 1 else AST ('(', (',', args)) if paren else AST (',', args)
+
+	@staticmethod
 	def args2kwargs (args, func = None):
 		func  = (lambda x: x) if func is None else func
 		rargs = []

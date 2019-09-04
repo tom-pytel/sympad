@@ -1896,6 +1896,10 @@ class AST (tuple):
 		return vars
 
 	@staticmethod
+	def tuple2ast (args, paren = False):
+		return args [0] if len (args) == 1 else AST ('(', (',', args)) if paren else AST (',', args)
+
+	@staticmethod
 	def args2kwargs (args, func = None):
 		func  = (lambda x: x) if func is None else func
 		rargs = []
@@ -2298,8 +2302,6 @@ AST.DictEmpty  = AST ('dict', ())
 # 	print (res)
 # AST translations for display or S escaping.
 
-import sympy as sp
-
 
 #...............................................................................................
 def _xlat_func2ast_Derivative (ast = AST.VarNull, *dvs):
@@ -2514,7 +2516,7 @@ XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_REIM,
 	'Gamma'                : lambda *args: AST ('func', 'gamma', tuple (args)),
 }
 
-def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other AST representations
+def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
 		return ast
 
@@ -2522,11 +2524,11 @@ def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other
 		xact = xlat.get (ast.func)
 
 		if xact is not None:
-			args = AST (*(xlat_funcs2asts (arg, xlat) for arg in ast.args))
+			args = AST (*(xlat_funcs2asts (arg, xlat, func_call = func_call) for arg in ast.args))
 
 			try:
 				if xact is True: # True means execute function and use return value for ast
-					return sym.spt2ast (sym._ast_func_call (getattr (sp, ast.func), args))
+					return func_call (ast.func, args)
 
 				xargs, xkw = AST.args2kwargs (args)
 				ast2       = xact (*xargs, **xkw)
@@ -2539,7 +2541,7 @@ def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other
 
 			return AST ('func', ast.func, args)
 
-	return AST (*(xlat_funcs2asts (e, xlat) for e in ast))
+	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast))
 
 #...............................................................................................
 def _xlat_func2tex_Subs (ast2tex, ast, vars, subs):
@@ -2554,15 +2556,15 @@ def _xlat_func2tex_Subs (ast2tex, ast, vars, subs):
 	return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (vars)}={ast2tex (subs)}}}'
 
 _XLAT_FUNC2TEX = {
-	'beta'    : lambda ast2tex, *args: f'\\beta\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'Gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'Lambda'  : lambda ast2tex, *args: f'\\Lambda\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'zeta'    : lambda ast2tex, *args: f'\\zeta\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	'beta'    : lambda ast2tex, *args: f'\\beta\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'Gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'Lambda'  : lambda ast2tex, *args: f'\\Lambda\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'zeta'    : lambda ast2tex, *args: f'\\zeta\\left({ast2tex (AST.tuple2ast (args))} \\right)',
 
 	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
-	're'      : lambda ast2tex, *args: f'\\Re\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'im'      : lambda ast2tex, *args: f'\\Im\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	're'      : lambda ast2tex, *args: f'\\Re\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'im'      : lambda ast2tex, *args: f'\\Im\\left({ast2tex (AST.tuple2ast (args))} \\right)',
 	'Subs'    : _xlat_func2tex_Subs,
 }
 
@@ -2725,9 +2727,6 @@ def _simplify (spt):
 
 	return spt
 
-def _tuple2ast (args, paren = False):
-	return args [0] if len (args) == 1 else AST ('(', (',', args)) if paren else AST (',', args)
-
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
 
@@ -2775,12 +2774,15 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 class ast2tex: # abstract syntax tree -> LaTeX text
 	def __init__ (self): self.parent = self.ast = None # pylint medication
 	def __new__ (cls, ast, xlat = True):
+		def func_call (func, args):
+			return spt2ast (_ast_func_call (getattr (sp, func), args))
+
 		self         = super ().__new__ (cls)
 		self.parents = [None]
 		self.parent  = self.ast = AST ()
 
 		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX)
+			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX, func_call = func_call)
 
 		return self._ast2tex (ast)
 
@@ -2867,7 +2869,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		a = ast.attr.replace ('_', '\\_')
 
 		if ast.args is not None:
-			a = f'\\operatorname{{{a}}}{self._ast2tex_paren (_tuple2ast (ast.args))}'
+			a = f'\\operatorname{{{a}}}{self._ast2tex_paren (AST.tuple2ast (ast.args))}'
 
 		return f'{self._ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "||", "^^", "&&"})}.{a}'
 
@@ -2940,7 +2942,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					if ast.func [0] == 'a' else \
 					(f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}')
 
-			return f'{n}\\left({self._ast2tex (_tuple2ast (ast.args))} \\right)'
+			return f'{n}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
 		tex = sxlat.xlat_func2tex (ast, self._ast2tex)
 
@@ -2948,9 +2950,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return tex
 
 		if ast.func in AST.Func.TEX:
-			return f'\\{ast.func}\\left({self._ast2tex (_tuple2ast (ast.args))} \\right)'
+			return f'\\{ast.func}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 		else:
-			return '\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({self._ast2tex (_tuple2ast (ast.args))} \\right)'
+			return '\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
 	def _ast2tex_lim (self, ast):
 		s = self._ast2tex (ast.to) if ast.dir is None else (self._ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -3029,7 +3031,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex (e) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", ","})} & \\text{{for}}\\: {self._ast2tex (p [1])}' for p in ast.piece) + ' \\end{cases}',
 		'lamb' : lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
-		'idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&"})}\\left[{self._ast2tex (_tuple2ast (ast.idx))} \\right]',
+		'idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&"})}\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]',
 		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and (a.is_ass or a.op in {',', 'lamb', 'slice'})) for a in _ast_slice_bounds (ast, '')),
 		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex (k)}{{:}} {self._ast2tex (v)}" for k, v in ast.dict)} \\right\\}}',
@@ -3203,7 +3205,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'#'    : lambda self, ast: ast.num,
 		'@'    : lambda self, ast: ast.var,
 		'.'    : lambda self, ast: f'{self._ast2nat_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb", "||", "^^", "&&"})}.{ast.attr}' \
-				if ast.args is None else f'{self._ast2nat (ast.obj)}.{ast.attr}{self._ast2nat_paren (_tuple2ast (ast.args))}',
+				if ast.args is None else f'{self._ast2nat (ast.obj)}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}',
 		'"'    : lambda self, ast: repr (ast.str_),
 		','    : lambda self, ast: f'{", ".join (self._ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
 		'('    : lambda self, ast: f'({self._ast2nat (ast.paren)})',
@@ -3217,7 +3219,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'^'    : _ast2nat_pow,
 		'log'  : _ast2nat_log,
 		'sqrt' : lambda self, ast: f'sqrt{self._ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{self._ast2nat (ast.idx)}]{{{self._ast2nat_wrap (ast.rad, 0, {","})}}}',
-		'func' : lambda self, ast: f'{ast.func}({self._ast2nat (_tuple2ast (ast.args))})',
+		'func' : lambda self, ast: f'{ast.func}({self._ast2nat (AST.tuple2ast (ast.args))})',
 		'lim'  : _ast2nat_lim,
 		'sum'  : _ast2nat_sum,
 		'diff' : _ast2nat_diff,
@@ -3227,7 +3229,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].is_ass or p [0].op in {"piece", "lamb"}, {","})} if {self._ast2nat_wrap (p [1], p [1].is_ass or p [1].op in {"piece", "lamb"}, {","})}' for p in ast.piece),
 		'lamb' : lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, 0, ast.lamb.is_eq)}',
-		'idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&"})}[{self._ast2nat (_tuple2ast (ast.idx))}]',
+		'idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&"})}[{self._ast2nat (AST.tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2nat (k)}: {self._ast2nat (v)}" for k, v in ast.dict)}}}',
@@ -3327,7 +3329,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'='    : lambda self, ast: f'{self._ast2py_paren (ast.lhs) if (ast.is_eq and ast.lhs.is_lamb) else self._ast2py (ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2py (ast.rhs)}',
 		'#'    : lambda self, ast: ast.num,
 		'@'    : lambda self, ast: ast.var,
-		'.'    : lambda self, ast: f'{self._ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{self._ast2py (ast.obj)}.{ast.attr}{self._ast2py_paren (_tuple2ast (ast.args))}',
+		'.'    : lambda self, ast: f'{self._ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{self._ast2py (ast.obj)}.{ast.attr}{self._ast2py_paren (AST.tuple2ast (ast.args))}',
 		'"'    : lambda self, ast: repr (ast.str_),
 		','    : lambda self, ast: f'{", ".join (self._ast2py (parm) for parm in ast.comma)}{_trail_comma (ast.comma)}',
 		'('    : lambda self, ast: f'({self._ast2py (ast.paren)})',
@@ -3341,7 +3343,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'^'    : _ast2py_pow,
 		'log'  : _ast2py_log,
 		'sqrt' : lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-		'func' : lambda self, ast: f'{ast.unescaped}({self._ast2py (_tuple2ast (ast.args))})',
+		'func' : lambda self, ast: f'{ast.unescaped}({self._ast2py (AST.tuple2ast (ast.args))})',
 		'lim'  : _ast2py_lim,
 		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
 		'diff' : _ast2py_diff,
@@ -3349,8 +3351,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'vec'  : lambda self, ast: 'Matrix([' + ', '.join (f'{self._ast2py (e)}' for e in ast.vec) + '])',
 		'mat'  : lambda self, ast: 'Matrix([' + ', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat) + '])',
 		'piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
-		'lamb' : lambda self, ast: f'Lambda({self._ast2py (_tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
-		'idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece", "lamb"} else self._ast2py (ast.obj)}[{self._ast2py (_tuple2ast (ast.idx))}]',
+		'lamb' : lambda self, ast: f'Lambda({self._ast2py (AST.tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
+		'idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_neg_num or ast.obj.op in {"=", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece", "lamb"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 		'set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
 		'dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',

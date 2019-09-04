@@ -1,8 +1,8 @@
-> \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2) ... \\left. x + y \\right|_{\\substack{ x=2\\\\ y=3 }}
-
 > x**-y[2]
 
 > emptyset Unicode symbol
+
+> random port selection
 
 > AppliedUndef, in func and in _Mul
 > Function ('f') (), Function ('f') (x), Function ('f') (x, y)

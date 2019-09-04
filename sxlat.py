@@ -1,9 +1,6 @@
 # AST translations for display or S escaping.
 
-import sympy as sp
-
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
-import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 #...............................................................................................
 def _xlat_func2ast_Derivative (ast = AST.VarNull, *dvs):
@@ -218,7 +215,7 @@ XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_REIM,
 	'Gamma'                : lambda *args: AST ('func', 'gamma', tuple (args)),
 }
 
-def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other AST representations
+def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
 		return ast
 
@@ -226,11 +223,11 @@ def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other
 		xact = xlat.get (ast.func)
 
 		if xact is not None:
-			args = AST (*(xlat_funcs2asts (arg, xlat) for arg in ast.args))
+			args = AST (*(xlat_funcs2asts (arg, xlat, func_call = func_call) for arg in ast.args))
 
 			try:
 				if xact is True: # True means execute function and use return value for ast
-					return sym.spt2ast (sym._ast_func_call (getattr (sp, ast.func), args))
+					return func_call (ast.func, args)
 
 				xargs, xkw = AST.args2kwargs (args)
 				ast2       = xact (*xargs, **xkw)
@@ -243,7 +240,7 @@ def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other
 
 			return AST ('func', ast.func, args)
 
-	return AST (*(xlat_funcs2asts (e, xlat) for e in ast))
+	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast))
 
 #...............................................................................................
 def _xlat_func2tex_Subs (ast2tex, ast, vars, subs):
@@ -258,15 +255,15 @@ def _xlat_func2tex_Subs (ast2tex, ast, vars, subs):
 	return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (vars)}={ast2tex (subs)}}}'
 
 _XLAT_FUNC2TEX = {
-	'beta'    : lambda ast2tex, *args: f'\\beta\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'Gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'Lambda'  : lambda ast2tex, *args: f'\\Lambda\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'zeta'    : lambda ast2tex, *args: f'\\zeta\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	'beta'    : lambda ast2tex, *args: f'\\beta\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'Gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'Lambda'  : lambda ast2tex, *args: f'\\Lambda\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'zeta'    : lambda ast2tex, *args: f'\\zeta\\left({ast2tex (AST.tuple2ast (args))} \\right)',
 
 	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
-	're'      : lambda ast2tex, *args: f'\\Re\\left({ast2tex (sym._tuple2ast (args))} \\right)',
-	'im'      : lambda ast2tex, *args: f'\\Im\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	're'      : lambda ast2tex, *args: f'\\Re\\left({ast2tex (AST.tuple2ast (args))} \\right)',
+	'im'      : lambda ast2tex, *args: f'\\Im\\left({ast2tex (AST.tuple2ast (args))} \\right)',
 	'Subs'    : _xlat_func2tex_Subs,
 }
 
