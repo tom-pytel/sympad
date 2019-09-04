@@ -1208,8 +1208,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('||', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3')))))
-# 	res = ast2py (ast)
+# 	ast = AST ('func', 'Lambda', (('^', ('@', 'x'), ('#', '2')), ('@', 'x')))
+# 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

@@ -282,7 +282,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('{1,2} ^^ {2,3} ^^ {3,4}'), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
 		self.assertEqual (p ('{1,2} && {2,3} && {3,4}'), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
 		self.assertEqual (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}'), ('||', (('set', (('#', '1'), ('#', '2'))), ('^^', (('set', (('#', '2'), ('#', '3'))), ('&&', (('set', (('#', '3'), ('#', '4'))), ('set', (('#', '4'), ('#', '5'))))))))))
-		self.assertEqual (p ('solveset (x**2 = 4)'), ('func', 'solveset', (('=', '=', ('^', ('@', 'x'), ('#', '2')), ('#', '4')),)))
+		self.assertEqual (p ('solve (x**2 = 4)'), ('func', 'solve', (('=', '=', ('^', ('@', 'x'), ('#', '2')), ('#', '4')),)))
+		self.assertEqual (p ('Subs (x y, x, 2)'), ('func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('@', 'x'), ('#', '2'))))
+		self.assertEqual (p ('Subs (x y, (x, y), (2, 3))'), ('func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('(', (',', (('@', 'x'), ('@', 'y')))), ('(', (',', (('#', '2'), ('#', '3')))))))
+		self.assertEqual (p ('(x y).subs (x, 2)'), ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2'))))
+		self.assertEqual (p ('(x y).subs (x, 2).subs (y, 3)'), ('.', ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2'))), 'subs', (('@', 'y'), ('#', '3'))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -528,7 +532,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{1,2} ^^ {2,3} ^^ {3,4}')), '\\left\\{1, 2 \\right\\} \\ominus \\left\\{2, 3 \\right\\} \\ominus \\left\\{3, 4 \\right\\}')
 		self.assertEqual (ast2tex (p ('{1,2} && {2,3} && {3,4}')), '\\left\\{1, 2 \\right\\} \\cap \\left\\{2, 3 \\right\\} \\cap \\left\\{3, 4 \\right\\}')
 		self.assertEqual (ast2tex (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), '\\left\\{1, 2 \\right\\} \\cup \\left\\{2, 3 \\right\\} \\ominus \\left\\{3, 4 \\right\\} \\cap \\left\\{4, 5 \\right\\}')
-		self.assertEqual (ast2tex (p ('solveset (x**2 = 4)')), '\\operatorname{solveset}\\left(x^2 = 4 \\right)')
+		self.assertEqual (ast2tex (p ('solve (x**2 = 4)')), '\\operatorname{solve}\\left(x^2 = 4 \\right)')
+		self.assertEqual (ast2tex (p ('Subs (x y, x, 2)')), '\\left. x y \\right|_{x=2}')
+		self.assertEqual (ast2tex (p ('Subs (x y, (x, y), (2, 3))')), '\\left. x y \\right|_{\\substack{x=2 \\\\ y=3}}')
+		self.assertEqual (ast2tex (p ('(x y).subs (x, 2)')), '\\left. \\left(x y \\right) \\right|_{x=2}')
+		self.assertEqual (ast2tex (p ('(x y).subs (x, 2).subs (y, 3)')), '\\left. \\left. \\left(x y \\right) \\right|_{x=2} \\right|_{y=3}')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -774,7 +782,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('{1,2} ^^ {2,3} ^^ {3,4}')), '{1, 2} ^^ {2, 3} ^^ {3, 4}')
 		self.assertEqual (ast2nat (p ('{1,2} && {2,3} && {3,4}')), '{1, 2} && {2, 3} && {3, 4}')
 		self.assertEqual (ast2nat (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), '{1, 2} || {2, 3} ^^ {3, 4} && {4, 5}')
-		self.assertEqual (ast2nat (p ('solveset (x**2 = 4)')), 'solveset(x**2 = 4)')
+		self.assertEqual (ast2nat (p ('solve (x**2 = 4)')), 'solve(x**2 = 4)')
+		self.assertEqual (ast2nat (p ('Subs (x y, x, 2)')), 'Subs(x y, x, 2)')
+		self.assertEqual (ast2nat (p ('Subs (x y, (x, y), (2, 3))')), 'Subs(x y, (x, y), (2, 3))')
+		self.assertEqual (ast2nat (p ('(x y).subs (x, 2)')), '(x y).subs(x, 2)')
+		self.assertEqual (ast2nat (p ('(x y).subs (x, 2).subs (y, 3)')), '(x y).subs(x, 2).subs(y, 3)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -1020,7 +1032,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('{1,2} ^^ {2,3} ^^ {3,4}')), 'Union(Complement(Union(Complement(FiniteSet(1, 2), FiniteSet(2, 3)), Complement(FiniteSet(2, 3), FiniteSet(1, 2))), FiniteSet(3, 4)), Complement(FiniteSet(3, 4), Union(Complement(FiniteSet(1, 2), FiniteSet(2, 3)), Complement(FiniteSet(2, 3), FiniteSet(1, 2)))))')
 		self.assertEqual (ast2py (p ('{1,2} && {2,3} && {3,4}')), 'Intersection(FiniteSet(1, 2), FiniteSet(2, 3), FiniteSet(3, 4))')
 		self.assertEqual (ast2py (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), 'Union(FiniteSet(1, 2), Union(Complement(FiniteSet(2, 3), Intersection(FiniteSet(3, 4), FiniteSet(4, 5))), Complement(Intersection(FiniteSet(3, 4), FiniteSet(4, 5)), FiniteSet(2, 3))))')
-		self.assertEqual (ast2py (p ('solveset (x**2 = 4)')), 'solveset(x**2 = 4)')
+		self.assertEqual (ast2py (p ('solve (x**2 = 4)')), 'solve(x**2 = 4)')
+		self.assertEqual (ast2py (p ('Subs (x y, x, 2)')), 'Subs(x*y, x, 2)')
+		self.assertEqual (ast2py (p ('Subs (x y, (x, y), (2, 3))')), 'Subs(x*y, (x, y), (2, 3))')
+		self.assertEqual (ast2py (p ('(x y).subs (x, 2)')), '(x*y).subs(x, 2)')
+		self.assertEqual (ast2py (p ('(x y).subs (x, 2).subs (y, 3)')), '(x*y).subs(x, 2).subs(y, 3)')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -1266,7 +1282,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('{1,2} ^^ {2,3} ^^ {3,4}')), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
 		self.assertEqual (ast2tex2ast (p ('{1,2} && {2,3} && {3,4}')), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
 		self.assertEqual (ast2tex2ast (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('^^', (('set', (('#', '2'), ('#', '3'))), ('&&', (('set', (('#', '3'), ('#', '4'))), ('set', (('#', '4'), ('#', '5'))))))))))
-		self.assertEqual (ast2tex2ast (p ('solveset (x**2 = 4)')), ('func', 'solveset', (('=', '=', ('^', ('@', 'x'), ('#', '2')), ('#', '4')),)))
+		self.assertEqual (ast2tex2ast (p ('solve (x**2 = 4)')), ('func', 'solve', (('=', '=', ('^', ('@', 'x'), ('#', '2')), ('#', '4')),)))
+		self.assertEqual (ast2tex2ast (p ('Subs (x y, x, 2)')), ('func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('@', 'x'), ('#', '2'))))
+		self.assertEqual (ast2tex2ast (p ('Subs (x y, (x, y), (2, 3))')), ('func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('(', (',', (('@', 'x'), ('@', 'y')))), ('(', (',', (('#', '2'), ('#', '3')))))))
+		self.assertEqual (ast2tex2ast (p ('(x y).subs (x, 2)')), ('func', 'Subs', (('(', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'x'), ('#', '2'))))
+		self.assertEqual (ast2tex2ast (p ('(x y).subs (x, 2).subs (y, 3)')), ('func', 'Subs', (('func', 'Subs', (('(', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'x'), ('#', '2'))), ('@', 'y'), ('#', '3'))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1512,7 +1532,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('{1,2} ^^ {2,3} ^^ {3,4}')), ('^^', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
 		self.assertEqual (ast2nat2ast (p ('{1,2} && {2,3} && {3,4}')), ('&&', (('set', (('#', '1'), ('#', '2'))), ('set', (('#', '2'), ('#', '3'))), ('set', (('#', '3'), ('#', '4'))))))
 		self.assertEqual (ast2nat2ast (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), ('||', (('set', (('#', '1'), ('#', '2'))), ('^^', (('set', (('#', '2'), ('#', '3'))), ('&&', (('set', (('#', '3'), ('#', '4'))), ('set', (('#', '4'), ('#', '5'))))))))))
-		self.assertEqual (ast2nat2ast (p ('solveset (x**2 = 4)')), ('func', 'solveset', (('=', '=', ('^', ('@', 'x'), ('#', '2')), ('#', '4')),)))
+		self.assertEqual (ast2nat2ast (p ('solve (x**2 = 4)')), ('func', 'solve', (('=', '=', ('^', ('@', 'x'), ('#', '2')), ('#', '4')),)))
+		self.assertEqual (ast2nat2ast (p ('Subs (x y, x, 2)')), ('func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('@', 'x'), ('#', '2'))))
+		self.assertEqual (ast2nat2ast (p ('Subs (x y, (x, y), (2, 3))')), ('func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('(', (',', (('@', 'x'), ('@', 'y')))), ('(', (',', (('#', '2'), ('#', '3')))))))
+		self.assertEqual (ast2nat2ast (p ('(x y).subs (x, 2)')), ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2'))))
+		self.assertEqual (ast2nat2ast (p ('(x y).subs (x, 2).subs (y, 3)')), ('.', ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2'))), 'subs', (('@', 'y'), ('#', '3'))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -1758,7 +1782,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('{1,2} ^^ {2,3} ^^ {3,4}')), ('func', 'Union', (('func', 'Complement', (('func', 'Union', (('func', 'Complement', (('func', 'FiniteSet', (('#', '1'), ('#', '2'))), ('func', 'FiniteSet', (('#', '2'), ('#', '3'))))), ('func', 'Complement', (('func', 'FiniteSet', (('#', '2'), ('#', '3'))), ('func', 'FiniteSet', (('#', '1'), ('#', '2'))))))), ('func', 'FiniteSet', (('#', '3'), ('#', '4'))))), ('func', 'Complement', (('func', 'FiniteSet', (('#', '3'), ('#', '4'))), ('func', 'Union', (('func', 'Complement', (('func', 'FiniteSet', (('#', '1'), ('#', '2'))), ('func', 'FiniteSet', (('#', '2'), ('#', '3'))))), ('func', 'Complement', (('func', 'FiniteSet', (('#', '2'), ('#', '3'))), ('func', 'FiniteSet', (('#', '1'), ('#', '2'))))))))))))
 		self.assertEqual (ast2py2ast (p ('{1,2} && {2,3} && {3,4}')), ('func', 'Intersection', (('func', 'FiniteSet', (('#', '1'), ('#', '2'))), ('func', 'FiniteSet', (('#', '2'), ('#', '3'))), ('func', 'FiniteSet', (('#', '3'), ('#', '4'))))))
 		self.assertEqual (ast2py2ast (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), ('func', 'Union', (('func', 'FiniteSet', (('#', '1'), ('#', '2'))), ('func', 'Union', (('func', 'Complement', (('func', 'FiniteSet', (('#', '2'), ('#', '3'))), ('func', 'Intersection', (('func', 'FiniteSet', (('#', '3'), ('#', '4'))), ('func', 'FiniteSet', (('#', '4'), ('#', '5'))))))), ('func', 'Complement', (('func', 'Intersection', (('func', 'FiniteSet', (('#', '3'), ('#', '4'))), ('func', 'FiniteSet', (('#', '4'), ('#', '5'))))), ('func', 'FiniteSet', (('#', '2'), ('#', '3'))))))))))
-		self.assertEqual (ast2py2ast (p ('solveset (x**2 = 4)')), ('func', 'solveset', (('=', '=', ('^', ('@', 'x'), ('#', '2')), ('#', '4')),)))
+		self.assertEqual (ast2py2ast (p ('solve (x**2 = 4)')), ('func', 'solve', (('=', '=', ('^', ('@', 'x'), ('#', '2')), ('#', '4')),)))
+		self.assertEqual (ast2py2ast (p ('Subs (x y, x, 2)')), ('func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('@', 'x'), ('#', '2'))))
+		self.assertEqual (ast2py2ast (p ('Subs (x y, (x, y), (2, 3))')), ('func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('(', (',', (('@', 'x'), ('@', 'y')))), ('(', (',', (('#', '2'), ('#', '3')))))))
+		self.assertEqual (ast2py2ast (p ('(x y).subs (x, 2)')), ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2'))))
+		self.assertEqual (ast2py2ast (p ('(x y).subs (x, 2).subs (y, 3)')), ('.', ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2'))), 'subs', (('@', 'y'), ('#', '3'))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -2004,7 +2032,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('{1,2} ^^ {2,3} ^^ {3,4}')), ('set', (('#', '1'), ('#', '4'))))
 		self.assertEqual (ast2spt2ast (p ('{1,2} && {2,3} && {3,4}')), ('set', ()))
 		self.assertEqual (ast2spt2ast (p ('{1,2} || {2,3} ^^ {3,4} && {4,5}')), ('set', (('#', '1'), ('#', '2'), ('#', '3'), ('#', '4'))))
-		self.assertEqual (ast2spt2ast (p ('solveset (x**2 = 4)')), ('set', (('#', '-2'), ('#', '2'))))
+		self.assertEqual (ast2spt2ast (p ('solve (x**2 = 4)')), ('[', (('#', '-2'), ('#', '2'))))
+		self.assertEqual (ast2spt2ast (p ('Subs (x y, x, 2)')), ('*', (('#', '2'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('Subs (x y, (x, y), (2, 3))')), ('#', '6'))
+		self.assertEqual (ast2spt2ast (p ('(x y).subs (x, 2)')), ('*', (('#', '2'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('(x y).subs (x, 2).subs (y, 3)')), ('#', '6'))
 
 _EXPRESSIONS = """
 1
