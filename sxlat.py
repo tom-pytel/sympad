@@ -260,36 +260,54 @@ def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other
 	return AST (*(xlat_funcs2asts (e, xlat) for e in ast))
 
 #...............................................................................................
-def _xlat_func2tex_Subs (args, _ast2tex):
-	vars = args [1].strip_paren ()
-	subs = args [2].strip_paren ()
+def _xlat_func2tex_Subs (ast2tex, ast, vars, subs):
+	vars = vars.strip_paren ()
+	subs = subs.strip_paren ()
 
 	if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
-		asss = ' \\\\ '.join (f'{_ast2tex (v)}={_ast2tex (s)}' for v, s in zip (vars.comma, subs.comma))
+		asss = ' \\\\ '.join (f'{ast2tex (v)}={ast2tex (s)}' for v, s in zip (vars.comma, subs.comma))
 
-		return f'\\left. {_ast2tex (args [0])} \\right|_{{\\substack{{{asss}}}}}'
+		return f'\\left. {ast2tex (ast)} \\right|_{{\\substack{{{asss}}}}}'
 
-	return f'\\left. {_ast2tex (args [0])} \\right|_{{{_ast2tex (vars)}={_ast2tex (subs)}}}'
+	return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (vars)}={ast2tex (subs)}}}'
 
 _XLAT_FUNC2TEX = {
-	'beta'    : lambda args, _ast2tex: f'\\beta\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
-	'gamma'   : lambda args, _ast2tex: f'\\Gamma\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
-	'Gamma'   : lambda args, _ast2tex: f'\\Gamma\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
-	'Lambda'  : lambda args, _ast2tex: f'\\Lambda\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
-	'zeta'    : lambda args, _ast2tex: f'\\zeta\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+	'beta'    : lambda ast2tex, *args: f'\\beta\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	'gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	'Gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	'Lambda'  : lambda ast2tex, *args: f'\\Lambda\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	'zeta'    : lambda ast2tex, *args: f'\\zeta\\left({ast2tex (sym._tuple2ast (args))} \\right)',
 
-	'binomial': lambda args, _ast2tex: f'\\binom{{{_ast2tex (args [0])}}}{{{_ast2tex (args [1])}}}' if len (args) == 2 else None,
-	're'      : lambda args, _ast2tex: f'\\Re\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
-	'im'      : lambda args, _ast2tex: f'\\Im\\left({_ast2tex (sym._tuple2ast (args))} \\right)',
+	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
+	're'      : lambda ast2tex, *args: f'\\Re\\left({ast2tex (sym._tuple2ast (args))} \\right)',
+	'im'      : lambda ast2tex, *args: f'\\Im\\left({ast2tex (sym._tuple2ast (args))} \\right)',
 	'Subs'    : _xlat_func2tex_Subs,
 }
 
-def xlat_func2tex (ast, _ast2tex):
+_XLAT_ATTRFUNC2TEX = {
+	'subs'    : _xlat_func2tex_Subs,
+}
+
+def xlat_func2tex (ast, ast2tex):
 	xact = _XLAT_FUNC2TEX.get (ast.func)
 
 	if xact:
 		try:
-			return xact (ast.args, _ast2tex)
+			return xact (ast2tex, *ast.args)
+		except:
+			pass
+
+	return None
+
+def xlat_attr2tex (ast, ast2tex):
+	if ast.args is None:
+		return None
+
+	xact = _XLAT_ATTRFUNC2TEX.get (ast.attr)
+
+	if xact:
+		try:
+			return xact (ast2tex, ast.obj, *ast.args)
 		except:
 			pass
 
@@ -347,6 +365,7 @@ class sxlat: # for single script
 	XLAT_FUNC2AST_PY  = XLAT_FUNC2AST_PY
 	xlat_funcs2asts   = xlat_funcs2asts
 	xlat_func2tex     = xlat_func2tex
+	xlat_attr2tex     = xlat_attr2tex
 	xlat_pyS          = xlat_pyS
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT

@@ -205,8 +205,15 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				f'\\partial{p}'
 
 	def _ast2tex_attr (self, ast):
+		tex = sxlat.xlat_attr2tex (ast, self._ast2tex)
+
+		if tex is not None:
+			return tex
+
 		a = ast.attr.replace ('_', '\\_')
-		a = a if ast.args is None else f'\\operatorname{{{a}}}{self._ast2tex_paren (_tuple2ast (ast.args))}'
+
+		if ast.args is not None:
+			a = f'\\operatorname{{{a}}}{self._ast2tex_paren (_tuple2ast (ast.args))}'
 
 		return f'{self._ast2tex_paren (ast.obj, {"=", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "||", "^^", "&&"})}.{a}'
 
