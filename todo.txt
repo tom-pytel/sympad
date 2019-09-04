@@ -1,3 +1,6 @@
+> AppliedUndef, in func and in _Mul
+> Function ('f') (), Function ('f') (x), Function ('f') (x, y)
+
 > emptyset Unicode symbol
 
 > var_prime in quick mode

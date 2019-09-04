@@ -164,7 +164,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	if vars:
 		for var in vars: # trying to change a fundemental law of the universe?
 			if AST ('@', var) in AST.CONSTS:
-				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants, they never change - Me.')
+				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
 
 	return _ast_remap (ast, _VARS), vars
 
@@ -302,13 +302,13 @@ def _admin_env (*args):
 					sym.set_pyS (state)
 
 			elif var == 'simplify':
-				msgs.append (f'Post-evaluation simplification is {"on" if state else "off"}.')
+				msgs.append (f'Post-evaluation simplify is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_simplify (state)
 
 			elif var == 'matsimp':
-				msgs.append (f'Matrix simplification is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.')
+				msgs.append (f'Matrix simplify is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.')
 
 				if apply:
 					spatch.set_matmulsimp (state)

@@ -921,7 +921,8 @@ class Parser (lalr1.LALR1):
 			if rule == ('expr_func', ('FUNC', 'expr_neg_func')):
 				return self._insert_symbol (('PARENL', 'PARENR'))
 
-			if rule == ('expr_paren', ('PARENL', 'expr_commas', 'PARENR')) and self.stack [-2].sym == 'expr_mul_imp' and self.stack [-2].red.is_attr:
+			if rule == ('expr_paren', ('PARENL', 'expr_commas', 'PARENR')) and self.stack [-2].sym == 'expr_mul_imp' and \
+					(self.stack [-2].red.is_attr or (self.stack [-2].red.is_var and self.stack [-2].red.var in self._USER_FUNCS)):
 				return self._insert_symbol ('PARENR')
 
 		if pos and rule [1] [pos - 1] == 'expr_commas' and rule [0] != 'expr_abs':
@@ -983,6 +984,7 @@ class sparser: # for single script
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	a = p.parse (r'a.x(')
+# 	p.set_user_funcs ({'f': 1})
+# 	a = p.parse (r'f(')
 # 	# a = sym.ast2spt (a)
 # 	print (a)
