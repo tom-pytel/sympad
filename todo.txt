@@ -1,11 +1,15 @@
-> AppliedUndef, in func and in _Mul
-> Function ('f') (), Function ('f') (x), Function ('f') (x, y)
+> \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2) ... \\left. x + y \\right|_{\\substack{ x=2\\\\ y=3 }}
+
+> x**-y[2]
 
 > emptyset Unicode symbol
 
+> AppliedUndef, in func and in _Mul
+> Function ('f') (), Function ('f') (x), Function ('f') (x, y)
+
 > var_prime in quick mode
 
-> \substack - \left. \frac{d}{d x} \operatorname{re}{\left(x\right)} \right|_{\substack{ x=2 }}, Subs(Derivative(re(x), x), x, 2)
+> break out state machine from server
 
 > no spacing for nums - 3 x -> 3x?
 > quick mode no spacing for vars x y z -> xyz?
@@ -24,6 +28,8 @@
 > xlat different types and initializations of matrices?
 > long variable name shortcut? $?
 > {1:2:3,} -> {slice(1, 2, 3),} (SymPy creating dynamic class of slice)?
+
+> fix unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyways.
 
 > sequence(factorial(k), (k,1,oo))
 > ImageSet(Lambda(n, 2 n pi + pi/2), Integers)

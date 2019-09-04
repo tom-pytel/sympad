@@ -102,8 +102,8 @@ def _dotprodsimp (a, b, simplify = True):
 
 def _MatrixArithmetic_eval_matrix_mul (self, other):
 	return self._new (self.rows, other.cols, lambda i, j:
-			_dotprodsimp ((self [i,k] for k in range (self.cols)),
-						(other [k,j] for k in range (self.cols))))
+		_dotprodsimp ((self [i,k] for k in range (self.cols)),
+		(other [k,j] for k in range (self.cols))))
 
 def _DenseMatrix_eval_matrix_mul (self, other):
 	other_len = other.rows * other.cols
@@ -118,8 +118,8 @@ def _DenseMatrix_eval_matrix_mul (self, other):
 			row_indices = range (self.cols * row, self.cols * (row + 1))
 			col_indices = range (col, other_len, other.cols)
 			new_mat [i] = _dotprodsimp (
-					(self._mat [a] for a in row_indices),
-					(other._mat [b] for b in col_indices))
+				(self._mat [a] for a in row_indices),
+				(other._mat [b] for b in col_indices))
 
 	return classof (self, other)._new (self.rows, other.cols, new_mat, copy = False)
 
@@ -145,7 +145,7 @@ def _SparseMatrix_eval_matrix_mul (self, other):
 			indices = set (col_lookup [col].keys ()) & set (row_lookup [row].keys ())
 			if indices:
 				smat [row, col] = _dotprodsimp ((row_lookup [row][k] for k in indices),
-						(col_lookup [col][k] for k in indices))
+					(col_lookup [col][k] for k in indices))
 
 	return self._new (self.rows, other.cols, smat)
 
