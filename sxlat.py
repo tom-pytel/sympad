@@ -218,20 +218,6 @@ XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_REIM,
 	'Gamma'                : lambda *args: AST ('func', 'gamma', tuple (args)),
 }
 
-def _xlat_func2ast (xact, args):
-	xargs = []
-	xkw   = {}
-
-	for arg in args:
-		if arg.is_ass:
-			xkw [arg.lhs.as_identifier ()] = arg.rhs
-		elif xkw:
-			raise SyntaxError ('positional argument follows keyword argument')
-		else:
-			xargs.append (arg)
-
-	return xact (*xargs, **xkw)
-
 def xlat_funcs2asts (ast, xlat): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
 		return ast
