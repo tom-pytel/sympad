@@ -167,7 +167,7 @@ class AST (tuple):
 		neg.has_neg = False
 		neg.is_neg  = False
 
-		while self.op == '-' and count:
+		while self.is_minus and count:
 			self         = self.minus
 			count       -= 1
 			is_neg       = neg.is_neg
