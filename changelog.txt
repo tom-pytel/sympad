@@ -1,5 +1,6 @@
 v1.0.4:
 -------
+* Added basic plotting.
 
 v1.0.3:
 -------

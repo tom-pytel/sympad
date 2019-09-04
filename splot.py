@@ -2,6 +2,8 @@ import base64
 from io import BytesIO
 import itertools as it
 
+import sympy as sp
+
 SPLOT = False
 
 try:
@@ -129,7 +131,7 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 		return None
 
 	obj = plt
-	fig = plt.figure ()
+	fig = obj.figure ()
 
 	args, xmin, xmax, ymin, ymax = _process_head (args, fs, obj, ret_xrng = True)
 	leg                          = False
@@ -144,6 +146,14 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 			pargs = [arg [0::2], arg [1::2]]
 
 		else: # y = function (x)
+			if not callable (arg):
+				s = arg.free_symbols
+
+				if len (s) != 1:
+					raise ValueError ('expression must have exactly one free variable')
+
+				arg = sp.Lambda (s.pop (), arg)
+
 			win = plt.gcf ().axes [-1].get_window_extent ()
 			xrs = (win.x1 - win.x0) // 50 # scale resolution to roughly 'res' points every 50 pixels
 			rng = res * xrs

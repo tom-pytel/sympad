@@ -853,6 +853,7 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('a if randprime(1, 4) == 2 else b', true)">a if randprime(1, 4) == 2 else b</a>
 	<a class="GreetingA" href="javascript:inputting ('Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)', true)">Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)</a>
 	<a class="GreetingA" href="javascript:inputting ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}', true)">(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}</a>
+	<a class="GreetingA" href="javascript:inputting ('plot (2 pi, -2, 2, sin x, \'r=sin\', cos x, \'g=cos\', tan x, \'b=tan\')', true)">plot (2 pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')</a>
 
 <!--
 <a class="GreetingA" href="javascript:inputting ('
@@ -950,6 +951,7 @@ Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
 a if randprime(1, 4) == 2 else b<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
+plot (2 pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
 </p>
 
 <h4>Multiline Examples</h4>
@@ -1276,6 +1278,7 @@ This simplification can be turned off and on via "<b>env(nomatsimp)</b>" and "<b
 </p>
 
 <h2>Functions</h2>
+
 <p>
 There are two types of functions made available in SymPad - all the SymPy native functions are available directly just by typing their name (a few escaped with "<b>$</b>"), as well as user created lambda functions assigned to variables.
 In addition, member functions of objects are supported and callable like "<b>Matrix ([1, 2, 3]).transpose ()</b>".
@@ -1343,6 +1346,40 @@ To enable or disable environment mapping of these functions like "<b>gamma()</b>
 Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always available because they are special cased, even if "<b>S()</b>" is not mapped, though if it is assigned to something else then these attributes are lost.
 Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
 </p>
+
+<h2>Plotting</h2>
+
+<p>
+Basic plotting functionality is available if you have the matplotlib python module installed on your system.
+</p>
+
+<h4>Plotting Examples</h4>
+
+<p>
+plot (2, 1/x)<br>
+plot (-2, 5, (x**2 - 6x + 9)/(x**2 - 9), 'r--')<br>
+plot (4, (x**2 + x - 2) / (x-1), 'g:', (1, 3), 'go')<br>
+plot (-2, 3, (x**2 + 2x - 8)/(x**4 - 16), 'b')<br>
+plot (1, 1/x, fs = 10)<br>
+plot (-3, 1, 1/x, '#mediumorchid')<br>
+plot (3, -1, 4, 1/x, '#salmon = 1/x')<br>
+plot (-2, 1, -2, 6, 1/x, '-- ##8040ff = 1/x')<br>
+plot (2pi, -6, 6, 1/sin(x), 'r=csc', 1/cos(x), 'g=sec', 1/tan(x), 'b=cot', fs = 10)<br>
+plot (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = (8,4), res = 32)<br>
+plot (2, -2, 2, sqrt (x**2 - 1), 'r', -sqrt (x**2 - 1), 'r', fs = -5, res = 32)<br>
+plot ([-3, 0, 0, 3, 3, 0, 0, -3])<br>
+plot ([(-3, 0), (0, 3), (3, 0), (0, -3)], sin (2x))<br>
+plot (3, [(-3, 0), (0, 3), (3, 0), (0, -3)], sin (2x))<br>
+plot (5, -5, 5, [(-3, 0), (0, 3), (3, 0), (0, -3)], sin (2x))<br>
+</p>
+
+
+
+
+
+
+
+
 
 <h2>Appendix</h2>
 
@@ -5064,6 +5101,8 @@ import base64
 from io import BytesIO
 import itertools as it
 
+import sympy as sp
+
 SPLOT = False
 
 try:
@@ -5191,7 +5230,7 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 		return None
 
 	obj = plt
-	fig = plt.figure ()
+	fig = obj.figure ()
 
 	args, xmin, xmax, ymin, ymax = _process_head (args, fs, obj, ret_xrng = True)
 	leg                          = False
@@ -5206,6 +5245,14 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 			pargs = [arg [0::2], arg [1::2]]
 
 		else: # y = function (x)
+			if not callable (arg):
+				s = arg.free_symbols
+
+				if len (s) != 1:
+					raise ValueError ('expression must have exactly one free variable')
+
+				arg = sp.Lambda (s.pop (), arg)
+
 			win = plt.gcf ().axes [-1].get_window_extent ()
 			xrs = (win.x1 - win.x0) // 50 # scale resolution to roughly 'res' points every 50 pixels
 			rng = res * xrs
