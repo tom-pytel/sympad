@@ -352,6 +352,13 @@ function ajaxResponse (resp) {
 				}
 			}
 
+			if (resp.img !== undefined) { // image present?
+				$(eLogEval).append (`<div><img src='data:image/png;base64,${resp.img}'></div>`);
+
+				logResize ();
+				scrollToEnd ();
+			}
+
 			if (resp.msg !== undefined && resp.msg.length) { // message present?
 				for (let msg of resp.msg) {
 					$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);

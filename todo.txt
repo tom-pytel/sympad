@@ -1,5 +1,3 @@
-> x**-y[2] and x**z**-y[2]
-
 > emptyset Unicode symbol
 
 > Python or, and and not

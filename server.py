@@ -75,6 +75,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import spatch        # AUTO_REMOVE_IN_SINGLE_SCRIPT
+	import splot         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 	_SYS_STDOUT   = sys.stdout
 	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
@@ -427,7 +428,6 @@ class Handler (SimpleHTTPRequestHandler):
 		tex = nat = py            = None
 
 		if ast is not None:
-			# ast = _ast_remap (ast, {_VAR_LAST: _VARS [_VAR_LAST]}) # just remap last evaluated _
 			tex = sym.ast2tex (ast)
 			nat = sym.ast2nat (ast)
 			py  = sym.ast2py (ast)
@@ -454,7 +454,13 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
+			if ast.is_func and ast.func == 'plot': # plotting?
+				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
+				ret      = splot.plot (*args, **kw)
+
+				return {'msg': ['Plotting not supported because matplotlib is not installed.']} if ret is None else {'img': ret}
+
+			elif ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (*ast.args)
 
 				if isinstance (asts, str):
@@ -556,7 +562,7 @@ def child ():
 		sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
-	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'spatch.py', 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
+	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'splot.py', 'spatch.py', 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
 	watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 	tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 

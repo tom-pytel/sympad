@@ -548,6 +548,13 @@ function ajaxResponse (resp) {
 				}
 			}
 
+			if (resp.img !== undefined) { // image present?
+				$(eLogEval).append (`<div><img src='data:image/png;base64,${resp.img}'></div>`);
+
+				logResize ();
+				scrollToEnd ();
+			}
+
 			if (resp.msg !== undefined && resp.msg.length) { // message present?
 				for (let msg of resp.msg) {
 					$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
@@ -1847,7 +1854,7 @@ class AST (tuple):
 		neg.has_neg = False
 		neg.is_neg  = False
 
-		while self.op == '-' and count:
+		while self.is_minus and count:
 			self         = self.minus
 			count       -= 1
 			is_neg       = neg.is_neg
@@ -3365,11 +3372,14 @@ class ast2py: # abstract syntax tree -> Python code text
 
 #...............................................................................................
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, setattr, delattr, exit, help, input, license, open, quit, __import__
-_builtins_dict  = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
-_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
+_builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
+_builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
 	'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
 	'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
+
+_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
+_ast2spt_funcs         = {**_ast2spt_func_builtins, **sp.__dict__}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __init__ (self): self.vars = self.eval = [] # pylint kibble
@@ -3463,8 +3473,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return res
 
-	_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
-
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
@@ -3472,7 +3480,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), 1 if len (ast.args) == 1 else self._ast2spt (ast.args [1]))
 
-		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
+		func = _ast2spt_funcs.get (ast.unescaped) # getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped) #
 
 		if func is not None:
 			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
@@ -4000,11 +4008,18 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 	arg, wrap   = _ast_func_reorder (rhs)
 	last, wrapl = lhs, lambda ast: ast
 
-	if last.is_mul:
-		last, wrapl = last.mul [-1], lambda ast, last=last: AST ('*', last.mul [:-1] + (ast,))
+	while 1:
+		if last.is_mul:
+			last, wrapl = last.mul [-1], lambda ast, last = last: AST ('*', last.mul [:-1] + (ast,))
+		elif last.is_pow:
+			last, wrapl = last.exp, lambda ast, last = last, wrapl = wrapl: wrapl (AST ('^', last.base, ast))
 
-	if last.is_pow:
-		last, wrapl = last.exp, lambda ast, last=last, wrapl=wrapl: wrapl (AST ('^', last.base, ast))
+		elif last.is_minus:
+			last, neg = last.strip_minus (retneg = True)
+			wrapl     = lambda ast, last = last, wrapl = wrapl, neg = neg: wrapl (neg (ast))
+
+		else:
+			break
 
 	if last.is_attr: # {x.y} *imp* () -> x.y(), x.{y.z} -> {x.y}.z
 		if last.args is None:
@@ -4368,7 +4383,7 @@ class Parser (lalr1.LALR1):
 			b'SVDhZpNwkXAe+rznBxr8iB4bNe/R/Z0ZUc8NkcWdB5rXHTwKekRqHRLej+GB3HQDXnSb8EP42+q+HxgyPaK/eB3hHzbmekXoqvMdw0mRxZTgT9n9fKgKwZNf9/xAg6/rj9Yn0onUnut0Y6pdXHXw4BmxNekO5KKzhcupMPfXz/sJT7e+sDaWr+77gQZf1xW+' \
 			b'HCUK1UUeYObW5dZWaqr7fqDB13W5L0d72uoiDzBz685rK3XVfT/Q4O29b3DDfmRdPd3wPJKVGp/tsfxBdXbNYW+1e3FYYil/y3gvOExdQTCOnOk+EawmZ4rJNo0r4JWl8hYPFrT9UBazmSfgMLVuHGGsaefn7wRIzvM5VusP9oc76oFrZj1ZDjhu7j7H2+ou' \
 			b'HGD3keMCF8hudkm+AwfYPeWBeX8d4dhV/MgDzuL9/zWyOJzp+gImU6ApjxwMuOtN2VT35UDzrfP2vTfN11b35UDzHTmYcNebr6vuy4Hme1gO4fwxi3tyoPna6rWr2VNbwbRL99BOarjXThjHYfIhKYSTcT9sYOIu+y7Kh9l5DRkvcyHe1fBg8HY6dayKf6R2' \
-			b'e6m5xeSJpir/bQ1B9H646ofHLZRSej0M5W1JRqjt5Wle7UYp0yq3vOIs7K82s1pKHJfCC9ywT7lk2GlRKoq8bI5FTh08+DNoMlzCQyMyJCKrlAwJoWN/YgrVPhV/lCktWcJMBn/ixUqLWZ0xD7ysyUsOOl7Ln0NIIZTmu6v/D5Qw4UU=' 
+			b'e6m5xeSJpir/bQ1B9H646ofHLZRSej0M5W1JRqjt5Wle7UYp0yq3vOIs7K82s1pKHJfCC9ywT7lk2GlRKoq8bI5FTh08+DNoMlzCQyMyJCKrlAwJoWN/YgrVPhV/lCktWcJMBn/ixUqLWZ0xD7ysyUsOOl7Ln0NIIZTmu6v/D5Qw4UU='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -4880,8 +4895,8 @@ class sparser: # for single script
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
 # 	p = Parser ()
-# 	p.set_user_funcs ({'f': 1})
-# 	a = p.parse (r'f(')
+# 	# p.set_user_funcs ({'f': 1})
+# 	a = p.parse (r'x**-y[0]')
 # 	# a = sym.ast2spt (a)
 # 	print (a)
 # Patch SymPy matrix multiplication for intermediate simplification step to control expression blowup.
@@ -5045,6 +5060,198 @@ def set_matmulsimp (state):
 class spatch: # for single script
 	SPATCHED       = SPATCHED
 	set_matmulsimp = set_matmulsimp
+import base64
+from io import BytesIO
+import itertools as it
+
+SPLOT = False
+
+try:
+	import matplotlib.pyplot as plt
+	from matplotlib import style
+
+	style.use ('bmh') # ('seaborn') # ('classic') # ('fivethirtyeight')
+
+	SPLOT = True
+
+except:
+	pass
+
+def _cast_num (arg):
+	try:
+		return float (arg)
+	except:
+		return None
+
+def _process_head (args, fs, obj, ret_xrng = False, ret_yrng = False):
+	args = list (reversed (args))
+
+	if fs is not None: # process figsize if present
+		if isinstance (fs, tuple):
+			fs = (_cast_num (fs [0]), _cast_num (fs [1]))
+
+		else:
+			fs = _cast_num (fs)
+
+			if fs >= 0:
+				fs = (fs, fs * 4 / 6)
+			else:
+				fs = (-fs, -fs)
+
+		fig = plt.gcf ()
+
+		fig.set_figwidth (fs [0])
+		fig.set_figheight (fs [1])
+
+	xmax, ymin, ymax = None, None, None
+
+	xmin = _cast_num (args [-1])
+
+	if xmin is not None: # process xmin / xmax, ymin, ymax if present
+		args = args [:-1]
+		xmax = _cast_num (args [-1])
+
+		if xmax is not None:
+			args = args [:-1]
+			ymin = _cast_num (args [-1])
+
+			if ymin is not None:
+				args = args [:-1]
+				ymax = _cast_num (args [-1])
+
+				if ymax is not None:
+					args = args [:-1]
+				else:
+					xmin, xmax, ymin, ymax = -xmin, xmin, xmax, ymin
+		else:
+			xmin, xmax = -xmin, xmin
+
+	if xmin is not None:
+		obj.xlim (xmin, xmax)
+	elif ret_xrng:
+		xmin, xmax = obj.xlim ()
+
+	if ymin is not None:
+		obj.ylim (ymin, ymax)
+	elif ret_yrng:
+		ymin, ymax = obj.ylim ()
+
+	return args, xmin, xmax, ymin, ymax
+
+def _process_fmt (args, kw = {}):
+	kw    = kw.copy ()
+	fargs = []
+
+	if args and isinstance (args [-1], str):
+		fmt, lbl = (args.pop ().split ('=', 1) + [None]) [:2]
+		fmt, clr = (fmt.split ('#', 1) + [None]) [:2]
+
+		if lbl:
+			kw ['label'] = lbl.strip ()
+
+		if clr:
+			kw ['color'] = clr.strip ()
+
+		fargs = [fmt.strip ()]
+
+	if args and isinstance (args [-1], dict):
+		kw.update (args.pop ())
+
+	return args, fargs, kw
+
+def plot (*args, fs = None, res = 12, **kw):
+	"""Plot function(s), point(s) and / or line(s).
+
+plotf ([limits,] *args, res = 16, **kw)
+
+limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
+  x              -> (-x, x, y auto)
+  x0, x1         -> (x0, x1, y auto)
+  x, y0, y1      -> (-x, x, y0, y1)
+  x0, x1, y0, y1 -> (x0, x1, y0, y1)
+
+fs      = set figure figsize if present: (default is (6, 4))
+  x      -> (x, x / 6 * 4)
+  -x     -> (x, x)
+  (x, y) -> (x, y)
+
+res     = minimum target resolution points per 50 x pixels (more or less 1 figsize x unit),
+          may be raised a little to align with grid
+
+*args   = functions and their formatting: (func, ['fmt',] [{kw},] func, ['fmt',] [{kw},] ...)
+  func                      -> callable function takes x and returns y
+	(x, y)                    -> point at x, y
+	(x0, y0, x1, y1, ...)     -> connected lines from x0, y1 to x1, y1 to etc...
+	((x0, y0), (x1, y1), ...) -> same thing
+
+	fmt                       = 'fmt[#color][=label]'
+	"""
+
+	if not SPLOT:
+		return None
+
+	obj = plt
+	fig = plt.figure ()
+
+	args, xmin, xmax, ymin, ymax = _process_head (args, fs, obj, ret_xrng = True)
+	leg                          = False
+
+	while args:
+		arg = args.pop ()
+
+		if isinstance (arg, (tuple, list)): # list of x, y coords
+			if isinstance (arg [0], (tuple, list)):
+				arg = list (it.chain.from_iterable (arg))
+
+			pargs = [arg [0::2], arg [1::2]]
+
+		else: # y = function (x)
+			win = plt.gcf ().axes [-1].get_window_extent ()
+			xrs = (win.x1 - win.x0) // 50 # scale resolution to roughly 'res' points every 50 pixels
+			rng = res * xrs
+			dx  = dx2 = xmax - xmin
+
+			while dx2 < (res * xrs) / 2: # align sampling grid on integers and fractions of integers while rng stays small enough
+				rng = int (rng + (dx2 - (rng % dx2)) % dx2)
+				dx2 = dx2 * 2
+
+			xs  = [xmin + dx * i / rng for i in range (rng + 1)]
+			ys  = [None] * len (xs)
+
+			for i in range (len (xs)):
+				try:
+					ys [i] = _cast_num (arg (xs [i]))
+				except (ValueError, ZeroDivisionError, FloatingPointError):
+					pass
+
+			# remove lines crossing graph vertically due to poles (more or less)
+			if ymin is not None:
+				for i in range (1, len (xs)):
+					if ys [i] is not None and ys [i-1] is not None:
+						if ys [i] < ymin and ys [i-1] > ymax:
+							ys [i] = None
+						elif ys [i] > ymax and ys [i-1] < ymin:
+							ys [i] = None
+
+			pargs = [xs, ys]
+
+		args, fargs, kwf = _process_fmt (args, kw)
+		leg              = leg or ('label' in kwf)
+
+		obj.plot (*(pargs + fargs), **kwf)
+
+	if leg:
+		obj.legend ()
+
+	data = BytesIO ()
+
+	fig.savefig (data, format = 'png', transparent = True, bbox_inches = 'tight')
+
+	return base64.b64encode (data.getvalue ()).decode ()
+
+class splot: # for single script
+	SPLOT = SPLOT
+	plot  = plot
 #!/usr/bin/env python
 # python 3.6+
 
@@ -5068,7 +5275,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.3'
+_VERSION         = '1.0.4'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmltNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
@@ -5466,7 +5673,6 @@ class Handler (SimpleHTTPRequestHandler):
 		tex = nat = py            = None
 
 		if ast is not None:
-			# ast = _ast_remap (ast, {_VAR_LAST: _VARS [_VAR_LAST]}) # just remap last evaluated _
 			tex = sym.ast2tex (ast)
 			nat = sym.ast2nat (ast)
 			py  = sym.ast2py (ast)
@@ -5493,7 +5699,13 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
+			if ast.is_func and ast.func == 'plot': # plotting?
+				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
+				ret      = splot.plot (*args, **kw)
+
+				return {'msg': ['Plotting not supported because matplotlib is not installed.']} if ret is None else {'img': ret}
+
+			elif ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (*ast.args)
 
 				if isinstance (asts, str):
@@ -5595,7 +5807,7 @@ def child ():
 		sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
-	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'spatch.py', 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
+	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'splot.py', 'spatch.py', 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
 	watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
 	tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 

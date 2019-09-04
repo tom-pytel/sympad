@@ -709,11 +709,14 @@ class ast2py: # abstract syntax tree -> Python code text
 
 #...............................................................................................
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, setattr, delattr, exit, help, input, license, open, quit, __import__
-_builtins_dict  = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
-_builtins_names = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
+_builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
+_builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
 	'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
 	'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
+
+_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
+_ast2spt_funcs         = {**_ast2spt_func_builtins, **sp.__dict__}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __init__ (self): self.vars = self.eval = [] # pylint kibble
@@ -807,8 +810,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return res
 
-	_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
-
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
@@ -816,7 +817,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), 1 if len (ast.args) == 1 else self._ast2spt (ast.args [1]))
 
-		func = getattr (sp, ast.unescaped, None) or self._ast2spt_func_builtins.get (ast.unescaped)
+		func = _ast2spt_funcs.get (ast.unescaped) # getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped) #
 
 		if func is not None:
 			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)

@@ -1,3 +1,6 @@
+v1.0.4:
+-------
+
 v1.0.3:
 -------
 * Extended post-evaluation simplification into basic Python containers.
