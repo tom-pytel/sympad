@@ -2,7 +2,7 @@
 
 > Python or, and and not
 
-> random port selection
+> random server port selection / fallback
 
 > AppliedUndef, in func and in _Mul
 > Function ('f') (), Function ('f') (x), Function ('f') (x, y)
@@ -29,7 +29,7 @@
 > long variable name shortcut? $?
 > {1:2:3,} -> {slice(1, 2, 3),} (SymPy creating dynamic class of slice)?
 
-> fix unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyways.
+> fix unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyway.
 
 > sequence(factorial(k), (k,1,oo))
 > ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
@@ -37,7 +37,7 @@
 > var assumptions
 > importing modules to allow custom code execution
 > Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
-> systems of equations, ODEs, graphical plots (using matplotlib?)...
+> systems of equations, ODEs, more graphical plots...
 
 
 Misc:

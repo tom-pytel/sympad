@@ -454,11 +454,11 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func == 'plot': # plotting?
+			if ast.is_func and ast.func == 'plotf': # plotting?
 				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
-				ret      = splot.plot (*args, **kw)
+				ret      = splot.plotf (*args, **kw)
 
-				return {'msg': ['Plotting not supported because matplotlib is not installed.']} if ret is None else {'img': ret}
+				return {'msg': ['Plotting not available because matplotlib is not installed.']} if ret is None else {'img': ret}
 
 			elif ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (*ast.args)

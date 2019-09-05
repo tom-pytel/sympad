@@ -1,18 +1,22 @@
+# Plot functions and expressions to image using matplotlib.
+
 import base64
 from io import BytesIO
 import itertools as it
 
 import sympy as sp
 
-SPLOT = False
+_SPLOT = False
 
 try:
+	import matplotlib
 	import matplotlib.pyplot as plt
-	from matplotlib import style
 
-	style.use ('bmh') # ('seaborn') # ('classic') # ('fivethirtyeight')
+	matplotlib.style.use ('bmh') # ('seaborn') # ('classic') # ('fivethirtyeight')
 
-	SPLOT = True
+	_SPLOT       = True
+	_FIGURE      = None
+	_TRANSPARENT = True
 
 except:
 	pass
@@ -23,8 +27,29 @@ def _cast_num (arg):
 	except:
 		return None
 
-def _process_head (args, fs, obj, ret_xrng = False, ret_yrng = False):
+def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = False):
+	global _FIGURE, _TRANSPARENT
+
+	if style is not None:
+		if style [:1] == '-':
+			style, _TRANSPARENT = style [1:], True
+		else:
+			_TRANSPARENT = False
+
+		matplotlib.style.use (style)
+
 	args = list (reversed (args))
+
+	if args and args [-1] == '+': # check if continuing plot
+		args.pop ()
+
+	elif _FIGURE:
+		plt.close (_FIGURE)
+
+		_FIGURE = None
+
+	if not _FIGURE:
+		_FIGURE = plt.figure ()
 
 	if fs is not None: # process figsize if present
 		if isinstance (fs, tuple):
@@ -34,30 +59,27 @@ def _process_head (args, fs, obj, ret_xrng = False, ret_yrng = False):
 			fs = _cast_num (fs)
 
 			if fs >= 0:
-				fs = (fs, fs * 4 / 6)
+				fs = (fs, fs * 3 / 4)
 			else:
 				fs = (-fs, -fs)
 
-		fig = plt.gcf ()
-
-		fig.set_figwidth (fs [0])
-		fig.set_figheight (fs [1])
+		_FIGURE.set_figwidth (fs [0])
+		_FIGURE.set_figheight (fs [1])
 
 	xmax, ymin, ymax = None, None, None
-
-	xmin = _cast_num (args [-1])
+	xmin             = _cast_num (args [-1]) if args else None
 
 	if xmin is not None: # process xmin / xmax, ymin, ymax if present
 		args = args [:-1]
-		xmax = _cast_num (args [-1])
+		xmax = _cast_num (args [-1]) if args else None
 
 		if xmax is not None:
 			args = args [:-1]
-			ymin = _cast_num (args [-1])
+			ymin = _cast_num (args [-1]) if args else None
 
 			if ymin is not None:
 				args = args [:-1]
-				ymax = _cast_num (args [-1])
+				ymax = _cast_num (args [-1]) if args else None
 
 				if ymax is not None:
 					args = args [:-1]
@@ -90,7 +112,16 @@ def _process_fmt (args, kw = {}):
 			kw ['label'] = lbl.strip ()
 
 		if clr:
-			kw ['color'] = clr.strip ()
+			clr = clr.strip ()
+
+			if len (clr) == 6:
+				try:
+					i   = int (clr, 16)
+					clr = f'#{clr}'
+				except:
+					pass
+
+			kw ['color'] = clr
 
 		fargs = [fmt.strip ()]
 
@@ -99,10 +130,10 @@ def _process_fmt (args, kw = {}):
 
 	return args, fargs, kw
 
-def plot (*args, fs = None, res = 12, **kw):
+def plotf (*args, fs = None, res = 12, style = None, **kw):
 	"""Plot function(s), point(s) and / or line(s).
 
-plotf ([limits,] *args, res = 16, **kw)
+plotf ([+,] [limits,] *args, fs = None, res = 12, **kw)
 
 limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x              -> (-x, x, y auto)
@@ -127,14 +158,13 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 	fmt                       = 'fmt[#color][=label]'
 	"""
 
-	if not SPLOT:
+	if not _SPLOT:
 		return None
 
-	obj = plt
-	fig = obj.figure ()
+	obj    = plt
+	legend = False
 
-	args, xmin, xmax, ymin, ymax = _process_head (args, fs, obj, ret_xrng = True)
-	leg                          = False
+	args, xmin, xmax, ymin, ymax = _process_head (obj, args, fs, style, ret_xrng = True)
 
 	while args:
 		arg = args.pop ()
@@ -163,8 +193,8 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 				rng = int (rng + (dx2 - (rng % dx2)) % dx2)
 				dx2 = dx2 * 2
 
-			xs  = [xmin + dx * i / rng for i in range (rng + 1)]
-			ys  = [None] * len (xs)
+			xs = [xmin + dx * i / rng for i in range (rng + 1)]
+			ys = [None] * len (xs)
 
 			for i in range (len (xs)):
 				try:
@@ -184,19 +214,21 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 			pargs = [xs, ys]
 
 		args, fargs, kwf = _process_fmt (args, kw)
-		leg              = leg or ('label' in kwf)
+		legend           = legend or ('label' in kwf)
 
 		obj.plot (*(pargs + fargs), **kwf)
 
-	if leg:
+	if legend:
 		obj.legend ()
 
 	data = BytesIO ()
 
-	fig.savefig (data, format = 'png', transparent = True, bbox_inches = 'tight')
+	if _TRANSPARENT:
+		_FIGURE.savefig (data, format = 'png', bbox_inches = 'tight', transparent = True)
+	else:
+		_FIGURE.savefig (data, format = 'png', bbox_inches = 'tight', facecolor = 'none', edgecolor = 'none')
 
 	return base64.b64encode (data.getvalue ()).decode ()
 
 class splot: # for single script
-	SPLOT = SPLOT
-	plot  = plot
+	plotf = plotf

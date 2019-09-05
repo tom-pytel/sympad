@@ -1,6 +1,6 @@
 v1.0.4:
 -------
-* Added basic plotting.
+* Added basic plotting using matplotlib.
 
 v1.0.3:
 -------

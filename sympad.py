@@ -853,7 +853,7 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('a if randprime(1, 4) == 2 else b', true)">a if randprime(1, 4) == 2 else b</a>
 	<a class="GreetingA" href="javascript:inputting ('Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)', true)">Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)</a>
 	<a class="GreetingA" href="javascript:inputting ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}', true)">(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}</a>
-	<a class="GreetingA" href="javascript:inputting ('plot (2 pi, -2, 2, sin x, \'r=sin\', cos x, \'g=cos\', tan x, \'b=tan\')', true)">plot (2 pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')</a>
+	<a class="GreetingA" href="javascript:inputting ('plotf (2pi, -2, 2, sin x, \'r=sin\', cos x, \'g=cos\', tan x, \'b=tan\')', true)">plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')</a>
 
 <!--
 <a class="GreetingA" href="javascript:inputting ('
@@ -951,7 +951,7 @@ Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
 a if randprime(1, 4) == 2 else b<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
-plot (2 pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
+plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
 </p>
 
 <h4>Multiline Examples</h4>
@@ -1350,36 +1350,75 @@ Also remember that these functions are always available for calling using the "<
 <h2>Plotting</h2>
 
 <p>
-Basic plotting functionality is available if you have the matplotlib python module installed on your system.
+Basic plotting functionality is available if you have the matplotlib Python module installed on your system.
+SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
+This function works by sampling a given expression at regular intervals to build up a list of x, y coordinates to pass on to matplotlib for rendering, the size of this sampling interval can be adjusted with a keyword argument.
+Also, this function works more like a statement in that it only works at the top level of the parse tree, which means you can not use it in other lambdas or tuples or assignments.
 </p>
 
-<h4>Plotting Examples</h4>
+<h4>plotf()</h4>
 
 <p>
-plot (2, 1/x)<br>
-plot (-2, 5, (x**2 - 6x + 9)/(x**2 - 9), 'r--')<br>
-plot (4, (x**2 + x - 2) / (x-1), 'g:', (1, 3), 'go')<br>
-plot (-2, 3, (x**2 + 2x - 8)/(x**4 - 16), 'b')<br>
-plot (1, 1/x, fs = 10)<br>
-plot (-3, 1, 1/x, '#mediumorchid')<br>
-plot (3, -1, 4, 1/x, '#salmon = 1/x')<br>
-plot (-2, 1, -2, 6, 1/x, '-- ##8040ff = 1/x')<br>
-plot (2pi, -6, 6, 1/sin(x), 'r=csc', 1/cos(x), 'g=sec', 1/tan(x), 'b=cot', fs = 10)<br>
-plot (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = (8,4), res = 32)<br>
-plot (2, -2, 2, sqrt (x**2 - 1), 'r', -sqrt (x**2 - 1), 'r', fs = -5, res = 32)<br>
-plot ([-3, 0, 0, 3, 3, 0, 0, -3])<br>
-plot ([(-3, 0), (0, 3), (3, 0), (0, -3)], sin (2x))<br>
-plot (3, [(-3, 0), (0, 3), (3, 0), (0, -3)], sin (2x))<br>
-plot (5, -5, 5, [(-3, 0), (0, 3), (3, 0), (0, -3)], sin (2x))<br>
+The format of the plot function is as follows: "<b>plotf(['+',] [limits,] [*plots,] fs=6.4, res=12, style=None, **kwargs)</b>".
+The initial optional "<b>'+'</b>" string signifies that the plot should build upon the previous plot which allows you to build up complex plots one function at a time.
+The limits are an optional zero to four numbers which specify the boundaries of the requested plot, if no limit numbers are present then the plot will range from 0 to 1 on the x axis and the y axis will be determined automatically.
+If one limit number is present then the plot will range from -x to +x of this number and the y is automatic, two numbers are interpreted as x0 and x1 and y is automatic, three is -x, x, y0 and y1 and four numbers let you specify the full range x0, x1, y0, y1 of the axes.
+</p><p>
+The "<b>fs</b>" keyword argument is a matplotlib "<b>figsize</b>" value which lets you specify the size of the plot. This can be either a single number in which case this specifies the x size and the y size is computed from this, or it can be a tuple specifying both the x and y sizes of the plot - the default is (6.4, 4.8).
+If a single number is provided and it is positive then the y size is computed as x*3/4 of this number to give a plot area with a 4:3 aspect ratio.
+It the single number is negative then the y size is set equal to the positive x size and the plot area will have a square aspect ratio.
+</p><p>
+The "<b>res</b>" keyword argument allows you to set the sampling resolution for the plot, the default is roughly 12 samples per 50 pixels of the plot.
+This is useful to increase if the function is intricate and the default resolution does not capture some point of interest correctly.
+</p><p>
+The "<b>style</b>" keyword allows you to change to any of the default matplotlib styles for drawing the plots.
+Some available styles are: "<b>bmh</b>", "<b>classic</b>", "<b>dark_background</b>", "<b>fast</b>", "<b>fivethirtyeight</b>", "<b>ggplot</b>", "<b>grayscale</b>", see the matplotlib documentation for a full list of styles.
+If you pass the name of the style starting with a '-' minus sign such as "<b>-bmh</b>" then the plot will be rendered with a transparent background, otherwise the color of the background comes from the style.
+The style which is set will persist for all future plots until it is changed.
+</p><p>
+Other keyword arguments from "<b>kwargs</b>" are passed through on to the "<b>matplotlib.pyplot.plot()</b>" function for each expression plotted.
+In addition each expression or function to be plotted can also specify its own dictionary of matplotlib keyword arguments to use for that specific expression.
 </p>
 
+<h4>Individual Plots</h4>
 
+<p>
+The "<b>plotf()</b>" function can take any number of expressions to plot at once with their own formatting options.
+The actual source of the data to be plotted can be an expression, a lambda function or a list of coordinate points which will be rendered as either a line of a certain style or just disconnected markers.
+The format of each individual plot specification to the plotting function is as follows: "<b>expression [,'format'] [,{'kwarg': value, ...}]</b>".
+As mentioned the expression can be just an expression like "<b>x**2</b>", a lambda of one variable "<b>lambda x: x**2</b>" or a list of paired "<b>[(x0, y0), (x1, y1), ...]</b>" or unpaired "<b>[x0, y0, x1, y1, ...]</b>" coordinates.
+</p><p>
+Following the expression is an optional string specifying the color, line or marker style and optional legend text for the expression.
+The format of this string is an extension of the matplotlib format string to its "<b>plot()</b>" function and is as follows: "<b>[marker][line][color][#extended color][=legend text]</b>".
+The "<b>marker</b>" option specifies which type of marker (if any) to place at each computed x, y coordinate, the possible options are: '.', ',', 'o', 'v', '^', '&lt;', '&gt;', '1', '2', '3', '4', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|' and '_'.
+The "<b>line</b>" option specifies which type of line (if any) connects the various x, y coordinates, the possible options are: '-', '--', '-.' and ':'.
+The options for the simple color specifier "<b>color</b>" are 'b', 'g', 'r', 'c', 'm', 'y', 'k' and 'w', which is a quick one letter way to pick different colors.
+If you need more control over color then use the extended color specifier which allows you to pick from the whole list of matplotlib named colors such as 'red', 'teal', 'mediumorchid' and 'salmon'.
+You can also directly specify the RGB values of the color by entering an HTML RGB color specifier like '#ff8040'.
+The last specifier is optional legend text for the expression, the presence of which is signalled by the '=' character immediately preceding it.
+</p><p>
+Following the format specifier is an optional dictionary of keyword argument and value pairs to be passed on to the matplotlib "<b>plot()</b>" function only for this given expression.
+These arguments will override any global matplotlib keyword arguments specified in the call to the "<b>plotf()</b>" function.
+</p><p>
+Note that the presence of any plots at all in a call to "<b>plotf()</b>" is optional, you can call "<b>plotf()</b>" with the continue option '+' without any plots in order to resize the previous plot or change the axes.
+Keep in mind that this does not re-plot any previously plotted functions so that data remains at whatever resolution it was plotted.
+</p>
 
+<h4>Examples</h4>
 
-
-
-
-
+<p>
+plotf (x**2)<br>
+plotf (2pi, sin x, cos x, sinc x, tanh x)<br>
+plotf (2, lambda x: 1 / x, '--r')<br>
+plotf (-2, 5, (x**2 - 6x + 9) / (x**2 - 9), ':#green')<br>
+plotf (4, (x**2 + x - 2) / (x - 1), 'b=line', (1, 3), 'o#red=point')<br>
+plotf (-1, 2, -3, 4, (0, 0), 'xr', [1, 1, 1.9, 1], 'vb', [(0.5, 2), (1.5, 3), (1.5, 0)], ':g')<br>
+plotf (pi, -20, 20, tan x, '#c08040=tan x', fs = (12, 4.8), linewidth = 1)<br>
+plotf (2pi, sin x, 'r', {'linewidth': 1}, cos x, 'g', {'linewidth': 3}, fs = 12)<br>
+plotf (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = -8, res = 32)<br>
+plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
+plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
+</p>
 
 <h2>Appendix</h2>
 
@@ -2189,7 +2228,7 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset'}
+	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset', 'plotf'}
 	PSEUDO          = {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
@@ -5097,21 +5136,25 @@ def set_matmulsimp (state):
 class spatch: # for single script
 	SPATCHED       = SPATCHED
 	set_matmulsimp = set_matmulsimp
+# Plot functions and expressions to image using matplotlib.
+
 import base64
 from io import BytesIO
 import itertools as it
 
 import sympy as sp
 
-SPLOT = False
+_SPLOT = False
 
 try:
+	import matplotlib
 	import matplotlib.pyplot as plt
-	from matplotlib import style
 
-	style.use ('bmh') # ('seaborn') # ('classic') # ('fivethirtyeight')
+	matplotlib.style.use ('bmh') # ('seaborn') # ('classic') # ('fivethirtyeight')
 
-	SPLOT = True
+	_SPLOT       = True
+	_FIGURE      = None
+	_TRANSPARENT = True
 
 except:
 	pass
@@ -5122,8 +5165,29 @@ def _cast_num (arg):
 	except:
 		return None
 
-def _process_head (args, fs, obj, ret_xrng = False, ret_yrng = False):
+def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = False):
+	global _FIGURE, _TRANSPARENT
+
+	if style is not None:
+		if style [:1] == '-':
+			style, _TRANSPARENT = style [1:], True
+		else:
+			_TRANSPARENT = False
+
+		matplotlib.style.use (style)
+
 	args = list (reversed (args))
+
+	if args and args [-1] == '+': # check if continuing plot
+		args.pop ()
+
+	elif _FIGURE:
+		plt.close (_FIGURE)
+
+		_FIGURE = None
+
+	if not _FIGURE:
+		_FIGURE = plt.figure ()
 
 	if fs is not None: # process figsize if present
 		if isinstance (fs, tuple):
@@ -5133,30 +5197,27 @@ def _process_head (args, fs, obj, ret_xrng = False, ret_yrng = False):
 			fs = _cast_num (fs)
 
 			if fs >= 0:
-				fs = (fs, fs * 4 / 6)
+				fs = (fs, fs * 3 / 4)
 			else:
 				fs = (-fs, -fs)
 
-		fig = plt.gcf ()
-
-		fig.set_figwidth (fs [0])
-		fig.set_figheight (fs [1])
+		_FIGURE.set_figwidth (fs [0])
+		_FIGURE.set_figheight (fs [1])
 
 	xmax, ymin, ymax = None, None, None
-
-	xmin = _cast_num (args [-1])
+	xmin             = _cast_num (args [-1]) if args else None
 
 	if xmin is not None: # process xmin / xmax, ymin, ymax if present
 		args = args [:-1]
-		xmax = _cast_num (args [-1])
+		xmax = _cast_num (args [-1]) if args else None
 
 		if xmax is not None:
 			args = args [:-1]
-			ymin = _cast_num (args [-1])
+			ymin = _cast_num (args [-1]) if args else None
 
 			if ymin is not None:
 				args = args [:-1]
-				ymax = _cast_num (args [-1])
+				ymax = _cast_num (args [-1]) if args else None
 
 				if ymax is not None:
 					args = args [:-1]
@@ -5189,7 +5250,16 @@ def _process_fmt (args, kw = {}):
 			kw ['label'] = lbl.strip ()
 
 		if clr:
-			kw ['color'] = clr.strip ()
+			clr = clr.strip ()
+
+			if len (clr) == 6:
+				try:
+					i   = int (clr, 16)
+					clr = f'#{clr}'
+				except:
+					pass
+
+			kw ['color'] = clr
 
 		fargs = [fmt.strip ()]
 
@@ -5198,10 +5268,10 @@ def _process_fmt (args, kw = {}):
 
 	return args, fargs, kw
 
-def plot (*args, fs = None, res = 12, **kw):
+def plotf (*args, fs = None, res = 12, style = None, **kw):
 	"""Plot function(s), point(s) and / or line(s).
 
-plotf ([limits,] *args, res = 16, **kw)
+plotf ([+,] [limits,] *args, fs = None, res = 12, **kw)
 
 limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x              -> (-x, x, y auto)
@@ -5226,14 +5296,13 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 	fmt                       = 'fmt[#color][=label]'
 	"""
 
-	if not SPLOT:
+	if not _SPLOT:
 		return None
 
-	obj = plt
-	fig = obj.figure ()
+	obj    = plt
+	legend = False
 
-	args, xmin, xmax, ymin, ymax = _process_head (args, fs, obj, ret_xrng = True)
-	leg                          = False
+	args, xmin, xmax, ymin, ymax = _process_head (obj, args, fs, style, ret_xrng = True)
 
 	while args:
 		arg = args.pop ()
@@ -5262,8 +5331,8 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 				rng = int (rng + (dx2 - (rng % dx2)) % dx2)
 				dx2 = dx2 * 2
 
-			xs  = [xmin + dx * i / rng for i in range (rng + 1)]
-			ys  = [None] * len (xs)
+			xs = [xmin + dx * i / rng for i in range (rng + 1)]
+			ys = [None] * len (xs)
 
 			for i in range (len (xs)):
 				try:
@@ -5283,22 +5352,24 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 			pargs = [xs, ys]
 
 		args, fargs, kwf = _process_fmt (args, kw)
-		leg              = leg or ('label' in kwf)
+		legend           = legend or ('label' in kwf)
 
 		obj.plot (*(pargs + fargs), **kwf)
 
-	if leg:
+	if legend:
 		obj.legend ()
 
 	data = BytesIO ()
 
-	fig.savefig (data, format = 'png', transparent = True, bbox_inches = 'tight')
+	if _TRANSPARENT:
+		_FIGURE.savefig (data, format = 'png', bbox_inches = 'tight', transparent = True)
+	else:
+		_FIGURE.savefig (data, format = 'png', bbox_inches = 'tight', facecolor = 'none', edgecolor = 'none')
 
 	return base64.b64encode (data.getvalue ()).decode ()
 
 class splot: # for single script
-	SPLOT = SPLOT
-	plot  = plot
+	plotf = plotf
 #!/usr/bin/env python
 # python 3.6+
 
@@ -5746,11 +5817,11 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func == 'plot': # plotting?
+			if ast.is_func and ast.func == 'plotf': # plotting?
 				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
-				ret      = splot.plot (*args, **kw)
+				ret      = splot.plotf (*args, **kw)
 
-				return {'msg': ['Plotting not supported because matplotlib is not installed.']} if ret is None else {'img': ret}
+				return {'msg': ['Plotting not available because matplotlib is not installed.']} if ret is None else {'img': ret}
 
 			elif ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
 				asts = globals () [f'_admin_{ast.func}'] (*ast.args)
