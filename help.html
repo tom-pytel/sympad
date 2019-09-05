@@ -386,7 +386,7 @@ In this way you can assign different values to "<b>a</b>" and have the integrati
 <h4>Simplification</h4>
 
 <p>
-Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, by default SymPy will try to simplify the result of any calculation before returning it.
+Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, by default SymPad will try to simplify the result of any calculation before returning it.
 This is due to the fact that many times SymPy prefers to return results quicker and leaves the option to simplify to the user - in this case SymPad, whereas SymPad is the kind of application which should always present the simplest possible representation of a result.
 This behavior can be turned off by calling "<b>env(nosimplify)</b>"" and turned back on via "<b>env('simplify')</b>", note the string quotes since "<b>simplify</b>" is a reserved SymPy function name.
 </p><p>
@@ -470,15 +470,16 @@ Also remember that these functions are always available for calling using the "<
 
 <p>
 Basic plotting functionality is available if you have the matplotlib Python module installed on your system.
-SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
-This function works by sampling a given expression at regular intervals to build up a list of x, y coordinates to pass on to matplotlib for rendering, the size of this sampling interval can be adjusted with a keyword argument.
-Also, this function works more like a statement in that it only works at the top level of the parse tree, which means you can not use it in other lambdas or tuples or assignments.
+These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas or tuples or assignments.
 </p>
 
-<h4>plotf()</h4>
+<h4>plotf() - Plot Function</h4>
 
 <p>
+SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
+This function works by sampling a given expression at regular intervals to build up a list of x, y coordinates to pass on to matplotlib for rendering, the size of this sampling interval can be adjusted with a keyword argument.
 The format of the plot function is as follows: "<b>plotf(['+',] [limits,] [*plots,] fs=6.4, res=12, style=None, **kwargs)</b>".
+</p><p>
 The initial optional "<b>'+'</b>" string signifies that the plot should build upon the previous plot which allows you to build up complex plots one function at a time.
 The limits are an optional zero to four numbers which specify the boundaries of the requested plot, if no limit numbers are present then the plot will range from 0 to 1 on the x axis and the y axis will be determined automatically.
 If one limit number is present then the plot will range from -x to +x of this number and the y is automatic, two numbers are interpreted as x0 and x1 and y is automatic, three is -x, x, y0 and y1 and four numbers let you specify the full range x0, x1, y0, y1 of the axes.
@@ -537,6 +538,19 @@ plotf (2pi, sin x, 'r', {'linewidth': 1}, cos x, 'g', {'linewidth': 3}, fs = 12)
 plotf (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = -8, res = 32)<br>
 plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
 plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
+</p>
+
+<h4>plotq() - Plot Quiver (2D Vector Field)</h4>
+
+<h4>Examples</h4>
+
+<p>
+plotq (-4, 4, -4, 4, lambda x, y: (x, y), fs = -8, width=0.005)<br>
+plotq (-2, 2, -2, 2, lambda x, y: (y, -x), 'mag', width=0.003)<br>
+walkq ('+', lambda x, y: (y, -x), 1.5, 0, 'k', res=0.25)<br>
+plotq (-2, 2, -2, 2, lambda x, y: (y (sign (Max (x, 0)) * 2 - 1), -x (sign (Max (x, 0)) * 2 - 1)), 'dir', width = 0.003, 'pivot' = 'mid', fs = -8)<br>
+plotq (-3, 3, -3, 3, lambda x, y: y - 2*x, 1, 0, res=13, width=0.003)<br>
+plotq (6, -6, 6, lambda x, y: (2*x+sec(x)**2)/(2*y), 0, -5, 'r=u(0) = -5', -4, 0, -3.2, 0, -2.4, 0, fs=-7, res=17, width=0.003)<br>
 </p>
 
 <h2>Appendix</h2>

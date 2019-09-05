@@ -260,12 +260,12 @@ def expr_intg ():
 			f'\\int {expr (_ALLOW_LAMB)} dx'
 
 def expr_vec ():
-	return '\[' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + ',]'
+	return '\\[' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + ',]'
 
 def expr_mat ():
 	cols = randrange (1, 4)
 
-	return '\[' + ','.join ('[' + ','.join (f'{expr (1)}' for j in range (cols)) + ',]' for i in range (randrange (1, 4))) + ',]'
+	return '\\[' + ','.join ('[' + ','.join (f'{expr (1)}' for j in range (cols)) + ',]' for i in range (randrange (1, 4))) + ',]'
 
 def expr_piece ():
 	p = [f'{expr (1)} if {expr (_ALLOW_LAMB)}']

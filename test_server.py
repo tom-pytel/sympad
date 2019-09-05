@@ -255,31 +255,31 @@ alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, n
 """), ('simplification', """
 
 env (nosimplify, nomatsimp)
-\[[x + 1, x - 1], [x - 1, x + 1]]**2
+\\[[x + 1, x - 1], [x - 1, x + 1]]**2
 solveset(x**3 = 5)
 env ('simplify', nomatsimp)
-\[[x + 1, x - 1], [x - 1, x + 1]]**2
+\\[[x + 1, x - 1], [x - 1, x + 1]]**2
 solveset(x**3 = 5)
 env (nosimplify, matsimp)
-\[[x + 1, x - 1], [x - 1, x + 1]]**2
+\\[[x + 1, x - 1], [x - 1, x + 1]]**2
 env ('simplify', matsimp)
-\[[x + 1, x - 1], [x - 1, x + 1]]**2
+\\[[x + 1, x - 1], [x - 1, x + 1]]**2
 solveset(x**3 = 5)
 
 """), ('calculate_eigen', """
 
-m = \[[1, 2], [3, 4
+m = \\[[1, 2], [3, 4
 l = m - lambda eye 2
 l.det(
 solve(_
 a, b = _
 m.eigenvals(
-Subs(l, lambda, a) \[x, y
+Subs(l, lambda, a) \\[x, y
 solve(_ [0], _ [1], x, y
-\[_ [0] [x], y].subs (y, 1
-Subs(l, lambda, b) \[x, y
+\\[_ [0] [x], y].subs (y, 1
+Subs(l, lambda, b) \\[x, y
 solve(_ [0], _ [1], x, y
-\[_ [0] [x], y].subs (y, 1
+\\[_ [0] [x], y].subs (y, 1
 m.eigenvects(
 
 """),
@@ -287,13 +287,13 @@ m.eigenvects(
 )
 
 SYSARGV  = sys.argv [:]
-sys.argv = [os.path.abspath ('server.py'), '--child', '127.0.0.1:8001']
+sys.argv = [os.path.abspath ('server.py'), '--child', '127.0.0.1:9001']
 
 import server
 
 HTTPD = server.start_server (logging = False)
 URL   = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
-# URL   = f'http://127.0.0.1:8000/'
+# URL   = f'http://127.0.0.1:9000/'
 
 if __name__ == '__main__':
 	for name, texts in _SESSIONS:

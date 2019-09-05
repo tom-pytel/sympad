@@ -33,7 +33,7 @@ _SYMPAD_NAME     = os.path.basename (sys.argv [0])
 _SYMPAD_CHILD    = ('--child', '') in __OPTS
 _SYMPAD_FIRSTRUN = ('--firstrun', '') in __OPTS
 
-_DEFAULT_ADDRESS = ('localhost', 8000)
+_DEFAULT_ADDRESS = ('localhost', 9000)
 _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
 _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -454,9 +454,9 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func == 'plotf': # plotting?
+			if ast.is_func and ast.func in {'plotf', 'plotq'}: # plotting?
 				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
-				ret      = splot.plotf (*args, **kw)
+				ret      = getattr (splot, ast.func) (*args, **kw)
 
 				return {'msg': ['Plotting not available because matplotlib is not installed.']} if ret is None else {'img': ret}
 

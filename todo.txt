@@ -1,3 +1,4 @@
+> constants like 'pi' and 'oo' process correctly as_identifier()
 > browser correct scroll to end on plot image
 
 > emptyset Unicode symbol

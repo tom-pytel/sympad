@@ -2153,16 +2153,16 @@ Integral (\\int y dy, (x, 0, 1))
 -{-1}**x
 (-1)**x
 -(-1)**x
-\[1,2]!
-\[[0,1],[1,0]]**x
-\[[1,2],[3,4]]!
-\[[1,2,3],[4,5,6]].T
-\[[1,2,3],[4,5,6]].T.T
-\[[1,2,3],[4,5,6]].T.T.T
-\[[1,2,3],[4,5,6]].transpose ()
-\[[1,2,3],[4,5,6]].transpose ().transpose ()
-\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()
-\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()
+\\[1,2]!
+\\[[0,1],[1,0]]**x
+\\[[1,2],[3,4]]!
+\\[[1,2,3],[4,5,6]].T
+\\[[1,2,3],[4,5,6]].T.T
+\\[[1,2,3],[4,5,6]].T.T.T
+\\[[1,2,3],[4,5,6]].transpose ()
+\\[[1,2,3],[4,5,6]].transpose ().transpose ()
+\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()
+\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()
 \\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]
 \\Theta \\Lambda \\xi \\Omega \\alpha \\theta \\Phi \\gamma \\nu \\delta \\rho \\lambda \\iota \\chi \\psi \\Psi \\Xi \\tau \\mu \\sigma \\omega \\kappa \\upsilon \\eta \\Pi \\epsilon \\Delta \\Upsilon \\beta \\phi \\Sigma
 1 if x < y
@@ -2219,7 +2219,7 @@ o [i].t
 o [i]**2
 o [i]!
 'Hello' [::-1]
-\[[1, 2, 3], [4, 5, 6]] [:,1]
+\\[[1, 2, 3], [4, 5, 6]] [:,1]
 \\binom96
 binomial (x, y)
 y - 1*x
