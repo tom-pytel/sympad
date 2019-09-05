@@ -551,6 +551,7 @@ walkq ('+', lambda x, y: (y, -x), 1.5, 0, 'k', res=0.25)<br>
 plotq (-2, 2, -2, 2, lambda x, y: (y (sign (Max (x, 0)) * 2 - 1), -x (sign (Max (x, 0)) * 2 - 1)), 'dir', width = 0.003, 'pivot' = 'mid', fs = -8)<br>
 plotq (-3, 3, -3, 3, lambda x, y: y - 2*x, 1, 0, res=13, width=0.003)<br>
 plotq (6, -6, 6, lambda x, y: (2*x+sec(x)**2)/(2*y), 0, -5, 'r=u(0) = -5', -4, 0, -3.2, 0, -2.4, 0, fs=-7, res=17, width=0.003)<br>
+plotq (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)<br>
 </p>
 
 <h2>Appendix</h2>

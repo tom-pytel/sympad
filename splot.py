@@ -319,6 +319,8 @@ style   = optional matplotlib plot style
 	'dir'               -> color by direction of (u, v) vector
   f (x, y, u, v)      -> relative scalar, will be scaled according to whole field to select color
 
+*args   = followed optionally by color and label format string '[#color][=label]'
+
 *args   = followed optionally by arguments to walkq for individual x, y walks and formatting
 	"""
 
@@ -361,19 +363,30 @@ style   = optional matplotlib plot style
 			except (ValueError, ZeroDivisionError, FloatingPointError):
 				U [i] [j] = V [i] [j] = 0
 
-		# cf          = args.pop () if callable (args [-1]) else _plotq_clr_func [args.pop ()] if isinstance (args [-1], str) and args [-1] in _plotq_clr_func else None
-		# args, _, kw = _process_fmt (args, kw)
+	cfunc = None
 
+	if args:
+		if callable (args [-1]): # color function present? f (x, y, u, v)
+			cfunc = args.pop ()
 
-	if args and (callable (args [-1]) or isinstance (args [-1], str)): # color function or name present?
-		c = args.pop ()
-		c = _plotq_clr_func [c] if isinstance (c, str) else c
-		C = [[c (X [i] [j], Y [i] [j], U [i] [j], V [i] [j]) for j in range (res [1])] for i in range (res [0])]
+		elif isinstance (args [-1], str): # pre-defined color function string?
+			cfunc = _plotq_clr_func.get (args [-1])
+
+			if cfunc:
+				args.pop ()
+
+	args, _, kw = _process_fmt (args, kw)
+
+	if cfunc:
+		C = [[cfunc (X [i] [j], Y [i] [j], U [i] [j], V [i] [j]) for j in range (res [1])] for i in range (res [0])]
 
 		obj.quiver (X, Y, U, V, C, **kw)
 
 	else:
-		obj.quiver (X, Y, U, V, **kw) # color = 'red', label = 'test',
+		obj.quiver (X, Y, U, V, **kw)
+
+	if 'label' in kw:
+		obj.legend ()
 
 	# if args: # if arguments remain, pass them on to walkq to draw differential curves
 	# 	walkq (res = resw, from_plotq = (args, xmin, xmax, ymin, ymax, f, isdy))
