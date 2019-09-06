@@ -1,5 +1,6 @@
-> constants like 'pi' and 'oo' process correctly as_identifier()
-> browser correct scroll to end on plot image
+> plotq expressions
+
+> patch into sympy arithmetic operation with bools
 
 > emptyset Unicode symbol
 

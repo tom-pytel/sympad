@@ -355,8 +355,10 @@ function ajaxResponse (resp) {
 			if (resp.img !== undefined) { // image present?
 				$(eLogEval).append (`<div><img src='data:image/png;base64,${resp.img}'></div>`);
 
-				logResize ();
-				scrollToEnd ();
+				setTimeout (function () { // image seems to take some time to register size even though it is directly present
+					logResize ();
+					scrollToEnd ();
+				}, 0);
 			}
 
 			if (resp.msg !== undefined && resp.msg.length) { // message present?
