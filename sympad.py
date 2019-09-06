@@ -551,8 +551,10 @@ function ajaxResponse (resp) {
 			if (resp.img !== undefined) { // image present?
 				$(eLogEval).append (`<div><img src='data:image/png;base64,${resp.img}'></div>`);
 
-				logResize ();
-				scrollToEnd ();
+				setTimeout (function () { // image seems to take some time to register size even though it is directly present
+					logResize ();
+					scrollToEnd ();
+				}, 0);
 			}
 
 			if (resp.msg !== undefined && resp.msg.length) { // message present?
@@ -1267,7 +1269,7 @@ In this way you can assign different values to "<b>a</b>" and have the integrati
 <h4>Simplification</h4>
 
 <p>
-Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, by default SymPy will try to simplify the result of any calculation before returning it.
+Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, by default SymPad will try to simplify the result of any calculation before returning it.
 This is due to the fact that many times SymPy prefers to return results quicker and leaves the option to simplify to the user - in this case SymPad, whereas SymPad is the kind of application which should always present the simplest possible representation of a result.
 This behavior can be turned off by calling "<b>env(nosimplify)</b>"" and turned back on via "<b>env('simplify')</b>", note the string quotes since "<b>simplify</b>" is a reserved SymPy function name.
 </p><p>
@@ -1351,15 +1353,32 @@ Also remember that these functions are always available for calling using the "<
 
 <p>
 Basic plotting functionality is available if you have the matplotlib Python module installed on your system.
-SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
-This function works by sampling a given expression at regular intervals to build up a list of x, y coordinates to pass on to matplotlib for rendering, the size of this sampling interval can be adjusted with a keyword argument.
-Also, this function works more like a statement in that it only works at the top level of the parse tree, which means you can not use it in other lambdas or tuples or assignments.
+These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas or tuples or assignments.
 </p>
 
-<h4>plotf()</h4>
+<h4>plotf() - Examples</h4>
 
 <p>
-The format of the plot function is as follows: "<b>plotf(['+',] [limits,] [*plots,] fs=6.4, res=12, style=None, **kwargs)</b>".
+plotf (x**2)<br>
+plotf (2pi, sin x, cos x, sinc x, tanh x)<br>
+plotf (2, lambda x: 1 / x, '--r')<br>
+plotf (-2, 5, (x**2 - 6x + 9) / (x**2 - 9), ':#green')<br>
+plotf (4, (x**2 + x - 2) / (x - 1), 'b=line', (1, 3), 'o#red=point')<br>
+plotf (-1, 2, -3, 4, (0, 0), 'xr', [1, 1, 1.9, 1], 'vb', [(0.5, 2), (1.5, 3), (1.5, 0), (-0.5, -2)], ':g')<br>
+plotf (pi, -20, 20, tan x, '#c08040=tan x', fs = (12, 4.8), linewidth = 1)<br>
+plotf (2pi, sin x, 'r', {'linewidth': 1}, cos x, 'g', {'linewidth': 3}, fs = 12)<br>
+plotf (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = -8, res = 32)<br>
+plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
+plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
+</p>
+
+<h4>plotf() - Plot Function</h4>
+
+<p>
+SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
+This function works by sampling a given expression at regular intervals to build up a list of x, y coordinates to pass on to matplotlib for rendering, the size of this sampling interval can be adjusted with a keyword argument.
+The format of this plot function is as follows: "<b>plotf(['+',] [limits,] [*plots,] fs=None, res=12, style=None, **kwargs)</b>".
+</p><p>
 The initial optional "<b>'+'</b>" string signifies that the plot should build upon the previous plot which allows you to build up complex plots one function at a time.
 The limits are an optional zero to four numbers which specify the boundaries of the requested plot, if no limit numbers are present then the plot will range from 0 to 1 on the x axis and the y axis will be determined automatically.
 If one limit number is present then the plot will range from -x to +x of this number and the y is automatic, two numbers are interpreted as x0 and x1 and y is automatic, three is -x, x, y0 and y1 and four numbers let you specify the full range x0, x1, y0, y1 of the axes.
@@ -1380,7 +1399,7 @@ Other keyword arguments from "<b>kwargs</b>" are passed through on to the "<b>ma
 In addition each expression or function to be plotted can also specify its own dictionary of matplotlib keyword arguments to use for that specific expression.
 </p>
 
-<h4>Individual Plots</h4>
+<h4>plotf() - Individual Plots</h4>
 
 <p>
 The "<b>plotf()</b>" function can take any number of expressions to plot at once with their own formatting options.
@@ -1404,20 +1423,48 @@ Note that the presence of any plots at all in a call to "<b>plotf()</b>" is opti
 Keep in mind that this does not re-plot any previously plotted functions so that data remains at whatever resolution it was plotted.
 </p>
 
-<h4>Examples</h4>
+<h4>plotv() - Examples</h4>
 
 <p>
-plotf (x**2)<br>
-plotf (2pi, sin x, cos x, sinc x, tanh x)<br>
-plotf (2, lambda x: 1 / x, '--r')<br>
-plotf (-2, 5, (x**2 - 6x + 9) / (x**2 - 9), ':#green')<br>
-plotf (4, (x**2 + x - 2) / (x - 1), 'b=line', (1, 3), 'o#red=point')<br>
-plotf (-1, 2, -3, 4, (0, 0), 'xr', [1, 1, 1.9, 1], 'vb', [(0.5, 2), (1.5, 3), (1.5, 0)], ':g')<br>
-plotf (pi, -20, 20, tan x, '#c08040=tan x', fs = (12, 4.8), linewidth = 1)<br>
-plotf (2pi, sin x, 'r', {'linewidth': 1}, cos x, 'g', {'linewidth': 3}, fs = 12)<br>
-plotf (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = -8, res = 32)<br>
-plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
-plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
+plotv ((-y, x))<br>
+plotv (lambda x, y: (y, -x), 'dir')<br>
+plotv (2, -2, 2, y / x, '#red=dy/dx', fs = -6, width = 0.005)<br>
+plotv (4, -4, 4, (lambda a, b: a + b**2, lambda a, b: a**2 - b), lambda x, y, u, v: y, res = 31, fs = -8, width = 0.003)<br>
+plotv (-2, 2, -2, 2, (v (sign (Max (u, 0)) * 2 - 1), -u (sign (Max (u, 0)) * 2 - 1)), 'dir', width = 0.003, pivot = 'mid', fs = -8)<br>
+plotv (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)<br>
+</p>
+
+<h4>plotv() - Plot Vector Field (2D)</h4>
+
+<p>
+This function allows you to plot a 2-dimensional vector field specified by one or two functions or expressions via the matplotlib "<b>Quiver()</b>" function.
+The format of this function is as follows: "<b>plotv (['+',] [limits,] func(s), [color,] [fmt,] fs = None, res = 13, style = None, **kw)</b>".
+The initial optional "<b>'+'</b>" and "<b>limits</b>" fields work exactly as in the "<b>plotf()</b>" function, as do the keyword arguments "<b>fs</b>" and "<b>style</b>".
+</p><p>
+The actual vector field to be plotted comes from either one or two functions or expressions which provide either the u and v coordinates of the vectors or a v/u slope for the vector - in which case the vector will not have a direction arrowhead by default.
+These function(s) are specified in the "<b>func(s)</b>" parameter and must be either a tuple of two functions or expressions or a single function or expression.
+</p><p>
+If there are two functions then they are called for each point sampled in the vector field with an x and y coordinate (the names of the symbols don't matter, the first argument is the x and the second is a y).
+These functions must each return a single real value, the first function returns the u component of the vector field and the second returns the v component.
+If instead of functions there is a tuple of two expressions, then the expressions together must have exactly two free variables which will be replaced with the x and y values of the vector field in alphabetical order, which means that expressions with free variables (a, b), (u, v) and (x, y) will recieve the x and y coordinates in that order.
+</p><p>
+If there is a single function or expression present then the interpretation of that function depends on what it returns.
+If the return value is a single real number then it is interpreted as a slope at that point in the vector field and rendered as such a sloped line, this is useful for plotting things like differential functions.
+If the return value has two components like a tuple or list of real values then those are treated as the u and v components of the vector field at that point directly and actually have a direction and magnitude unlike the single value slope.
+</p><p>
+The optional "<b>color</b>" parameter following the field functions(s) is either a function of four arguments "<b>lambda x, y, u, v: expr</b>" which will be called for each point of the vector field and should return a scalar, which scalar will be used to determine the relative color of the arrow at that point.
+Or it can be a string specifying one of the pre-defined color functions: 'dir' for a direcitonal color function and 'mag' for a magnitude color function, note 'mag' option doesn't make much sense for a field function or expression which only returns a slope.
+</p><p>
+Following this is an optional format string which works much like the format strings from the "<b>plotf()</b>" function except omitting the "<b>[marker][line][color]</b>" prefix and using only "<b>[#extended color][=legend text]</b>".
+If a color function is not specified before this string and a color is present then that color is used for the entire vector field.
+A label can also be present for this particular vector field which can be useful if plotting more than one field.
+</p><p>
+Finally the "<b>res</b>" argument specifies a resolution - or rather the number of arrows you want horizontally in the plot.
+If this argument is a single number then the number of arrows vertically across the plot is calculated from the aspect ratio of the plot as specified or not by the "<b>fs</b>" figsize argument.
+If rather the "<b>res</b>" argument is a tuple of two numbers then these are used directly for the number of arrows horizontally and vertically in the plot.
+</p><p>
+Any keyword arguments are passed through on to the matplotlib "<b>Quiver()</b>" function which allows you to tweak certain display properties of the plot like line thicknesses and arrowheads, for a full list of these options see the matplotlib documentation.
+Also notice that unlike the "<b>plotf()</b>" function, "<b>plotv()</b>" only plots one vector field at a time.
 </p>
 
 <h2>Appendix</h2>
@@ -2228,7 +2275,7 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset', 'plotf'}
+	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset', 'plotf', 'plotv'}
 	PSEUDO          = {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
@@ -5141,6 +5188,7 @@ class spatch: # for single script
 import base64
 from io import BytesIO
 import itertools as it
+import math
 
 import sympy as sp
 
@@ -5159,13 +5207,14 @@ try:
 except:
 	pass
 
+#...............................................................................................
 def _cast_num (arg):
 	try:
 		return float (arg)
 	except:
 		return None
 
-def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = False):
+def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = False, kw = {}):
 	global _FIGURE, _TRANSPARENT
 
 	if style is not None:
@@ -5178,7 +5227,7 @@ def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = Fal
 
 	args = list (reversed (args))
 
-	if args and args [-1] == '+': # check if continuing plot
+	if args and args [-1] == '+': # continuing plot on previous figure?
 		args.pop ()
 
 	elif _FIGURE:
@@ -5190,7 +5239,7 @@ def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = Fal
 		_FIGURE = plt.figure ()
 
 	if fs is not None: # process figsize if present
-		if isinstance (fs, tuple):
+		if isinstance (fs, (sp.Tuple, tuple)):
 			fs = (_cast_num (fs [0]), _cast_num (fs [1]))
 
 		else:
@@ -5236,7 +5285,12 @@ def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = Fal
 	elif ret_yrng:
 		ymin, ymax = obj.ylim ()
 
-	return args, xmin, xmax, ymin, ymax
+	kw = dict ((k, # cast certain SymPy objects which don't play nice with matplotlib using numpy
+		int (v) if isinstance (v, sp.Integer) else
+		float (v) if isinstance (v, (sp.Float, sp.Rational)) else
+		v) for k, v in kw.items ())
+
+	return args, xmin, xmax, ymin, ymax, kw
 
 def _process_fmt (args, kw = {}):
 	kw    = kw.copy ()
@@ -5254,7 +5308,7 @@ def _process_fmt (args, kw = {}):
 
 			if len (clr) == 6:
 				try:
-					i   = int (clr, 16)
+					_   = int (clr, 16)
 					clr = f'#{clr}'
 				except:
 					pass
@@ -5268,6 +5322,14 @@ def _process_fmt (args, kw = {}):
 
 	return args, fargs, kw
 
+def _figure_to_image ():
+	data = BytesIO ()
+
+	_FIGURE.savefig (data, format = 'png', bbox_inches = 'tight', facecolor = 'none', edgecolor = 'none', transparent = _TRANSPARENT)
+
+	return base64.b64encode (data.getvalue ()).decode ()
+
+#...............................................................................................
 def plotf (*args, fs = None, res = 12, style = None, **kw):
 	"""Plot function(s), point(s) and / or line(s).
 
@@ -5279,13 +5341,14 @@ limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x, y0, y1      -> (-x, x, y0, y1)
   x0, x1, y0, y1 -> (x0, x1, y0, y1)
 
-fs      = set figure figsize if present: (default is (6, 4))
-  x      -> (x, x / 6 * 4)
+fs      = set figure figsize if present: (default is (6.4, 4.8))
+  x      -> (x, x * 3 / 4)
   -x     -> (x, x)
   (x, y) -> (x, y)
 
 res     = minimum target resolution points per 50 x pixels (more or less 1 figsize x unit),
           may be raised a little to align with grid
+style   = optional matplotlib plot style
 
 *args   = functions and their formatting: (func, ['fmt',] [{kw},] func, ['fmt',] [{kw},] ...)
   func                      -> callable function takes x and returns y
@@ -5302,27 +5365,25 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 	obj    = plt
 	legend = False
 
-	args, xmin, xmax, ymin, ymax = _process_head (obj, args, fs, style, ret_xrng = True)
+	args, xmin, xmax, ymin, ymax, kw = _process_head (obj, args, fs, style, ret_xrng = True, kw = kw)
 
 	while args:
 		arg = args.pop ()
 
-		if isinstance (arg, (tuple, list)): # list of x, y coords
-			if isinstance (arg [0], (tuple, list)):
+		if isinstance (arg, (sp.Tuple, tuple, list)): # list of x, y coords
+			if isinstance (arg [0], (sp.Tuple, tuple, list)):
 				arg = list (it.chain.from_iterable (arg))
 
 			pargs = [arg [0::2], arg [1::2]]
 
 		else: # y = function (x)
 			if not callable (arg):
-				s = arg.free_symbols
-
-				if len (s) != 1:
+				if len (arg.free_symbols) != 1:
 					raise ValueError ('expression must have exactly one free variable')
 
-				arg = sp.Lambda (s.pop (), arg)
+				arg = sp.Lambda (arg.free_symbols.pop (), arg)
 
-			win = plt.gcf ().axes [-1].get_window_extent ()
+			win = _FIGURE.axes [-1].get_window_extent ()
 			xrs = (win.x1 - win.x0) // 50 # scale resolution to roughly 'res' points every 50 pixels
 			rng = res * xrs
 			dx  = dx2 = xmax - xmin
@@ -5356,20 +5417,189 @@ res     = minimum target resolution points per 50 x pixels (more or less 1 figsi
 
 		obj.plot (*(pargs + fargs), **kwf)
 
-	if legend:
+	if legend or 'label' in kw:
 		obj.legend ()
 
-	data = BytesIO ()
+	return _figure_to_image ()
 
-	if _TRANSPARENT:
-		_FIGURE.savefig (data, format = 'png', bbox_inches = 'tight', transparent = True)
+#...............................................................................................
+def __fxfy2fxy (f1, f2): # u = f1 (x, y), v = f2 (x, y) -> (u, v) = f' (x, y)
+	return lambda x, y, f1 = f1, f2 = f2: (float (f1 (x, y)), float (f2 (x, y)))
+
+def __fxy2fxy (f): # (u, v) = f (x, y) -> (u, v) = f' (x, y)
+	return lambda x, y, f = f: tuple (float (v) for v in f (x, y))
+
+def __fdy2fxy (f): # v/u = f (x, y) -> (u, v) = f' (x, y)
+	return lambda x, y, f = f: tuple ((math.cos (t), math.sin (t)) for t in (math.atan2 (f (x, y), 1),)) [0]
+
+def _process_funcxy (args, testx, testy):
+	isdy = False
+	f    = args.pop ()
+
+	if isinstance (f, (sp.Tuple, tuple, list)): # if (f1 (x, y), f2 (x, y)) functions or expressions present in args they are individual u and v functions
+		c1, c2 = callable (f [0]), callable (f [1])
+
+		if c1 and c2: # two Lambdas
+			f = __fxfy2fxy (f [0], f [1])
+
+		elif not (c1 or c2): # two expressions
+			vars = tuple (sorted (sp.Tuple (f [0], f [1]).free_symbols, key = lambda s: s.name))
+
+			if len (vars) != 2:
+				raise ValueError ('expression must have exactly two free variables')
+
+			return args, __fxfy2fxy (sp.Lambda (vars, f [0]), sp.Lambda (vars, f [1])), False
+
+		else:
+			raise ValueError ('field must be specified by two lambdas or two expressions, not a mix')
+
+	# one function or expression
+	if not callable (f): # convert expression to function
+		if len (f.free_symbols) != 2:
+			raise ValueError ('expression must have exactly two free variables')
+
+		f = sp.Lambda (tuple (sorted (f.free_symbols, key = lambda s: s.name)), f)
+
+	for y in testy: # check if returns 1 dy or 2 u and v values
+		for x in testx:
+			try:
+				v = f (x, y)
+			except (ValueError, ZeroDivisionError, FloatingPointError):
+				continue
+
+			try:
+				_, _ = v
+				f    = __fxy2fxy (f)
+
+				break
+
+			except:
+				f    = __fdy2fxy (f)
+				isdy = True
+
+				break
+
+		else:
+			continue
+
+		break
+
+	return args, f, isdy
+
+_plotv_clr_mag  = lambda x, y, u, v: math.sqrt (u**2 + v**2)
+_plotv_clr_dir  = lambda x, y, u, v: math.atan2 (v, u)
+
+_plotv_clr_func = {'mag': _plotv_clr_mag, 'dir': _plotv_clr_dir}
+
+#...............................................................................................
+def plotv (*args, fs = None, res = 13, resw = 1, style = None, **kw):
+	"""Plot vector field.
+
+plotv (['+',] [limits,] func(s), [color,] [fmt,] [*walks,] fs = None, res = 13, resw = 1, style = None, **kw)
+
+limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
+  x              -> (-x, x, y auto)
+  x0, x1         -> (x0, x1, y auto)
+  x, y0, y1      -> (-x, x, y0, y1)
+  x0, x1, y0, y1 -> (x0, x1, y0, y1)
+
+fs      = set figure figsize if present: (default is (6, 4))
+  x      -> (x, x / 6 * 4)
+  -x     -> (x, x)
+  (x, y) -> (x, y)
+
+res     = (w, h) number of arrows across x and y dimensions, if single digit then h will be w*3/4
+resw    = resolution for optional walkq, see walkq for meaning
+style   = optional matplotlib plot style
+
+func    = function or two functions or expressions returning either (u, v) or v/u
+	f (x, y)               -> returning (u, v)
+	f (x, y)               -> returning v/u will be interpreted without direction
+	(f1 (x, y), f2 (x, y)) -> returning u and v respectively
+
+color   = followed optionally by individual arrow color selection function (can not be expression)
+	'mag'               -> color by magnitude of (u, v) vector
+	'dir'               -> color by direction of (u, v) vector
+  f (x, y, u, v)      -> relative scalar, will be scaled according to whole field to select color
+
+fmt     = followed optionally by color and label format string '[#color][=label]'
+
+*walks  = followed optionally by arguments to walkq for individual x, y walks and formatting
+	"""
+
+	if not _SPLOT:
+		return None
+
+	obj = plt
+
+	args, xmin, xmax, ymin, ymax, kw = _process_head (obj, args, fs, style, ret_xrng = True, ret_yrng = True, kw = kw)
+
+	if not isinstance (res, (sp.Tuple, tuple, list)):
+		win = _FIGURE.axes [-1].get_window_extent ()
+		res = (int (res), int ((win.y1 - win.y0) // ((win.x1 - win.x0) / (res + 1))))
 	else:
-		_FIGURE.savefig (data, format = 'png', bbox_inches = 'tight', facecolor = 'none', edgecolor = 'none')
+		res = (int (res [0]), int (res [1]))
 
-	return base64.b64encode (data.getvalue ()).decode ()
+	xs = (xmax - xmin) / (res [0] + 1)
+	ys = (ymax - ymin) / (res [1] + 1)
+	x0 = xmin + xs / 2
+	y0 = ymin + ys / 2
+	xd = (xmax - xs / 2) - x0
+	yd = (ymax - ys / 2) - y0
+	X  = [[x0 + xd * i / (res [0] - 1)] * res [1] for i in range (res [0])]
+	Y  = [y0 + yd * i / (res [1] - 1) for i in range (res [1])]
+	Y  = [Y [:] for _ in range (res [0])]
+	U  = [[0] * res [1] for _ in range (res [0])]
+	V  = [[0] * res [1] for _ in range (res [0])]
 
+	args, f, isdy = _process_funcxy (args, [x [0] for x in X], Y [0])
+
+	if isdy:
+		d, kw = kw, {'headwidth': 0, 'headlength': 0, 'headaxislength': 0, 'pivot': 'middle'}
+		kw.update (d)
+
+	# populate U and Vs from X, Y grid
+	for j in range (res [1]):
+		for i in range (res [0]):
+			try:
+				U [i] [j], V [i] [j] = f (X [i] [j], Y [i] [j])
+			except (ValueError, ZeroDivisionError, FloatingPointError):
+				U [i] [j] = V [i] [j] = 0
+
+	clrf = None
+
+	if args:
+		if callable (args [-1]): # color function present? f (x, y, u, v)
+			clrf = args.pop ()
+
+		elif isinstance (args [-1], str): # pre-defined color function string?
+			clrf = _plotv_clr_func.get (args [-1])
+
+			if clrf:
+				args.pop ()
+
+	args, _, kw = _process_fmt (args, kw)
+
+	if clrf:
+		C = [[float (clrf (X [i] [j], Y [i] [j], U [i] [j], V [i] [j])) for j in range (res [1])] for i in range (res [0])]
+
+		obj.quiver (X, Y, U, V, C, **kw)
+
+	else:
+		obj.quiver (X, Y, U, V, **kw)
+
+	if 'label' in kw:
+		obj.legend ()
+
+	# if args: # if arguments remain, pass them on to walkq to draw differential curves
+	# 	walkq (res = resw, from_plotv = (args, xmin, xmax, ymin, ymax, f, isdy))
+
+	return _figure_to_image ()
+
+#...............................................................................................
 class splot: # for single script
 	plotf = plotf
+	plotv = plotv
 #!/usr/bin/env python
 # python 3.6+
 
@@ -5393,7 +5623,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.4'
+_VERSION         = '1.0.5'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmltNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
@@ -5404,7 +5634,7 @@ _SYMPAD_NAME     = os.path.basename (sys.argv [0])
 _SYMPAD_CHILD    = ('--child', '') in __OPTS
 _SYMPAD_FIRSTRUN = ('--firstrun', '') in __OPTS
 
-_DEFAULT_ADDRESS = ('localhost', 8000)
+_DEFAULT_ADDRESS = ('localhost', 9000)
 _STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
 
 __name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
@@ -5817,9 +6047,9 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func == 'plotf': # plotting?
+			if ast.is_func and ast.func in {'plotf', 'plotv'}: # plotting?
 				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
-				ret      = splot.plotf (*args, **kw)
+				ret      = getattr (splot, ast.func) (*args, **kw)
 
 				return {'msg': ['Plotting not available because matplotlib is not installed.']} if ret is None else {'img': ret}
 

@@ -1,10 +1,10 @@
-v1.0.4:
+v1.0.5:
 -------
-* Added vector field plotting.
+* Added vector field plotting using matplotlib.
 
 v1.0.4:
 -------
-* Added basic plotting using matplotlib.
+* Added basic function plotting using matplotlib.
 
 v1.0.3:
 -------

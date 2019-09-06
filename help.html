@@ -473,7 +473,7 @@ Basic plotting functionality is available if you have the matplotlib Python modu
 These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas or tuples or assignments.
 </p>
 
-<h4>Examples - plotf()</h4>
+<h4>plotf() - Examples</h4>
 
 <p>
 plotf (x**2)<br>
@@ -489,12 +489,12 @@ plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
 plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
 </p>
 
-<h4>Plot Function - plotf()</h4>
+<h4>plotf() - Plot Function</h4>
 
 <p>
 SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
 This function works by sampling a given expression at regular intervals to build up a list of x, y coordinates to pass on to matplotlib for rendering, the size of this sampling interval can be adjusted with a keyword argument.
-The format of the plot function is as follows: "<b>plotf(['+',] [limits,] [*plots,] fs=6.4, res=12, style=None, **kwargs)</b>".
+The format of this plot function is as follows: "<b>plotf(['+',] [limits,] [*plots,] fs=None, res=12, style=None, **kwargs)</b>".
 </p><p>
 The initial optional "<b>'+'</b>" string signifies that the plot should build upon the previous plot which allows you to build up complex plots one function at a time.
 The limits are an optional zero to four numbers which specify the boundaries of the requested plot, if no limit numbers are present then the plot will range from 0 to 1 on the x axis and the y axis will be determined automatically.
@@ -516,7 +516,7 @@ Other keyword arguments from "<b>kwargs</b>" are passed through on to the "<b>ma
 In addition each expression or function to be plotted can also specify its own dictionary of matplotlib keyword arguments to use for that specific expression.
 </p>
 
-<h4>Individual Plots</h4>
+<h4>plotf() - Individual Plots</h4>
 
 <p>
 The "<b>plotf()</b>" function can take any number of expressions to plot at once with their own formatting options.
@@ -540,23 +540,48 @@ Note that the presence of any plots at all in a call to "<b>plotf()</b>" is opti
 Keep in mind that this does not re-plot any previously plotted functions so that data remains at whatever resolution it was plotted.
 </p>
 
-<h4>Examples - plotv()</h4>
+<h4>plotv() - Examples</h4>
 
 <p>
-plotv (-4, 4, -4, 4, lambda x, y: (x, y), fs = -8, width=0.005)<br>
-plotv (-2, 2, -2, 2, lambda x, y: (y, -x), 'mag', width=0.003)<br>
-walkq ('+', lambda x, y: (y, -x), 1.5, 0, 'k', res=0.25)<br>
-plotv (-2, 2, -2, 2, lambda x, y: (y (sign (Max (x, 0)) * 2 - 1), -x (sign (Max (x, 0)) * 2 - 1)), 'dir', width = 0.003, pivot = 'mid', fs = -8)<br>
-plotv (-3, 3, -3, 3, lambda x, y: y - 2*x, 1, 0, res=13, width=0.003)<br>
-plotv (6, -6, 6, lambda x, y: (2*x+sec(x)**2)/(2*y), 0, -5, 'r=u(0) = -5', -4, 0, -3.2, 0, -2.4, 0, fs=-7, res=17, width=0.003)<br>
+plotv ((-y, x))<br>
+plotv (lambda x, y: (y, -x), 'dir')<br>
+plotv (2, -2, 2, y / x, '#red=dy/dx', fs = -6, width = 0.005)<br>
+plotv (4, -4, 4, (lambda a, b: a + b**2, lambda a, b: a**2 - b), lambda x, y, u, v: y, res = 31, fs = -8, width = 0.003)<br>
+plotv (-2, 2, -2, 2, (v (sign (Max (u, 0)) * 2 - 1), -u (sign (Max (u, 0)) * 2 - 1)), 'dir', width = 0.003, pivot = 'mid', fs = -8)<br>
 plotv (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)<br>
-plotv (-4, 4, -4, 4, (v + u, u - v), fs = -8, width = 0.005, pivot = 'mid')
 </p>
 
-<h4>Plot Vector Field (2D) - plotv()</h4>
+<h4>plotv() - Plot Vector Field (2D)</h4>
 
 <p>
-Blah...
+This function allows you to plot a 2-dimensional vector field specified by one or two functions or expressions via the matplotlib "<b>Quiver()</b>" function.
+The format of this function is as follows: "<b>plotv (['+',] [limits,] func(s), [color,] [fmt,] fs = None, res = 13, style = None, **kw)</b>".
+The initial optional "<b>'+'</b>" and "<b>limits</b>" fields work exactly as in the "<b>plotf()</b>" function, as do the keyword arguments "<b>fs</b>" and "<b>style</b>".
+</p><p>
+The actual vector field to be plotted comes from either one or two functions or expressions which provide either the u and v coordinates of the vectors or a v/u slope for the vector - in which case the vector will not have a direction arrowhead by default.
+These function(s) are specified in the "<b>func(s)</b>" parameter and must be either a tuple of two functions or expressions or a single function or expression.
+</p><p>
+If there are two functions then they are called for each point sampled in the vector field with an x and y coordinate (the names of the symbols don't matter, the first argument is the x and the second is a y).
+These functions must each return a single real value, the first function returns the u component of the vector field and the second returns the v component.
+If instead of functions there is a tuple of two expressions, then the expressions together must have exactly two free variables which will be replaced with the x and y values of the vector field in alphabetical order, which means that expressions with free variables (a, b), (u, v) and (x, y) will recieve the x and y coordinates in that order.
+</p><p>
+If there is a single function or expression present then the interpretation of that function depends on what it returns.
+If the return value is a single real number then it is interpreted as a slope at that point in the vector field and rendered as such a sloped line, this is useful for plotting things like differential functions.
+If the return value has two components like a tuple or list of real values then those are treated as the u and v components of the vector field at that point directly and actually have a direction and magnitude unlike the single value slope.
+</p><p>
+The optional "<b>color</b>" parameter following the field functions(s) is either a function of four arguments "<b>lambda x, y, u, v: expr</b>" which will be called for each point of the vector field and should return a scalar, which scalar will be used to determine the relative color of the arrow at that point.
+Or it can be a string specifying one of the pre-defined color functions: 'dir' for a direcitonal color function and 'mag' for a magnitude color function, note 'mag' option doesn't make much sense for a field function or expression which only returns a slope.
+</p><p>
+Following this is an optional format string which works much like the format strings from the "<b>plotf()</b>" function except omitting the "<b>[marker][line][color]</b>" prefix and using only "<b>[#extended color][=legend text]</b>".
+If a color function is not specified before this string and a color is present then that color is used for the entire vector field.
+A label can also be present for this particular vector field which can be useful if plotting more than one field.
+</p><p>
+Finally the "<b>res</b>" argument specifies a resolution - or rather the number of arrows you want horizontally in the plot.
+If this argument is a single number then the number of arrows vertically across the plot is calculated from the aspect ratio of the plot as specified or not by the "<b>fs</b>" figsize argument.
+If rather the "<b>res</b>" argument is a tuple of two numbers then these are used directly for the number of arrows horizontally and vertically in the plot.
+</p><p>
+Any keyword arguments are passed through on to the matplotlib "<b>Quiver()</b>" function which allows you to tweak certain display properties of the plot like line thicknesses and arrowheads, for a full list of these options see the matplotlib documentation.
+Also notice that unlike the "<b>plotf()</b>" function, "<b>plotv()</b>" only plots one vector field at a time.
 </p>
 
 <h2>Appendix</h2>

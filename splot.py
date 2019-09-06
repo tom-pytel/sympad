@@ -310,7 +310,7 @@ _plotv_clr_func = {'mag': _plotv_clr_mag, 'dir': _plotv_clr_dir}
 def plotv (*args, fs = None, res = 13, resw = 1, style = None, **kw):
 	"""Plot vector field.
 
-plotv (['+',] [limits,] func, [color,] [fmt,] [*walks,] res = 13, resw = 1, style = None, **kw)
+plotv (['+',] [limits,] func(s), [color,] [fmt,] [*walks,] fs = None, res = 13, resw = 1, style = None, **kw)
 
 limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x              -> (-x, x, y auto)
@@ -381,22 +381,22 @@ fmt     = followed optionally by color and label format string '[#color][=label]
 			except (ValueError, ZeroDivisionError, FloatingPointError):
 				U [i] [j] = V [i] [j] = 0
 
-	cfunc = None
+	clrf = None
 
 	if args:
 		if callable (args [-1]): # color function present? f (x, y, u, v)
-			cfunc = args.pop ()
+			clrf = args.pop ()
 
 		elif isinstance (args [-1], str): # pre-defined color function string?
-			cfunc = _plotv_clr_func.get (args [-1])
+			clrf = _plotv_clr_func.get (args [-1])
 
-			if cfunc:
+			if clrf:
 				args.pop ()
 
 	args, _, kw = _process_fmt (args, kw)
 
-	if cfunc:
-		C = [[cfunc (X [i] [j], Y [i] [j], U [i] [j], V [i] [j]) for j in range (res [1])] for i in range (res [0])]
+	if clrf:
+		C = [[float (clrf (X [i] [j], Y [i] [j], U [i] [j], V [i] [j])) for j in range (res [1])] for i in range (res [0])]
 
 		obj.quiver (X, Y, U, V, C, **kw)
 
