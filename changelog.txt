@@ -1,3 +1,7 @@
+v1.0.6:
+-------
+* Added walk over vector field plotting.
+
 v1.0.5:
 -------
 * Added vector field plotting using matplotlib.
