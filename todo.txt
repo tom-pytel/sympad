@@ -1,11 +1,9 @@
-> plotq expressions
-
-> patch into sympy arithmetic operation with bools
+> walkv
 
 > emptyset Unicode symbol
 
 > Python or, and and not
-
+> patch into sympy arithmetic operation with bools
 > random server port selection / fallback
 
 > AppliedUndef, in func and in _Mul
@@ -42,6 +40,7 @@
 > importing modules to allow custom code execution
 > Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
 > systems of equations, ODEs, more graphical plots...
+> numpy support
 
 
 Misc:

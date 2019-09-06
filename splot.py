@@ -54,7 +54,7 @@ def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = Fal
 		_FIGURE = plt.figure ()
 
 	if fs is not None: # process figsize if present
-		if isinstance (fs, tuple):
+		if isinstance (fs, (sp.Tuple, tuple)):
 			fs = (_cast_num (fs [0]), _cast_num (fs [1]))
 
 		else:
@@ -185,20 +185,18 @@ style   = optional matplotlib plot style
 	while args:
 		arg = args.pop ()
 
-		if isinstance (arg, (tuple, list)): # list of x, y coords
-			if isinstance (arg [0], (tuple, list)):
+		if isinstance (arg, (sp.Tuple, tuple, list)): # list of x, y coords
+			if isinstance (arg [0], (sp.Tuple, tuple, list)):
 				arg = list (it.chain.from_iterable (arg))
 
 			pargs = [arg [0::2], arg [1::2]]
 
 		else: # y = function (x)
 			if not callable (arg):
-				s = arg.free_symbols
-
-				if len (s) != 1:
+				if len (arg.free_symbols) != 1:
 					raise ValueError ('expression must have exactly one free variable')
 
-				arg = sp.Lambda (s.pop (), arg)
+				arg = sp.Lambda (arg.free_symbols.pop (), arg)
 
 			win = _FIGURE.axes [-1].get_window_extent ()
 			xrs = (win.x1 - win.x0) // 50 # scale resolution to roughly 'res' points every 50 pixels
@@ -234,14 +232,14 @@ style   = optional matplotlib plot style
 
 		obj.plot (*(pargs + fargs), **kwf)
 
-	if legend:
+	if legend or 'label' in kw:
 		obj.legend ()
 
 	return _figure_to_image ()
 
 #...............................................................................................
 def __fxfy2fxy (f1, f2): # u = f1 (x, y), v = f2 (x, y) -> (u, v) = f' (x, y)
-	return lambda x, y, f1 = f1, f2 = f2: (f1 (x, y), f2 (x, y))
+	return lambda x, y, f1 = f1, f2 = f2: (float (f1 (x, y)), float (f2 (x, y)))
 
 def __fxy2fxy (f): # (u, v) = f (x, y) -> (u, v) = f' (x, y)
 	return lambda x, y, f = f: tuple (float (v) for v in f (x, y))
@@ -253,46 +251,66 @@ def _process_funcxy (args, testx, testy):
 	isdy = False
 	f    = args.pop ()
 
-	if args and callable (args [-1]) and len (args [-1].args [0]) == 2: # if 2 f (x, y) functions present in args they are individual u and v functions
-		f = __fxfy2fxy (f, args.pop ())
+	if isinstance (f, (sp.Tuple, tuple, list)): # if (f1 (x, y), f2 (x, y)) functions or expressions present in args they are individual u and v functions
+		c1, c2 = callable (f [0]), callable (f [1])
 
-	else: # one function, check if returns 1 dy or 2 u and v values
-		for y in testy:
-			for x in testx:
-				try:
-					v = f (x, y)
-				except (ValueError, ZeroDivisionError, FloatingPointError):
-					continue
+		if c1 and c2: # two Lambdas
+			f = __fxfy2fxy (f [0], f [1])
 
-				try:
-					_, _ = v
-					f    = __fxy2fxy (f)
+		elif not (c1 or c2): # two expressions
+			vars = tuple (sorted (sp.Tuple (f [0], f [1]).free_symbols, key = lambda s: s.name))
 
-					break
+			if len (vars) != 2:
+				raise ValueError ('expression must have exactly two free variables')
 
-				except:
-					f    = __fdy2fxy (f)
-					isdy = True
+			return args, __fxfy2fxy (sp.Lambda (vars, f [0]), sp.Lambda (vars, f [1])), False
 
-					break
+		else:
+			raise ValueError ('field must be specified by two lambdas or two expressions, not a mix')
 
-			else:
+	# one function or expression
+	if not callable (f): # convert expression to function
+		if len (f.free_symbols) != 2:
+			raise ValueError ('expression must have exactly two free variables')
+
+		f = sp.Lambda (tuple (sorted (f.free_symbols, key = lambda s: s.name)), f)
+
+	for y in testy: # check if returns 1 dy or 2 u and v values
+		for x in testx:
+			try:
+				v = f (x, y)
+			except (ValueError, ZeroDivisionError, FloatingPointError):
 				continue
 
-			break
+			try:
+				_, _ = v
+				f    = __fxy2fxy (f)
+
+				break
+
+			except:
+				f    = __fdy2fxy (f)
+				isdy = True
+
+				break
+
+		else:
+			continue
+
+		break
 
 	return args, f, isdy
 
-_plotq_clr_mag  = lambda x, y, u, v: math.sqrt (u**2 + v**2)
-_plotq_clr_dir  = lambda x, y, u, v: math.atan2 (v, u)
+_plotv_clr_mag  = lambda x, y, u, v: math.sqrt (u**2 + v**2)
+_plotv_clr_dir  = lambda x, y, u, v: math.atan2 (v, u)
 
-_plotq_clr_func = {'mag': _plotq_clr_mag, 'dir': _plotq_clr_dir}
+_plotv_clr_func = {'mag': _plotv_clr_mag, 'dir': _plotv_clr_dir}
 
 #...............................................................................................
-def plotq (*args, fs = None, res = 13, resw = 1, style = None, **kw):
+def plotv (*args, fs = None, res = 13, resw = 1, style = None, **kw):
 	"""Plot vector field.
 
-plotq (['+',] [limits,] *args, ['[#color][=label]',] res = 13, resw = 1, style = None, **kw)
+plotv (['+',] [limits,] func, [color,] [fmt,] [*walks,] res = 13, resw = 1, style = None, **kw)
 
 limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x              -> (-x, x, y auto)
@@ -309,19 +327,19 @@ res     = (w, h) number of arrows across x and y dimensions, if single digit the
 resw    = resolution for optional walkq, see walkq for meaning
 style   = optional matplotlib plot style
 
-*args   = function or two functions returning either (u, v) or v/u
-	f (x, y)             -> returning (u, v)
-	f (x, y)             -> returning v/u will be interpreted without direction
-	f1 (x, y), f2 (x, y) -> returning u and v respectively
+func    = function or two functions or expressions returning either (u, v) or v/u
+	f (x, y)               -> returning (u, v)
+	f (x, y)               -> returning v/u will be interpreted without direction
+	(f1 (x, y), f2 (x, y)) -> returning u and v respectively
 
-*args   = followed optionally by individual arrow color selection function
+color   = followed optionally by individual arrow color selection function (can not be expression)
 	'mag'               -> color by magnitude of (u, v) vector
 	'dir'               -> color by direction of (u, v) vector
   f (x, y, u, v)      -> relative scalar, will be scaled according to whole field to select color
 
-*args   = followed optionally by color and label format string '[#color][=label]'
+fmt     = followed optionally by color and label format string '[#color][=label]'
 
-*args   = followed optionally by arguments to walkq for individual x, y walks and formatting
+*walks  = followed optionally by arguments to walkq for individual x, y walks and formatting
 	"""
 
 	if not _SPLOT:
@@ -331,7 +349,7 @@ style   = optional matplotlib plot style
 
 	args, xmin, xmax, ymin, ymax, kw = _process_head (obj, args, fs, style, ret_xrng = True, ret_yrng = True, kw = kw)
 
-	if not isinstance (res, (tuple, list)):
+	if not isinstance (res, (sp.Tuple, tuple, list)):
 		win = _FIGURE.axes [-1].get_window_extent ()
 		res = (int (res), int ((win.y1 - win.y0) // ((win.x1 - win.x0) / (res + 1))))
 	else:
@@ -370,7 +388,7 @@ style   = optional matplotlib plot style
 			cfunc = args.pop ()
 
 		elif isinstance (args [-1], str): # pre-defined color function string?
-			cfunc = _plotq_clr_func.get (args [-1])
+			cfunc = _plotv_clr_func.get (args [-1])
 
 			if cfunc:
 				args.pop ()
@@ -389,11 +407,11 @@ style   = optional matplotlib plot style
 		obj.legend ()
 
 	# if args: # if arguments remain, pass them on to walkq to draw differential curves
-	# 	walkq (res = resw, from_plotq = (args, xmin, xmax, ymin, ymax, f, isdy))
+	# 	walkq (res = resw, from_plotv = (args, xmin, xmax, ymin, ymax, f, isdy))
 
 	return _figure_to_image ()
 
 #...............................................................................................
 class splot: # for single script
 	plotf = plotf
-	plotq = plotq
+	plotv = plotv

@@ -473,7 +473,23 @@ Basic plotting functionality is available if you have the matplotlib Python modu
 These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas or tuples or assignments.
 </p>
 
-<h4>plotf() - Plot Function</h4>
+<h4>Examples - plotf()</h4>
+
+<p>
+plotf (x**2)<br>
+plotf (2pi, sin x, cos x, sinc x, tanh x)<br>
+plotf (2, lambda x: 1 / x, '--r')<br>
+plotf (-2, 5, (x**2 - 6x + 9) / (x**2 - 9), ':#green')<br>
+plotf (4, (x**2 + x - 2) / (x - 1), 'b=line', (1, 3), 'o#red=point')<br>
+plotf (-1, 2, -3, 4, (0, 0), 'xr', [1, 1, 1.9, 1], 'vb', [(0.5, 2), (1.5, 3), (1.5, 0), (-0.5, -2)], ':g')<br>
+plotf (pi, -20, 20, tan x, '#c08040=tan x', fs = (12, 4.8), linewidth = 1)<br>
+plotf (2pi, sin x, 'r', {'linewidth': 1}, cos x, 'g', {'linewidth': 3}, fs = 12)<br>
+plotf (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = -8, res = 32)<br>
+plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
+plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
+</p>
+
+<h4>Plot Function - plotf()</h4>
 
 <p>
 SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
@@ -524,34 +540,23 @@ Note that the presence of any plots at all in a call to "<b>plotf()</b>" is opti
 Keep in mind that this does not re-plot any previously plotted functions so that data remains at whatever resolution it was plotted.
 </p>
 
-<h4>Examples</h4>
+<h4>Examples - plotv()</h4>
 
 <p>
-plotf (x**2)<br>
-plotf (2pi, sin x, cos x, sinc x, tanh x)<br>
-plotf (2, lambda x: 1 / x, '--r')<br>
-plotf (-2, 5, (x**2 - 6x + 9) / (x**2 - 9), ':#green')<br>
-plotf (4, (x**2 + x - 2) / (x - 1), 'b=line', (1, 3), 'o#red=point')<br>
-plotf (-1, 2, -3, 4, (0, 0), 'xr', [1, 1, 1.9, 1], 'vb', [(0.5, 2), (1.5, 3), (1.5, 0)], ':g')<br>
-plotf (pi, -20, 20, tan x, '#c08040=tan x', fs = (12, 4.8), linewidth = 1)<br>
-plotf (2pi, sin x, 'r', {'linewidth': 1}, cos x, 'g', {'linewidth': 3}, fs = 12)<br>
-plotf (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = -8, res = 32)<br>
-plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
-plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
+plotv (-4, 4, -4, 4, lambda x, y: (x, y), fs = -8, width=0.005)<br>
+plotv (-2, 2, -2, 2, lambda x, y: (y, -x), 'mag', width=0.003)<br>
+walkq ('+', lambda x, y: (y, -x), 1.5, 0, 'k', res=0.25)<br>
+plotv (-2, 2, -2, 2, lambda x, y: (y (sign (Max (x, 0)) * 2 - 1), -x (sign (Max (x, 0)) * 2 - 1)), 'dir', width = 0.003, pivot = 'mid', fs = -8)<br>
+plotv (-3, 3, -3, 3, lambda x, y: y - 2*x, 1, 0, res=13, width=0.003)<br>
+plotv (6, -6, 6, lambda x, y: (2*x+sec(x)**2)/(2*y), 0, -5, 'r=u(0) = -5', -4, 0, -3.2, 0, -2.4, 0, fs=-7, res=17, width=0.003)<br>
+plotv (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)<br>
+plotv (-4, 4, -4, 4, (v + u, u - v), fs = -8, width = 0.005, pivot = 'mid')
 </p>
 
-<h4>plotq() - Plot Quiver (2D Vector Field)</h4>
-
-<h4>Examples</h4>
+<h4>Plot Vector Field (2D) - plotv()</h4>
 
 <p>
-plotq (-4, 4, -4, 4, lambda x, y: (x, y), fs = -8, width=0.005)<br>
-plotq (-2, 2, -2, 2, lambda x, y: (y, -x), 'mag', width=0.003)<br>
-walkq ('+', lambda x, y: (y, -x), 1.5, 0, 'k', res=0.25)<br>
-plotq (-2, 2, -2, 2, lambda x, y: (y (sign (Max (x, 0)) * 2 - 1), -x (sign (Max (x, 0)) * 2 - 1)), 'dir', width = 0.003, 'pivot' = 'mid', fs = -8)<br>
-plotq (-3, 3, -3, 3, lambda x, y: y - 2*x, 1, 0, res=13, width=0.003)<br>
-plotq (6, -6, 6, lambda x, y: (2*x+sec(x)**2)/(2*y), 0, -5, 'r=u(0) = -5', -4, 0, -3.2, 0, -2.4, 0, fs=-7, res=17, width=0.003)<br>
-plotq (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)<br>
+Blah...
 </p>
 
 <h2>Appendix</h2>
