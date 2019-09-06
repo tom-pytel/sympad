@@ -22,7 +22,7 @@ Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)
 plot (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')
 ```
 
-And they look like this while typing:
+And here are some examples of the visual output as you type:
 
 ![SymPad image example](https://raw.githubusercontent.com/Pristine-Cat/SymPad/master/sympad.png#1)
 

@@ -1,4 +1,5 @@
 > walkv
+> import
 
 > emptyset Unicode symbol
 
@@ -22,6 +23,7 @@
 
 > SYM CLEANUP!
 
+> plots as objects?
 > ProductSet?
 > no-evaluate version of Add and Mul (for tuples, lists and strings)?
 > extended comparison 0 <= x < 1
