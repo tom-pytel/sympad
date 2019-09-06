@@ -852,7 +852,6 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\pi \\int_0^{2pi} \\int_0^1 rho**2 sin\\phi drho dtheta dphi', true)">\int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi</a>
 	<a class="GreetingA" href="javascript:inputting ('\\[[1, 2], [3, 4]]**-1', true)">\[[1, 2], [3, 4]]**-1</a>
 	<a class="GreetingA" href="javascript:inputting ('Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()', true)">Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()</a>
-	<a class="GreetingA" href="javascript:inputting ('a if randprime(1, 4) == 2 else b', true)">a if randprime(1, 4) == 2 else b</a>
 	<a class="GreetingA" href="javascript:inputting ('Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)', true)">Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)</a>
 	<a class="GreetingA" href="javascript:inputting ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}', true)">(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}</a>
 	<a class="GreetingA" href="javascript:inputting ('plotf (2pi, -2, 2, sin x, \'r=sin\', cos x, \'g=cos\', tan x, \'b=tan\')', true)">plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')</a>
@@ -950,7 +949,6 @@ Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi<br>
 \[[1, 2], [3, 4]]**-1<br>
 Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
-a if randprime(1, 4) == 2 else b<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
@@ -1356,7 +1354,9 @@ Basic plotting functionality is available if you have the matplotlib Python modu
 These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas or tuples or assignments.
 </p>
 
-<h4>plotf() - Examples</h4>
+<h4>plotf() - Plot Function</h4>
+
+<p><b>Examples</b></p>
 
 <p>
 plotf (x**2)<br>
@@ -1372,7 +1372,7 @@ plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
 plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
 </p>
 
-<h4>plotf() - Plot Function</h4>
+<p><b>Usage</b></p>
 
 <p>
 SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
@@ -1399,7 +1399,7 @@ Other keyword arguments from "<b>kwargs</b>" are passed through on to the "<b>ma
 In addition each expression or function to be plotted can also specify its own dictionary of matplotlib keyword arguments to use for that specific expression.
 </p>
 
-<h4>plotf() - Individual Plots</h4>
+<p><b>Individual Plots</b></p>
 
 <p>
 The "<b>plotf()</b>" function can take any number of expressions to plot at once with their own formatting options.
@@ -1423,10 +1423,13 @@ Note that the presence of any plots at all in a call to "<b>plotf()</b>" is opti
 Keep in mind that this does not re-plot any previously plotted functions so that data remains at whatever resolution it was plotted.
 </p>
 
-<h4>plotv() - Examples</h4>
+<h4>plotv() - Plot Vector Field (2D)</h4>
+
+<p><b>Examples</b></p>
 
 <p>
 plotv ((-y, x))<br>
+plotv (2, y - 2 x, '#green')<br>
 plotv (lambda x, y: (y, -x), 'dir')<br>
 plotv (2, -2, 2, y / x, '#red=dy/dx', fs = -6, width = 0.005)<br>
 plotv (4, -4, 4, (lambda a, b: a + b**2, lambda a, b: a**2 - b), lambda x, y, u, v: y, res = 31, fs = -8, width = 0.003)<br>
@@ -1434,11 +1437,11 @@ plotv (-2, 2, -2, 2, (v (sign (Max (u, 0)) * 2 - 1), -u (sign (Max (u, 0)) * 2 -
 plotv (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)<br>
 </p>
 
-<h4>plotv() - Plot Vector Field (2D)</h4>
+<p><b>Usage</b></p>
 
 <p>
 This function allows you to plot a 2-dimensional vector field specified by one or two functions or expressions via the matplotlib "<b>Quiver()</b>" function.
-The format of this function is as follows: "<b>plotv (['+',] [limits,] func(s), [color,] [fmt,] fs = None, res = 13, style = None, **kw)</b>".
+The format of this function is as follows: "<b>plotv (['+',] [limits,] func(s), [color,] [fmt,] [*walks,] fs = None, res = 13, style = None, resw = 1, kww = {}, **kw)</b>".
 The initial optional "<b>'+'</b>" and "<b>limits</b>" fields work exactly as in the "<b>plotf()</b>" function, as do the keyword arguments "<b>fs</b>" and "<b>style</b>".
 </p><p>
 The actual vector field to be plotted comes from either one or two functions or expressions which provide either the u and v coordinates of the vectors or a v/u slope for the vector - in which case the vector will not have a direction arrowhead by default.
@@ -1465,6 +1468,51 @@ If rather the "<b>res</b>" argument is a tuple of two numbers then these are use
 </p><p>
 Any keyword arguments are passed through on to the matplotlib "<b>Quiver()</b>" function which allows you to tweak certain display properties of the plot like line thicknesses and arrowheads, for a full list of these options see the matplotlib documentation.
 Also notice that unlike the "<b>plotf()</b>" function, "<b>plotv()</b>" only plots one vector field at a time.
+</p><p>
+If any non-keyword arguments are present after the "<b>func(s)</b>", "<b>color</b>" and "<b>fmt</b>" parameters but before any keyword arguments then they are interpreted as parameters to the function "<b>plotw()</b>" which will be called after the vector field is plotted and will plot one or more walks over that vector field.
+The "<b>resw</b>" parameter is passed on to "<b>plotw()</b>" as a keyword argument as well as the contents of the "<b>kww</b>" dictionary.
+See the documentation for that function for usage and formatting of these parameters.
+</p>
+
+<h4>plotw() - Plot Walk Over Vector Field</h4>
+
+<p><b>WARNING!</b> This plotting function can be very slow due to the fact it calls very frequently into SymPy Lambda functions as it adapts the walk to minimize potential error.</p>
+
+<p><b>Examples</b></p>
+
+<p>
+plotw (3, -3, 3, y - 2x, (1, 1))<br>
+plotw (3, -3, 3, y - 2x, (1, 1), (1, 2), (1, 0))<br>
+plotw (6, -6, 6, lambda x, y: (2x + sec**2x) / 2y, (0, -5), 'r=u(0) = -5', fs = -7)<br>
+plotw (2.5, -2.5, 2.5, (-y, x), (0.5, 0), '=(0.5,0)', (1, 0), '=(1,0)', (1.5, 0), '=(1.5,0)', (2, 0), '=(2,0)', fs = -6)<br>
+plotw (pi, -pi, pi, sin x - sin y, (0, 0), (1, 1), (2, 2), (-1, -1), (-2, -2), fs = -8, linewidth = 5)<br>
+</p><p>
+These will make more sense if they are put in the context of their respective vector fields:
+</p><p>
+plotv (3, -3, 3, y - 2x, (1, 1))<br>
+plotv (3, -3, 3, y - 2x, (1, 1), (1, 2), (1, 0))<br>
+plotv (6, -6, 6, lambda x, y: (2x + sec**2x) / 2y, (0, -5), 'r=u(0) = -5', fs = -7, res = 33)<br>
+plotv (2.5, -2.5, 2.5, (-y, x), (0.5, 0), '=(0.5,0)', (1, 0), '=(1,0)', (1.5, 0), '=(1.5,0)', (2, 0), '=(2,0)', fs = -6, pivot = 'mid')<br>
+plotv (pi, -pi, pi, sin x - sin y, (0, 0), (1, 1), (2, 2), (-1, -1), (-2, -2), fs = -8, kww = {'linewidth': 5})<br>
+</p>
+
+<p><b>Usage</b></p>
+
+<p>
+This function is normally intended to be called implicitly from the "<b>plotv()</b>" function for plotting a walk over a plotted vector field but can be called on its own to plot one or more walks without the vectory field in the background.
+The format is as follows: "<b>plotw (['+',] [limits,] func(s), *points, fs = None, resw = 1, style = None, **kw)</b>"
+The "<b>'+'</b>", "<b>limits</b>", "<b>fs</b>" and "<b>style</b>" fields work in the same manner as the previous two functions.
+The "<b>func(s)</b>" is interpreted as a vector field function or pair of functions or expressions like in "<b>plotv()</b>".
+"<b>resw</b>" is a resolution parameter - maximum pixel steps to allow walk step to deviate before drawing, smaller = better quality.
+</p><p>
+What this function does is take an x, y point (or points if multiple starting positions provided) and starts walking the vector field according to its value at that point - following the gradient.
+It adapts the steps it takes according to how much curvature the vector field exhibits at that point and tries to reach either the edge of the graph or its own starting point to complete a loop.
+The "<b>*points</b>" parameters specified in the function is either one or more tuples of x, y values optionally followed by "#color=label" formatting and dictionary keywords for the line corresponding to the walk for that point, similar to the previous functions.
+An example of "<b>*points</b>": "<b>plotw(..., (0, 0), '#red=0,0', {'linewidth': 2}, (1, 1), '#green=1,1', {'linewidth': 3}, (2, 2), ...)</b>".
+</p><p>
+Due to numerical errors accumulating during the walk this is by no means a perfect plotting function and should be considered experimental.
+Also due to the fact that the points of the vector field are gotten from SymPy operations and the number of times they are requested this function can be very slow.
+It may also never finish if a complex circular vector field introduces enough errors so that the walk gets back to the starting point but not quite close enough to consider it a full loop then the walk will keep going around and around in circles and the function will not return, you have been warned.
 </p>
 
 <h2>Appendix</h2>
@@ -1519,19 +1567,19 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <p>
 Calculating eigenvalues and eigenvectors of a matrix by "hand":
 </p><p>
-m = \[[1, 2], [3, 4<i>&emsp;don't need to close brackets</i><br>
+m = \[[1, 2], [3, 4]]<br>
 l = m - lambda eye 2<br>
-l.det(<br>
+l.det ()<br>
 solve _<i>&emsp;this will give the eigenvalues</i><br>
 a, b = _<i>&emsp;assign to vars</i><br>
-m.eigenvals(<i>&emsp;verify eigenvalues</i><br>
-Subs(l, lambda, a) \[x, y<br>
-solve(_ [0], _ [1], x, y<i>&emsp;relation between x and y</i><br>
-\[_ [0] [x], y].subs(y, 1<i>&emsp;first eigenvector for eigenvalue a</i><br>
-Subs(l, lambda, b) \[x, y<br>
-solve(_ [0], _ [1], x, y<i>&emsp;relation between x and y</i><br>
-\[_ [0] [x], y].subs(y, 1<i>&emsp;second eigenvector for eigenvalue b</i><br>
-m.eigenvects(<i>&emsp;verify eigenvectors</i><br>
+m.eigenvals ()<i>&emsp;verify eigenvalues</i><br>
+Subs (l, lambda, a) \[x, y]<br>
+solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
+\[_ [0] [x], y].subs (y, 1)<i>&emsp;first eigenvector for eigenvalue a</i><br>
+Subs (l, lambda, b) \[x, y]<br>
+solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
+\[_ [0] [x], y].subs (y, 1)<i>&emsp;second eigenvector for eigenvalue b</i><br>
+m.eigenvects ()<i>&emsp;verify eigenvectors</i><br>
 </p>
 
 <h4>Notes</h4>
@@ -2275,7 +2323,7 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset', 'plotf', 'plotv'}
+	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset', 'plotf', 'plotv', 'plotw'}
 	PSEUDO          = {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
@@ -2786,7 +2834,8 @@ class sxlat: # for single script
 # 	ast = AST ('(', (',', (('#', '1'), ('#', '2'))))
 # 	res = XLAT_FUNC2AST_NAT ['set'] (ast)
 # 	print (res)
-# Convert between internal AST and SymPy expressions and write out LaTeX, native shorthand and Python code
+# Convert between internal AST and SymPy expressions and write out LaTeX, native shorthand and Python code.
+# Here be dragons!
 
 from ast import literal_eval
 from functools import reduce
@@ -5492,10 +5541,10 @@ _plotv_clr_dir  = lambda x, y, u, v: math.atan2 (v, u)
 _plotv_clr_func = {'mag': _plotv_clr_mag, 'dir': _plotv_clr_dir}
 
 #...............................................................................................
-def plotv (*args, fs = None, res = 13, resw = 1, style = None, **kw):
+def plotv (*args, fs = None, res = 13, style = None, resw = 1, kww = {}, **kw):
 	"""Plot vector field.
 
-plotv (['+',] [limits,] func(s), [color,] [fmt,] [*walks,] fs = None, res = 13, resw = 1, style = None, **kw)
+plotv (['+',] [limits,] func(s), [color,] [fmt,] [*walks,] fs = None, res = 13, style = None, resw = 1, kww = {}, **kw)
 
 limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x              -> (-x, x, y auto)
@@ -5503,16 +5552,17 @@ limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x, y0, y1      -> (-x, x, y0, y1)
   x0, x1, y0, y1 -> (x0, x1, y0, y1)
 
-fs      = set figure figsize if present: (default is (6, 4))
+fs      = set figure figsize if present: (default is (6.4, 4.8))
   x      -> (x, x / 6 * 4)
   -x     -> (x, x)
   (x, y) -> (x, y)
 
 res     = (w, h) number of arrows across x and y dimensions, if single digit then h will be w*3/4
-resw    = resolution for optional walkq, see walkq for meaning
+resw    = resolution for optional plotw, see plotw for meaning
+kww     = optional keyword arguments to be passed to plotw if that is being called
 style   = optional matplotlib plot style
 
-func    = function or two functions or expressions returning either (u, v) or v/u
+func(s) = function or two functions or expressions returning either (u, v) or v/u
 	f (x, y)               -> returning (u, v)
 	f (x, y)               -> returning v/u will be interpreted without direction
 	(f1 (x, y), f2 (x, y)) -> returning u and v respectively
@@ -5524,7 +5574,7 @@ color   = followed optionally by individual arrow color selection function (can 
 
 fmt     = followed optionally by color and label format string '[#color][=label]'
 
-*walks  = followed optionally by arguments to walkq for individual x, y walks and formatting
+*walks  = followed optionally by arguments to plotw for individual x, y walks and formatting
 	"""
 
 	if not _SPLOT:
@@ -5591,8 +5641,147 @@ fmt     = followed optionally by color and label format string '[#color][=label]
 	if 'label' in kw:
 		obj.legend ()
 
-	# if args: # if arguments remain, pass them on to walkq to draw differential curves
-	# 	walkq (res = resw, from_plotv = (args, xmin, xmax, ymin, ymax, f, isdy))
+	if args: # if arguments remain, pass them on to plotw to draw differential curves
+		plotw (resw = resw, from_plotv = (args, xmin, xmax, ymin, ymax, f), **kww)
+
+	return _figure_to_image ()
+
+#...............................................................................................
+def plotw (*args, fs = None, resw = 1, style = None, from_plotv = False, **kw):
+	"""Plot walk(s) over vector field.
+
+plotw (['+',] [limits,] func(s), *args, fs = None, resw = 1, style = None, **kw)
+
+limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
+  x              -> (-x, x, y auto)
+  x0, x1         -> (x0, x1, y auto)
+  x, y0, y1      -> (-x, x, y0, y1)
+  x0, x1, y0, y1 -> (x0, x1, y0, y1)
+
+fs      = set figure figsize if present: (default is (6.4, 4.8))
+  x      -> (x, x / 6 * 4)
+  -x     -> (x, x)
+  (x, y) -> (x, y)
+
+resw    = maximum pixel steps to allow walk step to deviate before drawing, smaller = better quality
+style   = optional matplotlib plot style
+
+func(s) = function or two functions returning either (u, v) or v/u
+	f (x, y)            -> returning (u, v)
+	f (x, y)            -> returning v/u will be interpreted without direction
+	f (x, y), f2 (x, y) -> returning u and v respectively
+
+*args   = followed by initial x, y points for walks (x, y, ['fmt',] [{kw},] x, y, ['fmt',] [{kw},] ...)
+	fmt   = 'fmt[#color][=label]'
+
+HACK: Python complex type used as 2D vector.
+	"""
+
+	def dot (p0, p1): # dot product of two 2d vectors stored as complexes
+		return p0.real * p1.real + p0.imag * p1.imag
+
+	def walk (x, y, f, o = 1): # returns [(x, y), (x, y), ...], True if looped else False
+		def delta (p, d = None):
+			try:
+				t = math.atan2 (*(f (p.real, p.imag) [::-1]))
+
+				return complex (math.cos (t), math.sin (t))
+
+			except (ValueError, ZeroDivisionError, FloatingPointError):
+				if d is not None:
+					return d
+
+			raise FloatingPointError
+
+		xys = [(x, y)]
+		err = 0
+		p0  = complex (x, y)
+		p   = p0
+#		d   = pxs
+		d   = delta (p, pxs)
+
+		while 1:
+#			d  = delta (p, d)
+			s  = 0
+			o2 = o
+			p2 = p
+			d2 = d
+
+			while 1:
+				st = 0.25 * pxm
+				d3 = o2 * d2
+
+				while 1:
+					p3 = p2 + d3 * st # * pxm
+
+					try:
+						d4 = delta (p3)
+						dc = math.acos (dot (d2, d4))
+
+						if dc > 2.748893571891069: # (7 * pi / 8), abrupt reverse of direction?
+							o2 = -o2
+
+						elif dc > 0.005:
+							st = st * (0.004 / dc)
+							continue
+
+						err = err + dc * st # * pxm
+						d2  = d4
+
+						break
+
+					except FloatingPointError:
+						break
+
+				s      = s + st
+				isloop = (dot (d3, p0 - p2) > 0) and abs (p3 - p0) < (2 * err) # (8 * pxm)
+				p2     = p3
+
+				if isloop or p2.real < xmin or p2.real > xmax or p2.imag < ymin or p2.imag > ymax:
+					xys.extend ([(p2.real, p2.imag)] + [(x, y)] * bool (isloop))
+					return xys, isloop
+
+				if abs (p2 - (p + o * d * s)) >= resw: # * pxm)) >= resw:
+					xys.append ((p2.real, p2.imag))
+
+					o = o2
+					p = p2
+					d = d2
+
+					break
+
+	if not _SPLOT:
+		return None
+
+	obj = plt
+
+	if from_plotv:
+		args, xmin, xmax, ymin, ymax, f  = from_plotv
+	else:
+		args, xmin, xmax, ymin, ymax, kw = _process_head (obj, args, fs, style, ret_xrng = True, ret_yrng = True, kw = kw)
+		args, f, _                       = _process_funcxy (args, [xmin + (xmax - xmin) * i / 4 for i in range (5)], [ymin + (ymax - ymin) * i / 4 for i in range (5)])
+
+	win  = _FIGURE.axes [-1].get_window_extent ()
+	pxs  = complex ((xmax - xmin) / (win.x1 - win.x0), (ymax - ymin) / (win.y1 - win.y0)) # pixel scale from xmin/max ymin/max scale
+	pxm  = abs (pxs)
+	resw = resw * pxm
+
+	leg = False
+
+	while args:
+		x, y        = args.pop ()
+		xys, isloop = walk (x, y, f)
+
+		if not isloop:
+			xys = xys [::-1] [:-1] + walk (x, y, f, -1) [0]
+
+		args, fargs, kwf = _process_fmt (args, kw)
+		leg              = leg or ('label' in kwf)
+
+		obj.plot (*([[xy [0] for xy in xys], [xy [1] for xy in xys]] + fargs), **kwf)
+
+	if leg or 'label' in kw:
+		obj.legend ()
 
 	return _figure_to_image ()
 
@@ -5600,6 +5789,7 @@ fmt     = followed optionally by color and label format string '[#color][=label]
 class splot: # for single script
 	plotf = plotf
 	plotv = plotv
+	plotw = plotw
 #!/usr/bin/env python
 # python 3.6+
 
@@ -5623,7 +5813,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.5'
+_VERSION         = '1.0.6'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmltNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
@@ -6047,7 +6237,7 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func in {'plotf', 'plotv'}: # plotting?
+			if ast.is_func and ast.func in {'plotf', 'plotv', 'plotw'}: # plotting?
 				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
 				ret      = getattr (splot, ast.func) (*args, **kw)
 

@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.0.5'
+_VERSION         = '1.0.6'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmltNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
@@ -454,7 +454,7 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func in {'plotf', 'plotv'}: # plotting?
+			if ast.is_func and ast.func in {'plotf', 'plotv', 'plotw'}: # plotting?
 				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
 				ret      = getattr (splot, ast.func) (*args, **kw)
 

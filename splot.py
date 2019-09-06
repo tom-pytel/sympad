@@ -307,10 +307,10 @@ _plotv_clr_dir  = lambda x, y, u, v: math.atan2 (v, u)
 _plotv_clr_func = {'mag': _plotv_clr_mag, 'dir': _plotv_clr_dir}
 
 #...............................................................................................
-def plotv (*args, fs = None, res = 13, resw = 1, style = None, **kw):
+def plotv (*args, fs = None, res = 13, style = None, resw = 1, kww = {}, **kw):
 	"""Plot vector field.
 
-plotv (['+',] [limits,] func(s), [color,] [fmt,] [*walks,] fs = None, res = 13, resw = 1, style = None, **kw)
+plotv (['+',] [limits,] func(s), [color,] [fmt,] [*walks,] fs = None, res = 13, style = None, resw = 1, kww = {}, **kw)
 
 limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x              -> (-x, x, y auto)
@@ -318,16 +318,17 @@ limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
   x, y0, y1      -> (-x, x, y0, y1)
   x0, x1, y0, y1 -> (x0, x1, y0, y1)
 
-fs      = set figure figsize if present: (default is (6, 4))
+fs      = set figure figsize if present: (default is (6.4, 4.8))
   x      -> (x, x / 6 * 4)
   -x     -> (x, x)
   (x, y) -> (x, y)
 
 res     = (w, h) number of arrows across x and y dimensions, if single digit then h will be w*3/4
-resw    = resolution for optional walkq, see walkq for meaning
+resw    = resolution for optional plotw, see plotw for meaning
+kww     = optional keyword arguments to be passed to plotw if that is being called
 style   = optional matplotlib plot style
 
-func    = function or two functions or expressions returning either (u, v) or v/u
+func(s) = function or two functions or expressions returning either (u, v) or v/u
 	f (x, y)               -> returning (u, v)
 	f (x, y)               -> returning v/u will be interpreted without direction
 	(f1 (x, y), f2 (x, y)) -> returning u and v respectively
@@ -339,7 +340,7 @@ color   = followed optionally by individual arrow color selection function (can 
 
 fmt     = followed optionally by color and label format string '[#color][=label]'
 
-*walks  = followed optionally by arguments to walkq for individual x, y walks and formatting
+*walks  = followed optionally by arguments to plotw for individual x, y walks and formatting
 	"""
 
 	if not _SPLOT:
@@ -406,8 +407,147 @@ fmt     = followed optionally by color and label format string '[#color][=label]
 	if 'label' in kw:
 		obj.legend ()
 
-	# if args: # if arguments remain, pass them on to walkq to draw differential curves
-	# 	walkq (res = resw, from_plotv = (args, xmin, xmax, ymin, ymax, f, isdy))
+	if args: # if arguments remain, pass them on to plotw to draw differential curves
+		plotw (resw = resw, from_plotv = (args, xmin, xmax, ymin, ymax, f), **kww)
+
+	return _figure_to_image ()
+
+#...............................................................................................
+def plotw (*args, fs = None, resw = 1, style = None, from_plotv = False, **kw):
+	"""Plot walk(s) over vector field.
+
+plotw (['+',] [limits,] func(s), *args, fs = None, resw = 1, style = None, **kw)
+
+limits  = set absolute axis bounds: (default x is (0, 1), y is automatic)
+  x              -> (-x, x, y auto)
+  x0, x1         -> (x0, x1, y auto)
+  x, y0, y1      -> (-x, x, y0, y1)
+  x0, x1, y0, y1 -> (x0, x1, y0, y1)
+
+fs      = set figure figsize if present: (default is (6.4, 4.8))
+  x      -> (x, x / 6 * 4)
+  -x     -> (x, x)
+  (x, y) -> (x, y)
+
+resw    = maximum pixel steps to allow walk step to deviate before drawing, smaller = better quality
+style   = optional matplotlib plot style
+
+func(s) = function or two functions returning either (u, v) or v/u
+	f (x, y)            -> returning (u, v)
+	f (x, y)            -> returning v/u will be interpreted without direction
+	f (x, y), f2 (x, y) -> returning u and v respectively
+
+*args   = followed by initial x, y points for walks (x, y, ['fmt',] [{kw},] x, y, ['fmt',] [{kw},] ...)
+	fmt   = 'fmt[#color][=label]'
+
+HACK: Python complex type used as 2D vector.
+	"""
+
+	def dot (p0, p1): # dot product of two 2d vectors stored as complexes
+		return p0.real * p1.real + p0.imag * p1.imag
+
+	def walk (x, y, f, o = 1): # returns [(x, y), (x, y), ...], True if looped else False
+		def delta (p, d = None):
+			try:
+				t = math.atan2 (*(f (p.real, p.imag) [::-1]))
+
+				return complex (math.cos (t), math.sin (t))
+
+			except (ValueError, ZeroDivisionError, FloatingPointError):
+				if d is not None:
+					return d
+
+			raise FloatingPointError
+
+		xys = [(x, y)]
+		err = 0
+		p0  = complex (x, y)
+		p   = p0
+#		d   = pxs
+		d   = delta (p, pxs)
+
+		while 1:
+#			d  = delta (p, d)
+			s  = 0
+			o2 = o
+			p2 = p
+			d2 = d
+
+			while 1:
+				st = 0.25 * pxm
+				d3 = o2 * d2
+
+				while 1:
+					p3 = p2 + d3 * st # * pxm
+
+					try:
+						d4 = delta (p3)
+						dc = math.acos (dot (d2, d4))
+
+						if dc > 2.748893571891069: # (7 * pi / 8), abrupt reverse of direction?
+							o2 = -o2
+
+						elif dc > 0.005:
+							st = st * (0.004 / dc)
+							continue
+
+						err = err + dc * st # * pxm
+						d2  = d4
+
+						break
+
+					except FloatingPointError:
+						break
+
+				s      = s + st
+				isloop = (dot (d3, p0 - p2) > 0) and abs (p3 - p0) < (2 * err) # (8 * pxm)
+				p2     = p3
+
+				if isloop or p2.real < xmin or p2.real > xmax or p2.imag < ymin or p2.imag > ymax:
+					xys.extend ([(p2.real, p2.imag)] + [(x, y)] * bool (isloop))
+					return xys, isloop
+
+				if abs (p2 - (p + o * d * s)) >= resw: # * pxm)) >= resw:
+					xys.append ((p2.real, p2.imag))
+
+					o = o2
+					p = p2
+					d = d2
+
+					break
+
+	if not _SPLOT:
+		return None
+
+	obj = plt
+
+	if from_plotv:
+		args, xmin, xmax, ymin, ymax, f  = from_plotv
+	else:
+		args, xmin, xmax, ymin, ymax, kw = _process_head (obj, args, fs, style, ret_xrng = True, ret_yrng = True, kw = kw)
+		args, f, _                       = _process_funcxy (args, [xmin + (xmax - xmin) * i / 4 for i in range (5)], [ymin + (ymax - ymin) * i / 4 for i in range (5)])
+
+	win  = _FIGURE.axes [-1].get_window_extent ()
+	pxs  = complex ((xmax - xmin) / (win.x1 - win.x0), (ymax - ymin) / (win.y1 - win.y0)) # pixel scale from xmin/max ymin/max scale
+	pxm  = abs (pxs)
+	resw = resw * pxm
+
+	leg = False
+
+	while args:
+		x, y        = args.pop ()
+		xys, isloop = walk (x, y, f)
+
+		if not isloop:
+			xys = xys [::-1] [:-1] + walk (x, y, f, -1) [0]
+
+		args, fargs, kwf = _process_fmt (args, kw)
+		leg              = leg or ('label' in kwf)
+
+		obj.plot (*([[xy [0] for xy in xys], [xy [1] for xy in xys]] + fargs), **kwf)
+
+	if leg or 'label' in kw:
+		obj.legend ()
 
 	return _figure_to_image ()
 
@@ -415,3 +555,4 @@ fmt     = followed optionally by color and label format string '[#color][=label]
 class splot: # for single script
 	plotf = plotf
 	plotv = plotv
+	plotw = plotw

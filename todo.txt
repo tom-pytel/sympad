@@ -1,5 +1,7 @@
 > walkv
+> import
 
+> nabla - gradient
 > emptyset Unicode symbol
 
 > Python or, and and not
@@ -22,6 +24,7 @@
 
 > SYM CLEANUP!
 
+> plots as objects?
 > ProductSet?
 > no-evaluate version of Add and Mul (for tuples, lists and strings)?
 > extended comparison 0 <= x < 1

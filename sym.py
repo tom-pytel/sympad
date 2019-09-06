@@ -1,4 +1,5 @@
-# Convert between internal AST and SymPy expressions and write out LaTeX, native shorthand and Python code
+# Convert between internal AST and SymPy expressions and write out LaTeX, native shorthand and Python code.
+# Here be dragons!
 
 from ast import literal_eval
 from functools import reduce
