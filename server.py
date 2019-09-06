@@ -454,7 +454,7 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func in {'plotf', 'plotv'}: # plotting?
+			if ast.is_func and ast.func in {'plotf', 'plotv', 'plotw'}: # plotting?
 				args, kw = AST.args2kwargs (_ast_remap (ast.args, _VARS), sym.ast2spt)
 				ret      = getattr (splot, ast.func) (*args, **kw)
 

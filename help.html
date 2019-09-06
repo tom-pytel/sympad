@@ -472,7 +472,9 @@ Basic plotting functionality is available if you have the matplotlib Python modu
 These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas or tuples or assignments.
 </p>
 
-<h4>plotf() - Examples</h4>
+<h4>plotf() - Plot Function</h4>
+
+<p><b>Examples</b></p>
 
 <p>
 plotf (x**2)<br>
@@ -488,7 +490,7 @@ plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
 plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
 </p>
 
-<h4>plotf() - Plot Function</h4>
+<p><b>Usage</b></p>
 
 <p>
 SymPad provides the "<b>plotf()</b>" function which can be used to plot one or more expressions or lambdas of one free variable or lists of points or lines.
@@ -515,7 +517,7 @@ Other keyword arguments from "<b>kwargs</b>" are passed through on to the "<b>ma
 In addition each expression or function to be plotted can also specify its own dictionary of matplotlib keyword arguments to use for that specific expression.
 </p>
 
-<h4>plotf() - Individual Plots</h4>
+<p><b>Individual Plots</b></p>
 
 <p>
 The "<b>plotf()</b>" function can take any number of expressions to plot at once with their own formatting options.
@@ -539,7 +541,9 @@ Note that the presence of any plots at all in a call to "<b>plotf()</b>" is opti
 Keep in mind that this does not re-plot any previously plotted functions so that data remains at whatever resolution it was plotted.
 </p>
 
-<h4>plotv() - Examples</h4>
+<h4>plotv() - Plot Vector Field (2D)</h4>
+
+<p><b>Examples</b></p>
 
 <p>
 plotv ((-y, x))<br>
@@ -551,11 +555,11 @@ plotv (-2, 2, -2, 2, (v (sign (Max (u, 0)) * 2 - 1), -u (sign (Max (u, 0)) * 2 -
 plotv (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)<br>
 </p>
 
-<h4>plotv() - Plot Vector Field (2D)</h4>
+<p><b>Usage</b></p>
 
 <p>
 This function allows you to plot a 2-dimensional vector field specified by one or two functions or expressions via the matplotlib "<b>Quiver()</b>" function.
-The format of this function is as follows: "<b>plotv (['+',] [limits,] func(s), [color,] [fmt,] fs = None, res = 13, style = None, **kw)</b>".
+The format of this function is as follows: "<b>plotv (['+',] [limits,] func(s), [color,] [fmt,] [*walks,] fs = None, res = 13, style = None, resw = 1, kww = {}, **kw)</b>".
 The initial optional "<b>'+'</b>" and "<b>limits</b>" fields work exactly as in the "<b>plotf()</b>" function, as do the keyword arguments "<b>fs</b>" and "<b>style</b>".
 </p><p>
 The actual vector field to be plotted comes from either one or two functions or expressions which provide either the u and v coordinates of the vectors or a v/u slope for the vector - in which case the vector will not have a direction arrowhead by default.
@@ -582,6 +586,51 @@ If rather the "<b>res</b>" argument is a tuple of two numbers then these are use
 </p><p>
 Any keyword arguments are passed through on to the matplotlib "<b>Quiver()</b>" function which allows you to tweak certain display properties of the plot like line thicknesses and arrowheads, for a full list of these options see the matplotlib documentation.
 Also notice that unlike the "<b>plotf()</b>" function, "<b>plotv()</b>" only plots one vector field at a time.
+</p><p>
+If any non-keyword arguments are present after the "<b>func(s)</b>", "<b>color</b>" and "<b>fmt</b>" parameters but before any keyword arguments then they are interpreted as parameters to the function "<b>plotw()</b>" which will be called after the vector field is plotted and will plot one or more walks over that vector field.
+The "<b>resw</b>" parameter is passed on to "<b>plotw()</b>" as a keyword argument as well as the contents of the "<b>kww</b>" dictionary.
+See the documentation for that function for usage and formatting of these parameters.
+</p>
+
+<h4>plotw() - Plot Walk Over Vector Field</h4>
+
+<p><b>WARNING!</b> This plotting function can be very slow due to the fact it calls very frequently into SymPy Lambda functions as it adapts the walk to minimize potential error.</p>
+
+<p><b>Examples</b></p>
+
+<p>
+plotw (3, -3, 3, y - 2x, (1, 1))<br>
+plotw (3, -3, 3, y - 2x, (1, 1), (1, 2), (1, 0))<br>
+plotw (6, -6, 6, lambda x, y: (2x + sec**2x) / 2y, (0, -5), 'r=u(0) = -5', fs = -7)<br>
+plotw (2.5, -2.5, 2.5, (-y, x), (0.5, 0), '=(0.5,0)', (1, 0), '=(1,0)', (1.5, 0), '=(1.5,0)', (2, 0), '=(2,0)', fs = -6)<br>
+plotw (pi, -pi, pi, sin x - sin y, (0, 0), (1, 1), (2, 2), (-1, -1), (-2, -2), fs = -8, linewidth = 5)<br>
+</p><p>
+These will make more sense if they are put in the context of their respective vector fields:
+</p><p>
+plotv (3, -3, 3, y - 2x, (1, 1))<br>
+plotv (3, -3, 3, y - 2x, (1, 1), (1, 2), (1, 0))<br>
+plotv (6, -6, 6, lambda x, y: (2x + sec**2x) / 2y, (0, -5), 'r=u(0) = -5', fs = -7, res = 33)<br>
+plotv (2.5, -2.5, 2.5, (-y, x), (0.5, 0), '=(0.5,0)', (1, 0), '=(1,0)', (1.5, 0), '=(1.5,0)', (2, 0), '=(2,0)', fs = -6, pivot = 'mid')<br>
+plotv (pi, -pi, pi, sin x - sin y, (0, 0), (1, 1), (2, 2), (-1, -1), (-2, -2), fs = -8, kww = {'linewidth': 5})<br>
+</p>
+
+<p><b>Usage</b></p>
+
+<p>
+This function is normally intended to be called implicitly from the "<b>plotv()</b>" function for plotting a walk over a plotted vector field but can be called on its own to plot one or more walks without the vectory field in the background.
+The format is as follows: "<b>plotw (['+',] [limits,] func(s), *points, fs = None, resw = 1, style = None, **kw)</b>"
+The "<b>'+'</b>", "<b>limits</b>", "<b>fs</b>" and "<b>style</b>" fields work in the same manner as the previous two functions.
+The "<b>func(s)</b>" is interpreted as a vector field function or pair of functions or expressions like in "<b>plotv()</b>".
+"<b>resw</b>" is a resolution parameter - maximum pixel steps to allow walk step to deviate before drawing, smaller = better quality.
+</p><p>
+What this function does is take an x, y point (or points if multiple starting positions provided) and starts walking the vector field according to its value at that point - following the gradient.
+It adapts the steps it takes according to how much curvature the vector field exhibits at that point and tries to reach either the edge of the graph or its own starting point to complete a loop.
+The "<b>*points</b>" parameters specified in the function is either one or more tuples of x, y values optionally followed by "#color=label" formatting and dictionary keywords for the line corresponding to the walk for that point, similar to the previous functions.
+An example of "<b>*points</b>": "<b>plotw(..., (0, 0), '#red=0,0', {'linewidth': 2}, (1, 1), '#green=1,1', {'linewidth': 3}, (2, 2), ...)</b>".
+</p><p>
+Due to numerical errors accumulating during the walk this is by no means a perfect plotting function and should be considered experimental.
+Also due to the fact that the points of the vector field are gotten from SymPy operations and the number of times they are requested this function can be very slow.
+It may also never finish if a complex circular vector field introduces enough errors so that the walk gets back to the starting point but not quite close enough to consider it a full loop then the walk will keep going around and around in circles and the function will not return, you have been warned.
 </p>
 
 <h2>Appendix</h2>
@@ -636,19 +685,19 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <p>
 Calculating eigenvalues and eigenvectors of a matrix by "hand":
 </p><p>
-m = \[[1, 2], [3, 4<i>&emsp;don't need to close brackets</i><br>
+m = \[[1, 2], [3, 4]]<br>
 l = m - lambda eye 2<br>
-l.det(<br>
+l.det ()<br>
 solve _<i>&emsp;this will give the eigenvalues</i><br>
 a, b = _<i>&emsp;assign to vars</i><br>
-m.eigenvals(<i>&emsp;verify eigenvalues</i><br>
-Subs(l, lambda, a) \[x, y<br>
-solve(_ [0], _ [1], x, y<i>&emsp;relation between x and y</i><br>
-\[_ [0] [x], y].subs(y, 1<i>&emsp;first eigenvector for eigenvalue a</i><br>
-Subs(l, lambda, b) \[x, y<br>
-solve(_ [0], _ [1], x, y<i>&emsp;relation between x and y</i><br>
-\[_ [0] [x], y].subs(y, 1<i>&emsp;second eigenvector for eigenvalue b</i><br>
-m.eigenvects(<i>&emsp;verify eigenvectors</i><br>
+m.eigenvals ()<i>&emsp;verify eigenvalues</i><br>
+Subs (l, lambda, a) \[x, y]<br>
+solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
+\[_ [0] [x], y].subs (y, 1)<i>&emsp;first eigenvector for eigenvalue a</i><br>
+Subs (l, lambda, b) \[x, y]<br>
+solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
+\[_ [0] [x], y].subs (y, 1)<i>&emsp;second eigenvector for eigenvalue b</i><br>
+m.eigenvects ()<i>&emsp;verify eigenvectors</i><br>
 </p>
 
 <h4>Notes</h4>

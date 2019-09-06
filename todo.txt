@@ -1,6 +1,7 @@
 > walkv
 > import
 
+> nabla - gradient
 > emptyset Unicode symbol
 
 > Python or, and and not
