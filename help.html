@@ -67,7 +67,6 @@ Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi<br>
 \[[1, 2], [3, 4]]**-1<br>
 Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
-a if randprime(1, 4) == 2 else b<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
@@ -544,6 +543,7 @@ Keep in mind that this does not re-plot any previously plotted functions so that
 
 <p>
 plotv ((-y, x))<br>
+plotv (2, y - 2 x, '#green')<br>
 plotv (lambda x, y: (y, -x), 'dir')<br>
 plotv (2, -2, 2, y / x, '#red=dy/dx', fs = -6, width = 0.005)<br>
 plotv (4, -4, 4, (lambda a, b: a + b**2, lambda a, b: a**2 - b), lambda x, y, u, v: y, res = 31, fs = -8, width = 0.003)<br>
