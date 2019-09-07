@@ -1,11 +1,17 @@
+> change how set ops are written to py
+> Python or, and and not
+> extended comparison 0 <= x < 1 (using and)
+> ProductSet?
+
+> expr = x**2y**2, f = lambda x, y: expr
+
 > import
 
-> nabla - gradient
-> emptyset Unicode symbol
+> nabla, laplacian
 
-> Python or, and and not
 > patch into sympy arithmetic operation with bools
 > random server port selection / fallback
+> emptyset Unicode symbol
 
 > AppliedUndef, in func and in _Mul
 > Function ('f') (), Function ('f') (x), Function ('f') (x, y)
@@ -18,20 +24,22 @@
 > quick mode no spacing for vars x y z -> xyz?
 > non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
 
+> floor / ceiling
+
 > display subscripts
 > parse subscripts
 
 > SYM CLEANUP!
 
+
 > plots as objects?
-> ProductSet?
 > no-evaluate version of Add and Mul (for tuples, lists and strings)?
-> extended comparison 0 <= x < 1
 > flush sys.stdout to msg before sending exception?
 > function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?
 > long variable name shortcut? $?
 > {1:2:3,} -> {slice(1, 2, 3),} (SymPy creating dynamic class of slice)?
+> derivative and integral of lambda functions?
 
 > fix unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyway.
 
