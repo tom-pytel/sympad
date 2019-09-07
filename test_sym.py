@@ -144,6 +144,14 @@ y**z [w]
 {y**z} [w]
 x {y**z} [w]
 {x y**z} [w]
+\sqrt[{lambda x, y, z: {ConditionSet()}}]{x}
+{1:2:3}[2]
+{1:2:3}.x
+None**-1.0**\[[\emptyset,],[0,],[\partial x,],] / {not \[None,\emptyset,]}
+\int_\lim_{x \to 1} oo^{not 1e100}^\{{partialx+dx},{\partialx*.1},partialx!} \log_\left|partialx\right|{1 \cdot False} dx
+{{\[[{{\emptyset} = {.1}},{\[[{\emptyset},],[{"str"},],]},],]} if {-{{\partial x}!}} else {{{{False}!} and {{{\partial x}||{oo}||{"str"}}}}}}
+{\int {{{{{1e-100}  {1}  {partialx}}}*{{True}^{\tilde\infty }}}} dx}
+{{{{-{"str"}} : {lambda x, y: {\partialx}}} \cdot {{not {{'str'} : {1.} : {.1}}}}}}
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

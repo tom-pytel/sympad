@@ -143,16 +143,24 @@ def _xlat_func2ast_Piecewise (*args):
 
 	return None
 
-def _xlat_func2ast_set (*args):
-	if not args:
-		return AST.SetEmpty
+# def _xlat_func2ast_set (*args):
+# 	if not args:
+# 		return AST.SetEmpty
 
-	arg = args [0].strip_paren ()
+# 	arg = args [0].strip_paren ()
 
-	if arg.op in {',', '[', 'vec', 'set'}:
-		return AST ('set', tuple (arg [1]))
+# 	if arg.op in {',', '[', 'vec', 'set'}:
+# 		return AST ('set', tuple (arg [1]))
 
-	return None
+# 	return None
+
+def _xlat_func2ast_slice (*args):
+	if len (args) == 1:
+		return AST ('slice', None, args [0], None)
+	if len (args) == 2:
+		return AST ('slice', args [0], args [1], None)
+	else:
+		return AST ('slice', args [0], args [1], args [2])
 
 def _xlat_func2ast_Sum (ast = AST.VarNull, ab = None):
 	if ab is None:
@@ -188,6 +196,7 @@ _XLAT_FUNC2AST_BASE = {
 	'Piecewise'            : _xlat_func2ast_Piecewise,
 	'Pow'                  : _xlat_func2ast_Pow,
 	'pow'                  : _xlat_func2ast_Pow,
+	'slice'                : _xlat_func2ast_slice,
 	'Sum'                  : _xlat_func2ast_Sum,
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
 	'Union'                : lambda *args: AST ('||', tuple (args)),

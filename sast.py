@@ -111,8 +111,8 @@ class AST (tuple):
 		else:
 			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
-	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^' and '&&' into single AST
-		if self.op in {'+', '*', '||', '^^', '&&'}:
+	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^', '&&', 'or' and 'and' into single AST
+		if self.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}:
 			if self.op == op:
 				for e in self [1]:
 					e.flat (op, seq)
@@ -470,7 +470,7 @@ class AST_Func (AST):
 
 	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset', 'plotf', 'plotv', 'plotw'}
 	PSEUDO          = {NOREMAP, NOEVAL}
-	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum'}
+	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum', 'slice'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 
