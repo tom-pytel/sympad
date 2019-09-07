@@ -2287,6 +2287,21 @@ Subs (x y, x, 2)
 Subs (x y, (x, y), (2, 3))
 (x y).subs (x, 2)
 (x y).subs (x, 2).subs (y, 3)
+x or y
+x or y or z
+x and y
+x and y and z
+x and y or z
+x and {y or z}
+not x or y
+not {x or y}
+not x and y
+not {x and y}
+x or not y
+x and not y
+not x
+not not x
+not not not x
 """
 
 if __name__ == '__main__':

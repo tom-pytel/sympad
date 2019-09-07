@@ -39,6 +39,9 @@
 # ('||', (expr1, expr2, ...))                      - set union
 # ('^^', (expr1, expr2, ...))                      - set symmetric difference
 # ('&&', (expr1, expr2, ...))                      - set intersection
+# ('or', (expr1, expr2, ...))                      - Python or
+# ('and', (expr1, expr2, ...))                     - Python and
+# ('not', (expr1, expr2, ...))                     - Python not
 
 import re
 import types
@@ -572,28 +575,46 @@ class AST_Dict (AST):
 		self.dict = dict
 
 class AST_Union (AST):
-	op, is_bor = '||', True
+	op, is_union = '||', True
 
 	def _init (self, union):
 		self.union = union
 
 class AST_Sdiff (AST): # symmetric difference
-	op, is_bxor = '^^', True
+	op, is_sdiff = '^^', True
 
 	def _init (self, sdiff):
 		self.sdiff = sdiff
 
 class AST_Xsect (AST): # intersection
-	op, is_band = '&&', True
+	op, is_xsect = '&&', True
 
 	def _init (self, xsect):
 		self.xsect = xsect
+
+class AST_Or (AST):
+	op, is_or = 'or', True
+
+	def _init (self, or_):
+		self.or_ = or_
+
+class AST_And (AST):
+	op, is_and = 'and', True
+
+	def _init (self, and_):
+		self.and_ = and_
+
+class AST_Not (AST):
+	op, is_not = 'not', True
+
+	def _init (self, not_):
+		self.not_ = not_
 
 #...............................................................................................
 _AST_CLASSES = [AST_Eq, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
 	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
 	AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
-	AST_Union, AST_Sdiff, AST_Xsect]
+	AST_Union, AST_Sdiff, AST_Xsect, AST_Or, AST_And, AST_Not]
 
 for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)

@@ -1,4 +1,7 @@
+> lambda parse set and py logic ops
+
 > Python or, and and not
+> unparenthesize py set operations
 > extended comparison 0 <= x < 1 (using and)
 > change how set ops are written to py?
 > ProductSet?
@@ -55,4 +58,36 @@
 
 
 Errors:
+
+
+{1:2:3}[4]
+{1:2:3}.a
+py slice?
+
+text: {1:2:3}[4]
+ast:  ('idx', ('slice', ('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'),))
+nat:  ('slice', ('#', '1'), ('#', '2'), ('idx', ('#', '3'), (('#', '4'),)))
+
+text: {{{True} : {"str"} : {1e100}} [{({False},{dx},{-1.0})}]}
+ast:  ('idx', ('slice', ('@', 'True'), ('"', 'str'), ('#', '1e+100')), ((',', (('@', 'False'), ('@', 'dx'), ('#', '-1.0'))),))
+nat:  ('slice', ('@', 'True'), ('"', 'str'), ('idx', ('#', '1e+100'), ((',', (('@', 'False'), ('@', 'dx'), ('#', '-1.0'))),)))
+
+
+
+text: [Derivative(ln1.or*(partial*0 - 1.0) or 1.0*1.0, y, 3), sec(sqrt(1e+100*-1.0)), FiniteSet({} and 1e-100**(1/partialx) and Sum(1, (x, -1, True)))]
+ast:  ('[', (('func', 'Derivative', (('or', (('*', (('.', ('@', 'ln1'), 'or'), ('+', (('*', (('@', 'partial'), ('#', '0'))), ('#', '-1.0'))))), ('*', (('#', '1.0'), ('#', '1.0'))))), ('@', 'y'), ('#', '3'))), ('func', 'sec', (('sqrt', ('*', (('#', '1e+100'), ('#', '-1.0')))),)), ('func', 'FiniteSet', (('and', (('dict', ()), ('^', ('#', '1e-100'), ('/', ('#', '1'), ('@', 'dx'))), ('func', 'Sum', (('#', '1'), (',', (('@', 'x'), ('#', '-1'), ('@', 'True'))))))),))))
+nat:  ('[', (('func', 'Derivative', (('or', (('.', ('@', 'ln1'), 'or', (('+', (('*', (('@', 'partial'), ('#', '0'))), ('#', '-1.0'))),)), ('*', (('#', '1.0'), ('#', '1.0'))))), ('@', 'y'), ('#', '3'))), ('func', 'sec', (('sqrt', ('*', (('#', '1e+100'), ('#', '-1.0')))),)), ('func', 'FiniteSet', (('and', (('dict', ()), ('^', ('#', '1e-100'), ('/', ('#', '1'), ('@', 'dx'))), ('func', 'Sum', (('#', '1'), (',', (('@', 'x'), ('#', '-1'), ('@', 'True'))))))),))))
+
+text: None**-1.0**\[[\emptyset,],[0,],[\partial x,],] / {not \[None,\emptyset,]}
+ast:  ('/', ('^', ('@', 'None'), ('-', ('^', ('#', '1.0'), ('mat', ((('set', ()),), (('#', '0'),), (('@', 'dx'),)))))), ('not', ('vec', (('@', 'None'), ('set', ())))))
+tex:  ('/', ('^', ('@', 'None'), ('-', ('^', ('#', '1.0'), ('vec', (('set', ()), ('#', '0'), ('@', 'dx')))))), ('not', ('vec', (('@', 'None'), ('set', ())))))
+
+text: \int_\lim_{x \to 1} oo^{not 1e100}^\{{partialx+dx},{\partialx*.1},partialx!} \log_\left|partialx\right|{1 \cdot False} dx
+ast:  ('intg', ('*', (('@', 'x'), ('lim', ('*', (('^', ('^', ('@', 'oo'), ('not', ('#', '1e+100'))), ('set', (('+', (('@', 'dx'), ('@', 'dx'))), ('*', (('@', 'dx'), ('#', '0.1'))), ('!', ('@', 'dx'))))), ('log', ('@', 'x')), ('|', ('@', 'dx')), ('#', '1'), ('@', 'False'))), ('@', 'x'), ('#', '1')))), ('@', 'dx'))
+nat:  ('intg', ('*', (('@', 'x'), ('lim', ('*', (('^', ('^', ('@', 'oo'), ('not', ('#', '1e+100'))), ('set', (('+', (('@', 'dx'), ('@', 'dx'))), ('*', (('@', 'dx'), ('#', '0.1'))), ('!', ('@', 'dx'))))), ('log', ('@', 'x')), ('|', ('@', 'dx')), ('#', '1'), ('@', 'False'), ('@', 'dx'))), ('@', 'x'), ('#', '1')))), ('@', ''))
+
+
+text: Piecewise((((Union(1.0, 0.1)) / d)**3 / (dy**1*dz**2*False)*Union(Complement(0, 1), Complement(1, 0)) = Union(Complement(a, Union(-1, oo, a_prime)), Complement(Union(-1, oo, a_prime), a))*log1.if*(Union(Complement(Union(Complement(False, dx), Complement(dx, False)), FiniteSet()), Complement(FiniteSet(), Union(Complement(False, dx), Complement(dx, False))))), FiniteSet((1e-100 or 1.0 or True, a[FiniteSet(), 1., -1.0], 1 in dx), False**1*e100*partialx**a)))
+ast:  ('func', 'Piecewise', ((',', (('=', '=', ('*', (('/', ('^', ('/', ('func', 'Union', (('#', '1.0'), ('#', '0.1'))), ('@', 'd')), ('#', '3')), ('*', (('^', ('@', 'dy'), ('#', '1')), ('^', ('@', 'dz'), ('#', '2')), ('@', 'False')))), ('func', 'Union', (('func', 'Complement', (('#', '0'), ('#', '1'))), ('func', 'Complement', (('#', '1'), ('#', '0'))))))), ('*', (('func', 'Union', (('func', 'Complement', (('@', 'a'), ('func', 'Union', (('#', '-1'), ('@', 'oo'), ('@', 'a_prime'))))), ('func', 'Complement', (('func', 'Union', (('#', '-1'), ('@', 'oo'), ('@', 'a_prime'))), ('@', 'a'))))), ('.', ('@', 'log1'), 'if'), ('func', 'Union', (('func', 'Complement', (('func', 'Union', (('func', 'Complement', (('@', 'False'), ('@', 'dx'))), ('func', 'Complement', (('@', 'dx'), ('@', 'False'))))), ('func', 'FiniteSet', ()))), ('func', 'Complement', (('func', 'FiniteSet', ()), ('func', 'Union', (('func', 'Complement', (('@', 'False'), ('@', 'dx'))), ('func', 'Complement', (('@', 'dx'), ('@', 'False')))))))))))), ('func', 'FiniteSet', ((',', (('or', (('#', '1e-100'), ('#', '1.0'), ('@', 'True'))), ('idx', ('@', 'a'), (('func', 'FiniteSet', ()), ('#', '1.'), ('#', '-1.0'))), ('=', 'in', ('#', '1'), ('@', 'dx')))), ('*', (('^', ('@', 'False'), ('#', '1')), ('@', 'e100'), ('^', ('@', 'dx'), ('@', 'a')))))))),))
+nat:  ('func', 'Piecewise', ((',', (('=', '=', ('*', (('/', ('^', ('/', ('func', 'Union', (('#', '1.0'), ('#', '0.1'))), ('@', 'd')), ('#', '3')), ('*', (('^', ('@', 'dy'), ('#', '1')), ('^', ('@', 'dz'), ('#', '2')), ('@', 'False')))), ('func', 'Union', (('func', 'Complement', (('#', '0'), ('#', '1'))), ('func', 'Complement', (('#', '1'), ('#', '0'))))))), ('*', (('func', 'Union', (('func', 'Complement', (('@', 'a'), ('func', 'Union', (('#', '-1'), ('@', 'oo'), ('@', 'a_prime'))))), ('func', 'Complement', (('func', 'Union', (('#', '-1'), ('@', 'oo'), ('@', 'a_prime'))), ('@', 'a'))))), ('.', ('@', 'log1'), 'if', (('func', 'Union', (('func', 'Complement', (('func', 'Union', (('func', 'Complement', (('@', 'False'), ('@', 'dx'))), ('func', 'Complement', (('@', 'dx'), ('@', 'False'))))), ('func', 'FiniteSet', ()))), ('func', 'Complement', (('func', 'FiniteSet', ()), ('func', 'Union', (('func', 'Complement', (('@', 'False'), ('@', 'dx'))), ('func', 'Complement', (('@', 'dx'), ('@', 'False'))))))))),))))), ('func', 'FiniteSet', ((',', (('or', (('#', '1e-100'), ('#', '1.0'), ('@', 'True'))), ('idx', ('@', 'a'), (('func', 'FiniteSet', ()), ('#', '1.'), ('#', '-1.0'))), ('=', 'in', ('#', '1'), ('@', 'dx')))), ('*', (('^', ('@', 'False'), ('#', '1')), ('@', 'e100'), ('^', ('@', 'dx'), ('@', 'a')))))))),))
 

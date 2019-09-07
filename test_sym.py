@@ -148,8 +148,8 @@ x {y**z} [w]
 
 _ALLOW_LAMB = 1
 
-def expr_eq (): ## BROKEN!
-	return f'{expr (_ALLOW_LAMB)} {choice (["=", "==", "!=", "<", "<=", ">", ">="])} {expr (_ALLOW_LAMB)}'
+def expr_eq (): # BROKEN?
+	return f'{expr (_ALLOW_LAMB)} {choice (["=", "==", "!=", "<", "<=", ">", ">=", " in ", " not in "])} {expr (_ALLOW_LAMB)}'
 
 def expr_curly ():
 	return '{' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + '}'
@@ -301,14 +301,23 @@ def expr_set ():
 def expr_dict ():
 	return '{' + ','.join (f'{choice (_TERMS)} : {expr (1)}' for i in range (randrange (4))) + '}'
 
-# def expr_bor ():
-# 	return '{' + '||'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+def expr_union ():
+	return '{' + '||'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
-# def expr_bxor ():
-# 	return '{' + '^^'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+def expr_sdiff ():
+	return '{' + '^^'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
 
-# def expr_band ():
-# 	return '{' + '&&'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+def expr_xsect ():
+	return '{' + '&&'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+
+def expr_or ():
+	return '{' + ' or '.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+
+def expr_and ():
+	return '{' + ' and '.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+
+def expr_not ():
+	return f'{{not {expr (1)}}}'
 
 #...............................................................................................
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
@@ -372,7 +381,7 @@ def flatten (ast):
 
 	t = [flatten (a) for a in ast]
 
-	if ast.op in {'+', '*'}:
+	if ast.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}:
 		t = (ast.op, tuple (sum (((m,) if m.op != ast.op else m [1] for m in t [1]), ())))
 
 	return AST (*t)
@@ -436,6 +445,7 @@ def test (argv = None):
 			if not ast or erridx or auto:
 				print ()
 				print ('Invalid:', text)
+
 				continue
 
 			ast = flatten (ast)
@@ -457,6 +467,7 @@ def test (argv = None):
 				if not ast or erridx or auto:
 					print ()
 					print ('Invalid:', text)
+
 					continue
 
 				ast = fix_rest (ast)
