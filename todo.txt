@@ -1,4 +1,6 @@
-> ast2py slice translation
+> true and false
+> boolean coercion to number types
+> logic operations fall back to Python logic ops?
 
 > lambda parse set and py logic ops?
 
@@ -78,8 +80,6 @@ text: Piecewise((((Union(1.0, 0.1)) / d)**3 / (dy**1*dz**2*False)*Union(Compleme
 ast:  ('func', 'Piecewise', ((',', (('=', '=', ('*', (('/', ('^', ('/', ('func', 'Union', (('#', '1.0'), ('#', '0.1'))), ('@', 'd')), ('#', '3')), ('*', (('^', ('@', 'dy'), ('#', '1')), ('^', ('@', 'dz'), ('#', '2')), ('@', 'False')))), ('func', 'Union', (('func', 'Complement', (('#', '0'), ('#', '1'))), ('func', 'Complement', (('#', '1'), ('#', '0'))))))), ('*', (('func', 'Union', (('func', 'Complement', (('@', 'a'), ('func', 'Union', (('#', '-1'), ('@', 'oo'), ('@', 'a_prime'))))), ('func', 'Complement', (('func', 'Union', (('#', '-1'), ('@', 'oo'), ('@', 'a_prime'))), ('@', 'a'))))), ('.', ('@', 'log1'), 'if'), ('func', 'Union', (('func', 'Complement', (('func', 'Union', (('func', 'Complement', (('@', 'False'), ('@', 'dx'))), ('func', 'Complement', (('@', 'dx'), ('@', 'False'))))), ('func', 'FiniteSet', ()))), ('func', 'Complement', (('func', 'FiniteSet', ()), ('func', 'Union', (('func', 'Complement', (('@', 'False'), ('@', 'dx'))), ('func', 'Complement', (('@', 'dx'), ('@', 'False')))))))))))), ('func', 'FiniteSet', ((',', (('or', (('#', '1e-100'), ('#', '1.0'), ('@', 'True'))), ('idx', ('@', 'a'), (('func', 'FiniteSet', ()), ('#', '1.'), ('#', '-1.0'))), ('=', 'in', ('#', '1'), ('@', 'dx')))), ('*', (('^', ('@', 'False'), ('#', '1')), ('@', 'e100'), ('^', ('@', 'dx'), ('@', 'a')))))))),))
 nat:  ('func', 'Piecewise', ((',', (('=', '=', ('*', (('/', ('^', ('/', ('func', 'Union', (('#', '1.0'), ('#', '0.1'))), ('@', 'd')), ('#', '3')), ('*', (('^', ('@', 'dy'), ('#', '1')), ('^', ('@', 'dz'), ('#', '2')), ('@', 'False')))), ('func', 'Union', (('func', 'Complement', (('#', '0'), ('#', '1'))), ('func', 'Complement', (('#', '1'), ('#', '0'))))))), ('*', (('func', 'Union', (('func', 'Complement', (('@', 'a'), ('func', 'Union', (('#', '-1'), ('@', 'oo'), ('@', 'a_prime'))))), ('func', 'Complement', (('func', 'Union', (('#', '-1'), ('@', 'oo'), ('@', 'a_prime'))), ('@', 'a'))))), ('.', ('@', 'log1'), 'if', (('func', 'Union', (('func', 'Complement', (('func', 'Union', (('func', 'Complement', (('@', 'False'), ('@', 'dx'))), ('func', 'Complement', (('@', 'dx'), ('@', 'False'))))), ('func', 'FiniteSet', ()))), ('func', 'Complement', (('func', 'FiniteSet', ()), ('func', 'Union', (('func', 'Complement', (('@', 'False'), ('@', 'dx'))), ('func', 'Complement', (('@', 'dx'), ('@', 'False'))))))))),))))), ('func', 'FiniteSet', ((',', (('or', (('#', '1e-100'), ('#', '1.0'), ('@', 'True'))), ('idx', ('@', 'a'), (('func', 'FiniteSet', ()), ('#', '1.'), ('#', '-1.0'))), ('=', 'in', ('#', '1'), ('@', 'dx')))), ('*', (('^', ('@', 'False'), ('#', '1')), ('@', 'e100'), ('^', ('@', 'dx'), ('@', 'a')))))))),))
 
-text: {{{{-{"str"}} : {lambda x, y: {\partialx}}} \cdot {{not {{'str'} : {1.} : {.1}}}}}}
-ast:  ('*', (('dict', ((('-', ('"', 'str')), ('lamb', ('@', 'dx'), (('@', 'x'), ('@', 'y')))),)), ('not', ('slice', ('"', 'str'), ('#', '1.'), ('#', '0.1')))))
-nat:  ('*', (('dict', ((('-', ('"', 'str')), ('*', (('@', 'lambda'), ('@', 'x')))), (('@', 'y'), ('@', 'dx')))), ('not', ('slice', ('"', 'str'), ('#', '1.'), ('#', '0.1')))))
-{z : {lambda x, y: {\partialx}} * {not {a : b : c}}}
-{-{"str"} : {lambda x, y: z}} \cdot {{not {a : b : c}}}
+text: {({\frac{({1},{1.},{0})}{{{1e-100} and {\partial }}}},{{-{-1}}^{{1} : {\partial x} : {0}}})}
+ast:  (',', (('/', (',', (('#', '1'), ('#', '1.'), ('#', '0'))), ('and', (('#', '1e-100'), ('@', 'partial')))), ('^', ('-', ('#', '-1')), ('slice', ('#', '1'), ('@', 'dx'), ('#', '0')))))
+nat:  (',', (('/', (',', (('#', '1'), ('#', '1.'), ('#', '0'))), ('and', (('#', '1e-100'), ('@', 'partial')))), ('slice', ('^', ('-', ('#', '-1')), ('#', '1')), ('@', 'dx'), ('#', '0'))))

@@ -377,7 +377,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", ",", "slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", ",", "slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"slice"})}' for p in ast.piece) + ' \\end{cases}',
 		'lamb' : lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 		'idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^", "slice"}, ast.obj.is_neg_num or ast.obj.op in {"=", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "||", "^^", "&&", "or", "and", "not"})}\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]',
-		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and (a.is_ass or a.op in {',', 'lamb', 'slice'})) for a in _ast_slice_bounds (ast, '')),
+		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and (a.is_ass or a.op in {',', 'slice'})) for a in _ast_slice_bounds (ast, '')),
 		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex (k)}{{:}} {self._ast2tex (v)}" for k, v in ast.dict)} \\right\\}}',
 		'||'   : lambda self, ast: ' \\cup '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', 'slice', 'or', 'and', 'not'} or (a.is_piece and a is not ast.union [-1])) for a in ast.union),
@@ -695,9 +695,9 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_slice (self, ast):
 		if self.parent.is_idx and ast in self.parent.idx or \
 				self.parent.is_comma and len (self.parents) > 1 and self.parents [-2].is_idx and ast in self.parents [-2].idx:
-			return ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast))
+			return ':'.join (self._ast2py_paren (a, a.is_ass or a.op in {',', 'slice'}) for a in _ast_slice_bounds (ast))
 
-		return f'slice({", ".join (self._ast2py_paren (a, a.is_ass or a.op in {",", "lamb", "slice"}) for a in _ast_slice_bounds (ast, AST.None_))})'
+		return f'slice({", ".join (self._ast2py_paren (a, a.is_ass or a.op in {",", "slice"}) for a in _ast_slice_bounds (ast, AST.None_))})'
 
 	def _ast2py_sdiff (self, ast):
 		sdiff = self._ast2py (ast.sdiff [0])
