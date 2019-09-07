@@ -1,3 +1,7 @@
+v1.0.7:
+-------
+* Patched SymPy sets.Complement to sympify args.
+
 v1.0.6:
 -------
 * Added walk over vector field plotting.

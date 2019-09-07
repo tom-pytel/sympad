@@ -36,9 +36,9 @@
 # ('slice', start, stop, step)                     - indexing slice object: obj [start : stop : step], None or False indicates not specified
 # ('set', (expr1, expr2, ...))                     - set
 # ('dict', ((k1, v1), (k2, v2), ...))              - python dict
-# ('||', (expr1, expr2, ...))                      - bitwise or, set union
-# ('^^', (expr1, expr2, ...))                      - bitwise xor, set symmetric difference
-# ('&&', (expr1, expr2, ...))                      - bitwise and, set intersection
+# ('||', (expr1, expr2, ...))                      - set union
+# ('^^', (expr1, expr2, ...))                      - set symmetric difference
+# ('&&', (expr1, expr2, ...))                      - set intersection
 
 import re
 import types
@@ -108,8 +108,8 @@ class AST (tuple):
 		else:
 			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
-	def flat (self, op = None, seq = None): # flatten trees of '+' or '*' into single AST
-		if self.is_add or self.is_mul:
+	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^' and '&&' into single AST
+		if self.op in {'+', '*', '||', '^^', '&&'}:
 			if self.op == op:
 				for e in self [1]:
 					e.flat (op, seq)

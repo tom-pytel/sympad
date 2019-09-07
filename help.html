@@ -407,7 +407,7 @@ All functions may take multiple comma-separated arguments and the SymPy function
 
 <p>
 Almost all SymPy function and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
-Though those and functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$print ("Hello World...")</b>".
+Though those functions and others beginning with an underscore as well as many __builtins__ can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$print ("Hello World...")</b>".
 Only the "safe" __builtin__ functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
 The reason for excluding single letter functions is that due to the way the grammar works all natively recognized function names are permanently excluded from being used as variables and since very often single letters are used as variable names this would be problematic.
 A workaround is in place and described further down.
@@ -730,8 +730,10 @@ If you want a completely separate context then you can run another SymPad on a d
 </p><p>
 Keep in mind that if you copy to Python code and want it to run in SymPy you must be in uppercase "<b>EI</b>" mode or have the variables "<b>e</b>" and "<b>i</b>" in Python assigned to "<b>E</b>" and "<b>I</b>".
 </p><p>
+Quick input mode can cause keyword arguments to not be recognized correctly since it always separates letters into variables, if some keyword argument is not working in quick input mode then wrap it in quotes.
+</p><p>
 There are many SymPy objects which SymPad does not understand natively yet.
-In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the element will be used in the native representation string.
+In any case where such an object is the result of an evalutation then the SymPy LaTeX representation will be used for the displayed answer and the SymPy str version of the element will be used in the native representation string, as well as the actual object which resulted from the previous calculation being stored in the "<b>_</b>" variable.
 This should allow you to continue working with the calculation.
 </p>
 

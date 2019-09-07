@@ -1,28 +1,30 @@
-> change how set ops are written to py
 > Python or, and and not
 > extended comparison 0 <= x < 1 (using and)
+> change how set ops are written to py?
 > ProductSet?
 
 > expr = x**2y**2, f = lambda x, y: expr
 
-> import
+> importing modules to allow custom code execution
 
+> AppliedUndef, in func and in _Mul
+> Function ('f') (), Function ('f') (x), Function ('f') (x, y)
+> ODEs
+
+> vector calculus
 > nabla, laplacian
 
 > patch into sympy arithmetic operation with bools
 > random server port selection / fallback
 > emptyset Unicode symbol
 
-> AppliedUndef, in func and in _Mul
-> Function ('f') (), Function ('f') (x), Function ('f') (x, y)
-
 > var_prime in quick mode
 
 > break out state machine from server
 
-> no spacing for nums - 3 x -> 3x?
-> quick mode no spacing for vars x y z -> xyz?
-> non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
+> formatting: no spacing for nums - 3 x -> 3x?
+> formatting: quick mode no spacing for vars x y z -> xyz?
+> formatting: non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
 
 > floor / ceiling
 
@@ -30,7 +32,6 @@
 > parse subscripts
 
 > SYM CLEANUP!
-
 
 > plots as objects?
 > no-evaluate version of Add and Mul (for tuples, lists and strings)?
@@ -47,15 +48,11 @@
 > ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
 
 > var assumptions
-> importing modules to allow custom code execution
-> Proper implementation of vectors with "<b>\vec{x}</b>" and "<b>\hat{i}</b>" variables
-> systems of equations, ODEs, more graphical plots...
+> Proper implementation of vectors with "\vec{x}" and "\hat{i}" variables
+> systems of equations
+> more graphical plots
 > numpy support
 
-
-Misc:
-
-> def __new__(cls, b, e, evaluate=None): obj = Expr.__new__(cls, b, e)
 
 Errors:
 

@@ -1,23 +1,16 @@
-# Patch SymPy matrix multiplication for intermediate simplification step to control expression blowup.
+# Patch SymPy bugs and inconveniences.
 
 from collections import defaultdict
 
-SPATCHED = False
+#...............................................................................................
+def _Complement__new__ (cls, a, b, evaluate = True): # sets.Complement patched to sympify args
+	if evaluate:
+		return Complement.reduce (sympify (a), sympify (b))
 
-try: # try to patch and fail silently if SymPy has changed too much since this was written
-	from sympy import S, count_ops, cancel, together, SparseMatrix
-	from sympy.matrices.common import MatrixArithmetic, classof
-	from sympy.matrices.dense import DenseMatrix
-	from sympy.matrices.sparse import SparseMatrix
+	return Basic.__new__ (cls, a, b)
 
-	_DEFAULT_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
-	_DEFAULT_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
-	_DEFAULT_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
-
-	SPATCHED = True
-
-except:
-	pass
+#...............................................................................................
+# matrix multiplication itermediate simplification routines
 
 def _dotprodsimp (a, b, simplify = True):
 	"""Sum-of-products with optional intermediate product simplification
@@ -148,6 +141,30 @@ def _SparseMatrix_eval_matrix_mul (self, other):
 					(col_lookup [col][k] for k in indices))
 
 	return self._new (self.rows, other.cols, smat)
+
+#...............................................................................................
+SPATCHED = False
+
+try: # try to patch and fail silently if SymPy has changed too much since this was written
+	from sympy import sympify, S, count_ops, cancel, together, SparseMatrix, Basic, Complement
+	from sympy.matrices.common import MatrixArithmetic, classof
+	from sympy.matrices.dense import DenseMatrix
+	from sympy.matrices.sparse import SparseMatrix
+
+	_DEFAULT_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
+	_DEFAULT_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
+	_DEFAULT_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
+
+	MatrixArithmetic._eval_matrix_mul         = _MatrixArithmetic_eval_matrix_mul
+	DenseMatrix._eval_matrix_mul              = _DenseMatrix_eval_matrix_mul
+	SparseMatrix._eval_matrix_mul             = _SparseMatrix_eval_matrix_mul
+
+	Complement.__new__                        = _Complement__new__
+
+	SPATCHED = True
+
+except:
+	pass
 
 def set_matmulsimp (state):
 	if SPATCHED:

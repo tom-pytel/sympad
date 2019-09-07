@@ -75,11 +75,11 @@ def _simplify (spt):
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
 
-def _ast_slice_bounds (ast, None_ = AST.VarNull):
-	return tuple (a or None_ for a in ((ast.start, ast.stop) if ast.step is None else (ast.start, ast.stop, ast.step)))
-
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_neg_num or (ast.is_mul and _ast_is_neg (ast.mul [0]))
+
+def _ast_slice_bounds (ast, None_ = AST.VarNull):
+	return tuple (a or None_ for a in ((ast.start, ast.stop) if ast.step is None else (ast.start, ast.stop, ast.step)))
 
 def _ast_followed_by_slice (ast, seq):
 	try:
@@ -101,7 +101,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if id (func) in _ast_func_call_spobjs: # if SymPy object try applying 'evaluate' flag
 		try:
 			spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
-		except: # (ValueError, TypeError, NameError, AttributeError, sp.OptionError): # maybe 'evaluate' keyword not supported?
+		except: # maybe 'evaluate' keyword not supported?
 			pass
 
 	if spt is None:
@@ -717,7 +717,7 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
-_ast2spt_funcs         = {**_ast2spt_func_builtins, **sp.__dict__}
+_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __init__ (self): self.vars = self.eval = [] # pylint kibble
@@ -818,7 +818,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), 1 if len (ast.args) == 1 else self._ast2spt (ast.args [1]))
 
-		func = _ast2spt_funcs.get (ast.unescaped) # getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped) #
+		func = _ast2spt_pyfuncs.get (ast.unescaped) # getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped) #
 
 		if func is not None:
 			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
@@ -1063,9 +1063,9 @@ def _spt2ast_Integral (spt):
 
 _spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
-dict_keys   = {}.keys ().__class__
-dict_values = {}.values ().__class__
-dict_items  = {}.items ().__class__
+_dict_keys   = {}.keys ().__class__
+_dict_values = {}.values ().__class__
+_dict_items  = {}.items ().__class__
 
 _spt2ast_funcs = {
 	ExprNoEval: lambda spt: spt.SYMPAD_eval (),
@@ -1082,9 +1082,9 @@ _spt2ast_funcs = {
 	frozenset: lambda spt: AST ('set', tuple (spt2ast (e) for e in spt)),
 	dict: lambda spt: AST ('dict', tuple ((spt2ast (k), spt2ast (v)) for k, v in spt.items ())),
 	slice: lambda spt: AST ('slice', False if spt.start is None else spt2ast (spt.start), False if spt.stop is None else spt2ast (spt.stop), None if spt.step is None else spt2ast (spt.step)),
-	dict_keys: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
-	dict_values: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
-	dict_items: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
+	_dict_keys: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
+	_dict_values: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
+	_dict_items: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
 	sp.Tuple: lambda spt: spt2ast (spt.args),
 
 	sp.Integer: _spt2ast_num,
