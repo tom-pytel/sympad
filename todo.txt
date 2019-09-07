@@ -1,4 +1,6 @@
-> lambda parse set and py logic ops
+> ast2py slice translation
+
+> lambda parse set and py logic ops?
 
 > Python or, and and not
 > unparenthesize py set operations

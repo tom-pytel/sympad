@@ -175,7 +175,22 @@ def _xlat_func2ast_Sum (ast = AST.VarNull, ab = None):
 
 	return None
 
-_XLAT_FUNC2AST_BASE = {
+_XLAT_FUNC2AST_ALL    = {
+	'slice'                : _xlat_func2ast_slice,
+	'Eq'                   : lambda a, b: AST ('=', '==', a, b),
+	'Ne'                   : lambda a, b: AST ('=', '!=', a, b),
+	'Lt'                   : lambda a, b: AST ('=', '<', a, b),
+	'Le'                   : lambda a, b: AST ('=', '<=', a, b),
+	'Gt'                   : lambda a, b: AST ('=', '>', a, b),
+	'Ge'                   : lambda a, b: AST ('=', '>=', a, b),
+}
+
+_XLAT_FUNC2AST_REIM = {
+	'Re'                   : lambda *args: AST ('func', 're', tuple (args)),
+	'Im'                   : lambda *args: AST ('func', 'im', tuple (args)),
+}
+
+_XLAT_FUNC2AST_TEXNAT = {
 	'abs'                  : lambda ast: AST ('|', ast),
 	'Abs'                  : lambda ast: AST ('|', ast),
 	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
@@ -196,18 +211,12 @@ _XLAT_FUNC2AST_BASE = {
 	'Piecewise'            : _xlat_func2ast_Piecewise,
 	'Pow'                  : _xlat_func2ast_Pow,
 	'pow'                  : _xlat_func2ast_Pow,
-	'slice'                : _xlat_func2ast_slice,
 	'Sum'                  : _xlat_func2ast_Sum,
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
 	'Union'                : lambda *args: AST ('||', tuple (args)),
 }
 
-_XLAT_FUNC2AST_REIM = {
-	'Re'                   : lambda *args: AST ('func', 're', tuple (args)),
-	'Im'                   : lambda *args: AST ('func', 'im', tuple (args)),
-}
-
-XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_BASE,
+XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
 	'SparseMatrix'         : _xlat_func2ast_Matrix,
 	'MutableSparseMatrix'  : _xlat_func2ast_Matrix,
 	'ImmutableDenseMatrix' : _xlat_func2ast_Matrix,
@@ -218,9 +227,9 @@ XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_BASE,
 	'zeros'                : True,
 }
 
-XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2AST_BASE}
+XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2AST_TEXNAT}
 
-XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_REIM,
+XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM,
 	'Gamma'                : lambda *args: AST ('func', 'gamma', tuple (args)),
 }
 

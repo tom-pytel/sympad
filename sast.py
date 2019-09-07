@@ -41,7 +41,7 @@
 # ('&&', (expr1, expr2, ...))                      - set intersection
 # ('or', (expr1, expr2, ...))                      - Python or
 # ('and', (expr1, expr2, ...))                     - Python and
-# ('not', (expr1, expr2, ...))                     - Python not
+# ('not', expr)                                    - Python not
 
 import re
 import types
