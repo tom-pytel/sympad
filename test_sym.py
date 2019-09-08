@@ -163,6 +163,7 @@ x + {-1 * 2}
 x - {{1 2} 3}
 x - {{1 * 2} * 3}
 {sqrt{{{{not {1.}}}+{\int_{a'}^{-1.0} {str} dx}+{{{-1} \cdot {1e100} \cdot {\infty zoo}}}}}}
+x - a b!
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
