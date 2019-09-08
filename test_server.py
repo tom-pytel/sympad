@@ -268,19 +268,19 @@ solveset(x**3 = 5)
 
 """), ('calculate_eigen', """
 
-m = \\[[1, 2], [3, 4
+m = \\[[1, 2], [3, 4]]
 l = m - lambda eye 2
-l.det(
-solve(_
+l.det()
+solve(_)
 a, b = _
-m.eigenvals(
-Subs(l, lambda, a) \\[x, y
-solve(_ [0], _ [1], x, y
-\\[_ [0] [x], y].subs (y, 1
-Subs(l, lambda, b) \\[x, y
-solve(_ [0], _ [1], x, y
-\\[_ [0] [x], y].subs (y, 1
-m.eigenvects(
+m.eigenvals()
+Subs(l, lambda, a) \\[x, y]
+solve(_ [0], _ [1], x, y)
+\\[_ [0] [x], y].subs (y, 1)
+Subs(l, lambda, b) \\[x, y]
+solve(_ [0], _ [1], x, y)
+\\[_ [0] [x], y].subs (y, 1)
+m.eigenvects()
 
 """),
 

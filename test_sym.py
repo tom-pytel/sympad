@@ -157,6 +157,7 @@ None**-1.0**\[[\emptyset,],[0,],[\partial x,],] / {not \[None,\emptyset,]}
 {{{\sum_{x = {{a'} : {"str"} : {True}}}^{({\partial x})} {[]}}||{{{1.0} : {False} : {\emptyset}} [{{-1} == {\partialx}}]}||{{{{oo} if {None} else {\partialx}}^^{{.1} [{oo}]}}}}}
 {lambda x, y, z: {lambda x, y: {{{-1.0}&&{False}&&{d}}}}}
 \int {{\partialx} : {d} : {1.0}} dx
+{\lim_{x \to {{1} : {1e+100} : {.1}}} {({\partial x},{\partialx})}}
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
@@ -552,10 +553,5 @@ def test (argv = None):
 			raise
 
 if __name__ == '__main__':
-	# parser = sparser.Parser ()
-	# ast = parser.parse ("{{\\lim_{x \\to {{oo},}} {\\frac{d}{d}}}  {{{{{partialx} \\cdot {a'}}} \\cdot {{{a'}*{'str'}}}}}}") [0]
-	# ast = parser.parse ('{{1+{2+3}}+4}') [0]
-	# print (ast)
-	# ast = flatten (ast)
-	# print (ast)
+	# test (['-nt', '-e', 'x + {-1 * 2}'])
 	test ()

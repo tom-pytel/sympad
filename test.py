@@ -2470,6 +2470,12 @@ False - True
 True * True
 (2 > 1) x
 (2 > 1) + (1 < 2)
+\[{[a, b]},]
+{{a:b:c}:d}
+{a:{b:c:d}}
+{a:b:c} = {a:b:c}
+\[1:2:3]
+-{not x}
 """
 # _EXPRESSIONS = """
 
