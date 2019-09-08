@@ -338,16 +338,15 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{self._ast2tex_paren (ast.diff)}'
 
 	def _ast2tex_intg (self, ast):
-		if ast.from_ is None:
-			return \
-					f'\\int \\ {self._ast2tex (ast.dv)}' \
-					if ast.intg is None else \
-					f'\\int {self._ast2tex_wrap (ast.intg, {"diff", "slice", "||", "^^", "&&", "or", "and", "not"}, {"="})} \\ {self._ast2tex (ast.dv)}'
+		if ast.intg is None:
+			intg = ' '
 		else:
-			return \
-					f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)} \\ {self._ast2tex (ast.dv)}' \
-					if ast.intg is None else \
-					f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)} {self._ast2tex_wrap (ast.intg, {"diff", "slice", "||", "^^", "&&", "or", "and", "not"}, {"="})} \\ {self._ast2tex (ast.dv)}'
+			intg = f' {self._ast2tex_wrap (ast.intg, {"diff", "slice", "||", "^^", "&&", "or", "and", "not"}, {"="})} '
+
+		if ast.from_ is None:
+			return f'\\int{intg}\\ {self._ast2tex (ast.dv)}'
+		else:
+			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	_ast2tex_funcs = {
 		'='    : lambda self, ast: f'{self._ast2tex_eq_hs (ast, ast.lhs)} {AST.Eq.PY2TEX.get (ast.rel, ast.rel)} {self._ast2tex_eq_hs (ast, ast.rhs, False)}',
@@ -539,16 +538,15 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'{d.strip () if d else "d"}{"" if p == 1 else f"^{p}"} / {" ".join (self._ast2nat (n) for n in ast.dvs)} {self._ast2nat_paren (ast.diff)}'
 
 	def _ast2nat_intg (self, ast):
-		if ast.from_ is None:
-			if ast.intg is None:
-				return f'\\int {self._ast2nat (ast.dv)}'
-			else:
-				return f'\\int {self._ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece", "slice"} or ast.intg.is_mul_has_abs, {"=", "lamb", "||", "^^", "&&", "or", "and", "not"})} {self._ast2nat (ast.dv)}'
+		if ast.intg is None:
+			intg = ' '
 		else:
-			if ast.intg is None:
-				return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)} {self._ast2nat (ast.dv)}'
-			else:
-				return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)} {self._ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece", "slice"} or ast.intg.is_mul_has_abs, {"=", "lamb", "||", "^^", "&&", "or", "and", "not"})} {self._ast2nat (ast.dv)}'
+			intg = f' {self._ast2nat_wrap (ast.intg, ast.intg.op in {"diff", "piece", "slice"} or ast.intg.is_mul_has_abs, {"=", "lamb", "||", "^^", "&&", "or", "and", "not"})} '
+
+		if ast.from_ is None:
+			return f'\\int{intg}{self._ast2nat (ast.dv)}'
+		else:
+			return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)}{intg}{self._ast2nat (ast.dv)}'
 
 	_ast2nat_funcs = {
 		'='    : lambda self, ast: f'{self._ast2nat_eq_hs (ast, ast.lhs)} {AST.Eq.PYFMT.get (ast.rel, ast.rel)} {self._ast2nat_eq_hs (ast, ast.rhs, False)}',
