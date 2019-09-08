@@ -37,7 +37,7 @@
 <h1 align="center" style="margin: 0">SymPad</h1>
 <h4 align="center" style="margin: 0"><script type="text/javascript">document.write (Version)</script></h4>
 
-<h2>Introduction</h2>
+<h2 id="Introduction">Introduction</h2>
 
 <p>
 SymPad is a simple single script graphical symbolic calculator / scratchpad using SymPy for the math and MathJax for the display in a browser.
@@ -48,7 +48,64 @@ Sympad will accept Python expressions, LaTeX formatting, Unicode math symbols an
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p>
 
-<h4>Quick Start</h4>
+<h2 id="Table of Contents">Table of Contents</h2>
+
+<h4><a href="#Introduction">Introduction</a></h4>
+
+<h4><a href="#Table of Contents">Table of Contents</a></h4>
+
+<h4><a href="#Quick Start">Quick Start</a></h4>
+&emsp;<a href="#Multiline Examples">Multiline Examples</a><br>
+&emsp;<a href="#Usage">Usage</a><br>
+&emsp;<a href="#Quick Input Mode">Quick Input Mode</a><br>
+
+<h4><a href="#Types">Types</a></h4>
+&emsp;<a href="#Numbers">Numbers</a><br>
+&emsp;<a href="#Variables">Variables</a><br>
+&emsp;<a href="#Vectors and Matrices">Vectors and Matrices</a><br>
+&emsp;<a href="#Piecewise Expressions">Piecewise Expressions</a><br>
+&emsp;<a href="#Strings">Strings</a><br>
+&emsp;<a href="#Lists and Tuples">Lists and Tuples</a><br>
+&emsp;<a href="#Dictionaries">Dictionaries</a><br>
+&emsp;<a href="#Sets">Sets</a><br>
+
+<h4><a href="#Operations">Operations</a></h4>
+&emsp;<a href="#Addition and Multiplication">Addition and Multiplication</a><br>
+&emsp;<a href="#Exponentiation">Exponentiation</a><br>
+&emsp;<a href="#Logarithms">Logarithms</a><br>
+&emsp;<a href="#Roots">Roots</a><br>
+&emsp;<a href="#Factorial">Factorial</a><br>
+&emsp;<a href="#Absolute Value">Absolute Value</a><br>
+&emsp;<a href="#Limits">Limits</a><br>
+&emsp;<a href="#Sums">Sums</a><br>
+&emsp;<a href="#Differentiation">Differentiation</a><br>
+&emsp;<a href="#Integration">Integration</a><br>
+&emsp;<a href="#Comparison">Comparison</a><br>
+&emsp;<a href="#Set Operations">Set Operations</a><br>
+&emsp;<a href="#Parentheses">Parentheses</a><br>
+&emsp;<a href="#Indexing">Indexing</a><br>
+&emsp;<a href="#Member Access">Member Access</a><br>
+&emsp;<a href="#Variable Assignment">Variable Assignment</a><br>
+&emsp;<a href="#Simplification">Simplification</a><br>
+
+<h4><a href="#Functions">Functions</a></h4>
+&emsp;<a href="#SymPy Functions">SymPy Functions</a><br>
+&emsp;<a href="#Lambda Functions">Lambda Functions</a><br>
+&emsp;<a href="#Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</a><br>
+
+<h4><a href="#Plotting">Plotting</a></h4>
+&emsp;<a href="#plotf() - Plot Function">plotf() - Plot Function</a><br>
+&emsp;<a href="#plotv() - Plot Vector Field (2D)">plotv() - Plot Vector Field (2D)</a><br>
+&emsp;<a href="#plotw() - Plot Walk Over Vector Field">plotw() - Plot Walk Over Vector Field</a><br>
+
+<h4><a href="#Appendix">Appendix</a></h4>
+&emsp;<a href="#Special Characters">Special Characters</a><br>
+&emsp;<a href="#Admin Functions">Admin Functions</a><br>
+&emsp;<a href="#Environment Settings for env()">Environment Settings for env()</a><br>
+&emsp;<a href="#More Examples">More Examples</a><br>
+&emsp;<a href="#Notes">Notes</a><br>
+
+<h2 id="Quick Start">Quick Start</h2>
 
 <p>
 The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad:
@@ -72,7 +129,7 @@ Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
 </p>
 
-<h4>Multiline Examples</h4>
+<h4 id="Multiline Examples">Multiline Examples</h4>
 
 <p>
 Enter the lines that follow one by one to see the effect:
@@ -103,7 +160,7 @@ y<br>
 For more examples see the appendix.
 </p>
 
-<h4>Usage</h4>
+<h4 id="Usage">Usage</h4>
 
 <p>
 You enter expresstions and they get evaluated.
@@ -119,7 +176,7 @@ Finally, a triple-click will copy the expression in LaTeX format.
 The single-click native and double-click Python formats should almost always be pasteable back into SymPad, whereas the LaTeX format may or may not be depending on what elements are present.
 </p>
 
-<h4>Quick Input Mode</h4>
+<h4 id="Quick Input Mode">Quick Input Mode</h4>
 
 <p>
 This is the input mode SymPad was born in and still my preferred mode for quick calculations due to the ease and speed of input.
@@ -131,9 +188,9 @@ Note that a grammatical break is also still required AFTER text operators like "
 For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
 </p>
 
-<h2>Types</h2>
+<h2 id="Types">Types</h2>
 
-<h4>Numbers</h4>
+<h4 id="Numbers">Numbers</h4>
 
 <p>
 Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
@@ -144,7 +201,7 @@ Instead, use spaces and/or explicit multiplication: "<b>2 * e + 22</b>".
 Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" depending on preference, no Pythonic "<b>j</b>" option at the moment but it can be hacked by setting "<b>j = i</b>" in SymPad.
 </p>
 
-<h4>Variables</h4>
+<h4 id="Variables">Variables</h4>
 
 <p>
 Variable names can be a mix of Python and LaTeX format, they can be multi-character but cannot start with an underscore "<b>_</b>" or a number though they may contain those.
@@ -167,7 +224,7 @@ Variables may be assigned values, references to other variables or even entire e
 They may also be assigned a user function which allows you to use them as macro expression functions, that is covered in the section on functions.
 </p>
 
-<h4>Vectors and Matrices</h4>
+<h4 id="Vectors and Matrices">Vectors and Matrices</h4>
 
 <p>
 Vectors are passed as a single level of brackets such as "<b>\[1, 2]</b>" or "<b>\[x, y, z]</b>" and these are interpreted as column matrices.
@@ -176,35 +233,35 @@ A 2x3 matrix would be specified as  "<b>\[[1, 2, 3], [4, 5, 6]]</b>", a 1x3 woul
 These can also be entered using LaTeX "<b>\<span></span>begin{(v|b|p|)matrix} \<span></span>end{(v|b|p|)matrix}</b>" format.
 </p>
 
-<h4>Piecewise Expressions</h4>
+<h4 id="Piecewise Expressions">Piecewise Expressions</h4>
 
 <p>
 These are supported and can be entered as SymPy "<b>Piecewise</b>" functions, LaTeX "<b>\<span></span>begin{cases} \<span></span>end{cases}</b>" notation or the native Python-like conditional expressions of the form "<b>a if condition else b</b>".
 They may be arbitrarily long - "<b>a if condition1 else b if condition2 else ...</b>" and may leave off the last "<b>else</b>" which is equivalent to a SymPy "<b>Piecewise</b>" function without a terminating "<b>True</b>" condition.
 </p>
 
-<h4>Strings</h4>
+<h4 id="Strings">Strings</h4>
 
 <p>
 These exist for the sole purpose of passing string hints or other arguments to SymPy functions. They work as expected being enclosed by single or double quotes and
 supporting escape sequences. For example "<b>Limit (1/x, x, 0, '-')</b>".
 </p>
 
-<h4>Lists and Tuples</h4>
+<h4 id="Lists and Tuples">Lists and Tuples</h4>
 
 <p>
 Standard Python bracket enclosed lists and optionally parentheses enclosed tuples are accepted.
 Like strings these exist for the purpose of passing parameters to functions like "<b>Matrix ([[1, 2], [3, 4]])</b>".
 </p>
 
-<h4>Dictionaries</h4>
+<h4 id="Dictionaries">Dictionaries</h4>
 
 <p>
 Standard Python dictionaries entered using the same format "<b>{a: b, c: d}</b>".
 Like strings, lists and tuples these exist for the purpose of passing and recieving parameters to and from functions.
 </p>
 
-<h4>Sets</h4>
+<h4 id="Sets">Sets</h4>
 
 <p>
 These are not the standard Python sets but rather are represented internally by the SymPy object "<b>FiniteSet</b>".
@@ -215,9 +272,9 @@ As said these are converted to "<b>FiniteSet</b>" for evaluation. If however you
 The following default sets are available at the top level: "<b>Complexes</b>", "<b>Reals</b>", "<b>Naturals</b>", "<b>Naturals0</b>" and "<b>Integers</b>".
 </p>
 
-<h2>Operations</h2>
+<h2 id="Operations">Operations</h2>
 
-<h4>Addition and Multiplication</h4>
+<h4 id="Addition and Multiplication">Addition and Multiplication</h4>
 
 <p>
 Addition is addition and subtraction is subtraction: "<b>a + b</b>", "<b>a - b</b>".
@@ -229,7 +286,7 @@ So high in fact that parentheses are not needed if using "<b>\frac</b>" as an ex
 The "<b>\frac</b>" operation also does not need parentheses if using single digit operands or single letter variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$ or "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$.
 </p>
 
-<h4>Exponentiation</h4>
+<h4 id="Exponentiation">Exponentiation</h4>
 
 <p>
 There are two power opearators "<b>^</b>" and "<b>**</b>". They have the same precedence and can be used interchangeably but follow slightly different
@@ -239,33 +296,33 @@ of curly braces whereas the "<b>**</b>" follows Python rules which allow negativ
 "<b>e^ln(x)</b>" = $e^ln(x)$.
 </p>
 
-<h4>Logarithms</h4>
+<h4 id="Logarithms">Logarithms</h4>
 
 <p>
 The natural logarithm of x is specified by "<b>ln x</b>", "<b>\ln x</b>", "<b>log x</b>", "<b>\log{x}</b>". A logarithm in a specific base is specified
 by "<b>\log_b x</b>" = $\log_b x$, "<b>\log_{10}(1000)</b>" = $\log_{10}{1000}$ = 3, etc...
 </p>
 
-<h4>Roots</h4>
+<h4 id="Roots">Roots</h4>
 
 <p>
 The square root of x ($\sqrt{x}$) may be entered in any of these forms "<b>sqrt x</b>", "<b>\sqrt x</b>", "<b>sqrt (x)</b>", "<b>\sqrt{x}</b>", with or without the slash.
 The cube (or any other) root is similar, $\sqrt[3]x$ = "<b>sqrt[3]x</b>", "<b>sqrt[3] (x)</b>" or "<b>\sqrt[3] {x}</b>".
 </p>
 
-<h4>Factorial</h4>
+<h4 id="Factorial">Factorial</h4>
 
 <p>
 "<b>4!</b>" = "<b>24</b>", "<b>x!</b>" = "<b>factorial(x)</b>", "<b>(-0.5)!</b>" = "<b>1.77245385090552</b>" and "<b>simplify(x!/x)</b>" = "<b>gamma(x)</b>".
 </p>
 
-<h4>Absolute Value</h4>
+<h4 id="Absolute Value">Absolute Value</h4>
 
 <p>
 The shorthand for the absolute value of "<b>x</b>" is "<b>|x|</b>" though this may be ambiguous if using multiple absolute value bars, in which case simply wrap it in curly braces or parentheses as such "<b>{|x|}</b>".
 </p>
 
-<h4>Limits</h4>
+<h4 id="Limits">Limits</h4>
 
 <p>
 To take the limit of an expression "<b>z</b>" as variable "<b>x</b>" approaches "<b>y</b>" enter "<b>\lim_{x \to y} (z)</b>" = $\lim_{x\to y} (z)$.
@@ -276,7 +333,7 @@ expression. Limits may also be entered using the standard SymPy syntax "<b>Limit
 direction like SymPy, or you may specify a direction "<b>Limit (expression, variable, to, dir='+-')</b>".
 </p>
 
-<h4>Sums</h4>
+<h4 id="Sums">Sums</h4>
 
 <p>
 The summation (finite or infinite) of expression "<b>z</b>" as variable "<b>n</b>" ranges from "<b>a</b>" to "<b>b</b>" is written as "<b>\sum_{n=a}^b
@@ -285,7 +342,7 @@ explicit multiplication terminate a sum expression.
 Sums may also be entered using the standard SymPy syntax "<b>Sum (expression, (variable, from, to))</b>".
 </p>
 
-<h4>Differentiation</h4>
+<h4 id="Differentiation">Differentiation</h4>
 
 <p>
 The derivative of expression "<b>z</b>" with respect to "<b>x</b>" is entered as "<b>d/dx z</b>" or "<b>\frac{d}{dx} z</b>" = $\frac{d}{dx} z$. The
@@ -295,7 +352,7 @@ $\frac{\partial^2}{\partial x\partial y} (z)$. Derivatives may also be entered u
 power2, ...)</b>".
 </p>
 
-<h4>Integration</h4>
+<h4 id="Integration">Integration</h4>
 
 <p>
 The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b>\int z dx</b>" = $\int z\ dx$. The definite integral from "<b>a</b>" to
@@ -303,7 +360,7 @@ The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b
 may also be entered using the standard SymPy syntax "<b>Integral (expression, (variable, from, to), ...)</b>".
 </p>
 
-<h4>Comparison</h4>
+<h4 id="Comparison">Comparison</h4>
 
 <p>
 Are parsed from the standard Python "<b>=, ==, !=, &lt;, &lt;=, &gt;, &gt;=</b>" or LaTeX "<b>\ne, \neq, \lt, \le, \gt, \ge</b>" symbols.
@@ -314,7 +371,7 @@ The membership test "<b>in</b>" and "<b>not in</b>" are related to the compariso
 These may be entered like in Python, using the LaTeX versions "<b>\in</b>" and "<b>\notin</b>" or directly using the Unicode characters "<b>∈</b>" and "<b>∉</b>" and they test for membership in any sequence or iterable.
 </p>
 
-<h4>Set Operations</h4>
+<h4 id="Set Operations">Set Operations</h4>
 
 <p>
 These basic set operations are supported: "<b>+</b>", "<b>||</b>" or "<b>\cup</b>" for union - "<b>{1, 2} || {2, 3} = {1, 2, 3}</b>".
@@ -329,7 +386,7 @@ A partial fix is to wrap the set operations in a lambda or variable assignment u
 variable or view it.
 </p>
 
-<h4>Parentheses</h4>
+<h4 id="Parentheses">Parentheses</h4>
 
 <p>
 Explicit "<b>( )</b>" or implicit curly "<b>{ }</b>" parentheses allow prioritization of lower precedence operations over higher ones as usual and also
@@ -339,13 +396,13 @@ in general and always when calling functions which take multiple parameters like
 and dictionaries if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
 </p>
 
-<h4>Indexing</h4>
+<h4 id="Indexing">Indexing</h4>
 
 <p>
 Python style bracket indexing is natively supported for all objects using single or tuple indices and slices - "<b>'Hello'[::-1]</b>" = "<b>'olleH'</b>", "<b>\[[1, 2, 3], [4, 5, 6]] [1, 2]</b>" = "<b>6</b>" and "<b>\[[1, 2, 3], [4, 5, 6]] [:, 1:]</b>" = "<b>\[[2, 3], [5, 6]]</b>".
 </p>
 
-<h4>Member Access</h4>
+<h4 id="Member Access">Member Access</h4>
 
 <p>
 You can access member data or functions of an expression just like in Python with the "<b>.</b>" operator.
@@ -353,7 +410,7 @@ If the attribute name following the dot is followed by a parenthesized expressio
 For example, two ways to get the transpose of a matrix are "<b>\[[1, 2, 3], [4, 5, 6]].T</b>" and "<b>\[[1, 2, 3], [4, 5, 6]].transpose ()</b>".
 </p>
 
-<h4>Variable Assignment</h4>
+<h4 id="Variable Assignment">Variable Assignment</h4>
 
 <p>
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
@@ -382,7 +439,7 @@ This function defers evaluation of the expression for one round thus allowing th
 In this way you can assign different values to "<b>a</b>" and have the integration happen automatically any time you access the "<b>f</b>" variable instead of just using the result of whatever variables were defined at the time of definition.
 </p>
 
-<h4>Simplification</h4>
+<h4 id="Simplification">Simplification</h4>
 
 <p>
 Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, by default SymPad will try to simplify the result of any calculation before returning it.
@@ -395,7 +452,7 @@ This tends to slow down normal matrix operations a little but prevents the kind 
 This simplification can be turned off and on via "<b>env(nomatsimp)</b>" and "<b>env(matsimp)</b>".
 </p>
 
-<h2>Functions</h2>
+<h2 id="Functions">Functions</h2>
 
 <p>
 There are two types of functions made available in SymPad - all the SymPy native functions are available directly just by typing their name (a few escaped with "<b>$</b>"), as well as user created lambda functions assigned to variables.
@@ -403,7 +460,7 @@ In addition, member functions of objects are supported and callable like "<b>Mat
 All functions may take multiple comma-separated arguments and the SymPy functions also optionally take keyword arguments.
 </p>
 
-<h4>SymPy Functions</h4>
+<h4 id="SymPy Functions">SymPy Functions</h4>
 
 <p>
 Almost all SymPy function and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
@@ -426,7 +483,7 @@ These include the functions "<b>abs/Abs (x)</b>" which are rendered as the stand
 Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>" and "<b>Sum</b>", and more...
 </p>
 
-<h4>Lambda Functions</h4>
+<h4 id="Lambda Functions">Lambda Functions</h4>
 
 <p>
 User created lambda functions are supported and are specified the same way as Python lambdas - "<b>lambda x, y: (x+y)**2</b>".
@@ -438,7 +495,7 @@ Lambdas may be passed to SymPy functions which take those and use them for somet
 Lambda recursion is not supported.
 </p>
 
-<h4>Functions, Parentheses and Implicit Multiplication</h4>
+<h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
 
 <p>
 SymPad supports implicit multiplication, that is writing two variables next to each other to indicate multiplication so "<b>x y</b>" = "<b>x * y</b>".
@@ -465,14 +522,14 @@ Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always 
 Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
 </p>
 
-<h2>Plotting</h2>
+<h2 id="Plotting">Plotting</h2>
 
 <p>
 Basic plotting functionality is available if you have the matplotlib Python module installed on your system.
 These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas or tuples or assignments.
 </p>
 
-<h4>plotf() - Plot Function</h4>
+<h4 id="plotf() - Plot Function">plotf() - Plot Function</h4>
 
 <p><b>Examples</b></p>
 
@@ -541,7 +598,7 @@ Note that the presence of any plots at all in a call to "<b>plotf()</b>" is opti
 Keep in mind that this does not re-plot any previously plotted functions so that data remains at whatever resolution it was plotted.
 </p>
 
-<h4>plotv() - Plot Vector Field (2D)</h4>
+<h4 id="plotv() - Plot Vector Field (2D)">plotv() - Plot Vector Field (2D)</h4>
 
 <p><b>Examples</b></p>
 
@@ -592,7 +649,7 @@ The "<b>resw</b>" parameter is passed on to "<b>plotw()</b>" as a keyword argume
 See the documentation for that function for usage and formatting of these parameters.
 </p>
 
-<h4>plotw() - Plot Walk Over Vector Field</h4>
+<h4 id="plotw() - Plot Walk Over Vector Field">plotw() - Plot Walk Over Vector Field</h4>
 
 <p><b>WARNING!</b> This plotting function can be very slow due to the fact it calls very frequently into SymPy Lambda functions as it adapts the walk to minimize potential error.</p>
 
@@ -633,9 +690,9 @@ Also due to the fact that the points of the vector field are gotten from SymPy o
 It may also never finish if a complex circular vector field introduces enough errors so that the walk gets back to the starting point but not quite close enough to consider it a full loop then the walk will keep going around and around in circles and the function will not return, you have been warned.
 </p>
 
-<h2>Appendix</h2>
+<h2 id="Appendix">Appendix</h2>
 
-<h4>Special Characters</h4>
+<h4 id="Special Characters">Special Characters</h4>
 
 <p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.
 Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</p>
@@ -645,7 +702,7 @@ Even if the object resulting from the expression is not natively known to SymPad
 <p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
 <p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
 
-<h4>Admin Functions</h4>
+<h4 id="Admin Functions">Admin Functions</h4>
 
 <p>"<b>vars()</b>" - Show all currently mapped non-lambda user variables.</p>
 <p>"<b>funcs()</b>" - Show all currently mapped lambda user variables (callable functions).</p>
@@ -659,7 +716,7 @@ If arguments are present they specify turning on or off a certain aspect of SymP
 For example the quick input functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>", "<b>env('quick')</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
 <p>"<b>envreset()</b>" - Reset environment to what it was at startup.</p>
 
-<h4>Environment Settings for env()</h4>
+<h4 id="Environment Settings for env()">Environment Settings for env()</h4>
 
 <p>In quick input mode you should always use parentheses and in the case of the "<b>simplify</b>" option you need to use the quoted version "<b>env('simplify')</b>" due to that being a function name and how letters are parsed in quick mode.</p>
 
@@ -680,7 +737,7 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 
 </b></p>
 
-<h4>More Examples</h4>
+<h4 id="More Examples">More Examples</h4>
 
 <p>
 Calculating eigenvalues and eigenvectors of a matrix by "hand":
@@ -700,7 +757,7 @@ solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
 m.eigenvects ()<i>&emsp;verify eigenvectors</i><br>
 </p>
 
-<h4>Notes</h4>
+<h4 id="Notes">Notes</h4>
 
 <p>
 <b>WARNING!</b> This http server implementation is nowhere near secure, this as well as the posibility of execution of arbitrary Python functions means you should never leave this server open to the internet by serving on an IP address visible to the external world.
