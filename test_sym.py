@@ -168,6 +168,7 @@ x - a b!
 1+{{-1 * 2}+1}
 -1 * a
 x - y! ()
+-x * a!
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
