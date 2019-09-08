@@ -633,7 +633,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_curly (self, ast):
 		return \
 				self._ast2py_paren (ast) \
-				if ast.strip_minus ().op in {',', '+', '*', '/', '||', '^^', '&&'} or (ast.is_log and ast.base is not None) else \
+				if ast.strip_minus ().op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 				self._ast2py (ast)
 
 	def _ast2py_paren (self, ast, paren = None):
@@ -718,9 +718,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'|'    : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
 		'-'    : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+"})}',
 		'!'    : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
-		# '+'    : lambda self, ast: ' + '.join (self._ast2py_paren (n) if (n.op in {'||', '^^', '&&'} or (n.is_mul and n is not ast.add [0] and _ast_is_neg (n.mul [0]))) else self._ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
-		'+'    : lambda self, ast: ' + '.join (self._ast2py_paren (n) if n.op in {'||', '^^', '&&'} else self._ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
-		'*'    : lambda self, ast: '*'.join (self._ast2py_paren (n) if n.op in {'+', '||', '^^', '&&'} else self._ast2py (n) for n in ast.mul),
+		'+'    : lambda self, ast: ' + '.join (self._ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
+		'*'    : lambda self, ast: '*'.join (self._ast2py_paren (n) if n.is_add else self._ast2py (n) for n in ast.mul),
 		'/'    : _ast2py_div,
 		'^'    : _ast2py_pow,
 		'log'  : _ast2py_log,

@@ -1,12 +1,9 @@
 > \[], \[[]], \[[], []], ...
+> change 'vec' object to column 'mat' object?
 
 > logic operations fall back to Python logic ops?
 
 > remove \lim, \sum and definite \int vars from free_vars
-
-> lambda parse set and py logic ops?
-
-> unparenthesize py set operations
 
 > extended comparison 0 <= x < 1 (using and)
 > ProductSet?
