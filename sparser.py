@@ -126,7 +126,27 @@ def _expr_mul_exp (lhs, rhs): # isolate explicit multiplication so it doesn't tr
 		return AST ('{', AST.flatcat ('*', lhs, rhs))
 
 def _expr_neg (expr):
-	if expr.is_mul:
+	mcs = lambda ast: ast
+	ast = expr
+
+	while 1: # propagate negation into first number in nested multiply if possible
+		if ast.is_curly:
+			mcs = lambda ast, mcs = mcs: AST ('{', ast)
+			ast = ast.curly
+
+		elif ast.is_mul:
+			if ast.mul [0].is_num:
+				return mcs (AST ('*', (ast.mul [0].neg (stack = True),) + ast.mul [1:]))
+
+			elif ast.mul [0].is_curly:
+				mcs = lambda ast, mcs = mcs, mul = ast.mul: AST ('*', (('{', ast),) + mul [1:])
+				ast = ast.mul [0].curly
+
+				continue
+
+		break
+
+	if expr.is_mul: # fall back to negating first element of multiplication
 		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
 	else:
 		return expr.neg (stack = True)
@@ -516,7 +536,7 @@ class Parser (lalr1.LALR1):
 			b'HtSRz81UzESnE4pj6ZBmNtAU1x5Y6ft1SA+ygbxC59uDL04Xci+OrZSU0dKj7QwD7jtXHljp/kFUeontz0I1UfmmU4DaZZ/XhlsKnLiuIhjMiEXxbiT7sSMqx96zvrcGzlT38wB0zHDrYn6AT9VeN/RuVp+47VT0cus83MQzaL9u9mXItSkuMlCg5T0UqC8u' \
 			b'MlCg+/WQjynQ5DI0iuhhjmDlvXS2gNfMZipeMhN3UMAj3oFz3rVnkPFIU2lS1vBj3ifAIXTfe/Z+7mgmlPp+XeGLlbop7kOgyEfcPO+jyOviPgSKfL/O7jW4f2Ij8v2DrKTI/g97yrYnzn/6KAWr8+F582JJzJUEVuF+88ZXUYWmuJbAKrwoD+jzVGFVXEvg' \
 			b'Mpm9u933vwrr4loCqzB29KsSaxrYjaqNnpdrtvCj9N5Ass5LIsay9EJs+ud1XNJfeo3awbKveE8pH5UntR2nborBP6ndBjXqTO7wxfDfqAN+3eQr4ixqn+lYKZep3DYtibUv3vWmvyK0XaHpN1dnqv8aPgk12Oq95MdK5IGVZqXKiCWmULpKl25FS5LhVAyd' \
-			b'ypCprODDNiXxLmNjqvZz8dWKtJyPwsInGUxVIUULjA8GxKcgRUelsX99Sok03938P8xScfw=' 
+			b'ypCprODDNiXxLmNjqvZz8dWKtJyPwsInGUxVIUULjA8GxKcgRUelsX99Sok03938P8xScfw='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -1038,10 +1058,12 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
-# 	# p.set_user_funcs ({'f': 1})
-# 	a = p.parse (r'\[[1],[2]]')
-# 	# a = sym.ast2spt (a)
-# 	print (a)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
+	# p.set_user_funcs ({'f': 1})
+	# a = p.parse (r'x - {1 * 2}')
+	# a = p.parse (r'x - {{1 * 2} * 3}')
+	a = p.parse ('m - lambda eye 2')
+	# a = sym.ast2spt (a)
+	print (a)

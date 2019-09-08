@@ -237,7 +237,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			if p and p.is_attr and s [:6] == '\\left(':
 				s = self._ast2tex_wrap (s, 1)
 
-			if p and (n.op in {'#', '[', '!', 'mat'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
+			if p and (n.op in {'#', '[', '!', 'mat'} or n.is_null_var or p.strip_minus ().op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 					_ast_is_neg (n) or \
 					n.strip_paren ().is_comma or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
@@ -465,7 +465,7 @@ class ast2nat: # abstract syntax tree -> native text
 					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
 					n.op in {'=', '+', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} or (n.is_piece and n is not ast.mul [-1]))
 
-			if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.op in {'lim', 'sum', 'diff', 'intg'} or \
+			if p and (n.op in {'#', '[', '!', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus ().op in {'lim', 'sum', 'diff', 'intg'} or \
 					n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'} or \
 					n.strip_paren ().is_comma or (n.is_pow and n.base.strip_paren ().is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
