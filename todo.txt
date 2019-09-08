@@ -2,6 +2,7 @@
 > boolalg.BooleanFalse.as_coeff_Mul = lambda self, rational = False: (S.Zero, self)
 
 > true and false
+> patch into sympy arithmetic operation with bools
 > boolean coercion to number types
 > logic operations fall back to Python logic ops?
 
@@ -24,7 +25,6 @@
 > vector calculus
 > nabla, laplacian
 
-> patch into sympy arithmetic operation with bools
 > random server port selection / fallback
 > emptyset Unicode symbol
 
@@ -41,7 +41,7 @@
 > display subscripts
 > parse subscripts
 
-> SYM CLEANUP!
+> SYM.PY REFACTOR!
 
 > plots as objects?
 > no-evaluate version of Add and Mul (for tuples, lists and strings)?
@@ -49,7 +49,6 @@
 > function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?
 > long variable name shortcut? $?
-> {1:2:3,} -> {slice(1, 2, 3),} (SymPy creating dynamic class of slice)?
 > derivative and integral of lambda functions?
 
 > fix unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyway.
