@@ -143,12 +143,12 @@ def _expr_piece (expr, expr_if, expr_else):
 # 	else:
 # 		return AST ('{', AST.flatcat ('*', lhs, rhs))
 
-def _expr_add (expr):
+def _expr_add (expr): # pull negative out of first term of nested curly/multiplication for consistency
 	mcs = lambda ast: ast
 	ast = expr
 	mul = False
 
-	while 1: # pull negative out of first term of nested curly/multiplication for consistency
+	while 1:
 		if ast.is_curly:
 			mcs = lambda ast, mcs = mcs: mcs (AST ('{', ast))
 			ast = ast.curly
@@ -170,32 +170,37 @@ def _expr_add (expr):
 
 	return expr
 
-# def _expr_neg (expr): # TODO: this looks broken
+# def _expr_neg (expr): # propagate negation into first number in nested multiply if possible
 # 	mcs = lambda ast: ast
 # 	ast = expr
+# 	mul = False
 
-# 	while 1: # propagate negation into first number in nested multiply if possible
+# 	while 1:
 # 		if ast.is_curly:
 # 			mcs = lambda ast, mcs = mcs: AST ('{', ast)
 # 			ast = ast.curly
 
 # 			continue
 
-# 		elif ast.is_mul:
-# 			if ast.mul [0].is_num:
-# 				return mcs (AST ('*', (ast.mul [0].neg (stack = True),) + ast.mul [1:]))
+# 		elif ast.is_mul or ast.is_mulexp:
+# 			mcs = lambda ast, mcs = mcs, op = ast.op, mul = ast.mul: mcs (AST (op, (ast,) + mul [1:]))
+# 			ast = ast.mul [0]
+# 			mul = True
 
-# 			elif ast.mul [0].is_curly:
-# 				mcs = lambda ast, mcs = mcs, mul = ast.mul: AST ('*', (('{', ast),) + mul [1:])
-# 				ast = ast.mul [0].curly
+# 			continue
 
-# 				continue
+# 		elif ast.is_num:
+# 			return mcs (ast.neg ())
 
 # 		break
 
-def _expr_neg (expr): # TODO: this looks broken
-	if expr.is_mul: # fall back to negating first element of multiplication
-		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
+# 	return expr.neg (stack = True)
+
+def _expr_neg (expr): # TODO: this is counterintuitive, something not right
+	return expr.neg (stack = True)
+
+	if (expr.is_mul or expr.is_mulexp) and expr.mul [0].is_pos_num:
+		return AST (expr.op, (expr.mul [0].neg (stack = True),) + expr.mul [1:])
 	else:
 		return expr.neg (stack = True)
 
@@ -1142,6 +1147,11 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# p.set_user_funcs ({'f': 1})
 	# a = p.parse (r'x - {1 * 2}')
 	# a = p.parse (r'x - {{1 * 2} * 3}')
-	a = p.parse ('1 + {{-1 * 2} + 1}')
-	# a = sym.ast2spt (a)
+
+	a = p.parse ('-x * a!')
 	print (a)
+	# a = p.parse ('-1 * a')
+	# print (a)
+
+	# a = sym.ast2spt (a)
+	# print (a)

@@ -166,6 +166,8 @@ x - {{1 * 2} * 3}
 x - a b!
 \int x * \frac{y}{z} \ dx
 1+{{-1 * 2}+1}
+-1 * a
+x - y! ()
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
