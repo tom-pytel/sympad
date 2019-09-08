@@ -146,7 +146,7 @@ def _SparseMatrix_eval_matrix_mul (self, other):
 SPATCHED = False
 
 try: # try to patch and fail silently if SymPy has changed too much since this was written
-	from sympy import sympify, S, count_ops, cancel, together, SparseMatrix, Basic, Complement
+	from sympy import sympify, S, count_ops, cancel, together, SparseMatrix, Basic, Complement, boolalg
 	from sympy.matrices.common import MatrixArithmetic, classof
 	from sympy.matrices.dense import DenseMatrix
 	from sympy.matrices.sparse import SparseMatrix
@@ -160,6 +160,29 @@ try: # try to patch and fail silently if SymPy has changed too much since this w
 	SparseMatrix._eval_matrix_mul             = _SparseMatrix_eval_matrix_mul
 
 	Complement.__new__                        = _Complement__new__
+
+	boolalg.BooleanTrue.__int__               = lambda self: 1
+	boolalg.BooleanTrue.__float__             = lambda self: 1.0
+	boolalg.BooleanTrue.__complex__           = lambda self: 1+0j
+	boolalg.BooleanFalse.__int__              = lambda self: 0
+	boolalg.BooleanFalse.__float__            = lambda self: 0.0
+	boolalg.BooleanFalse.__complex__          = lambda self: 0j
+	boolalg.BooleanAtom.__add__               = lambda self, other: int (self) + other
+	boolalg.BooleanAtom.__radd__              = lambda self, other: other + int (self)
+	boolalg.BooleanAtom.__sub__               = lambda self, other: int (self) - other
+	boolalg.BooleanAtom.__rsub__              = lambda self, other: other - int (self)
+	boolalg.BooleanAtom.__mul__               = lambda self, other: int (self) * other
+	boolalg.BooleanAtom.__rmul__              = lambda self, other: other * int (self)
+	boolalg.BooleanAtom.__pow__               = lambda self, other: int (self) ** other
+	boolalg.BooleanAtom.__rpow__              = lambda self, other: other ** int (self)
+	boolalg.BooleanAtom.__div__               = lambda self, other: int (self) / other
+	boolalg.BooleanAtom.__rdiv__              = lambda self, other: other / int (self)
+	boolalg.BooleanAtom.__truediv__           = lambda self, other: int (self) / other
+	boolalg.BooleanAtom.__rtruediv__          = lambda self, other: other / int (self)
+	boolalg.BooleanAtom.__floordiv__          = lambda self, other: int (self) // other
+	boolalg.BooleanAtom.__rfloordiv__         = lambda self, other: other // int (self)
+	boolalg.BooleanAtom.__mod__               = lambda self, other: int (self) % other
+	boolalg.BooleanAtom.__rmod__              = lambda self, other: other % int (self)
 
 	SPATCHED = True
 

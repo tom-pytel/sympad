@@ -1,3 +1,6 @@
+> boolalg.BooleanTrue.as_coeff_Mul  = lambda self, rational = False: (S.One, self)
+> boolalg.BooleanFalse.as_coeff_Mul = lambda self, rational = False: (S.Zero, self)
+
 > true and false
 > boolean coercion to number types
 > logic operations fall back to Python logic ops?
@@ -6,8 +9,8 @@
 
 > Python or, and and not
 > unparenthesize py set operations
+
 > extended comparison 0 <= x < 1 (using and)
-> change how set ops are written to py?
 > ProductSet?
 
 > expr = x**2y**2, f = lambda x, y: expr
