@@ -220,7 +220,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_add (self, ast):
 		return ' + '.join (self._ast2tex_wrap (n, \
-				((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]), \
+				((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]),
 				(n.is_piece and n is not ast.add [-1]) or n.op in {'=', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} # or (n.is_mul and n is not ast.add [0] and _ast_is_neg (n.mul [0]))
 				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
@@ -1265,7 +1265,7 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('func', 'Lambda', (('^', ('@', 'x'), ('#', '2')), ('@', 'x')))
+# 	ast = AST ('+', (('@', 'x'), ('*', (('#', '-1'), ('#', '2')))))
 # 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 

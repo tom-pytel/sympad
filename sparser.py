@@ -344,6 +344,18 @@ def _ast_strip_tail_differential (ast):
 		if dv and ast2:
 			return AST ('+', ast.add [:-1] + (neg (ast2),)), dv
 
+	# elif ast.is_curly:
+	# 	ast2, neg = ast.curly.strip_minus (retneg = True)
+	# 	ast2, dv  = _ast_strip_tail_differential (ast2)
+
+	# 	if dv:
+	# 		if ast2:
+	# 			return AST ('{', ast2), dv
+	# 		elif neg.is_neg:
+	# 			return AST ('{', AST.NegOne), dv
+	# 		else:
+	# 			return None, dv
+
 	return ast, None
 
 def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
@@ -1058,12 +1070,12 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
-	# p.set_user_funcs ({'f': 1})
-	# a = p.parse (r'x - {1 * 2}')
-	# a = p.parse (r'x - {{1 * 2} * 3}')
-	a = p.parse ('m - lambda eye 2')
-	# a = sym.ast2spt (a)
-	print (a)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
+# 	# p.set_user_funcs ({'f': 1})
+# 	# a = p.parse (r'x - {1 * 2}')
+# 	# a = p.parse (r'x - {{1 * 2} * 3}')
+# 	a = p.parse ('\int x * y/z dx')
+# 	# a = sym.ast2spt (a)
+# 	print (a)
