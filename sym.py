@@ -17,7 +17,7 @@ _EVAL                  = True # expression evaluation via 'evaluate' flag
 _DOIT                  = True # expression doit()
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
-	op = 'text'
+	op, is_text = 'text', True
 
 	def _init (self, tex = None, nat = None, py = None, spt = None):
 		self.tex, self.nat, self.py, self.spt = tex, nat, py, spt

@@ -111,7 +111,7 @@ class AST (tuple):
 		else:
 			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
-	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^', '&&', 'or' and 'and' into single AST
+	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^', '&&', 'or' and 'and' into single ASTs
 		if self.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}:
 			if self.op == op:
 				for e in self [1]:

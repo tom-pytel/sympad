@@ -158,11 +158,14 @@ None**-1.0**\[[\emptyset,],[0,],[\partial x,],] / {not \[None,\emptyset,]}
 {lambda x, y, z: {lambda x, y: {{{-1.0}&&{False}&&{d}}}}}
 \int {{\partialx} : {d} : {1.0}} dx
 {\lim_{x \to {{1} : {1e+100} : {.1}}} {({\partial x},{\partialx})}}
+x + {-1 2}
+x + {-1 * 2}
 x - {{1 2} 3}
 x - {{1 * 2} * 3}
 {sqrt{{{{not {1.}}}+{\int_{a'}^{-1.0} {str} dx}+{{{-1} \cdot {1e100} \cdot {\infty zoo}}}}}}
 x - a b!
 \int x * \frac{y}{z} \ dx
+1+{{-1 * 2}+1}
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

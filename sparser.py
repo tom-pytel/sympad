@@ -10,6 +10,24 @@ import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+class AST_MulExp (AST): # for isolating explicit multiplications from implicit mul grammar rewriting rules, appears only in this module
+	op, is_mulexp = 'mulexp', True
+
+	def _init (self, mul):
+		self.mul = mul
+
+	@staticmethod
+	def to_mul (ast): # convert explicit multiplication ASTs to normal multiplication ASTs
+		if not isinstance (ast, AST):
+			return ast
+
+		if ast.is_mulexp:
+			return AST ('*', tuple (AST_MulExp.to_mul (a) for a in ast.mul))
+
+		return AST (*tuple (AST_MulExp.to_mul (a) for a in ast))
+
+AST.register_AST (AST_MulExp)
+
 def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
 			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\', '') or FUNC.text
@@ -116,36 +134,66 @@ def _expr_piece (expr, expr_if, expr_else):
 	else:
 		return AST ('piece', ((expr, expr_if), (expr_else, True)))
 
-def _expr_mul_exp (lhs, rhs): # isolate explicit multiplication so it doesn't trigger implicit mul grammar rewriting
-	if lhs.is_curly:
-		lhs = lhs.curly
+# def _expr_mul_exp (lhs, rhs): # isolate explicit multiplication so it doesn't trigger implicit mul grammar rewriting
+# 	if lhs.is_curly:
+# 		lhs = lhs.curly
 
-	if rhs.is_mul:
-		return AST ('*', (('{', AST.flatcat ('*', lhs, rhs.mul [0])), *rhs.mul [1:]))
-	else:
-		return AST ('{', AST.flatcat ('*', lhs, rhs))
+# 	if rhs.is_mul:
+# 		return AST ('*', (('{', AST.flatcat ('*', lhs, rhs.mul [0])), *rhs.mul [1:]))
+# 	else:
+# 		return AST ('{', AST.flatcat ('*', lhs, rhs))
 
-def _expr_neg (expr):
+def _expr_add (expr):
 	mcs = lambda ast: ast
 	ast = expr
+	mul = False
 
-	while 1: # propagate negation into first number in nested multiply if possible
+	while 1: # pull negative out of first term of nested curly/multiplication for consistency
 		if ast.is_curly:
-			mcs = lambda ast, mcs = mcs: AST ('{', ast)
+			mcs = lambda ast, mcs = mcs: mcs (AST ('{', ast))
 			ast = ast.curly
 
-		elif ast.is_mul:
-			if ast.mul [0].is_num:
-				return mcs (AST ('*', (ast.mul [0].neg (stack = True),) + ast.mul [1:]))
+			continue
 
-			elif ast.mul [0].is_curly:
-				mcs = lambda ast, mcs = mcs, mul = ast.mul: AST ('*', (('{', ast),) + mul [1:])
-				ast = ast.mul [0].curly
+		elif ast.is_mul or ast.is_mulexp:
+			mcs = lambda ast, mcs = mcs, op = ast.op, mul = ast.mul: mcs (AST (op, (ast,) + mul [1:]))
+			ast = ast.mul [0]
+			mul = True
 
-				continue
+			continue
+
+		elif ast.is_minus or ast.is_neg_num:
+			if mul:
+				return AST ('-', mcs (ast.neg ()))
 
 		break
 
+	return expr
+
+# def _expr_neg (expr): # TODO: this looks broken
+# 	mcs = lambda ast: ast
+# 	ast = expr
+
+# 	while 1: # propagate negation into first number in nested multiply if possible
+# 		if ast.is_curly:
+# 			mcs = lambda ast, mcs = mcs: AST ('{', ast)
+# 			ast = ast.curly
+
+# 			continue
+
+# 		elif ast.is_mul:
+# 			if ast.mul [0].is_num:
+# 				return mcs (AST ('*', (ast.mul [0].neg (stack = True),) + ast.mul [1:]))
+
+# 			elif ast.mul [0].is_curly:
+# 				mcs = lambda ast, mcs = mcs, mul = ast.mul: AST ('*', (('{', ast),) + mul [1:])
+# 				ast = ast.mul [0].curly
+
+# 				continue
+
+# 		break
+
+def _expr_neg (expr): # TODO: this looks broken
 	if expr.is_mul: # fall back to negating first element of multiplication
 		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
 	else:
@@ -325,15 +373,26 @@ def _ast_strip_tail_differential (ast):
 		if dv:
 			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
 
-	elif ast.is_mul:
+	# elif ast.is_mul:
+	# 	ast2, neg = ast.mul [-1].strip_minus (retneg = True)
+	# 	ast2, dv  = _ast_strip_tail_differential (ast2)
+
+	# 	if dv:
+	# 		if ast2:
+	# 			return (AST ('*', ast.mul [:-1] + (neg (ast2),)), dv)
+	# 		elif len (ast.mul) > 2:
+	# 			return (neg (AST ('*', ast.mul [:-1])), dv)
+	# 		else:
+	# 			return (neg (ast.mul [0]), dv)
+	elif ast.is_mul or ast.is_mulexp:
 		ast2, neg = ast.mul [-1].strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
 			if ast2:
-				return (AST ('*', ast.mul [:-1] + (neg (ast2),)), dv)
+				return (AST (ast.op, ast.mul [:-1] + (neg (ast2),)), dv)
 			elif len (ast.mul) > 2:
-				return (neg (AST ('*', ast.mul [:-1])), dv)
+				return (neg (AST (ast.op, ast.mul [:-1])), dv)
 			else:
 				return (neg (ast.mul [0]), dv)
 
@@ -735,13 +794,16 @@ class Parser (lalr1.LALR1):
 	def expr_xsect_1       (self, expr_xsect, XSECT, expr_add):                    return AST.flatcat ('&&', expr_xsect, expr_add)
 	def expr_xsect_2       (self, expr_add):                                       return expr_add
 
-	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
-	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):               return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
+	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                   return AST.flatcat ('+', _expr_add (expr_add), _expr_add (expr_mul_exp))
+	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                  return AST.flatcat ('+', _expr_add (expr_add), _expr_neg (expr_mul_exp))
+	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):               return AST.flatcat ('+', _expr_add (expr_add), _expr_neg (expr_mul_exp))
 	def expr_add_4         (self, expr_mul_exp):                                   return expr_mul_exp
 
-	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg)
-	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg)
+	# def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg)
+	# def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg)
+	# def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
+	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return AST.flatcat ('mulexp', expr_mul_exp, expr_neg)
+	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return AST.flatcat ('mulexp', expr_mul_exp, expr_neg)
 	def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
 
 	def expr_neg_1         (self, MINUS, expr_neg):                                return _expr_neg (expr_neg)
@@ -1054,7 +1116,7 @@ class Parser (lalr1.LALR1):
 
 			for res in rated [:32]:
 				res = res [-1]
-				res = (res [0].no_curlys.flat (),) + res [1:] if isinstance (res [0], AST) else res
+				res = (AST_MulExp.to_mul (res [0].no_curlys).flat (),) + res [1:] if isinstance (res [0], AST) else res
 
 				print ('parse:', res, file = sys.stderr)
 
@@ -1065,17 +1127,17 @@ class Parser (lalr1.LALR1):
 
 		res = next (iter (rated)) [-1]
 
-		return (res [0].no_curlys.flat (),) + res [1:] if isinstance (res [0], AST) else res
+		return (AST_MulExp.to_mul (res [0].no_curlys).flat (),) + res [1:] if isinstance (res [0], AST) else res
 
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
-# 	# p.set_user_funcs ({'f': 1})
-# 	# a = p.parse (r'x - {1 * 2}')
-# 	# a = p.parse (r'x - {{1 * 2} * 3}')
-# 	a = p.parse ('\int x * y/z dx')
-# 	# a = sym.ast2spt (a)
-# 	print (a)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
+	# p.set_user_funcs ({'f': 1})
+	# a = p.parse (r'x - {1 * 2}')
+	# a = p.parse (r'x - {{1 * 2} * 3}')
+	a = p.parse ('1 + {{-1 * 2} + 1}')
+	# a = sym.ast2spt (a)
+	print (a)

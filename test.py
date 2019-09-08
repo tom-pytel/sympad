@@ -38,6 +38,9 @@ class Test (unittest.TestCase):
 	def test_sym (self):
 		self.assertEqual (_test_sym.test ([]), True)
 
+	def test_sym_texnat (self):
+		self.assertEqual (_test_sym.test (['-tn']), True)
+
 	#...............................................................................................
 	def test_sparser (self):
 		self.assertEqual (p ('1'), ('#', '1'))
