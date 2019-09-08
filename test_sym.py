@@ -169,6 +169,8 @@ x - a b!
 -1 * a
 x - y! ()
 -x * a!
+a * {-b} * c
+a * {-b} c
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
