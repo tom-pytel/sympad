@@ -9,7 +9,7 @@ v1.0.7:
 
 v1.0.6:
 -------
-* Added walk over vector field plotting.
+* Added walk over vector field plotting using matplotlib.
 
 v1.0.5:
 -------

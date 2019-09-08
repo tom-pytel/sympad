@@ -134,16 +134,7 @@ def _expr_piece (expr, expr_if, expr_else):
 	else:
 		return AST ('piece', ((expr, expr_if), (expr_else, True)))
 
-# def _expr_mul_exp (lhs, rhs): # isolate explicit multiplication so it doesn't trigger implicit mul grammar rewriting
-# 	if lhs.is_curly:
-# 		lhs = lhs.curly
-
-# 	if rhs.is_mul:
-# 		return AST ('*', (('{', AST.flatcat ('*', lhs, rhs.mul [0])), *rhs.mul [1:]))
-# 	else:
-# 		return AST ('{', AST.flatcat ('*', lhs, rhs))
-
-def _expr_mul (expr): # pull negative out of first term of nested curly/multiplication for consistency
+def _expr_mul (expr): # pull negative(s) out of first term of nested curly/multiplication for consistency
 	mcs = lambda ast: ast
 	ast = expr
 	mul = False
@@ -162,46 +153,33 @@ def _expr_mul (expr): # pull negative out of first term of nested curly/multipli
 
 			continue
 
-		elif ast.is_minus or ast.is_neg_num:
+	# 	elif ast.is_minus or ast.is_neg_num:
+	# 		if mul:
+	# 			return AST ('-', mcs (ast.neg ()))
+
+	# 	break
+
+	# return expr
+
+		elif ast.is_minus:
+			mcs = lambda ast, mcs = mcs: AST ('-', mcs (ast))
+			ast = ast.minus
+
+			continue
+
+		elif ast.is_neg_num:
 			if mul:
 				return AST ('-', mcs (ast.neg ()))
 
 		break
 
+	if mul:
+		return mcs (ast)
+
 	return expr
 
-# def _expr_neg (expr): # propagate negation into first number in nested multiply if possible
-# 	mcs = lambda ast: ast
-# 	ast = expr
-# 	mul = False
-
-# 	while 1:
-# 		if ast.is_curly:
-# 			mcs = lambda ast, mcs = mcs: AST ('{', ast)
-# 			ast = ast.curly
-
-# 			continue
-
-# 		elif ast.is_mul or ast.is_mulexp:
-# 			mcs = lambda ast, mcs = mcs, op = ast.op, mul = ast.mul: mcs (AST (op, (ast,) + mul [1:]))
-# 			ast = ast.mul [0]
-# 			mul = True
-
-# 			continue
-
-# 		elif ast.is_num:
-# 			return mcs (ast.neg ())
-
-# 		break
-
-# 	return expr.neg (stack = True)
-
-def _expr_neg (expr): # TODO: this is counterintuitive, something not right
+def _expr_neg (expr):
 	return expr.neg (stack = True)
-	# if (expr.is_mul or expr.is_mulexp) and expr.mul [0].is_pos_num:
-	# 	return AST (expr.op, (expr.mul [0].neg (stack = True),) + expr.mul [1:])
-	# else:
-	# 	return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjacent terms not handled by grammar
 	ast         = None
@@ -377,17 +355,6 @@ def _ast_strip_tail_differential (ast):
 		if dv:
 			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
 
-	# elif ast.is_mul:
-	# 	ast2, neg = ast.mul [-1].strip_minus (retneg = True)
-	# 	ast2, dv  = _ast_strip_tail_differential (ast2)
-
-	# 	if dv:
-	# 		if ast2:
-	# 			return (AST ('*', ast.mul [:-1] + (neg (ast2),)), dv)
-	# 		elif len (ast.mul) > 2:
-	# 			return (neg (AST ('*', ast.mul [:-1])), dv)
-	# 		else:
-	# 			return (neg (ast.mul [0]), dv)
 	elif ast.is_mul or ast.is_mulexp:
 		ast2, neg = ast.mul [-1].strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
@@ -406,18 +373,6 @@ def _ast_strip_tail_differential (ast):
 
 		if dv and ast2:
 			return AST ('+', ast.add [:-1] + (neg (ast2),)), dv
-
-	# elif ast.is_curly:
-	# 	ast2, neg = ast.curly.strip_minus (retneg = True)
-	# 	ast2, dv  = _ast_strip_tail_differential (ast2)
-
-	# 	if dv:
-	# 		if ast2:
-	# 			return AST ('{', ast2), dv
-	# 		elif neg.is_neg:
-	# 			return AST ('{', AST.NegOne), dv
-	# 		else:
-	# 			return None, dv
 
 	return ast, None
 
@@ -808,10 +763,6 @@ class Parser (lalr1.LALR1):
 	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):               return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
 	def expr_add_4         (self, expr_mul_exp):                                   return expr_mul_exp
 
-	# def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg)
-	# def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                   return _expr_mul_exp (expr_mul_exp, expr_neg)
-	# def expr_mul_exp_3     (self, expr_neg):                                       return expr_neg
-
 	def expr_mul_exp       (self, expr_mul_expr):                                  return _expr_mul (expr_mul_expr)
 	def expr_mul_expr_1    (self, expr_mul_expr, CDOT, expr_neg):                  return AST.flatcat ('mulexp', expr_mul_expr, expr_neg)
 	def expr_mul_expr_2    (self, expr_mul_expr, STAR, expr_neg):                  return AST.flatcat ('mulexp', expr_mul_expr, expr_neg)
@@ -825,10 +776,6 @@ class Parser (lalr1.LALR1):
 	def expr_div_1         (self, expr_div, DIVIDE, expr_mul_imp):                 return AST ('/', expr_div, expr_mul_imp)
 	def expr_div_2         (self, expr_div, DIVIDE, MINUS, expr_mul_imp):          return AST ('/', expr_div, _expr_neg (expr_mul_imp))
 	def expr_div_3         (self, expr_mul_imp):                                   return expr_mul_imp
-
-	# def expr_mul_imp       (self, expr_mul_impr):                                  return _expr_mul (expr_mul_impr)
-	# def expr_mul_impr_1    (self, expr_mul_impr, expr_intg):                       return _expr_mul_imp (expr_mul_impr, expr_intg, self._USER_FUNCS)
-	# def expr_mul_impr_2    (self, expr_intg):                                      return expr_intg
 
 	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                        return _expr_mul_imp (expr_mul_imp, expr_intg, self._USER_FUNCS)
 	def expr_mul_imp_2     (self, expr_intg):                                      return expr_intg
@@ -1154,10 +1101,8 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# a = p.parse (r'x - {1 * 2}')
 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-	a = p.parse ('-x * a!')
+	a = p.parse ('--1 * x')
 	print (a)
-	# a = p.parse ('-1 * a')
-	# print (a)
 
 	# a = sym.ast2spt (a)
 	# print (a)
