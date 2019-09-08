@@ -182,16 +182,12 @@ _XLAT_FUNC2AST_REIM = {
 _XLAT_FUNC2AST_TEXNAT = {
 	'abs'                  : lambda ast: AST ('|', ast),
 	'Abs'                  : lambda ast: AST ('|', ast),
-	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
 	'Derivative'           : _xlat_func2ast_Derivative,
 	'diff'                 : _xlat_func2ast_Derivative,
-	'EmptySet'             : lambda *args: AST.SetEmpty,
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
 	'factorial'            : lambda ast: AST ('!', ast),
-	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
 	'Integral'             : _xlat_func2ast_Integral,
 	'integrate'            : _xlat_func2ast_Integral,
-	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
 	'Lambda'               : _xlat_func2ast_Lambda,
 	'Limit'                : _xlat_func2ast_Limit,
 	'limit'                : _xlat_func2ast_Limit,
@@ -202,7 +198,16 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'pow'                  : _xlat_func2ast_Pow,
 	'Sum'                  : _xlat_func2ast_Sum,
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
+
+	'EmptySet'             : lambda *args: AST.SetEmpty,
+	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
+	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
+	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
 	'Union'                : lambda *args: AST ('||', tuple (args)),
+
+	'Or'                   : lambda *args: AST ('or', tuple (args)),
+	'And'                  : lambda *args: AST ('and', tuple (args)),
+	'Not'                  : lambda not_: AST ('not', not_),
 }
 
 XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,

@@ -464,11 +464,15 @@ def _expr_vec (ast):
 	e = ast.comma if ast.is_comma else (ast,)
 
 	if all (c.is_brack for c in e):
-		if len (e) == 1 or len (set (len (c.brack) for c in e)) == 1:
-			if len (e [0].brack) == 1:
+		if len (e) == 0:
+			return AST.MatEmpty
+
+		elif len (e) == 1 or len (set (len (c.brack) for c in e)) == 1:
+			if e [0].brack.len == 1:
 				return AST ('vec', tuple (c.brack [0] for c in e))
 			else:
 				return AST ('mat', tuple (c.brack for c in e))
+
 		elif e [-1].brack.len < e [0].brack.len:
 			return AST ('mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),))
 
