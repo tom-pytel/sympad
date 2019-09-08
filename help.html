@@ -62,6 +62,7 @@ The input will be evaluated symbolically or numerically with the results being c
 <h4><a href="#Types">Types</a></h4>
 &emsp;<a href="#Numbers">Numbers</a><br>
 &emsp;<a href="#Variables">Variables</a><br>
+&emsp;<a href="#Booleans">Booleans</a><br>
 &emsp;<a href="#Vectors and Matrices">Vectors and Matrices</a><br>
 &emsp;<a href="#Piecewise Expressions">Piecewise Expressions</a><br>
 &emsp;<a href="#Strings">Strings</a><br>
@@ -222,6 +223,13 @@ There is nothing special about differential variables other than their specific 
 </p><p>
 Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 They may also be assigned a user function which allows you to use them as macro expression functions, that is covered in the section on functions.
+</p>
+
+<h4 id="Booleans">Booleans</h4>
+
+<p>
+Your standard True and False with SymPy Boolean results being coerced to these.
+SymPad modifies the SymPy Boolean classes to allow basic arithmetic so you can use the results of comparisons in expressions and they are automatically cast just like in Python to 1 and 0.
 </p>
 
 <h4 id="Vectors and Matrices">Vectors and Matrices</h4>

@@ -638,7 +638,7 @@ AST.SetEmpty   = AST ('set', ())
 AST.DictEmpty  = AST ('dict', ())
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	ast = AST ('*', (('*', (('@', 'x'), ('@', 'd'))), ('@', 'y')))
 # 	res = ast.flat ()
 # 	print (res)

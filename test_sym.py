@@ -11,6 +11,7 @@ import sys
 import time
 
 from sast import AST
+import spatch
 import sxlat
 import sym
 import sparser
@@ -152,6 +153,10 @@ None**-1.0**\[[\emptyset,],[0,],[\partial x,],] / {not \[None,\emptyset,]}
 {{\[[{{\emptyset} = {.1}},{\[[{\emptyset},],[{"str"},],]},],]} if {-{{\partial x}!}} else {{{{False}!} and {{{\partial x}||{oo}||{"str"}}}}}}
 {\int {{{{{1e-100}  {1}  {partialx}}}*{{True}^{\tilde\infty }}}} dx}
 {{{{-{"str"}} : {lambda x, y: {\partialx}}} \cdot {{not {{'str'} : {1.} : {.1}}}}}}
+{-{-1}}^{{1} : {\partial x} : {0}}
+{{{\sum_{x = {{a'} : {"str"} : {True}}}^{({\partial x})} {[]}}||{{{1.0} : {False} : {\emptyset}} [{{-1} == {\partialx}}]}||{{{{oo} if {None} else {\partialx}}^^{{.1} [{oo}]}}}}}
+{lambda x, y, z: {lambda x, y: {{{-1.0}&&{False}&&{d}}}}}
+\int {{\partialx} : {d} : {1.0}} dx
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
@@ -357,7 +362,7 @@ def fix_vars (ast):
 	if not isinstance (ast, AST):
 		return ast
 
-	if ast == ('@', '_'):
+	if ast == ('@', '_'): # remove LAST_VAR with other innocuous var
 		return AST ('@', 'x')
 
 	return AST (*tuple (fix_vars (a) for a in ast))
@@ -366,7 +371,7 @@ def fix_rest (ast):
 	if not isinstance (ast, AST):
 		return ast
 
-	if ast.is_comma:
+	if ast.is_comma: # wrap tuples in parens
 		return AST ('(', AST (*tuple (fix_vars (a) for a in ast)))
 
 	return AST (*tuple (fix_vars (a) for a in ast))
@@ -415,12 +420,13 @@ def test (argv = None):
 
 	_DEPTH  = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpid:x:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'depth=', 'expr='])
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpixd:e:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'xlat', 'nc', 'nocurlys', 'depth=', 'expr='])
+	xlat    = ('-x', '') in opts or ('--xlat', '') in opts
 
 	for opt, arg in opts:
 		if opt in ('-d', '--depth'):
 			_DEPTH = int (arg)
-		elif opt in ('-x', '--expr'):
+		elif opt in ('-e', '--expr'):
 			single = [arg]
 
 	if ('--dump', '') in opts:
@@ -469,7 +475,7 @@ def test (argv = None):
 				if not CURLYS:
 					ast = fix_vars (ast)
 
-				text              = sym.ast2py (ast)
+				text              = sym.ast2py (ast, xlat = xlat)
 				ast, erridx, auto = parse (text)
 
 				if not ast or erridx or auto:
@@ -480,9 +486,9 @@ def test (argv = None):
 
 				ast = fix_rest (ast)
 
-			tex = dotex and sym.ast2tex (ast, xlat = False)
-			nat = donat and sym.ast2nat (ast, xlat = False)
-			py  = dopy and sym.ast2py (ast, xlat = False)
+			tex = dotex and sym.ast2tex (ast, xlat = xlat)
+			nat = donat and sym.ast2nat (ast, xlat = xlat)
+			py  = dopy and sym.ast2py (ast, xlat = xlat)
 
 			if ('--show', '') in opts:
 				print ()

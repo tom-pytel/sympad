@@ -359,7 +359,7 @@ class sxlat: # for single script
 	xlat_pyS          = xlat_pyS
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: ## DEBUG!
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	ast = AST ('(', (',', (('#', '1'), ('#', '2'))))
 # 	res = XLAT_FUNC2AST_NAT ['set'] (ast)
 # 	print (res)
