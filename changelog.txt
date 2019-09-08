@@ -3,6 +3,7 @@ v1.0.7:
 * Patched SymPy sets.Complement to sympify args.
 * Added slice() translation and lots of slice formatting fixes.
 * Changed comparisons to use SymPy comparison objects first and fall back to Python operators if that fails.
+* Patched in basic math operation on SymPy Booleans.
 
 v1.0.6:
 -------

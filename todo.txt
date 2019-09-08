@@ -18,6 +18,8 @@
 
 > importing modules to allow custom code execution
 
+> better plotting limits specification
+
 > AppliedUndef, in func and in _Mul
 > Function ('f') (), Function ('f') (x), Function ('f') (x, y)
 > ODEs

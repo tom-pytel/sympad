@@ -151,38 +151,48 @@ try: # try to patch and fail silently if SymPy has changed too much since this w
 	from sympy.matrices.dense import DenseMatrix
 	from sympy.matrices.sparse import SparseMatrix
 
-	_DEFAULT_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
-	_DEFAULT_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
-	_DEFAULT_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
+	Complement.__new__                      = _Complement__new__ # sets.Complement sympify args fix
 
-	MatrixArithmetic._eval_matrix_mul         = _MatrixArithmetic_eval_matrix_mul
-	DenseMatrix._eval_matrix_mul              = _DenseMatrix_eval_matrix_mul
-	SparseMatrix._eval_matrix_mul             = _SparseMatrix_eval_matrix_mul
+	# itermediate matrix multiplication simplification
+	_SYMPY_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
+	_SYMPY_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
+	_SYMPY_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
 
-	Complement.__new__                        = _Complement__new__
+	MatrixArithmetic._eval_matrix_mul       = _MatrixArithmetic_eval_matrix_mul
+	DenseMatrix._eval_matrix_mul            = _DenseMatrix_eval_matrix_mul
+	SparseMatrix._eval_matrix_mul           = _SparseMatrix_eval_matrix_mul
 
-	boolalg.BooleanTrue.__int__               = lambda self: 1
-	boolalg.BooleanTrue.__float__             = lambda self: 1.0
-	boolalg.BooleanTrue.__complex__           = lambda self: 1+0j
-	boolalg.BooleanFalse.__int__              = lambda self: 0
-	boolalg.BooleanFalse.__float__            = lambda self: 0.0
-	boolalg.BooleanFalse.__complex__          = lambda self: 0j
-	boolalg.BooleanAtom.__add__               = lambda self, other: int (self) + other
-	boolalg.BooleanAtom.__radd__              = lambda self, other: other + int (self)
-	boolalg.BooleanAtom.__sub__               = lambda self, other: int (self) - other
-	boolalg.BooleanAtom.__rsub__              = lambda self, other: other - int (self)
-	boolalg.BooleanAtom.__mul__               = lambda self, other: int (self) * other
-	boolalg.BooleanAtom.__rmul__              = lambda self, other: other * int (self)
-	boolalg.BooleanAtom.__pow__               = lambda self, other: int (self) ** other
-	boolalg.BooleanAtom.__rpow__              = lambda self, other: other ** int (self)
-	boolalg.BooleanAtom.__div__               = lambda self, other: int (self) / other
-	boolalg.BooleanAtom.__rdiv__              = lambda self, other: other / int (self)
-	boolalg.BooleanAtom.__truediv__           = lambda self, other: int (self) / other
-	boolalg.BooleanAtom.__rtruediv__          = lambda self, other: other / int (self)
-	boolalg.BooleanAtom.__floordiv__          = lambda self, other: int (self) // other
-	boolalg.BooleanAtom.__rfloordiv__         = lambda self, other: other // int (self)
-	boolalg.BooleanAtom.__mod__               = lambda self, other: int (self) % other
-	boolalg.BooleanAtom.__rmod__              = lambda self, other: other % int (self)
+	# enable math on booleans
+	boolalg.BooleanTrue.__int__             = lambda self: 1
+	boolalg.BooleanTrue.__float__           = lambda self: 1.0
+	boolalg.BooleanTrue.__complex__         = lambda self: 1+0j
+	boolalg.BooleanTrue.as_coeff_Add        = lambda self, *a, **kw: (S.Zero, S.One)
+	boolalg.BooleanTrue.as_coeff_Mul        = lambda self, *a, **kw: (S.One, S.One)
+	boolalg.BooleanTrue._eval_evalf         = lambda self, *a, **kw: S.One
+
+	boolalg.BooleanFalse.__int__            = lambda self: 0
+	boolalg.BooleanFalse.__float__          = lambda self: 0.0
+	boolalg.BooleanFalse.__complex__        = lambda self: 0j
+	boolalg.BooleanFalse.as_coeff_Mul       = lambda self, *a, **kw: (S.Zero, S.Zero)
+	boolalg.BooleanFalse.as_coeff_Add       = lambda self, *a, **kw: (S.Zero, S.Zero)
+	boolalg.BooleanFalse._eval_evalf        = lambda self, *a, **kw: S.Zero
+
+	boolalg.BooleanAtom.__add__             = lambda self, other: self.__int__ () + other
+	boolalg.BooleanAtom.__radd__            = lambda self, other: other + self.__int__ ()
+	boolalg.BooleanAtom.__sub__             = lambda self, other: self.__int__ () - other
+	boolalg.BooleanAtom.__rsub__            = lambda self, other: other - self.__int__ ()
+	boolalg.BooleanAtom.__mul__             = lambda self, other: self.__int__ () * other
+	boolalg.BooleanAtom.__rmul__            = lambda self, other: other * self.__int__ ()
+	boolalg.BooleanAtom.__pow__             = lambda self, other: self.__int__ () ** other
+	boolalg.BooleanAtom.__rpow__            = lambda self, other: other ** self.__int__ ()
+	boolalg.BooleanAtom.__div__             = lambda self, other: self.__int__ () / other
+	boolalg.BooleanAtom.__rdiv__            = lambda self, other: other / self.__int__ ()
+	boolalg.BooleanAtom.__truediv__         = lambda self, other: self.__int__ () / other
+	boolalg.BooleanAtom.__rtruediv__        = lambda self, other: other / self.__int__ ()
+	boolalg.BooleanAtom.__floordiv__        = lambda self, other: self.__int__ () // other
+	boolalg.BooleanAtom.__rfloordiv__       = lambda self, other: other // self.__int__ ()
+	boolalg.BooleanAtom.__mod__             = lambda self, other: self.__int__ () % other
+	boolalg.BooleanAtom.__rmod__            = lambda self, other: other % self.__int__ ()
 
 	SPATCHED = True
 
@@ -192,9 +202,9 @@ except:
 def set_matmulsimp (state):
 	if SPATCHED:
 		idx                               = bool (state)
-		MatrixArithmetic._eval_matrix_mul = (_DEFAULT_MatrixArithmetic_eval_matrix_mul, _MatrixArithmetic_eval_matrix_mul) [idx]
-		DenseMatrix._eval_matrix_mul      = (_DEFAULT_DenseMatrix_eval_matrix_mul, _DenseMatrix_eval_matrix_mul) [idx]
-		SparseMatrix._eval_matrix_mul     = (_DEFAULT_SparseMatrix_eval_matrix_mul, _SparseMatrix_eval_matrix_mul) [idx]
+		MatrixArithmetic._eval_matrix_mul = (_SYMPY_MatrixArithmetic_eval_matrix_mul, _MatrixArithmetic_eval_matrix_mul) [idx]
+		DenseMatrix._eval_matrix_mul      = (_SYMPY_DenseMatrix_eval_matrix_mul, _DenseMatrix_eval_matrix_mul) [idx]
+		SparseMatrix._eval_matrix_mul     = (_SYMPY_SparseMatrix_eval_matrix_mul, _SparseMatrix_eval_matrix_mul) [idx]
 
 class spatch: # for single script
 	SPATCHED       = SPATCHED

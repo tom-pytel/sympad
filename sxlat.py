@@ -143,17 +143,6 @@ def _xlat_func2ast_Piecewise (*args):
 
 	return None
 
-# def _xlat_func2ast_set (*args):
-# 	if not args:
-# 		return AST.SetEmpty
-
-# 	arg = args [0].strip_paren ()
-
-# 	if arg.op in {',', '[', 'vec', 'set'}:
-# 		return AST ('set', tuple (arg [1]))
-
-# 	return None
-
 def _xlat_func2ast_slice (*args):
 	if len (args) == 1:
 		return AST ('slice', None, args [0], None)
