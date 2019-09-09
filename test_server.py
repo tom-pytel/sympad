@@ -44,15 +44,28 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('x, y = 1, 2'), {'math': [('x = 1', 'x = 1', 'x = 1'), ('y = 2', 'y = 2', 'y = 2')]})
 		self.assertEqual (get ('x, y = y, x'), {'math': [('x = 2', 'x = 2', 'x = 2'), ('y = 1', 'y = 1', 'y = 1')]})
 		self.assertEqual (get ('x, y'), {'math': ('(2, 1)', '(2, 1)', '\\left(2, 1 \\right)')})
-		self.assertEqual (get ('delvars'), {'math': ('delvars', 'delvars', 'delvars')})
-		self.assertEqual (get ('x'), {'math': ('2', '2', '2')})
-		self.assertEqual (get ('y'), {'math': ('1', '1', '1')})
+		self.assertEqual (get ('del vars'), {'msg': ["Variable 'x' deleted.", "Variable 'y' deleted."]})
+		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
+		self.assertEqual (get ('y'), {'math': ('y', 'y', 'y')})
 
 	def test_lambdas (self):
 		reset ()
 		self.assertEqual (get ('f = lambda: 2'), {'math': ('f = lambda: 2', 'f = Lambda((), 2)', 'f = \\left(\\left( \\right) \\mapsto 2 \\right)')})
 		self.assertEqual (get ('f'), {'math': ('lambda: 2', 'Lambda((), 2)', '\\left(\\left( \\right) \\mapsto 2 \\right)')})
 		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
+		self.assertEqual (get ('f = lambda: y'), {'math': ('f = lambda: y', 'f = Lambda((), y)', 'f = \\left(\\left( \\right) \\mapsto y \\right)')})
+		self.assertEqual (get ('f'), {'math': ('lambda: y', 'Lambda((), y)', '\\left(\\left( \\right) \\mapsto y \\right)')})
+		self.assertEqual (get ('f ()'), {'math': ('y', 'y', 'y')})
+		self.assertEqual (get ('y = 2'), {'math': ('y = 2', 'y = 2', 'y = 2')})
+		self.assertEqual (get ('f'), {'math': ('lambda: y', 'Lambda((), y)', '\\left(\\left( \\right) \\mapsto y \\right)')})
+		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
+		self.assertEqual (get ('f = lambda: y'), {'math': ('f = lambda: 2', 'f = Lambda((), 2)', 'f = \\left(\\left( \\right) \\mapsto 2 \\right)')})
+		self.assertEqual (get ('f'), {'math': ('lambda: 2', 'Lambda((), 2)', '\\left(\\left( \\right) \\mapsto 2 \\right)')})
+		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
+		self.assertEqual (get ('f = lambda: @y'), {'math': ('f = lambda: y', 'f = Lambda((), y)', 'f = \\left(\\left( \\right) \\mapsto y \\right)')})
+		self.assertEqual (get ('f'), {'math': ('lambda: y', 'Lambda((), y)', '\\left(\\left( \\right) \\mapsto y \\right)')})
+		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
+		self.assertEqual (get ('del y'), {'msg': ["Variable 'y' deleted."]})
 		self.assertEqual (get ('f = lambda x: x'), {'math': ('f = lambda x: x', 'f = Lambda(x, x)', 'f = \\left(x \\mapsto x \\right)')})
 		self.assertEqual (get ('f'), {'math': ('lambda x: x', 'Lambda(x, x)', '\\left(x \\mapsto x \\right)')})
 		self.assertEqual (get ('f (x)'), {'math': ('x', 'x', 'x')})
@@ -62,7 +75,17 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (x)'), {'math': ('x**2', 'x**2', 'x^2')})
 		self.assertEqual (get ('f (y)'), {'math': ('y**2', 'y**2', 'y^2')})
 		self.assertEqual (get ('f (2)'), {'math': ('4', '4', '4')})
-		self.assertEqual (get ('g = lambda x: f(x) + f(2x)'), {'math': ('g = lambda x: f(2 x) + f(x)', 'g = Lambda(x, f(2*x) + f(x))', 'g = \\left(x \\mapsto \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right) \\right)')})
+		self.assertEqual (get ('g = lambda x: f(x) + f(2x)'), {'math': ('g = lambda x: 5x**2', 'g = Lambda(x, 5*x**2)', 'g = \\left(x \\mapsto 5 x^2 \\right)')})
+		self.assertEqual (get ('g'), {'math': ('lambda x: 5x**2', 'Lambda(x, 5*x**2)', '\\left(x \\mapsto 5 x^2 \\right)')})
+		self.assertEqual (get ('g (x)'), {'math': ('5x**2', '5*x**2', '5 x^2')})
+		self.assertEqual (get ('g (y)'), {'math': ('5y**2', '5*y**2', '5 y^2')})
+		self.assertEqual (get ('g (2)'), {'math': ('20', '20', '20')})
+		self.assertEqual (get ('del f'), {'msg': ["Function 'f' deleted."]})
+		self.assertEqual (get ('g (2)'), {'math': ('20', '20', '20')})
+		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)')})
+		self.assertEqual (get ('g = lambda x: @(f(x) + f(2x))'), {'math': ('g = lambda x: f(2 x) + f(x)', 'g = Lambda(x, f(2*x) + f(x))', 'g = \\left(x \\mapsto \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right) \\right)')})
+		self.assertEqual (get ('h = lambda x: @(f(x)) + @(f(2x))'), {'math': ('h = lambda x: f(2 x) + f(x)', 'h = Lambda(x, f(2*x) + f(x))', 'h = \\left(x \\mapsto \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right) \\right)')})
+		self.assertEqual (get ('g == h'), {'math': ('True', 'True', 'True')})
 		self.assertEqual (get ('g'), {'math': ('lambda x: f(2 x) + f(x)', 'Lambda(x, f(2*x) + f(x))', '\\left(x \\mapsto \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right) \\right)')})
 		self.assertEqual (get ('g (x)'), {'math': ('5x**2', '5*x**2', '5 x^2')})
 		self.assertEqual (get ('g (y)'), {'math': ('5y**2', '5*y**2', '5 y^2')})
@@ -142,6 +165,60 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('\\[_ [0] [x], y].subs (y, 1)'), {'math': ('\\[1/6 * sqrt(33) - 1/2, 1]', 'Matrix([S(1) / 6*sqrt(33) - S(1) / 2, 1])', '\\begin{bmatrix} \\frac{1}{6} \\sqrt{33} - \\frac{1}{2} \\\\ 1 \\end{bmatrix}')})
 		self.assertEqual (get ('m.eigenvects()'), {'math': ('[(-1/2 * sqrt(33) + 5/2, 1, [\\[-1/6 * sqrt(33) - 1/2, 1]]), (1/2 * sqrt(33) + 5/2, 1, [\\[1/6 * sqrt(33) - 1/2, 1]])]', '[(-S(1) / 2*sqrt(33) + S(5) / 2, 1, [Matrix([-S(1) / 6*sqrt(33) - S(1) / 2, 1])]), (S(1) / 2*sqrt(33) + S(5) / 2, 1, [Matrix([S(1) / 6*sqrt(33) - S(1) / 2, 1])])]', '\\left[\\left(-\\frac{1}{2} \\sqrt{33} + \\frac{5}{2}, 1, \\left[\\begin{bmatrix} -\\frac{1}{6} \\sqrt{33} - \\frac{1}{2} \\\\ 1 \\end{bmatrix} \\right] \\right), \\left(\\frac{1}{2} \\sqrt{33} + \\frac{5}{2}, 1, \\left[\\begin{bmatrix} \\frac{1}{6} \\sqrt{33} - \\frac{1}{2} \\\\ 1 \\end{bmatrix} \\right] \\right) \\right]')})
 
+	def test_sets (self):
+		reset ()
+		self.assertEqual (get ('1 in {1, 2, 3}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('0 in {1, 2, 3}'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('1 not in {1, 2, 3}'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('0 not in {1, 2, 3}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('a in {a, b, c}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('z in {a, b, c}'), {'math': ('Contains(z, {a, b, c})', 'Contains(z, {a, b, c})', 'z \\in \\left\\{a, b, c\\right\\}')})
+		self.assertEqual (get ('a not in {a, b, c}'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('z not in {a, b, c}'), {'math': ('not Contains(z, {a, b, c})', 'Not(Contains(z, {a, b, c}))', '\\neg\\ z \\in \\left\\{a, b, c\\right\\}')})
+		self.assertEqual (get ('{1, 2} || {2, 3}'), {'math': ('{1, 2, 3}', 'FiniteSet(1, 2, 3)', '\\left\\{1, 2, 3 \\right\\}')})
+		self.assertEqual (get ('{1, 2} && {2, 3}'), {'math': ('{2,}', 'FiniteSet(2)', '\\left\\{2 \\right\\}')})
+		self.assertEqual (get ('{1, 2} ^^ {2, 3}'), {'math': ('{1, 3}', 'FiniteSet(1, 3)', '\\left\\{1, 3 \\right\\}')})
+		self.assertEqual (get ('{1, 2, 3} || {2, 3, 4} ^^ {3, 4, 5} && {4, 5, 6}'), {'math': ('{1, 2, 3, 5}', 'FiniteSet(1, 2, 3, 5)', '\\left\\{1, 2, 3, 5 \\right\\}')})
+		self.assertEqual (get ('{a, b} || {b, c}'), {'math': ('{a, b, c}', 'FiniteSet(a, b, c)', '\\left\\{a, b, c \\right\\}')})
+		self.assertEqual (get ('{a, b} && {b, c}'), {'math': ('{b,} || {a,} && {c,}', 'Union(FiniteSet(b), Intersection(FiniteSet(a), FiniteSet(c)))', '\\left\\{b \\right\\} \\cup \\left\\{a \\right\\} \\cap \\left\\{c \\right\\}')})
+		self.assertEqual (get ('{a, b} ^^ {b, c}'), {'math': ('{a,} ^^ {c,}', 'Union(Complement(FiniteSet(a), FiniteSet(c)), Complement(FiniteSet(c), FiniteSet(a)))', '\\left\\{a \\right\\} \\ominus \\left\\{c \\right\\}')})
+		self.assertEqual (get ('{a, b, c} || {b, c, d} ^^ {c, d, f} && {d, f, g}'), {'math': ('{a, b, c} || {f,} - {b, c} || ({b, c} && {b, c, d} - ({c,} && {g,})) - {f,}', 'Union(FiniteSet(a, b, c), FiniteSet(f) - FiniteSet(b, c), Intersection(FiniteSet(b, c), FiniteSet(b, c, d) - Intersection(FiniteSet(c), FiniteSet(g))) - FiniteSet(f))', '\\left\\{a, b, c \\right\\} \\cup \\left\\{f \\right\\} - \\left\\{b, c \\right\\} \\cup \\left(\\left\\{b, c \\right\\} \\cap \\left\\{b, c, d \\right\\} - \\left(\\left\\{c \\right\\} \\cap \\left\\{g \\right\\} \\right) \\right) - \\left\\{f \\right\\}')})
+		self.assertEqual (get ('{a, b} < {a, b, c}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('{a, b} <= {a, b, c}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('{a, b, c} < {a, b, c}'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('{a, b, c} <= {a, b, c}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('{a, b, c, d} <= {a, b, c}'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('{a, b, c} > {a, b}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('{a, b, c} >= {a, b}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('{a, b, c} > {a, b, c}'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('{a, b, c} >= {a, b, c}'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('{a, b, c} >= {a, b, c, d}'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('1 + i in Complexes'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('1 + i in Reals'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('1.1 in Reals'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('1.1 in Integers'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('0 in Naturals0'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('0 in Naturals'), {'math': ('False', 'False', 'False')})
+
+	def test_logic (self):
+		reset ()
+		self.assertEqual (get ('not 0'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('not 1'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('0 or 0'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('0 or 1'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('1 or 1'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('0 and 0'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('0 and 1'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('1 and 1'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('not x'), {'math': ('not x', 'Not(x)', '\\neg\\ x')})
+		self.assertEqual (get ('x or y'), {'math': ('x or y', 'Or(x, y)', 'x \\vee y')})
+		self.assertEqual (get ('x and y'), {'math': ('x and y', 'And(x, y)', 'x \\wedge y')})
+		self.assertEqual (get ('x or y and not z'), {'math': ('x or y and not z', 'Or(x, And(y, Not(z)))', 'x \\vee y \\wedge \\neg\\ z')})
+		self.assertEqual (get ('(1 > 0) + (1 > 1) + (1 > 2)'), {'math': ('1', '1', '1')})
+		self.assertEqual (get ('(1 >= 0) + (1 >= 1) + (1 >= 2)'), {'math': ('2', '2', '2')})
+		self.assertEqual (get ('(1 < 0) + (1 < 1) + (1 < 2)'), {'math': ('1', '1', '1')})
+		self.assertEqual (get ('(1 <= 0) + (1 <= 1) + (1 <= 2)'), {'math': ('2', '2', '2')})
+
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ()
 	ret  = {}
@@ -184,7 +261,7 @@ x, y = y, x
 x, y = 1, 2
 x, y = y, x
 x, y
-delvars
+del vars
 x
 y
 
@@ -193,6 +270,19 @@ y
 f = lambda: 2
 f
 f ()
+f = lambda: y
+f
+f ()
+y = 2
+f
+f ()
+f = lambda: y
+f
+f ()
+f = lambda: @y
+f
+f ()
+del y
 f = lambda x: x
 f
 f (x)
@@ -203,6 +293,16 @@ f (x)
 f (y)
 f (2)
 g = lambda x: f(x) + f(2x)
+g
+g (x)
+g (y)
+g (2)
+del f
+g (2)
+f = lambda x: x**2
+g = lambda x: @(f(x) + f(2x))
+h = lambda x: @(f(x)) + @(f(2x))
+g == h
 g
 g (x)
 g (y)
@@ -281,6 +381,60 @@ Subs(l, lambda, b) \\[x, y]
 solve(_ [0], _ [1], x, y)
 \\[_ [0] [x], y].subs (y, 1)
 m.eigenvects()
+
+"""), ('sets', """
+
+1 in {1, 2, 3}
+0 in {1, 2, 3}
+1 not in {1, 2, 3}
+0 not in {1, 2, 3}
+a in {a, b, c}
+z in {a, b, c}
+a not in {a, b, c}
+z not in {a, b, c}
+{1, 2} || {2, 3}
+{1, 2} && {2, 3}
+{1, 2} ^^ {2, 3}
+{1, 2, 3} || {2, 3, 4} ^^ {3, 4, 5} && {4, 5, 6}
+{a, b} || {b, c}
+{a, b} && {b, c}
+{a, b} ^^ {b, c}
+{a, b, c} || {b, c, d} ^^ {c, d, f} && {d, f, g}
+{a, b} < {a, b, c}
+{a, b} <= {a, b, c}
+{a, b, c} < {a, b, c}
+{a, b, c} <= {a, b, c}
+{a, b, c, d} <= {a, b, c}
+{a, b, c} > {a, b}
+{a, b, c} >= {a, b}
+{a, b, c} > {a, b, c}
+{a, b, c} >= {a, b, c}
+{a, b, c} >= {a, b, c, d}
+1 + i in Complexes
+1 + i in Reals
+1.1 in Reals
+1.1 in Integers
+0 in Naturals0
+0 in Naturals
+
+"""), ('logic', """
+
+not 0
+not 1
+0 or 0
+0 or 1
+1 or 1
+0 and 0
+0 and 1
+1 and 1
+not x
+x or y
+x and y
+x or y and not z
+(1 > 0) + (1 > 1) + (1 > 2)
+(1 >= 0) + (1 >= 1) + (1 >= 2)
+(1 < 0) + (1 < 1) + (1 < 2)
+(1 <= 0) + (1 <= 1) + (1 <= 2)
 
 """),
 

@@ -5,12 +5,11 @@
 
 > remove \lim, \sum and definite \int vars from free_vars
 
-> extended comparison 0 <= x < 1 (using and)
-> ProductSet?
-
 > importing modules to allow custom code execution
 
 > better plotting limits specification
+
+> extended comparison 0 <= x < 1 (using and)
 
 > AppliedUndef, in func and in _Mul
 > Function ('f') (), Function ('f') (x), Function ('f') (x, y)
@@ -22,6 +21,7 @@
 
 > random server port selection / fallback
 > emptyset Unicode symbol
+> ProductSet?
 
 > break out state machine from server
 

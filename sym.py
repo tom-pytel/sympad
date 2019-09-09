@@ -815,8 +815,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'<='   : (sp.Le, lambda a, b: a <= b),
 		'>'    : (sp.Gt, lambda a, b: a > b),
 		'>='   : (sp.Ge, lambda a, b: a >= b),
-		'in'   : (lambda a, b: a in b,) * 2,
-		'notin': (lambda a, b: a not in b,) * 2,
+		'in'   : (sp.Contains, lambda a, b: a in b),
+		'notin': (lambda a, b: sp.Not (sp.Contains (a, b)), lambda a, b: a not in b),
 	}
 
 	def _ast2spt_eq (self, ast):

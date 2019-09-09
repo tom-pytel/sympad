@@ -1,10 +1,15 @@
+v1.0.8:
+-------
+* Added overlooked SymPy set operation Contains.
+* Changed lambdas to bind global variables on definition.
+
 v1.0.7:
 -------
 * Added Pythonic 'or', 'and' and 'not' operators using SymPy Or, And and Not.
 * Added slice() translation and lots of slice formatting fixes.
+* Changed comparisons to use SymPy comparison objects first and fall back to Python operators if that fails.
 * Patched in basic math operation on SymPy Booleans, x + (y > z) valid now.
 * Patched SymPy sets.Complement to sympify args.
-* Changed comparisons to use SymPy comparison objects first and fall back to Python operators if that fails.
 * Fixed lots of obscure corner case grammar things that should never happen anyway like dictionaries of slices.
 
 v1.0.6:

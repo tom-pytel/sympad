@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.0.7'
+_VERSION         = '1.0.8'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmltNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
@@ -104,8 +104,12 @@ class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
 def _ast_remap (ast, map_, recurse = True):
-	if not isinstance (ast, AST) or ast.is_lamb or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
+	if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 		return ast
+
+	if ast.is_lamb:
+		lvars = set (ast.vars)
+		map_  = dict (kv for kv in filter (lambda kv: kv [0] not in lvars, map_.items ()))
 
 	elif ast.is_var:
 		var = map_.get (ast.var)
@@ -124,9 +128,9 @@ def _ast_remap (ast, map_, recurse = True):
 
 			return _ast_remap (_ast_remap (lamb.lamb, args, False), map_) # remap lambda vars to func args then global remap
 
-		return AST ('func', ast.func, \
-				tuple (('(', _ast_remap (a, map_, recurse)) \
-				if (a.is_var and map_.get (a.var, AST.VarNull).is_ass) \
+		return AST ('func', ast.func,
+				tuple (('(', _ast_remap (a, map_, recurse))
+				if (a.is_var and map_.get (a.var, AST.VarNull).is_ass)
 				else _ast_remap (a, map_, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
 	return AST (*(_ast_remap (a, map_, recurse) for a in ast))
