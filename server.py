@@ -158,7 +158,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 	if len (vars) == 1: # simple assignment
 		_set_vars ({vars [0]: ast})
 
-		asts = [AST ('=', '=', ('@', vars [0]), ast)]
+		asts = [AST ('=', ('@', vars [0]), ast)]
 
 	else: # tuple assignment
 		ast  = ast.strip_paren ()
@@ -171,7 +171,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 		_set_vars (dict (zip (vars, asts)))
 
-		asts = [AST ('=', '=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
+		asts = [AST ('=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
 
 	_update_vars ()
 
@@ -182,7 +182,7 @@ def _admin_vars (*args):
 
 	for v, e in sorted (_VARS.items ()):
 		if v != _VAR_LAST and not e.is_lamb:
-			asts.append (AST ('=', '=', ('@', v), e))
+			asts.append (AST ('=', ('@', v), e))
 
 	if not asts:
 		return 'No variables defined.'
@@ -194,7 +194,7 @@ def _admin_funcs (*args):
 
 	for v, e in sorted (_VARS.items ()):
 		if v != _VAR_LAST and e.is_lamb:
-			asts.append (AST ('=', '=', ('@', v), e))
+			asts.append (AST ('=', ('@', v), e))
 
 	if not asts:
 		return 'No functions defined.'

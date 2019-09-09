@@ -1,6 +1,7 @@
 # Base classes for abstract math syntax tree, tuple based.
 #
-# ('=', 'rel', lhs, rhs)                           - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
+# ('=', lhs, rhs)                                  - assignment to Left-Hand-Side of Right-Hand-Side
+# ('==', 'rel', lhs, rhs)                          - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
 # ('#', 'num')                                     - real numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                                     - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
 # ('.', expr, 'name')                              - data member reference
@@ -308,8 +309,14 @@ class AST (tuple):
 		AST.CONSTS.update ((AST.E, AST.I))
 
 #...............................................................................................
-class AST_Eq (AST):
-	op, is_eq  = '=', True
+class AST_Ass (AST):
+	op, is_ass  = '=', True
+
+	def _init (self, lhs, rhs):
+		self.lhs, self.rhs = lhs, rhs # should be py form
+
+class AST_Cmp (AST):
+	op, is_cmp  = '==', True
 
 	TEX2PY = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!=', '\\in': 'in', '\\notin': 'notin'}
 	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>=', '\u2208': 'in', '\u2209': 'notin'}
@@ -319,8 +326,6 @@ class AST_Eq (AST):
 
 	def _init (self, rel, lhs, rhs):
 		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be py form
-
-	_is_ass = lambda self: self.rel == '='
 
 class AST_Num (AST):
 	op, is_num = '#', True
@@ -641,7 +646,7 @@ class AST_Not (AST):
 		self.not_ = not_
 
 #...............................................................................................
-_AST_CLASSES = [AST_Eq, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
+_AST_CLASSES = [AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
 	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
 	AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
 	AST_Union, AST_Sdiff, AST_Xsect, AST_Or, AST_And, AST_Not]

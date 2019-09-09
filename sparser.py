@@ -78,7 +78,7 @@ def _expr_comma (lhs, rhs):
 
 	elif lhs.is_ass:
 		if lhs.rhs.is_mul and lhs.rhs.mul.len == 2 and lhs.rhs.mul [0].is_var_lambda and lhs.rhs.mul [1].is_var:
-			return AST ('=', '=', lhs.lhs, ('lamb', rhs.stop, (lhs.rhs.mul [1], rhs.start)))
+			return AST ('=', lhs.lhs, ('lamb', rhs.stop, (lhs.rhs.mul [1], rhs.start)))
 
 	elif lhs.is_comma:
 		for i in range (lhs.comma.len - 1, -1, -1):
@@ -90,7 +90,7 @@ def _expr_comma (lhs, rhs):
 
 			elif lhs.comma [i].is_ass:
 				if lhs.comma [i].rhs.is_mul and lhs.comma [i].rhs.mul.len == 2 and lhs.comma [i].rhs.mul [0].is_var_lambda and lhs.comma [i].rhs.mul [1].is_var:
-					ast = AST ('=', '=', lhs.comma [i].lhs, ('lamb', rhs.stop, (lhs.comma [i].rhs.mul [1], *lhs.comma [i + 1:], rhs.start)))
+					ast = AST ('=', lhs.comma [i].lhs, ('lamb', rhs.stop, (lhs.comma [i].rhs.mul [1], *lhs.comma [i + 1:], rhs.start)))
 
 					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
 
@@ -101,7 +101,7 @@ def _expr_comma (lhs, rhs):
 
 def _expr_colon (lhs, rhs):
 	if lhs.is_ass:
-		l, wrap_ass = lhs.rhs, lambda rhs, lhs = lhs.lhs: AST ('=', '=', lhs, rhs)
+		l, wrap_ass = lhs.rhs, lambda rhs, lhs = lhs.lhs: AST ('=', lhs, rhs)
 	else:
 		l, wrap_ass = lhs, lambda rhs: rhs
 
@@ -635,7 +635,7 @@ class Parser (lalr1.LALR1):
 		('BINOM',         r'\\binom(?!{_LETTERU})'),
 		('IF',            r'if(?!{_LETTERU})'),
 		('ELSE',          r'else(?!{_LETTERU})'),
-		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LETTERU})|{"|".join (AST.Eq.UNI2PY)}'),
+		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LETTERU})|{"|".join (AST.Cmp.UNI2PY)}'),
 		('OR',           fr'or\b|\\vee(?!{_LETTER})|{_UOR}'),
 		('AND',          fr'and\b|\\wedge(?!{_LETTER})|{_UAND}'),
 		('NOT',          fr'not\b|\\neg(?!{_LETTER})|{_UNOT}'),
@@ -697,7 +697,7 @@ class Parser (lalr1.LALR1):
 		('SETMINUS',     fr'\\setminus'),
 		('SUBSTACK',      r'\\substack'),
 
-		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)|{"|".join (AST.Eq.UNI2PY)}'),
+		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)|{"|".join (AST.Cmp.UNI2PY)}'),
 		('OR',           fr'or\b|\\vee|{_UOR}'),
 		('AND',          fr'and\b|\\wedge|{_UAND}'),
 		('NOT',          fr'not\b|\\neg|{_UNOT}'),
@@ -722,7 +722,7 @@ class Parser (lalr1.LALR1):
 
 	def expr               (self, expr_eq):                                        return expr_eq
 
-	def expr_eq_1          (self, expr_mapsto1, EQ, expr_mapsto2):                 return AST ('=', '=', expr_mapsto1, expr_mapsto2)
+	def expr_eq_1          (self, expr_mapsto1, EQ, expr_mapsto2):                 return AST ('=', expr_mapsto1, expr_mapsto2)
 	def expr_eq_2          (self, expr_mapsto):                                    return expr_mapsto
 
 	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_colon):                 return _expr_mapsto (expr_paren.strip (), expr_colon)
@@ -741,7 +741,7 @@ class Parser (lalr1.LALR1):
 	def expr_not_1         (self, NOT, expr_not):                                  return AST ('not', expr_not)
 	def expr_not_2         (self, expr_cmp):                                       return expr_cmp
 
-	def expr_cmp_1         (self, expr_union1, CMP, expr_union2):                  return AST ('=', AST.Eq.ANY2PY.get (CMP.text.replace (' ', ''), CMP.text.replace (' ', '')), expr_union1, expr_union2)
+	def expr_cmp_1         (self, expr_union1, CMP, expr_union2):                  return AST ('==', AST.Cmp.ANY2PY.get (CMP.text.replace (' ', ''), CMP.text.replace (' ', '')), expr_union1, expr_union2)
 	def expr_cmp_2         (self, expr_union):                                     return expr_union
 
 	def expr_union_1       (self, expr_union, UNION, expr_sdiff):                  return AST.flatcat ('||', expr_union, expr_sdiff)

@@ -166,12 +166,12 @@ def _xlat_func2ast_Sum (ast = AST.VarNull, ab = None):
 
 _XLAT_FUNC2AST_ALL    = {
 	'slice'                : _xlat_func2ast_slice,
-	'Eq'                   : lambda a, b: AST ('=', '==', a, b),
-	'Ne'                   : lambda a, b: AST ('=', '!=', a, b),
-	'Lt'                   : lambda a, b: AST ('=', '<', a, b),
-	'Le'                   : lambda a, b: AST ('=', '<=', a, b),
-	'Gt'                   : lambda a, b: AST ('=', '>', a, b),
-	'Ge'                   : lambda a, b: AST ('=', '>=', a, b),
+	'Eq'                   : lambda a, b: AST ('==', '==', a, b),
+	'Ne'                   : lambda a, b: AST ('==', '!=', a, b),
+	'Lt'                   : lambda a, b: AST ('==', '<', a, b),
+	'Le'                   : lambda a, b: AST ('==', '<=', a, b),
+	'Gt'                   : lambda a, b: AST ('==', '>', a, b),
+	'Ge'                   : lambda a, b: AST ('==', '>=', a, b),
 
 	'Or'                   : lambda *args: AST ('or', tuple (args)),
 	'And'                  : lambda *args: AST ('and', tuple (args)),
@@ -205,7 +205,7 @@ _XLAT_FUNC2AST_TEXNAT = {
 
 	'EmptySet'             : lambda *args: AST.SetEmpty,
 	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
-	'Contains'             : lambda a, b: AST ('=', 'in', a, b),
+	'Contains'             : lambda a, b: AST ('==', 'in', a, b),
 	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
 	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
 	'Union'                : lambda *args: AST ('||', tuple (args)),
@@ -350,7 +350,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 	es = [_xlat_pyS (a) for a in ast]
 
 	return AST (*tuple (e [0] for e in es)), \
-			ast.op in {'=', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'vec', 'mat', 'piece', 'lamb'} or any (e [1] for e in es)
+			ast.op in {'=', '==', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'vec', 'mat', 'piece', 'lamb'} or any (e [1] for e in es)
 
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 
