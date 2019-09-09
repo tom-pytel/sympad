@@ -34,13 +34,10 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
-def _fltoint (num):
-	return int (num) if isinstance (num, int) or num.is_integer () else num
-
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
-	if fallback is None: # fallback = None for raise on error
-		ret = _sympify # _sympify being used as uniquie non-None None
-	elif fallback is True: # True for return original value
+	ret = _sympify # _sympify being used as uniquie non-None None, fallback = None -> ret = _sympify for raise on error
+
+	if fallback is True: # True for return original value
 		ret = spt
 
 	else: # func for conversion function
@@ -50,15 +47,13 @@ def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argu
 			pass
 
 	try:
-		symp = sympify (spt)
+		ret = sympify (spt)
 
 	except:
 		if ret is _sympify:
 			raise
 
-		symp = ret
-
-	return symp
+	return ret
 
 def _simplify (spt):
 	if isinstance (spt, (bool, int, float, complex, str, slice)):
@@ -94,6 +89,9 @@ def _Mul (*args, evaluate = True):
 
 def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
 	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
+
+def _fltoint (num):
+	return int (num) if isinstance (num, int) or num.is_integer () else num
 
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
@@ -999,7 +997,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'&&'   : lambda self, ast: sp.Intersection (*(self._ast2spt (a) for a in ast.xsect)),
 		'or'   : lambda self, ast: sp.Or (*(_sympify (self._ast2spt (a), sp.Or, bool) for a in ast.or_)),
 		'and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
-		'not'  : lambda self, ast: sp.Not (_sympify (self._ast2spt (ast.not_), sp.Not, bool)),
+		'not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 
 		'text' : lambda self, ast: ast.spt,
 	}
@@ -1288,8 +1286,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('+', (('@', 'x'), ('*', (('#', '-1'), ('#', '2')))))
-# 	res = ast2nat (ast)
+# 	ast = AST ('not', ('@', 'None'))
+# 	res = ast2spt (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)
