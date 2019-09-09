@@ -1,4 +1,4 @@
-> env noeval
+> Add, Mul, etc... translate...
 > 1 in x
 > extended comparison 0 <= x < 1 (using and)
 
@@ -38,7 +38,6 @@
 > SYM.PY REFACTOR!
 
 > plots as objects?
-> no-evaluate version of Add and Mul (for tuples, lists and strings)?
 > flush sys.stdout to msg before sending exception?
 > function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?

@@ -24,9 +24,9 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _VERSION         = '1.0.8'
 
-__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmltNOSgGz', ['child', 'firstrun',
+__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
-	'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
+	'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
@@ -44,6 +44,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		f'{__name_indent} [-u | --ugly] [-E | --EI] \n' \
 		f'{__name_indent} [-q | --quick] [-y | --nopyS] \n' \
 		f'{__name_indent} [-s | --nosimplify] [-m | -nomatsimp] \n' \
+		f'{__name_indent} [-t | --nodoit] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
 		f'{__name_indent} [-g | --nogamma] [-G | --noGamma] \n' \
 		f'{__name_indent} [-z | --nozeta] \n' \
@@ -59,6 +60,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
   -y, --nopyS      - Start without Python S escaping
   -s, --nosimplify - Start without post-evaluation simplification
   -m, --nomatsimp  - Start without matrix simplification
+  -t, --nodoit     - Start without automatic expression doit()
   -N, --noN        - Start without N lambda function
   -S, --noS        - Start without S lambda function
   -O, --noO        - Start without O lambda function
@@ -84,7 +86,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', True), ('matsimp', True),
-		('eval', True), ('doit', True),('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
+		('doit', True),('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS         = {_VAR_LAST: AST.Zero} # This also!
@@ -286,12 +288,6 @@ def _admin_env (*args):
 				if apply:
 					spatch.set_matmulsimp (state)
 
-			elif var == 'eval':
-				msgs.append (f'Expression evaluation is {"on" if state else "off"}.')
-
-				if apply:
-					sym.set_eval (state)
-
 			elif var == 'doit':
 				msgs.append (f'Expression doit is {"on" if state else "off"}.')
 
@@ -330,7 +326,7 @@ def _admin_env (*args):
 
 		if var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
-		elif var not in {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'eval', 'doit', *_ONE_FUNCS}:
+		elif var not in {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'doit', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
@@ -492,8 +488,8 @@ def start_server (logging = True):
 		_DISPLAYSTYLE [0] = 0
 
 	# make sure all env options are initialized according to command line options
-	for short, long in zip ('EqysmltNOSgGz', \
-			['EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp', 'noeval', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
+	for short, long in zip ('EqysmtNOSgGz', \
+			['EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
 		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
 			_admin_env (AST ('@', long))
 		else:

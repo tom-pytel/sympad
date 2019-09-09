@@ -13,7 +13,6 @@ _SYMPY_FLOAT_PRECISION = None
 _USER_FUNCS            = {} # dict user funcs {name: AST, ...}
 _POST_SIMPLIFY         = True # post-evaluation simplification
 _PYS                   = True # Python S() escaping
-_EVAL                  = True # expression evaluation via 'evaluate' flag
 _DOIT                  = True # expression doit()
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
@@ -116,24 +115,13 @@ def _ast_followed_by_slice (ast, seq):
 
 	return False
 
-_ast_func_call_spobjs = set (id (o) for o in sp.__dict__.values ()) # for testing to see if obj belongs to SymPy
-
 def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
 	pyargs, pykw = AST.args2kwargs (args, _ast2spt)
-	spt          = None
 
-	# if _is_sympy_obj (func): # if SymPy object try applying 'evaluate' flag
-	if id (func) in _ast_func_call_spobjs: # if SymPy object try applying 'evaluate' flag
-		try:
-			spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
-		except: # maybe 'evaluate' keyword not supported?
-			pass
-
-	if spt is None:
-		spt = func (*pyargs, **pykw)
+	spt          = func (*pyargs, **pykw)
 
 	if type (spt) is func: # try to pass func name escaped status through SymPy object
 		try:
@@ -803,7 +791,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		spt = self._ast2spt (ast)
 
-		if _POST_SIMPLIFY and _EVAL:
+		if _POST_SIMPLIFY:
 			spt = _simplify (spt)
 
 		return spt
@@ -811,7 +799,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt (self, ast):
 		spt = self._ast2spt_funcs [ast.op] (self, ast)
 
-		if _DOIT and _EVAL and self.eval:
+		if _DOIT and self.eval:
 			try:
 				spt = spt.doit (deep = False)
 			except:
@@ -887,9 +875,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
 
 	def _ast2spt_add (self, ast): # specifically try to subtract negated objects (because of sets)
-		if not _EVAL:
-			return sp.Add (*(self._ast2spt (n) for n in ast.add), evaluate = False)
-
 		itr = iter (ast.add)
 		res = self._ast2spt (next (itr))
 
@@ -929,7 +914,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				for n in ast.dvs \
 				), ())
 
-		return sp.Derivative (self._ast2spt (ast [1]), *args, evaluate = _EVAL)
+		return sp.Derivative (self._ast2spt (ast [1]), *args)
 
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
@@ -983,23 +968,23 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		','    : lambda self, ast: tuple (self._ast2spt (p) for p in ast.comma),
 		'('    : lambda self, ast: self._ast2spt (ast.paren),
 		'['    : lambda self, ast: [self._ast2spt (b) for b in ast.brack],
-		'|'    : lambda self, ast: sp.Abs (self._ast2spt (ast.abs), evaluate = _EVAL),
+		'|'    : lambda self, ast: sp.Abs (self._ast2spt (ast.abs)),
 		'-'    : lambda self, ast: -self._ast2spt (ast.minus),
-		'!'    : lambda self, ast: sp.factorial (self._ast2spt (ast.fact), evaluate = _EVAL),
+		'!'    : lambda self, ast: sp.factorial (self._ast2spt (ast.fact)),
 		'+'    : _ast2spt_add,
-		'*'    : lambda self, ast: _Mul (*(self._ast2spt (n) for n in ast.mul), evaluate = _EVAL),
-		'/'    : lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1, evaluate = _EVAL), evaluate = _EVAL),
-		'^'    : lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp), evaluate = _EVAL),
-		'log'  : lambda self, ast: sp.log (self._ast2spt (ast.log), evaluate = _EVAL) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base), evaluate = _EVAL),
-		'sqrt' : lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (sp.S (2), -1, evaluate = _EVAL), evaluate = _EVAL) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1, evaluate = _EVAL), evaluate = _EVAL),
+		'*'    : lambda self, ast: _Mul (*(self._ast2spt (n) for n in ast.mul)),
+		'/'    : lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1)),
+		'^'    : lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp)),
+		'log'  : lambda self, ast: sp.log (self._ast2spt (ast.log)) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base)),
+		'sqrt' : lambda self, ast: _Pow (self._ast2spt (ast.rad), _Pow (sp.S (2), -1)) if ast.idx is None else _Pow (self._ast2spt (ast.rad), _Pow (self._ast2spt (ast.idx), -1)),
 		'func' : _ast2spt_func,
 		'lim'  : lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
 		'sum'  : lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
 		'diff' : _ast2spt_diff,
 		'intg' : _ast2spt_intg,
-		'vec'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec], evaluate = _EVAL),
-		'mat'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat], evaluate = _EVAL),
-		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece), evaluate = _EVAL),
+		'vec'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
+		'mat'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
+		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
 		'lamb' : _ast2spt_lamb,
 		'idx'  : _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
@@ -1077,10 +1062,10 @@ def _spt2ast_Add (spt):
 
 def _spt2ast_Mul (spt):
 	if spt.args [0] == -1:
-		return AST ('-', spt2ast (sp.Mul (*spt.args [1:], evaluate = _EVAL)))
+		return AST ('-', spt2ast (sp.Mul (*spt.args [1:])))
 
 	if spt.args [0].is_negative and isinstance (spt, sp.Number):
-		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:], evaluate = _EVAL)))
+		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:])))
 
 	args = spt.args [1:] if spt.args [0] == 1 else spt.args # sometimes we get Mul (1, ...), strip the 1
 
@@ -1092,7 +1077,7 @@ def _spt2ast_Mul (spt):
 
 	for arg in args:
 		if isinstance (arg, sp.Pow) and arg.args [1].is_negative:
-			denom.append (spt2ast (arg.args [0] if arg.args [1] is sp.S.NegativeOne else _Pow (arg.args [0], -arg.args [1], evaluate = _EVAL)))
+			denom.append (spt2ast (arg.args [0] if arg.args [1] is sp.S.NegativeOne else _Pow (arg.args [0], -arg.args [1])))
 		else:
 			numer.append (spt2ast (arg))
 
@@ -1107,7 +1092,7 @@ def _spt2ast_Mul (spt):
 
 def _spt2ast_Pow (spt):
 	if spt.args [1].is_negative:
-		return AST ('/', AST.One, spt2ast (spt.args [0] if spt.args [1] is sp.S.NegativeOne else _Pow (spt.args [0], -spt.args [1], evaluate = _EVAL)))
+		return AST ('/', AST.One, spt2ast (spt.args [0] if spt.args [1] is sp.S.NegativeOne else _Pow (spt.args [0], -spt.args [1])))
 
 	if spt.args [1] == 0.5:
 		return AST ('sqrt', spt2ast (spt.args [0]))
@@ -1269,10 +1254,6 @@ def set_simplify (state):
 	global _POST_SIMPLIFY
 	_POST_SIMPLIFY = state
 
-def set_eval (state):
-	global _EVAL
-	_EVAL = state
-
 def set_doit (state):
 	global _DOIT
 	_DOIT = state
@@ -1282,7 +1263,6 @@ class sym: # for single script
 	set_user_funcs = set_user_funcs
 	set_pyS        = set_pyS
 	set_simplify   = set_simplify
-	set_eval       = set_eval
 	set_doit       = set_doit
 	ast2tex        = ast2tex
 	ast2nat        = ast2nat
@@ -1290,19 +1270,17 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
-	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-	# ast = AST ('.', ('@', 'S'), 'Half')
-	# res = ast2spt (ast, vars)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
+# 	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+# 	# ast = AST ('.', ('@', 'S'), 'Half')
+# 	# res = ast2spt (ast, vars)
 
-	_EVAL = False
+# 	ast = AST ('+', (('#', '1'), ('#', '2')))
+# 	res = ast2spt (ast)
+# 	# res = spt2ast (res)
 
-	ast = AST ('+', (('#', '1'), ('#', '2')))
-	res = ast2spt (ast)
-	# res = spt2ast (res)
-
-	print (res)
+# 	print (res)
