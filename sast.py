@@ -44,6 +44,7 @@
 # ('and', (expr1, expr2, ...))                     - Python and
 # ('not', expr)                                    - Python not
 
+from collections import OrderedDict
 import re
 import types
 
@@ -225,10 +226,10 @@ class AST (tuple):
 		return args [0] if len (args) == 1 else AST ('(', (',', args)) if paren else AST (',', args)
 
 	@staticmethod
-	def args2kwargs (args, func = None):
+	def args2kwargs (args, func = None, ass2eq = False):
 		func  = (lambda x: x) if func is None else func
 		rargs = []
-		kw    = {}
+		kw    = []
 		itr   = reversed (args)
 
 		for arg in itr:
@@ -236,13 +237,19 @@ class AST (tuple):
 				ident = arg.lhs.as_identifier ()
 
 				if ident is not None:
-					kw [ident] = func (arg.rhs)
+					kw.append ((ident, func (arg.rhs)))
 
 					continue
 
-			rargs = [func (arg)] + [func (arg) for arg in itr]
+				elif ass2eq: # rewrite assignment = as == for equations passed to functions
+					arg = AST ('==', '==', arg.lhs, arg.rhs)
 
-		return rargs [::-1], kw
+			if ass2eq:
+				rargs = [func (arg)] + [func (AST ('==', '==', a.lhs, a.rhs) if a.is_ass else a) for a in itr]
+			else:
+				rargs = [func (arg)] + [func (a) for a in itr]
+
+		return rargs [::-1], OrderedDict (reversed (kw))
 
 	@staticmethod
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~

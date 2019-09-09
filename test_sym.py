@@ -494,7 +494,7 @@ def test (argv = None):
 				if not CURLYS:
 					ast = fix_vars (ast)
 
-				text              = sym.ast2py (ast, xlat = xlat)
+				text              = sym.ast2py (ast, xlat = xlat, funcass2eq = False)
 				ast, erridx, auto = parse (text)
 
 				if not ast or erridx or auto:
@@ -507,7 +507,7 @@ def test (argv = None):
 
 			tex = dotex and sym.ast2tex (ast, xlat = xlat)
 			nat = donat and sym.ast2nat (ast, xlat = xlat)
-			py  = dopy and sym.ast2py (ast, xlat = xlat)
+			py  = dopy and sym.ast2py (ast, xlat = xlat, funcass2eq = False)
 
 			if ('--show', '') in opts:
 				print ()
@@ -525,6 +525,7 @@ def test (argv = None):
 			ast_nat = donat and parse (nat) [0]
 			ast_py  = dopy and parse (py) [0]
 			ast_srp = process (ast)
+
 			ast_tex = dotex and process (ast_tex)
 			ast_nat = donat and process (ast_nat)
 			ast_py  = dopy and process (ast_py)

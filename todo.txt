@@ -1,6 +1,9 @@
-> Add, Mul, etc... translate...
-> 1 in x
+> (x = y) no strip parentheses at top level
 > extended comparison 0 <= x < 1 (using and)
+
+> eliminate pointless minus rewriting
+
+> test_python module
 
 > \[], \[[]], \[[], []], ...
 > change 'vec' object to column 'mat' object?
@@ -8,6 +11,8 @@
 > remove \lim, \sum and definite \int vars from free_vars
 
 > importing modules to allow custom code execution
+
+> Add, Mul, etc... translate...
 
 > better plotting limits specification
 
@@ -24,8 +29,6 @@
 > ProductSet?
 > ImageSet?
 
-> break out state machine from server
-
 > formatting: no spacing for nums - 3 x -> 3x?
 > formatting: quick mode no spacing for vars x y z -> xyz?
 > formatting: non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
@@ -37,12 +40,15 @@
 
 > SYM.PY REFACTOR!
 
+> 1 in x and other sets to accept symbols, how?
 > plots as objects?
 > flush sys.stdout to msg before sending exception?
 > function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?
 > long variable name shortcut? $?
 > derivative and integral of lambda functions?
+
+> break out state machine from server
 
 > fix instances unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyway.
 
@@ -67,3 +73,12 @@ tex:  ('piece', ((('=', 'in', ('#', '-1.0'), ('@', 'True')), ('+', (('@', 'dx'),
 \[[], []]
 
 
+text: lambda: 1e-100 [a, 1, -1]^\emptyset : 1.0**{lambda x, y, z: 1e-100 and \[-1.0,]}
+ast:  ('lamb', ('slice', ('^', ('idx', ('#', '1e-100'), (('@', 'a'), ('#', '1'), ('#', '-1'))), ('set', ())), ('^', ('#', '1.0'), ('lamb', ('and', (('#', '1e-100'), ('vec', (('#', '-1.0'),)))), (('@', 'x'), ('@', 'y'), ('@', 'z')))), None), ())
+nat:  ('lamb', ('dict', ((('^', ('idx', ('#', '1e-100'), (('@', 'a'), ('#', '1'), ('#', '-1'))), ('set', ())), ('^', ('#', '1.0'), ('lamb', ('and', (('#', '1e-100'), ('vec', (('#', '-1.0'),)))), (('@', 'x'), ('@', 'y'), ('@', 'z'))))),)), ())
+
+
+text: {{{{{\[[{False},{None},{"str"},],[{"str"},{\partial },{1e100},],[{\tilde\infty },{-1},{\partialx},],]}^{{{oo}  {oo}}}} == {\log_{\frac{1e+100}{d}}{\log{\partial x}}}}^^{lambda: {{{\int {\partialx} dx} \cdot {\{}} \cdot {\int {"str"} dx}}}}^^{{{-{-{a}}}*{{()}!}*{\sum_{x = {{{\partial }^^{None}}}}^{{{1.0}^^{1}}} {{True} : {oo} : {partialx}}}}}}}
+ast:  ('^^', (('==', '==', ('^', ('mat', ((('@', 'False'), ('@', 'None'), ('"', 'str')), (('"', 'str'), ('@', 'partial'), ('#', '1e+100')), (('@', 'zoo'), ('#', '-1'), ('@', 'dx')))), ('*', (('@', 'oo'), ('@', 'oo')))), ('log', ('log', ('@', 'dx')), ('/', ('#', '1e+100'), ('@', 'd')))), ('lamb', ('*', (('intg', ('@', 'dx'), ('@', 'dx')), ('set', ()), ('intg', ('"', 'str'), ('@', 'dx')))), ()), ('-', ('-', ('*', (('@', 'a'), ('!', (',', ())), ('sum', ('slice', ('@', 'True'), ('@', 'oo'), ('@', 'dx')), ('@', 'x'), ('^^', (('@', 'partial'), ('@', 'None'))), ('^^', (('#', '1.0'), ('#', '1'))))))))))
+tex:  ('^^', (('==', '==', ('^', ('mat', ((('@', 'False'), ('@', 'None'), ('"', 'str')), (('"', 'str'), ('@', 'partial'), ('#', '1e+100')), (('@', 'zoo'), ('#', '-1'), ('@', 'dx')))), ('*', (('@', 'oo'), ('@', 'oo')))), ('log', ('log', ('@', 'dx')), ('/', ('#', '1e+100'), ('@', 'd')))), ('lamb', ('*', (('intg', ('@', 'dx'), ('@', 'dx')), ('set', ()), ('intg', ('"', 'str'), ('@', 'dx')))), ()), ('-', ('-', ('*', (('!', ('func', 'a', ())), ('sum', ('slice', ('@', 'True'), ('@', 'oo'), ('@', 'dx')), ('@', 'x'), ('^^', (('@', 'partial'), ('@', 'None'))), ('^^', (('#', '1.0'), ('#', '1'))))))))))
+nat:  ('^^', (('==', '==', ('^', ('mat', ((('@', 'False'), ('@', 'None'), ('"', 'str')), (('"', 'str'), ('@', 'partial'), ('#', '1e+100')), (('@', 'zoo'), ('#', '-1'), ('@', 'dx')))), ('*', (('@', 'oo'), ('@', 'oo')))), ('log', ('log', ('@', 'dx')), ('/', ('#', '1e+100'), ('@', 'd')))), ('lamb', ('*', (('intg', ('@', 'dx'), ('@', 'dx')), ('set', ()), ('intg', ('"', 'str'), ('@', 'dx')))), ()), ('-', ('-', ('*', (('!', ('func', 'a', ())), ('sum', ('slice', ('@', 'True'), ('@', 'oo'), ('@', 'dx')), ('@', 'x'), ('^^', (('@', 'partial'), ('@', 'None'))), ('^^', (('#', '1.0'), ('#', '1'))))))))))

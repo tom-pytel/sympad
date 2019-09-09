@@ -566,7 +566,7 @@ class Parser (lalr1.LALR1):
 			b'HrhDpXePotIVbZnW2x2VbwoD2FCd+U1mKWTM9SCcpkUGkbxbwf2UD8yxbNb3cqhJhnV37GDis6y/TBJzWxol4ZhHqylkC818R0Zsi14YvCyWg/tjwRaw2AEyXdU9pGvXXKUDQZf1eK+DoH1zlQ4EnbDuuxBBk03VJFHbGYSlVvuCjtrh7VBqhXe8AQIv67Vm' \
 			b'ZeT8NJ7UJXfSWjWLHFnMLn1n8XcnEwHVJ4wy7yPVTXMfHEi+rGt6tSR3zX1wIPnjs4+lLd6XO15vUv0f95V9X5z/9ckYqM5ls7IPoTpp4dADcajCq7IvvkwVmuahOCxCWd4XvvdVaJuH4lCFy7vd974KXfNQHKowdvSNIsvlFv0oa3IAVPxIvte03YXvOZDO' \
 			b'KZMHUfevK1nBoryl6onxeQ0X2eFKQn46dteM/hE7bMWmSuM3+mb8r8Wi3w7WDHqqfoTH1qLmuX1sEquf1x+Y4cLZvJB1YhGrAT3oOJ7R7vkK58DwB60kJdxIK3GJ6wzIQyd88IAzDS7zoDKvcaQFxfEt7Wg9MSqITrVICx5BLDpyQRtLIVJgOgAgfoVCnGTO' \
-			b'lZAY5/ub/w+qJSmq' 
+			b'lZAY5/ub/w+qJSmq'
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -1089,15 +1089,15 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
-	# p.set_user_funcs ({'f': 1})
-	# a = p.parse (r'x - {1 * 2}')
-	# a = p.parse (r'x - {{1 * 2} * 3}')
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
+# 	# p.set_user_funcs ({'f': 1})
+# 	# a = p.parse (r'x - {1 * 2}')
+# 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-	a = p.parse ('-{\int x dx} + y * dz')
-	print (a)
+# 	a = p.parse ('-{\\int x dx} + y * dz')
+# 	print (a)
 
-	# a = sym.ast2spt (a)
-	# print (a)
+# 	# a = sym.ast2spt (a)
+# 	# print (a)

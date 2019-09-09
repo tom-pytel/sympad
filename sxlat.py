@@ -166,6 +166,7 @@ def _xlat_func2ast_Sum (ast = AST.VarNull, ab = None):
 
 _XLAT_FUNC2AST_ALL    = {
 	'slice'                : _xlat_func2ast_slice,
+
 	'Eq'                   : lambda a, b: AST ('==', '==', a, b),
 	'Ne'                   : lambda a, b: AST ('==', '!=', a, b),
 	'Lt'                   : lambda a, b: AST ('==', '<', a, b),

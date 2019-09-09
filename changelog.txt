@@ -1,7 +1,8 @@
 v1.0.8:
 -------
-* Added overlooked SymPy set operation Contains.
+* Added SymPy set operation Contains usage.
 * Changed lambdas to bind global variables on definition.
+* Fixed some assignment vs. equation cases.
 
 v1.0.7:
 -------

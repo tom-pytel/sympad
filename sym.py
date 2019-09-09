@@ -33,12 +33,6 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
-def _is_sympy_obj (obj):
-	try:
-		return obj.__class__.__module__ [:6] == 'sympy.'
-	except:
-		return None
-
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
 	ret = _sympify # _sympify being used as uniquie non-None None, fallback = None -> ret = _sympify for raise on error
 
@@ -612,10 +606,11 @@ class ast2nat: # abstract syntax tree -> native text
 #...............................................................................................
 class ast2py: # abstract syntax tree -> Python code text
 	def __init__ (self): self.parent = self.ast = None # pylint droppings
-	def __new__ (cls, ast, xlat = True):
-		self         = super ().__new__ (cls)
-		self.parents = [None]
-		self.parent  = self.ast = AST ()
+	def __new__ (cls, ast, xlat = True, funcass2eq = True):
+		self            = super ().__new__ (cls)
+		self.funcass2eq = funcass2eq
+		self.parents    = [None]
+		self.parent     = self.ast = AST ()
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -645,8 +640,8 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_eq (self, ast):
 		rel = '=' if ast.is_ass else ast.rel
 
-		if (ast.is_ass and not ast.parent) or rel in {'in', 'notin'}:
-			return f'{self._ast2py_paren (ast.lhs) if (ast.op in {"=", "=="} and ast.lhs.is_lamb) else self._ast2py (ast.lhs)} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py (ast.rhs)}'
+		if rel in {'in', 'notin'} or (ast.is_ass and (not self.parent or self.parent.is_func)):
+			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py (ast.rhs)}'
 
 		return f'{self._ast2py_cmpfuncs [rel]}({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
 
@@ -682,6 +677,11 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f'ln{self._ast2py_paren (ast.log)}'
 		else:
 			return f'log{self._ast2py_paren (ast.log)} / log{self._ast2py_paren (ast.base)}'
+
+	def _ast2py_func (self, ast):
+		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.funcass2eq)
+
+		return f'{ast.unescaped}({", ".join (args + [f"{k}={a}" for k, a in kw.items ()])})'
 
 	def _ast2py_lim (self, ast):
 		return \
@@ -745,7 +745,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'^'    : _ast2py_pow,
 		'log'  : _ast2py_log,
 		'sqrt' : lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
-		'func' : lambda self, ast: f'{ast.unescaped}({self._ast2py (AST.tuple2ast (ast.args))})',
+		'func' : _ast2py_func,
 		'lim'  : _ast2py_lim,
 		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
 		'diff' : _ast2py_diff,
@@ -1270,17 +1270,17 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
-# 	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-# 	# ast = AST ('.', ('@', 'S'), 'Half')
-# 	# res = ast2spt (ast, vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
+	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+	# ast = AST ('.', ('@', 'S'), 'Half')
+	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('+', (('#', '1'), ('#', '2')))
-# 	res = ast2spt (ast)
-# 	# res = spt2ast (res)
+	ast = AST ('func', 'cofactors', (('#', '1'), ('lamb', ('=', ('#', '1'), ('(', ('lamb', ('#', '2'), ()))), (('@', 'x'),))))
+	res = ast2py (ast)
+	# res = spt2ast (res)
 
-# 	print (res)
+	print (res)
