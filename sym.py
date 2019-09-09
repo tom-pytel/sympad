@@ -37,23 +37,28 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 def _fltoint (num):
 	return int (num) if isinstance (num, int) or num.is_integer () else num
 
-def _Mul (*args, evaluate = True):
-	if not evaluate:
-		return sp.Mul (*args, evaluate = False)
+def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
+	if fallback is None: # fallback = None for raise on error
+		ret = _sympify # _sympify being used as uniquie non-None None
+	elif fallback is True: # True for return original value
+		ret = spt
 
-	itr = iter (args)
-	res = next (itr)
-
-	for arg in itr:
+	else: # func for conversion function
 		try:
-			res = res * arg
+			ret = fallback (spt)
 		except:
-			res = sp.sympify (res) * sp.sympify (arg)
+			pass
 
-	return res
+	try:
+		symp = sympify (spt)
 
-def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
-	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
+	except:
+		if ret is _sympify:
+			raise
+
+		symp = ret
+
+	return symp
 
 def _simplify (spt):
 	if isinstance (spt, (bool, int, float, complex, str, slice)):
@@ -71,6 +76,24 @@ def _simplify (spt):
 		pass
 
 	return spt
+
+def _Mul (*args, evaluate = True):
+	if not evaluate:
+		return sp.Mul (*args, evaluate = False)
+
+	itr = iter (args)
+	res = next (itr)
+
+	for arg in itr:
+		try:
+			res = res * arg
+		except:
+			res = sp.sympify (res) * sp.sympify (arg)
+
+	return res
+
+def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
+	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
 
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
@@ -818,7 +841,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	}
 
 	def _ast2spt_var (self, ast):
-		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # 'self' being used for as unique None
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # 'self' being used as unique non-None None
 
 		if spt is self:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
@@ -974,9 +997,9 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'||'   : lambda self, ast: sp.Union (*(self._ast2spt (a) for a in ast.union)),
 		'^^'   : _ast2spt_sdiff,
 		'&&'   : lambda self, ast: sp.Intersection (*(self._ast2spt (a) for a in ast.xsect)),
-		'or'   : lambda self, ast: sp.Or (*(self._ast2spt (a) for a in ast.or_)),
-		'and'  : lambda self, ast: sp.And (*(self._ast2spt (a) for a in ast.and_)),
-		'not'  : lambda self, ast: sp.Not (self._ast2spt (ast.not_)),
+		'or'   : lambda self, ast: sp.Or (*(_sympify (self._ast2spt (a), sp.Or, bool) for a in ast.or_)),
+		'and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
+		'not'  : lambda self, ast: sp.Not (_sympify (self._ast2spt (ast.not_), sp.Not, bool)),
 
 		'text' : lambda self, ast: ast.spt,
 	}
@@ -1153,6 +1176,10 @@ _spt2ast_funcs = {
 
 	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
 	sp.boolalg.BooleanFalse: lambda spt: AST.False_,
+	sp.Or: lambda spt: AST ('or', tuple (spt2ast (a) for a in spt.args)),
+	sp.And: lambda spt: AST ('and', tuple (spt2ast (a) for a in spt.args)),
+	sp.Not: lambda spt: AST ('not', spt2ast (spt.args [0])),
+
 	EqAss: lambda spt: AST ('=', '=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Eq: lambda spt: AST ('=', '==', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ne: lambda spt: AST ('=', '!=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
@@ -1160,9 +1187,6 @@ _spt2ast_funcs = {
 	sp.Le: lambda spt: AST ('=', '<=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Gt: lambda spt: AST ('=', '>', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ge: lambda spt: AST ('=', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Or: lambda spt: AST ('or', tuple (spt2ast (a) for a in spt.args)),
-	sp.And: lambda spt: AST ('and', tuple (spt2ast (a) for a in spt.args)),
-	sp.Not: lambda spt: AST ('not', spt2ast (spt.args [0])),
 
 	sp.EmptySet: lambda spt: AST.SetEmpty,
 	sp.fancysets.Complexes: lambda spt: AST.Complexes,

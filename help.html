@@ -61,7 +61,6 @@ The input will be evaluated symbolically or numerically with the results being c
 
 <h4><a href="#Types">Types</a></h4>
 &emsp;<a href="#Numbers">Numbers</a><br>
-&emsp;<a href="#Variables">Variables</a><br>
 &emsp;<a href="#Booleans">Booleans</a><br>
 &emsp;<a href="#Vectors and Matrices">Vectors and Matrices</a><br>
 &emsp;<a href="#Piecewise Expressions">Piecewise Expressions</a><br>
@@ -69,6 +68,7 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#Lists and Tuples">Lists and Tuples</a><br>
 &emsp;<a href="#Dictionaries">Dictionaries</a><br>
 &emsp;<a href="#Sets">Sets</a><br>
+&emsp;<a href="#Variables">Variables</a><br>
 
 <h4><a href="#Operations">Operations</a></h4>
 &emsp;<a href="#Addition and Multiplication">Addition and Multiplication</a><br>
@@ -81,6 +81,7 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#Sums">Sums</a><br>
 &emsp;<a href="#Differentiation">Differentiation</a><br>
 &emsp;<a href="#Integration">Integration</a><br>
+&emsp;<a href="#Logic Operations">Logic Operations</a><br>
 &emsp;<a href="#Comparison">Comparison</a><br>
 &emsp;<a href="#Set Operations">Set Operations</a><br>
 &emsp;<a href="#Parentheses">Parentheses</a><br>
@@ -202,29 +203,6 @@ Instead, use spaces and/or explicit multiplication: "<b>2 * e + 22</b>".
 Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" depending on preference, no Pythonic "<b>j</b>" option at the moment but it can be hacked by setting "<b>j = i</b>" in SymPad.
 </p>
 
-<h4 id="Variables">Variables</h4>
-
-<p>
-Variable names can be a mix of Python and LaTeX format, they can be multi-character but cannot start with an underscore "<b>_</b>" or a number though they may contain those.
-Standard identifiers are accepted as well as single Greek letters optionally preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$).
-The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters, those Greek letters are accepted in Unicode as well.
-</p><p>
-The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
-"<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
-Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
-Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
-By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
-This is objectively prettier, but can be changed via the "<b>env (EI)</b>" and "<b>env (noEI)</b>" function.
-The SymPy constant usage can also be activated via the command line switch "<b>--EI</b>".
-</p><p>
-Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>", "<b>\partial x</b>" or "<b>∂x</b>" and are treated as a single variable.
-If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
-There is nothing special about differential variables other than their specific use in differentiation and integration.
-</p><p>
-Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
-They may also be assigned a user function which allows you to use them as macro expression functions, that is covered in the section on functions.
-</p>
-
 <h4 id="Booleans">Booleans</h4>
 
 <p>
@@ -278,6 +256,29 @@ To enter a set of zero or one element use the slash-curly set override syntax to
 As said these are converted to "<b>FiniteSet</b>" for evaluation. If however you need a true Python set for some reason then wrap the set or any other iterable in the Python "<b>set()</b>" function, this will always result in a Python set inside the calculations, though it will be returned to SymPy as a "<b>FiniteSet</b>" after the calculation completes.
 </p><p>
 The following default sets are available at the top level: "<b>Complexes</b>", "<b>Reals</b>", "<b>Naturals</b>", "<b>Naturals0</b>" and "<b>Integers</b>".
+</p>
+
+<h4 id="Variables">Variables</h4>
+
+<p>
+Variable names can be a mix of Python and LaTeX format, they can be multi-character but cannot start with an underscore "<b>_</b>" or a number though they may contain those.
+Standard identifiers are accepted as well as single Greek letters optionally preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$).
+The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters, those Greek letters are accepted in Unicode as well.
+</p><p>
+The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
+"<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
+Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
+Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
+By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
+This is objectively prettier, but can be changed via the "<b>env (EI)</b>" and "<b>env (noEI)</b>" function.
+The SymPy constant usage can also be activated via the command line switch "<b>--EI</b>".
+</p><p>
+Differentials are entered as "<b>dx</b>", "<b>partialx</b>", "<b>\partialx</b>", "<b>\partial x</b>" or "<b>∂x</b>" and are treated as a single variable.
+If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a space between them or two spaces between the "<b>\partial</b>" and the "<b>x</b>".
+There is nothing special about differential variables other than their specific use in differentiation and integration.
+</p><p>
+Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
+They may also be assigned a user function which allows you to use them as macro expression functions, that is covered in the section on functions.
 </p>
 
 <h2 id="Operations">Operations</h2>
@@ -366,6 +367,13 @@ power2, ...)</b>".
 The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b>\int z dx</b>" = $\int z\ dx$. The definite integral from "<b>a</b>" to
 "<b>b</b>" is "<b>\int_a^b z dx</b>" = $\int_a^b z\ dx$. "<b>\int dx/x</b>" = $\int \frac1x\ dx$. Iterated and improper integrals also work. Integrals
 may also be entered using the standard SymPy syntax "<b>Integral (expression, (variable, from, to), ...)</b>".
+</p>
+
+<h4 id="Logic Operations">Logic Operations</h4>
+
+<p>
+The standard Python "<b>or</b>", "<b>and</b>" and "<b>not</b>" operations are present but they are implemented using SymPy "<b>Or</b>", "<b>And</b>" and "<b>Not</b>" objects.
+Though by default these objects work only on booleans and not things like lists or tuples or other objects, SymPad makes them work by coercing any objects which they do not accept to booleans.
 </p>
 
 <h4 id="Comparison">Comparison</h4>
@@ -499,7 +507,9 @@ In order to make use of them though you must assign them to a variable like "<b>
 When a lambda function is defined no variables are mapped and no functions are called or expressions doit()-ed, this means that if a lambda references an assigned global variable the variable will be bound upon execution, not definition of the lambda.
 This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed.
 Lambda functions may reference other lambda functions as long as those are defined at the time of creation.
+</p><p>
 Lambdas may be passed to SymPy functions which take those and use them for something but these may not reference other user lambdas.
+Lambdas can not be called directly like "<b>(lambda x: x**2) (3)</b>", only through variables they are assigned to.
 Lambda recursion is not supported.
 </p>
 

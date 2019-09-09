@@ -1,7 +1,7 @@
+> lambdas as expressions
+
 > \[], \[[]], \[[], []], ...
 > change 'vec' object to column 'mat' object?
-
-> logic operations fall back to Python logic ops or sympify arguments?
 
 > remove \lim, \sum and definite \int vars from free_vars
 
@@ -67,3 +67,23 @@ tex:  ('piece', ((('=', 'in', ('#', '-1.0'), ('@', 'True')), ('+', (('@', 'dx'),
 \[[], []]
 
 
+text: {{{\log_{oo}{1}} if {{'str'} / {0}} else {unpolarify({False},{1e100},{'str'})}}^{-{{1.} [{d}, {True}, {\partial x}]}}}
+ast:  ('^', ('piece', ((('log', ('#', '1'), ('@', 'oo')), ('/', ('"', 'str'), ('#', '0'))), (('func', 'unpolarify', (('@', 'False'), ('#', '1e+100'), ('"', 'str'))), True))), ('-', ('idx', ('#', '1.'), (('@', 'd'), ('@', 'True'), ('@', 'dx')))))
+nat:  ('^', ('piece', ((('log', ('#', '1'), ('@', 'oo')), ('/', ('"', 'str'), ('#', '0'))), (('func', 'unpolarify', (('@', 'False'), ('#', '1e+100'), ('"', 'str'))), True))), ('idx', ('#', '-1.'), (('@', 'd'), ('@', 'True'), ('@', 'dx'))))
+
+
+text: {{{\partialx : {{{d} \cdot {partial} \cdot {.1}}}}}**{-{{1e-100} [{a}, {-1.0}, {\partial x}]}}}
+ast:  ('^', ('dict', ((('@', 'dx'), ('*', (('@', 'd'), ('@', 'partial'), ('#', '0.1')))),)), ('-', ('idx', ('#', '1e-100'), (('@', 'a'), ('#', '-1.0'), ('@', 'dx')))))
+nat:  ('^', ('dict', ((('@', 'dx'), ('*', (('@', 'd'), ('@', 'partial'), ('#', '0.1')))),)), ('idx', ('#', '-1e-100'), (('@', 'a'), ('#', '-1.0'), ('@', 'dx'))))
+
+a**{-{{1e-100} [{a}, {-1.0}, {\partial x}]}}
+a**{-{1 [y]}}
+a**{-1 [y]}
+
+text: a**{-1 [y]}
+ast:  ('^', ('@', 'a'), ('-', ('idx', ('#', '1'), (('@', 'y'),))))
+nat:  ('^', ('@', 'a'), ('idx', ('#', '-1'), (('@', 'y'),)))
+
+a**-1 [y]
+a**{-1 [y]}
+a**(-1 [y])
