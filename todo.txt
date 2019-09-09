@@ -1,5 +1,3 @@
-> lambdas as expressions
-
 > \[], \[[]], \[[], []], ...
 > change 'vec' object to column 'mat' object?
 

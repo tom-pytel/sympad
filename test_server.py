@@ -100,6 +100,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (1, 2, 3, 4)'), {'math': ('10', '10', '10')})
 		self.assertEqual (get ('f (1, 2, 3)'), {'err': "TypeError: lambda function 'f' takes 4 argument(s)"})
 		self.assertEqual (get ('f (1, 2, 3, 4, 5)'), {'err': "TypeError: lambda function 'f' takes 4 argument(s)"})
+		self.assertEqual (get ('f = lambda x: lambda: x**2'), {'math': ('f = lambda x: {lambda: x**2}', 'f = Lambda(x, Lambda((), x**2))', 'f = \\left(x \\mapsto \\left(\\left( \\right) \\mapsto x^2 \\right) \\right)')})
+		self.assertEqual (get ('f (2)'), {'math': ('lambda: 4', 'Lambda((), 4)', '\\left(\\left( \\right) \\mapsto 4 \\right)')})
+		self.assertEqual (get ('_ ()'), {'math': ('4', '4', '4')})
+		self.assertEqual (get ('f = lambda x: lambda: lambda: x**2'), {'math': ('f = lambda x: {lambda: {lambda: x**2}}', 'f = Lambda(x, Lambda((), Lambda((), x**2)))', 'f = \\left(x \\mapsto \\left(\\left( \\right) \\mapsto \\left(\\left( \\right) \\mapsto x^2 \\right) \\right) \\right)')})
+		self.assertEqual (get ('f (3)'), {'math': ('lambda: {lambda: 9}', 'Lambda((), Lambda((), 9))', '\\left(\\left( \\right) \\mapsto \\left(\\left( \\right) \\mapsto 9 \\right) \\right)')})
+		self.assertEqual (get ('_ ()'), {'math': ('lambda: 9', 'Lambda((), 9)', '\\left(\\left( \\right) \\mapsto 9 \\right)')})
+		self.assertEqual (get ('_ ()'), {'math': ('9', '9', '9')})
 
 	def test_env (self):
 		reset ()
@@ -317,6 +324,13 @@ f = lambda x, y, z, w: x + y + z + w
 f (1, 2, 3, 4)
 f (1, 2, 3)
 f (1, 2, 3, 4, 5)
+f = lambda x: lambda: x**2
+f (2)
+_ ()
+f = lambda x: lambda: lambda: x**2
+f (3)
+_ ()
+_ ()
 
 """), ('env', """
 
