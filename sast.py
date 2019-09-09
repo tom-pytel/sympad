@@ -180,12 +180,9 @@ class AST (tuple):
 
 		return (self, neg) if retneg else self
 
-	def strip_mls (self, count = None): # mls = mul, lim, sum
-		count = -1 if count is None else count
-
-		while self.op in {'*', 'lim', 'sum'} and count:
-			self   = self.mul [-1] if self.is_mul else self [1]
-			count -= 1
+	def _strip_mmls (self): # mls = minus, mul, lim, sum
+		while self.op in {'-', '*', 'lim', 'sum'}:
+			self = self.mul [-1] if self.is_mul else self [1]
 
 		return self
 

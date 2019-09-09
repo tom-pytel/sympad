@@ -1,3 +1,5 @@
+> extended comparison 0 <= x < 1 (using and)
+
 > \[], \[[]], \[[], []], ...
 > change 'vec' object to column 'mat' object?
 
@@ -6,8 +8,6 @@
 > importing modules to allow custom code execution
 
 > better plotting limits specification
-
-> extended comparison 0 <= x < 1 (using and)
 
 > AppliedUndef, in func and in _Mul
 > Function ('f') (), Function ('f') (x), Function ('f') (x, y)
@@ -20,6 +20,7 @@
 > random server port selection / fallback
 > emptyset Unicode symbol
 > ProductSet?
+> ImageSet?
 
 > break out state machine from server
 
@@ -42,10 +43,10 @@
 > long variable name shortcut? $?
 > derivative and integral of lambda functions?
 
-> fix unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyway.
+> fix instances unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyway.
 
-> sequence(factorial(k), (k,1,oo))
-> ImageSet(Lambda(n, 2 n pi + pi/2), Integers)
+> sequence (factorial (k), (k, 1, oo))
+> ImageSet (Lambda (n, 2 n pi + pi / 2), Integers)
 
 > var assumptions
 > Proper implementation of vectors with "\vec{x}" and "\hat{i}" variables
@@ -65,29 +66,3 @@ tex:  ('piece', ((('=', 'in', ('#', '-1.0'), ('@', 'True')), ('+', (('@', 'dx'),
 \[[], []]
 
 
-text: {{{{{\infty zoo} [{1e100}]} [{{0} : {\partialx}}]}+{-{\int {d} dx}}+{\lim_{x \to {{}}} {{{\partial } \cdot {dx}}}}}}
-ast:  ('+', (('idx', ('idx', ('*', (('@', 'oo'), ('@', 'zoo'))), (('#', '1e+100'),)), (('dict', ((('#', '0'), ('@', 'dx')),)),)), ('-', ('intg', ('@', 'd'), ('@', 'dx'))), ('lim', ('*', (('@', 'partial'), ('@', 'dx'))), ('@', 'x'), ('dict', ()))))
-tex:  ('+', (('idx', ('idx', ('*', (('@', 'oo'), ('@', 'zoo'))), (('#', '1e+100'),)), (('dict', ((('#', '0'), ('@', 'dx')),)),)), ('-', ('intg', ('+', (('*', (('@', 'd'), ('@', 'dx'))), ('lim', ('@', 'partial'), ('@', 'x'), ('dict', ())))), ('@', 'dx')))))
-nat:  ('+', (('idx', ('idx', ('*', (('@', 'oo'), ('@', 'zoo'))), (('#', '1e+100'),)), (('dict', ((('#', '0'), ('@', 'dx')),)),)), ('-', ('intg', ('+', (('*', (('@', 'd'), ('@', 'dx'))), ('lim', ('@', 'partial'), ('@', 'x'), ('dict', ())))), ('@', 'dx')))))
-
-
-text: {{{\log_{oo}{1}} if {{'str'} / {0}} else {unpolarify({False},{1e100},{'str'})}}^{-{{1.} [{d}, {True}, {\partial x}]}}}
-ast:  ('^', ('piece', ((('log', ('#', '1'), ('@', 'oo')), ('/', ('"', 'str'), ('#', '0'))), (('func', 'unpolarify', (('@', 'False'), ('#', '1e+100'), ('"', 'str'))), True))), ('-', ('idx', ('#', '1.'), (('@', 'd'), ('@', 'True'), ('@', 'dx')))))
-nat:  ('^', ('piece', ((('log', ('#', '1'), ('@', 'oo')), ('/', ('"', 'str'), ('#', '0'))), (('func', 'unpolarify', (('@', 'False'), ('#', '1e+100'), ('"', 'str'))), True))), ('idx', ('#', '-1.'), (('@', 'd'), ('@', 'True'), ('@', 'dx'))))
-
-
-text: {{{\partialx : {{{d} \cdot {partial} \cdot {.1}}}}}**{-{{1e-100} [{a}, {-1.0}, {\partial x}]}}}
-ast:  ('^', ('dict', ((('@', 'dx'), ('*', (('@', 'd'), ('@', 'partial'), ('#', '0.1')))),)), ('-', ('idx', ('#', '1e-100'), (('@', 'a'), ('#', '-1.0'), ('@', 'dx')))))
-nat:  ('^', ('dict', ((('@', 'dx'), ('*', (('@', 'd'), ('@', 'partial'), ('#', '0.1')))),)), ('idx', ('#', '-1e-100'), (('@', 'a'), ('#', '-1.0'), ('@', 'dx'))))
-
-a**{-{{1e-100} [{a}, {-1.0}, {\partial x}]}}
-a**{-{1 [y]}}
-a**{-1 [y]}
-
-text: a**{-1 [y]}
-ast:  ('^', ('@', 'a'), ('-', ('idx', ('#', '1'), (('@', 'y'),))))
-nat:  ('^', ('@', 'a'), ('idx', ('#', '-1'), (('@', 'y'),)))
-
-a**-1 [y]
-a**{-1 [y]}
-a**(-1 [y])

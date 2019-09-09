@@ -173,6 +173,8 @@ a * {-b} * c
 a * {-b} c
 --1 * x
 ---1 * x
+a**{-1 [y]}
+-{\int x dx} + y * dz
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

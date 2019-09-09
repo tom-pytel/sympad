@@ -153,14 +153,6 @@ def _expr_mul (expr): # pull negative(s) out of first term of nested curly/multi
 
 			continue
 
-	# 	elif ast.is_minus or ast.is_neg_num:
-	# 		if mul:
-	# 			return AST ('-', mcs (ast.neg ()))
-
-	# 	break
-
-	# return expr
-
 		elif ast.is_minus:
 			mcs = lambda ast, mcs = mcs: AST ('-', mcs (ast))
 			ast = ast.minus
@@ -224,7 +216,10 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 		if not arg.brack:
 			raise SyntaxError ('missing index')
 
-		ast = wrap (AST ('idx', last, arg.brack))
+		if last.is_neg_num: # really silly, trying to index negative number, will fail but rewrite to neg of idx of pos number for consistency of parsing
+			ast = AST ('-', wrap (AST ('idx', last.neg (), arg.brack)))
+		else:
+			ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
 		return wrapl (ast)
@@ -571,7 +566,7 @@ class Parser (lalr1.LALR1):
 			b'URS6oiXTeruj8E1RANtVe36TWwo5cz2IoGmSQRTv1uV+KgblWDbqeznUJMe6Ow5w8VnWXiaLua2MknHMk9UUsnXN/EBObIseGDwsnoP7U8EXsPgBslzVPZRraK4yQKDLWrzXIdC+ucoAgU54911IoMmnalKo7QzB0lf7goG+w9tX6Su84wkIeFmrNVdGzi/j' \
 			b'ybrkTlmrZlEgj9mlzyx+72QmkPqEU+Z9lLpp7kOAyJc1Ta9W5K65DwEif3z+sbTE+/LA802q/+Pesu+N898+mQLFuWxU9iEUJ00ceiABRXhV/sWXKULTPJSASSjL28L3vght81ACinB5s/veF6FrHkpAEcaGvlHkudyiHWVNvoAqfhTfK9rg0vd8kfYpkxux' \
 			b'7l8XsoJHeUvFE9PzHC7yw5WM/HTq0Iz+kbrbSk2Fxk/0zfhfi0e/HcwZ9FT8uB6/FrXO7VOTWPw8/8AMJ87miawTk1gN5EHb8YxWz1fYB4ZfaCUr0UaaiUtaZyAe2uGDO5ypc5k7lXmOI00ojk9pR/OJUUC0q0Wa8Ahh0ZYL2li6IgzTBgDxLXTFCXGuXIlp' \
-			b'vrv5f9PuKV0=' 
+			b'vrv5f9PuKV0='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -1101,7 +1096,7 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# a = p.parse (r'x - {1 * 2}')
 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-	a = p.parse ('--1 * x')
+	a = p.parse ('-{\int x dx} + y * dz')
 	print (a)
 
 	# a = sym.ast2spt (a)

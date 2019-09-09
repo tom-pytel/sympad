@@ -2116,7 +2116,7 @@ class AST (tuple):
 
 		return (self, neg) if retneg else self
 
-	def strip_mls (self, count = None): # mls = mul, lim, sum
+	def strip_mmls (self, count = None): # mls = mul, lim, sum
 		count = -1 if count is None else count
 
 		while self.op in {'*', 'lim', 'sum'} and count:
@@ -3186,7 +3186,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_add (self, ast):
 		return ' + '.join (self._ast2tex_wrap (n, \
-				((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]),
+				((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and n is not ast.add [-1]),
 				(n.is_piece and n is not ast.add [-1]) or n.op in {'=', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} # or (n.is_mul and n is not ast.add [0] and _ast_is_neg (n.mul [0]))
 				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
@@ -3197,7 +3197,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		for n in ast.mul:
 			s = self._ast2tex_wrap (n, \
-					(p and _ast_is_neg (n)) or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+					(p and _ast_is_neg (n)) or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
 					n.op in {'=', '+', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} or (n.is_piece and n is not ast.mul [-1]))
 
 			if p and p.is_attr and s [:6] == '\\left(':
@@ -3416,7 +3416,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_add (self, ast):
 		return ' + '.join (self._ast2nat_wrap (n, \
-				n.is_piece or ((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]),
+				n.is_piece or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and n is not ast.add [-1]),
 				(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} # or (n.is_mul and n is not ast.add [0] and _ast_is_neg (n.mul [0]))
 				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
@@ -3427,7 +3427,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 		for n in ast.mul:
 			s = self._ast2nat_wrap (n, \
-					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
 					n.op in {'=', '+', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} or (n.is_piece and n is not ast.mul [-1]))
 
 			if p and (n.op in {'#', '[', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus ().op in {'lim', 'sum', 'diff', 'intg'} or \
@@ -4805,7 +4805,7 @@ class Parser (lalr1.LALR1):
 			b'URS6oiXTeruj8E1RANtVe36TWwo5cz2IoGmSQRTv1uV+KgblWDbqeznUJMe6Ow5w8VnWXiaLua2MknHMk9UUsnXN/EBObIseGDwsnoP7U8EXsPgBslzVPZRraK4yQKDLWrzXIdC+ucoAgU54911IoMmnalKo7QzB0lf7goG+w9tX6Su84wkIeFmrNVdGzi/j' \
 			b'ybrkTlmrZlEgj9mlzyx+72QmkPqEU+Z9lLpp7kOAyJc1Ta9W5K65DwEif3z+sbTE+/LA802q/+Pesu+N898+mQLFuWxU9iEUJ00ceiABRXhV/sWXKULTPJSASSjL28L3vght81ACinB5s/veF6FrHkpAEcaGvlHkudyiHWVNvoAqfhTfK9rg0vd8kfYpkxux' \
 			b'7l8XsoJHeUvFE9PzHC7yw5WM/HTq0Iz+kbrbSk2Fxk/0zfhfi0e/HcwZ9FT8uB6/FrXO7VOTWPw8/8AMJ87miawTk1gN5EHb8YxWz1fYB4ZfaCUr0UaaiUtaZyAe2uGDO5ypc5k7lXmOI00ojk9pR/OJUUC0q0Wa8Ahh0ZYL2li6IgzTBgDxLXTFCXGuXIlp' \
-			b'vrv5f9PuKV0=' 
+			b'vrv5f9PuKV0='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}

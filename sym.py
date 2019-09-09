@@ -241,7 +241,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_add (self, ast):
 		return ' + '.join (self._ast2tex_wrap (n, \
-				((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]),
+				((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and n is not ast.add [-1]),
 				(n.is_piece and n is not ast.add [-1]) or n.op in {'=', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} # or (n.is_mul and n is not ast.add [0] and _ast_is_neg (n.mul [0]))
 				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
@@ -252,7 +252,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		for n in ast.mul:
 			s = self._ast2tex_wrap (n, \
-					(p and _ast_is_neg (n)) or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+					(p and _ast_is_neg (n)) or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
 					n.op in {'=', '+', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} or (n.is_piece and n is not ast.mul [-1]))
 
 			if p and p.is_attr and s [:6] == '\\left(':
@@ -471,7 +471,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_add (self, ast):
 		return ' + '.join (self._ast2nat_wrap (n, \
-				n.is_piece or ((n.strip_mls ().is_intg or (n.is_mul and n.mul [-1].strip_mls ().is_intg)) and n is not ast.add [-1]),
+				n.is_piece or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and n is not ast.add [-1]),
 				(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} # or (n.is_mul and n is not ast.add [0] and _ast_is_neg (n.mul [0]))
 				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
 
@@ -482,7 +482,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 		for n in ast.mul:
 			s = self._ast2nat_wrap (n, \
-					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mls ().is_intg and n is not ast.mul [-1]), \
+					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
 					n.op in {'=', '+', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} or (n.is_piece and n is not ast.mul [-1]))
 
 			if p and (n.op in {'#', '[', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus ().op in {'lim', 'sum', 'diff', 'intg'} or \
@@ -1286,8 +1286,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('not', ('@', 'None'))
-# 	res = ast2spt (ast)
+# 	ast = AST ('+', (('-', ('intg', ('@', 'x'), ('@', 'dx'))), ('*', (('@', 'y'), ('@', 'dz')))))
+# 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)
