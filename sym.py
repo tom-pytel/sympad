@@ -24,7 +24,7 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 AST.register_AST (AST_Text)
 
-class EqAss (sp.Eq): # assignment instead of equality comparison
+class ExprAss (sp.Eq): # assignment instead of equality comparison
 	pass
 
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
@@ -33,6 +33,12 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
+
+def _is_sympy_obj (obj):
+	try:
+		return obj.__class__.__module__ [:6] == 'sympy.'
+	except:
+		return None
 
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
 	ret = _sympify # _sympify being used as uniquie non-None None, fallback = None -> ret = _sympify for raise on error
@@ -119,6 +125,7 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 	pyargs, pykw = AST.args2kwargs (args, _ast2spt)
 	spt          = None
 
+	# if _is_sympy_obj (func): # if SymPy object try applying 'evaluate' flag
 	if id (func) in _ast_func_call_spobjs: # if SymPy object try applying 'evaluate' flag
 		try:
 			spt = func (*pyargs, **{'evaluate': _EVAL, **pykw})
@@ -198,7 +205,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return (s, has) if ret_has else s
 
 	def _ast2tex_eq_hs (self, ast, hs, lhs = True):
-		return self._ast2tex_wrap (hs, 0, (hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece'})) if ast.is_ass else {'==', 'piece', 'slice', 'or', 'and', 'not'})
+		return self._ast2tex_wrap (hs, 0, (hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece'})) if ast.is_ass else {'=', '==', 'piece', 'slice', 'or', 'and', 'not'})
 
 	def _ast2tex_num (self, ast):
 		m, e = ast.num_mant_and_exp
@@ -468,7 +475,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return (s, has) if ret_has else s
 
 	def _ast2nat_eq_hs (self, ast, hs, lhs = True):
-		return self._ast2nat_wrap (hs, 0, (hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece', 'lamb'})) if ast.is_ass else {'==', 'piece', 'lamb', 'slice', 'or', 'and', 'not'})
+		return self._ast2nat_wrap (hs, 0, (hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece', 'lamb'})) if ast.is_ass else {'=', '==', 'piece', 'lamb', 'slice', 'or', 'and', 'not'})
 
 	def _ast2nat_add (self, ast):
 		return ' + '.join (self._ast2nat_wrap (n, \
@@ -796,7 +803,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		spt = self._ast2spt (ast)
 
-		if _POST_SIMPLIFY:
+		if _POST_SIMPLIFY and _EVAL:
 			spt = _simplify (spt)
 
 		return spt
@@ -813,7 +820,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return spt
 
 	_ast2spt_cmpfuncs = {
-		'='    : (EqAss, lambda a, b: a == b),
+		'='    : (ExprAss, lambda a, b: a == b),
 		'=='   : (sp.Eq, lambda a, b: a == b),
 		'!='   : (sp.Ne, lambda a, b: a != b),
 		'<'    : (sp.Lt, lambda a, b: a < b),
@@ -828,10 +835,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		lhs, rhs  = self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)
 		fspt, fpy = self._ast2spt_cmpfuncs ['=' if ast.is_ass else ast.rel]
 
-		try: # try to use SymPy comparison object
-			return fspt (lhs, rhs)
-		except: # fall back to Python comparison
-			return fpy (lhs, rhs)
+		try:
+			return fspt (lhs, rhs) # try to use SymPy comparison object
+		except:
+			return fpy (lhs, rhs) # fall back to Python comparison
 
 	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
 		'pi'   : sp.pi,
@@ -1184,7 +1191,7 @@ _spt2ast_funcs = {
 	sp.And: lambda spt: AST ('and', tuple (spt2ast (a) for a in spt.args)),
 	sp.Not: lambda spt: AST ('not', spt2ast (spt.args [0])),
 
-	EqAss: lambda spt: AST ('=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+	ExprAss: lambda spt: AST ('=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Eq: lambda spt: AST ('==', '==', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Ne: lambda spt: AST ('==', '!=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
 	sp.Lt: lambda spt: AST ('==', '<', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
@@ -1283,17 +1290,19 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
-# 	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-# 	# ast = AST ('.', ('@', 'S'), 'Half')
-# 	# res = ast2spt (ast, vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
+	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+	# ast = AST ('.', ('@', 'S'), 'Half')
+	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('+', (('-', ('intg', ('@', 'x'), ('@', 'dx'))), ('*', (('@', 'y'), ('@', 'dz')))))
-# 	res = ast2nat (ast)
-# 	# res = spt2ast (res)
+	_EVAL = False
 
-# 	print (res)
+	ast = AST ('+', (('#', '1'), ('#', '2')))
+	res = ast2spt (ast)
+	# res = spt2ast (res)
+
+	print (res)

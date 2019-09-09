@@ -1,4 +1,5 @@
-> split AST assignment from inequalities
+> env noeval
+> 1 in x
 > extended comparison 0 <= x < 1 (using and)
 
 > \[], \[[]], \[[], []], ...
@@ -65,4 +66,5 @@ tex:  ('piece', ((('=', 'in', ('#', '-1.0'), ('@', 'True')), ('+', (('@', 'dx'),
 \[]
 \[[]]
 \[[], []]
+
 
