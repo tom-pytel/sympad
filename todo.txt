@@ -90,21 +90,9 @@ ast:  ('sum', ('/', ('^^', (('#', '1.'), ('@', 'None'), ('@', 'oo'))), ('and', (
 nat:  ('sum', ('/', ('^^', (('#', '1.'), ('@', 'None'), ('@', 'oo'))), ('and', (('"', 'str'), ('@', 'True')))), ('@', 'x'), ('sum', ('*', (('@', 'e100'), ('#', '0.1'))), ('@', 'x'), ('@', 'dx'), ('#', '1')), ('lamb', ('dict', ((('or', (('@', 'zoo'), ('@', 'lambda'))), ('set', ())),)), (('@', 'x'),)))
 
 
-text:    {{{{\left|{None}\right|} == {[{\partialx},{\tilde\infty }]}}  not in  {lambda x, y, z: {{{1.0}}}}}  in  {\[{d^{1} / dx^{1} {{1.}!}},{{{{{1e100} or {1.0}}}+{\[[{1.0},],[{"str"},],]}}},]}}
-Invalid: Eq(abs(None), [partialx, zoo]) not in Lambda((x, y, z), 1.0) in Matrix([Derivative(factorial(1.), x, 1), Or(1e+100, 1.0) + Matrix([1.0, 'str'])])
-
-
 text: \int_{\infty zoo : ()}^{{\frac01. and (partialx,1.0) and a' [-1, -1.0, partialx]} and \frac[0,\infty zoo,d]{True^^1e-100} and {not a} [[partialx,"str"], 1e100^\partial , {not 1e100}]} \log{\tilde\infty  : False}^{"str"  1.0  oo} dx
 textpy: Integral(ln({zoo: False}**('str'*1.0*oo)), (x, {oo*zoo: ()}, And(0/1.and(partialx, 1.0), a_prime[-1, -1.0, partialx], [0, oo*zoo, d] / Union(Complement(True, 1e-100), Complement(1e-100, True)), Not(a)[[partialx, 'str'], 1e+100**partial, Not(1e+100)])))
 ast:  ('func', 'Integral', (('log', ('^', ('dict', ((('@', 'zoo'), ('@', 'False')),)), ('*', (('"', 'str'), ('#', '1.0'), ('@', 'oo'))))), (',', (('@', 'x'), ('dict', ((('*', (('@', 'oo'), ('@', 'zoo'))), (',', ())),)), ('func', 'And', (('and', (('/', ('#', '0'), ('#', '1.')), (',', (('@', 'dx'), ('#', '1.0'))))), ('idx', ('@', 'a_prime'), (('#', '-1'), ('#', '-1.0'), ('@', 'dx'))), ('/', ('[', (('#', '0'), ('*', (('@', 'oo'), ('@', 'zoo'))), ('@', 'd'))), ('func', 'Union', (('func', 'Complement', (('@', 'True'), ('#', '1e-100'))), ('func', 'Complement', (('#', '1e-100'), ('@', 'True')))))), ('idx', ('func', 'Not', (('@', 'a'),)), (('[', (('@', 'dx'), ('"', 'str'))), ('^', ('#', '1e+100'), ('@', 'partial')), ('func', 'Not', (('#', '1e+100'),))))))))))
 py:   ('func', 'Integral', (('log', ('^', ('dict', ((('@', 'zoo'), ('@', 'False')),)), ('*', (('"', 'str'), ('#', '1.0'), ('@', 'oo'))))), (',', (('@', 'x'), ('dict', ((('*', (('@', 'oo'), ('@', 'zoo'))), (',', ())),)), ('func', 'And', (('func', 'And', (('/', ('#', '0'), ('#', '1.')), (',', (('@', 'dx'), ('#', '1.0'))))), ('idx', ('@', 'a_prime'), (('#', '-1'), ('#', '-1.0'), ('@', 'dx'))), ('/', ('[', (('#', '0'), ('*', (('@', 'oo'), ('@', 'zoo'))), ('@', 'd'))), ('func', 'Union', (('func', 'Complement', (('@', 'True'), ('#', '1e-100'))), ('func', 'Complement', (('#', '1e-100'), ('@', 'True')))))), ('idx', ('func', 'Not', (('@', 'a'),)), (('[', (('@', 'dx'), ('"', 'str'))), ('^', ('#', '1e+100'), ('@', 'partial')), ('func', 'Not', (('#', '1e+100'),))))))))))
 
 
-Invalid! {{{{\left|{None}\right|} == {[{\partialx},{\tilde\infty }]}}  not in  {lambda x, y, z: {{{1.0}}}}}  in  {\[{d^{1} / dx^{1} {{1.}!}},{{{{{1e100} or {1.0}}}+{\[[{1.0},],[{"str"},],]}}},]}}
-text:    {{{{\left|{None}\right|} == {[{\partialx},{\tilde\infty }]}}  not in  {lambda x, y, z: {{{1.0}}}}}  in  {\[{d^{1} / dx^{1} {{1.}!}},{{{{{1e100} or {1.0}}}+{\[[{1.0},],[{"str"},],]}}},]}}
-textpy:  Eq(abs(None), [partialx, zoo]) not in Lambda((x, y, z), 1.0) in Matrix([Derivative(factorial(1.), x, 1), Or(1e+100, 1.0) + Matrix([1.0, 'str'])])
-
-
-Invalid! {-{\int {{{True}  in  {\emptyset}}  not in  {{not {partialx}}}} dx}}
-text:    {-{\int {{{True}  in  {\emptyset}}  not in  {{not {partialx}}}} dx}}
-textpy:  -Integral(True in FiniteSet() not in Not(partialx), x)

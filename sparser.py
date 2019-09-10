@@ -138,9 +138,9 @@ def _expr_cmp (lhs, CMP, rhs):
 	cmp = AST.Cmp.ANY2PY.get (CMP.text.replace (' ', ''), CMP.text.replace (' ', ''))
 
 	if lhs.is_cmp:
-		return AST ('==', lhs.lhs, lhs.cmp + ((cmp, rhs),))
+		return AST ('<>', lhs.lhs, lhs.cmp + ((cmp, rhs),))
 	else:
-		return AST ('==', lhs, ((cmp, rhs),))
+		return AST ('<>', lhs, ((cmp, rhs),))
 
 def _expr_mul (expr): # pull negative(s) out of first term of nested curly/multiplication for consistency
 	mcs = lambda ast: ast

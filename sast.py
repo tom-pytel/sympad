@@ -1,7 +1,7 @@
 # Base classes for abstract math syntax tree, tuple based.
 #
 # ('=', lhs, rhs)                                  - assignment to Left-Hand-Side of Right-Hand-Side
-# ('==', lhs, (('rel1', expr1), ...))              - equalit(ies) of type 'rel' relating two or more ASTs, potentially x < y < z is x < y and y < z
+# ('<>', lhs, (('rel1', expr1), ...))              - comparisons of type 'rel' relating two or more expressions, potentially x < y < z is x < y and y < z
 # ('#', 'num')                                     - real numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                                     - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
 # ('.', expr, 'name')                              - data member reference
@@ -114,7 +114,7 @@ class AST (tuple):
 			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
 	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^', '&&', 'or' and 'and' into single ASTs
-		if self.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}: # specifically not '==' because that would be different meaning
+		if self.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}: # specifically not '<>' because that would be different meaning
 			if self.op == op:
 				for e in self [1]:
 					e.flat (op, seq)
@@ -242,10 +242,10 @@ class AST (tuple):
 					continue
 
 				elif ass2eq: # rewrite assignment = as == for equations passed to functions
-					arg = AST ('==', arg.lhs, (('==', arg.rhs),))
+					arg = AST ('<>', arg.lhs, (('==', arg.rhs),))
 
 			if ass2eq:
-				rargs = [func (arg)] + [func (AST ('==', a.lhs, (('==', a.rhs),)) if a.is_ass else a) for a in itr]
+				rargs = [func (arg)] + [func (AST ('<>', a.lhs, (('==', a.rhs),)) if a.is_ass else a) for a in itr]
 			else:
 				rargs = [func (arg)] + [func (a) for a in itr]
 
@@ -323,7 +323,7 @@ class AST_Ass (AST):
 		self.lhs, self.rhs = lhs, rhs # should be py form
 
 class AST_Cmp (AST):
-	op, is_cmp = '==', True
+	op, is_cmp = '<>', True
 
 	TEX2PY = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!=', '\\in': 'in', '\\notin': 'notin'}
 	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>=', '\u2208': 'in', '\u2209': 'notin'}

@@ -28,7 +28,6 @@ _TERMS = [
 	'1e100',
 	'1e+100',
 	'a',
-	"a'",
 	'd',
 	'dx',
 	'partial',
@@ -63,24 +62,24 @@ Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
 {{{0}!} \cdot {partial^{1} / partialx^{1} {dx}} \cdot {{d}**{d}}}
 {{partial^{4} / partialy^{3} partialy^{1} {a}} \cdot {{'str'}^{d}}}
 {\int {-1} dx} / {\int {1} dx}
-{\int_{dx}^{a'} {-1} dx}!
-\int {partial^{3} / partialy^{3} {a'}} dx
+{\int_{dx}^{a} {-1} dx}!
+\int {partial^{3} / partialy^{3} {a}} dx
 {{\int {partial} dx}  {partial^{4} / partialy^{1} partialz^{1} partialz^{2} {a}}}
 \int_{[{-1.0}]}^{\int {partialx} dx} {{{oo}+{-1}}} dx
 \int_{partial^{6} / partialy^{2} partialx^{2} partialz^{2} {partialx}}^{partial^{4} / partialz^{1} partialz^{2} partialx^{1} {0}} {{a} != {'str'}} dx
 {{{oo}**{'str'}}+{\int {oo} dx}+{partial^{7} / partialz^{3} partialx^{2} partialx^{2} {0}}}
 [{{{-1} \cdot {oo}}},{{{dx},{1.0},{oo}}},{partial^{8} / partialx^{3} partialx^{2} partialz^{3} {oo}}]
 {{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'str'}}}
-{{lambda: {-1}} \cdot {\frac{partialx}{oo}} \cdot {{1.0} if {1} else {a'} if {0}}}
-{{{a'} / {-1}} {\lim_{x \to partial} {-1}} * [lambda x, y, z: {partialx}]}
+{{lambda: {-1}} \cdot {\frac{partialx}{oo}} \cdot {{1.0} if {1} else {a} if {0}}}
+{{{a} / {-1}} {\lim_{x \to partial} {-1}} * [lambda x, y, z: {partialx}]}
 \int_{\sqrt[{a}]{1.0}}^{[]} {lambda x: {partialx}} dx
 lambda x: {{dx} = {dx}}
 \int {{{{a} / {dx}}  {partial^{2} / partialz^{2} {partialx}}}} dx
 \int \frac{d}{dx} x dx
 \int d / dx x dx
-\int_{{partial^{4} / partialx^{1} partialy^{3} {partial}}**{\sqrt[{oo}]{0}}}^{{{{-1} == {0}}*{({partial},{'str'},{a'})}*{{1} / {1}}}} {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
+\int_{{partial^{4} / partialx^{1} partialy^{3} {partial}}**{\sqrt[{oo}]{0}}}^{{{{-1} == {0}}*{({partial},{'str'},{a})}*{{1} / {1}}}} {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
 \int {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
-\lim_{x \to \frac{lambda x, y, z: {-{0}}}{partial^{5} / partialz^{2} partialz^{1} partialx^{2} {Limit (a', x, 1)}}} {\arctan()}
+\lim_{x \to \frac{lambda x, y, z: {-{0}}}{partial^{5} / partialz^{2} partialz^{1} partialx^{2} {Limit (a, x, 1)}}} {\arctan()}
 -{{{{{{partialx},{partial},{oo},},{{dx},{-1.0},{a},},}}**{StrictGreaterThan({1.0})}} > {partial^{4} / partialz^{1} partialx^{2} partialy^{1} {{1.0}^{1}}}}
 -{{{{{\sum_{x = 0}^{-1.0} {oo}} \cdot {({0})}}},}}
 \int {{{{d}+{partialx}+{1}}} if {lambda x, y, z: {a}} else {{1} / {partialx}}} dx
@@ -89,18 +88,18 @@ lambda x: {{dx} = {dx}}
 \frac{{-1.0} > {oo}}{\ln{-1.0}}
 {{|{d}|}{{({1.0},{1})},{[{oo}]},},}
 1/2 * {a+b} [lambda: {d}]
-{{{'str'} < {1.0}} \cdot {({a'})} \cdot {{1} if {a'}}}
+{{{'str'} < {1.0}} \cdot {({a})} \cdot {{1} if {a}}}
 -{1.0 if partial else d if 1 else oo if 1.0 else 'str'}
 {partial^{5} / partialy^{2} partialy^{2} partialy^{1} {partial}}^{{-1.0} > {d}}
 {lambda x: {a}} if {{{'str'}*{a}*{1}}}
 \int_{{-1.0} <= {1}}^{-{1}} {{-1.0} <= {1.0}} dx
-{{({a'1.0})}+{{a}!}+{{d} if {1} else {dx}}}
+{{({a1.0})}+{{a}!}+{{d} if {1} else {dx}}}
 \int_{{{a}+{a}+{0}}}^{{'str'} / {a}} {\int {1} dx} dx
 lambda x: {lambda x, y: {oo}}
-\sqrt[3]{({oo},{a'})}
+\sqrt[3]{({oo},{a})}
 Limit (\sum_{x = oo}^{partial} {-1.0}, x, \sec({-1.0},{-1},{partialx}))
 {{a} = {partial}} if {{{oo}+{0}+{-1}}} else {\int {a} dx}
-\sum_{x = {{1}*{d}*{oo}}}^{\exp({a'},{1})} {\log_{1.0}{a}}
+\sum_{x = {{1}*{d}*{oo}}}^{\exp({a},{1})} {\log_{1.0}{a}}
 lambda x: {{a} = {dx}}
 {{{d}^{oo}}*{{a}^{d}}}
 {{oo} if {oo}} = {is_mersenne_prime({'str'})}
@@ -108,15 +107,15 @@ lambda x: {{a} = {dx}}
 {{\frac{\int_{a}^{1} {dx} dx}{{{oo} \cdot {d} \cdot {dx}}}}}
 \int d/dx dx
 (((-1)**partial)**({a_prime, oo, 'str'}))**-{-{0}}
-Limit ({{{0}^{'str'}}  {\left|{a}\right|}  {({a},{a'})}}, x, lambda x: {{1}!})
+Limit ({{{0}^{'str'}}  {\left|{a}\right|}  {({a},{a})}}, x, lambda x: {{1}!})
 \left(\left(\text{'str'} \right)! \le \left(\left(x, y \right) \mapsto -1.0 \right) \right) == \int_{\left[-1.0, \partial, -1 \right]}^{\log_{-1.0}\left(-1 \right)} \begin{cases} 1 & \text{for}\: \infty \\ 1.0 & \text{for}\: 1.0 \end{cases} \ dx
 x^{-{{1} / {1.0}}}
 cofactors( 1 , {lambda x: 1 = lambda: 2} )
-({{{-{cse()}},{{{{partial} != {-1}}*{{{-1.0}  {1.0}}}}},{lambda: {{-1.0} == {dx}}},},{{\lim_{x \to \log_{0}{d}} {[{-1.0}]}},{partial^{7} / partialx^{3} partialy^{1} partialx^{3} {{partialx} if {a'} else {-1.0} if {a} else {d} if {1.0} else {partialx}}},{{lambda x, y, z: {oo}} = {\tanh()}},},{{partial^{3} / partialz^{3} {{oo} / {'str'}}},{({{{\left|{dx}\right|},{{a} if {d}},},{{-{oo}},{({{-1.0},{oo},{-1.0},})},},})},{partial^{5} / partialx^{1} partialy^{1} partialz^{3} {{-1}!}},},})
+({{{-{cse()}},{{{{partial} != {-1}}*{{{-1.0}  {1.0}}}}},{lambda: {{-1.0} == {dx}}},},{{\lim_{x \to \log_{0}{d}} {[{-1.0}]}},{partial^{7} / partialx^{3} partialy^{1} partialx^{3} {{partialx} if {a} else {-1.0} if {a} else {d} if {1.0} else {partialx}}},{{lambda x, y, z: {oo}} = {\tanh()}},},{{partial^{3} / partialz^{3} {{oo} / {'str'}}},{({{{\left|{dx}\right|},{{a} if {d}},},{{-{oo}},{({{-1.0},{oo},{-1.0},})},},})},{partial^{5} / partialx^{1} partialy^{1} partialz^{3} {{-1}!}},},})
 {\left|{a}\right|} if {\int {'str'} dx} else {({-1},{-1},{a})} if {\left|{1.0}\right|}
 {lambda x: {{1.0} if {oo} else {1.0} if {oo}}} = {{{{partial} \cdot {partialx}}}**{{a}!}}
 {Sum (\int {1} dx, (x, 0, 1))} dx
-{{\sum_{x = \left|{0}\right|}^{\tan({-1.0})} {\int_{partialx}^{oo} {d} dx}}+{{{\lim_{x \to 1} {d}} \cdot {{{a'}+{-1}+{dx}}}}}+{{{{a} = {a'}}+{({dx0d})}+{{{dx}*{dx}*{a'}}}}}}
+{{\sum_{x = \left|{0}\right|}^{\tan({-1.0})} {\int_{partialx}^{oo} {d} dx}}+{{{\lim_{x \to 1} {d}} \cdot {{{a}+{-1}+{dx}}}}}+{{{{a} = {a}}+{({dx0d})}+{{{dx}*{dx}*{a}}}}}}
 log(partialx*'str'*partialx) / log(Derivative(a, z, 3, y, 2))
 dpartial
 a, lambda: b = 1
@@ -154,7 +153,7 @@ None**-1.0**\[[\emptyset,],[0,],[\partial x,],] / {not \[None,\emptyset,]}
 {\int {{{{{1e-100}  {1}  {partialx}}}*{{True}^{\tilde\infty }}}} dx}
 {{{{-{"str"}} : {lambda x, y: {\partialx}}} \cdot {{not {{'str'} : {1.} : {.1}}}}}}
 {-{-1}}^{{1} : {\partial x} : {0}}
-{{{\sum_{x = {{a'} : {"str"} : {True}}}^{({\partial x})} {[]}}||{{{1.0} : {False} : {\emptyset}} [{{-1} == {\partialx}}]}||{{{{oo} if {None} else {\partialx}}^^{{.1} [{oo}]}}}}}
+{{{\sum_{x = {{a} : {"str"} : {True}}}^{({\partial x})} {[]}}||{{{1.0} : {False} : {\emptyset}} [{{-1} == {\partialx}}]}||{{{{oo} if {None} else {\partialx}}^^{{.1} [{oo}]}}}}}
 {lambda x, y, z: {lambda x, y: {{{-1.0}&&{False}&&{d}}}}}
 \int {{\partialx} : {d} : {1.0}} dx
 {\lim_{x \to {{1} : {1e+100} : {.1}}} {({\partial x},{\partialx})}}
@@ -162,7 +161,7 @@ x + {-1 2}
 x + {-1 * 2}
 x - {{1 2} 3}
 x - {{1 * 2} * 3}
-{sqrt{{{{not {1.}}}+{\int_{a'}^{-1.0} {str} dx}+{{{-1} \cdot {1e100} \cdot {\infty zoo}}}}}}
+{sqrt{{{{not {1.}}}+{\int_{a}^{-1.0} {str} dx}+{{{-1} \cdot {1e100} \cdot {\infty zoo}}}}}}
 x - a b!
 \int x * \frac{y}{z} \ dx
 1+{{-1 * 2}+1}
@@ -176,6 +175,10 @@ a * {-b} c
 a**{-1 [y]}
 -{\int x dx} + y * dz
 {z = x <= y} in [1, 2]
+\int_a^b {d != c} dx
+\int_a^b {d = c} dx
+{a in b} not in c
+a*()!
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
