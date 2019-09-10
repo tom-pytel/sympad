@@ -5,8 +5,6 @@
 
 > test_python module
 
-> is_pos_num -> is_num_pos
-> is_attr_var/is_attr_func
 > len (ast.comma) -> ast.comma.len
 
 > remove \lim, \sum and definite \int vars from free_vars

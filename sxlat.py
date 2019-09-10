@@ -26,7 +26,7 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 
 			if not v.is_var:
 				return None
-			elif dvs and dvs [-1].is_pos_int_num:
+			elif dvs and dvs [-1].is_num_pos_int:
 				ds.append (AST ('^', ('@', f'd{v.var}'), dvs.pop ()))
 			else:
 				ds.append (AST ('@', f'd{v.var}'))
@@ -161,7 +161,11 @@ def _xlat_f2a_slice (*args):
 	else:
 		return AST ('slice', args [0], args [1], args [2])
 
-def _xlat_f2a_Sum (ast = AST.VarNull, ab = None):
+def _xlat_f2a_Sum_NAT (ast = AST.VarNull, ab = None, **kw):
+	if not kw:
+		return _xlat_f2a_Sum (ast, ab, **kw)
+
+def _xlat_f2a_Sum (ast = AST.VarNull, ab = None, **kw):
 	if ab is None:
 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
 
@@ -205,7 +209,6 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'Piecewise'            : _xlat_f2a_Piecewise,
 	'Pow'                  : _xlat_f2a_Pow,
 	'pow'                  : _xlat_f2a_Pow,
-	'Sum'                  : _xlat_f2a_Sum,
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
 
 	'Limit'                : _xlat_f2a_Limit,
@@ -224,11 +227,11 @@ XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
 	'Mul'                  : lambda *args, **kw: AST ('*', args),
 
 	'Derivative'           : _xlat_f2a_Derivative,
-	'diff'                 : _xlat_f2a_Derivative,
 	'Integral'             : _xlat_f2a_Integral,
+	'Sum'                  : _xlat_f2a_Sum,
+	'diff'                 : _xlat_f2a_Derivative,
 	'integrate'            : _xlat_f2a_Integral,
-	'Limit'                : _xlat_f2a_Limit,
-	'limit'                : _xlat_f2a_Limit,
+	'summation'            : _xlat_f2a_Sum,
 
 	'SparseMatrix'         : _xlat_f2a_Matrix,
 	'MutableSparseMatrix'  : _xlat_f2a_Matrix,
@@ -246,9 +249,8 @@ XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2A
 	'Mul'                  : lambda *args, **kw: None if kw else AST ('*', args),
 
 	'Derivative'           : _xlat_f2a_Derivative_NAT,
-	'diff'                 : _xlat_f2a_Derivative_NAT,
 	'Integral'             : _xlat_f2a_Integral_NAT,
-	'integrate'            : _xlat_f2a_Integral_NAT,
+	'Sum'                  : _xlat_f2a_Sum_NAT,
 }
 
 XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM,
@@ -330,7 +332,7 @@ def xlat_func2tex (ast, ast2tex):
 	return None
 
 def xlat_attr2tex (ast, ast2tex):
-	if ast.args is None:
+	if ast.is_attr_var:
 		return None
 
 	xact = _XLAT_ATTRFUNC2TEX.get (ast.attr)
@@ -379,7 +381,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 
 	if ast.is_pow:
 		exp, has = _xlat_pyS (ast.exp)
-		base     = _xlat_pyS (ast.base, not (has or exp.is_pos_num)) [0]
+		base     = _xlat_pyS (ast.base, not (has or exp.is_num_pos)) [0]
 
 		return AST ('^', base, exp), True
 

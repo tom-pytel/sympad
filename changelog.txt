@@ -1,7 +1,7 @@
 v1.0.8:
 -------
 * Added SymPy set operation Contains usage.
-* Added and expanded some function visual translations.
+* Added and expanded some function visual translations - summation(), .limit()/.diff()/.integrate() and others.
 * Changed lambdas to bind global variables on definition.
 * Fixed passing assignments as equations into functions.
 

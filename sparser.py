@@ -159,7 +159,7 @@ def _expr_mul (expr): # pull negative(s) out of first term of nested curly/multi
 
 			continue
 
-		elif ast.is_neg_num:
+		elif ast.is_num_neg:
 			if mul:
 				return AST ('-', mcs (ast.neg ()))
 
@@ -192,14 +192,14 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 			break
 
 	if last.is_attr: # {x.y} *imp* () -> x.y(), x.{y.z} -> {x.y}.z
-		if last.args is None:
+		if last.is_attr_var:
 			if arg.is_paren:
 				ast = wrap (AST ('.', last.obj, last.attr, _ast_func_tuple_args (arg)))
 			elif rhs.is_attr:
 				ast = AST ('.', _expr_mul_imp (last, rhs.obj), rhs.attr)
 
 	elif last.is_pow: # {x^y.z} *imp* () -> x^{y.z()}
-		if last.exp.is_attr and last.exp.args is None:
+		if last.exp.is_attr_var:
 			if arg.is_paren:
 				ast = AST ('^', last.base, wrap (AST ('.', last.exp.obj, last.exp.attr, _ast_func_tuple_args (arg))))
 			elif rhs.is_attr:
@@ -216,7 +216,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 		if not arg.brack:
 			raise SyntaxError ('missing index')
 
-		if last.is_neg_num: # really silly, trying to index negative number, will fail but rewrite to neg of idx of pos number for consistency of parsing
+		if last.is_num_neg: # really silly, trying to index negative number, will fail but rewrite to neg of idx of pos number for consistency of parsing
 			ast = AST ('-', wrap (AST ('idx', last.neg (), arg.brack)))
 		else:
 			ast = wrap (AST ('idx', last, arg.brack))
@@ -232,7 +232,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			p = 1
 			v = ast.numer
 
-		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.no_curlys.is_pos_int_num:
+		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.no_curlys.is_num_pos_int:
 			p = ast.numer.exp.no_curlys.as_int
 			v = ast.numer.base
 
@@ -250,7 +250,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if ast_dv_check (n):
 				dec = 1
-			elif n.is_pow and ast_dv_check (n.base) and n.exp.no_curlys.is_pos_int_num:
+			elif n.is_pow and ast_dv_check (n.base) and n.exp.no_curlys.is_num_pos_int:
 				dec = n.exp.no_curlys.as_int
 			else:
 				return None

@@ -138,7 +138,7 @@ class AST (tuple):
 
 	def neg (self, stack = False): # stack means stack negatives ('-', ('-', ('#', '-1')))
 		if stack:
-			if not self.is_pos_num:
+			if not self.is_num_pos:
 				return AST ('-', self)
 			else:
 				return AST ('#', f'-{self.num}')
@@ -343,10 +343,10 @@ class AST_Num (AST):
 		self.num = num
 
 	_grp              = lambda self: [g or '' for g in AST_Num._rec_num.match (self.num).groups ()]
-	_is_pos_num       = lambda self: not self.grp [0]
-	_is_neg_num       = lambda self: bool (self.grp [0])
-	_is_int_num       = lambda self: not self.grp [3] and not self.grp [7] # self.num_exp_val >= -len (self.grp [2])
-	_is_pos_int_num   = lambda self: self.is_int_num and not self.is_neg_num
+	_is_num_pos       = lambda self: not self.grp [0]
+	_is_num_neg       = lambda self: bool (self.grp [0])
+	_is_num_int       = lambda self: not self.grp [3] and not self.grp [7] # self.num_exp_val >= -len (self.grp [2])
+	_is_num_pos_int   = lambda self: self.is_num_int and not self.is_num_neg
 	_num_exp          = lambda self: self.grp [8] + self.grp [9]
 	_num_mant_and_exp = lambda self: (''.join (self.grp [:7]), self.num_exp)
 	_num_exp_val      = lambda self: int (self.num_exp) if self.num_exp else 0
