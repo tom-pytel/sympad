@@ -13,6 +13,21 @@ def _xlat_f2a_slice (*args):
 	else:
 		return AST ('slice', args [0], args [1], args [2])
 
+def _xlat_f2a_And (*args):
+	itr  = iter (args)
+	args = [next (itr)]
+
+	for arg in itr:
+		if arg.op == args [-1].op == '<>' and arg.lhs == args [-1].cmp [-1] [1]:
+			args [-1] = AST ('<>', args [-1].lhs, args [-1].cmp + arg.cmp)
+		else:
+			args.append (arg)
+
+	if len (args) == 1:
+		return args [0]
+	else:
+		return AST ('and', tuple (args))
+
 def _xlat_f2a_Lambda (args, expr):
 	args = args.strip_paren ()
 	args = args.comma if args.is_comma else (args,)
@@ -189,7 +204,7 @@ _XLAT_FUNC2AST_ALL    = {
 	'Ge'                   : lambda a, b: AST ('<>', a, (('>=', b),)),
 
 	'Or'                   : lambda *args: AST ('or', tuple (args)),
-	'And'                  : lambda *args: AST ('and', tuple (args)),
+	'And'                  : _xlat_f2a_And, # lambda *args: AST ('and', tuple (args)),
 	'Not'                  : lambda not_: AST ('not', not_),
 }
 
@@ -443,6 +458,7 @@ class sxlat: # for single script
 	xlat_func2tex     = xlat_func2tex
 	xlat_attr2tex     = xlat_attr2tex
 	xlat_pyS          = xlat_pyS
+	_xlat_f2a_And     = _xlat_f2a_And
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!

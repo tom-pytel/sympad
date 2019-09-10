@@ -15,7 +15,7 @@ _POST_SIMPLIFY         = True # post-evaluation simplification
 _PYS                   = True # Python S() escaping
 _DOIT                  = True # expression doit()
 
-class _None: pass # uniquie non-None None marker
+class _None: pass # unique non-None None marker
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op, is_text = 'text', True
@@ -36,7 +36,7 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
-	ret = _sympify # _sympify being used as uniquie non-None None, fallback = None -> ret = _sympify for raise on error
+	ret = _None
 
 	if fallback is True: # True for return original value
 		ret = spt
@@ -51,7 +51,7 @@ def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argu
 		ret = sympify (spt)
 
 	except:
-		if ret is _sympify:
+		if ret is _None:
 			raise
 
 	return ret
@@ -878,13 +878,13 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	}
 
 	def _ast2spt_var (self, ast):
-		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, self) # 'self' being used as unique non-None None
+		spt = {**self._ast2spt_consts, AST.E.var: sp.E, AST.I.var: sp.I}.get (ast.var, _None)
 
-		if spt is self:
+		if spt is _None:
 			if len (ast.var) > 1 and ast.var not in AST.Var.GREEK:
-				spt = getattr (sp, ast.var, self)
+				spt = getattr (sp, ast.var, _None)
 
-			if spt is self:
+			if spt is _None:
 				spt = sp.Symbol (ast.var)
 
 		return spt
@@ -1236,7 +1236,7 @@ class spt2ast:
 		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
 		sp.Or: lambda self, spt: AST ('or', tuple (self._spt2ast (a) for a in spt.args)),
-		sp.And: lambda self, spt: AST ('and', tuple (self._spt2ast (a) for a in spt.args)),
+		sp.And: lambda self, spt: sxlat._xlat_f2a_And (*tuple (self._spt2ast (a) for a in spt.args)), # AST ('and', tuple (self._spt2ast (a) for a in spt.args)),
 		sp.Not: lambda self, spt: AST ('not', self._spt2ast (spt.args [0])),
 
 		ExprAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),

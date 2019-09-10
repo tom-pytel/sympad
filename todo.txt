@@ -1,13 +1,16 @@
-> extended comparison 0 <= x < 1 (using and)
-> convert to _None in sym and remove bool to funcs that take _None
+> patch together out of order extended comparison objects potentially inverting comparisons
 
 > -{not x}, -2{x or y}
-
-> test_python module
 
 > len (ast.comma) -> ast.comma.len
 
 > remove \lim, \sum and definite \int vars from free_vars
+
+> ' differential operator
+> var_prime in quick mode
+> AppliedUndef, in func and in _Mul
+> Function ('f') (), Function ('f') (x), Function ('f') (x, y)
+> ODEs
 
 > \[], \[[]], \[[], []], ...
 > change 'vec' object to column 'mat' object?
@@ -16,10 +19,7 @@
 
 > better plotting limits specification
 
-> AppliedUndef, in func and in _Mul
-> Function ('f') (), Function ('f') (x), Function ('f') (x, y)
-> var_prime in quick mode
-> ODEs
+> test_python module
 
 > vector calculus
 > nabla, laplacian
