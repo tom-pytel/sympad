@@ -635,10 +635,10 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return py
 
-	_ast2py_cmpfuncs = {'==': 'Eq', '!=': 'Ne', '<': 'Lt', '<=': 'Le', '>': 'Gt', '>=': 'Ge'}
+	_ast2py_cmpfuncs = {'=': 'Eq', '==': 'Eq', '!=': 'Ne', '<': 'Lt', '<=': 'Le', '>': 'Gt', '>=': 'Ge'}
 
 	def _ast2py_eq (self, ast):
-		rel = '==' if ast.is_ass else ast.rel
+		rel = '=' if ast.is_ass else ast.rel
 
 		if rel in {'in', 'notin'} or (ast.is_ass and (not self.parent or self.parent.is_func)):
 			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py (ast.rhs)}'
@@ -1184,7 +1184,7 @@ class spt2ast:
 		sp.Integer: _spt2ast_num,
 		sp.Float: _spt2ast_num,
 		sp.Rational: lambda self, spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
-		sp.numbers.ImaginaryUnit: lambda ast: AST.I,
+		sp.numbers.ImaginaryUnit: lambda self, spt: AST.I,
 		sp.numbers.Pi: lambda self, spt: AST.Pi,
 		sp.numbers.Exp1: lambda self, spt: AST.E,
 		sp.numbers.Infinity: lambda self, spt: AST.Infty,

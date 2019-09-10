@@ -1,10 +1,9 @@
-> (x = y) no strip parentheses at top level
+> add .limit(), .diff() and .integrate() translations
+> Add, Mul, etc... translate...
+
 > extended comparison 0 <= x < 1 (using and)
 
-> add .limit(), .diff() and .integrate() translations
-
 > test_python module
-> Add, Mul, etc... translate...
 
 > remove \lim, \sum and definite \int vars from free_vars
 
