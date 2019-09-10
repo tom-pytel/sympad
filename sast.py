@@ -409,6 +409,8 @@ class AST_Attr (AST):
 	def _init (self, obj, attr, args = None):
 		self.obj, self.attr, self.args = obj, attr, args
 
+	_is_attrfunc = lambda self: self.args is not None
+
 class AST_Str (AST):
 	op, is_str = '"', True
 

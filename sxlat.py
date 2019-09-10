@@ -2,8 +2,14 @@
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+_AST_StrPlus = AST ('"', '+')
+
 #...............................................................................................
-def _xlat_func2ast_Derivative (ast = AST.VarNull, *dvs):
+def _xlat_f2a_Derivative_NAT (ast = AST.VarNull, *dvs, **kw):
+	if not kw:
+		return _xlat_f2a_Derivative (ast, *dvs)
+
+def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 	ds = []
 
 	if not dvs:
@@ -27,7 +33,11 @@ def _xlat_func2ast_Derivative (ast = AST.VarNull, *dvs):
 
 	return AST ('diff', ast, tuple (ds))
 
-def _xlat_func2ast_Integral (ast = None, dvab = None, *args):
+def _xlat_f2a_Integral_NAT (ast = None, dvab = None, *args, **kw):
+	if not kw:
+		return _xlat_f2a_Integral (ast, dvab, *args, **kw)
+
+def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 	if ast is None:
 		return AST ('intg', AST.VarNull, AST.VarNull)
 
@@ -57,23 +67,23 @@ def _xlat_func2ast_Integral (ast = None, dvab = None, *args):
 	if ast2 is None:
 		return None
 
-	return _xlat_func2ast_Integral (ast2, *args) if args else ast2
+	return _xlat_f2a_Integral (ast2, *args) if args else ast2
 
-_xlat_func2ast_Limit_dirs = {AST ('"', '+'): ('+',), AST ('"', '-'): ('-',), AST ('"', '+-'): ()}
+_xlat_f2a_Limit_dirs = {AST ('"', '+'): ('+',), AST ('"', '-'): ('-',), AST ('"', '+-'): ()}
 
-def _xlat_func2ast_Lambda (args, expr):
+def _xlat_f2a_Lambda (args, expr):
 	args = args.strip_paren ()
 	args = args.comma if args.is_comma else (args,)
 
 	return AST ('lamb', expr, args)
 
-def _xlat_func2ast_Limit (ast = AST.VarNull, var = AST.VarNull, to = AST.VarNull, dir = AST ('"', '+')):
-	return AST ('lim', ast, var, to, *_xlat_func2ast_Limit_dirs [dir])
+def _xlat_f2a_Limit (ast = AST.VarNull, var = AST.VarNull, to = AST.VarNull, dir = _AST_StrPlus):
+	return AST ('lim', ast, var, to, *_xlat_f2a_Limit_dirs [dir])
 
-def _xlat_func2ast_Pow (ast = AST.VarNull, exp = AST.VarNull):
+def _xlat_f2a_Pow (ast = AST.VarNull, exp = AST.VarNull):
 	return AST ('^', ast, exp)
 
-def _xlat_func2ast_Matrix (ast = AST.VarNull):
+def _xlat_f2a_Matrix (ast = AST.VarNull):
 	if ast.is_null_var:
 		return AST ('vec', ())
 
@@ -107,7 +117,7 @@ def _xlat_func2ast_Matrix (ast = AST.VarNull):
 
 	return None
 
-def _xlat_func2ast_Piecewise (*args):
+def _xlat_f2a_Piecewise (*args):
 	pcs = []
 
 	if not args or args [0].is_null_var:
@@ -143,7 +153,7 @@ def _xlat_func2ast_Piecewise (*args):
 
 	return None
 
-def _xlat_func2ast_slice (*args):
+def _xlat_f2a_slice (*args):
 	if len (args) == 1:
 		return AST ('slice', None, args [0], None)
 	if len (args) == 2:
@@ -151,7 +161,7 @@ def _xlat_func2ast_slice (*args):
 	else:
 		return AST ('slice', args [0], args [1], args [2])
 
-def _xlat_func2ast_Sum (ast = AST.VarNull, ab = None):
+def _xlat_f2a_Sum (ast = AST.VarNull, ab = None):
 	if ab is None:
 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
 
@@ -165,7 +175,7 @@ def _xlat_func2ast_Sum (ast = AST.VarNull, ab = None):
 	return None
 
 _XLAT_FUNC2AST_ALL    = {
-	'slice'                : _xlat_func2ast_slice,
+	'slice'                : _xlat_f2a_slice,
 
 	'Eq'                   : lambda a, b: AST ('==', '==', a, b),
 	'Ne'                   : lambda a, b: AST ('==', '!=', a, b),
@@ -187,22 +197,19 @@ _XLAT_FUNC2AST_REIM = {
 _XLAT_FUNC2AST_TEXNAT = {
 	'abs'                  : lambda ast: AST ('|', ast),
 	'Abs'                  : lambda ast: AST ('|', ast),
-	'Derivative'           : _xlat_func2ast_Derivative,
-	'diff'                 : _xlat_func2ast_Derivative,
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
 	'factorial'            : lambda ast: AST ('!', ast),
-	'Integral'             : _xlat_func2ast_Integral,
-	'integrate'            : _xlat_func2ast_Integral,
-	'Lambda'               : _xlat_func2ast_Lambda,
-	'Limit'                : _xlat_func2ast_Limit,
-	'limit'                : _xlat_func2ast_Limit,
-	'Matrix'               : _xlat_func2ast_Matrix,
-	'MutableDenseMatrix'   : _xlat_func2ast_Matrix,
-	'Piecewise'            : _xlat_func2ast_Piecewise,
-	'Pow'                  : _xlat_func2ast_Pow,
-	'pow'                  : _xlat_func2ast_Pow,
-	'Sum'                  : _xlat_func2ast_Sum,
+	'Lambda'               : _xlat_f2a_Lambda,
+	'Matrix'               : _xlat_f2a_Matrix,
+	'MutableDenseMatrix'   : _xlat_f2a_Matrix,
+	'Piecewise'            : _xlat_f2a_Piecewise,
+	'Pow'                  : _xlat_f2a_Pow,
+	'pow'                  : _xlat_f2a_Pow,
+	'Sum'                  : _xlat_f2a_Sum,
 	'Tuple'                : lambda *args: AST ('(', (',', args)),
+
+	'Limit'                : _xlat_f2a_Limit,
+	'limit'                : _xlat_f2a_Limit,
 
 	'EmptySet'             : lambda *args: AST.SetEmpty,
 	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
@@ -213,17 +220,36 @@ _XLAT_FUNC2AST_TEXNAT = {
 }
 
 XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
-	'SparseMatrix'         : _xlat_func2ast_Matrix,
-	'MutableSparseMatrix'  : _xlat_func2ast_Matrix,
-	'ImmutableDenseMatrix' : _xlat_func2ast_Matrix,
-	'ImmutableSparseMatrix': _xlat_func2ast_Matrix,
+	'Add'                  : lambda *args, **kw: AST ('+', args),
+	'Mul'                  : lambda *args, **kw: AST ('*', args),
+
+	'Derivative'           : _xlat_f2a_Derivative,
+	'diff'                 : _xlat_f2a_Derivative,
+	'Integral'             : _xlat_f2a_Integral,
+	'integrate'            : _xlat_f2a_Integral,
+	'Limit'                : _xlat_f2a_Limit,
+	'limit'                : _xlat_f2a_Limit,
+
+	'SparseMatrix'         : _xlat_f2a_Matrix,
+	'MutableSparseMatrix'  : _xlat_f2a_Matrix,
+	'ImmutableDenseMatrix' : _xlat_f2a_Matrix,
+	'ImmutableSparseMatrix': _xlat_f2a_Matrix,
+
 	'diag'                 : True,
 	'eye'                  : True,
 	'ones'                 : True,
 	'zeros'                : True,
 }
 
-XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2AST_TEXNAT}
+XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2AST_TEXNAT,
+	'Add'                  : lambda *args, **kw: None if kw else AST ('+', args),
+	'Mul'                  : lambda *args, **kw: None if kw else AST ('*', args),
+
+	'Derivative'           : _xlat_f2a_Derivative_NAT,
+	'diff'                 : _xlat_f2a_Derivative_NAT,
+	'Integral'             : _xlat_f2a_Integral_NAT,
+	'integrate'            : _xlat_f2a_Integral_NAT,
+}
 
 XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM,
 	'Gamma'                : lambda *args: AST ('func', 'gamma', tuple (args)),
@@ -241,7 +267,7 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 
 			try:
 				if xact is True: # True means execute function and use return value for ast
-					return func_call (ast.func, args)
+					return func_call (ast.func, args) # not checking func_call None because that should never happen
 
 				xargs, xkw = AST.args2kwargs (args)
 				ast2       = xact (*xargs, **xkw)
@@ -257,7 +283,7 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast))
 
 #...............................................................................................
-def _xlat_func2tex_Subs (ast2tex, ast, vars, subs):
+def _xlat_f2t_Subs (ast2tex, ast, vars, subs):
 	vars = vars.strip_paren ()
 	subs = subs.strip_paren ()
 
@@ -279,19 +305,25 @@ _XLAT_FUNC2TEX = {
 	'im'      : lambda ast2tex, *args: f'\\Im\\left({ast2tex (AST.tuple2ast (args))} \\right)',
 
 	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
-	'Subs'    : _xlat_func2tex_Subs,
+	'Subs'    : _xlat_f2t_Subs,
 }
 
 _XLAT_ATTRFUNC2TEX = {
-	'subs'    : _xlat_func2tex_Subs,
+	'diff'     : lambda ast2tex, ast, *dvs, **kw: ast2tex (_xlat_f2a_Derivative (ast, *dvs, **kw)),
+	'integrate': lambda ast2tex, ast, dvab = None, *args, **kw: ast2tex (_xlat_f2a_Integral (ast, dvab, *args, **kw)),
+	'limit'    : lambda ast2tex, ast, var = AST.VarNull, to = AST.VarNull, dir = _AST_StrPlus: ast2tex (_xlat_f2a_Limit (ast, var, to, dir)),
+
+	'subs'     : _xlat_f2t_Subs,
 }
 
 def xlat_func2tex (ast, ast2tex):
 	xact = _XLAT_FUNC2TEX.get (ast.func)
 
 	if xact:
+		args, kw = AST.args2kwargs (ast.args)
+
 		try:
-			return xact (ast2tex, *ast.args)
+			return xact (ast2tex, *args, **kw)
 		except:
 			pass
 
@@ -304,8 +336,10 @@ def xlat_attr2tex (ast, ast2tex):
 	xact = _XLAT_ATTRFUNC2TEX.get (ast.attr)
 
 	if xact:
+		args, kw = AST.args2kwargs (ast.args)
+
 		try:
-			return xact (ast2tex, ast.obj, *ast.args)
+			return xact (ast2tex, ast.obj, *args, **kw)
 		except:
 			pass
 

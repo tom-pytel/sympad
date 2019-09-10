@@ -472,34 +472,31 @@ def test (argv = None):
 
 	try:
 		while 1:
+			textpy            = None
 			text              = expr_func ()
 			ast, erridx, auto = parse (text)
 
 			if not ast or erridx or auto:
-				print ()
-				print ('Invalid:', text)
+			# 	print ()
+			# 	print ('Invalid:', text)
 
 				continue
 
 			ast = flatten (ast)
 			ast = fix_rest (ast)
 
-			if ('--show', '') in opts:
-				print ()
-				print ('-' * 78)
-				print ()
-				print ('text:', text)
-
 			if dopy:
 				if not CURLYS:
 					ast = fix_vars (ast)
 
-				text              = sym.ast2py (ast, xlat = xlat, ass2eq = False)
-				ast, erridx, auto = parse (text)
+				textpy            = sym.ast2py (ast, xlat = xlat, ass2eq = False)
+				ast, erridx, auto = parse (textpy)
 
 				if not ast or erridx or auto:
 					print ()
-					print ('Invalid:', text)
+					print ('Invalid!', text)
+					print ('text:   ', text)
+					print ('textpy: ', textpy)
 
 					continue
 
@@ -511,7 +508,11 @@ def test (argv = None):
 
 			if ('--show', '') in opts:
 				print ()
+				print ('-' * 78)
 				print ('text:', text)
+				if textpy:
+					print ()
+					print ('textpy:', textpy)
 				print ()
 				print ('ast: ', ast)
 				print ()
@@ -534,6 +535,9 @@ def test (argv = None):
 				print ()
 				print ('!' * 78)
 				print ('text:', text)
+				if textpy is not None:
+					print ()
+					print ('textpy:', textpy)
 				print ()
 				print ('ast: ', ast_srp)
 
@@ -561,6 +565,8 @@ def test (argv = None):
 		print ()
 		print ('!' * 78)
 		print ('text:   ', text)
+		if textpy is not None:
+			print ('textpy: ', textpy)
 		print ('ast:    ', ast)
 		print ('ast_srp:', ast_srp)
 		print ('ast_tex:', ast_tex)

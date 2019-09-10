@@ -71,10 +71,7 @@ def _simplify (spt):
 
 	return spt
 
-def _Mul (*args, evaluate = True):
-	if not evaluate:
-		return sp.Mul (*args, evaluate = False)
-
+def _Mul (*args):
 	itr = iter (args)
 	res = next (itr)
 
@@ -86,8 +83,8 @@ def _Mul (*args, evaluate = True):
 
 	return res
 
-def _Pow (base, exp, evaluate = True): # fix inconsistent sympy Pow (..., evaluate = True)
-	return base**exp if evaluate else sp.Pow (base, exp, evaluate = False)
+def _Pow (base, exp): # fix inconsistent sympy Pow (..., evaluate = True)
+	return base**exp
 
 def _fltoint (num):
 	return int (num) if isinstance (num, int) or num.is_integer () else num
@@ -660,6 +657,15 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return self._ast2py (ast)
 
+	def _ast2py_attr (self, ast):
+		# return f'{self._ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{self._ast2py (ast.obj)}.{ast.attr}{self._ast2py_paren (AST.tuple2ast (ast.args))}'
+		if ast.is_attrfunc:
+			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
+
+			return f'{self._ast2py (ast.obj)}.{ast.attr}({", ".join (args + [f"{k}={a}" for k, a in kw.items ()])})'
+
+		return f'{self._ast2py (ast.obj)}.{ast.attr}'
+
 	def _ast2py_div (self, ast):
 		n = self._ast2py_curly (ast.numer)
 		d = self._ast2py_curly (ast.denom)
@@ -731,7 +737,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'=='   : _ast2py_eq,
 		'#'    : lambda self, ast: ast.num,
 		'@'    : lambda self, ast: ast.var,
-		'.'    : lambda self, ast: f'{self._ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{self._ast2py (ast.obj)}.{ast.attr}{self._ast2py_paren (AST.tuple2ast (ast.args))}',
+		'.'    : _ast2py_attr,
 		'"'    : lambda self, ast: repr (ast.str_),
 		','    : lambda self, ast: f'{", ".join (self._ast2py (parm) for parm in ast.comma)}{_trail_comma (ast.comma)}',
 		'('    : lambda self, ast: f'({self._ast2py (ast.paren)})',

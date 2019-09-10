@@ -1,5 +1,5 @@
-> add .limit(), .diff() and .integrate() translations
-> Add, Mul, etc... translate...
+> fix .subs not working with (x+y).subs ((x, y), (2, 3))
+> collapse nested subs and Subs
 
 > extended comparison 0 <= x < 1 (using and)
 
@@ -86,3 +86,7 @@ nat:  ('^^', (('==', '==', ('^', ('mat', ((('@', 'False'), ('@', 'None'), ('"', 
 text: \sum_{x = (\sum_{x = partialx}^1e100 .1)}^{lambda x: \tilde\infty  or lambda: \emptyset} \frac{1.^^None^^oo}{"str" and True}
 ast:  ('sum', ('/', ('^^', (('#', '1.'), ('@', 'None'), ('@', 'oo'))), ('and', (('"', 'str'), ('@', 'True')))), ('@', 'x'), ('sum', ('*', (('@', 'e100'), ('#', '0.1'))), ('@', 'x'), ('@', 'dx'), ('#', '1')), ('lamb', ('slice', ('or', (('@', 'zoo'), ('@', 'lambda'))), ('set', ()), None), (('@', 'x'),)))
 nat:  ('sum', ('/', ('^^', (('#', '1.'), ('@', 'None'), ('@', 'oo'))), ('and', (('"', 'str'), ('@', 'True')))), ('@', 'x'), ('sum', ('*', (('@', 'e100'), ('#', '0.1'))), ('@', 'x'), ('@', 'dx'), ('#', '1')), ('lamb', ('dict', ((('or', (('@', 'zoo'), ('@', 'lambda'))), ('set', ())),)), (('@', 'x'),)))
+
+
+text:    {{{{\left|{None}\right|} == {[{\partialx},{\tilde\infty }]}}  not in  {lambda x, y, z: {{{1.0}}}}}  in  {\[{d^{1} / dx^{1} {{1.}!}},{{{{{1e100} or {1.0}}}+{\[[{1.0},],[{"str"},],]}}},]}}
+Invalid: Eq(abs(None), [partialx, zoo]) not in Lambda((x, y, z), 1.0) in Matrix([Derivative(factorial(1.), x, 1), Or(1e+100, 1.0) + Matrix([1.0, 'str'])])
