@@ -658,8 +658,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		return self._ast2py (ast)
 
 	def _ast2py_attr (self, ast):
-		# return f'{self._ast2py (ast.obj)}.{ast.attr}' if ast.args is None else f'{self._ast2py (ast.obj)}.{ast.attr}{self._ast2py_paren (AST.tuple2ast (ast.args))}'
-		if ast.is_attrfunc:
+		if ast.is_attr_func:
 			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
 			return f'{self._ast2py (ast.obj)}.{ast.attr}({", ".join (args + [f"{k}={a}" for k, a in kw.items ()])})'
@@ -1300,17 +1299,17 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
-	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-	# ast = AST ('.', ('@', 'S'), 'Half')
-	# res = ast2spt (ast, vars)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
+# 	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+# 	# ast = AST ('.', ('@', 'S'), 'Half')
+# 	# res = ast2spt (ast, vars)
 
-	ast = AST ('func', 'cofactors', (('#', '1'), ('lamb', ('=', ('#', '1'), ('(', ('lamb', ('#', '2'), ()))), (('@', 'x'),))))
-	res = ast2py (ast)
-	# res = spt2ast (res)
+# 	ast = AST ('func', 'cofactors', (('#', '1'), ('lamb', ('=', ('#', '1'), ('(', ('lamb', ('#', '2'), ()))), (('@', 'x'),))))
+# 	res = ast2py (ast)
+# 	# res = spt2ast (res)
 
-	print (res)
+# 	print (res)

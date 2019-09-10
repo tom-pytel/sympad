@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # python 3.6+
 
+from functools import lru_cache
 import unittest
 
 import sympy as sp
 from sast import AST
 import spatch
-from sym import *
+import sym
 from sparser import Parser
 
 import test_sym as _test_sym
@@ -17,8 +18,22 @@ parser       = Parser ()
 sym.set_pyS (False)
 sym.set_simplify (False)
 
-def sparser (text):
-	return parser.parse (text) [0]
+@lru_cache (maxsize = None)
+def sparser (text): return parser.parse (text) [0]
+
+@lru_cache (maxsize = None)
+def ast2tex (ast): return sym.ast2tex (ast)
+
+@lru_cache (maxsize = None)
+def ast2nat (ast): return sym.ast2nat (ast)
+
+@lru_cache (maxsize = None)
+def ast2py (ast): return sym.ast2py (ast)
+
+@lru_cache (maxsize = None)
+def ast2spt (ast): return sym.ast2spt (ast)
+
+spt2ast = sym.spt2ast
 
 def ast2tex2ast (ast):
 	return sparser (ast2tex (ast))
