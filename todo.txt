@@ -1,18 +1,17 @@
 > (x = y) no strip parentheses at top level
 > extended comparison 0 <= x < 1 (using and)
 
-> eliminate pointless minus rewriting
+> add .limit(), .diff() and .integrate() translations
 
 > test_python module
+> Add, Mul, etc... translate...
+
+> remove \lim, \sum and definite \int vars from free_vars
 
 > \[], \[[]], \[[], []], ...
 > change 'vec' object to column 'mat' object?
 
-> remove \lim, \sum and definite \int vars from free_vars
-
 > importing modules to allow custom code execution
-
-> Add, Mul, etc... translate...
 
 > better plotting limits specification
 
@@ -46,7 +45,8 @@
 > function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?
 > long variable name shortcut? $?
-> derivative and integral of lambda functions?
+> derivative and integral of lambda functions? lambdas as expressions?
+> eliminate potentially pointless minus rewriting by moving negation in parse higherarchy?
 
 > break out state machine from server
 
@@ -82,3 +82,8 @@ text: {{{{{\[[{False},{None},{"str"},],[{"str"},{\partial },{1e100},],[{\tilde\i
 ast:  ('^^', (('==', '==', ('^', ('mat', ((('@', 'False'), ('@', 'None'), ('"', 'str')), (('"', 'str'), ('@', 'partial'), ('#', '1e+100')), (('@', 'zoo'), ('#', '-1'), ('@', 'dx')))), ('*', (('@', 'oo'), ('@', 'oo')))), ('log', ('log', ('@', 'dx')), ('/', ('#', '1e+100'), ('@', 'd')))), ('lamb', ('*', (('intg', ('@', 'dx'), ('@', 'dx')), ('set', ()), ('intg', ('"', 'str'), ('@', 'dx')))), ()), ('-', ('-', ('*', (('@', 'a'), ('!', (',', ())), ('sum', ('slice', ('@', 'True'), ('@', 'oo'), ('@', 'dx')), ('@', 'x'), ('^^', (('@', 'partial'), ('@', 'None'))), ('^^', (('#', '1.0'), ('#', '1'))))))))))
 tex:  ('^^', (('==', '==', ('^', ('mat', ((('@', 'False'), ('@', 'None'), ('"', 'str')), (('"', 'str'), ('@', 'partial'), ('#', '1e+100')), (('@', 'zoo'), ('#', '-1'), ('@', 'dx')))), ('*', (('@', 'oo'), ('@', 'oo')))), ('log', ('log', ('@', 'dx')), ('/', ('#', '1e+100'), ('@', 'd')))), ('lamb', ('*', (('intg', ('@', 'dx'), ('@', 'dx')), ('set', ()), ('intg', ('"', 'str'), ('@', 'dx')))), ()), ('-', ('-', ('*', (('!', ('func', 'a', ())), ('sum', ('slice', ('@', 'True'), ('@', 'oo'), ('@', 'dx')), ('@', 'x'), ('^^', (('@', 'partial'), ('@', 'None'))), ('^^', (('#', '1.0'), ('#', '1'))))))))))
 nat:  ('^^', (('==', '==', ('^', ('mat', ((('@', 'False'), ('@', 'None'), ('"', 'str')), (('"', 'str'), ('@', 'partial'), ('#', '1e+100')), (('@', 'zoo'), ('#', '-1'), ('@', 'dx')))), ('*', (('@', 'oo'), ('@', 'oo')))), ('log', ('log', ('@', 'dx')), ('/', ('#', '1e+100'), ('@', 'd')))), ('lamb', ('*', (('intg', ('@', 'dx'), ('@', 'dx')), ('set', ()), ('intg', ('"', 'str'), ('@', 'dx')))), ()), ('-', ('-', ('*', (('!', ('func', 'a', ())), ('sum', ('slice', ('@', 'True'), ('@', 'oo'), ('@', 'dx')), ('@', 'x'), ('^^', (('@', 'partial'), ('@', 'None'))), ('^^', (('#', '1.0'), ('#', '1'))))))))))
+
+
+text: \sum_{x = (\sum_{x = partialx}^1e100 .1)}^{lambda x: \tilde\infty  or lambda: \emptyset} \frac{1.^^None^^oo}{"str" and True}
+ast:  ('sum', ('/', ('^^', (('#', '1.'), ('@', 'None'), ('@', 'oo'))), ('and', (('"', 'str'), ('@', 'True')))), ('@', 'x'), ('sum', ('*', (('@', 'e100'), ('#', '0.1'))), ('@', 'x'), ('@', 'dx'), ('#', '1')), ('lamb', ('slice', ('or', (('@', 'zoo'), ('@', 'lambda'))), ('set', ()), None), (('@', 'x'),)))
+nat:  ('sum', ('/', ('^^', (('#', '1.'), ('@', 'None'), ('@', 'oo'))), ('and', (('"', 'str'), ('@', 'True')))), ('@', 'x'), ('sum', ('*', (('@', 'e100'), ('#', '0.1'))), ('@', 'x'), ('@', 'dx'), ('#', '1')), ('lamb', ('dict', ((('or', (('@', 'zoo'), ('@', 'lambda'))), ('set', ())),)), (('@', 'x'),)))

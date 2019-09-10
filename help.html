@@ -792,9 +792,9 @@ If you are getting results which are just plain wrong, check to see if you have 
 </p><p>
 If you are unable to use a keyword argument identifier in a function call because it is a reserved name then you can wrap it in quotes, Python strings are allowed as keyword identifiers specifically for this purpose.
 </p><p>
-Usually SymPad should be smart enough to figure out when a function argument is and equation and when it is a keyword assignment like in this function "<b>solve(x**2 = i)</b>".
+Usually SymPad should be smart enough to figure out when a function argument is an equation and when it is a keyword assignment like in this function "<b>solve(x**2 = i)</b>".
 However some room for ambiguity remains like in this function "<b>solve(i = x**2)</b>".
-In cases like these you need to pass the equation followed by an explicit non-keyword argument like "<b>solve(i = x**2, x)</b>" or by using the strict comparison double equals "<b>solve(i == x**2)</b>".
+In cases like these you need to pass the equation followed by an explicit non-keyword argument like "<b>solve(i = x**2, x)</b>", by using the strict comparison double equals "<b>solve(i == x**2)</b>" or by wrapping the single-equals equation in parentheses "<b>solve((i = x**2))</b>".
 </p><p>
 The LaTeX parsing is not really comprehensive, it is geared towards being able to read back the LaTeX emitted by SymPad correctly.
 </p><p>
