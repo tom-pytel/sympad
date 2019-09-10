@@ -15,6 +15,8 @@ _POST_SIMPLIFY         = True # post-evaluation simplification
 _PYS                   = True # Python S() escaping
 _DOIT                  = True # expression doit()
 
+class _None: pass # uniquie non-None None marker
+
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op, is_text = 'text', True
 
@@ -183,8 +185,11 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		return (s, has) if ret_has else s
 
-	def _ast2tex_eq_hs (self, ast, hs, lhs = True):
-		return self._ast2tex_wrap (hs, 0, (hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece'})) if ast.is_ass else {'=', '==', 'piece', 'slice', 'or', 'and', 'not'})
+	def _ast2tex_ass_hs (self, hs, lhs = True):
+		return self._ast2tex_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece'}))
+
+	def _ast2tex_cmp_hs (self, hs):
+		return self._ast2tex_wrap (hs, 0, {'=', '==', 'piece', 'slice', 'or', 'and', 'not'})
 
 	def _ast2tex_num (self, ast):
 		m, e = ast.num_mant_and_exp
@@ -356,8 +361,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	_ast2tex_funcs = {
-		'='    : lambda self, ast: f'{self._ast2tex_eq_hs (ast, ast.lhs)} = {self._ast2tex_eq_hs (ast, ast.rhs, False)}',
-		'=='   : lambda self, ast: f'{self._ast2tex_eq_hs (ast, ast.lhs)} {AST.Cmp.PY2TEX.get (ast.rel, ast.rel)} {self._ast2tex_eq_hs (ast, ast.rhs, False)}',
+		'='    : lambda self, ast: f'{self._ast2tex_ass_hs (ast.lhs)} = {self._ast2tex_ass_hs (ast.rhs, False)}',
+		'=='   : lambda self, ast: f'{self._ast2tex_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PY2TEX.get (r, r)} {self._ast2tex_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'    : _ast2tex_num,
 		'@'    : _ast2tex_var,
 		'.'    : _ast2tex_attr,
@@ -453,8 +458,11 @@ class ast2nat: # abstract syntax tree -> native text
 
 		return (s, has) if ret_has else s
 
-	def _ast2nat_eq_hs (self, ast, hs, lhs = True):
-		return self._ast2nat_wrap (hs, 0, (hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece', 'lamb'})) if ast.is_ass else {'=', '==', 'piece', 'lamb', 'slice', 'or', 'and', 'not'})
+	def _ast2nat_ass_hs (self, hs, lhs = True):
+		return self._ast2nat_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece', 'lamb'}))
+
+	def _ast2nat_cmp_hs (self, hs):
+		return self._ast2nat_wrap (hs, 0, {'=', '==', 'piece', 'lamb', 'slice', 'or', 'and', 'not'})
 
 	def _ast2nat_add (self, ast):
 		return ' + '.join (self._ast2nat_wrap (n, \
@@ -557,8 +565,8 @@ class ast2nat: # abstract syntax tree -> native text
 			return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)}{intg}{self._ast2nat (ast.dv)}'
 
 	_ast2nat_funcs = {
-		'='    : lambda self, ast: f'{self._ast2nat_eq_hs (ast, ast.lhs)} = {self._ast2nat_eq_hs (ast, ast.rhs, False)}',
-		'=='   : lambda self, ast: f'{self._ast2nat_eq_hs (ast, ast.lhs)} {AST.Cmp.PYFMT.get (ast.rel, ast.rel)} {self._ast2nat_eq_hs (ast, ast.rhs, False)}',
+		'='    : lambda self, ast: f'{self._ast2nat_ass_hs (ast.lhs)} = {self._ast2nat_ass_hs (ast.rhs, False)}',
+		'=='   : lambda self, ast: f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'    : lambda self, ast: ast.num,
 		'@'    : lambda self, ast: ast.var,
 		'.'    : lambda self, ast: f'{self._ast2nat_paren (ast.obj, {"=", "==", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})}.{ast.attr}' \
@@ -632,30 +640,40 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return py
 
-	_ast2py_cmpfuncs = {'=': 'Eq', '==': 'Eq', '!=': 'Ne', '<': 'Lt', '<=': 'Le', '>': 'Gt', '>=': 'Ge'}
-
-	def _ast2py_eq (self, ast):
-		rel = '=' if ast.is_ass else ast.rel
-
-		if rel in {'in', 'notin'} or (ast.is_ass and (not self.parent or self.parent.is_func)):
-			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py (ast.rhs)}'
-
-		return f'{self._ast2py_cmpfuncs [rel]}({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
-
 	def _ast2py_curly (self, ast):
 		return \
 				self._ast2py_paren (ast) \
 				if ast.strip_minus ().op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 				self._ast2py (ast)
 
-	def _ast2py_paren (self, ast, paren = None):
-		if paren is None:
+	def _ast2py_paren (self, ast, paren = _None):
+		if paren is _None:
 			return self._ast2py (ast) if ast.is_paren else f'({self._ast2py (ast)})'
 
 		if ((ast.op in paren) if isinstance (paren, set) else paren):
 			return f'({self._ast2py (ast)})'
 
 		return self._ast2py (ast)
+
+	def _ast2py_ass (self, ast):
+		if not self.parent or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
+			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
+
+		return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
+
+	_ast2py_cmpfuncs = {'==': 'Eq', '!=': 'Ne', '<': 'Lt', '<=': 'Le', '>': 'Gt', '>=': 'Ge'}
+
+	def _ast2py_cmp (self, ast):
+		def cmppy (lhs, rel, rhs):
+			if rel in {'in', 'notin'}:
+				return f'{self._ast2py_paren (lhs) if lhs.is_lamb else self._ast2py (lhs)} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py (rhs)}'
+			else:
+				return f'{self._ast2py_cmpfuncs [rel]}({self._ast2py_paren (lhs, bool (lhs.is_comma))}, {self._ast2py_paren (rhs, bool (rhs.is_comma))})'
+
+		if ast.cmp.len == 1:
+			return cmppy (ast.lhs, *ast.cmp [0])
+		else:
+			return f'And({cmppy (ast.lhs, *ast.cmp [0])}, {", ".join (cmppy (ast.cmp [i - 1] [1], *ast.cmp [i]) for i in range (1, ast.cmp.len))})'
 
 	def _ast2py_attr (self, ast):
 		if ast.is_attr_func:
@@ -732,8 +750,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		return sdiff
 
 	_ast2py_funcs = {
-		'='    : _ast2py_eq,
-		'=='   : _ast2py_eq,
+		'='    : _ast2py_ass,
+		'=='   : _ast2py_cmp,
 		'#'    : lambda self, ast: ast.num,
 		'@'    : lambda self, ast: ast.var,
 		'.'    : _ast2py_attr,
@@ -766,9 +784,9 @@ class ast2py: # abstract syntax tree -> Python code text
 		'||'   : lambda self, ast: f'Union({", ".join (self._ast2py (a) for a in ast.union)})',
 		'^^'   : _ast2py_sdiff,
 		'&&'   : lambda self, ast: f'Intersection({", ".join (self._ast2py (a) for a in ast.xsect)})',
-		'or'   : lambda self, ast: f'Or({", ".join (self._ast2py_paren (a, {"=", "==", ","}) for a in ast.or_)})',
-		'and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, {"=", "==", ","}) for a in ast.and_)})',
-		'not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, bool (ast.not_.is_ass or ast.not_.is_comma))})',
+		'or'   : lambda self, ast: f'Or({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.or_)})',
+		'and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
+		'not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
 
 		'text' : lambda self, ast: ast.py,
 	}
@@ -812,8 +830,15 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return spt
 
+	def _ast2spt_ass (self, ast):
+		lhs, rhs = self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)
+
+		try:
+			return ExprAss (lhs, rhs) # try to use SymPy comparison object
+		except:
+			return lhs == rhs # fall back to Python comparison
+
 	_ast2spt_cmpfuncs = {
-		'='    : (ExprAss, lambda a, b: a == b),
 		'=='   : (sp.Eq, lambda a, b: a == b),
 		'!='   : (sp.Ne, lambda a, b: a != b),
 		'<'    : (sp.Lt, lambda a, b: a < b),
@@ -824,14 +849,21 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'notin': (lambda a, b: sp.Not (sp.Contains (a, b)), lambda a, b: a not in b),
 	}
 
-	def _ast2spt_eq (self, ast):
-		lhs, rhs  = self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)
-		fspt, fpy = self._ast2spt_cmpfuncs ['=' if ast.is_ass else ast.rel]
+	def _ast2spt_cmp (self, ast):
+		def cmpspt (lhs, rel, rhs):
+			fspt, fpy = self._ast2spt_cmpfuncs [rel]
 
-		try:
-			return fspt (lhs, rhs) # try to use SymPy comparison object
-		except:
-			return fpy (lhs, rhs) # fall back to Python comparison
+			try:
+				return fspt (lhs, rhs) # try to use SymPy comparison object
+			except:
+				return fpy (lhs, rhs) # fall back to Python comparison
+
+		hss = [self._ast2spt (ast.lhs)] + [self._ast2spt (cmp [1]) for cmp in ast.cmp]
+
+		if ast.cmp.len == 1:
+			return cmpspt (hss [0], ast.cmp [0] [0], hss [1])
+		else:
+			return sp.And (*(_sympify (cmpspt (hss [i], ast.cmp [i] [0], hss [i + 1])) for i in range (ast.cmp.len)))
 
 	_ast2spt_consts = { # 'e' and 'i' dynamically set on use from AST.E or AST.I
 		'pi'   : sp.pi,
@@ -964,8 +996,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	_ast2spt_funcs = {
-		'='    : _ast2spt_eq,
-		'=='   : _ast2spt_eq,
+		'='    : _ast2spt_ass,
+		'=='   : _ast2spt_cmp,
 		'#'    : lambda self, ast: sp.Integer (ast.num) if ast.is_num_int else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
 		'@'    : _ast2spt_var,
 		'.'    : _ast2spt_attr,
@@ -1206,12 +1238,12 @@ class spt2ast:
 		sp.Not: lambda self, spt: AST ('not', self._spt2ast (spt.args [0])),
 
 		ExprAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
-		sp.Eq: lambda self, spt: AST ('==', '==', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
-		sp.Ne: lambda self, spt: AST ('==', '!=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
-		sp.Lt: lambda self, spt: AST ('==', '<', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
-		sp.Le: lambda self, spt: AST ('==', '<=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
-		sp.Gt: lambda self, spt: AST ('==', '>', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
-		sp.Ge: lambda self, spt: AST ('==', '>=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Eq: lambda self, spt: AST ('==', self._spt2ast (spt.args [0]), (('==', self._spt2ast (spt.args [1])),)),
+		sp.Ne: lambda self, spt: AST ('==', self._spt2ast (spt.args [0]), (('!=', self._spt2ast (spt.args [1])),)),
+		sp.Lt: lambda self, spt: AST ('==', self._spt2ast (spt.args [0]), (('<',  self._spt2ast (spt.args [1])),)),
+		sp.Le: lambda self, spt: AST ('==', self._spt2ast (spt.args [0]), (('<=', self._spt2ast (spt.args [1])),)),
+		sp.Gt: lambda self, spt: AST ('==', self._spt2ast (spt.args [0]), (('>',  self._spt2ast (spt.args [1])),)),
+		sp.Ge: lambda self, spt: AST ('==', self._spt2ast (spt.args [0]), (('>=', self._spt2ast (spt.args [1])),)),
 
 		sp.EmptySet: lambda self, spt: AST.SetEmpty,
 		sp.fancysets.Complexes: lambda self, spt: AST.Complexes,
@@ -1300,17 +1332,17 @@ class sym: # for single script
 	ast2spt        = ast2spt
 	spt2ast        = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
-# 	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-# 	# ast = AST ('.', ('@', 'S'), 'Half')
-# 	# res = ast2spt (ast, vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
+	# vars = {'f': AST ('lamb', ('intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
+	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
+	# vars = {'S': AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))}
+	# ast = AST ('.', ('@', 'S'), 'Half')
+	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('func', 'cofactors', (('#', '1'), ('lamb', ('=', ('#', '1'), ('(', ('lamb', ('#', '2'), ()))), (('@', 'x'),))))
-# 	res = ast2py (ast)
-# 	# res = spt2ast (res)
+	ast = AST ('==', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z'))))
+	res = ast2spt (ast)
+	res = spt2ast (res)
 
-# 	print (res)
+	print (res)

@@ -1,11 +1,11 @@
 # Base classes for abstract math syntax tree, tuple based.
 #
 # ('=', lhs, rhs)                                  - assignment to Left-Hand-Side of Right-Hand-Side
-# ('==', 'rel', lhs, rhs)                          - equality of type 'rel' relating Left-Hand-Side and Right-Hand-Side
+# ('==', lhs, (('rel1', expr1), ...))              - equalit(ies) of type 'rel' relating two or more ASTs, potentially x < y < z is x < y and y < z
 # ('#', 'num')                                     - real numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                                     - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
 # ('.', expr, 'name')                              - data member reference
-# ('.', expr, 'name', (a1, a2, ...))               - method member call
+# ('.', expr, 'name', (arg1, arg2, ...))           - method member call
 # ('"', 'str')                                     - string
 # (',', (expr1, expr2, ...))                       - comma expression (tuple)
 # ('{', expr)                                      - invisible implicit parentheses for grouping and isolation during parsing
@@ -22,7 +22,7 @@
 # ('log', expr, base)                              - logarithm of expr in base
 # ('sqrt', expr)                                   - square root of expr
 # ('sqrt', expr, n)                                - nth root of expr
-# ('func', 'name', (a1, a2, ...))                  - sympy or regular Python function 'name', will be called with expressions a1, a2, ...
+# ('func', 'name', (arg1, arg2, ...))              - sympy or regular Python function 'name', will be called with expressions a1, a2, ...
 # ('lim', expr, var, to)                           - limit of expr when variable var approaches to from both positive and negative directions
 # ('lim', expr, var, to, 'dir')                    - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('sum', expr, var, from, to)                     - summation of expr over variable var from from to to
@@ -114,7 +114,7 @@ class AST (tuple):
 			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
 	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^', '&&', 'or' and 'and' into single ASTs
-		if self.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}:
+		if self.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}: # specifically not '==' because that would be different meaning
 			if self.op == op:
 				for e in self [1]:
 					e.flat (op, seq)
@@ -242,10 +242,10 @@ class AST (tuple):
 					continue
 
 				elif ass2eq: # rewrite assignment = as == for equations passed to functions
-					arg = AST ('==', '==', arg.lhs, arg.rhs)
+					arg = AST ('==', arg.lhs, (('==', arg.rhs),))
 
 			if ass2eq:
-				rargs = [func (arg)] + [func (AST ('==', '==', a.lhs, a.rhs) if a.is_ass else a) for a in itr]
+				rargs = [func (arg)] + [func (AST ('==', a.lhs, (('==', a.rhs),)) if a.is_ass else a) for a in itr]
 			else:
 				rargs = [func (arg)] + [func (a) for a in itr]
 
@@ -317,13 +317,13 @@ class AST (tuple):
 
 #...............................................................................................
 class AST_Ass (AST):
-	op, is_ass  = '=', True
+	op, is_ass = '=', True
 
 	def _init (self, lhs, rhs):
 		self.lhs, self.rhs = lhs, rhs # should be py form
 
 class AST_Cmp (AST):
-	op, is_cmp  = '==', True
+	op, is_cmp = '==', True
 
 	TEX2PY = {'\\ne': '!=', '\\le': '<=', '\\ge': '>=', '\\lt': '<', '\\gt': '>', '\\neq': '!=', '\\in': 'in', '\\notin': 'notin'}
 	UNI2PY = {'\u2260': '!=', '\u2264': '<=', '\u2265': '>=', '\u2208': 'in', '\u2209': 'notin'}
@@ -331,8 +331,8 @@ class AST_Cmp (AST):
 	PY2TEX = {'!=': '\\ne', '<=': '\\le', '>=': '\\ge', 'in': '\\in', 'notin': '\\notin'}
 	PYFMT  = {'notin': 'not in'}
 
-	def _init (self, rel, lhs, rhs):
-		self.rel, self.lhs, self.rhs = rel, lhs, rhs # should be py form
+	def _init (self, lhs, cmp):
+		self.lhs, self.cmp = lhs, cmp # should be py forms (('!=', expr), ('<=', expr), ...)
 
 class AST_Num (AST):
 	op, is_num = '#', True
