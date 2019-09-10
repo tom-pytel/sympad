@@ -5,80 +5,19 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _AST_StrPlus = AST ('"', '+')
 
 #...............................................................................................
-def _xlat_f2a_Derivative_NAT (ast = AST.VarNull, *dvs, **kw):
-	if not kw:
-		return _xlat_f2a_Derivative (ast, *dvs)
-
-def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
-	ds = []
-
-	if not dvs:
-		vars = ast.free_vars ()
-
-		if len (vars) == 1:
-			ds = [AST ('@', f'd{vars.pop ().var}')]
-
+def _xlat_f2a_slice (*args):
+	if len (args) == 1:
+		return AST ('slice', None, args [0], None)
+	if len (args) == 2:
+		return AST ('slice', args [0], args [1], None)
 	else:
-		dvs = list (dvs [::-1])
-
-		while dvs:
-			v = dvs.pop ()
-
-			if not v.is_var:
-				return None
-			elif dvs and dvs [-1].is_num_pos_int:
-				ds.append (AST ('^', ('@', f'd{v.var}'), dvs.pop ()))
-			else:
-				ds.append (AST ('@', f'd{v.var}'))
-
-	return AST ('diff', ast, tuple (ds))
-
-def _xlat_f2a_Integral_NAT (ast = None, dvab = None, *args, **kw):
-	if not kw:
-		return _xlat_f2a_Integral (ast, dvab, *args, **kw)
-
-def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
-	if ast is None:
-		return AST ('intg', AST.VarNull, AST.VarNull)
-
-	if dvab is None:
-		vars = ast.free_vars ()
-
-		if len (vars) == 1:
-			return AST ('intg', ast, ('@', f'd{vars.pop ().var}'))
-
-		return AST ('intg', AST.VarNull, AST.VarNull)
-
-	dvab = dvab.strip_paren ()
-	ast2 = None
-
-	if dvab.is_comma:
-		if dvab.comma and dvab.comma [0].is_nonconst_var:
-			if dvab.comma.len == 1:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'))
-			elif dvab.comma.len == 2:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'), AST.Zero, dvab.comma [1])
-			elif dvab.comma.len == 3:
-				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'), dvab.comma [1], dvab.comma [2])
-
-	elif dvab.is_var:
-		ast2 = AST ('intg', ast, ('@', f'd{dvab.var}'))
-
-	if ast2 is None:
-		return None
-
-	return _xlat_f2a_Integral (ast2, *args) if args else ast2
-
-_xlat_f2a_Limit_dirs = {AST ('"', '+'): ('+',), AST ('"', '-'): ('-',), AST ('"', '+-'): ()}
+		return AST ('slice', args [0], args [1], args [2])
 
 def _xlat_f2a_Lambda (args, expr):
 	args = args.strip_paren ()
 	args = args.comma if args.is_comma else (args,)
 
 	return AST ('lamb', expr, args)
-
-def _xlat_f2a_Limit (ast = AST.VarNull, var = AST.VarNull, to = AST.VarNull, dir = _AST_StrPlus):
-	return AST ('lim', ast, var, to, *_xlat_f2a_Limit_dirs [dir])
 
 def _xlat_f2a_Pow (ast = AST.VarNull, exp = AST.VarNull):
 	return AST ('^', ast, exp)
@@ -153,13 +92,74 @@ def _xlat_f2a_Piecewise (*args):
 
 	return None
 
-def _xlat_f2a_slice (*args):
-	if len (args) == 1:
-		return AST ('slice', None, args [0], None)
-	if len (args) == 2:
-		return AST ('slice', args [0], args [1], None)
+def _xlat_f2a_Derivative_NAT (ast = AST.VarNull, *dvs, **kw):
+	if not kw:
+		return _xlat_f2a_Derivative (ast, *dvs)
+
+def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
+	ds = []
+
+	if not dvs:
+		vars = ast.free_vars ()
+
+		if len (vars) == 1:
+			ds = [AST ('@', f'd{vars.pop ().var}')]
+
 	else:
-		return AST ('slice', args [0], args [1], args [2])
+		dvs = list (dvs [::-1])
+
+		while dvs:
+			v = dvs.pop ()
+
+			if not v.is_var:
+				return None
+			elif dvs and dvs [-1].is_num_pos_int:
+				ds.append (AST ('^', ('@', f'd{v.var}'), dvs.pop ()))
+			else:
+				ds.append (AST ('@', f'd{v.var}'))
+
+	return AST ('diff', ast, tuple (ds))
+
+def _xlat_f2a_Integral_NAT (ast = None, dvab = None, *args, **kw):
+	if not kw:
+		return _xlat_f2a_Integral (ast, dvab, *args, **kw)
+
+def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
+	if ast is None:
+		return AST ('intg', AST.VarNull, AST.VarNull)
+
+	if dvab is None:
+		vars = ast.free_vars ()
+
+		if len (vars) == 1:
+			return AST ('intg', ast, ('@', f'd{vars.pop ().var}'))
+
+		return AST ('intg', AST.VarNull, AST.VarNull)
+
+	dvab = dvab.strip_paren ()
+	ast2 = None
+
+	if dvab.is_comma:
+		if dvab.comma and dvab.comma [0].is_nonconst_var:
+			if dvab.comma.len == 1:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'))
+			elif dvab.comma.len == 2:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'), AST.Zero, dvab.comma [1])
+			elif dvab.comma.len == 3:
+				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'), dvab.comma [1], dvab.comma [2])
+
+	elif dvab.is_var:
+		ast2 = AST ('intg', ast, ('@', f'd{dvab.var}'))
+
+	if ast2 is None:
+		return None
+
+	return _xlat_f2a_Integral (ast2, *args) if args else ast2
+
+_xlat_f2a_Limit_dirs = {AST ('"', '+'): ('+',), AST ('"', '-'): ('-',), AST ('"', '+-'): ()}
+
+def _xlat_f2a_Limit (ast = AST.VarNull, var = AST.VarNull, to = AST.VarNull, dir = _AST_StrPlus):
+	return AST ('lim', ast, var, to, *_xlat_f2a_Limit_dirs [dir])
 
 def _xlat_f2a_Sum_NAT (ast = AST.VarNull, ab = None, **kw):
 	if not kw:
@@ -285,16 +285,59 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast))
 
 #...............................................................................................
-def _xlat_f2t_Subs (ast2tex, ast, vars, subs):
-	vars = vars.strip_paren ()
-	subs = subs.strip_paren ()
+def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .subs()
+	try:
+		if ast.is_func_Subs:
+			if len (ast.args) == 3:
+				vars = ast.args [1].strip_paren ()
+				subs = ast.args [2].strip_paren ()
 
-	if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
-		asss = ' \\\\ '.join (f'{ast2tex (v)}={ast2tex (s)}' for v, s in zip (vars.comma, subs.comma))
+				if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
+					return _xlat_f2t_SUBS_collect (ast.args [0], list (zip (vars.comma, subs.comma)) + tail)
+
+				return _xlat_f2t_SUBS_collect (ast.args [0], [(vars, subs)] + tail)
+
+		elif ast.is_attr_func and ast.attr == 'subs':
+			if ast.args.len == 2:
+				return _xlat_f2t_SUBS_collect (ast.obj, [(ast.args [0], ast.args [1])] + tail)
+
+			elif ast.args.len == 1:
+				arg = ast.args [0].strip_paren ()
+
+				if arg.is_dict:
+					return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
+
+				elif arg.op in {',', '[', 'set'}:
+					args = []
+
+					for arg in arg [1]:
+						arg = arg.strip_paren ()
+
+						if arg.op not in {',', '['} or arg [1].len != 2:
+							break
+
+						args.append (arg [1])
+
+					else:
+						return _xlat_f2t_SUBS_collect (ast.obj, args + tail)
+
+	except:
+		pass
+
+	return ast, tail
+
+def _xlat_f2t_SUBS (ast2tex, ast): # handles both Subs() and .subs() and collapses nested calls into one substitution
+	ast, subs = _xlat_f2t_SUBS_collect (ast, [])
+
+	if len (subs) == 1:
+		return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (subs [0] [0])}={ast2tex (subs [0] [1])}}}'
+
+	elif len (subs) > 1:
+		asss = ' \\\\ '.join (f'{ast2tex (v)}={ast2tex (s)}' for v, s in subs)
 
 		return f'\\left. {ast2tex (ast)} \\right|_{{\\substack{{{asss}}}}}'
 
-	return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (vars)}={ast2tex (subs)}}}'
+	return None
 
 _XLAT_FUNC2TEX = {
 	'beta'    : lambda ast2tex, *args: f'\\beta\\left({ast2tex (AST.tuple2ast (args))} \\right)',
@@ -307,7 +350,8 @@ _XLAT_FUNC2TEX = {
 	'im'      : lambda ast2tex, *args: f'\\Im\\left({ast2tex (AST.tuple2ast (args))} \\right)',
 
 	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
-	'Subs'    : _xlat_f2t_Subs,
+
+	'Subs'    : lambda ast2tex, *args: _xlat_f2t_SUBS (ast2tex, AST ('func', 'Subs', args)),
 }
 
 _XLAT_ATTRFUNC2TEX = {
@@ -315,7 +359,7 @@ _XLAT_ATTRFUNC2TEX = {
 	'integrate': lambda ast2tex, ast, dvab = None, *args, **kw: ast2tex (_xlat_f2a_Integral (ast, dvab, *args, **kw)),
 	'limit'    : lambda ast2tex, ast, var = AST.VarNull, to = AST.VarNull, dir = _AST_StrPlus: ast2tex (_xlat_f2a_Limit (ast, var, to, dir)),
 
-	'subs'     : _xlat_f2t_Subs,
+	'subs'     : lambda ast2tex, ast, *args: _xlat_f2t_SUBS (ast2tex, AST ('.', ast, 'subs', args)),
 }
 
 def xlat_func2tex (ast, ast2tex):
@@ -332,18 +376,16 @@ def xlat_func2tex (ast, ast2tex):
 	return None
 
 def xlat_attr2tex (ast, ast2tex):
-	if ast.is_attr_var:
-		return None
+	if ast.is_attr_func:
+		xact = _XLAT_ATTRFUNC2TEX.get (ast.attr)
 
-	xact = _XLAT_ATTRFUNC2TEX.get (ast.attr)
+		if xact:
+			args, kw = AST.args2kwargs (ast.args)
 
-	if xact:
-		args, kw = AST.args2kwargs (ast.args)
-
-		try:
-			return xact (ast2tex, ast.obj, *args, **kw)
-		except:
-			pass
+			try:
+				return xact (ast2tex, ast.obj, *args, **kw)
+			except:
+				pass
 
 	return None
 
@@ -388,7 +430,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 	es = [_xlat_pyS (a) for a in ast]
 
 	return AST (*tuple (e [0] for e in es)), \
-			ast.op in {'=', '==', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'vec', 'mat', 'piece', 'lamb'} or any (e [1] for e in es)
+			ast.op in {'=', '==', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'vec', 'mat', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'} or any (e [1] for e in es)
 
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 
@@ -404,6 +446,6 @@ class sxlat: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('(', (',', (('#', '1'), ('#', '2'))))
-# 	res = XLAT_FUNC2AST_NAT ['set'] (ast)
+# 	ast = AST ('.', ('@', 'x'), 'subs', (('dict', ((('@', 'x'), ('#', '2')),)),))
+# 	res = xlat_attr2tex (ast, None)
 # 	print (res)

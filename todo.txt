@@ -1,7 +1,6 @@
-> fix .subs not working with (x+y).subs ((x, y), (2, 3))
-> collapse nested subs and Subs
-
 > extended comparison 0 <= x < 1 (using and)
+
+> -{not x}, -2{x or y}
 
 > test_python module
 
@@ -103,3 +102,8 @@ py:   ('func', 'Integral', (('log', ('^', ('dict', ((('@', 'zoo'), ('@', 'False'
 Invalid! {{{{\left|{None}\right|} == {[{\partialx},{\tilde\infty }]}}  not in  {lambda x, y, z: {{{1.0}}}}}  in  {\[{d^{1} / dx^{1} {{1.}!}},{{{{{1e100} or {1.0}}}+{\[[{1.0},],[{"str"},],]}}},]}}
 text:    {{{{\left|{None}\right|} == {[{\partialx},{\tilde\infty }]}}  not in  {lambda x, y, z: {{{1.0}}}}}  in  {\[{d^{1} / dx^{1} {{1.}!}},{{{{{1e100} or {1.0}}}+{\[[{1.0},],[{"str"},],]}}},]}}
 textpy:  Eq(abs(None), [partialx, zoo]) not in Lambda((x, y, z), 1.0) in Matrix([Derivative(factorial(1.), x, 1), Or(1e+100, 1.0) + Matrix([1.0, 'str'])])
+
+
+Invalid! {-{\int {{{True}  in  {\emptyset}}  not in  {{not {partialx}}}} dx}}
+text:    {-{\int {{{True}  in  {\emptyset}}  not in  {{not {partialx}}}} dx}}
+textpy:  -Integral(True in FiniteSet() not in Not(partialx), x)
