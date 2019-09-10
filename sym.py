@@ -606,11 +606,11 @@ class ast2nat: # abstract syntax tree -> native text
 #...............................................................................................
 class ast2py: # abstract syntax tree -> Python code text
 	def __init__ (self): self.parent = self.ast = None # pylint droppings
-	def __new__ (cls, ast, xlat = True, funcass2eq = True):
-		self            = super ().__new__ (cls)
-		self.funcass2eq = funcass2eq
-		self.parents    = [None]
-		self.parent     = self.ast = AST ()
+	def __new__ (cls, ast, xlat = True, ass2eq = True):
+		self         = super ().__new__ (cls)
+		self.ass2eq  = ass2eq
+		self.parents = [None]
+		self.parent  = self.ast = AST ()
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -635,10 +635,10 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return py
 
-	_ast2py_cmpfuncs = {'=': 'Eq', '==': 'Eq', '!=': 'Ne', '<': 'Lt', '<=': 'Le', '>': 'Gt', '>=': 'Ge'}
+	_ast2py_cmpfuncs = {'==': 'Eq', '!=': 'Ne', '<': 'Lt', '<=': 'Le', '>': 'Gt', '>=': 'Ge'}
 
 	def _ast2py_eq (self, ast):
-		rel = '=' if ast.is_ass else ast.rel
+		rel = '==' if ast.is_ass else ast.rel
 
 		if rel in {'in', 'notin'} or (ast.is_ass and (not self.parent or self.parent.is_func)):
 			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py (ast.rhs)}'
@@ -679,7 +679,7 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f'log{self._ast2py_paren (ast.log)} / log{self._ast2py_paren (ast.base)}'
 
 	def _ast2py_func (self, ast):
-		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.funcass2eq)
+		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
 		return f'{ast.unescaped}({", ".join (args + [f"{k}={a}" for k, a in kw.items ()])})'
 
@@ -1001,227 +1001,251 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	}
 
 #...............................................................................................
-def spt2ast (spt): # sympy tree (expression) -> abstract syntax tree
-	for cls in spt.__class__.__mro__:
-		func = _spt2ast_funcs.get (cls)
+class spt2ast:
+	def __init__ (self): self.parent = self.spt = None # pylint droppings
+	def __new__ (cls, spt):
+		self         = super ().__new__ (cls)
+		self.parents = [None]
+		self.parent  = self.spt = AST ()
 
-		if func:
-			return func (spt)
+		return self._spt2ast (spt)
 
-	tex = sp.latex (spt)
+	def _spt2ast (self, spt): # sympy tree (expression) -> abstract syntax tree
+		def __spt2ast (spt):
+			for cls in spt.__class__.__mro__:
+				func = spt2ast._spt2ast_funcs.get (cls)
 
-	if tex == str (spt): # no native latex representation?
-		tex = tex.replace ('_', '\\_')
+				if func:
+					return func (self, spt)
 
-	if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
-		tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
+			tex = sp.latex (spt)
 
-	return AST ('text', tex, str (spt), str (spt), spt)
+			if tex == str (spt): # no native latex representation?
+				tex = tex.replace ('_', '\\_')
 
-def _spt2ast_num (spt):
-	num = AST ('#', str (spt))
+			if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
+				tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
 
-	if num.grp [5]:
-		return AST ('#', ''.join (num.grp [:6] + num.grp [7:]))
+			return AST ('text', tex, str (spt), str (spt), spt)
 
-	e = len (num.grp [2]) + num.num_exp_val
+		self.parents.append (self.spt)
 
-	return AST ('#', \
-			f'{num.grp [0]}{num.grp [1]}e+{e}'     if e >= 16 else \
-			f'{num.grp [0]}{num.grp [1]}{"0" * e}' if e >= 0 else \
-			f'{num.grp [0]}{num.grp [1]}e{e}')
+		self.parent = self.spt
+		self.spt    = spt
 
-def _spt2ast_Union (spt): # convert union of complements to symmetric difference if present
-	if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
-			spt.args [0].args [0] == spt.args [1].args [1] and spt.args [0].args [1] == spt.args [1].args [0]:
-		return AST ('^^', (spt2ast (spt.args [0].args [0]), spt2ast (spt.args [0].args [1])))
+		spt         = __spt2ast (spt)
 
-	return spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (spt2ast (a) for a in spt.args))
+		del self.parents [-1]
 
-def _spt2ast_MatrixBase (spt):
-	if not spt.cols or not spt.rows:
-		return AST ('vec', ())
-	if spt.cols > 1:
-		return AST ('mat', tuple (tuple (spt2ast (e) for e in spt [row, :]) for row in range (spt.rows)))
-	elif spt.rows > 1:
-		return AST ('vec', tuple (spt2ast (e) for e in spt))
-	else:
-		return spt2ast (spt [0])
+		self.spt    = self.parent
+		self.parent = self.parents [-1]
 
-def _spt2ast_Add (spt):
-	args = spt.args
+		return spt
 
-	for arg in args:
-		if isinstance (arg, sp.Order):
-			break
-	else:
-		if args [0].is_number:
-			args = spt.args [1:] + (spt.args [0],)
+	def _spt2ast_num (self, spt):
+		num = AST ('#', str (spt))
 
-	return AST ('+', tuple (spt2ast (arg) for arg in args))
+		if num.grp [5]:
+			return AST ('#', ''.join (num.grp [:6] + num.grp [7:]))
 
-def _spt2ast_Mul (spt):
-	if spt.args [0] == -1:
-		return AST ('-', spt2ast (sp.Mul (*spt.args [1:])))
+		e = len (num.grp [2]) + num.num_exp_val
 
-	if spt.args [0].is_negative and isinstance (spt, sp.Number):
-		return AST ('-', spt2ast (sp.Mul (-spt.args [0], *spt.args [1:])))
+		return AST ('#', \
+				f'{num.grp [0]}{num.grp [1]}e+{e}'     if e >= 16 else \
+				f'{num.grp [0]}{num.grp [1]}{"0" * e}' if e >= 0 else \
+				f'{num.grp [0]}{num.grp [1]}e{e}')
 
-	args = spt.args [1:] if spt.args [0] == 1 else spt.args # sometimes we get Mul (1, ...), strip the 1
+	def _spt2ast_Union (self, spt): # convert union of complements to symmetric difference if present
+		if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
+				spt.args [0].args [0] == spt.args [1].args [1] and spt.args [0].args [1] == spt.args [1].args [0]:
+			return AST ('^^', (self._spt2ast (spt.args [0].args [0]), self._spt2ast (spt.args [0].args [1])))
 
-	if len (spt.args) == 1:
-		return spt2ast (args [0])
+		return self._spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (self._spt2ast (a) for a in spt.args))
 
-	numer = []
-	denom = []
-
-	for arg in args:
-		if isinstance (arg, sp.Pow) and arg.args [1].is_negative:
-			denom.append (spt2ast (arg.args [0] if arg.args [1] is sp.S.NegativeOne else _Pow (arg.args [0], -arg.args [1])))
+	def _spt2ast_MatrixBase (self, spt):
+		if not spt.cols or not spt.rows:
+			return AST ('vec', ())
+		if spt.cols > 1:
+			return AST ('mat', tuple (tuple (self._spt2ast (e) for e in spt [row, :]) for row in range (spt.rows)))
+		elif spt.rows > 1:
+			return AST ('vec', tuple (self._spt2ast (e) for e in spt))
 		else:
-			numer.append (spt2ast (arg))
+			return self._spt2ast (spt [0])
 
-	if not denom:
-		return AST ('*', tuple (numer)) if len (numer) > 1 else numer [0]
-
-	if not numer:
-		return AST ('/', AST.One, AST ('*', tuple (denom)) if len (denom) > 1 else denom [0])
-
-	return AST ('/', AST ('*', tuple (numer)) if len (numer) > 1 else numer [0], \
-			AST ('*', tuple (denom)) if len (denom) > 1 else denom [0])
-
-def _spt2ast_Pow (spt):
-	if spt.args [1].is_negative:
-		return AST ('/', AST.One, spt2ast (spt.args [0] if spt.args [1] is sp.S.NegativeOne else _Pow (spt.args [0], -spt.args [1])))
-
-	if spt.args [1] == 0.5:
-		return AST ('sqrt', spt2ast (spt.args [0]))
-
-	return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
-
-def _spt2ast_MatPow (spt):
-	try: # compensate for some MatPow.doit() != mat**pow
-		return spt2ast (spt.args [0]**spt.args [1])
-	except:
-		return AST ('^', spt2ast (spt.args [0]), spt2ast (spt.args [1]))
-
-def _spt2ast_Function (spt, name = None, args = None, kws = None):
-	if name is None:
-		name = spt.__class__.__name__
-
-	if getattr (spt, 'SYMPAD_ESCAPED', None):
-		name = f'{AST.Func.ESCAPE}{name}'
-
-	if args is None:
+	def _spt2ast_Add (self, spt):
 		args = spt.args
 
-	if kws:
-		return AST ('func', name, tuple (spt2ast (arg) for arg in spt.args) + tuple (AST ('=', ('@', kw), a) for kw, a in kws))
-	else:
-		return AST ('func', name, tuple (spt2ast (arg) for arg in spt.args))
+		for arg in args:
+			if isinstance (arg, sp.Order):
+				break
+		else:
+			if args [0].is_number:
+				args = spt.args [1:] + (spt.args [0],)
 
-def _spt2ast_Derivative (spt):
-	return AST ('diff', spt2ast (spt.args [0]), tuple ( \
-			('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p))) \
-			for s, p in spt.args [1:]))
+		return AST ('+', tuple (self._spt2ast (arg) for arg in args))
 
-def _spt2ast_Integral (spt):
-	return \
-			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])) \
-			if len (spt.args [1]) == 3 else \
-			AST ('intg', spt2ast (spt.args [0]), AST ('@', f'd{spt2ast (spt.args [1] [0]) [1]}'))
+	def _spt2ast_Mul (self, spt):
+		if spt.args [0] == -1:
+			return AST ('-', self._spt2ast (sp.Mul (*spt.args [1:])))
 
-_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
+		if spt.args [0].is_negative and isinstance (spt, sp.Number):
+			return AST ('-', self._spt2ast (sp.Mul (-spt.args [0], *spt.args [1:])))
 
-_dict_keys   = {}.keys ().__class__
-_dict_values = {}.values ().__class__
-_dict_items  = {}.items ().__class__
+		args = spt.args [1:] if spt.args [0] == 1 else spt.args # sometimes we get Mul (1, ...), strip the 1
 
-_spt2ast_funcs = {
-	ExprNoEval: lambda spt: spt.SYMPAD_eval (),
+		if len (spt.args) == 1:
+			return self._spt2ast (args [0])
 
-	None.__class__: lambda spt: AST.None_,
-	bool: lambda spt: AST.True_ if spt else AST.False_,
-	int: lambda spt: AST ('#', str (spt)),
-	float: lambda spt: AST ('#', str (_fltoint (spt))),
-	complex: lambda spt: AST ('#', str (_fltoint (spt.real))) if not spt.imag else AST ('+', (('#', str (_fltoint (spt.real))), AST.I if spt.imag == 1 else ('*', (('#', str (_fltoint (spt.imag))), AST.I)))),
-	str: lambda spt: AST ('"', spt),
-	tuple: lambda spt: AST ('(', (',', tuple (spt2ast (e) for e in spt))),
-	list: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
-	set: lambda spt: AST ('set', tuple (spt2ast (e) for e in spt)),
-	frozenset: lambda spt: AST ('set', tuple (spt2ast (e) for e in spt)),
-	dict: lambda spt: AST ('dict', tuple ((spt2ast (k), spt2ast (v)) for k, v in spt.items ())),
-	slice: lambda spt: AST ('slice', False if spt.start is None else spt2ast (spt.start), False if spt.stop is None else spt2ast (spt.stop), None if spt.step is None else spt2ast (spt.step)),
-	_dict_keys: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
-	_dict_values: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
-	_dict_items: lambda spt: AST ('[', tuple (spt2ast (e) for e in spt)),
-	sp.Tuple: lambda spt: spt2ast (spt.args),
+		numer = []
+		denom = []
 
-	sp.Integer: _spt2ast_num,
-	sp.Float: _spt2ast_num,
-	sp.Rational: lambda spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
-	sp.numbers.ImaginaryUnit: lambda ast: AST.I,
-	sp.numbers.Pi: lambda spt: AST.Pi,
-	sp.numbers.Exp1: lambda spt: AST.E,
-	sp.numbers.Infinity: lambda spt: AST.Infty,
-	sp.numbers.NegativeInfinity: lambda spt: AST ('-', AST.Infty),
-	sp.numbers.ComplexInfinity: lambda spt: AST.CInfty,
-	sp.numbers.NaN: lambda spt: AST.NaN,
+		for arg in args:
+			if isinstance (arg, sp.Pow) and arg.args [1].is_negative:
+				denom.append (self._spt2ast (arg.args [0] if arg.args [1] is sp.S.NegativeOne else _Pow (arg.args [0], -arg.args [1])))
+			else:
+				numer.append (self._spt2ast (arg))
 
-	sp.Symbol: lambda spt: AST ('@', spt.name),
+		if not denom:
+			return AST ('*', tuple (numer)) if len (numer) > 1 else numer [0]
 
-	sp.boolalg.BooleanTrue: lambda spt: AST.True_,
-	sp.boolalg.BooleanFalse: lambda spt: AST.False_,
-	sp.Or: lambda spt: AST ('or', tuple (spt2ast (a) for a in spt.args)),
-	sp.And: lambda spt: AST ('and', tuple (spt2ast (a) for a in spt.args)),
-	sp.Not: lambda spt: AST ('not', spt2ast (spt.args [0])),
+		if not numer:
+			return AST ('/', AST.One, AST ('*', tuple (denom)) if len (denom) > 1 else denom [0])
 
-	ExprAss: lambda spt: AST ('=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Eq: lambda spt: AST ('==', '==', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Ne: lambda spt: AST ('==', '!=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Lt: lambda spt: AST ('==', '<', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Le: lambda spt: AST ('==', '<=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Gt: lambda spt: AST ('==', '>', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Ge: lambda spt: AST ('==', '>=', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
+		return AST ('/', AST ('*', tuple (numer)) if len (numer) > 1 else numer [0], \
+				AST ('*', tuple (denom)) if len (denom) > 1 else denom [0])
 
-	sp.EmptySet: lambda spt: AST.SetEmpty,
-	sp.fancysets.Complexes: lambda spt: AST.Complexes,
-	sp.FiniteSet: lambda spt: AST ('set', tuple (spt2ast (arg) for arg in spt.args)),
-	sp.Union: _spt2ast_Union,
-	sp.Intersection: lambda spt: spt2ast (spt.args [0]) if len (spt.args) == 1 else AST.flatcat ('&&', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Complement: lambda spt: AST ('+', (spt2ast (spt.args [0]), ('-', spt2ast (spt.args [1])))),
+	def _spt2ast_Pow (self, spt):
+		if spt.args [1].is_negative:
+			return AST ('/', AST.One, self._spt2ast (spt.args [0] if spt.args [1] is sp.S.NegativeOne else _Pow (spt.args [0], -spt.args [1])))
 
-	sp.matrices.MatrixBase: _spt2ast_MatrixBase,
+		if spt.args [1] == 0.5:
+			return AST ('sqrt', self._spt2ast (spt.args [0]))
 
-	sp.Poly: lambda spt: _spt2ast_Function (spt, args = spt.args + spt.gens, kws = (('domain', AST ('"', str (spt.domain))),)),
+		return AST ('^', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1]))
 
-	sp.Add: _spt2ast_Add,
-	sp.Mul: _spt2ast_Mul,
-	sp.Pow: _spt2ast_Pow,
-	sp.MatPow: _spt2ast_MatPow,
+	def _spt2ast_MatPow (self, spt):
+		try: # compensate for some MatPow.doit() != mat**pow
+			return self._spt2ast (spt.args [0]**spt.args [1])
+		except:
+			return AST ('^', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1]))
 
-	sp.Abs: lambda spt: AST ('|', spt2ast (spt.args [0])),
-	sp.arg: lambda spt: AST ('func', 'arg', (spt2ast (spt.args [0]),)),
-	sp.exp: lambda spt: AST ('^', AST.E, spt2ast (spt.args [0])),
-	sp.factorial: lambda spt: AST ('!', spt2ast (spt.args [0])),
-	sp.Function: _spt2ast_Function,
-	sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
-	sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
-	sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
-	sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
-	sp.log: lambda spt: AST ('log', spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', spt2ast (spt.args [0]), spt2ast (spt.args [1])),
-	sp.Min: lambda spt: AST ('func', 'Min', tuple (spt2ast (arg) for arg in spt.args)),
-	sp.Max: lambda spt: AST ('func', 'Max', tuple (spt2ast (arg) for arg in spt.args)),
+	def _spt2ast_Function (self, spt, name = None, args = None, kws = None):
+		if name is None:
+			name = spt.__class__.__name__
 
-	sp.Limit: lambda spt: AST (*(('lim', spt2ast (spt.args [0]), spt2ast (spt.args [1]), spt2ast (spt.args [2])) + _spt2ast_Limit_dirs [spt.args [3].name])),
-	sp.Sum: lambda spt: AST ('sum', spt2ast (spt.args [0]), spt2ast (spt.args [1] [0]), spt2ast (spt.args [1] [1]), spt2ast (spt.args [1] [2])),
-	sp.Derivative: _spt2ast_Derivative,
-	sp.Integral: _spt2ast_Integral,
+		if getattr (spt, 'SYMPAD_ESCAPED', None):
+			name = f'{AST.Func.ESCAPE}{name}'
 
-	sp.Order: lambda spt: AST ('func', 'O', ((spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else spt2ast (spt.args)),)),
-	sp.Piecewise: lambda spt: AST ('piece', tuple ((spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else spt2ast (t [1])) for t in spt.args)),
-	sp.Lambda: lambda spt: AST ('lamb', spt2ast (spt.args [1]), tuple (spt2ast (v) for v in spt.args [0])),
-}
+		if args is None:
+			args = spt.args
+
+		if kws:
+			return AST ('func', name, tuple (self._spt2ast (arg) for arg in spt.args) + tuple (AST ('=', ('@', kw), a) for kw, a in kws))
+		else:
+			return AST ('func', name, tuple (self._spt2ast (arg) for arg in spt.args))
+
+	def _spt2ast_Derivative (self, spt):
+		return AST ('diff', self._spt2ast (spt.args [0]), tuple ( \
+				('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p))) \
+				for s, p in spt.args [1:]))
+
+	def _spt2ast_Integral (self, spt):
+		return \
+				AST ('intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'), self._spt2ast (spt.args [1] [1]), self._spt2ast (spt.args [1] [2])) \
+				if len (spt.args [1]) == 3 else \
+				AST ('intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'))
+
+	_dict_keys   = {}.keys ().__class__
+	_dict_values = {}.values ().__class__
+	_dict_items  = {}.items ().__class__
+
+	_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
+
+	_spt2ast_funcs = {
+		ExprNoEval: lambda self, spt: spt.SYMPAD_eval (),
+
+		None.__class__: lambda self, spt: AST.None_,
+		bool: lambda self, spt: AST.True_ if spt else AST.False_,
+		int: lambda self, spt: AST ('#', str (spt)),
+		float: lambda self, spt: AST ('#', str (_fltoint (spt))),
+		complex: lambda self, spt: AST ('#', str (_fltoint (spt.real))) if not spt.imag else AST ('+', (('#', str (_fltoint (spt.real))), AST.I if spt.imag == 1 else ('*', (('#', str (_fltoint (spt.imag))), AST.I)))),
+		str: lambda self, spt: AST ('"', spt),
+		tuple: lambda self, spt: AST ('(', (',', tuple (self._spt2ast (e) for e in spt))),
+		list: lambda self, spt: AST ('[', tuple (self._spt2ast (e) for e in spt)),
+		set: lambda self, spt: AST ('set', tuple (self._spt2ast (e) for e in spt)),
+		frozenset: lambda self, spt: AST ('set', tuple (self._spt2ast (e) for e in spt)),
+		dict: lambda self, spt: AST ('dict', tuple ((self._spt2ast (k), self._spt2ast (v)) for k, v in spt.items ())),
+		slice: lambda self, spt: AST ('slice', False if spt.start is None else self._spt2ast (spt.start), False if spt.stop is None else self._spt2ast (spt.stop), None if spt.step is None else self._spt2ast (spt.step)),
+		_dict_keys: lambda self, spt: AST ('[', tuple (self._spt2ast (e) for e in spt)),
+		_dict_values: lambda self, spt: AST ('[', tuple (self._spt2ast (e) for e in spt)),
+		_dict_items: lambda self, spt: AST ('[', tuple (self._spt2ast (e) for e in spt)),
+		sp.Tuple: lambda self, spt: self._spt2ast (spt.args),
+
+		sp.Integer: _spt2ast_num,
+		sp.Float: _spt2ast_num,
+		sp.Rational: lambda self, spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
+		sp.numbers.ImaginaryUnit: lambda ast: AST.I,
+		sp.numbers.Pi: lambda self, spt: AST.Pi,
+		sp.numbers.Exp1: lambda self, spt: AST.E,
+		sp.numbers.Infinity: lambda self, spt: AST.Infty,
+		sp.numbers.NegativeInfinity: lambda self, spt: AST ('-', AST.Infty),
+		sp.numbers.ComplexInfinity: lambda self, spt: AST.CInfty,
+		sp.numbers.NaN: lambda self, spt: AST.NaN,
+
+		sp.Symbol: lambda self, spt: AST ('@', spt.name),
+
+		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
+		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
+		sp.Or: lambda self, spt: AST ('or', tuple (self._spt2ast (a) for a in spt.args)),
+		sp.And: lambda self, spt: AST ('and', tuple (self._spt2ast (a) for a in spt.args)),
+		sp.Not: lambda self, spt: AST ('not', self._spt2ast (spt.args [0])),
+
+		ExprAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Eq: lambda self, spt: AST ('==', '==', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Ne: lambda self, spt: AST ('==', '!=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Lt: lambda self, spt: AST ('==', '<', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Le: lambda self, spt: AST ('==', '<=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Gt: lambda self, spt: AST ('==', '>', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Ge: lambda self, spt: AST ('==', '>=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+
+		sp.EmptySet: lambda self, spt: AST.SetEmpty,
+		sp.fancysets.Complexes: lambda self, spt: AST.Complexes,
+		sp.FiniteSet: lambda self, spt: AST ('set', tuple (self._spt2ast (arg) for arg in spt.args)),
+		sp.Union: _spt2ast_Union,
+		sp.Intersection: lambda self, spt: self._spt2ast (spt.args [0]) if len (spt.args) == 1 else AST.flatcat ('&&', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Complement: lambda self, spt: AST ('+', (self._spt2ast (spt.args [0]), ('-', self._spt2ast (spt.args [1])))),
+
+		sp.matrices.MatrixBase: _spt2ast_MatrixBase,
+
+		sp.Poly: lambda self, spt: self._spt2ast_Function (spt, args = spt.args + spt.gens, kws = (('domain', AST ('"', str (spt.domain))),)),
+
+		sp.Add: _spt2ast_Add,
+		sp.Mul: _spt2ast_Mul,
+		sp.Pow: _spt2ast_Pow,
+		sp.MatPow: _spt2ast_MatPow,
+
+		sp.Abs: lambda self, spt: AST ('|', self._spt2ast (spt.args [0])),
+		sp.arg: lambda self, spt: AST ('func', 'arg', (self._spt2ast (spt.args [0]),)),
+		sp.exp: lambda self, spt: AST ('^', AST.E, self._spt2ast (spt.args [0])),
+		sp.factorial: lambda self, spt: AST ('!', self._spt2ast (spt.args [0])),
+		sp.Function: _spt2ast_Function,
+		sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
+		sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
+		sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
+		sp.functions.elementary.hyperbolic.InverseHyperbolicFunction: _spt2ast_Function,
+		sp.log: lambda self, spt: AST ('log', self._spt2ast (spt.args [0])) if len (spt.args) == 1 else AST ('log', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		sp.Min: lambda self, spt: AST ('func', 'Min', tuple (self._spt2ast (arg) for arg in spt.args)),
+		sp.Max: lambda self, spt: AST ('func', 'Max', tuple (self._spt2ast (arg) for arg in spt.args)),
+
+		sp.Limit: lambda self, spt: AST (*(('lim', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1]), self._spt2ast (spt.args [2])) + spt2ast._spt2ast_Limit_dirs [spt.args [3].name])),
+		sp.Sum: lambda self, spt: AST ('sum', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1] [0]), self._spt2ast (spt.args [1] [1]), self._spt2ast (spt.args [1] [2])),
+		sp.Derivative: _spt2ast_Derivative,
+		sp.Integral: _spt2ast_Integral,
+
+		sp.Order: lambda self, spt: AST ('func', 'O', ((self._spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else self._spt2ast (spt.args)),)),
+		sp.Piecewise: lambda self, spt: AST ('piece', tuple ((self._spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else self._spt2ast (t [1])) for t in spt.args)),
+		sp.Lambda: lambda self, spt: AST ('lamb', self._spt2ast (spt.args [1]), tuple (self._spt2ast (v) for v in spt.args [0])),
+	}
 
 #...............................................................................................
 def set_precision (ast): # recurse through ast to set sympy float precision according to longest string of digits found
