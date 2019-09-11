@@ -1,4 +1,4 @@
-# AST translations for display or S escaping.
+# AST translations for funtions to display or convert to internal AST or SymPy S() escaping.
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -13,15 +13,94 @@ def _xlat_f2a_slice (*args):
 	else:
 		return AST ('slice', args [0], args [1], args [2])
 
-def _xlat_f2a_And (*args):
+# def _xlat_f2a_And (*args):
+# 	itr  = iter (args)
+# 	args = [next (itr)]
+
+# 	for arg in itr:
+# 		if arg.op == args [-1].op == '<>' and arg.lhs == args [-1].cmp [-1] [1]:
+# 			args [-1] = AST ('<>', args [-1].lhs, args [-1].cmp + arg.cmp)
+# 		else:
+# 			args.append (arg)
+
+# 	if len (args) == 1:
+# 		return args [0]
+# 	else:
+# 		return AST ('and', tuple (args))
+
+_xlat_f2a_Add_invert = {'==': '==', '!=': '!=', '<': '>', '<=': '>=', '>': '<', '>=': '<='}
+
+def _xlat_f2a_And (*args): # patch together out of order extended comparison objects potentially inverting comparisons
+	def concat (lhs, rhs):
+		return AST ('<>', lhs.lhs, lhs.cmp + rhs.cmp)
+
+	def invert (ast):
+		cmp = []
+		lhs = ast.lhs
+
+		for c in ast.cmp:
+			v = _xlat_f2a_Add_invert.get (c [0])
+
+			if v is None:
+				return None
+
+			cmp.append ((v, lhs))
+
+			lhs = c [1]
+
+		return AST ('<>', lhs, tuple (cmp [::-1]))
+
+	def match (ast):
+		li, ll = None, 0
+		ri, rl = None, 0
+
+		for i in range (len (args)):
+			if args [i].is_cmp:
+				if ast.lhs == args [i].cmp [-1] [1] and (li is None or args [i].cmp.len > ll):
+					li, ll = i, args [i].cmp.len
+
+				if ast.cmp [-1] [1] == args [i].lhs and (ri is None or args [i].cmp.len > rl):
+					ri, rl = i, args [i].cmp.len
+
+		return li, ri, ll + rl
+
 	itr  = iter (args)
-	args = [next (itr)]
+	args = []
 
 	for arg in itr:
-		if arg.op == args [-1].op == '<>' and arg.lhs == args [-1].cmp [-1] [1]:
-			args [-1] = AST ('<>', args [-1].lhs, args [-1].cmp + arg.cmp)
-		else:
+		if not args or not arg.is_cmp:
 			args.append (arg)
+
+		else:
+			while 1:
+				li, ri, l = match (arg)
+				argv      = invert (arg)
+
+				if argv is not None:
+					liv, riv, lv = match (argv)
+
+					if lv > l:
+						li, ri = liv, riv
+						arg    = argv
+
+				if li is None or li == ri:
+					if ri is None:
+						args.append (arg)
+						break
+
+					else:
+						arg = concat (arg, args [ri])
+						del args [ri]
+
+				elif ri is None:
+					arg = concat (args [li], arg)
+					del args [li]
+
+				else:
+					i1, i2 = min (li, ri), max (li, ri)
+					arg    = concat (concat (args [li], arg), args [ri])
+
+					del args [i2], args [i1]
 
 	if len (args) == 1:
 		return args [0]
@@ -444,6 +523,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 
 	es = [_xlat_pyS (a) for a in ast]
 
+	# TODO: '<>' might be problematic in cases where it has an 'in' or 'notin'
 	return AST (*tuple (e [0] for e in es)), \
 			ast.op in {'=', '<>', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'vec', 'mat', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'} or any (e [1] for e in es)
 
@@ -462,6 +542,7 @@ class sxlat: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('.', ('@', 'x'), 'subs', (('dict', ((('@', 'x'), ('#', '2')),)),))
-# 	res = xlat_attr2tex (ast, None)
+# 	# ast = AST ('and', (('<>', ('@', 'w'), (('>', ('@', 'z')),)), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z'))))))
+# 	ast = AST ('and', (('<>', ('@', 'w'), (('>', ('@', 'z')),)), ('<>', ('@', 'x'), (('<', ('@', 'y')),)), ('<>', ('@', 'y'), (('<', ('@', 'z')),))))
+# 	res = _xlat_f2a_And (*ast.and_)
 # 	print (res)

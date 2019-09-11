@@ -351,6 +351,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\[1:2:3]'), ('vec', (('slice', ('#', '1'), ('#', '2'), ('#', '3')),)))
 		self.assertEqual (p ('-{not x}'), ('-', ('not', ('@', 'x'))))
 		self.assertEqual (p ('x < y in [y] in [[y]] != 2 > 1'), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('in', ('[', (('@', 'y'),))), ('in', ('[', (('[', (('@', 'y'),)),))), ('!=', ('#', '2')), ('>', ('#', '1')))))
+		self.assertEqual (p ('x < y < z < w'), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z')), ('<', ('@', 'w')))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -644,6 +645,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\[1:2:3]')), '\\begin{bmatrix} \\left(1{:}2{:}3 \\right) \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('-{not x}')), '-\\left(\\neg\\ x \\right)')
 		self.assertEqual (ast2tex (p ('x < y in [y] in [[y]] != 2 > 1')), 'x < y \\in \\left[y \\right] \\in \\left[\\left[y \\right] \\right] \\ne 2 > 1')
+		self.assertEqual (ast2tex (p ('x < y < z < w')), 'x < y < z < w')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -937,6 +939,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\[1:2:3]')), '\\[1:2:3]')
 		self.assertEqual (ast2nat (p ('-{not x}')), '-(not x)')
 		self.assertEqual (ast2nat (p ('x < y in [y] in [[y]] != 2 > 1')), 'x < y in [y] in [[y]] != 2 > 1')
+		self.assertEqual (ast2nat (p ('x < y < z < w')), 'x < y < z < w')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -1230,6 +1233,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\[1:2:3]')), 'Matrix([slice(1, 2, 3)])')
 		self.assertEqual (ast2py (p ('-{not x}')), '-Not(x)')
 		self.assertEqual (ast2py (p ('x < y in [y] in [[y]] != 2 > 1')), 'And(Lt(x, y), y in [y], [y] in [[y]], Ne([[y]], 2), Gt(2, 1))')
+		self.assertEqual (ast2py (p ('x < y < z < w')), 'And(Lt(x, y), Lt(y, z), Lt(z, w))')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -1523,6 +1527,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\[1:2:3]')), ('vec', (('(', ('slice', ('#', '1'), ('#', '2'), ('#', '3'))),)))
 		self.assertEqual (ast2tex2ast (p ('-{not x}')), ('-', ('(', ('not', ('@', 'x')))))
 		self.assertEqual (ast2tex2ast (p ('x < y in [y] in [[y]] != 2 > 1')), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('in', ('[', (('@', 'y'),))), ('in', ('[', (('[', (('@', 'y'),)),))), ('!=', ('#', '2')), ('>', ('#', '1')))))
+		self.assertEqual (ast2tex2ast (p ('x < y < z < w')), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z')), ('<', ('@', 'w')))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1816,6 +1821,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\[1:2:3]')), ('vec', (('slice', ('#', '1'), ('#', '2'), ('#', '3')),)))
 		self.assertEqual (ast2nat2ast (p ('-{not x}')), ('-', ('(', ('not', ('@', 'x')))))
 		self.assertEqual (ast2nat2ast (p ('x < y in [y] in [[y]] != 2 > 1')), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('in', ('[', (('@', 'y'),))), ('in', ('[', (('[', (('@', 'y'),)),))), ('!=', ('#', '2')), ('>', ('#', '1')))))
+		self.assertEqual (ast2nat2ast (p ('x < y < z < w')), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z')), ('<', ('@', 'w')))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -2109,6 +2115,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\[1:2:3]')), ('func', 'Matrix', (('[', (('func', 'slice', (('#', '1'), ('#', '2'), ('#', '3'))),)),)))
 		self.assertEqual (ast2py2ast (p ('-{not x}')), ('-', ('func', 'Not', (('@', 'x'),))))
 		self.assertEqual (ast2py2ast (p ('x < y in [y] in [[y]] != 2 > 1')), ('func', 'And', (('func', 'Lt', (('@', 'x'), ('@', 'y'))), ('<>', ('@', 'y'), (('in', ('[', (('@', 'y'),))),)), ('<>', ('[', (('@', 'y'),)), (('in', ('[', (('[', (('@', 'y'),)),))),)), ('func', 'Ne', (('[', (('[', (('@', 'y'),)),)), ('#', '2'))), ('func', 'Gt', (('#', '2'), ('#', '1'))))))
+		self.assertEqual (ast2py2ast (p ('x < y < z < w')), ('func', 'And', (('func', 'Lt', (('@', 'x'), ('@', 'y'))), ('func', 'Lt', (('@', 'y'), ('@', 'z'))), ('func', 'Lt', (('@', 'z'), ('@', 'w'))))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -2402,6 +2409,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\[1:2:3]')), ('func', 'slice', (('#', '1'), ('#', '2'), ('#', '3'))))
 		self.assertRaises (TypeError, ast2spt2ast, p ('-{not x}'))
 		self.assertEqual (ast2spt2ast (p ('x < y in [y] in [[y]] != 2 > 1')), ('<>', ('@', 'x'), (('<', ('@', 'y')),)))
+		self.assertEqual (ast2spt2ast (p ('x < y < z < w')), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z')), ('<', ('@', 'w')))))
 
 _EXPRESSIONS = """
 1
@@ -2695,6 +2703,7 @@ True * True
 \\[1:2:3]
 -{not x}
 x < y in [y] in [[y]] != 2 > 1
+x < y < z < w
 """
 # _EXPRESSIONS = """
 
