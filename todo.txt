@@ -1,7 +1,5 @@
 > change 'vec' object to column 'mat' object?
 
-> len (ast.comma) -> ast.comma.len
-
 > ' differential operator
 > var_prime in quick mode
 > AppliedUndef, in func and in _Mul

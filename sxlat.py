@@ -117,16 +117,16 @@ def _xlat_f2a_Matrix (ast = AST.VarNull):
 			cols = len (rows [0])
 
 			for row in ast.brack [1 : -1]:
-				if len (row.brack) != cols:
+				if row.brack.len != cols:
 					break
 
 				rows.append (row.brack)
 
 			else:
-				l = len (ast.brack [-1].brack)
+				l = ast.brack [-1].brack.len
 
 				if l <= cols:
-					if len (ast.brack) > 1:
+					if ast.brack.len > 1:
 						rows.append (ast.brack [-1].brack + (AST.VarNull,) * (cols - l))
 
 					if l != cols:
@@ -148,7 +148,7 @@ def _xlat_f2a_Piecewise (*args):
 		for c in args [:-1]:
 			c = c.strip
 
-			if not c.is_comma or len (c.comma) != 2:
+			if not c.is_comma or c.comma.len != 2:
 				return None
 
 			pcs.append (c.comma)
@@ -163,13 +163,13 @@ def _xlat_f2a_Piecewise (*args):
 
 	if not ast.is_comma:
 		return AST ('piece', pcs + ((ast, AST.VarNull),))
-	elif len (ast.comma) == 0:
+	elif ast.comma.len == 0:
 		return AST ('piece', pcs + ())
 
 	if not ast.comma [0].is_comma:
-		if len (ast.comma) == 1:
+		if ast.comma.len == 1:
 			return AST ('piece', pcs + ((ast.comma [0], AST.VarNull),))
-		elif len (ast.comma) == 2:
+		elif ast.comma.len == 2:
 			return AST ('piece', pcs + ((ast.comma [0], True if ast.comma [1] == AST.True_ else ast.comma [1]),))
 
 	return None

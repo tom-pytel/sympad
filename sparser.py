@@ -289,7 +289,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
 		tail = []
-		end  = len (ast.mul)
+		end  = ast.mul.len
 
 		for i in range (end - 1, -1, -1):
 			if ast.mul [i].is_div:
@@ -341,7 +341,7 @@ def _ast_strip_tail_differential (ast):
 		if dv:
 			if ast2:
 				return (AST ('diff', neg (ast2), ast.dvs), dv)
-			elif len (ast.dvs) == 1:
+			elif ast.dvs.len == 1:
 				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv)
 			else:
 				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
@@ -365,7 +365,7 @@ def _ast_strip_tail_differential (ast):
 		if dv:
 			if ast2:
 				return (AST (ast.op, ast.mul [:-1] + (neg (ast2),)), dv)
-			elif len (ast.mul) > 2:
+			elif ast.mul.len > 2:
 				return (neg (AST (ast.op, ast.mul [:-1])), dv)
 			else:
 				return (neg (ast.mul [0]), dv)
@@ -429,7 +429,7 @@ def _expr_vec (ast):
 		if len (e) == 0:
 			return AST.MatEmpty
 
-		elif len (e) == 1 or len (set (len (c.brack) for c in e)) == 1:
+		elif len (e) == 1 or len (set (c.brack.len for c in e)) == 1:
 			if e [0].brack.len == 1:
 				return AST ('vec', tuple (c.brack [0] for c in e))
 			elif e [0].brack.len:

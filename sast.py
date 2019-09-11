@@ -296,8 +296,8 @@ class AST (tuple):
 			lamb = vars.get (ast.func)
 
 			if lamb and lamb.is_lamb: # 'execute' user lambda
-				if len (ast.args) != len (lamb.vars):
-					raise TypeError (f"lambda function '{ast.func}' takes {len (lamb.vars)} argument(s)")
+				if ast.args.len != lamb.vars.len:
+					raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
 				args = dict (zip ((v.var for v in lamb.vars), ast.args))
 
@@ -438,7 +438,7 @@ class AST_Comma (AST):
 	def _init (self, comma):
 		self.comma = comma
 
-	_is_empty_comma = lambda self: not (len (self.comma))
+	_is_empty_comma = lambda self: not (self.comma.len)
 
 class AST_Curly (AST):
 	op, is_curly = '{', True
@@ -596,8 +596,8 @@ class AST_Mat (AST):
 	def _init (self, mat):
 		self.mat = mat
 
-	_rows = lambda self: len (self.mat)
-	_cols = lambda self: len (self.mat [0]) if self.mat else 0
+	_rows = lambda self: self.mat.len
+	_cols = lambda self: self.mat [0].len if self.mat else 0
 
 class AST_Piece (AST):
 	op, is_piece = 'piece', True
