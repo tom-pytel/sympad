@@ -1469,7 +1469,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\left(\\left(\\right) \\mapsto x \\right)')), ('(', ('lamb', ('@', 'x'), ())))
 		self.assertEqual (ast2tex2ast (p ('\\left(\\left(x \\right) \\mapsto x^2 \\right)')), ('(', ('lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))))
 		self.assertEqual (ast2tex2ast (p ('\\left(\\left(x, y \\right) \\mapsto x + y \\right)')), ('(', ('lamb', ('+', (('@', 'x'), ('@', 'y'))), (('@', 'x'), ('@', 'y')))))
-		self.assertEqual (ast2tex2ast (p ('eye (2).is_diagonal ()')), ('.', ('mat', ((('#', '1'), ('#', '0')), (('#', '0'), ('#', '1')))), 'is\\_diagonal', ()))
+		self.assertEqual (ast2tex2ast (p ('eye (2).is_diagonal ()')), ('.', ('mat', ((('#', '1'), ('#', '0')), (('#', '0'), ('#', '1')))), 'is_diagonal', ()))
 		self.assertEqual (ast2tex2ast (p ('a [2]')), ('idx', ('@', 'a'), (('#', '2'),)))
 		self.assertEqual (ast2tex2ast (p ('a [2,3]')), ('idx', ('@', 'a'), (('#', '2'), ('#', '3'))))
 		self.assertEqual (ast2tex2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),)))))
