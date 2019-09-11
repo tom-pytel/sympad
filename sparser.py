@@ -37,7 +37,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
 def _ast_func_tuple_args (ast):
-	ast = ast.strip (1)
+	ast = ast._strip (1)
 
 	return ast.comma if ast.is_comma else (ast,)
 
@@ -142,7 +142,7 @@ def _expr_cmp (lhs, CMP, rhs):
 	else:
 		return AST ('<>', lhs, ((cmp, rhs),))
 
-def _expr_mul (expr): # pull negative(s) out of first term of nested curly/multiplication for consistency
+def _expr_mul (expr): # ONLY FOR CONSISTENCY! pull negative(s) out of first term of nested curly/multiplication
 	mcs = lambda ast: ast
 	ast = expr
 	mul = False
@@ -193,7 +193,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 			last, wrapl = last.exp, lambda ast, last = last, wrapl = wrapl: wrapl (AST ('^', last.base, ast))
 
 		elif last.is_minus:
-			last, neg = last.strip_minus (retneg = True)
+			last, neg = last._strip_minus (retneg = True)
 			wrapl     = lambda ast, last = last, wrapl = wrapl, neg = neg: wrapl (neg (ast))
 
 		else:
@@ -214,7 +214,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, rhs.obj), rhs.attr))
 
 	elif last.is_var: # user_func *imp* () -> user_func (), var (tuple) -> func ()
-		if last.var in user_funcs or arg.strip_paren ().is_comma:
+		if last.var in user_funcs or arg.strip_paren.is_comma:
 			if arg.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
 			else:
@@ -323,7 +323,7 @@ def _ast_strip_tail_differential (ast):
 
 	if ast.is_intg:
 		if ast.intg is not None:
-			ast2, neg = ast.intg.strip_minus (retneg = True)
+			ast2, neg = ast.intg._strip_minus (retneg = True)
 			ast2, dv  = _ast_strip_tail_differential (ast2)
 
 			if dv:
@@ -335,7 +335,7 @@ def _ast_strip_tail_differential (ast):
 					return (AST ('intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
-		ast2, neg = ast.diff.strip_minus (retneg = True)
+		ast2, neg = ast.diff._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
@@ -347,19 +347,19 @@ def _ast_strip_tail_differential (ast):
 				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
 
 	elif ast.is_div:
-		ast2, neg = ast.denom.strip_minus (retneg = True)
+		ast2, neg = ast.denom._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv and ast2:
 			return AST ('/', ast.numer, neg (ast2)), dv
 
-		ast2, neg = ast.numer.strip_minus (retneg = True)
+		ast2, neg = ast.numer._strip_minus (retneg = True)
 
 		if dv:
 			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
 
 	elif ast.is_mul or ast.is_mulexp:
-		ast2, neg = ast.mul [-1].strip_minus (retneg = True)
+		ast2, neg = ast.mul [-1]._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
@@ -371,7 +371,7 @@ def _ast_strip_tail_differential (ast):
 				return (neg (ast.mul [0]), dv)
 
 	elif ast.is_add:
-		ast2, neg = ast.add [-1].strip_minus (retneg = True)
+		ast2, neg = ast.add [-1]._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv and ast2:
@@ -380,7 +380,7 @@ def _ast_strip_tail_differential (ast):
 	return ast, None
 
 def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
-	ast, neg = ast.strip_minus (retneg = True)
+	ast, neg = ast._strip_minus (retneg = True)
 	ast, dv  = _ast_strip_tail_differential (ast)
 
 	if dv:
@@ -396,7 +396,7 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	ast, wrap = _ast_func_reorder (args [iparm])
 
-	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast.strip (strip)),) + args [iparm + 1:])))
+	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast._strip (strip)),) + args [iparm + 1:])))
 
 def _expr_func_func (FUNC, expr_neg_func, expr_super = None):
 	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
@@ -735,7 +735,7 @@ class Parser (lalr1.LALR1):
 	def expr_ass_1         (self, expr_mapsto1, EQ, expr_mapsto2):                 return AST ('=', expr_mapsto1, expr_mapsto2)
 	def expr_ass_2         (self, expr_mapsto):                                    return expr_mapsto
 
-	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_colon):                 return _expr_mapsto (expr_paren.strip (), expr_colon)
+	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_colon):                 return _expr_mapsto (expr_paren.strip, expr_colon)
 	def expr_mapsto_2      (self, expr_piece):                                     return expr_piece
 
 	def expr_piece_1       (self, expr_or, IF, expr_ass, ELSE, expr_mapsto):       return _expr_piece (expr_or, expr_ass, expr_mapsto)
@@ -778,7 +778,7 @@ class Parser (lalr1.LALR1):
 
 	def expr_diff          (self, expr_div):                                       return _expr_diff (expr_div)
 
-	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                    return AST ('/', _expr_mul (expr_div), expr_divm)
+	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                    return AST ('/', _expr_mul (expr_div), _expr_mul (expr_divm))
 	def expr_div_2         (self, expr_mul_imp):                                   return expr_mul_imp
 	def expr_divm_1        (self, MINUS, expr_divm):                               return _expr_neg (expr_divm)
 	def expr_divm_2        (self, expr_mul_imp):                                   return expr_mul_imp
@@ -790,12 +790,12 @@ class Parser (lalr1.LALR1):
 	def expr_intg_2        (self, INTG, expr_add):                                 return _expr_intg (expr_add)
 	def expr_intg_3        (self, expr_lim):                                       return expr_lim
 
-	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('lim', expr_neg, expr_var, expr)
-	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('lim', expr_neg, expr_var, expr, '+')
-	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('lim', expr_neg, expr_var, expr, '-')
+	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('lim', _expr_mul (expr_neg), expr_var, expr)
+	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('lim', _expr_mul (expr_neg), expr_var, expr, '+')
+	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('lim', _expr_mul (expr_neg), expr_var, expr, '-')
 	def expr_lim_6         (self, expr_sum):                                                                        return expr_sum
 
-	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('sum', expr_neg, varass [0], varass [1], expr_super)
+	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('sum', _expr_mul (expr_neg), varass [0], varass [1], expr_super)
 	def expr_sum_2         (self, expr_func):                                                                       return expr_func
 
 	def expr_func_1        (self, SQRT, BRACKL, expr_commas, BRACKR, expr_neg_func): return _expr_func (1, 'sqrt', expr_neg_func, expr_commas)
@@ -1061,7 +1061,7 @@ class Parser (lalr1.LALR1):
 		return True # continue parsing if conflict branches remain to find best resolution
 
 	def parse (self, text):
-		if not text.strip ():
+		if not text.strip:
 			return (AST.VarNull, 0, [])
 
 		self.parse_results  = [] # [(reduction, erridx, autocomplete), ...]

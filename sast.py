@@ -153,7 +153,7 @@ class AST (tuple):
 			else:
 				return AST ('#', f'-{self.num}')
 
-	def strip (self, count = None, ops = {'{', '('}, idx = 1, keeptuple = False):
+	def _strip (self, count = None, ops = {'{', '('}, idx = 1, keeptuple = False):
 		count = -1 if count is None else count
 
 		while count and self.op in ops and not (keeptuple and self [idx].is_comma):
@@ -162,11 +162,11 @@ class AST (tuple):
 
 		return self
 
-	strip_attr   = lambda self, count = None: self.strip (count, ('.',))
-	strip_curlys = lambda self, count = None: self.strip (count, ('{',))
-	strip_paren  = lambda self, count = None, keeptuple = False: self.strip (count, ('(',), keeptuple = keeptuple)
+	_strip_attr   = lambda self, count = None: self._strip (count, ('.',))
+	_strip_curlys = lambda self, count = None: self._strip (count, ('{',))
+	_strip_paren  = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 
-	def strip_minus (self, count = None, retneg = False):
+	def _strip_minus (self, count = None, retneg = False):
 		count       = -1 if count is None else count
 		neg         = lambda ast: ast
 		neg.has_neg = False
@@ -202,14 +202,26 @@ class AST (tuple):
 
 		return name if AST._rec_identifier.match (name) else None
 
-	def free_vars (self): # return set of unique unbound variables found in tree
+	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
 				if ast.is_const_var is False and ast.var:
 					vars.add (ast)
 
-				for e in ast:
-					_free_vars (e, vars)
+				else:
+					for e in ast:
+						_free_vars (e, vars)
+
+					if ast.is_lim:
+						vars.remove (ast.lvar)
+					elif ast.is_sum:
+						vars.remove (ast.svar)
+
+					elif ast.is_intg:
+						vars.remove (ast.dv)
+
+						if ast.is_intg_definite:
+							vars.remove (ast.dv.as_var)
 
 		vars = set ()
 
@@ -569,6 +581,8 @@ class AST_Intg (AST):
 
 	def _init (self, intg, dv, from_ = None, to = None):
 		self.intg, self.dv, self.from_, self.to = intg, dv, from_, to
+
+	_is_intg_definite = lambda self: self.from_ is not None
 
 class AST_Vec (AST):
 	op, is_vec = 'vec', True

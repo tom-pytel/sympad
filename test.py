@@ -356,6 +356,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\[[]]'), ('mat', ()))
 		self.assertEqual (p ('\\[[], []]'), ('mat', ()))
 		self.assertEqual (p ('\\{a:b}'), ('set', (('slice', ('@', 'a'), ('@', 'b'), None),)))
+		self.assertEqual (p ('{-x} y / z'), ('/', ('-', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'z')))
+		self.assertEqual (p ('d / dz {-1} a'), ('diff', ('-', ('*', (('#', '1'), ('@', 'a')))), (('@', 'dz'),)))
+		self.assertEqual (p ('1 / {-2} x'), ('/', ('#', '1'), ('-', ('*', (('#', '2'), ('@', 'x'))))))
+		self.assertEqual (p ('\\sum_{x=0}^b {-x} y'), ('sum', ('-', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'x'), ('#', '0'), ('@', 'b')))
+		self.assertEqual (p ('\\lim_{x\to0} {-x} y'), None)
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -654,6 +659,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\[[]]')), '\\begin{bmatrix} \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\[[], []]')), '\\begin{bmatrix} \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\{a:b}')), '\\left\\{\\left(a{:}b \\right) \\right\\}')
+		self.assertEqual (ast2tex (p ('{-x} y / z')), '\\frac{-{x y}}{z}')
+		self.assertEqual (ast2tex (p ('d / dz {-1} a')), '\\frac{d}{dz}\\left(-{1 a} \\right)')
+		self.assertEqual (ast2tex (p ('1 / {-2} x')), '\\frac{1}{-{2 x}}')
+		self.assertEqual (ast2tex (p ('\\sum_{x=0}^b {-x} y')), '\\sum_{x = 0}^b -{x y}')
+		self.assertRaises (AttributeError, ast2tex, p ('\\lim_{x\to0} {-x} y'))
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -952,6 +962,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\[[]]')), '\\[]')
 		self.assertEqual (ast2nat (p ('\\[[], []]')), '\\[]')
 		self.assertEqual (ast2nat (p ('\\{a:b}')), '{(a:b),}')
+		self.assertEqual (ast2nat (p ('{-x} y / z')), '{-{x y}} / z')
+		self.assertEqual (ast2nat (p ('d / dz {-1} a')), 'd / dz (-{1 a})')
+		self.assertEqual (ast2nat (p ('1 / {-2} x')), '1 / {-{2 x}}')
+		self.assertEqual (ast2nat (p ('\\sum_{x=0}^b {-x} y')), '\\sum_{x = 0}^b -{x y}')
+		self.assertRaises (AttributeError, ast2nat, p ('\\lim_{x\to0} {-x} y'))
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -1250,6 +1265,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\[[]]')), 'Matrix([])')
 		self.assertEqual (ast2py (p ('\\[[], []]')), 'Matrix([])')
 		self.assertEqual (ast2py (p ('\\{a:b}')), 'FiniteSet(slice(a, b))')
+		self.assertEqual (ast2py (p ('{-x} y / z')), '(-x*y) / z')
+		self.assertEqual (ast2py (p ('d / dz {-1} a')), 'Derivative(-1*a, z)')
+		self.assertEqual (ast2py (p ('1 / {-2} x')), '1 / (-2*x)')
+		self.assertEqual (ast2py (p ('\\sum_{x=0}^b {-x} y')), 'Sum(-x*y, (x, 0, b))')
+		self.assertRaises (AttributeError, ast2py, p ('\\lim_{x\to0} {-x} y'))
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -1548,6 +1568,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\[[]]')), ('mat', ()))
 		self.assertEqual (ast2tex2ast (p ('\\[[], []]')), ('mat', ()))
 		self.assertEqual (ast2tex2ast (p ('\\{a:b}')), ('set', (('(', ('slice', ('@', 'a'), ('@', 'b'), None)),)))
+		self.assertEqual (ast2tex2ast (p ('{-x} y / z')), ('/', ('-', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'z')))
+		self.assertEqual (ast2tex2ast (p ('d / dz {-1} a')), ('diff', ('(', ('-', ('*', (('#', '1'), ('@', 'a'))))), (('@', 'dz'),)))
+		self.assertEqual (ast2tex2ast (p ('1 / {-2} x')), ('/', ('#', '1'), ('-', ('*', (('#', '2'), ('@', 'x'))))))
+		self.assertEqual (ast2tex2ast (p ('\\sum_{x=0}^b {-x} y')), ('sum', ('-', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'x'), ('#', '0'), ('@', 'b')))
+		self.assertRaises (AttributeError, ast2tex2ast, p ('\\lim_{x\to0} {-x} y'))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1846,6 +1871,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\[[]]')), ('mat', ()))
 		self.assertEqual (ast2nat2ast (p ('\\[[], []]')), ('mat', ()))
 		self.assertEqual (ast2nat2ast (p ('\\{a:b}')), ('set', (('(', ('slice', ('@', 'a'), ('@', 'b'), None)),)))
+		self.assertEqual (ast2nat2ast (p ('{-x} y / z')), ('/', ('-', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'z')))
+		self.assertEqual (ast2nat2ast (p ('d / dz {-1} a')), ('diff', ('(', ('-', ('*', (('#', '1'), ('@', 'a'))))), (('@', 'dz'),)))
+		self.assertEqual (ast2nat2ast (p ('1 / {-2} x')), ('/', ('#', '1'), ('-', ('*', (('#', '2'), ('@', 'x'))))))
+		self.assertEqual (ast2nat2ast (p ('\\sum_{x=0}^b {-x} y')), ('sum', ('-', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'x'), ('#', '0'), ('@', 'b')))
+		self.assertRaises (AttributeError, ast2nat2ast, p ('\\lim_{x\to0} {-x} y'))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -2144,6 +2174,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\[[]]')), ('func', 'Matrix', (('[', ()),)))
 		self.assertEqual (ast2py2ast (p ('\\[[], []]')), ('func', 'Matrix', (('[', ()),)))
 		self.assertEqual (ast2py2ast (p ('\\{a:b}')), ('func', 'FiniteSet', (('func', 'slice', (('@', 'a'), ('@', 'b'))),)))
+		self.assertEqual (ast2py2ast (p ('{-x} y / z')), ('/', ('(', ('-', ('*', (('@', 'x'), ('@', 'y'))))), ('@', 'z')))
+		self.assertEqual (ast2py2ast (p ('d / dz {-1} a')), ('func', 'Derivative', (('-', ('*', (('#', '1'), ('@', 'a')))), ('@', 'z'))))
+		self.assertEqual (ast2py2ast (p ('1 / {-2} x')), ('/', ('#', '1'), ('(', ('-', ('*', (('#', '2'), ('@', 'x')))))))
+		self.assertEqual (ast2py2ast (p ('\\sum_{x=0}^b {-x} y')), ('func', 'Sum', (('-', ('*', (('@', 'x'), ('@', 'y')))), ('(', (',', (('@', 'x'), ('#', '0'), ('@', 'b')))))))
+		self.assertRaises (AttributeError, ast2py2ast, p ('\\lim_{x\to0} {-x} y'))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -2442,6 +2477,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\[[]]')), ('vec', ()))
 		self.assertEqual (ast2spt2ast (p ('\\[[], []]')), ('vec', ()))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('\\{a:b}'))
+		self.assertEqual (ast2spt2ast (p ('{-x} y / z')), ('-', ('/', ('*', (('@', 'x'), ('@', 'y'))), ('@', 'z'))))
+		self.assertEqual (ast2spt2ast (p ('d / dz {-1} a')), ('diff', ('-', ('@', 'a')), (('@', 'dz'),)))
+		self.assertEqual (ast2spt2ast (p ('1 / {-2} x')), ('/', ('-', ('/', ('#', '1'), ('#', '2'))), ('@', 'x')))
+		self.assertEqual (ast2spt2ast (p ('\\sum_{x=0}^b {-x} y')), ('sum', ('-', ('*', (('@', 'x'), ('@', 'y')))), ('@', 'x'), ('#', '0'), ('@', 'b')))
+		self.assertRaises (AttributeError, ast2spt2ast, p ('\\lim_{x\to0} {-x} y'))
 
 _EXPRESSIONS = """
 1
@@ -2742,6 +2782,10 @@ x < y < z < w
 \\{a:b}
 {-x} y / z
 d / dz {-1} a
+1 / {-2} x
+\sum_{x=0}^b {-x} y
+\lim_{x\to0} {-x} y
+\int a / -1 dx
 """
 # _EXPRESSIONS = """
 

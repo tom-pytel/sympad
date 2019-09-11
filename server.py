@@ -163,7 +163,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		asts = [AST ('=', ('@', vars [0]), ast)]
 
 	else: # tuple assignment
-		ast  = ast.strip_paren ()
+		ast  = ast.strip_paren
 		asts = ast.comma if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
 
 		if len (vars) < len (asts):

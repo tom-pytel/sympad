@@ -197,6 +197,10 @@ lambda: a or lambda: b
 \{a:b}
 {-x} y / z
 d / dz {-1} a
+1 / {-2} x
+\sum_{x=0}^b {-x} y
+\lim_{x\to0} {-x} y
+\int a / -1 dx
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

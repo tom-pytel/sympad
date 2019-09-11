@@ -249,22 +249,22 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			if p and p.is_attr and s [:6] == '\\left(':
 				s = self._ast2tex_wrap (s, 1)
 
-			if p and (n.op in {'#', '[', 'mat'} or n.is_null_var or p.strip_minus ().op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
+			if p and (n.op in {'#', '[', 'mat'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 					_ast_is_neg (n) or \
-					n.strip_paren ().is_comma or \
+					n.strip_paren.is_comma or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(n.op in {'/', 'diff'} and p.op in {'#', '/'}) or \
 					(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
-					(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
+					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
 					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or \
-					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren ().is_comma or n.base.is_brack)) or \
-					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren ().is_comma)) or \
-					(n.is_fact and n.fact.strip_paren ().is_comma)):
+					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma or n.base.is_brack)) or \
+					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren.is_comma)) or \
+					(n.is_fact and n.fact.strip_paren.is_comma)):
 				t.append (f' \\cdot {s}')
 				has = True
 
 			elif p and (p.op in {'sqrt'} or p.num_exp or \
-					p.strip_minus ().is_diff_or_part_any or n.is_diff_or_part_any or \
+					p.strip_minus.is_diff_or_part_any or n.is_diff_or_part_any or \
 					(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
 				t.append (f'\\ {s}')
 
@@ -489,15 +489,15 @@ class ast2nat: # abstract syntax tree -> native text
 					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
 					n.op in {'=', '<>', '+', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} or (n.is_piece and n is not ast.mul [-1]))
 
-			if p and (n.op in {'#', '[', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus ().op in {'lim', 'sum', 'diff', 'intg'} or \
-					n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'} or \
-					n.strip_paren ().is_comma or (n.is_pow and n.base.strip_paren ().is_comma) or \
+			if p and (n.op in {'#', '[', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg'} or \
+					n.op in {'/', 'diff'} or p.strip_minus.op in {'/', 'diff'} or \
+					n.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var)) or \
 					(n.is_pow and (n.base.is_num_pos or n.base.is_brack)) or \
-					(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
-					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren ().is_comma)) or \
-					(n.is_fact and n.fact.strip_paren ().is_comma)):
+					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
+					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren.is_comma)) or \
+					(n.is_fact and n.fact.strip_paren.is_comma)):
 				t.append (f' * {s}')
 				has = True
 
@@ -517,16 +517,16 @@ class ast2nat: # abstract syntax tree -> native text
 				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)) else \
 				self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
 
-		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else \
+		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if (not ast.denom.is_num and _ast_is_neg (ast.denom)) else \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
-		s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
+		s     = ns or ds or ast.numer.strip_minus.op not in {'#', '@', '*'} or ast.denom.strip_minus.op not in {'#', '@', '*'}
 
 		return f'{n}{" / " if s else "/"}{d}'
 
 	def _ast2nat_pow (self, ast, trighpow = True):
 		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '[', '|', 'func', 'mat', 'set', 'dict'} or ast.base.is_num_pos))
-		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '<>', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'}, {","})
+		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus.op in {'=', '<>', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'}, {","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
 			i = len (ast.base.func)
@@ -652,7 +652,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_curly (self, ast):
 		return \
 				self._ast2py_paren (ast) \
-				if ast.strip_minus ().op in {'<>', ',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
+				if ast.strip_minus.op in {'<>', ',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 				self._ast2py (ast)
 
 	def _ast2py_paren (self, ast, paren = _None):
@@ -698,7 +698,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		n = self._ast2py_curly (ast.numer)
 		d = self._ast2py_curly (ast.denom)
 
-		return f'{n}{" / " if ast.numer.strip_minus ().op not in {"#", "@"} or ast.denom.strip_minus ().op not in {"#", "@"} else "/"}{d}'
+		return f'{n}{" / " if ast.numer.strip_minus.op not in {"#", "@"} or ast.denom.strip_minus.op not in {"#", "@"} else "/"}{d}'
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) else self._ast2py_curly (ast.base)
@@ -729,7 +729,7 @@ class ast2py: # abstract syntax tree -> Python code text
 				(self._ast2py (n.base.as_var), str (n.exp.as_int))
 				for n in ast.dvs), ())
 
-		return f'Derivative({self._ast2py (ast.diff.strip_paren (keeptuple = True))}, {", ".join (args)})'
+		return f'Derivative({self._ast2py (ast.diff._strip_paren (keeptuple = True))}, {", ".join (args)})'
 
 	def _ast2py_intg (self, ast):
 		if ast.intg is not None and ast.intg.is_intg:
@@ -778,7 +778,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'/'    : _ast2py_div,
 		'^'    : _ast2py_pow,
 		'log'  : _ast2py_log,
-		'sqrt' : lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
+		'sqrt' : lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad._strip_paren (1), ('/', AST.One, ast.idx))),
 		'func' : _ast2py_func,
 		'lim'  : _ast2py_lim,
 		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
@@ -917,7 +917,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return attr if ast.is_attr_var else _ast_func_call (attr, ast.args, self._ast2spt)
 
 		except AttributeError: # unresolved attributes of expressions with free vars remaining should not raise
-			if not obj.free_vars ():
+			if not obj.free_vars:
 				raise
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
@@ -927,7 +927,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		res = self._ast2spt (next (itr))
 
 		for arg in itr:
-			arg, neg    = arg.strip_minus (retneg = True)
+			arg, neg    = arg._strip_minus (retneg = True)
 			arg, is_neg = self._ast2spt (arg), neg.is_neg
 
 			try:
@@ -992,7 +992,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not ast.free_vars ():
+			if not ast.free_vars:
 				raise
 
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)

@@ -93,7 +93,7 @@ def _xlat_f2a_And (*args): # patch together out of order extended comparison obj
 		return AST ('and', tuple (args))
 
 def _xlat_f2a_Lambda (args, expr):
-	args = args.strip_paren ()
+	args = args.strip_paren
 	args = args.comma if args.is_comma else (args,)
 
 	return AST ('lamb', expr, args)
@@ -146,7 +146,7 @@ def _xlat_f2a_Piecewise (*args):
 
 	if len (args) > 1:
 		for c in args [:-1]:
-			c = c.strip ()
+			c = c.strip
 
 			if not c.is_comma or len (c.comma) != 2:
 				return None
@@ -158,7 +158,7 @@ def _xlat_f2a_Piecewise (*args):
 	if not ast.is_paren:
 		return None
 
-	ast = ast.strip ()
+	ast = ast.strip
 	pcs = tuple (pcs)
 
 	if not ast.is_comma:
@@ -182,7 +182,7 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 	ds = []
 
 	if not dvs:
-		vars = ast.free_vars ()
+		vars = ast.free_vars
 
 		if len (vars) == 1:
 			ds = [AST ('@', f'd{vars.pop ().var}')]
@@ -211,14 +211,14 @@ def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 		return AST ('intg', AST.VarNull, AST.VarNull)
 
 	if dvab is None:
-		vars = ast.free_vars ()
+		vars = ast.free_vars
 
 		if len (vars) == 1:
 			return AST ('intg', ast, ('@', f'd{vars.pop ().var}'))
 
 		return AST ('intg', AST.VarNull, AST.VarNull)
 
-	dvab = dvab.strip_paren ()
+	dvab = dvab.strip_paren
 	ast2 = None
 
 	if dvab.is_comma:
@@ -251,7 +251,7 @@ def _xlat_f2a_Sum (ast = AST.VarNull, ab = None, **kw):
 	if ab is None:
 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
 
-	ab = ab.strip_paren ()
+	ab = ab.strip_paren
 
 	if ab.is_var:
 		return AST ('sum', ast, ab, AST.VarNull, AST.VarNull)
@@ -371,8 +371,8 @@ def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .s
 	try:
 		if ast.is_func_Subs:
 			if len (ast.args) == 3:
-				vars = ast.args [1].strip_paren ()
-				subs = ast.args [2].strip_paren ()
+				vars = ast.args [1].strip_paren
+				subs = ast.args [2].strip_paren
 
 				if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
 					return _xlat_f2t_SUBS_collect (ast.args [0], list (zip (vars.comma, subs.comma)) + tail)
@@ -384,7 +384,7 @@ def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .s
 				return _xlat_f2t_SUBS_collect (ast.obj, [(ast.args [0], ast.args [1])] + tail)
 
 			elif ast.args.len == 1:
-				arg = ast.args [0].strip_paren ()
+				arg = ast.args [0].strip_paren
 
 				if arg.is_dict:
 					return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
@@ -393,7 +393,7 @@ def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .s
 					args = []
 
 					for arg in arg [1]:
-						arg = arg.strip_paren ()
+						arg = arg.strip_paren
 
 						if arg.op not in {',', '['} or arg [1].len != 2:
 							break

@@ -1,5 +1,3 @@
-> remove \lim, \sum and definite \int vars from free_vars
-
 > change 'vec' object to column 'mat' object?
 
 > len (ast.comma) -> ast.comma.len

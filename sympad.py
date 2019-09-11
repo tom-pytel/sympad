@@ -2721,7 +2721,7 @@ def _xlat_f2a_And (*args): # patch together out of order extended comparison obj
 		return AST ('and', tuple (args))
 
 def _xlat_f2a_Lambda (args, expr):
-	args = args.strip_paren ()
+	args = args.strip_paren
 	args = args.comma if args.is_comma else (args,)
 
 	return AST ('lamb', expr, args)
@@ -2807,7 +2807,7 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 	ds = []
 
 	if not dvs:
-		vars = ast.free_vars ()
+		vars = ast.free_vars
 
 		if len (vars) == 1:
 			ds = [AST ('@', f'd{vars.pop ().var}')]
@@ -2836,14 +2836,14 @@ def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 		return AST ('intg', AST.VarNull, AST.VarNull)
 
 	if dvab is None:
-		vars = ast.free_vars ()
+		vars = ast.free_vars
 
 		if len (vars) == 1:
 			return AST ('intg', ast, ('@', f'd{vars.pop ().var}'))
 
 		return AST ('intg', AST.VarNull, AST.VarNull)
 
-	dvab = dvab.strip_paren ()
+	dvab = dvab.strip_paren
 	ast2 = None
 
 	if dvab.is_comma:
@@ -2876,7 +2876,7 @@ def _xlat_f2a_Sum (ast = AST.VarNull, ab = None, **kw):
 	if ab is None:
 		return AST ('sum', ast, AST.VarNull, AST.VarNull, AST.VarNull)
 
-	ab = ab.strip_paren ()
+	ab = ab.strip_paren
 
 	if ab.is_var:
 		return AST ('sum', ast, ab, AST.VarNull, AST.VarNull)
@@ -2996,8 +2996,8 @@ def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .s
 	try:
 		if ast.is_func_Subs:
 			if len (ast.args) == 3:
-				vars = ast.args [1].strip_paren ()
-				subs = ast.args [2].strip_paren ()
+				vars = ast.args [1].strip_paren
+				subs = ast.args [2].strip_paren
 
 				if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
 					return _xlat_f2t_SUBS_collect (ast.args [0], list (zip (vars.comma, subs.comma)) + tail)
@@ -3009,7 +3009,7 @@ def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .s
 				return _xlat_f2t_SUBS_collect (ast.obj, [(ast.args [0], ast.args [1])] + tail)
 
 			elif ast.args.len == 1:
-				arg = ast.args [0].strip_paren ()
+				arg = ast.args [0].strip_paren
 
 				if arg.is_dict:
 					return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
@@ -3018,7 +3018,7 @@ def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .s
 					args = []
 
 					for arg in arg [1]:
-						arg = arg.strip_paren ()
+						arg = arg.strip_paren
 
 						if arg.op not in {',', '['} or arg [1].len != 2:
 							break
@@ -3407,22 +3407,22 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			if p and p.is_attr and s [:6] == '\\left(':
 				s = self._ast2tex_wrap (s, 1)
 
-			if p and (n.op in {'#', '[', 'mat'} or n.is_null_var or p.strip_minus ().op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
+			if p and (n.op in {'#', '[', 'mat'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 					_ast_is_neg (n) or \
-					n.strip_paren ().is_comma or \
+					n.strip_paren.is_comma or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(n.op in {'/', 'diff'} and p.op in {'#', '/'}) or \
 					(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
-					(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
+					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
 					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or \
-					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren ().is_comma or n.base.is_brack)) or \
-					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren ().is_comma)) or \
-					(n.is_fact and n.fact.strip_paren ().is_comma)):
+					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma or n.base.is_brack)) or \
+					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren.is_comma)) or \
+					(n.is_fact and n.fact.strip_paren.is_comma)):
 				t.append (f' \\cdot {s}')
 				has = True
 
 			elif p and (p.op in {'sqrt'} or p.num_exp or \
-					p.strip_minus ().is_diff_or_part_any or n.is_diff_or_part_any or \
+					p.strip_minus.is_diff_or_part_any or n.is_diff_or_part_any or \
 					(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
 				t.append (f'\\ {s}')
 
@@ -3639,15 +3639,15 @@ class ast2nat: # abstract syntax tree -> native text
 					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
 					n.op in {'=', '<>', '+', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} or (n.is_piece and n is not ast.mul [-1]))
 
-			if p and (n.op in {'#', '[', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus ().op in {'lim', 'sum', 'diff', 'intg'} or \
-					n.op in {'/', 'diff'} or p.strip_minus ().op in {'/', 'diff'} or \
-					n.strip_paren ().is_comma or (n.is_pow and n.base.strip_paren ().is_comma) or \
+			if p and (n.op in {'#', '[', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg'} or \
+					n.op in {'/', 'diff'} or p.strip_minus.op in {'/', 'diff'} or \
+					n.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var)) or \
 					(n.is_pow and (n.base.is_num_pos or n.base.is_brack)) or \
-					(n.is_attr and n.strip_attr ().strip_paren ().is_comma) or \
-					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren ().is_comma)) or \
-					(n.is_fact and n.fact.strip_paren ().is_comma)):
+					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
+					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren.is_comma)) or \
+					(n.is_fact and n.fact.strip_paren.is_comma)):
 				t.append (f' * {s}')
 				has = True
 
@@ -3670,13 +3670,13 @@ class ast2nat: # abstract syntax tree -> native text
 		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
-		s     = ns or ds or ast.numer.strip_minus ().op not in {'#', '@', '*'} or ast.denom.strip_minus ().op not in {'#', '@', '*'}
+		s     = ns or ds or ast.numer.strip_minus.op not in {'#', '@', '*'} or ast.denom.strip_minus.op not in {'#', '@', '*'}
 
 		return f'{n}{" / " if s else "/"}{d}'
 
 	def _ast2nat_pow (self, ast, trighpow = True):
 		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '[', '|', 'func', 'mat', 'set', 'dict'} or ast.base.is_num_pos))
-		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus ().op in {'=', '<>', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'}, {","})
+		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus.op in {'=', '<>', '+', '*', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'}, {","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
 			i = len (ast.base.func)
@@ -3803,7 +3803,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_curly (self, ast):
 		return \
 				self._ast2py_paren (ast) \
-				if ast.strip_minus ().op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
+				if ast.strip_minus.op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 				self._ast2py (ast)
 
 	def _ast2py_paren (self, ast, paren = _None):
@@ -3847,7 +3847,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		n = self._ast2py_curly (ast.numer)
 		d = self._ast2py_curly (ast.denom)
 
-		return f'{n}{" / " if ast.numer.strip_minus ().op not in {"#", "@"} or ast.denom.strip_minus ().op not in {"#", "@"} else "/"}{d}'
+		return f'{n}{" / " if ast.numer.strip_minus.op not in {"#", "@"} or ast.denom.strip_minus.op not in {"#", "@"} else "/"}{d}'
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) else self._ast2py_curly (ast.base)
@@ -3878,7 +3878,7 @@ class ast2py: # abstract syntax tree -> Python code text
 				(self._ast2py (n.base.as_var), str (n.exp.as_int))
 				for n in ast.dvs), ())
 
-		return f'Derivative({self._ast2py (ast.diff.strip_paren (keeptuple = True))}, {", ".join (args)})'
+		return f'Derivative({self._ast2py (ast.diff._strip_paren (keeptuple = True))}, {", ".join (args)})'
 
 	def _ast2py_intg (self, ast):
 		if ast.intg is not None and ast.intg.is_intg:
@@ -3927,7 +3927,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'/'    : _ast2py_div,
 		'^'    : _ast2py_pow,
 		'log'  : _ast2py_log,
-		'sqrt' : lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad.strip_paren (1), ('/', AST.One, ast.idx))),
+		'sqrt' : lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad._strip_paren (1), ('/', AST.One, ast.idx))),
 		'func' : _ast2py_func,
 		'lim'  : _ast2py_lim,
 		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
@@ -4066,7 +4066,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return attr if ast.is_attr_var else _ast_func_call (attr, ast.args, self._ast2spt)
 
 		except AttributeError: # unresolved attributes of expressions with free vars remaining should not raise
-			if not obj.free_vars ():
+			if not obj.free_vars:
 				raise
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
@@ -4076,7 +4076,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		res = self._ast2spt (next (itr))
 
 		for arg in itr:
-			arg, neg    = arg.strip_minus (retneg = True)
+			arg, neg    = arg._strip_minus (retneg = True)
 			arg, is_neg = self._ast2spt (arg), neg.is_neg
 
 			try:
@@ -4141,7 +4141,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not ast.free_vars ():
+			if not ast.free_vars:
 				raise
 
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)
@@ -4697,7 +4697,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 			last, wrapl = last.exp, lambda ast, last = last, wrapl = wrapl: wrapl (AST ('^', last.base, ast))
 
 		elif last.is_minus:
-			last, neg = last.strip_minus (retneg = True)
+			last, neg = last._strip_minus (retneg = True)
 			wrapl     = lambda ast, last = last, wrapl = wrapl, neg = neg: wrapl (neg (ast))
 
 		else:
@@ -4718,7 +4718,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, rhs.obj), rhs.attr))
 
 	elif last.is_var: # user_func *imp* () -> user_func (), var (tuple) -> func ()
-		if last.var in user_funcs or arg.strip_paren ().is_comma:
+		if last.var in user_funcs or arg.strip_paren.is_comma:
 			if arg.is_paren:
 				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
 			else:
@@ -4827,7 +4827,7 @@ def _ast_strip_tail_differential (ast):
 
 	if ast.is_intg:
 		if ast.intg is not None:
-			ast2, neg = ast.intg.strip_minus (retneg = True)
+			ast2, neg = ast.intg._strip_minus (retneg = True)
 			ast2, dv  = _ast_strip_tail_differential (ast2)
 
 			if dv:
@@ -4839,7 +4839,7 @@ def _ast_strip_tail_differential (ast):
 					return (AST ('intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
-		ast2, neg = ast.diff.strip_minus (retneg = True)
+		ast2, neg = ast.diff._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
@@ -4851,19 +4851,19 @@ def _ast_strip_tail_differential (ast):
 				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
 
 	elif ast.is_div:
-		ast2, neg = ast.denom.strip_minus (retneg = True)
+		ast2, neg = ast.denom._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv and ast2:
 			return AST ('/', ast.numer, neg (ast2)), dv
 
-		ast2, neg = ast.numer.strip_minus (retneg = True)
+		ast2, neg = ast.numer._strip_minus (retneg = True)
 
 		if dv:
 			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
 
 	elif ast.is_mul or ast.is_mulexp:
-		ast2, neg = ast.mul [-1].strip_minus (retneg = True)
+		ast2, neg = ast.mul [-1]._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
@@ -4875,7 +4875,7 @@ def _ast_strip_tail_differential (ast):
 				return (neg (ast.mul [0]), dv)
 
 	elif ast.is_add:
-		ast2, neg = ast.add [-1].strip_minus (retneg = True)
+		ast2, neg = ast.add [-1]._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv and ast2:
@@ -4884,7 +4884,7 @@ def _ast_strip_tail_differential (ast):
 	return ast, None
 
 def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
-	ast, neg = ast.strip_minus (retneg = True)
+	ast, neg = ast._strip_minus (retneg = True)
 	ast, dv  = _ast_strip_tail_differential (ast)
 
 	if dv:
@@ -5078,7 +5078,7 @@ class Parser (lalr1.LALR1):
 			b'IEpbxRQuupFSt6XkbVudRk5WJGSEdS+cJiM0ve37dc+9O0jFsona8+EkWcPdsoM5zrLOMKnKTXmUtWIer8bwLDTzHZm2Lfqg97GY++0PBeO9YrjHfFV3kK9tc5EODF3Wq70MhsbmIh0YOmKJdyaG6umBBNR1hxhL1fUZHVW+c33ZgcHLOqhdK+RMPFZz+Kya' \
 			b'RY4sjpd+c/Oowe0Rw8m7xm3TXLwDr5f1Pi+S1665eAdePyyrVdr8fbnjpSDV//Vi2RfjzNhHX6Mcl02n3vVypMU898Gh7C7K3Pf0ZWeae+GwCmR5B/dOl51t7oVD2S3vRN/psnPNvXAou9RfhwXxFg10azoPoGri2xvaowWL32jBpFjk0yHNdekmznIIKpcU' \
 			b'nkz36XizLVYi0YGvY6HbZvCP0GEnNJUWfxGb4b9WIoi9ZXqeyh3+qWKohW2ffKSy5wUApr9oVRaQji4eFUssOolnsFm+wvbzHKGVpEQMaRUsiZsBe+hMDxbfyKFbypS8SSXEQ8k0dMxDxrzgkMbNE4HaJV/pW9FRC7L6UGxoaN9/bRyvRwTO0o7tKRbycUK2' \
-			b'Lz4pzA9X/x9DWBvw' 
+			b'Lz4pzA9X/x9DWBvw'
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -6542,7 +6542,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		asts = [AST ('=', ('@', vars [0]), ast)]
 
 	else: # tuple assignment
-		ast  = ast.strip_paren ()
+		ast  = ast.strip_paren
 		asts = ast.comma if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
 
 		if len (vars) < len (asts):
