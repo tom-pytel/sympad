@@ -274,9 +274,9 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				if i == len (ns) - 1:
 					return AST ('diff', None, tuple (ds))
 				elif i == len (ns) - 2:
-					return AST ('diff', ns [-1], tuple (ds))
+					return AST ('diff', _expr_mul (ns [-1]), tuple (ds))
 				else:
-					return AST ('diff', AST ('*', ns [i + 1:]), tuple (ds))
+					return AST ('diff', _expr_mul (AST ('*', ns [i + 1:])), tuple (ds))
 
 		return None # raise SyntaxError?
 
@@ -303,7 +303,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 						tail.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
+						tail.insert (0, AST ('diff', _expr_mul (ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end])), diff.dvs))
 
 					else:
 						continue
@@ -778,7 +778,7 @@ class Parser (lalr1.LALR1):
 
 	def expr_diff          (self, expr_div):                                       return _expr_diff (expr_div)
 
-	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                    return AST ('/', expr_div, expr_divm)
+	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                    return AST ('/', _expr_mul (expr_div), expr_divm)
 	def expr_div_2         (self, expr_mul_imp):                                   return expr_mul_imp
 	def expr_divm_1        (self, MINUS, expr_divm):                               return _expr_neg (expr_divm)
 	def expr_divm_2        (self, expr_mul_imp):                                   return expr_mul_imp

@@ -195,6 +195,8 @@ lambda: a or lambda: b
 \[[]]
 \[[], []]
 \{a:b}
+{-x} y / z
+d / dz {-1} a
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
@@ -256,7 +258,7 @@ def expr_sqrt ():
 			if random () >= 0.5 else \
 			f'\\sqrt[{expr (_ALLOW_LAMB)}]{expr (_ALLOW_LAMB)}'
 
-_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma'}
+_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma', 'digamma'}
 
 def expr_func ():
 	while 1:
@@ -550,24 +552,24 @@ def test (argv = None):
 			if (dotex and ast_tex != ast_srp) or (donat and ast_nat != ast_srp) or (dopy and ast_py != ast_srp):
 				print ()
 				print ('!' * 78)
-				print ('text:', text)
+				print ('text:  ', text)
 				if textpy is not None:
 					print ()
 					print ('textpy:', textpy)
 				print ()
-				print ('ast: ', ast_srp)
+				print ('ast:   ', ast_srp)
 
 				if dotex and ast_tex != ast_srp:
 					print ()
-					print ('tex: ', ast_tex)
+					print ('tex:   ', ast_tex)
 
 				if donat and ast_nat != ast_srp:
 					print ()
-					print ('nat: ', ast_nat)
+					print ('nat:   ', ast_nat)
 
 				if dopy and ast_py != ast_srp:
 					print ()
-					print ('py:  ', ast_py)
+					print ('py:    ', ast_py)
 
 				print ()
 				print ('FAILED!')
