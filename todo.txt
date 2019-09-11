@@ -1,5 +1,3 @@
-> VarNulls, especially in matrices
-> \[], \[[]], \[[], []], ...
 > change 'vec' object to column 'mat' object?
 
 > remove \lim, \sum and definite \int vars from free_vars
@@ -63,10 +61,11 @@
 Errors:
 
 
-text: \{\fracNonedx**{dx} : {{partialx||dy}+{b or 'str'}}}
-ast:  ('set', (('slice', ('*', (('/', ('@', 'N'), ('@', 'o')), ('^', ('@', 'nedx'), ('@', 'dx')))), ('+', (('||', (('@', 'dx'), ('@', 'dy'))), ('or', (('@', 'b'), ('"', 'str'))))), None),))
-tex:  ('dict', ((('*', (('/', ('@', 'N'), ('@', 'o')), ('^', ('@', 'nedx'), ('@', 'dx')))), ('+', (('||', (('@', 'dx'), ('@', 'dy'))), ('or', (('@', 'b'), ('"', 'str')))))),))
-nat:  ('dict', ((('*', (('/', ('@', 'N'), ('@', 'o')), ('^', ('@', 'nedx'), ('@', 'dx')))), ('+', (('||', (('@', 'dx'), ('@', 'dy'))), ('or', (('@', 'b'), ('"', 'str')))))),))
+text: \sum_{x = \ln\left|1e+100 [-1.0, 1e+100]\right|}^lambda x: {-\tilde\infty *{b \cdot \partialx}} \[[{None \cdot \partial x},{not dx},],[\partial ^\partialx,\partial x^'str',],] / \lim_{x \to -1.0 if False else \partialy if 1. else \partialx if xyzd} Sum (c, (x, \infty zoo, xyzd))
+ast:  ('slice', ('sum', ('*', (('@', 'ambda'), ('@', 'x'))), ('@', 'x'), ('log', ('|', ('idx', ('#', '1e+100'), (('#', '-1.0'), ('#', '1e+100'))))), ('@', 'l')), ('/', ('*', (('-', ('*', (('@', 'zoo'), ('@', 'b'), ('@', 'dx')))), ('mat', ((('*', (('@', 'None'), ('@', 'dx'))), ('not', ('@', 'dx'))), (('*', (('^', ('@', 'partial'), ('@', 'partial')), ('@', 'x'))), ('^', ('@', 'dx'), ('"', 'str'))))))), ('lim', ('func', 'Sum', (('@', 'c'), (',', (('@', 'x'), ('*', (('@', 'oo'), ('@', 'zoo'))), ('@', 'xyzd'))))), ('@', 'x'), ('piece', ((('#', '-1.0'), ('@', 'False')), (('@', 'dy'), ('#', '1.')), (('@', 'dx'), ('@', 'xyzd')))))), None)
+tex:  ('slice', ('sum', ('*', (('@', 'ambda'), ('@', 'x'))), ('@', 'x'), ('log', ('|', ('idx', ('#', '1e+100'), (('#', '-1.0'), ('#', '1e+100'))))), ('@', 'l')), ('/', ('-', ('*', (('@', 'zoo'), ('@', 'b'), ('@', 'dx'), ('mat', ((('*', (('@', 'None'), ('@', 'dx'))), ('not', ('@', 'dx'))), (('*', (('^', ('@', 'partial'), ('@', 'partial')), ('@', 'x'))), ('^', ('@', 'dx'), ('"', 'str')))))))), ('lim', ('func', 'Sum', (('@', 'c'), (',', (('@', 'x'), ('*', (('@', 'oo'), ('@', 'zoo'))), ('@', 'xyzd'))))), ('@', 'x'), ('piece', ((('#', '-1.0'), ('@', 'False')), (('@', 'dy'), ('#', '1.')), (('@', 'dx'), ('@', 'xyzd')))))), None)
+nat:  ('slice', ('sum', ('*', (('@', 'ambda'), ('@', 'x'))), ('@', 'x'), ('log', ('|', ('idx', ('#', '1e+100'), (('#', '-1.0'), ('#', '1e+100'))))), ('@', 'l')), ('/', ('-', ('*', (('@', 'zoo'), ('@', 'b'), ('@', 'dx'), ('mat', ((('*', (('@', 'None'), ('@', 'dx'))), ('not', ('@', 'dx'))), (('*', (('^', ('@', 'partial'), ('@', 'partial')), ('@', 'x'))), ('^', ('@', 'dx'), ('"', 'str')))))))), ('lim', ('func', 'Sum', (('@', 'c'), (',', (('@', 'x'), ('*', (('@', 'oo'), ('@', 'zoo'))), ('@', 'xyzd'))))), ('@', 'x'), ('piece', ((('#', '-1.0'), ('@', 'False')), (('@', 'dy'), ('#', '1.')), (('@', 'dx'), ('@', 'xyzd')))))), None)
 
-
-\{a:b}
+\sum_{x = \ln\left|1e+100 [-1.0, 1e+100]\right|}^lambda x: {-\tilde\infty *{b \cdot \partialx}} \[[{None \cdot \partial x},{not dx},],[\partial ^\partialx,\partial x^'str',],] / \lim_{x \to -1.0 if False else \partialy if 1. else \partialx if xyzd} Sum (c, (x, \infty zoo, xyzd))
+\sum_{x = 0}^lambda x: {-z} a / y
+{-x} y / z
