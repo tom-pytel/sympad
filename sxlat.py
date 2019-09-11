@@ -13,21 +13,6 @@ def _xlat_f2a_slice (*args):
 	else:
 		return AST ('slice', args [0], args [1], args [2])
 
-# def _xlat_f2a_And (*args):
-# 	itr  = iter (args)
-# 	args = [next (itr)]
-
-# 	for arg in itr:
-# 		if arg.op == args [-1].op == '<>' and arg.lhs == args [-1].cmp [-1] [1]:
-# 			args [-1] = AST ('<>', args [-1].lhs, args [-1].cmp + arg.cmp)
-# 		else:
-# 			args.append (arg)
-
-# 	if len (args) == 1:
-# 		return args [0]
-# 	else:
-# 		return AST ('and', tuple (args))
-
 _xlat_f2a_Add_invert = {'==': '==', '!=': '!=', '<': '>', '<=': '>=', '>': '<', '>=': '<='}
 
 def _xlat_f2a_And (*args): # patch together out of order extended comparison objects potentially inverting comparisons

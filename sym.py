@@ -539,7 +539,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'\\lim_{{{self._ast2nat (ast.lvar)} \\to {s}}} {self._ast2nat_curly_mul_exp (ast.lim, False, ast.lim.op in {"=", "<>", "+", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"} or ast.lim.is_mul_has_abs)}'
 
 	def _ast2nat_sum (self, ast):
-		return f'\\sum_{{{self._ast2nat (ast.svar)}={self._ast2nat_curly (ast.from_, {"lamb", "piece"})}}}^{self._ast2nat_curly (ast.to)} {self._ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "<>", "+", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"} or ast.sum.is_mul_has_abs)}'
+		return f'\\sum_{{{self._ast2nat (ast.svar)} = {self._ast2nat_curly (ast.from_, {"lamb", "piece"})}}}^{self._ast2nat_curly (ast.to)} {self._ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "<>", "+", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"} or ast.sum.is_mul_has_abs)}'
 
 	def _ast2nat_diff (self, ast):
 		p = 0
@@ -681,7 +681,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		if ast.is_attr_func:
 			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
-			return f'{self._ast2py (ast.obj)}.{ast.attr}({", ".join (args + [f"{k}={a}" for k, a in kw.items ()])})'
+			return f'{self._ast2py (ast.obj)}.{ast.attr}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
 		return f'{self._ast2py (ast.obj)}.{ast.attr}'
 
@@ -706,7 +706,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_func (self, ast):
 		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
-		return f'{ast.unescaped}({", ".join (args + [f"{k}={a}" for k, a in kw.items ()])})'
+		return f'{ast.unescaped}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
 	def _ast2py_lim (self, ast):
 		return \
