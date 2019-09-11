@@ -462,7 +462,8 @@ function ajaxResponse (resp) {
 			eLogInputWait.style.visibility = '';
 
 			let idMath = 'LogInputMath' + UniqueID ++;
-			$(eLogInput).append (`<span id="${idMath}" onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">$${resp.tex}$</span>`);
+			let math   = resp.tex ? `$${resp.tex}$` : '';
+			$(eLogInput).append (`<span id="${idMath}" onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
 			let eMath  = document.getElementById (idMath);
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
@@ -839,7 +840,7 @@ r"""<!DOCTYPE html>
 		Type or click any of the following to get started:
 	</div>
 	<br><br>
-	<a class="GreetingA" href="javascript:inputting ('cos**-1 0 + \\log_2{8}', true)">cos**-1 0 + \log_2{8}</a>
+	<a class="GreetingA" href="javascript:inputting ('cos**-1 0 \\log_2{8}', true)">cos**-1 0 \log_2{8}</a>
 	<a class="GreetingA" href="javascript:inputting ('expand ((1 + x)**4)', true)">expand ((1 + x)**4)</a>
 	<a class="GreetingA" href="javascript:inputting ('factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)', true)">factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)</a>
 	<a class="GreetingA" href="javascript:inputting ('series (e^x, x, 0, 5)', true)">series (e^x, x, 0, 5)</a>
@@ -896,6 +897,7 @@ r"""<!DOCTYPE html>
 	h2 { margin: 2em 0 1em 0; }
 	h4 { margin: 1.5em 0 0.75em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
+	table { margin: 0 0 1.2em 1em; line-height: 150%; }
 	i { color: #0008; }
 	del { color: red; }
 </style>
@@ -984,10 +986,11 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#plotw() - Plot Walk Over Vector Field">plotw() - Plot Walk Over Vector Field</a><br>
 
 <h4><a href="#Appendix">Appendix</a></h4>
+&emsp;<a href="#More Examples">More Examples</a><br>
 &emsp;<a href="#Special Characters">Special Characters</a><br>
 &emsp;<a href="#Admin Functions">Admin Functions</a><br>
 &emsp;<a href="#Environment Settings for env()">Environment Settings for env()</a><br>
-&emsp;<a href="#More Examples">More Examples</a><br>
+&emsp;<a href="#Command Line Arguments">Command Line Arguments</a><br>
 &emsp;<a href="#Notes">Notes</a><br>
 
 <h2 id="Quick Start">Quick Start</h2>
@@ -995,7 +998,7 @@ The input will be evaluated symbolically or numerically with the results being c
 <p>
 The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad:
 </p><p>
-cos**-1 0 + \log_2{8}<br>
+cos**-1 0 \log_2{8}<br>
 expand ((1 + x)**4)<br>
 factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)<br>
 series (e^x, x, 0, 5)<br>
@@ -1595,51 +1598,6 @@ It may also never finish if a complex circular vector field introduces enough er
 
 <h2 id="Appendix">Appendix</h2>
 
-<h4 id="Special Characters">Special Characters</h4>
-
-<p>"<b>_</b>" - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.
-Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</p>
-<p>"<b>$</b>" - "<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
-<p>"<b>@</b>" - "<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value.
-This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</p>
-<p>"<b>%</b>" - "<b>%(expr)</b>" - Percent prevents evaluation for the expression it encapsulates for one round. An optional second argument is a count of the number of rounds to prevent evaluations, it can be infinity.</p>
-<p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
-<p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
-
-<h4 id="Admin Functions">Admin Functions</h4>
-
-<p>"<b>vars()</b>" - Show all currently mapped non-lambda user variables.</p>
-<p>"<b>funcs()</b>" - Show all currently mapped lambda user variables (callable functions).</p>
-<p>"<b>del(var1, var2, ...)</b>" - Delete variable assignments, lambda or non-lambda.</p>
-<p>"<b>del(vars())</b>" - Delete all non-lambda variables.</p>
-<p>"<b>del(funcs())</b>" - Delete all lambda functions.</p>
-<p>"<b>delall()</b>" - Delete ALL variables, lambda and non-lambda.</p>
-<p>"<b>env()</b>" - Show or change current SymPad runtime environment.
-Called without any arguments it will show the current state of the environment.
-If arguments are present they specify turning on or off a certain aspect of SymPad functionality.
-For example the quick input functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>", "<b>env('quick')</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
-<p>"<b>envreset()</b>" - Reset environment to what it was at startup.</p>
-
-<h4 id="Environment Settings for env()">Environment Settings for env()</h4>
-
-<p>In quick input mode you should always use parentheses and in the case of the "<b>simplify</b>" option you need to use the quoted version "<b>env('simplify')</b>" due to that being a function name and how letters are parsed in quick mode.</p>
-
-<p>"<b>EI</b>" - Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
-This allows the Python code copied from SymPad to work directly with SymPy where the uppercase constants are used.</p>
-<p>"<b>quick</b>" - Quick single letter variable name input mode.</p>
-<p>"<b>pyS</b>" - Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</p>
-<p>"<b>simplify</b>" - Post-evaluation simplification, this can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</p>
-<p>"<b>matsimp</b>" - Matrix simplification, this turns on a patch to SymPy which does a basic simplification step on intermediate matrix multiplication products which prevents matrix operations from blowing up.</p>
-<p>"<b>doit</b>" - Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</p>
-<p>"<b>N</b>" - Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</p>
-<p>"<b>O</b>" - Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</p>
-<p>"<b>S</b>" - Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</p>
-<p>"<b>gamma</b>" - Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</p>
-<p>"<b>Gamma</b>" - Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</p>
-<p>"<b>zeta</b>" - Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</p>
-
-</b></p>
-
 <h4 id="More Examples">More Examples</h4>
 
 <p>
@@ -1659,6 +1617,88 @@ solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
 \[_ [0] [x], y].subs (y, 1)<i>&emsp;second eigenvector for eigenvalue b</i><br>
 m.eigenvects ()<i>&emsp;verify eigenvectors</i><br>
 </p>
+
+<p>
+Iterative plotting:
+</p><p>
+f = lambda x, y: (2x + sec**2x) / 2y<br>
+plotv (6, -6, 6, f, fs = -8, res = 33)<i>&emsp;plot vector field</i><br>
+plotw ('+', f, (-1, 0))<i>&emsp;add first walk starting at point (-1, 0)</i><br>
+plotw ('+', f, (-2, 0))<br>
+plotw ('+', f, (-3, 0))<br>
+plotw ('+', f, (-4, 0))<br>
+plotw ('+', f, (-5, 0))<br>
+</p>
+
+<h4 id="Special Characters">Special Characters</h4>
+
+<p><b>_</b> - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.
+Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</p>
+<p><b>$</b> - "<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
+<p><b>@</b> - "<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value.
+This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</p>
+<p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
+<p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
+
+<h4 id="Admin Functions">Admin Functions</h4>
+
+<p><b>vars()</b> - Show all currently mapped non-lambda user variables.</p>
+<p><b>funcs()</b> - Show all currently mapped lambda user variables (callable functions).</p>
+<p><b>del(var1, var2, ...)</b> - Delete variable assignments, lambda or non-lambda.</p>
+<p><b>del(vars())</b> - Delete all non-lambda variables.</p>
+<p><b>del(funcs())</b> - Delete all lambda functions.</p>
+<p><b>delall()</b> - Delete ALL variables, lambda and non-lambda.</p>
+<p><b>env()</b> - Show or change current SymPad runtime environment.
+Called without any arguments it will show the current state of the environment.
+If arguments are present they specify turning on or off a certain aspect of SymPad functionality.
+For example the quick input functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>", "<b>env('quick')</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
+<p><b>envreset()</b> - Reset environment to what it was at startup.</p>
+
+<h4 id="Environment Settings for env()">Environment Settings for env()</h4>
+
+<p>In quick input mode you should always use parentheses and in the case of the "<b>simplify</b>" option you need to use the quoted version "<b>env('simplify')</b>" due to that being a function name and how letters are parsed in quick mode.</p>
+
+<p><b>EI</b> - Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
+This allows the Python code copied from SymPad to work directly with SymPy where the uppercase constants are used.</p>
+<p><b>quick</b> - Quick single letter variable name input mode.</p>
+<p><b>pyS</b> - Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</p>
+<p><b>simplify</b> - Post-evaluation simplification, this can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</p>
+<p><b>matsimp</b> - Matrix simplification, this turns on a patch to SymPy which does a basic simplification step on intermediate matrix multiplication products which prevents matrix operations from blowing up.</p>
+<p><b>doit</b> - Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</p>
+<p><b>N</b> - Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</p>
+<p><b>O</b> - Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</p>
+<p><b>S</b> - Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</p>
+<p><b>gamma</b> - Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</p>
+<p><b>Gamma</b> - Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</p>
+<p><b>zeta</b> - Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</p>
+
+</b></p>
+
+<h4 id="Command Line Arguments">Command Line Arguments</h4>
+
+<p>
+<b>sympad.py</b> [-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-u | --ugly] [-E | --EI] [-q | --quick] [-y | --nopyS] [-s | --nosimplify] [-m | -nomatsimp] [-t | --nodoit] [-N | --noN] [-O | --noO] [-S | --noS] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] [host:port | host | :port]
+</p>
+
+<table>
+<tr><td><b>-h, --help</b></td><td>&emsp;- Show help information.</td></tr>
+<tr><td><b>-v, --version</b></td><td>&emsp;- Show version string.</td></tr>
+<tr><td><b>-d, --debug</b></td><td>&emsp;- Dump debug info to server log.</td></tr>
+<tr><td><b>-n, --nobrowser</b></td><td>&emsp;- Don't start system browser to SymPad page.</td></tr>
+<tr><td><b>-u, --ugly</b></td><td>&emsp;- Start in draft display style (only on command line).</td></tr>
+<tr><td><b>-E, --EI</b></td><td>&emsp;- Start with SymPy constants 'E' and 'I' not 'e' and 'i'.</td></tr>
+<tr><td><b>-q, --quick</b></td><td>&emsp;- Start in quick input mode.</td></tr>
+<tr><td><b>-y, --nopyS</b></td><td>&emsp;- Start without Python S escaping.</td></tr>
+<tr><td><b>-s, --nosimplify</b></td><td>&emsp;- Start without post-evaluation simplification.</td></tr>
+<tr><td><b>-m, --nomatsimp</b></td><td>&emsp;- Start without matrix simplification.</td></tr>
+<tr><td><b>-t, --nodoit</b></td><td>&emsp;- Start without automatic expression doit().</td></tr>
+<tr><td><b>-N, --noN</b></td><td>&emsp;- Start without N lambda function.</td></tr>
+<tr><td><b>-S, --noS</b></td><td>&emsp;- Start without S lambda function.</td></tr>
+<tr><td><b>-O, --noO</b></td><td>&emsp;- Start without O lambda function.</td></tr>
+<tr><td><b>-g, --nogamma</b></td><td>&emsp;- Start without gamma lambda function.</td></tr>
+<tr><td><b>-G, --noGamma</b></td><td>&emsp;- Start without Gamma lambda function.</td></tr>
+<tr><td><b>-z, --nozeta</b></td><td>&emsp;- Start without zeta lambda function.</td></tr>
+</table>
 
 <h4 id="Notes">Notes</h4>
 
@@ -3754,7 +3794,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_mat (self, ast):
 		if not ast.rows:
 			return '\\[]'
-		elif ast.is_mat_column:
+		elif ast.is_mat_column and not any (r [0].is_brack for r in ast.mat): # (ast.rows > 1 or not ast.mat [0] [0].is_brack):
 			return f"\\[{', '.join (self._ast2nat (row [0]) for row in ast.mat)}]"
 		else:
 			return f"""\\[{', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}]' for row in ast.mat)}]"""
@@ -3932,7 +3972,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_mat (self, ast):
 		if not ast.rows:
 			return 'Matrix()'
-		elif ast.is_mat_column:
+		elif ast.is_mat_column and not any (r [0].is_brack for r in ast.mat): # (ast.rows > 1 or not ast.mat [0] [0].is_brack):
 			return f"Matrix([{', '.join (self._ast2py (row [0]) for row in ast.mat)}])"
 		else:
 			return f"""Matrix([{', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat)}])"""
@@ -6476,9 +6516,9 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		f'{__name_indent} [-z | --nozeta] \n' \
 		f'{__name_indent} [host:port | host | :port]' '''
 
-  -h, --help       - This
+  -h, --help       - Show help information
   -v, --version    - Show version string
-  -d, --debug      - Dump debug info to server output
+  -d, --debug      - Dump debug info to server log
   -n, --nobrowser  - Don't start system browser to SymPad page
   -u, --ugly       - Start in draft display style (only on command line)
   -E, --EI         - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
@@ -6901,8 +6941,6 @@ def start_server (logging = True):
 	if not logging:
 		Handler.log_message = lambda *args, **kwargs: None
 
-	# _update_vars ()
-
 	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
 		_DISPLAYSTYLE [0] = 0
 
@@ -6934,7 +6972,7 @@ def start_server (logging = True):
 		if e.errno != 98:
 			raise
 
-		print (f'Port {port} seems to be in use, try specifying different port as a command line parameter, e.g. localhost:8001')
+		print (f'Port {port} seems to be in use, try specifying different port as a command line parameter, e.g. localhost:9001')
 
 		sys.exit (-1)
 
@@ -6983,12 +7021,13 @@ def parent ():
 		print (_VERSION)
 		sys.exit (0)
 
-	args      = [sys.executable] + sys.argv + ['--child']
+	base      = [sys.executable] + sys.argv [:1] + ['--child']
+	opts      = [o [0] for o in __OPTS]
 	first_run = ['--firstrun']
 
 	try:
 		while 1:
-			ret       = subprocess.run (args + first_run)
+			ret       = subprocess.run (base + opts + first_run + __ARGV)
 			first_run = []
 
 			if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):

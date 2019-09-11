@@ -482,8 +482,6 @@ def start_server (logging = True):
 	if not logging:
 		Handler.log_message = lambda *args, **kwargs: None
 
-	# _update_vars ()
-
 	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
 		_DISPLAYSTYLE [0] = 0
 
@@ -515,7 +513,7 @@ def start_server (logging = True):
 		if e.errno != 98:
 			raise
 
-		print (f'Port {port} seems to be in use, try specifying different port as a command line parameter, e.g. localhost:8001')
+		print (f'Port {port} seems to be in use, try specifying different port as a command line parameter, e.g. localhost:9001')
 
 		sys.exit (-1)
 
@@ -564,12 +562,13 @@ def parent ():
 		print (_VERSION)
 		sys.exit (0)
 
-	args      = [sys.executable] + sys.argv + ['--child']
+	base      = [sys.executable] + sys.argv [:1] + ['--child']
+	opts      = [o [0] for o in __OPTS]
 	first_run = ['--firstrun']
 
 	try:
 		while 1:
-			ret       = subprocess.run (args + first_run)
+			ret       = subprocess.run (base + opts + first_run + __ARGV)
 			first_run = []
 
 			if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
