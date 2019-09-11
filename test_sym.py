@@ -201,6 +201,7 @@ d / dz {-1} a
 \sum_{x=0}^b {-x} y
 \lim_{x\to0} {-x} y
 \int a / -1 dx
+\[[[x]]]
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

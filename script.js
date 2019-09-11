@@ -265,7 +265,8 @@ function ajaxResponse (resp) {
 			eLogInputWait.style.visibility = '';
 
 			let idMath = 'LogInputMath' + UniqueID ++;
-			$(eLogInput).append (`<span id="${idMath}" onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">$${resp.tex}$</span>`);
+			let math   = resp.tex ? `$${resp.tex}$` : '';
+			$(eLogInput).append (`<span id="${idMath}" onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
 			let eMath  = document.getElementById (idMath);
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {

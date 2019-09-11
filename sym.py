@@ -577,7 +577,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_mat (self, ast):
 		if not ast.rows:
 			return '\\[]'
-		elif ast.is_mat_column:
+		elif ast.is_mat_column and (ast.rows > 1 or not ast.mat [0] [0].is_brack):
 			return f"\\[{', '.join (self._ast2nat (row [0]) for row in ast.mat)}]"
 		else:
 			return f"""\\[{', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}]' for row in ast.mat)}]"""
@@ -755,7 +755,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_mat (self, ast):
 		if not ast.rows:
 			return 'Matrix()'
-		elif ast.is_mat_column:
+		elif ast.is_mat_column and (ast.rows > 1 or not ast.mat [0] [0].is_brack):
 			return f"Matrix([{', '.join (self._ast2py (row [0]) for row in ast.mat)}])"
 		else:
 			return f"""Matrix([{', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat)}])"""

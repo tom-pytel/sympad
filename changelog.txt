@@ -6,7 +6,8 @@ v1.0.8:
 * Added compacting of multiple Subs() and .subs().
 * Changed lambdas to bind global variables on definition.
 * Cleaned up passing assignments as equations into functions.
-* Cleaned up internal handling if incomplete and empty matrices.
+* Cleaned up internal handling of incomplete and empty matrices.
+* Fixed more obscure grammar cases.
 
 v1.0.7:
 -------
