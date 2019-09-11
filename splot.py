@@ -198,10 +198,6 @@ style   = optional matplotlib plot style
 
 				arg = sp.Lambda (arg.free_symbols.pop (), arg)
 
-				import sys
-				print (repr (arg), file = sys.stderr)
-
-
 			win = _FIGURE.axes [-1].get_window_extent ()
 			xrs = (win.x1 - win.x0) // 50 # scale resolution to roughly 'res' points every 50 pixels
 			rng = res * xrs

@@ -268,7 +268,7 @@ _XLAT_FUNC2AST_ALL    = {
 	'Ge'                   : lambda a, b: AST ('<>', a, (('>=', b),)),
 
 	'Or'                   : lambda *args: AST ('or', tuple (args)),
-	'And'                  : _xlat_f2a_And, # lambda *args: AST ('and', tuple (args)),
+	'And'                  : _xlat_f2a_And,
 	'Not'                  : lambda not_: AST ('not', not_),
 }
 

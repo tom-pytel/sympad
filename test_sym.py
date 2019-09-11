@@ -24,17 +24,26 @@ _TERMS = [
 	'-1.0',
 	'.1',
 	'1.',
+	'2',
 	'1e-100',
 	'1e100',
 	'1e+100',
 	'a',
+	'b',
+	'c',
+	'x'
+	'y'
+	'z'
 	'd',
 	'dx',
+	'dy',
+	'dz',
 	'partial',
 	'partialx',
 	'\\partial ',
 	'\\partialx',
 	'\\partial x',
+	'\\partialy',
 	'oo',
 	'\\infty '
 	'zoo',
@@ -179,6 +188,9 @@ a**{-1 [y]}
 \int_a^b {d = c} dx
 {a in b} not in c
 a*()!
+\frac12. and ()
+lambda: a or lambda: b
+{{a in b} * y} in z
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
@@ -433,7 +445,7 @@ def parse (text):
 	t   = time.process_time () - t0
 
 	if t > 2:
-		print (f'\n{text}', file = sys.stderr)
+		print (f'Slow parse: \n{text}', file = sys.stderr)
 
 	return ret
 
@@ -480,9 +492,6 @@ def test (argv = None):
 			ast, erridx, auto = parse (text)
 
 			if not ast or erridx or auto:
-			# 	print ()
-			# 	print ('Invalid:', text)
-
 				continue
 
 			ast = flatten (ast)
@@ -497,7 +506,7 @@ def test (argv = None):
 
 				if not ast or erridx or auto:
 					print ()
-					print ('Invalid!', text)
+					print ('Invalid!')
 					print ('text:   ', text)
 					print ('textpy: ', textpy)
 
@@ -512,18 +521,18 @@ def test (argv = None):
 			if ('--show', '') in opts:
 				print ()
 				print ('-' * 78)
-				print ('text:', text)
+				print ('text:  ', text)
 				if textpy:
 					print ()
 					print ('textpy:', textpy)
 				print ()
-				print ('ast: ', ast)
+				print ('ast:   ', ast)
 				print ()
-				print ('tex: ', tex)
+				print ('tex:   ', tex)
 				print ()
-				print ('nat: ', nat)
+				print ('nat:   ', nat)
 				print ()
-				print ('py:  ', py)
+				print ('py:    ', py)
 
 			ast_tex = dotex and parse (tex) [0]
 			ast_nat = donat and parse (nat) [0]

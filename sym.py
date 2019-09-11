@@ -465,6 +465,14 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_cmp_hs (self, hs):
 		return self._ast2nat_wrap (hs, 0, {'=', '<>', 'piece', 'lamb', 'slice', 'or', 'and', 'not'})
 
+	def _ast2nat_attr (self, ast):
+		obj = self._ast2nat_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})
+
+		if ast.is_attr_var:
+			return f'{obj}.{ast.attr}'
+		else:
+			return f'{obj}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}'
+
 	def _ast2nat_add (self, ast):
 		return ' + '.join (self._ast2nat_wrap (n, \
 				n.is_piece or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and n is not ast.add [-1]),
@@ -571,8 +579,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'<>'   : lambda self, ast: f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'    : lambda self, ast: ast.num,
 		'@'    : lambda self, ast: ast.var,
-		'.'    : lambda self, ast: f'{self._ast2nat_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})}.{ast.attr}' \
-				if ast.is_attr_var else f'{self._ast2nat (ast.obj)}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}',
+		'.'    : _ast2nat_attr,
 		'"'    : lambda self, ast: repr (ast.str_),
 		','    : lambda self, ast: f'{", ".join (self._ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
 		'('    : lambda self, ast: f'({self._ast2nat (ast.paren)})',
@@ -595,7 +602,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'mat'  : lambda self, ast: ('\\[' + ', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}]' for row in ast.mat) + ']') if ast.mat else 'Matrix([])',
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "piece", "lamb"}, {",", "slice"})}' for p in ast.piece),
-		'lamb' : lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.op in {"lamb", "slice"}, ast.lamb.op in {"=", "<>"})}',
+		'lamb' : lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.is_lamb, ast.lamb.op in {"=", "<>", "slice"})}',
 		'idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^", "slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&", "or", "and", "not"})}[{self._ast2nat (AST.tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
 		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
@@ -645,7 +652,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_curly (self, ast):
 		return \
 				self._ast2py_paren (ast) \
-				if ast.strip_minus ().op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
+				if ast.strip_minus ().op in {'<>', ',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 				self._ast2py (ast)
 
 	def _ast2py_paren (self, ast, paren = _None):
@@ -678,12 +685,14 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f'And({cmppy (ast.lhs, *ast.cmp [0])}, {", ".join (cmppy (ast.cmp [i - 1] [1], *ast.cmp [i]) for i in range (1, ast.cmp.len))})'
 
 	def _ast2py_attr (self, ast):
+		obj = self._ast2py_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/"})
+
 		if ast.is_attr_func:
 			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
-			return f'{self._ast2py (ast.obj)}.{ast.attr}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
+			return f'{obj}.{ast.attr}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
-		return f'{self._ast2py (ast.obj)}.{ast.attr}'
+		return f'{obj}.{ast.attr}'
 
 	def _ast2py_div (self, ast):
 		n = self._ast2py_curly (ast.numer)
@@ -764,8 +773,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'|'    : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
 		'-'    : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+"})}',
 		'!'    : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
-		'+'    : lambda self, ast: ' + '.join (self._ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
-		'*'    : lambda self, ast: '*'.join (self._ast2py_paren (n) if n.is_add else self._ast2py (n) for n in ast.mul),
+		'+'    : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in) for n in ast.add).replace (' + -', ' - '),
+		'*'    : lambda self, ast: '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add) for n in ast.mul),
 		'/'    : _ast2py_div,
 		'^'    : _ast2py_pow,
 		'log'  : _ast2py_log,
@@ -1236,7 +1245,7 @@ class spt2ast:
 		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
 		sp.Or: lambda self, spt: AST ('or', tuple (self._spt2ast (a) for a in spt.args)),
-		sp.And: lambda self, spt: sxlat._xlat_f2a_And (*tuple (self._spt2ast (a) for a in spt.args)), # AST ('and', tuple (self._spt2ast (a) for a in spt.args)),
+		sp.And: lambda self, spt: sxlat._xlat_f2a_And (*tuple (self._spt2ast (a) for a in spt.args)), # collapse possibly previously segmented extended comparison
 		sp.Not: lambda self, spt: AST ('not', self._spt2ast (spt.args [0])),
 
 		ExprAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),

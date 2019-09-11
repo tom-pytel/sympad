@@ -334,6 +334,8 @@ class AST_Cmp (AST):
 	def _init (self, lhs, cmp):
 		self.lhs, self.cmp = lhs, cmp # should be py forms (('!=', expr), ('<=', expr), ...)
 
+	_is_cmp_in = lambda self: self.cmp.len == 1 and self.cmp [0] [0] in {'in', 'notin'}
+
 class AST_Num (AST):
 	op, is_num = '#', True
 
