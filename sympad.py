@@ -2094,7 +2094,7 @@ class AST (tuple):
 			else:
 				return AST ('#', f'-{self.num}')
 
-	def strip (self, count = None, ops = {'{', '('}, idx = 1, keeptuple = False):
+	def _strip (self, count = None, ops = {'{', '('}, idx = 1, keeptuple = False):
 		count = -1 if count is None else count
 
 		while count and self.op in ops and not (keeptuple and self [idx].is_comma):
@@ -2103,11 +2103,11 @@ class AST (tuple):
 
 		return self
 
-	strip_attr   = lambda self, count = None: self.strip (count, ('.',))
-	strip_curlys = lambda self, count = None: self.strip (count, ('{',))
-	strip_paren  = lambda self, count = None, keeptuple = False: self.strip (count, ('(',), keeptuple = keeptuple)
+	_strip_attr   = lambda self, count = None: self._strip (count, ('.',))
+	_strip_curlys = lambda self, count = None: self._strip (count, ('{',))
+	_strip_paren  = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 
-	def strip_minus (self, count = None, retneg = False):
+	def _strip_minus (self, count = None, retneg = False):
 		count       = -1 if count is None else count
 		neg         = lambda ast: ast
 		neg.has_neg = False
@@ -2143,14 +2143,26 @@ class AST (tuple):
 
 		return name if AST._rec_identifier.match (name) else None
 
-	def free_vars (self): # return set of unique unbound variables found in tree
+	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
 				if ast.is_const_var is False and ast.var:
 					vars.add (ast)
 
-				for e in ast:
-					_free_vars (e, vars)
+				else:
+					for e in ast:
+						_free_vars (e, vars)
+
+					if ast.is_lim:
+						vars.remove (ast.lvar)
+					elif ast.is_sum:
+						vars.remove (ast.svar)
+
+					elif ast.is_intg:
+						vars.remove (ast.dv)
+
+						if ast.is_intg_definite:
+							vars.remove (ast.dv.as_var)
 
 		vars = set ()
 
@@ -2225,8 +2237,8 @@ class AST (tuple):
 			lamb = vars.get (ast.func)
 
 			if lamb and lamb.is_lamb: # 'execute' user lambda
-				if len (ast.args) != len (lamb.vars):
-					raise TypeError (f"lambda function '{ast.func}' takes {len (lamb.vars)} argument(s)")
+				if ast.args.len != lamb.vars.len:
+					raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
 				args = dict (zip ((v.var for v in lamb.vars), ast.args))
 
@@ -2274,6 +2286,8 @@ class AST_Cmp (AST):
 
 	def _init (self, lhs, cmp):
 		self.lhs, self.cmp = lhs, cmp # should be py forms (('!=', expr), ('<=', expr), ...)
+
+	_is_cmp_in = lambda self: self.cmp.len == 1 and self.cmp [0] [0] in {'in', 'notin'}
 
 class AST_Num (AST):
 	op, is_num = '#', True
@@ -2365,7 +2379,7 @@ class AST_Comma (AST):
 	def _init (self, comma):
 		self.comma = comma
 
-	_is_empty_comma = lambda self: not (len (self.comma))
+	_is_empty_comma = lambda self: not (self.comma.len)
 
 class AST_Curly (AST):
 	op, is_curly = '{', True
@@ -2509,11 +2523,13 @@ class AST_Intg (AST):
 	def _init (self, intg, dv, from_ = None, to = None):
 		self.intg, self.dv, self.from_, self.to = intg, dv, from_, to
 
-class AST_Vec (AST):
-	op, is_vec = 'vec', True
+	_is_intg_definite = lambda self: self.from_ is not None
 
-	def _init (self, vec):
-		self.vec = vec
+# class AST_Vec (AST):
+# 	op, is_vec = 'vec', True
+
+# 	def _init (self, vec):
+# 		self.vec = vec
 
 class AST_Mat (AST):
 	op, is_mat = 'mat', True
@@ -2521,8 +2537,9 @@ class AST_Mat (AST):
 	def _init (self, mat):
 		self.mat = mat
 
-	_rows = lambda self: len (self.mat)
-	_cols = lambda self: len (self.mat [0]) if self.mat else 0
+	_rows          = lambda self: self.mat.len
+	_cols          = lambda self: self.mat [0].len if self.mat else 0
+	_is_mat_column = lambda self: self.rows and self.cols == 1
 
 class AST_Piece (AST):
 	op, is_piece = 'piece', True
@@ -2599,7 +2616,7 @@ class AST_Not (AST):
 #...............................................................................................
 _AST_CLASSES = [AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
 	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
-	AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
+	AST_Diff, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
 	AST_Union, AST_Sdiff, AST_Xsect, AST_Or, AST_And, AST_Not]
 
 for _cls in _AST_CLASSES:
@@ -2731,27 +2748,30 @@ def _xlat_f2a_Pow (ast = AST.VarNull, exp = AST.VarNull):
 
 def _xlat_f2a_Matrix (ast = AST.VarNull):
 	if ast.is_null_var:
-		return AST ('vec', ())
+		return AST.MatEmpty
 
-	if ast.is_brack and ast.brack:
-		if not ast.brack [0].is_brack: # single layer or brackets, column matrix?
-			return AST ('vec', ast.brack)
+	if ast.is_brack:
+		if not ast.brack:
+			return AST.MatEmpty
+
+		elif not ast.brack [0].is_brack: # single layer or brackets, column matrix?
+			return AST ('mat', tuple ((c,) for c in ast.brack))
 
 		elif ast.brack [0].brack:
 			rows = [ast.brack [0].brack]
 			cols = len (rows [0])
 
 			for row in ast.brack [1 : -1]:
-				if len (row.brack) != cols:
+				if row.brack.len != cols:
 					break
 
 				rows.append (row.brack)
 
 			else:
-				l = len (ast.brack [-1].brack)
+				l = ast.brack [-1].brack.len
 
 				if l <= cols:
-					if len (ast.brack) > 1:
+					if ast.brack.len > 1:
 						rows.append (ast.brack [-1].brack + (AST.VarNull,) * (cols - l))
 
 					if l != cols:
@@ -2759,7 +2779,7 @@ def _xlat_f2a_Matrix (ast = AST.VarNull):
 					elif cols > 1:
 						return AST ('mat', tuple (rows))
 					else:
-						return AST ('vec', tuple (r [0] for r in rows))
+						return AST ('mat', tuple ((r [0],) for r in rows))
 
 	return None
 
@@ -2771,9 +2791,9 @@ def _xlat_f2a_Piecewise (*args):
 
 	if len (args) > 1:
 		for c in args [:-1]:
-			c = c.strip ()
+			c = c.strip
 
-			if not c.is_comma or len (c.comma) != 2:
+			if not c.is_comma or c.comma.len != 2:
 				return None
 
 			pcs.append (c.comma)
@@ -2783,18 +2803,18 @@ def _xlat_f2a_Piecewise (*args):
 	if not ast.is_paren:
 		return None
 
-	ast = ast.strip ()
+	ast = ast.strip
 	pcs = tuple (pcs)
 
 	if not ast.is_comma:
 		return AST ('piece', pcs + ((ast, AST.VarNull),))
-	elif len (ast.comma) == 0:
+	elif ast.comma.len == 0:
 		return AST ('piece', pcs + ())
 
 	if not ast.comma [0].is_comma:
-		if len (ast.comma) == 1:
+		if ast.comma.len == 1:
 			return AST ('piece', pcs + ((ast.comma [0], AST.VarNull),))
-		elif len (ast.comma) == 2:
+		elif ast.comma.len == 2:
 			return AST ('piece', pcs + ((ast.comma [0], True if ast.comma [1] == AST.True_ else ast.comma [1]),))
 
 	return None
@@ -2896,7 +2916,7 @@ _XLAT_FUNC2AST_ALL    = {
 	'Ge'                   : lambda a, b: AST ('<>', a, (('>=', b),)),
 
 	'Or'                   : lambda *args: AST ('or', tuple (args)),
-	'And'                  : _xlat_f2a_And, # lambda *args: AST ('and', tuple (args)),
+	'And'                  : _xlat_f2a_And,
 	'Not'                  : lambda not_: AST ('not', not_),
 }
 
@@ -3154,9 +3174,8 @@ class sxlat: # for single script
 	_xlat_f2a_And     = _xlat_f2a_And
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# ast = AST ('and', (('<>', ('@', 'w'), (('>', ('@', 'z')),)), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z'))))))
-# 	ast = AST ('and', (('<>', ('@', 'w'), (('>', ('@', 'z')),)), ('<>', ('@', 'x'), (('<', ('@', 'y')),)), ('<>', ('@', 'y'), (('<', ('@', 'z')),))))
-# 	res = _xlat_f2a_And (*ast.and_)
+# 	ast = AST ('func', 'Matrix', (('[', ()),))
+# 	res = _xlat_f2a_Matrix (ast.args [0])
 # 	print (res)
 # Convert between internal AST and SymPy expressions and write out LaTeX, native shorthand and Python code.
 # Here be dragons! MUST REFACTOR AT SOME POINT!
@@ -3543,13 +3562,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'sum'  : _ast2tex_sum,
 		'diff' : _ast2tex_diff,
 		'intg' : _ast2tex_intg,
-		'vec'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in ast.vec) + ' \\end{bmatrix}',
+		# 'vec'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in ast.vec) + ' \\end{bmatrix}',
 		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"slice"})}' for p in ast.piece) + ' \\end{cases}',
-		'lamb' : lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
+		'lamb' : lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if ast.vars.len == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 		'idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^", "slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "||", "^^", "&&", "or", "and", "not"})}\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]',
 		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and a.op in {'=', ',', 'slice'}) for a in _ast_slice_bounds (ast, '')),
-		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
+		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex_wrap (c, 0, c.is_slice) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex_wrap (k, 0, k.is_slice)}{{:}} {self._ast2tex_wrap (v, 0, v.is_slice)}" for k, v in ast.dict)} \\right\\}}',
 		'||'   : lambda self, ast: ' \\cup '.join (self._ast2tex_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', 'or', 'and', 'not'} or (a.is_piece and a is not ast.union [-1])) for a in ast.union),
 		'^^'   : lambda self, ast: ' \\ominus '.join (self._ast2tex_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', '||', 'or', 'and', 'not'} or (a.is_piece and a is not ast.sdiff [-1])) for a in ast.sdiff),
@@ -3623,6 +3642,14 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_cmp_hs (self, hs):
 		return self._ast2nat_wrap (hs, 0, {'=', '<>', 'piece', 'lamb', 'slice', 'or', 'and', 'not'})
 
+	def _ast2nat_attr (self, ast):
+		obj = self._ast2nat_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})
+
+		if ast.is_attr_var:
+			return f'{obj}.{ast.attr}'
+		else:
+			return f'{obj}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}'
+
 	def _ast2nat_add (self, ast):
 		return ' + '.join (self._ast2nat_wrap (n, \
 				n.is_piece or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and n is not ast.add [-1]),
@@ -3667,7 +3694,7 @@ class ast2nat: # abstract syntax tree -> native text
 				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)) else \
 				self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
 
-		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if _ast_is_neg (ast.denom) else \
+		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if (not ast.denom.is_num and _ast_is_neg (ast.denom)) else \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
 		s     = ns or ds or ast.numer.strip_minus.op not in {'#', '@', '*'} or ast.denom.strip_minus.op not in {'#', '@', '*'}
@@ -3724,13 +3751,20 @@ class ast2nat: # abstract syntax tree -> native text
 		else:
 			return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)}{intg}{self._ast2nat (ast.dv)}'
 
+	def _ast2nat_mat (self, ast):
+		if not ast.rows:
+			return '\\[]'
+		elif ast.is_mat_column:
+			return f"\\[{', '.join (self._ast2nat (row [0]) for row in ast.mat)}]"
+		else:
+			return f"""\\[{', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}]' for row in ast.mat)}]"""
+
 	_ast2nat_funcs = {
 		'='    : lambda self, ast: f'{self._ast2nat_ass_hs (ast.lhs)} = {self._ast2nat_ass_hs (ast.rhs, False)}',
 		'<>'   : lambda self, ast: f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'    : lambda self, ast: ast.num,
 		'@'    : lambda self, ast: ast.var,
-		'.'    : lambda self, ast: f'{self._ast2nat_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})}.{ast.attr}' \
-				if ast.is_attr_var else f'{self._ast2nat (ast.obj)}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}',
+		'.'    : _ast2nat_attr,
 		'"'    : lambda self, ast: repr (ast.str_),
 		','    : lambda self, ast: f'{", ".join (self._ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
 		'('    : lambda self, ast: f'({self._ast2nat (ast.paren)})',
@@ -3749,14 +3783,14 @@ class ast2nat: # abstract syntax tree -> native text
 		'sum'  : _ast2nat_sum,
 		'diff' : _ast2nat_diff,
 		'intg' : _ast2nat_intg,
-		'vec'  : lambda self, ast: f'\\[{", ".join (self._ast2nat_wrap (e, e.is_brack) for e in ast.vec)}]',
-		'mat'  : lambda self, ast: ('\\[' + ', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}]' for row in ast.mat) + ']') if ast.mat else 'Matrix([])',
+		# 'vec'  : lambda self, ast: f'\\[{", ".join (self._ast2nat_wrap (e, e.is_brack) for e in ast.vec)}]',
+		'mat'  : _ast2nat_mat,
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "piece", "lamb"}, {",", "slice"})}' for p in ast.piece),
-		'lamb' : lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.op in {"lamb", "slice"}, ast.lamb.op in {"=", "<>"})}',
+		'lamb' : lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.is_lamb, ast.lamb.op in {"=", "<>", "slice"})}',
 		'idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^", "slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&", "or", "and", "not"})}[{self._ast2nat (AST.tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
-		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
+		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (c, 0, c.is_slice) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'dict' : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (k, 0, k.op in {"lamb", "slice"}) + f": {self._ast2nat_wrap (v, v.is_lamb, v.is_slice)}" for k, v in ast.dict)}}}',
 		'||'   : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', 'piece', 'lamb', 'or', 'and', 'not'}) for a in ast.union),
 		'^^'   : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', 'piece', 'lamb', '||', 'or', 'and', 'not'}) for a in ast.sdiff),
@@ -3803,7 +3837,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_curly (self, ast):
 		return \
 				self._ast2py_paren (ast) \
-				if ast.strip_minus.op in {',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
+				if ast.strip_minus.op in {'<>', ',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
 				self._ast2py (ast)
 
 	def _ast2py_paren (self, ast, paren = _None):
@@ -3836,12 +3870,14 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f'And({cmppy (ast.lhs, *ast.cmp [0])}, {", ".join (cmppy (ast.cmp [i - 1] [1], *ast.cmp [i]) for i in range (1, ast.cmp.len))})'
 
 	def _ast2py_attr (self, ast):
+		obj = self._ast2py_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/"})
+
 		if ast.is_attr_func:
 			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
-			return f'{self._ast2py (ast.obj)}.{ast.attr}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
+			return f'{obj}.{ast.attr}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
-		return f'{self._ast2py (ast.obj)}.{ast.attr}'
+		return f'{obj}.{ast.attr}'
 
 	def _ast2py_div (self, ast):
 		n = self._ast2py_curly (ast.numer)
@@ -3893,6 +3929,14 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return intg
 
+	def _ast2py_mat (self, ast):
+		if not ast.rows:
+			return 'Matrix()'
+		elif ast.is_mat_column:
+			return f"Matrix([{', '.join (self._ast2py (row [0]) for row in ast.mat)}])"
+		else:
+			return f"""Matrix([{', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat)}])"""
+
 	def _ast2py_slice (self, ast):
 		if self.parent.is_idx and ast in self.parent.idx or \
 				self.parent.is_comma and len (self.parents) > 1 and self.parents [-2].is_idx and ast in self.parents [-2].idx:
@@ -3922,8 +3966,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'|'    : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
 		'-'    : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+"})}',
 		'!'    : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
-		'+'    : lambda self, ast: ' + '.join (self._ast2py (n) for n in ast.add).replace (' + -', ' - ').replace (' + -', ' - '),
-		'*'    : lambda self, ast: '*'.join (self._ast2py_paren (n) if n.is_add else self._ast2py (n) for n in ast.mul),
+		'+'    : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in) for n in ast.add).replace (' + -', ' - '),
+		'*'    : lambda self, ast: '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add) for n in ast.mul),
 		'/'    : _ast2py_div,
 		'^'    : _ast2py_pow,
 		'log'  : _ast2py_log,
@@ -3933,8 +3977,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
 		'diff' : _ast2py_diff,
 		'intg' : _ast2py_intg,
-		'vec'  : lambda self, ast: 'Matrix([' + ', '.join (f'({self._ast2py (e)},)' if e.is_brack else f'{self._ast2py (e)}' for e in ast.vec) + '])',
-		'mat'  : lambda self, ast: 'Matrix([' + ', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat) + '])',
+		# 'vec'  : lambda self, ast: 'Matrix([' + ', '.join (f'({self._ast2py (e)},)' if e.is_brack else f'{self._ast2py (e)}' for e in ast.vec) + '])',
+		'mat'  : _ast2py_mat,
 		'piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
 		'lamb' : lambda self, ast: f'Lambda({self._ast2py (AST.tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
 		'idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
@@ -4091,7 +4135,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return self._ast2spt (ast.args [0])
 
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
-			return ExprNoEval (str (ast.args [0]), 1 if len (ast.args) == 1 else self._ast2spt (ast.args [1]))
+			return ExprNoEval (str (ast.args [0]), 1 if ast.args.len == 1 else self._ast2spt (ast.args [1]))
 
 		func = _ast2spt_pyfuncs.get (ast.unescaped) # getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped) #
 
@@ -4179,7 +4223,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'sum'  : lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
 		'diff' : _ast2spt_diff,
 		'intg' : _ast2spt_intg,
-		'vec'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
+		# 'vec'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
 		'mat'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
 		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
 		'lamb' : _ast2spt_lamb,
@@ -4260,14 +4304,12 @@ class spt2ast:
 		return self._spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (self._spt2ast (a) for a in spt.args))
 
 	def _spt2ast_MatrixBase (self, spt):
-		if not spt.cols or not spt.rows:
-			return AST ('vec', ())
+		if not spt.rows or not spt.cols:
+			return AST.MatEmpty
 		if spt.cols > 1:
 			return AST ('mat', tuple (tuple (self._spt2ast (e) for e in spt [row, :]) for row in range (spt.rows)))
-		elif spt.rows > 1:
-			return AST ('vec', tuple (self._spt2ast (e) for e in spt))
 		else:
-			return self._spt2ast (spt [0])
+			return AST ('mat', tuple ((self._spt2ast (e),) for e in spt))
 
 	def _spt2ast_Add (self, spt):
 		args = spt.args
@@ -4394,7 +4436,7 @@ class spt2ast:
 		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
 		sp.Or: lambda self, spt: AST ('or', tuple (self._spt2ast (a) for a in spt.args)),
-		sp.And: lambda self, spt: sxlat._xlat_f2a_And (*tuple (self._spt2ast (a) for a in spt.args)), # AST ('and', tuple (self._spt2ast (a) for a in spt.args)),
+		sp.And: lambda self, spt: sxlat._xlat_f2a_And (*tuple (self._spt2ast (a) for a in spt.args)), # collapse possibly previously segmented extended comparison
 		sp.Not: lambda self, spt: AST ('not', self._spt2ast (spt.args [0])),
 
 		ExprAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
@@ -4500,8 +4542,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'w'))))
-# 	res = ast2spt (ast)
+# 	ast = AST ('func', 'Matrix', (('[', ()),))
+# 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)
@@ -4541,7 +4583,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
 def _ast_func_tuple_args (ast):
-	ast = ast.strip (1)
+	ast = ast._strip (1)
 
 	return ast.comma if ast.is_comma else (ast,)
 
@@ -4646,7 +4688,7 @@ def _expr_cmp (lhs, CMP, rhs):
 	else:
 		return AST ('<>', lhs, ((cmp, rhs),))
 
-def _expr_mul (expr): # pull negative(s) out of first term of nested curly/multiplication for consistency
+def _expr_mul (expr): # ONLY FOR CONSISTENCY! pull negative(s) out of first term of nested curly/multiplication
 	mcs = lambda ast: ast
 	ast = expr
 	mul = False
@@ -4778,9 +4820,9 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				if i == len (ns) - 1:
 					return AST ('diff', None, tuple (ds))
 				elif i == len (ns) - 2:
-					return AST ('diff', ns [-1], tuple (ds))
+					return AST ('diff', _expr_mul (ns [-1]), tuple (ds))
 				else:
-					return AST ('diff', AST ('*', ns [i + 1:]), tuple (ds))
+					return AST ('diff', _expr_mul (AST ('*', ns [i + 1:])), tuple (ds))
 
 		return None # raise SyntaxError?
 
@@ -4793,7 +4835,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
 		tail = []
-		end  = len (ast.mul)
+		end  = ast.mul.len
 
 		for i in range (end - 1, -1, -1):
 			if ast.mul [i].is_div:
@@ -4807,7 +4849,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 						tail.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
+						tail.insert (0, AST ('diff', _expr_mul (ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end])), diff.dvs))
 
 					else:
 						continue
@@ -4845,7 +4887,7 @@ def _ast_strip_tail_differential (ast):
 		if dv:
 			if ast2:
 				return (AST ('diff', neg (ast2), ast.dvs), dv)
-			elif len (ast.dvs) == 1:
+			elif ast.dvs.len == 1:
 				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv)
 			else:
 				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
@@ -4869,7 +4911,7 @@ def _ast_strip_tail_differential (ast):
 		if dv:
 			if ast2:
 				return (AST (ast.op, ast.mul [:-1] + (neg (ast2),)), dv)
-			elif len (ast.mul) > 2:
+			elif ast.mul.len > 2:
 				return (neg (AST (ast.op, ast.mul [:-1])), dv)
 			else:
 				return (neg (ast.mul [0]), dv)
@@ -4900,7 +4942,7 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	ast, wrap = _ast_func_reorder (args [iparm])
 
-	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast.strip (strip)),) + args [iparm + 1:])))
+	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast._strip (strip)),) + args [iparm + 1:])))
 
 def _expr_func_func (FUNC, expr_neg_func, expr_super = None):
 	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
@@ -4924,7 +4966,7 @@ def _expr_mat (mat_rows):
 	elif len (mat_rows [0]) > 1:
 		return AST ('mat', mat_rows)
 	else:
-		return AST ('vec', tuple (c [0] for c in mat_rows))
+		return AST ('mat', tuple ((c [0],) for c in mat_rows))
 
 def _expr_vec (ast):
 	e = ast.comma if ast.is_comma else (ast,)
@@ -4933,16 +4975,18 @@ def _expr_vec (ast):
 		if len (e) == 0:
 			return AST.MatEmpty
 
-		elif len (e) == 1 or len (set (len (c.brack) for c in e)) == 1:
+		elif len (e) == 1 or len (set (c.brack.len for c in e)) == 1:
 			if e [0].brack.len == 1:
-				return AST ('vec', tuple (c.brack [0] for c in e))
-			else:
+				return AST ('mat', tuple ((c.brack [0],) for c in e))
+			elif e [0].brack.len:
 				return AST ('mat', tuple (c.brack for c in e))
+			else:
+				return AST.MatEmpty
 
 		elif e [-1].brack.len < e [0].brack.len:
-			return AST ('mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),))
+			raise lalr1.Incomplete (AST ('mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
 
-	return AST ('vec', e)
+	return AST ('mat', tuple ((c,) for c in e))
 
 def _expr_curly (ast, forceset = False):
 	e   = ast.comma if ast.is_comma else (ast,)
@@ -5237,7 +5281,7 @@ class Parser (lalr1.LALR1):
 	def expr_ass_1         (self, expr_mapsto1, EQ, expr_mapsto2):                 return AST ('=', expr_mapsto1, expr_mapsto2)
 	def expr_ass_2         (self, expr_mapsto):                                    return expr_mapsto
 
-	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_colon):                 return _expr_mapsto (expr_paren.strip (), expr_colon)
+	def expr_mapsto_1      (self, expr_paren, MAPSTO, expr_colon):                 return _expr_mapsto (expr_paren.strip, expr_colon)
 	def expr_mapsto_2      (self, expr_piece):                                     return expr_piece
 
 	def expr_piece_1       (self, expr_or, IF, expr_ass, ELSE, expr_mapsto):       return _expr_piece (expr_or, expr_ass, expr_mapsto)
@@ -5280,7 +5324,7 @@ class Parser (lalr1.LALR1):
 
 	def expr_diff          (self, expr_div):                                       return _expr_diff (expr_div)
 
-	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                    return AST ('/', expr_div, expr_divm)
+	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                    return AST ('/', _expr_mul (expr_div), _expr_mul (expr_divm))
 	def expr_div_2         (self, expr_mul_imp):                                   return expr_mul_imp
 	def expr_divm_1        (self, MINUS, expr_divm):                               return _expr_neg (expr_divm)
 	def expr_divm_2        (self, expr_mul_imp):                                   return expr_mul_imp
@@ -5292,12 +5336,12 @@ class Parser (lalr1.LALR1):
 	def expr_intg_2        (self, INTG, expr_add):                                 return _expr_intg (expr_add)
 	def expr_intg_3        (self, expr_lim):                                       return expr_lim
 
-	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('lim', expr_neg, expr_var, expr)
-	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('lim', expr_neg, expr_var, expr, '+')
-	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('lim', expr_neg, expr_var, expr, '-')
+	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('lim', _expr_mul (expr_neg), expr_var, expr)
+	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('lim', _expr_mul (expr_neg), expr_var, expr, '+')
+	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('lim', _expr_mul (expr_neg), expr_var, expr, '-')
 	def expr_lim_6         (self, expr_sum):                                                                        return expr_sum
 
-	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('sum', expr_neg, varass [0], varass [1], expr_super)
+	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('sum', _expr_mul (expr_neg), varass [0], varass [1], expr_super)
 	def expr_sum_2         (self, expr_func):                                                                       return expr_func
 
 	def expr_func_1        (self, SQRT, BRACKL, expr_commas, BRACKR, expr_neg_func): return _expr_func (1, 'sqrt', expr_neg_func, expr_commas)
@@ -5563,7 +5607,7 @@ class Parser (lalr1.LALR1):
 		return True # continue parsing if conflict branches remain to find best resolution
 
 	def parse (self, text):
-		if not text.strip ():
+		if not text.strip:
 			return (AST.VarNull, 0, [])
 
 		self.parse_results  = [] # [(reduction, erridx, autocomplete), ...]
@@ -5602,17 +5646,17 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
-# 	# p.set_user_funcs ({'f': 1})
-# 	# a = p.parse (r'x - {1 * 2}')
-# 	# a = p.parse (r'x - {{1 * 2} * 3}')
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
+	# p.set_user_funcs ({'f': 1})
+	# a = p.parse (r'x - {1 * 2}')
+	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-# 	a = p.parse ('-{\\int x dx} + y * dz')
-# 	print (a)
+	a = p.parse ('{-x} y / z')
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)
 # Patch SymPy bugs and inconveniences.
 
 from collections import defaultdict
@@ -6023,10 +6067,6 @@ style   = optional matplotlib plot style
 					raise ValueError ('expression must have exactly one free variable')
 
 				arg = sp.Lambda (arg.free_symbols.pop (), arg)
-
-				import sys
-				print (repr (arg), file = sys.stderr)
-
 
 			win = _FIGURE.axes [-1].get_window_extent ()
 			xrs = (win.x1 - win.x0) // 50 # scale resolution to roughly 'res' points every 50 pixels

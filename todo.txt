@@ -1,5 +1,4 @@
 > ' differential operator
-> var_prime in quick mode
 > AppliedUndef, in func and in _Mul
 > Function ('f') (), Function ('f') (x), Function ('f') (x, y)
 > ODEs

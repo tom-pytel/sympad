@@ -50,7 +50,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		f'{__name_indent} [-z | --nozeta] \n' \
 		f'{__name_indent} [host:port | host | :port]' '''
 
-  -h, --help       - This
+  -h, --help       - Show help information
   -v, --version    - Show version string
   -d, --debug      - Dump debug info to server output
   -n, --nobrowser  - Don't start system browser to SymPad page
