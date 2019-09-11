@@ -217,6 +217,10 @@ class AST (tuple):
 					elif ast.is_sum:
 						vars.remove (ast.svar)
 
+					elif ast.is_diff:
+						for dv in ast.dvs:
+							vars.remove (dv)
+
 					elif ast.is_intg:
 						vars.remove (ast.dv)
 

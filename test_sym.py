@@ -205,6 +205,8 @@ d / dz {-1} a
 \[[[1, 2]], [[3]]]
 \sqrt(a:b)
 \sqrt[3](a:b)
+{z : v,c : z,0 : u = {lambda x, y: a}}
+a.inverse_mellin_transform()
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
@@ -459,6 +461,7 @@ def parse (text):
 	t   = time.process_time () - t0
 
 	if t > 2:
+		print ()
 		print (f'Slow parse: \n{text}', file = sys.stderr)
 
 	return ret

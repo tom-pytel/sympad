@@ -816,7 +816,7 @@ class Parser (lalr1.LALR1):
 	def expr_fact_1        (self, expr_fact, EXCL):                                return AST ('!', expr_fact)
 	def expr_fact_2        (self, expr_attr):                                      return expr_attr
 
-	def expr_attr_1        (self, expr_attr, ATTR):                                return AST ('.', expr_attr, ATTR.grp [0] or ATTR.grp [1])
+	def expr_attr_1        (self, expr_attr, ATTR):                                return AST ('.', expr_attr, ATTR.grp [0] or ATTR.grp [1].replace ('\\', ''))
 	def expr_attr_2        (self, expr_abs):                                       return expr_abs
 
 	def expr_abs_1         (self, LEFT, BAR1, expr_commas, RIGHT, BAR2):           return AST ('|', expr_commas)

@@ -460,7 +460,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return (s, has) if ret_has else s
 
 	def _ast2nat_ass_hs (self, hs, lhs = True):
-		return self._ast2nat_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece', 'lamb'}))
+		return self._ast2nat_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and hs.op in {',', 'piece', 'lamb'}) or (not lhs and hs.is_lamb))
 
 	def _ast2nat_cmp_hs (self, hs):
 		return self._ast2nat_wrap (hs, 0, {'=', '<>', 'piece', 'lamb', 'slice', 'or', 'and', 'not'})

@@ -1,6 +1,7 @@
+> AST ('diff', ...) and int dvs -> vars instead of dvars
+> AST ('diff', expr) implicit without dvs
 > ' differential operator
-> AppliedUndef, in func and in _Mul
-> Function ('f') (), Function ('f') (x), Function ('f') (x, y)
+> undefined functions (AppliedUndef), Function ('f') (), Function ('f') (x), Function ('f') (x, y)
 > ODEs
 
 > importing modules to allow custom code execution
@@ -28,6 +29,7 @@
 
 > SYM.PY REFACTOR!
 
+> Custom Contains and other set operation fallbacks to allow symbols to stand in for sets?
 > 1 in x and other sets to accept symbols, how?
 > plots as objects?
 > flush sys.stdout to msg before sending exception?

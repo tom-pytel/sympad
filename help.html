@@ -119,15 +119,12 @@ expand ((1 + x)**4)<br>
 factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)<br>
 series (e^x, x, 0, 5)<br>
 solve (x**2 + y = 4, x)<br>
-\lim_{x\to\infty} 1/x<br>
 Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
-Derivative (x**2y**2, x, y, 2)<br>
 d**6 / dx dy**2 dz**3 x^3 y^3 z^3<br>
 Integral (e^{-x^2}, (x, 0, \infty))<br>
 \int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi<br>
 \[[1, 2], [3, 4]]**-1<br>
-Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
@@ -717,25 +714,46 @@ It may also never finish if a complex circular vector field introduces enough er
 <h4 id="More Examples">More Examples</h4>
 
 <p>
-Calculating eigenvalues and eigenvectors of a matrix by "hand":
+<b>Limits, Sums, Derivatives and Integrals</b>
+</p><p>
+\lim_{h\to0} {(x + h)**2 - x**2} / h<br>
+Limit ((1 + 1/x)**x, x, \infty)<br>
+{(1 - 1/x)**x}.limit (x, \infty)<br>
+\sum_{n=0}**oo (-1)**n x**{2n} / (2n)!<br>
+Sum ((-1)**n x**{2n + 1} / (2n + 1)!, (n, 0, oo))<br>
+d/dx ln x<br>
+Derivative (x**3y**2, x, y)<br>
+diff (sin x + cos x, x, 2)<br>
+{sin**2x}.diff (x)<br>
+d**3/dx**2dy x**3y**2<br>
+\int x**a dx<br>
+Integral (a**x, x)<br>
+{x**3y**2}.integrate (x, y)<br>
+\int_0^1 x dx<br>
+Integral (r, (r, 0, 1), (theta, 0, 2pi))<br>
+{sin x / x}.integrate ((x, -oo, oo))<br>
+</p>
+
+<p>
+<b>Calculating eigenvalues and eigenvectors of a matrix</b><i>&emsp; by "hand"</i>
 </p><p>
 m = \[[1, 2], [3, 4]]<br>
 l = m - lambda eye 2<br>
 l.det ()<br>
-solve _<i>&emsp;this will give the eigenvalues</i><br>
-a, b = _<i>&emsp;assign to vars</i><br>
-m.eigenvals ()<i>&emsp;verify eigenvalues</i><br>
+solve _<i>&emsp; this will give the eigenvalues</i><br>
+a, b = _<i>&emsp; assign to vars</i><br>
+m.eigenvals ()<i>&emsp; verify eigenvalues</i><br>
 Subs (l, lambda, a) \[x, y]<br>
-solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
-\[_ [0] [x], y].subs (y, 1)<i>&emsp;first eigenvector for eigenvalue a</i><br>
+solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
+\[_ [0] [x], y].subs (y, 1)<i>&emsp; first eigenvector for eigenvalue a</i><br>
 Subs (l, lambda, b) \[x, y]<br>
-solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
-\[_ [0] [x], y].subs (y, 1)<i>&emsp;second eigenvector for eigenvalue b</i><br>
-m.eigenvects ()<i>&emsp;verify eigenvectors</i><br>
+solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
+\[_ [0] [x], y].subs (y, 1)<i>&emsp; second eigenvector for eigenvalue b</i><br>
+m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
 </p>
 
 <p>
-Iterative plotting:
+<b>Iterative plotting</b>
 </p><p>
 f = lambda x, y: (2x + sec**2x) / 2y<br>
 plotv (6, -6, 6, f, fs = -8, res = 33)<i>&emsp;plot vector field</i><br>
