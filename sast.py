@@ -584,11 +584,11 @@ class AST_Intg (AST):
 
 	_is_intg_definite = lambda self: self.from_ is not None
 
-class AST_Vec (AST):
-	op, is_vec = 'vec', True
+# class AST_Vec (AST):
+# 	op, is_vec = 'vec', True
 
-	def _init (self, vec):
-		self.vec = vec
+# 	def _init (self, vec):
+# 		self.vec = vec
 
 class AST_Mat (AST):
 	op, is_mat = 'mat', True
@@ -596,8 +596,9 @@ class AST_Mat (AST):
 	def _init (self, mat):
 		self.mat = mat
 
-	_rows = lambda self: self.mat.len
-	_cols = lambda self: self.mat [0].len if self.mat else 0
+	_rows          = lambda self: self.mat.len
+	_cols          = lambda self: self.mat [0].len if self.mat else 0
+	_is_mat_column = lambda self: self.rows and self.cols == 1
 
 class AST_Piece (AST):
 	op, is_piece = 'piece', True
@@ -674,7 +675,7 @@ class AST_Not (AST):
 #...............................................................................................
 _AST_CLASSES = [AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
 	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
-	AST_Diff, AST_Intg, AST_Vec, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
+	AST_Diff, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
 	AST_Union, AST_Sdiff, AST_Xsect, AST_Or, AST_And, AST_Not]
 
 for _cls in _AST_CLASSES:

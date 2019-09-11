@@ -385,7 +385,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'sum'  : _ast2tex_sum,
 		'diff' : _ast2tex_diff,
 		'intg' : _ast2tex_intg,
-		'vec'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in ast.vec) + ' \\end{bmatrix}',
+		# 'vec'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in ast.vec) + ' \\end{bmatrix}',
 		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"slice"})}' for p in ast.piece) + ' \\end{cases}',
 		'lamb' : lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if ast.vars.len == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
@@ -574,6 +574,14 @@ class ast2nat: # abstract syntax tree -> native text
 		else:
 			return f'\\int_{self._ast2nat_curly (ast.from_)}^{self._ast2nat_curly (ast.to)}{intg}{self._ast2nat (ast.dv)}'
 
+	def _ast2nat_mat (self, ast):
+		if not ast.rows:
+			return '\\[]'
+		elif ast.is_mat_column:
+			return f"\\[{', '.join (self._ast2nat (row [0]) for row in ast.mat)}]"
+		else:
+			return f"""\\[{', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}]' for row in ast.mat)}]"""
+
 	_ast2nat_funcs = {
 		'='    : lambda self, ast: f'{self._ast2nat_ass_hs (ast.lhs)} = {self._ast2nat_ass_hs (ast.rhs, False)}',
 		'<>'   : lambda self, ast: f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}',
@@ -598,8 +606,8 @@ class ast2nat: # abstract syntax tree -> native text
 		'sum'  : _ast2nat_sum,
 		'diff' : _ast2nat_diff,
 		'intg' : _ast2nat_intg,
-		'vec'  : lambda self, ast: f'\\[{", ".join (self._ast2nat_wrap (e, e.is_brack) for e in ast.vec)}]',
-		'mat'  : lambda self, ast: ('\\[' + ', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}]' for row in ast.mat) + ']') if ast.mat else '\\[]',
+		# 'vec'  : lambda self, ast: f'\\[{", ".join (self._ast2nat_wrap (e, e.is_brack) for e in ast.vec)}]',
+		'mat'  : _ast2nat_mat,
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "piece", "lamb"}, {",", "slice"})}' for p in ast.piece),
 		'lamb' : lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.is_lamb, ast.lamb.op in {"=", "<>", "slice"})}',
@@ -744,6 +752,14 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return intg
 
+	def _ast2py_mat (self, ast):
+		if not ast.rows:
+			return 'Matrix()'
+		elif ast.is_mat_column:
+			return f"Matrix([{', '.join (self._ast2py (row [0]) for row in ast.mat)}])"
+		else:
+			return f"""Matrix([{', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat)}])"""
+
 	def _ast2py_slice (self, ast):
 		if self.parent.is_idx and ast in self.parent.idx or \
 				self.parent.is_comma and len (self.parents) > 1 and self.parents [-2].is_idx and ast in self.parents [-2].idx:
@@ -784,8 +800,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
 		'diff' : _ast2py_diff,
 		'intg' : _ast2py_intg,
-		'vec'  : lambda self, ast: 'Matrix([' + ', '.join (f'({self._ast2py (e)},)' if e.is_brack else f'{self._ast2py (e)}' for e in ast.vec) + '])',
-		'mat'  : lambda self, ast: 'Matrix([' + ', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat) + '])',
+		# 'vec'  : lambda self, ast: 'Matrix([' + ', '.join (f'({self._ast2py (e)},)' if e.is_brack else f'{self._ast2py (e)}' for e in ast.vec) + '])',
+		'mat'  : _ast2py_mat,
 		'piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
 		'lamb' : lambda self, ast: f'Lambda({self._ast2py (AST.tuple2ast (ast.vars, paren = True))}, {self._ast2py (ast.lamb)})',
 		'idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "lim", "sum", "diff", "intg", "piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
@@ -1030,7 +1046,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'sum'  : lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
 		'diff' : _ast2spt_diff,
 		'intg' : _ast2spt_intg,
-		'vec'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
+		# 'vec'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
 		'mat'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
 		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
 		'lamb' : _ast2spt_lamb,
@@ -1111,14 +1127,12 @@ class spt2ast:
 		return self._spt2ast (spt.args [0]) if len (spt.args) == 1 else AST ('||', tuple (self._spt2ast (a) for a in spt.args))
 
 	def _spt2ast_MatrixBase (self, spt):
-		if not spt.cols or not spt.rows:
-			return AST ('vec', ())
+		if not spt.rows or not spt.cols:
+			return AST.MatEmpty
 		if spt.cols > 1:
 			return AST ('mat', tuple (tuple (self._spt2ast (e) for e in spt [row, :]) for row in range (spt.rows)))
-		elif spt.rows > 1:
-			return AST ('vec', tuple (self._spt2ast (e) for e in spt))
 		else:
-			return self._spt2ast (spt [0])
+			return AST ('mat', tuple ((self._spt2ast (e),) for e in spt))
 
 	def _spt2ast_Add (self, spt):
 		args = spt.args

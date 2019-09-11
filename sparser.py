@@ -420,7 +420,7 @@ def _expr_mat (mat_rows):
 	elif len (mat_rows [0]) > 1:
 		return AST ('mat', mat_rows)
 	else:
-		return AST ('vec', tuple (c [0] for c in mat_rows))
+		return AST ('mat', tuple ((c [0],) for c in mat_rows))
 
 def _expr_vec (ast):
 	e = ast.comma if ast.is_comma else (ast,)
@@ -431,7 +431,7 @@ def _expr_vec (ast):
 
 		elif len (e) == 1 or len (set (c.brack.len for c in e)) == 1:
 			if e [0].brack.len == 1:
-				return AST ('vec', tuple (c.brack [0] for c in e))
+				return AST ('mat', tuple ((c.brack [0],) for c in e))
 			elif e [0].brack.len:
 				return AST ('mat', tuple (c.brack for c in e))
 			else:
@@ -440,7 +440,7 @@ def _expr_vec (ast):
 		elif e [-1].brack.len < e [0].brack.len:
 			raise lalr1.Incomplete (AST ('mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
 
-	return AST ('vec', e)
+	return AST ('mat', tuple ((c,) for c in e))
 
 def _expr_curly (ast, forceset = False):
 	e   = ast.comma if ast.is_comma else (ast,)

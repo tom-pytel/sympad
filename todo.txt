@@ -1,5 +1,3 @@
-> change 'vec' object to column 'mat' object?
-
 > ' differential operator
 > var_prime in quick mode
 > AppliedUndef, in func and in _Mul

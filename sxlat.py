@@ -103,14 +103,14 @@ def _xlat_f2a_Pow (ast = AST.VarNull, exp = AST.VarNull):
 
 def _xlat_f2a_Matrix (ast = AST.VarNull):
 	if ast.is_null_var:
-		return AST ('vec', ())
+		return AST.MatEmpty
 
 	if ast.is_brack:
 		if not ast.brack:
 			return AST.MatEmpty
 
 		elif not ast.brack [0].is_brack: # single layer or brackets, column matrix?
-			return AST ('vec', ast.brack)
+			return AST ('mat', tuple ((c,) for c in ast.brack))
 
 		elif ast.brack [0].brack:
 			rows = [ast.brack [0].brack]
@@ -134,7 +134,7 @@ def _xlat_f2a_Matrix (ast = AST.VarNull):
 					elif cols > 1:
 						return AST ('mat', tuple (rows))
 					else:
-						return AST ('vec', tuple (r [0] for r in rows))
+						return AST ('mat', tuple ((r [0],) for r in rows))
 
 	return None
 
