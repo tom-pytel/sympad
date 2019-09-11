@@ -203,6 +203,8 @@ d / dz {-1} a
 \int a / -1 dx
 \[[[x]]]
 \[[[1, 2]], [[3]]]
+\sqrt(a:b)
+\sqrt[3](a:b)
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

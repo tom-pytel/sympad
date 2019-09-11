@@ -2839,6 +2839,8 @@ d / dz {-1} a
 {1/x}.limit (x, 0, "-")
 {x^2y**2z}.diff (x, 2, y, z)
 {x y}.integrate ((x, 0, 1))
+\sqrt (a:b)
+\sqrt[3] (a:b)
 """
 # _EXPRESSIONS = """
 

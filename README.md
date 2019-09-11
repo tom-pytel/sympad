@@ -17,7 +17,7 @@ d**6 / dx dy**2 dz**3 x^3 y^3 z^3
 \int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi
 \[[1, 2], [3, 4]]**-1
 Matrix ([[1, 2, 3], [4, 5, 6]]) [:,1].transpose ()
-Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)
+Matrix (4, 4, lambda r, c: c + r if c > r else 0)
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')
 ```
