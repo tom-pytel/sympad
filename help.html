@@ -13,9 +13,9 @@
 	h2 { margin: 2em 0 1em 0; }
 	h4 { margin: 1.5em 0 0.75em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
+	table { margin: 0 0 1.2em 1em; line-height: 150%; }
 	i { color: #0008; }
 	del { color: red; }
-	table { margin: 0 0 1.2em 1em; line-height: 150%; }
 </style>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
@@ -114,7 +114,7 @@ The input will be evaluated symbolically or numerically with the results being c
 <p>
 The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad:
 </p><p>
-cos**-1 0 + \log_2{8}<br>
+cos**-1 0 \log_2{8}<br>
 expand ((1 + x)**4)<br>
 factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)<br>
 series (e^x, x, 0, 5)<br>
@@ -734,6 +734,18 @@ solve (_ [0], _ [1], x, y)<i>&emsp;relation between x and y</i><br>
 m.eigenvects ()<i>&emsp;verify eigenvectors</i><br>
 </p>
 
+<p>
+Iterative plotting:
+</p><p>
+f = lambda x, y: (2x + sec**2x) / 2y<br>
+plotv (6, -6, 6, f, fs = -8, res = 33)<i>&emsp;plot vector field</i><br>
+plotw ('+', f, (-1, 0))<i>&emsp;add first walk starting at point (-1, 0)</i><br>
+plotw ('+', f, (-2, 0))<br>
+plotw ('+', f, (-3, 0))<br>
+plotw ('+', f, (-4, 0))<br>
+plotw ('+', f, (-5, 0))<br>
+</p>
+
 <h4 id="Special Characters">Special Characters</h4>
 
 <p><b>_</b> - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.
@@ -785,23 +797,23 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 </p>
 
 <table>
-<tr><td><b>-h, --help</b></td><td>- Show help information.</td></tr>
-<tr><td><b>-v, --version</b></td><td>- Show version string.</td></tr>
-<tr><td><b>-d, --debug</b></td><td>- Dump debug info to server output.</td></tr>
-<tr><td><b>-n, --nobrowser</b></td><td>- Don't start system browser to SymPad page.</td></tr>
-<tr><td><b>-u, --ugly</b></td><td>- Start in draft display style (only on command line).</td></tr>
-<tr><td><b>-E, --EI</b></td><td>- Start with SymPy constants 'E' and 'I' not 'e' and 'i'.</td></tr>
-<tr><td><b>-q, --quick</b></td><td>- Start in quick input mode.</td></tr>
-<tr><td><b>-y, --nopyS</b></td><td>- Start without Python S escaping.</td></tr>
-<tr><td><b>-s, --nosimplify</b></td><td>- Start without post-evaluation simplification.</td></tr>
-<tr><td><b>-m, --nomatsimp</b></td><td>- Start without matrix simplification.</td></tr>
-<tr><td><b>-t, --nodoit</b></td><td>- Start without automatic expression doit().</td></tr>
-<tr><td><b>-N, --noN</b></td><td>- Start without N lambda function.</td></tr>
-<tr><td><b>-S, --noS</b></td><td>- Start without S lambda function.</td></tr>
-<tr><td><b>-O, --noO</b></td><td>- Start without O lambda function.</td></tr>
-<tr><td><b>-g, --nogamma</b></td><td>- Start without gamma lambda function.</td></tr>
-<tr><td><b>-G, --noGamma</b></td><td>- Start without Gamma lambda function.</td></tr>
-<tr><td><b>-z, --nozeta</b></td><td>- Start without zeta lambda function.</td></tr>
+<tr><td><b>-h, --help</b></td><td>&emsp;- Show help information.</td></tr>
+<tr><td><b>-v, --version</b></td><td>&emsp;- Show version string.</td></tr>
+<tr><td><b>-d, --debug</b></td><td>&emsp;- Dump debug info to server log.</td></tr>
+<tr><td><b>-n, --nobrowser</b></td><td>&emsp;- Don't start system browser to SymPad page.</td></tr>
+<tr><td><b>-u, --ugly</b></td><td>&emsp;- Start in draft display style (only on command line).</td></tr>
+<tr><td><b>-E, --EI</b></td><td>&emsp;- Start with SymPy constants 'E' and 'I' not 'e' and 'i'.</td></tr>
+<tr><td><b>-q, --quick</b></td><td>&emsp;- Start in quick input mode.</td></tr>
+<tr><td><b>-y, --nopyS</b></td><td>&emsp;- Start without Python S escaping.</td></tr>
+<tr><td><b>-s, --nosimplify</b></td><td>&emsp;- Start without post-evaluation simplification.</td></tr>
+<tr><td><b>-m, --nomatsimp</b></td><td>&emsp;- Start without matrix simplification.</td></tr>
+<tr><td><b>-t, --nodoit</b></td><td>&emsp;- Start without automatic expression doit().</td></tr>
+<tr><td><b>-N, --noN</b></td><td>&emsp;- Start without N lambda function.</td></tr>
+<tr><td><b>-S, --noS</b></td><td>&emsp;- Start without S lambda function.</td></tr>
+<tr><td><b>-O, --noO</b></td><td>&emsp;- Start without O lambda function.</td></tr>
+<tr><td><b>-g, --nogamma</b></td><td>&emsp;- Start without gamma lambda function.</td></tr>
+<tr><td><b>-G, --noGamma</b></td><td>&emsp;- Start without Gamma lambda function.</td></tr>
+<tr><td><b>-z, --nozeta</b></td><td>&emsp;- Start without zeta lambda function.</td></tr>
 </table>
 
 <h4 id="Notes">Notes</h4>

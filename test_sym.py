@@ -202,6 +202,7 @@ d / dz {-1} a
 \lim_{x\to0} {-x} y
 \int a / -1 dx
 \[[[x]]]
+\[[[1, 2]], [[3]]]
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

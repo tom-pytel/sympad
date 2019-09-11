@@ -52,7 +52,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 
   -h, --help       - Show help information
   -v, --version    - Show version string
-  -d, --debug      - Dump debug info to server output
+  -d, --debug      - Dump debug info to server log
   -n, --nobrowser  - Don't start system browser to SymPad page
   -u, --ugly       - Start in draft display style (only on command line)
   -E, --EI         - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
