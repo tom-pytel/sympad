@@ -2704,6 +2704,10 @@ True * True
 -{not x}
 x < y in [y] in [[y]] != 2 > 1
 x < y < z < w
+\\[]
+\\[[]]
+\\[[], []]
+\\{a:b}
 """
 # _EXPRESSIONS = """
 

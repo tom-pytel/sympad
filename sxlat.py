@@ -105,8 +105,11 @@ def _xlat_f2a_Matrix (ast = AST.VarNull):
 	if ast.is_null_var:
 		return AST ('vec', ())
 
-	if ast.is_brack and ast.brack:
-		if not ast.brack [0].is_brack: # single layer or brackets, column matrix?
+	if ast.is_brack:
+		if not ast.brack:
+			return AST.MatEmpty
+
+		elif not ast.brack [0].is_brack: # single layer or brackets, column matrix?
 			return AST ('vec', ast.brack)
 
 		elif ast.brack [0].brack:
@@ -527,7 +530,6 @@ class sxlat: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# ast = AST ('and', (('<>', ('@', 'w'), (('>', ('@', 'z')),)), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z'))))))
-# 	ast = AST ('and', (('<>', ('@', 'w'), (('>', ('@', 'z')),)), ('<>', ('@', 'x'), (('<', ('@', 'y')),)), ('<>', ('@', 'y'), (('<', ('@', 'z')),))))
-# 	res = _xlat_f2a_And (*ast.and_)
+# 	ast = AST ('func', 'Matrix', (('[', ()),))
+# 	res = _xlat_f2a_Matrix (ast.args [0])
 # 	print (res)

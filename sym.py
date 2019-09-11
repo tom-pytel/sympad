@@ -391,7 +391,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'lamb' : lambda self, ast: f'\\left({self._ast2tex (ast.vars [0] if len (ast.vars) == 1 else AST ("(", (",", ast.vars)))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 		'idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^", "slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "-", "+", "*", "/", "lim", "sum", "diff", "intg", "piece", "||", "^^", "&&", "or", "and", "not"})}\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]',
 		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and a.op in {'=', ',', 'slice'}) for a in _ast_slice_bounds (ast, '')),
-		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex (c) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
+		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex_wrap (c, 0, c.is_slice) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex_wrap (k, 0, k.is_slice)}{{:}} {self._ast2tex_wrap (v, 0, v.is_slice)}" for k, v in ast.dict)} \\right\\}}',
 		'||'   : lambda self, ast: ' \\cup '.join (self._ast2tex_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', 'or', 'and', 'not'} or (a.is_piece and a is not ast.union [-1])) for a in ast.union),
 		'^^'   : lambda self, ast: ' \\ominus '.join (self._ast2tex_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', '||', 'or', 'and', 'not'} or (a.is_piece and a is not ast.sdiff [-1])) for a in ast.sdiff),
@@ -599,13 +599,13 @@ class ast2nat: # abstract syntax tree -> native text
 		'diff' : _ast2nat_diff,
 		'intg' : _ast2nat_intg,
 		'vec'  : lambda self, ast: f'\\[{", ".join (self._ast2nat_wrap (e, e.is_brack) for e in ast.vec)}]',
-		'mat'  : lambda self, ast: ('\\[' + ', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}]' for row in ast.mat) + ']') if ast.mat else 'Matrix([])',
+		'mat'  : lambda self, ast: ('\\[' + ', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}{_trail_comma (row)}]' for row in ast.mat) + ']') if ast.mat else '\\[]',
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "piece", "lamb"}, {",", "slice"})}' for p in ast.piece),
 		'lamb' : lambda self, ast: f'lambda{" " + ", ".join (v.var for v in ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.is_lamb, ast.lamb.op in {"=", "<>", "slice"})}',
 		'idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^", "slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "lim", "sum", "diff", "intg", "piece", "lamb", "||", "^^", "&&", "or", "and", "not"})}[{self._ast2nat (AST.tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
-		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat (c) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
+		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (c, 0, c.is_slice) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'dict' : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (k, 0, k.op in {"lamb", "slice"}) + f": {self._ast2nat_wrap (v, v.is_lamb, v.is_slice)}" for k, v in ast.dict)}}}',
 		'||'   : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', 'piece', 'lamb', 'or', 'and', 'not'}) for a in ast.union),
 		'^^'   : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', 'piece', 'lamb', '||', 'or', 'and', 'not'}) for a in ast.sdiff),
@@ -1352,8 +1352,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'w'))))
-# 	res = ast2spt (ast)
+# 	ast = AST ('func', 'Matrix', (('[', ()),))
+# 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

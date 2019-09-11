@@ -191,6 +191,10 @@ a*()!
 \frac12. and ()
 lambda: a or lambda: b
 {{a in b} * y} in z
+\[]
+\[[]]
+\[[], []]
+\{a:b}
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

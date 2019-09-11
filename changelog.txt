@@ -5,6 +5,7 @@ v1.0.8:
 * Added and expanded some function visual translations: summation(), .limit()/.diff()/.integrate() and more...
 * Changed lambdas to bind global variables on definition.
 * Cleaned up passing assignments as equations into functions.
+* Cleaned up internal handling if incomplete and empty matrices.
 
 v1.0.7:
 -------
