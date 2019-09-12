@@ -72,7 +72,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version) # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-	import sympy as sp   # AUTO_REMOVE_IN_SINGLE_SCRIPT
+	import sympy as sp
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT

@@ -385,6 +385,13 @@ def expr_and ():
 def expr_not ():
 	return f'{{not {expr (1)}}}'
 
+def expr_ufunc ():
+	name = choice (('', 'f', 'g', 'h'))
+	vars = choice (((), ('x',), ('x, y',), ('x, y, z',)))
+	kw   = choice (((), (), ('reals = False',), ('reals = False, commutative = False',)))
+
+	return f'{{?{name}({", ".join (vars + kw)})}}'
+
 #...............................................................................................
 EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
 

@@ -5,6 +5,7 @@ from ast import literal_eval
 from functools import reduce
 import re
 import sympy as sp
+from sympy.core.function import AppliedUndef as sp_AppliedUndef
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -385,7 +386,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'sum'  : _ast2tex_sum,
 		'diff' : _ast2tex_diff,
 		'intg' : _ast2tex_intg,
-		# 'vec'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in ast.vec) + ' \\end{bmatrix}',
+		# 'vec'  : None, # not currently used
 		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"slice"})}' for p in ast.piece) + ' \\end{cases}',
 		'lamb' : lambda self, ast: f'\\left({self._ast2tex (AST ("@", ast.vars [0]) if ast.vars.len == 1 else AST ("(", (",", tuple (("@", v) for v in ast.vars))))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
@@ -399,7 +400,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'or'   : lambda self, ast: ' \\vee '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', 'slice'} or (a.is_piece and a is not ast.or_ [-1])) for a in ast.or_),
 		'and'  : lambda self, ast: ' \\wedge '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', 'slice', 'or'} or (a.is_piece and a is not ast.and_ [-1])) for a in ast.and_),
 		'not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "slice", "or", "and"})}',
-		'ufunc': lambda self, ast: '(ufunc)',
+		'ufunc': lambda self, ast: f'\\operatorname{{?{ast.ufunc}}}\\left({", ".join (ast.vars + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
 
 		'text' : lambda self, ast: ast.tex,
 	}
@@ -608,7 +609,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'sum'  : _ast2nat_sum,
 		'diff' : _ast2nat_diff,
 		'intg' : _ast2nat_intg,
-		# 'vec'  : lambda self, ast: f'\\[{", ".join (self._ast2nat_wrap (e, e.is_brack) for e in ast.vec)}]',
+		# 'vec'  : None, # not currently used
 		'mat'  : _ast2nat_mat,
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "piece", "lamb"}, {",", "slice"})}' for p in ast.piece),
@@ -803,7 +804,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
 		'diff' : _ast2py_diff,
 		'intg' : _ast2py_intg,
-		# 'vec'  : lambda self, ast: 'Matrix([' + ', '.join (f'({self._ast2py (e)},)' if e.is_brack else f'{self._ast2py (e)}' for e in ast.vec) + '])',
+		# 'vec'  : None, # not currently used
 		'mat'  : _ast2py_mat,
 		'piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
 		'lamb' : lambda self, ast: f"""Lambda({ast.vars [0] if ast.vars.len == 1 else f'({", ".join (ast.vars)})'}, {self._ast2py (ast.lamb)})""",
@@ -817,7 +818,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'or'   : lambda self, ast: f'Or({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.or_)})',
 		'and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
 		'not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
-		'ufunc': lambda self, ast: '(ufunc)',
+		'ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})({", ".join (ast.vars)})',
 
 		'text' : lambda self, ast: ast.py,
 	}
@@ -1050,7 +1051,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'sum'  : lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
 		'diff' : _ast2spt_diff,
 		'intg' : _ast2spt_intg,
-		# 'vec'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e)] for e in ast.vec]),
+		# 'vec'  : None, # not currently used
 		'mat'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
 		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
 		'lamb' : _ast2spt_lamb,
@@ -1064,7 +1065,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'or'   : lambda self, ast: sp.Or (*(_sympify (self._ast2spt (a), sp.Or, bool) for a in ast.or_)),
 		'and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
-		'ufunc': lambda self, ast: sp.S.Zero,
+		'ufunc': lambda self, ast: sp.Function (f'{ast.ufunc}', **{k: self._ast2spt (a) for k, a in ast.kw}) (*(sp.Symbol (v) for v in ast.vars)),
 
 		'text' : lambda self, ast: ast.spt,
 	}
@@ -1313,6 +1314,8 @@ class spt2ast:
 		sp.Order: lambda self, spt: AST ('func', 'O', ((self._spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else self._spt2ast (spt.args)),)),
 		sp.Piecewise: lambda self, spt: AST ('piece', tuple ((self._spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else self._spt2ast (t [1])) for t in spt.args)),
 		sp.Subs: lambda self, spt: AST ('func', 'Subs', tuple (self._spt2ast (a) for a in spt.args) if len (spt.args [1]) > 1 else (self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1] [0]), self._spt2ast (spt.args [2] [0]))),
+
+		sp_AppliedUndef: lambda self, spt: AST ('ufunc', spt.name, tuple (a.name for a in spt.args), tuple ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ())), # i._explicit_class_assumptions.items ()))
 	}
 
 #...............................................................................................

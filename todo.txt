@@ -4,14 +4,14 @@
 > AST ('diff', expr) implicit without dvs
 > ' differential operator
 
-> func = something recognized as keyword assign?
-
 > semicolon evaluation separator
 
 > change lambda var specification to strings
 > change other not wanting to map var specification to strings
 
 > overhaul function keyword arguments
+
+> parse from python ln x / ln base -> \log_{base} x
 
 > underscores:
 > allow leading underscore for vars and funcs and leading \_ for tex
@@ -32,6 +32,8 @@
 > emptyset Unicode symbol
 > ProductSet?
 > ImageSet?
+
+> rewrite sqrt during autocomplete to show radix
 
 > formatting: no spacing for nums - 3 x -> 3x?
 > formatting: quick mode no spacing for vars x y z -> xyz?
