@@ -92,12 +92,12 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_VARS         = {_VAR_LAST: AST.Zero} # This also!
 
 	_ONE_FUNCS    = OrderedDict ([
-		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), (('@', 'x'),))),
-		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), (('@', 'x'),))),
-		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), (('@', 'x'),))),
-		('gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
-		('Gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), (('@', 'z'),))),
-		('zeta',  AST ('lamb', ('func', '$zeta', (('@', 'z'),)), (('@', 'z'),))),
+		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), ('x',))),
+		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), ('x',))),
+		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), ('x',))),
+		('gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), ('z',))),
+		('Gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), ('z',))),
+		('zeta',  AST ('lamb', ('func', '$zeta', (('@', 'z'),)), ('z',))),
 	])
 
 #...............................................................................................
