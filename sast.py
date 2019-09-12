@@ -189,7 +189,7 @@ class AST (tuple):
 
 		return self
 
-	def as_identifier (self, top = True):
+	def as_identifier (self, recursed = False):
 		if self.op in {'#', '@', '"'}:
 			name = self [1]
 		elif not self.is_mul:
@@ -197,11 +197,11 @@ class AST (tuple):
 
 		else:
 			try:
-				name = ''.join (m.as_identifier () for m in self.mul)
+				name = ''.join (m.as_identifier (True) for m in self.mul)
 			except TypeError:
 				return None
 
-		return name if AST._rec_identifier.match (name) else None
+		return name if recursed or AST._rec_identifier.match (name) else None
 
 	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):

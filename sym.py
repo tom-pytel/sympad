@@ -399,6 +399,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'or'   : lambda self, ast: ' \\vee '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', 'slice'} or (a.is_piece and a is not ast.or_ [-1])) for a in ast.or_),
 		'and'  : lambda self, ast: ' \\wedge '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', 'slice', 'or'} or (a.is_piece and a is not ast.and_ [-1])) for a in ast.and_),
 		'not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "slice", "or", "and"})}',
+		'ufunc': lambda self, ast: '(ufunc)',
 
 		'text' : lambda self, ast: ast.tex,
 	}
@@ -622,6 +623,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'or'   : lambda self, ast: ' or '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'slice', 'piece', 'lamb'}) for a in ast.or_),
 		'and'  : lambda self, ast: ' and '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', 'slice', 'piece', 'lamb', 'or'}) for a in ast.and_),
 		'not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "slice", "piece", "lamb", "or", "and"})}',
+		'ufunc': lambda self, ast: f'?{ast.ufunc}({", ".join (ast.vars + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
 
 		'text' : lambda self, ast: ast.nat,
 	}
@@ -815,6 +817,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'or'   : lambda self, ast: f'Or({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.or_)})',
 		'and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
 		'not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
+		'ufunc': lambda self, ast: '(ufunc)',
 
 		'text' : lambda self, ast: ast.py,
 	}
@@ -1061,6 +1064,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'or'   : lambda self, ast: sp.Or (*(_sympify (self._ast2spt (a), sp.Or, bool) for a in ast.or_)),
 		'and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
+		'ufunc': lambda self, ast: sp.S.Zero,
 
 		'text' : lambda self, ast: ast.spt,
 	}

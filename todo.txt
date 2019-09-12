@@ -4,6 +4,8 @@
 > AST ('diff', expr) implicit without dvs
 > ' differential operator
 
+> func = something recognized as keyword assign?
+
 > semicolon evaluation separator
 
 > change lambda var specification to strings
