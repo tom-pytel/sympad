@@ -1,5 +1,3 @@
-> sqrt start autocomplete error
-
 > ODE:
 > undefined functions (AppliedUndef), Function ('f') (), Function ('f') (x), Function ('f') (x, y)
 > AST ('diff', ...) and int dvs -> vars instead of dvars
