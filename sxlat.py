@@ -96,7 +96,7 @@ def _xlat_f2a_Lambda (args, expr):
 	args = args.strip_paren
 	args = args.comma if args.is_comma else (args,)
 
-	return AST ('lamb', expr, args)
+	return AST ('lamb', expr, tuple (c.var for c in args))
 
 def _xlat_f2a_Pow (ast = AST.VarNull, exp = AST.VarNull):
 	return AST ('^', ast, exp)

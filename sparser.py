@@ -74,23 +74,23 @@ def _expr_comma (lhs, rhs):
 
 	if lhs.is_mul:
 		if lhs.mul.len == 2 and lhs.mul [0].is_var_lambda and lhs.mul [1].is_var:
-			return AST ('lamb', rhs.stop, (lhs.mul [1], rhs.start))
+			return AST ('lamb', rhs.stop, (lhs.mul [1].var, rhs.start.var))
 
 	elif lhs.is_ass:
 		if lhs.rhs.is_mul and lhs.rhs.mul.len == 2 and lhs.rhs.mul [0].is_var_lambda and lhs.rhs.mul [1].is_var:
-			return AST ('=', lhs.lhs, ('lamb', rhs.stop, (lhs.rhs.mul [1], rhs.start)))
+			return AST ('=', lhs.lhs, ('lamb', rhs.stop, (lhs.rhs.mul [1].var, rhs.start.var)))
 
 	elif lhs.is_comma:
 		for i in range (lhs.comma.len - 1, -1, -1):
 			if lhs.comma [i].is_mul:
 				if lhs.comma [i].mul.len == 2 and lhs.comma [i].mul [0].is_var_lambda and lhs.comma [i].mul [1].is_var:
-					ast = AST ('lamb', rhs.stop, (lhs.comma [i].mul [1], *lhs.comma [i + 1:], rhs.start))
+					ast = AST ('lamb', rhs.stop, (lhs.comma [i].mul [1].var, *(c.var for c in lhs.comma [i + 1:]), rhs.start.var))
 
 					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
 
 			elif lhs.comma [i].is_ass:
 				if lhs.comma [i].rhs.is_mul and lhs.comma [i].rhs.mul.len == 2 and lhs.comma [i].rhs.mul [0].is_var_lambda and lhs.comma [i].rhs.mul [1].is_var:
-					ast = AST ('=', lhs.comma [i].lhs, ('lamb', rhs.stop, (lhs.comma [i].rhs.mul [1], *lhs.comma [i + 1:], rhs.start)))
+					ast = AST ('=', lhs.comma [i].lhs, ('lamb', rhs.stop, (lhs.comma [i].rhs.mul [1].var, *(c.var for c in lhs.comma [i + 1:]), rhs.start.var)))
 
 					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
 
@@ -111,20 +111,20 @@ def _expr_colon (lhs, rhs):
 
 	elif l.is_mul:
 		if l.mul.len == 2 and l.mul [0].is_var_lambda and l.mul [1].is_var:
-			return wrap_ass (AST ('lamb', rhs, (l.mul [1],)))
+			return wrap_ass (AST ('lamb', rhs, (l.mul [1].var,)))
 
 	return _ast_pre_slice (lhs, rhs)
 
 def _expr_mapsto (args, lamb):
 	if args.is_var:
-		return AST ('lamb', lamb, (args,))
+		return AST ('lamb', lamb, (args.var,))
 
 	elif args.is_comma:
 		for var in args.comma:
 			if not var.is_var:
 				break
 		else:
-			return AST ('lamb', lamb, args.comma)
+			return AST ('lamb', lamb, tuple (c.var for c in args.comma))
 
 	raise SyntaxError ('invalid lambda function')
 

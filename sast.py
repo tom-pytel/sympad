@@ -304,7 +304,7 @@ class AST (tuple):
 				if ast.args.len != lamb.vars.len:
 					raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
-				args = dict (zip ((v.var for v in lamb.vars), ast.args))
+				args = dict (zip (lamb.vars, ast.args))
 
 				return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
 
