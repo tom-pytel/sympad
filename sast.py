@@ -282,21 +282,21 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
-	def remap_vars (ast, vars, recurse = True):
-		if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
+	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
+		if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
 			return ast
 
-		if ast.is_lamb:
+		if ast.is_lamb: # lambda definition
 			lvars = set (ast.vars)
 			vars  = dict (kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ()))
 
-		elif ast.is_var:
+		elif ast.is_var: # regular var substitution?
 			var = vars.get (ast.var)
 
 			if var: # user var
-				return var if var.is_lamb or not recurse else AST.remap_vars (var, vars)
+				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars)
 
-		elif ast.is_func:
+		elif ast.is_func: # function, might be user lambda call
 			lamb = vars.get (ast.func)
 
 			if lamb and lamb.is_lamb: # 'execute' user lambda
@@ -305,14 +305,14 @@ class AST (tuple):
 
 				args = dict (zip ((v.var for v in lamb.vars), ast.args))
 
-				return AST.remap_vars (AST.remap_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
+				return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
 
 			return AST ('func', ast.func,
-					tuple (('(', AST.remap_vars (a, vars, recurse))
+					tuple (('(', AST.apply_vars (a, vars, recurse))
 					if (a.is_var and vars.get (a.var, AST.VarNull).is_ass)
-					else AST.remap_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+					else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
-		return AST (*(AST.remap_vars (a, vars, recurse) for a in ast))
+		return AST (*(AST.apply_vars (a, vars, recurse) for a in ast))
 
 	@staticmethod
 	def register_AST (cls):

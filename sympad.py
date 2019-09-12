@@ -2259,7 +2259,7 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
-	def remap_vars (ast, vars, recurse = True):
+	def apply_vars (ast, vars, recurse = True):
 		if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, lambda definition or stop remap
 			return ast
 
@@ -2271,7 +2271,7 @@ class AST (tuple):
 			var = vars.get (ast.var)
 
 			if var: # user var
-				return var if var.is_lamb or not recurse else AST.remap_vars (var, vars)
+				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars)
 
 		elif ast.is_func:
 			lamb = vars.get (ast.func)
@@ -2282,14 +2282,14 @@ class AST (tuple):
 
 				args = dict (zip ((v.var for v in lamb.vars), ast.args))
 
-				return AST.remap_vars (AST.remap_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
+				return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
 
 			return AST ('func', ast.func,
-					tuple (('(', AST.remap_vars (a, vars, recurse))
+					tuple (('(', AST.apply_vars (a, vars, recurse))
 					if (a.is_var and vars.get (a.var, AST.VarNull).is_ass)
-					else AST.remap_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+					else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
-		return AST (*(AST.remap_vars (a, vars, recurse) for a in ast))
+		return AST (*(AST.apply_vars (a, vars, recurse) for a in ast))
 
 	@staticmethod
 	def register_AST (cls):
@@ -6600,12 +6600,12 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 			if AST ('@', var) in AST.CONSTS:
 				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
 
-	return AST.remap_vars (ast, _VARS), vars
+	return AST.apply_vars (ast, _VARS), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def _set_vars (vars):
 		try: # check for circular references
-			AST.remap_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
+			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
 		except RecursionError:
 			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
 
@@ -6882,7 +6882,7 @@ class Handler (SimpleHTTPRequestHandler):
 			ast, _, _  = _PARSER.parse (request ['text'])
 
 			if ast.is_func and ast.func in {'plotf', 'plotv', 'plotw'}: # plotting?
-				args, kw = AST.args2kwargs (AST.remap_vars (ast.args, _VARS), sym.ast2spt)
+				args, kw = AST.args2kwargs (AST.apply_vars (ast.args, _VARS), sym.ast2spt)
 				ret      = getattr (splot, ast.func) (*args, **kw)
 
 				return {'msg': ['Plotting not available because matplotlib is not installed.']} if ret is None else {'img': ret}
@@ -7040,7 +7040,7 @@ def parent ():
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	vars = {'f': AST ('lamb', ('@', 'x'), (('@', 'x'),)), 'g': AST ('lamb', ('func', 'f', (('@', 'x'),)), (('@', 'x'),))}
 # 	ast = AST ('func', 'g', (('#', '1'),))
-# 	res = AST.remap_vars (ast, vars)
+# 	res = AST.apply_vars (ast, vars)
 # 	print (res)
 # 	sys.exit (0)
 

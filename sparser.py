@@ -786,8 +786,8 @@ class Parser (lalr1.LALR1):
 	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                        return _expr_mul_imp (expr_mul_imp, expr_intg, self._USER_FUNCS)
 	def expr_mul_imp_2     (self, expr_intg):                                      return expr_intg
 
-	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):           return _expr_intg (expr_add, (expr_sub, expr_super))
-	def expr_intg_2        (self, INTG, expr_add):                                 return _expr_intg (expr_add)
+	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):           return _expr_intg (_expr_mul (expr_add), (expr_sub, expr_super))
+	def expr_intg_2        (self, INTG, expr_add):                                 return _expr_intg (_expr_mul (expr_add))
 	def expr_intg_3        (self, expr_lim):                                       return expr_lim
 
 	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('lim', _expr_mul (expr_neg), expr_var, expr)
@@ -1100,15 +1100,15 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
-	# p.set_user_funcs ({'f': 1})
-	# a = p.parse (r'x - {1 * 2}')
-	# a = p.parse (r'x - {{1 * 2} * 3}')
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
+# 	# p.set_user_funcs ({'f': 1})
+# 	# a = p.parse (r'x - {1 * 2}')
+# 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-	a = p.parse ('{-x} y / z')
-	print (a)
+# 	a = p.parse ('\int x / --1 dx')
+# 	print (a)
 
-	# a = sym.ast2spt (a)
-	# print (a)
+# 	# a = sym.ast2spt (a)
+# 	# print (a)
