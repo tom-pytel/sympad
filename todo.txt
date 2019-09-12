@@ -1,4 +1,4 @@
-> ODE:
+> ODEs:
 > undefined functions (AppliedUndef), Function ('f') (), Function ('f') (x), Function ('f') (x, y)
 > AST ('diff', ...) and int dvs -> vars instead of dvars
 > AST ('diff', expr) implicit without dvs
@@ -6,8 +6,14 @@
 
 > semicolon evaluation separator
 
-> UNDERSCORES:
+> change lambda var specification to strings
+> change other not wanting to map var specification to strings
+
+> overhaul function keyword arguments
+
+> underscores:
 > allow leading underscore for vars and funcs and leading \_ for tex
+> clean up sparser TOKENS and centralize repeated patterns
 > display subscripts
 > parse subscripts
 
@@ -32,7 +38,6 @@
 > var assumptions (using @ character?)
 
 > floor / ceiling
-
 
 > SYM.PY REFACTOR!
 

@@ -1192,7 +1192,7 @@ class spt2ast:
 		except:
 			return AST ('^', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1]))
 
-	def _spt2ast_Function (self, spt, name = None, args = None, kws = None):
+	def _spt2ast_Function (self, spt, name = None, args = None, kw = None):
 		if name is None:
 			name = spt.__class__.__name__
 
@@ -1202,8 +1202,8 @@ class spt2ast:
 		if args is None:
 			args = spt.args
 
-		if kws:
-			return AST ('func', name, tuple (self._spt2ast (arg) for arg in spt.args) + tuple (AST ('=', ('@', kw), a) for kw, a in kws))
+		if kw:
+			return AST ('func', name, tuple (self._spt2ast (arg) for arg in spt.args) + tuple (AST ('=', ('@', kw), a) for kw, a in kw))
 		else:
 			return AST ('func', name, tuple (self._spt2ast (arg) for arg in spt.args))
 
@@ -1280,7 +1280,7 @@ class spt2ast:
 
 		sp.matrices.MatrixBase: _spt2ast_MatrixBase,
 
-		sp.Poly: lambda self, spt: self._spt2ast_Function (spt, args = spt.args + spt.gens, kws = (('domain', AST ('"', str (spt.domain))),)),
+		sp.Poly: lambda self, spt: self._spt2ast_Function (spt, args = spt.args + spt.gens, kw = (('domain', AST ('"', str (spt.domain))),)),
 
 		sp.Add: _spt2ast_Add,
 		sp.Mul: _spt2ast_Mul,

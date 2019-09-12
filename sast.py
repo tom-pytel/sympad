@@ -43,6 +43,7 @@
 # ('or', (expr1, expr2, ...))                      - Python or
 # ('and', (expr1, expr2, ...))                     - Python and
 # ('not', expr)                                    - Python not
+# ('ufunc', 'name', ('v1', ...), (('kw1', a1), ...)) - undefined function with keyword arguments
 
 from collections import OrderedDict
 import re
@@ -646,13 +647,13 @@ class AST_Union (AST):
 	def _init (self, union):
 		self.union = union
 
-class AST_Sdiff (AST): # symmetric difference
+class AST_SDiff (AST): # symmetric difference
 	op, is_sdiff = '^^', True
 
 	def _init (self, sdiff):
 		self.sdiff = sdiff
 
-class AST_Xsect (AST): # intersection
+class AST_XSect (AST): # intersection
 	op, is_xsect = '&&', True
 
 	def _init (self, xsect):
@@ -676,11 +677,17 @@ class AST_Not (AST):
 	def _init (self, not_):
 		self.not_ = not_
 
+class AST_UFunc (AST):
+	op, is_ufunc = 'ufunc', True
+
+	def _init (self, ufunc, vars, kw):
+		self.ufunc, self.vars, self.kw = ufunc, vars, kw
+
 #...............................................................................................
 _AST_CLASSES = [AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
 	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
 	AST_Diff, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
-	AST_Union, AST_Sdiff, AST_Xsect, AST_Or, AST_And, AST_Not]
+	AST_Union, AST_SDiff, AST_XSect, AST_Or, AST_And, AST_Not, AST_UFunc]
 
 for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)
