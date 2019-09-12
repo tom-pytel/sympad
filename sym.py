@@ -494,7 +494,7 @@ class ast2nat: # abstract syntax tree -> native text
 					n.op in {'/', 'diff'} or p.strip_minus.op in {'/', 'diff'} or \
 					n.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
-					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var)) or \
+					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var or (p.is_pow and p.exp.is_attr_var))) or \
 					(n.is_pow and (n.base.is_num_pos or n.base.is_brack)) or \
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
 					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren.is_comma)) or \
