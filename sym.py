@@ -1305,7 +1305,7 @@ class spt2ast:
 		sp.Derivative: _spt2ast_Derivative,
 		sp.Integral: _spt2ast_Integral,
 
-		sp.Lambda: lambda self, spt: AST ('lamb', self._spt2ast (spt.args [1]), tuple (str (v) for v in spt.args [0])),
+		sp.Lambda: lambda self, spt: AST ('lamb', self._spt2ast (spt.args [1]), tuple (v.name for v in spt.args [0])),
 		sp.Order: lambda self, spt: AST ('func', 'O', ((self._spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else self._spt2ast (spt.args)),)),
 		sp.Piecewise: lambda self, spt: AST ('piece', tuple ((self._spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else self._spt2ast (t [1])) for t in spt.args)),
 		sp.Subs: lambda self, spt: AST ('func', 'Subs', tuple (self._spt2ast (a) for a in spt.args) if len (spt.args [1]) > 1 else (self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1] [0]), self._spt2ast (spt.args [2] [0]))),
