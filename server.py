@@ -90,6 +90,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS         = {_VAR_LAST: AST.Zero} # This also!
+	_UFUNCS2VARS  = {} # Yup...
 
 	_ONE_FUNCS    = OrderedDict ([
 		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), ('x',))),
@@ -106,8 +107,16 @@ class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
 def _update_vars ():
+	_UFUNCS2VARS.clear ()
+
 	one_funcs  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
-	user_funcs = dict (va for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
+	user_funcs = {} # dict (va for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
+
+	for var, ast in _VARS.items ():
+		if ast.is_ufunc:
+			_UFUNCS2VARS [ast] = AST ('@', var)
+		elif ast.is_lamb and var != _VAR_LAST:
+			user_funcs [var] = ast
 
 	user_funcs.update (one_funcs)
 
@@ -183,7 +192,7 @@ def _admin_vars (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
-		if v != _VAR_LAST and not e.is_lamb:
+		if v != _VAR_LAST and not e.is_lamb and not e.is_ufunc:
 			asts.append (AST ('=', ('@', v), e))
 
 	if not asts:
@@ -195,7 +204,7 @@ def _admin_funcs (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
-		if v != _VAR_LAST and e.is_lamb:
+		if v != _VAR_LAST and (e.is_lamb or e.is_ufunc):
 			asts.append (AST ('=', ('@', v), e))
 
 	if not asts:
@@ -443,6 +452,9 @@ class Handler (SimpleHTTPRequestHandler):
 
 				spt = sym.ast2spt (ast, _VARS)
 				ast = sym.spt2ast (spt)
+
+				if ast not in _UFUNCS2VARS: # map unnamed functions back to their variables but only below top level
+					ast = AST.remap (ast, _UFUNCS2VARS)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
 					import sympy as sp

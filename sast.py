@@ -283,6 +283,18 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
+	def remap (ast, map, recurse = False): # remapping of arbitrary ASTs
+		if not isinstance (ast, AST):
+			return ast
+
+		mapped = map.get (ast)
+
+		if mapped:
+			return AST.remap (mapped, map, recurse) if recurse else mapped
+
+		return AST (*(AST.remap (a, map, recurse) for a in ast))
+
+	@staticmethod
 	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
 		if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
 			return ast
@@ -295,7 +307,7 @@ class AST (tuple):
 			var = vars.get (ast.var)
 
 			if var: # user var
-				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars)
+				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse)
 
 		elif ast.is_func: # function, might be user lambda call
 			lamb = vars.get (ast.func)
