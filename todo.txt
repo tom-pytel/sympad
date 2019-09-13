@@ -1,15 +1,19 @@
+> Function('')(x, y, z) -> Function('') * (x, y, z)
+> ufunc 'slice'
+> sort kwargs for reverse-mapping of ufuncs to vars
+
 > ufunction of same name seems to get kwargs stuck in SymPy
 
 > ODE:
-> undefined functions (AppliedUndef), Function ('f') (), Function ('f') (x), Function ('f') (x, y)
 > AST ('diff', ...) and int dvs -> vars instead of dvars
 > AST ('diff', expr) implicit without dvs
 > ' differential operator
 
+> remove _expr_mul and other negative manipulations and change test_sym instead!
+
 > semicolon evaluation separator
 
-> change lambda var specification to strings
-> change other not wanting to map var specification to strings
+> change other not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 > overhaul function keyword arguments
 
@@ -99,3 +103,14 @@ Slow Parse:
 
 Errors:
 
+
+text:   \sum_{x = {({?g(x)})}}^{?h()} {\[[0 [1e+100],{},],[{1e-100*2*2},\fracb\partialy,],[{.1  -1},(.1),],]+{{\infty zoo||partialx}&&{1e-100+\partialy}&&{\emptyset  1.0}}+\[lambda: 1,]} <= \lim_{x \to {not \emptyset >= 1}} \sum_{x = \left|1.\right|}^{partial \cdot \partialy \cdot .1} {\partial &&0&&1e100} : lambda x, y: {?(reals = False, commutative = False)} : {\sum_{x = {"str" and 0 and \partialx}}^1e-100 : None \int_b^dz a dx*-{?h(x, reals = False)}*{?f(x, y, reals = False)} : partial**\partialy}
+textpy: (slice(Le(Sum(Matrix([[0[1e+100], {}], [1e-100*2*2, b/partial*y], [0.1 - 1, (0.1)]]) + Intersection(Union(oo*zoo, partialx), 1e-100 + partialy, FiniteSet()*1.0) + Matrix([Lambda((), 1)]), (x, (Function('g')(x)), Function('h')())), Limit(Sum(Intersection(partial, 0, 1e+100), (x, abs(1.), partial*partialy*0.1)), x, Not(Ge(FiniteSet(), 1)), dir='+-')), lambda*x), slice(y, Function('', reals = False, commutative = False)(), (slice(Sum(e, (x, And('str', 0, partialx), 1)) - 100, None*Integral(z*a, (x, b, d))*-Function('h', reals = False)(x)*Function('f', reals = False)(x, y), partial**partialy))))
+ast:    (',', (('func', 'slice', (('func', 'Le', (('func', 'Sum', (('+', (('func', 'Matrix', (('[', (('[', (('idx', ('#', '0'), (('#', '1e+100'),)), ('dict', ()))), ('[', (('*', (('#', '1e-100'), ('#', '2'), ('#', '2'))), ('*', (('/', ('@', 'b'), ('@', 'partial')), ('@', 'y'))))), ('[', (('+', (('#', '0.1'), ('#', '-1'))), ('#', '0.1'))))),)), ('func', 'Intersection', (('func', 'Union', (('*', (('@', 'oo'), ('@', 'zoo'))), ('@', 'dx'))), ('+', (('#', '1e-100'), ('@', 'dy'))), ('*', (('func', 'FiniteSet', ()), ('#', '1.0'))))), ('func', 'Matrix', (('[', (('func', 'Lambda', ((',', ()), ('#', '1'))),)),)))), (',', (('@', 'x'), ('*', (('func', 'Function', (('"', 'g'),)), ('@', 'x'))), ('*', (('func', 'Function', (('"', 'h'),)), (',', ()))))))), ('func', 'Limit', (('func', 'Sum', (('func', 'Intersection', (('@', 'partial'), ('#', '0'), ('#', '1e+100'))), (',', (('@', 'x'), ('func', 'abs', (('#', '1.'),)), ('*', (('@', 'partial'), ('@', 'dy'), ('#', '0.1'))))))), ('@', 'x'), ('func', 'Not', (('func', 'Ge', (('func', 'FiniteSet', ()), ('#', '1'))),)), ('=', ('@', 'dir'), ('"', '+-')))))), ('*', (('@', 'lambda'), ('@', 'x'))))), ('func', 'slice', (('@', 'y'), ('*', (('func', 'Function', (('"', ''), ('=', ('@', 'reals'), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))), (',', ()))), ('func', 'slice', (('+', (('func', 'Sum', (('@', 'e'), (',', (('@', 'x'), ('func', 'And', (('"', 'str'), ('#', '0'), ('@', 'dx'))), ('#', '1'))))), ('#', '-100'))), ('*', (('@', 'None'), ('func', 'Integral', (('*', (('@', 'z'), ('@', 'a'))), (',', (('@', 'x'), ('@', 'b'), ('@', 'd'))))), ('-', ('*', (('func', 'Function', (('"', 'h'), ('=', ('@', 'reals'), ('@', 'False')))), ('@', 'x')))), ('func', 'Function', (('"', 'f'), ('=', ('@', 'reals'), ('@', 'False')))), (',', (('@', 'x'), ('@', 'y'))))), ('^', ('@', 'partial'), ('@', 'dy'))))))))
+py:     (',', (('func', 'slice', (('func', 'Le', (('func', 'Sum', (('+', (('func', 'Matrix', (('[', (('[', (('idx', ('#', '0'), (('#', '1e+100'),)), ('dict', ()))), ('[', (('*', (('#', '1e-100'), ('#', '2'), ('#', '2'))), ('*', (('/', ('@', 'b'), ('@', 'partial')), ('@', 'y'))))), ('[', (('+', (('#', '0.1'), ('#', '-1'))), ('#', '0.1'))))),)), ('func', 'Intersection', (('func', 'Union', (('*', (('@', 'oo'), ('@', 'zoo'))), ('@', 'dx'))), ('+', (('#', '1e-100'), ('@', 'dy'))), ('*', (('func', 'FiniteSet', ()), ('#', '1.0'))))), ('func', 'Matrix', (('[', (('func', 'Lambda', ((',', ()), ('#', '1'))),)),)))), (',', (('@', 'x'), ('*', (('func', 'Function', (('"', 'g'),)), ('@', 'x'))), ('*', (('func', 'Function', (('"', 'h'),)), (',', ()))))))), ('func', 'Limit', (('func', 'Sum', (('func', 'Intersection', (('@', 'partial'), ('#', '0'), ('#', '1e+100'))), (',', (('@', 'x'), ('func', 'abs', (('#', '1.'),)), ('*', (('@', 'partial'), ('@', 'dy'), ('#', '0.1'))))))), ('@', 'x'), ('func', 'Not', (('func', 'Ge', (('func', 'FiniteSet', ()), ('#', '1'))),)), ('=', ('@', 'dir'), ('"', '+-')))))), ('*', (('@', 'lambda'), ('@', 'x'))))), ('func', 'slice', (('@', 'y'), ('*', (('func', 'Function', (('"', ''), ('=', ('@', 'reals'), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))), (',', ()))), ('func', 'slice', (('+', (('func', 'Sum', (('@', 'e'), (',', (('@', 'x'), ('func', 'And', (('"', 'str'), ('#', '0'), ('@', 'dx'))), ('#', '1'))))), ('#', '-100'))), ('*', (('@', 'None'), ('func', 'Integral', (('*', (('@', 'z'), ('@', 'a'))), (',', (('@', 'x'), ('@', 'b'), ('@', 'd'))))), ('-', ('func', 'Function', (('"', 'h'), ('=', ('@', 'reals'), ('@', 'False'))))), ('@', 'x'), ('func', 'Function', (('"', 'f'), ('=', ('@', 'reals'), ('@', 'False')))), (',', (('@', 'x'), ('@', 'y'))))), ('^', ('@', 'partial'), ('@', 'dy'))))))))
+
+
+text:   {[]*-{?(x, y, reals = False, commutative = False)}}
+textpy: []*-Function('', reals = False, commutative = False)(x, y)
+ast:    ('*', (('[', ()), ('-', ('*', (('func', 'Function', (('"', ''), ('=', ('@', 'reals'), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))), (',', (('@', 'x'), ('@', 'y'))))))))
+py:     ('*', (('[', ()), ('-', ('func', 'Function', (('"', ''), ('=', ('@', 'reals'), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False'))))), (',', (('@', 'x'), ('@', 'y')))))
