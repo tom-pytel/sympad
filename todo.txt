@@ -1,15 +1,17 @@
-> document undefined functions
+> remove _expr_mul and other negative manipulations and change test_sym instead!
+> push negation into implicit multiplication?
 
-> sxlat diff(), Derivative(), etc... to ' differential operator
+> 4'
+
+> document undefined functions
 
 > AST ('diff', ...) dvs -> vars instead of dvars
 
 > ufunction of same name seems to get kwargs stuck in SymPy
 
-> remove _expr_mul and other negative manipulations and change test_sym instead!
-> push negation into implicit multiplication.
-
 > semicolon evaluation separator
+
+> index support testing on indexing with symbol "1 [x]"
 
 > change other not wanting to map var specification to strings (diff dvs, int dv, ...)
 
@@ -102,3 +104,9 @@ Slow Parse:
 Errors:
 
 
+text:   {-{{{{1e100}''}*{\frac{1.0}{c}}*{{partialx}!}}}}
+ast:    ('-', ('diffp', ('*', (('#', '1e+100'), ('/', ('#', '1.0'), ('@', 'c')), ('!', ('@', 'dx')))), 2))
+tex:    ('diffp', ('-', ('*', (('#', '1e+100'), ('/', ('#', '1.0'), ('@', 'c')), ('!', ('@', 'dx'))))), 2)
+nat:    ('diffp', ('-', ('*', (('#', '1e+100'), ('/', ('#', '1.0'), ('@', 'c')), ('!', ('@', 'dx'))))), 2)
+
+-{{{{1e100}''}*{\frac{1.0}{c}}*{{partialx}!}}}

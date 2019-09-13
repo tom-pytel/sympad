@@ -182,10 +182,14 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 	ds = []
 
 	if not dvs:
-		vars = ast.free_vars
+		# vars = ast.free_vars
 
-		if len (vars) == 1:
-			ds = [AST ('@', f'd{vars.pop ().var}')]
+		# if len (vars) == 1:
+		# 	ds = [AST ('@', f'd{vars.pop ().var}')]
+		if ast.is_diffp:
+			return AST ('diffp', ast.diffp, ast.count + 1)
+		else:
+			return AST ('diffp', ast, 1)
 
 	else:
 		dvs = list (dvs [::-1])

@@ -211,6 +211,16 @@ a**b.c {x * y}!
 \lim_{x \to a = {lambda: c}} b
 ?f (x, y, real = True)
 Function ('f', real = True) (x, y)
+a [b]'
+a.b ()'
+{x/y}'
+1'['ac']
+|x|'
+|'str'|'
+{x**y}'
+{{-1}'}
+{a [b]}''
+1.'''
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
@@ -319,6 +329,9 @@ def expr_diff ():
 			f'{d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr (_ALLOW_LAMB)}'
 			# if random () >= 0.5 else \
 			# f'Derivative ({expr (_ALLOW_LAMB)}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
+
+def expr_diffp ():
+	return f"""{expr (1)}{"'" * randrange (1, 4)}"""
 
 def expr_intg ():
 	return \

@@ -44,7 +44,9 @@ def _ast_func_tuple_args (ast):
 def _ast_func_reorder (ast):
 	wrap2 = None
 
-	if ast.is_fact:
+	if ast.is_diffp:
+		ast2, wrap2 = ast.diffp, lambda a, count = ast.count: AST ('diffp', a, count)
+	elif ast.is_fact:
 		ast2, wrap2 = ast.fact, lambda a: AST ('!', a)
 	elif ast.is_pow:
 		ast2, wrap2 = ast.base, lambda a: AST ('^', a, ast.exp)
@@ -145,7 +147,7 @@ def _expr_cmp (lhs, CMP, rhs):
 def _expr_mul (expr): # ONLY FOR CONSISTENCY! pull negative(s) out of first term of nested curly/multiplication
 	mcs = lambda ast: ast
 	ast = expr
-	mul = False
+	do  = False
 
 	while 1:
 		if ast.is_curly:
@@ -155,9 +157,9 @@ def _expr_mul (expr): # ONLY FOR CONSISTENCY! pull negative(s) out of first term
 			continue
 
 		elif ast.is_mul or ast.is_mulexp:
-			mcs = lambda ast, mcs = mcs, op = ast.op, mul = ast.mul: mcs (AST (op, (ast,) + mul [1:]))
+			mcs = lambda ast, mcs = mcs, op = ast.op, do = ast.mul: mcs (AST (op, (ast,) + do [1:]))
 			ast = ast.mul [0]
-			mul = True
+			do  = True
 
 			continue
 
@@ -167,13 +169,20 @@ def _expr_mul (expr): # ONLY FOR CONSISTENCY! pull negative(s) out of first term
 
 			continue
 
+		elif ast.is_diffp:
+			mcs = lambda ast, mcs = mcs, count = ast.count: AST ('diffp', mcs (ast), count)
+			ast = ast.diffp
+			do  = True
+
+			continue
+
 		elif ast.is_num_neg:
-			if mul:
+			if do:
 				return AST ('-', mcs (ast.neg ()))
 
 		break
 
-	if mul:
+	if do:
 		return mcs (ast)
 
 	return expr
@@ -608,7 +617,7 @@ class Parser (lalr1.LALR1):
 			b'sa2xFWrA7Rte39zdIV1/N6VAuq3TG8taILjSXeJBtWTd9MbptEBYE3CiBym2ToosbH6muciDXCB3tZbsIMu7cm2xfawxYCqjWuP/EQJsc8aHMuBerKbBqnRGtald7Yh1aM+r2+F6CR76ZvkBHuSrbpgeYZ3V6vtwfVRcG4XlsW6K5kGUB6y5e0gHFUTB1fzB' \
 			b'F4RqHtRBBbFuduUuCkK3KwvDLi0Q3dz/ASx6y0hUMIXFA0s6HydQNm5p+Zhm1QGrgtbec5tj//OolNbNlzzIUnLNgz2ojDau7XhIZdQ3D/agMlo363Hu62/grQnrD3ozQvzflkoh0Wny4jKJsyih9KDyP8kVK8cr/7Y564PWeq7zPzn7MnfNWR9U5usnRM66' \
 			b'zLvmrA8q8/WTLmdd5n1z1geV+fr5nbMu86E564PK3DSvdQuL2XbkcuI7fCGA0d9BAOgUA+HdV9wV8EM0WSu85iEGGGFgzR6YYeDtK4rT7cuxfUml/xR7mMSG0sQ7fLlm/4pdqO1OvjUE6waFewKTlZTqlKxLoR7ha1rgbnxnWXxXGb0jLLwfrBPvBfO1xZKi' \
-			b'fNTX2TvTQAhlURx45PgoqKoDVUWe0vPBr/EtcTtcHAWvJ9PUKr1cr9Gyg9Pjlq02ysDbCf39vrWpnmPa+DIUUjrsqasclKbiPjtsq+lTwRCqAbCzHof0Ps4P1/8LnPzZLA==' 
+			b'fNTX2TvTQAhlURx45PgoqKoDVUWe0vPBr/EtcTtcHAWvJ9PUKr1cr9Gyg9Pjlq02ysDbCf39vrWpnmPa+DIUUjrsqasclKbiPjtsq+lTwRCqAbCzHof0Ps4P1/8LnPzZLA=='
 
 	_PARSER_TOP             = 'expr_commas'
 	_PARSER_CONFLICT_REDUCE = {'BAR'}
@@ -689,7 +698,7 @@ class Parser (lalr1.LALR1):
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))"),
 		('ATTR',         fr'\.\s*(?:({_LTRU}\w*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
-		('STR',          fr"((?<!{_LTRU}|[')}}]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
+		('STR',          fr"((?<![.\w')}}\]]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
 
 		('SUB1',         fr'_{_VARTEX1}'),
 		('SUB',           r'_'),
@@ -1153,15 +1162,15 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
-# 	# p.set_user_funcs ({'f': 1})
-# 	# a = p.parse (r'x - {1 * 2}')
-# 	# a = p.parse (r'x - {{1 * 2} * 3}')
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
+	# p.set_user_funcs ({'f': 1})
+	# a = p.parse (r'x - {1 * 2}')
+	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-# 	a = p.parse ("Function('f', real = True)(x, y)")
-# 	print (a)
+	a = p.parse ("{{-1}'}")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)

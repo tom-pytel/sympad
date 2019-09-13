@@ -1,7 +1,8 @@
 v1.0.9:
 -------
 * Added undefined functions.
-* Fixed internal lambda variable representation so lambda args don't get remapped.
+* Added prime "'" differentiation operator.
+* Fixed internal lambda variable representation so lambda var specification doesn't get remapped.
 
 v1.0.8:
 -------

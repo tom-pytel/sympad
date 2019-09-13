@@ -27,7 +27,7 @@
 # ('lim', expr, var, to, 'dir')                    - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('sum', expr, var, from, to)                     - summation of expr over variable var from from to to
 # ('diff', expr, (dvar1, ...))                     - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
-# ('prime', expr, count)                           - differentiation wrt unspecified variable count times
+# ('diffp', expr, count)                           - differentiation wrt unspecified variable count times
 # ('intg', expr, var)                              - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('intg', expr, var, from, to)                    - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('vec', (e1, e2, ...))                           - vector
