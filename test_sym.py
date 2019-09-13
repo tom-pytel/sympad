@@ -131,7 +131,6 @@ a, lambda: b = 1
 \exp({a},{-1},{1})
 x, y = lambda: 1, lambda: 2
 doo
-partial'
 Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 (dx**p*artial)*Limit(sqrt(-1), x, 0**d)[(Matrix([[partialx]])), lcm_list()]
 ln((a)**b)

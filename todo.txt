@@ -1,6 +1,9 @@
-> AST ('diff', expr) implicit without dvs
-> AST ('diff', ...) dvs -> vars instead of dvars
+> document undefined functions
+
 > ' differential operator
+> AST ('diff', expr) implicit without dvs
+
+> AST ('diff', ...) dvs -> vars instead of dvars
 
 > ufunction of same name seems to get kwargs stuck in SymPy
 

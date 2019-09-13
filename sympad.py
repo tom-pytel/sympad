@@ -1154,7 +1154,6 @@ The Greek letters recognized and rendered in ... Greek ... are only those normal
 The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
 "<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
 Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
-Variable names may be followed by various primes ' such as "<b> var' </b>" ($var'$) or "<b> \omega'' </b>" ($\omega''$).
 By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
 This is objectively prettier, but can be changed via the "<b>env (EI)</b>" and "<b>env (noEI)</b>" function.
 The SymPy constant usage can also be activated via the command line switch "<b>--EI</b>".
@@ -2077,7 +2076,7 @@ class AST (tuple):
 
 		return val
 
-	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted non-primed variable?
+	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted variable?
 		if self.op == '/':
 			return True
 		elif self.op == '#':
@@ -2394,7 +2393,7 @@ class AST_Var (AST):
 	_is_diff_or_part_solo = lambda self: (self.grp [0] or self.grp [1]) and not self.grp [2]
 	_is_diff_or_part_any  = lambda self: self.grp [0] or self.grp [1]
 	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] or '' # 'dx' -> 'd', 'partialx' -> 'partial', else ''
-	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted, non-primed)?
+	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted)?
 	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
 	_as_diff              = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
 
@@ -3418,21 +3417,16 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return '{}' # Null var
 
 		v = ast.as_var.var
-		p = ''
-
-		while v [-6:] == '_prime':
-			v, p = v [:-6], p + "'"
-
 		n = v.replace ('_', '\\_')
 		t = AST.Var.PY2TEX.get (n)
 
 		return \
-				f'{t or n}{p}'      if not ast.diff_or_part_type else \
-				f'd{t or n}{p}'		  if ast.is_diff_any else \
-				f'\\partial{p}'     if ast.is_part_solo else \
-				f'\\partial{t}{p}'  if t else \
-				f'\\partial {n}{p}' if n else \
-				f'\\partial{p}'
+				f'{t or n}'      if not ast.diff_or_part_type else \
+				f'd{t or n}'     if ast.is_diff_any else \
+				f'\\partial'     if ast.is_part_solo else \
+				f'\\partial{t}'  if t else \
+				f'\\partial {n}' if n else \
+				f'\\partial'
 
 	def _ast2tex_attr (self, ast):
 		tex = sxlat.xlat_attr2tex (ast, self._ast2tex)
@@ -5066,7 +5060,7 @@ def _expr_var (VAR):
 	else:
 		var = AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-	return AST ('@', var + '_prime' * len (VAR.grp [4]))
+	return AST ('@', var)
 
 #...............................................................................................
 class Parser (lalr1.LALR1):

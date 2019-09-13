@@ -36,6 +36,15 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
+class ExprDiffP (sp.Expr): # non-variable specified prime derivative
+	def doit (self, *args, **kw):
+		spt = sp.diff (self.args [0], (self.args [0].free_symbols.pop (), self.args [1]))
+
+		if isinstance (spt, sp.Derivative) and len (spt.args) == 2:
+			return ExprDiffP (spt.args [0], spt.args [1] [1])
+
+		return spt
+
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
 	ret = _None
 
@@ -202,21 +211,16 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return '{}' # Null var
 
 		v = ast.as_var.var
-		p = ''
-
-		while v [-6:] == '_prime':
-			v, p = v [:-6], p + "'"
-
 		n = v.replace ('_', '\\_')
 		t = AST.Var.PY2TEX.get (n)
 
 		return \
-				f'{t or n}{p}'      if not ast.diff_or_part_type else \
-				f'd{t or n}{p}'		  if ast.is_diff_any else \
-				f'\\partial{p}'     if ast.is_part_solo else \
-				f'\\partial{t}{p}'  if t else \
-				f'\\partial {n}{p}' if n else \
-				f'\\partial{p}'
+				f'{t or n}'      if not ast.diff_or_part_type else \
+				f'd{t or n}'     if ast.is_diff_any else \
+				f'\\partial'     if ast.is_part_solo else \
+				f'\\partial{t}'  if t else \
+				f'\\partial {n}' if n else \
+				f'\\partial'
 
 	def _ast2tex_attr (self, ast):
 		tex = sxlat.xlat_attr2tex (ast, self._ast2tex)
@@ -385,8 +389,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'lim'  : _ast2tex_lim,
 		'sum'  : _ast2tex_sum,
 		'diff' : _ast2tex_diff,
+		'diffp': lambda self, ast: self._ast2tex (ast.diffp) + "'" * ast.count,
 		'intg' : _ast2tex_intg,
-		# 'vec'  : None, # not currently used
 		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"slice"})}' for p in ast.piece) + ' \\end{cases}',
 		'lamb' : lambda self, ast: f'\\left({self._ast2tex (AST ("@", ast.vars [0]) if ast.vars.len == 1 else AST ("(", (",", tuple (("@", v) for v in ast.vars))))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
@@ -608,8 +612,8 @@ class ast2nat: # abstract syntax tree -> native text
 		'lim'  : _ast2nat_lim,
 		'sum'  : _ast2nat_sum,
 		'diff' : _ast2nat_diff,
+		'diffp': lambda self, ast: self._ast2nat (ast.diffp) + "'" * ast.count,
 		'intg' : _ast2nat_intg,
-		# 'vec'  : None, # not currently used
 		'mat'  : _ast2nat_mat,
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "piece", "lamb"}, {",", "slice"})}' for p in ast.piece),
@@ -803,8 +807,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'lim'  : _ast2py_lim,
 		'sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
 		'diff' : _ast2py_diff,
+		'diffp': lambda self, ast: '(diffp)',
 		'intg' : _ast2py_intg,
-		# 'vec'  : None, # not currently used
 		'mat'  : _ast2py_mat,
 		'piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
 		'lamb' : lambda self, ast: f"""Lambda({ast.vars [0] if ast.vars.len == 1 else f'({", ".join (ast.vars)})'}, {self._ast2py (ast.lamb)})""",
@@ -985,6 +989,16 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return sp.Derivative (self._ast2spt (ast [1]), *args)
 
+	def _ast2spt_diffp (self, ast):
+		spt = self._ast2spt (ast.diffp)
+
+		if isinstance (spt, ExprDiffP):
+			return ExprDiffP (spt.args [0], spt.args [1] + ast.count)
+		elif len (spt.free_symbols) <= 1:
+			return ExprDiffP (spt, ast.count)
+		else:
+			raise ValueError ('multiple possible variables of differentiation for prime')
+
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
 			if ast.intg is None:
@@ -1050,8 +1064,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'lim'  : lambda self, ast: (sp.Limit if ast.dir else sp.limit) (self._ast2spt (ast.lim), self._ast2spt (ast.lvar), self._ast2spt (ast.to), dir = ast.dir or '+-'),
 		'sum'  : lambda self, ast: sp.Sum (self._ast2spt (ast.sum), (self._ast2spt (ast.svar), self._ast2spt (ast.from_), self._ast2spt (ast.to))),
 		'diff' : _ast2spt_diff,
+		'diffp': _ast2spt_diffp,
 		'intg' : _ast2spt_intg,
-		# 'vec'  : None, # not currently used
 		'mat'  : lambda self, ast: sp.Matrix ([[self._ast2spt (e) for e in row] for row in ast.mat]),
 		'piece': lambda self, ast: sp.Piecewise (*((self._ast2spt (p [0]), True if p [1] is True else self._ast2spt (p [1])) for p in ast.piece)),
 		'lamb' : _ast2spt_lamb,
@@ -1237,6 +1251,7 @@ class spt2ast:
 
 	_spt2ast_funcs = {
 		ExprNoEval: lambda self, spt: spt.SYMPAD_eval (),
+		ExprDiffP: lambda self, spt: AST ('diffp', self._spt2ast (spt.args [0]), int (spt.args [1])),
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,

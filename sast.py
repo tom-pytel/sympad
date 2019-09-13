@@ -26,7 +26,8 @@
 # ('lim', expr, var, to)                           - limit of expr when variable var approaches to from both positive and negative directions
 # ('lim', expr, var, to, 'dir')                    - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('sum', expr, var, from, to)                     - summation of expr over variable var from from to to
-# ('diff', expr, (var1, ...))                      - differentiation of expr with respect to var1 and optional other vars
+# ('diff', expr, (dvar1, ...))                     - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
+# ('prime', expr, count)                           - differentiation wrt unspecified variable count times
 # ('intg', expr, var)                              - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('intg', expr, var, from, to)                    - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('vec', (e1, e2, ...))                           - vector
@@ -97,7 +98,7 @@ class AST (tuple):
 
 		return val
 
-	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted non-primed variable?
+	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted variable?
 		if self.op == '/':
 			return True
 		elif self.op == '#':
@@ -430,7 +431,7 @@ class AST_Var (AST):
 	_is_diff_or_part_solo = lambda self: (self.grp [0] or self.grp [1]) and not self.grp [2]
 	_is_diff_or_part_any  = lambda self: self.grp [0] or self.grp [1]
 	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] or '' # 'dx' -> 'd', 'partialx' -> 'partial', else ''
-	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted, non-primed)?
+	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted)?
 	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
 	_as_diff              = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
 
@@ -594,6 +595,12 @@ class AST_Diff (AST):
 
 	_diff_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
 
+class AST_DiffP (AST):
+	op, is_diffp = 'diffp', True
+
+	def _init (self, diffp, count):
+		self.diffp, self.count = diffp, count
+
 class AST_Intg (AST):
 	op, is_intg = 'intg', True
 
@@ -699,7 +706,7 @@ class AST_UFunc (AST):
 #...............................................................................................
 _AST_CLASSES = [AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
 	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
-	AST_Diff, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
+	AST_Diff, AST_DiffP, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
 	AST_Union, AST_SDiff, AST_XSect, AST_Or, AST_And, AST_Not, AST_UFunc]
 
 for _cls in _AST_CLASSES:
