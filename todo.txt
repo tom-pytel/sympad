@@ -1,11 +1,11 @@
+> redo minus stuff
 > remove _expr_mul and other negative manipulations and change test_sym instead!
 > push negation into implicit multiplication?
 
-> 4'
+> 4' evaluation in sym
 
 > document undefined functions
-
-> AST ('diff', ...) dvs -> vars instead of dvars
+> document prime differential operator
 
 > ufunction of same name seems to get kwargs stuck in SymPy
 
