@@ -226,6 +226,21 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('(1 < 0) + (1 < 1) + (1 < 2)'), {'math': ('1', '1', '1')})
 		self.assertEqual (get ('(1 <= 0) + (1 <= 1) + (1 <= 2)'), {'math': ('2', '2', '2')})
 
+	def test_server_funcs (self):
+		reset ()
+		self.assertEqual (get ('x = 1'), {'math': ('x = 1', 'x = 1', 'x = 1')})
+		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)')})
+		self.assertEqual (get ('y = ?(x, real = True)'), {'math': ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = \\operatorname{?}\\left(x, real = True \\right)')})
+		self.assertEqual (get ('vars'), {'math': ('x = 1', 'x = 1', 'x = 1')})
+		self.assertEqual (get ('funcs'), {'math': [('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = \\operatorname{?}\\left(x, real = True \\right)')]})
+		self.assertEqual (get ('z = y'), {'math': ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = \\operatorname{?}\\left(x, real = True \\right)')})
+		self.assertEqual (get ('funcs'), {'math': [('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = \\operatorname{?}\\left(x, real = True \\right)'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = \\operatorname{?}\\left(x, real = True \\right)')]})
+		self.assertEqual (get ('del y'), {'msg': ["Variable 'y' deleted."]})
+		self.assertEqual (get ('funcs'), {'math': [('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = \\operatorname{?}\\left(x, real = True \\right)')]})
+		self.assertEqual (get ('delall'), {'msg': ['All assignments deleted.']})
+		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
+		self.assertEqual (get ('funcs'), {'msg': ['No functions defined.']})
+
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ()
 	ret  = {}
