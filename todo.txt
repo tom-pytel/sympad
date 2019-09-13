@@ -1,7 +1,6 @@
 > document undefined functions
 
-> ' differential operator
-> AST ('diff', expr) implicit without dvs
+> sxlat diff(), Derivative(), etc... to ' differential operator
 
 > AST ('diff', ...) dvs -> vars instead of dvars
 
