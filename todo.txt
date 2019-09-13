@@ -1,8 +1,9 @@
-> redo minus stuff
+> redo ExprDiffP differential evaluation to use Derivative and checking number of free_symbols
+> 4' evaluation in sym
+
 > remove _expr_mul and other negative manipulations and change test_sym instead!
 > push negation into implicit multiplication?
-
-> 4' evaluation in sym
+> redo minus stuff?
 
 > document undefined functions
 > document prime differential operator

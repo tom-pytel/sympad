@@ -959,8 +959,8 @@ class Parser (lalr1.LALR1):
 	def expr_super_3       (self, CARET, expr_frac):                                   return expr_frac
 	def expr_super_4       (self, CARET1):                                             return _ast_from_tok_digit_or_var (CARET1)
 
-	def expr_neg_arg_1    (self, MINUS, expr_neg_arg):                                 return _expr_neg (expr_neg_arg)
-	def expr_neg_arg_2    (self, expr_diffp):                                          return expr_diffp
+	def expr_neg_arg_1     (self, MINUS, expr_neg_arg):                                return _expr_neg (expr_neg_arg)
+	def expr_neg_arg_2     (self, expr_diffp):                                         return expr_diffp
 
 	def varass             (self, expr_var, EQ, expr_commas):                          return (expr_var, expr_commas)
 
