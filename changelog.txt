@@ -1,5 +1,7 @@
 v1.0.9:
 -------
+* Added undefined functions.
+* Fixed internal lambda variable representation so lambda args don't get remapped.
 
 v1.0.8:
 -------

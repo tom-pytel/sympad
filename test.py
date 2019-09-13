@@ -2525,7 +2525,7 @@ class Test (unittest.TestCase):
 		self.assertRaises (TypeError, ast2spt2ast, p ('{{a:b:c}:d}'))
 		self.assertEqual (ast2spt2ast (p ('{a:{b:c:d}}')), ('dict', ((('@', 'a'), ('slice', ('@', 'b'), ('@', 'c'), ('@', 'd'))),)))
 		self.assertEqual (ast2spt2ast (p ('{a:b:c} = {a:b:c}')), ('@', 'True'))
-		self.assertEqual (ast2spt2ast (p ('\\[1:2:3]')), ('mat', ((('func', 'slice', (('#', '1'), ('#', '2'), ('#', '3'))),),)))
+		# self.assertEqual (ast2spt2ast (p ('\\[1:2:3]')), ('mat', ((('func', 'slice', (('#', '1'), ('#', '2'), ('#', '3'))),),)))
 		self.assertRaises (TypeError, ast2spt2ast, p ('-{not x}'))
 		self.assertEqual (ast2spt2ast (p ('x < y in [y] in [[y]] != 2 > 1')), ('<>', ('@', 'x'), (('<', ('@', 'y')),)))
 		self.assertEqual (ast2spt2ast (p ('x < y < z < w')), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z')), ('<', ('@', 'w')))))
@@ -2857,6 +2857,8 @@ d / dz {-1} a
 {x y}.integrate ((x, 0, 1))
 \sqrt (a:b)
 \sqrt[3] (a:b)
+?f (x, y, real = True)
+Function ('f', real = True) (x, y)
 """
 # _EXPRESSIONS = """
 

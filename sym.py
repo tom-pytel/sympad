@@ -1227,7 +1227,7 @@ class spt2ast:
 		if spt.__class__.__name__ == 'slice': # special cased converted slice object with start, stop and step present, this is REALLY unnecessary...
 			return AST ('slice', *tuple (self._spt2ast (s) for s in spt.args))
 
-		return AST ('ufunc', spt.name, tuple (a.name for a in spt.args), tuple ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ())) # i._explicit_class_assumptions.items ()))
+		return AST ('ufunc', spt.name, tuple (a.name for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__

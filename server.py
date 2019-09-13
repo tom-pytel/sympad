@@ -225,7 +225,7 @@ def _admin_del (*args):
 		else:
 			var = arg.as_identifier ()
 
-			if var is None:
+			if var is None or var == _VAR_LAST:
 				raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
 
 			vars [var] = _VARS.get (var)

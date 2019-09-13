@@ -210,6 +210,8 @@ a.inverse_mellin_transform()
 a**b.c {x * y}!
 \int x / --1 dx
 \lim_{x \to a = {lambda: c}} b
+?f (x, y, real = True)
+Function ('f', real = True) (x, y)
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
