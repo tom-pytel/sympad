@@ -1,5 +1,4 @@
 > Function('')(x, y, z) -> Function('') * (x, y, z)
-> ufunc 'slice'
 > sort kwargs for reverse-mapping of ufuncs to vars
 
 > ufunction of same name seems to get kwargs stuck in SymPy

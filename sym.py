@@ -1197,6 +1197,17 @@ class spt2ast:
 		except:
 			return AST ('^', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1]))
 
+	def _spt2ast_Derivative (self, spt):
+		return AST ('diff', self._spt2ast (spt.args [0]), tuple ( \
+				('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p))) \
+				for s, p in spt.args [1:]))
+
+	def _spt2ast_Integral (self, spt):
+		return \
+				AST ('intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'), self._spt2ast (spt.args [1] [1]), self._spt2ast (spt.args [1] [2])) \
+				if len (spt.args [1]) == 3 else \
+				AST ('intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'))
+
 	def _spt2ast_Function (self, spt, name = None, args = None, kw = None):
 		if name is None:
 			name = spt.__class__.__name__
@@ -1212,16 +1223,11 @@ class spt2ast:
 		else:
 			return AST ('func', name, tuple (self._spt2ast (arg) for arg in spt.args))
 
-	def _spt2ast_Derivative (self, spt):
-		return AST ('diff', self._spt2ast (spt.args [0]), tuple ( \
-				('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p))) \
-				for s, p in spt.args [1:]))
+	def _spt2ast_AppliedUndef (self, spt):
+		if spt.__class__.__name__ == 'slice': # special cased converted slice object with start, stop and step present, this is REALLY unnecessary...
+			return AST ('slice', *tuple (self._spt2ast (s) for s in spt.args))
 
-	def _spt2ast_Integral (self, spt):
-		return \
-				AST ('intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'), self._spt2ast (spt.args [1] [1]), self._spt2ast (spt.args [1] [2])) \
-				if len (spt.args [1]) == 3 else \
-				AST ('intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'))
+		return AST ('ufunc', spt.name, tuple (a.name for a in spt.args), tuple ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ())) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__
@@ -1296,7 +1302,6 @@ class spt2ast:
 		sp.arg: lambda self, spt: AST ('func', 'arg', (self._spt2ast (spt.args [0]),)),
 		sp.exp: lambda self, spt: AST ('^', AST.E, self._spt2ast (spt.args [0])),
 		sp.factorial: lambda self, spt: AST ('!', self._spt2ast (spt.args [0])),
-		sp.Function: _spt2ast_Function,
 		sp.functions.elementary.trigonometric.TrigonometricFunction: _spt2ast_Function,
 		sp.functions.elementary.hyperbolic.HyperbolicFunction: _spt2ast_Function,
 		sp.functions.elementary.trigonometric.InverseTrigonometricFunction: _spt2ast_Function,
@@ -1315,7 +1320,8 @@ class spt2ast:
 		sp.Piecewise: lambda self, spt: AST ('piece', tuple ((self._spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else self._spt2ast (t [1])) for t in spt.args)),
 		sp.Subs: lambda self, spt: AST ('func', 'Subs', tuple (self._spt2ast (a) for a in spt.args) if len (spt.args [1]) > 1 else (self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1] [0]), self._spt2ast (spt.args [2] [0]))),
 
-		sp_AppliedUndef: lambda self, spt: AST ('ufunc', spt.name, tuple (a.name for a in spt.args), tuple ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ())), # i._explicit_class_assumptions.items ()))
+		sp.Function: _spt2ast_Function,
+		sp_AppliedUndef: _spt2ast_AppliedUndef,
 	}
 
 #...............................................................................................

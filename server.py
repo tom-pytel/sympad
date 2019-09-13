@@ -461,6 +461,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 					print ('spt:        ', repr (spt), file = sys.stderr)
 					print ('spt type:   ', type (spt), file = sys.stderr)
+					print ('spt args:   ', repr (spt.args), file = sys.stderr)
 					print ('sympy latex:', sp.latex (spt), file = sys.stderr)
 					print ('ast:        ', ast, file = sys.stderr)
 					print (file = sys.stderr)
