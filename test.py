@@ -369,6 +369,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('{x y}.integrate ((x, 0, 1))'), ('.', ('*', (('@', 'x'), ('@', 'y'))), 'integrate', (('(', (',', (('@', 'x'), ('#', '0'), ('#', '1')))),)))
 		self.assertEqual (p ('\\sqrt (a:b)'), ('sqrt', ('slice', ('@', 'a'), ('@', 'b'), None)))
 		self.assertEqual (p ('\\sqrt[3] (a:b)'), ('sqrt', ('slice', ('@', 'a'), ('@', 'b'), None), ('#', '3')))
+		self.assertEqual (p ('?f (x, y, real = True)'), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
+		self.assertEqual (p ("Function ('f', real = True) (x, y)"), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -680,6 +682,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{x y}.integrate ((x, 0, 1))')), '\\int_0^1 x y \\ dx')
 		self.assertEqual (ast2tex (p ('\\sqrt (a:b)')), '\\sqrt{\\left(a{:}b \\right)}')
 		self.assertEqual (ast2tex (p ('\\sqrt[3] (a:b)')), '\\sqrt[3]{\\left(a{:}b \\right)}')
+		self.assertEqual (ast2tex (p ('?f (x, y, real = True)')), '\\operatorname{?f}\\left(x, y, real = True \\right)')
+		self.assertEqual (ast2tex (p ("Function ('f', real = True) (x, y)")), '\\operatorname{?f}\\left(x, y, real = True \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -991,6 +995,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('{x y}.integrate ((x, 0, 1))')), '(x y).integrate(x, 0, 1)')
 		self.assertEqual (ast2nat (p ('\\sqrt (a:b)')), 'sqrt(a:b)')
 		self.assertEqual (ast2nat (p ('\\sqrt[3] (a:b)')), '\\sqrt[3]{(a:b)}')
+		self.assertEqual (ast2nat (p ('?f (x, y, real = True)')), '?f(x, y, real = True)')
+		self.assertEqual (ast2nat (p ("Function ('f', real = True) (x, y)")), '?f(x, y, real = True)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -1302,6 +1308,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('{x y}.integrate ((x, 0, 1))')), '(x*y).integrate((x, 0, 1))')
 		self.assertEqual (ast2py (p ('\\sqrt (a:b)')), 'sqrt(slice(a, b))')
 		self.assertEqual (ast2py (p ('\\sqrt[3] (a:b)')), 'slice(a, b)**(1/3)')
+		self.assertEqual (ast2py (p ('?f (x, y, real = True)')), "Function('f', real = True)(x, y)")
+		self.assertEqual (ast2py (p ("Function ('f', real = True) (x, y)")), "Function('f', real = True)(x, y)")
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -1613,6 +1621,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('{x y}.integrate ((x, 0, 1))')), ('intg', ('*', (('@', 'x'), ('@', 'y'))), ('@', 'dx'), ('#', '0'), ('#', '1')))
 		self.assertEqual (ast2tex2ast (p ('\\sqrt (a:b)')), ('sqrt', ('(', ('slice', ('@', 'a'), ('@', 'b'), None))))
 		self.assertEqual (ast2tex2ast (p ('\\sqrt[3] (a:b)')), ('sqrt', ('(', ('slice', ('@', 'a'), ('@', 'b'), None)), ('#', '3')))
+		self.assertEqual (ast2tex2ast (p ('?f (x, y, real = True)')), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
+		self.assertEqual (ast2tex2ast (p ("Function ('f', real = True) (x, y)")), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -1924,6 +1934,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('{x y}.integrate ((x, 0, 1))')), ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'integrate', (('@', 'x'), ('#', '0'), ('#', '1'))))
 		self.assertEqual (ast2nat2ast (p ('\\sqrt (a:b)')), ('sqrt', ('slice', ('@', 'a'), ('@', 'b'), None)))
 		self.assertEqual (ast2nat2ast (p ('\\sqrt[3] (a:b)')), ('sqrt', ('(', ('slice', ('@', 'a'), ('@', 'b'), None)), ('#', '3')))
+		self.assertEqual (ast2nat2ast (p ('?f (x, y, real = True)')), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
+		self.assertEqual (ast2nat2ast (p ("Function ('f', real = True) (x, y)")), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -2235,6 +2247,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('{x y}.integrate ((x, 0, 1))')), ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'integrate', (('(', (',', (('@', 'x'), ('#', '0'), ('#', '1')))),)))
 		self.assertEqual (ast2py2ast (p ('\\sqrt (a:b)')), ('sqrt', ('func', 'slice', (('@', 'a'), ('@', 'b')))))
 		self.assertEqual (ast2py2ast (p ('\\sqrt[3] (a:b)')), ('^', ('func', 'slice', (('@', 'a'), ('@', 'b'))), ('(', ('/', ('#', '1'), ('#', '3')))))
+		self.assertEqual (ast2py2ast (p ('?f (x, y, real = True)')), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
+		self.assertEqual (ast2py2ast (p ("Function ('f', real = True) (x, y)")), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -2525,7 +2539,7 @@ class Test (unittest.TestCase):
 		self.assertRaises (TypeError, ast2spt2ast, p ('{{a:b:c}:d}'))
 		self.assertEqual (ast2spt2ast (p ('{a:{b:c:d}}')), ('dict', ((('@', 'a'), ('slice', ('@', 'b'), ('@', 'c'), ('@', 'd'))),)))
 		self.assertEqual (ast2spt2ast (p ('{a:b:c} = {a:b:c}')), ('@', 'True'))
-		# self.assertEqual (ast2spt2ast (p ('\\[1:2:3]')), ('mat', ((('func', 'slice', (('#', '1'), ('#', '2'), ('#', '3'))),),)))
+		self.assertEqual (ast2spt2ast (p ('\\[1:2:3]')), ('mat', ((('slice', ('#', '1'), ('#', '2'), ('#', '3')),),)))
 		self.assertRaises (TypeError, ast2spt2ast, p ('-{not x}'))
 		self.assertEqual (ast2spt2ast (p ('x < y in [y] in [[y]] != 2 > 1')), ('<>', ('@', 'x'), (('<', ('@', 'y')),)))
 		self.assertEqual (ast2spt2ast (p ('x < y < z < w')), ('<>', ('@', 'x'), (('<', ('@', 'y')), ('<', ('@', 'z')), ('<', ('@', 'w')))))
@@ -2546,6 +2560,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('{x y}.integrate ((x, 0, 1))')), ('*', (('/', ('#', '1'), ('#', '2')), ('@', 'y'))))
 		self.assertRaises (TypeError, ast2spt2ast, p ('\\sqrt (a:b)'))
 		self.assertRaises (TypeError, ast2spt2ast, p ('\\sqrt[3] (a:b)'))
+		self.assertEqual (ast2spt2ast (p ('?f (x, y, real = True)')), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
+		self.assertEqual (ast2spt2ast (p ("Function ('f', real = True) (x, y)")), ('ufunc', 'f', ('x', 'y'), (('real', ('@', 'True')),)))
 
 _EXPRESSIONS = """
 1
