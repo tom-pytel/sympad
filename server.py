@@ -162,6 +162,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		_VARS.update (vars)
 
 	if not vars: # no assignment
+		ast               = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
 		_VARS [_VAR_LAST] = ast
 
 		return [ast]
@@ -431,7 +432,7 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = io.StringIO ()
 			ast, _, _  = _PARSER.parse (request ['text'])
 
-			if ast.is_func and ast.func in {'plotf', 'plotv', 'plotw'}: # plotting?
+			if ast.is_func and ast.func in AST.Func.PLOT: # plotting?
 				args, kw = AST.args2kwargs (AST.apply_vars (ast.args, _VARS), sym.ast2spt)
 				ret      = getattr (splot, ast.func) (*args, **kw)
 
@@ -453,15 +454,17 @@ class Handler (SimpleHTTPRequestHandler):
 				spt = sym.ast2spt (ast, _VARS)
 				ast = sym.spt2ast (spt)
 
-				if ast not in _UFUNCS2VARS: # map unnamed functions back to their variables but only below top level
-					ast = AST.remap (ast, _UFUNCS2VARS)
-
 				if os.environ.get ('SYMPAD_DEBUG'):
 					import sympy as sp
 
 					print ('spt:        ', repr (spt), file = sys.stderr)
 					print ('spt type:   ', type (spt), file = sys.stderr)
-					print ('spt args:   ', repr (spt.args), file = sys.stderr)
+
+					try:
+						print ('spt args:   ', repr (spt.args), file = sys.stderr)
+					except:
+						pass
+
 					print ('sympy latex:', sp.latex (spt), file = sys.stderr)
 					print ('ast:        ', ast, file = sys.stderr)
 					print (file = sys.stderr)

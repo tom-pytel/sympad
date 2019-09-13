@@ -450,6 +450,21 @@ x or y and not z
 (1 < 0) + (1 < 1) + (1 < 2)
 (1 <= 0) + (1 <= 1) + (1 <= 2)
 
+"""), ('server_funcs', """
+
+x = 1
+f = lambda x: x**2
+y = ?(x, real = True)
+vars
+funcs
+z = y
+funcs
+del y
+funcs
+delall
+vars
+funcs
+
 """),
 
 )
@@ -464,12 +479,13 @@ URL   = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
 # URL   = f'http://127.0.0.1:9000/'
 
 if __name__ == '__main__':
-	for name, texts in _SESSIONS:
-		reset ()
+	if SYSARGV [1] == '--print':
+		for name, texts in _SESSIONS:
+			reset ()
 
-		print (f'\n\tdef test_{name} (self):\n\t\treset ()')
+			print (f'\n\tdef test_{name} (self):\n\t\treset ()')
 
-		texts = [s.strip () for s in texts.strip ().split ('\n')]
+			texts = [s.strip () for s in texts.strip ().split ('\n')]
 
-		for text in texts:
-			print (f'\t\tself.assertEqual (get ({text!r}), {get (text)!r})')
+			for text in texts:
+				print (f'\t\tself.assertEqual (get ({text!r}), {get (text)!r})')

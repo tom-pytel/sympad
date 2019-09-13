@@ -1,11 +1,11 @@
-> ufunction of same name seems to get kwargs stuck in SymPy
-
-> ODE:
-> AST ('diff', ...) and int dvs -> vars instead of dvars
 > AST ('diff', expr) implicit without dvs
+> AST ('diff', ...) dvs -> vars instead of dvars
 > ' differential operator
 
+> ufunction of same name seems to get kwargs stuck in SymPy
+
 > remove _expr_mul and other negative manipulations and change test_sym instead!
+> push negation into implicit multiplication.
 
 > semicolon evaluation separator
 
@@ -15,7 +15,6 @@
 
 > parse from python ln x / ln base -> \log_{base} x
 
-> underscores:
 > allow leading underscore for vars and funcs and leading \_ for tex
 > clean up sparser TOKENS and centralize repeated patterns
 > display subscripts
@@ -27,6 +26,8 @@
 
 > test_python module
 
+> lighter font color assumptions and info for math returns
+
 > vector calculus
 > nabla, laplacian
 
@@ -35,15 +36,11 @@
 > ProductSet?
 > ImageSet?
 
-> rewrite sqrt during autocomplete to show radix
-
 > formatting: no spacing for nums - 3 x -> 3x?
 > formatting: quick mode no spacing for vars x y z -> xyz?
 > formatting: non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
 
 > var assumptions (using @ character?)
-
-> floor / ceiling
 
 > SYM.PY REFACTOR!
 
@@ -56,6 +53,9 @@
 > long variable name shortcut? $?
 > derivative and integral of lambda functions? lambdas as expressions?
 > eliminate potentially pointless minus rewriting by moving negation in parse higherarchy?
+> rewrite sqrt during autocomplete to show radix?
+
+> floor / ceiling
 
 > break out state machine from server
 
