@@ -633,3 +633,49 @@ def test (argv = None):
 if __name__ == '__main__':
 	# test (['-nt', '-e', 'x + {-1 * 2}'])
 	test ()
+
+
+
+# def _expr_mul (expr): # ONLY FOR CONSISTENCY! pull negative(s) out of first term of nested curly/multiplication
+# 	mcs = lambda ast: ast
+# 	ast = expr
+# 	do  = False
+
+# 	while 1:
+# 		if ast.is_curly:
+# 			mcs = lambda ast, mcs = mcs: mcs (AST ('{', ast))
+# 			ast = ast.curly
+
+# 			continue
+
+# 		elif ast.is_mul or ast.is_mulexp:
+# 			mcs = lambda ast, mcs = mcs, op = ast.op, do = ast.mul: mcs (AST (op, (ast,) + do [1:]))
+# 			ast = ast.mul [0]
+# 			do  = True
+
+# 			continue
+
+# 		elif ast.is_minus:
+# 			mcs = lambda ast, mcs = mcs: AST ('-', mcs (ast))
+# 			ast = ast.minus
+
+# 			continue
+
+# 		elif ast.is_diffp:
+# 			mcs = lambda ast, mcs = mcs, count = ast.count: AST ('diffp', mcs (ast), count)
+# 			ast = ast.diffp
+# 			do  = True
+
+# 			continue
+
+# 		elif ast.is_num_neg:
+# 			if do:
+# 				return AST ('-', mcs (ast.neg ()))
+
+# 		break
+
+# 	if do:
+# 		return mcs (ast)
+
+# 	return expr
+

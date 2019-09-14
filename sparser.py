@@ -144,50 +144,14 @@ def _expr_cmp (lhs, CMP, rhs):
 	else:
 		return AST ('<>', lhs, ((cmp, rhs),))
 
-def _expr_mul (expr): # ONLY FOR CONSISTENCY! pull negative(s) out of first term of nested curly/multiplication
-	mcs = lambda ast: ast
-	ast = expr
-	do  = False
-
-	while 1:
-		if ast.is_curly:
-			mcs = lambda ast, mcs = mcs: mcs (AST ('{', ast))
-			ast = ast.curly
-
-			continue
-
-		elif ast.is_mul or ast.is_mulexp:
-			mcs = lambda ast, mcs = mcs, op = ast.op, do = ast.mul: mcs (AST (op, (ast,) + do [1:]))
-			ast = ast.mul [0]
-			do  = True
-
-			continue
-
-		elif ast.is_minus:
-			mcs = lambda ast, mcs = mcs: AST ('-', mcs (ast))
-			ast = ast.minus
-
-			continue
-
-		elif ast.is_diffp:
-			mcs = lambda ast, mcs = mcs, count = ast.count: AST ('diffp', mcs (ast), count)
-			ast = ast.diffp
-			do  = True
-
-			continue
-
-		elif ast.is_num_neg:
-			if do:
-				return AST ('-', mcs (ast.neg ()))
-
-		break
-
-	if do:
-		return mcs (ast)
-
-	return expr
-
 def _expr_neg (expr):
+	if expr.is_fact:
+		if expr.fact.is_num_pos:
+			return AST ('!', expr.fact.neg ())
+
+	elif expr.is_mul:
+		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
+
 	return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjacent terms not handled by grammar
@@ -233,10 +197,7 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 		if not arg.brack:
 			raise SyntaxError ('missing index')
 
-		if last.is_num_neg: # really silly, trying to index negative number, will fail but rewrite to neg of idx of pos number for consistency of parsing
-			ast = AST ('-', wrap (AST ('idx', last.neg (), arg.brack)))
-		else:
-			ast = wrap (AST ('idx', last, arg.brack))
+		ast = wrap (AST ('idx', last, arg.brack))
 
 	if ast:
 		return wrapl (ast)
@@ -283,9 +244,9 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				if i == len (ns) - 1:
 					return AST ('diff', None, tuple (ds))
 				elif i == len (ns) - 2:
-					return AST ('diff', _expr_mul (ns [-1]), tuple (ds))
+					return AST ('diff', ns [-1], tuple (ds))
 				else:
-					return AST ('diff', _expr_mul (AST ('*', ns [i + 1:])), tuple (ds))
+					return AST ('diff', AST ('*', ns [i + 1:]), tuple (ds))
 
 		return None # raise SyntaxError?
 
@@ -312,7 +273,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 						tail.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('diff', _expr_mul (ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end])), diff.dvs))
+						tail.insert (0, AST ('diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
 
 					else:
 						continue
@@ -817,7 +778,7 @@ class Parser (lalr1.LALR1):
 	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
 	def expr_add_4         (self, expr_mul_exp):                                       return expr_mul_exp
 
-	def expr_mul_exp       (self, expr_mul_expr):                                      return _expr_mul (expr_mul_expr)
+	def expr_mul_exp       (self, expr_mul_expr):                                      return expr_mul_expr
 	def expr_mul_expr_1    (self, expr_mul_expr, CDOT, expr_neg):                      return AST.flatcat ('mulexp', expr_mul_expr, expr_neg)
 	def expr_mul_expr_2    (self, expr_mul_expr, STAR, expr_neg):                      return AST.flatcat ('mulexp', expr_mul_expr, expr_neg)
 	def expr_mul_expr_3    (self, expr_neg):                                           return expr_neg
@@ -827,7 +788,7 @@ class Parser (lalr1.LALR1):
 
 	def expr_diff          (self, expr_div):                                           return _expr_diff (expr_div)
 
-	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                        return AST ('/', _expr_mul (expr_div), _expr_mul (expr_divm))
+	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                        return AST ('/', expr_div, expr_divm)
 	def expr_div_2         (self, expr_mul_imp):                                       return expr_mul_imp
 	def expr_divm_1        (self, MINUS, expr_divm):                                   return _expr_neg (expr_divm)
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
@@ -835,16 +796,16 @@ class Parser (lalr1.LALR1):
 	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return _expr_mul_imp (expr_mul_imp, expr_intg, self._USER_FUNCS)
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
-	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (_expr_mul (expr_add), (expr_sub, expr_super))
-	def expr_intg_2        (self, INTG, expr_add):                                     return _expr_intg (_expr_mul (expr_add))
+	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
+	def expr_intg_2        (self, INTG, expr_add):                                     return _expr_intg (expr_add)
 	def expr_intg_3        (self, expr_lim):                                           return expr_lim
 
-	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('lim', _expr_mul (expr_neg), expr_var, expr)
-	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('lim', _expr_mul (expr_neg), expr_var, expr, '+')
-	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('lim', _expr_mul (expr_neg), expr_var, expr, '-')
+	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('lim', expr_neg, expr_var, expr)
+	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('lim', expr_neg, expr_var, expr, '+')
+	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('lim', expr_neg, expr_var, expr, '-')
 	def expr_lim_6         (self, expr_sum):                                                                        return expr_sum
 
-	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('sum', _expr_mul (expr_neg), varass [0], varass [1], expr_super)
+	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('sum', expr_neg, varass [0], varass [1], expr_super)
 	def expr_sum_2         (self, expr_diffp):                                                                      return expr_diffp
 
 	def expr_diffp_1       (self, expr_diffp, PRIME):                                  return AST ('diffp', expr_diffp.diffp, expr_diffp.count + 1) if expr_diffp.is_diffp else AST ('diffp', expr_diffp, 1)
