@@ -98,6 +98,9 @@ def _trail_comma (obj):
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_num_neg or (ast.is_mul and _ast_is_neg (ast.mul [0]))
 
+def _ast_is_neg_nominus (ast):
+	return ast.is_num_neg or (ast.is_mul and _ast_is_neg (ast.mul [0]))
+
 def _ast_slice_bounds (ast, None_ = AST.VarNull):
 	return tuple (a or None_ for a in ((ast.start, ast.stop) if ast.step is None else (ast.start, ast.stop, ast.step)))
 
@@ -227,10 +230,20 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{self._ast2tex_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "lim", "sum", "intg", "piece", "slice", "||", "^^", "&&", "or", "and", "not"})}.{a}'
 
 	def _ast2tex_add (self, ast):
-		return ' + '.join (self._ast2tex_wrap (n, \
-				((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and n is not ast.add [-1]),
-				(n.is_piece and n is not ast.add [-1]) or n.op in {'=', '<>', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} # or (n.is_mul and n is not ast.add [0] and _ast_is_neg (n.mul [0]))
-				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
+		terms = []
+
+		for n in ast.add:
+			not_first = n is not ast.add [0]
+			not_last  = n is not ast.add [-1]
+
+			if n.is_minus and not_first: # and n.minus.is_num_pos
+				terms.extend ([' - ', self._ast2tex (n.minus)])
+			else:
+				terms.extend ([' + ', self._ast2tex_wrap (n,
+					(_ast_is_neg_nominus (n) and not_first) or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and not_last),
+					(n.is_piece and not_last) or n.op in {'=', '<>', 'slice', '||', '^^', '&&', 'or', 'and', 'not'})])
+
+		return ''.join (terms [1:]).replace (' + -', ' - ')
 
 	def _ast2tex_mul (self, ast, ret_has = False):
 		t   = []
@@ -472,10 +485,20 @@ class ast2nat: # abstract syntax tree -> native text
 			return f'{obj}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}'
 
 	def _ast2nat_add (self, ast):
-		return ' + '.join (self._ast2nat_wrap (n, \
-				n.is_piece or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and n is not ast.add [-1]),
-				(n.op in ('piece', 'lamb') and n is not ast.add [-1]) or n.op in {'=', '<>', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} # or (n.is_mul and n is not ast.add [0] and _ast_is_neg (n.mul [0]))
-				) for n in ast.add).replace (' + -', ' - ')#.replace (' + {-', ' - {')
+		terms = []
+
+		for n in ast.add:
+			not_first = n is not ast.add [0]
+			not_last  = n is not ast.add [-1]
+
+			if n.is_minus and not_first: # and n.minus.is_num_pos
+				terms.extend ([' - ', self._ast2nat (n.minus)])
+			else:
+				terms.extend ([' + ', self._ast2nat_wrap (n,
+					(_ast_is_neg_nominus (n) and not_first) or n.is_piece or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and not_last),
+					(n.op in ('piece', 'lamb') and not_last) or n.op in {'=', '<>', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'})])
+
+		return ''.join (terms [1:]).replace (' + -', ' - ')
 
 	def _ast2nat_mul (self, ast, ret_has = False):
 		t   = []
@@ -788,7 +811,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'|'    : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
 		'-'    : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+"})}',
 		'!'    : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
-		'+'    : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in) for n in ast.add).replace (' + -', ' - '),
+		'+'    : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n.is_num_neg and n is not ast.add [0])) for n in ast.add).replace (' + -', ' - '),
 		'*'    : lambda self, ast: '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add) for n in ast.mul),
 		'/'    : _ast2py_div,
 		'^'    : _ast2py_pow,
@@ -1155,7 +1178,20 @@ class spt2ast:
 			if args [0].is_number:
 				args = spt.args [1:] + (spt.args [0],)
 
-		return AST ('+', tuple (self._spt2ast (arg) for arg in args))
+		terms = []
+
+		for arg in args:
+			ast = self._spt2ast (arg)
+
+			if ast.is_num_neg:
+				ast = AST ('-', ast.neg ())
+			elif ast.is_mul and _ast_is_neg (ast.mul [0]):
+				ast = AST ('-', ('*', (ast.mul [0].neg (),) + ast.mul [1:]))
+
+
+			terms.append (ast)
+
+		return AST ('+', tuple (terms))
 
 	def _spt2ast_Mul (self, spt):
 		if spt.args [0] == -1:
@@ -1391,7 +1427,7 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('lim', ('@', 'b'), ('@', 'x'), ('=', ('@', 'a'), ('lamb', ('@', 'c'), ())))
+# 	ast = AST ('+', (('@', 'x'), ('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('^', ('#', '5'), ('/', ('#', '1'), ('#', '3')))))))
 # 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 

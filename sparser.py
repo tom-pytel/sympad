@@ -144,10 +144,10 @@ def _expr_cmp (lhs, CMP, rhs):
 	else:
 		return AST ('<>', lhs, ((cmp, rhs),))
 
-def _expr_neg (expr):
-	if expr.is_fact:
-		if expr.fact.is_num_pos:
-			return AST ('!', expr.fact.neg ())
+def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy
+	if expr.op in {'!', 'diffp', 'idx'}:
+		if expr [1].is_num_pos:
+			return AST (expr.op, expr [1].neg (), *expr [2:])
 
 	elif expr.is_mul:
 		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
@@ -774,8 +774,8 @@ class Parser (lalr1.LALR1):
 	def expr_xsect_2       (self, expr_add):                                           return expr_add
 
 	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return AST.flatcat ('+', expr_add, expr_mul_exp)
-	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
-	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, _expr_neg (expr_mul_exp))
+	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)) # _expr_neg (expr_mul_exp, num = False))
+	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)) # _expr_neg (expr_mul_exp, num = False))
 	def expr_add_4         (self, expr_mul_exp):                                       return expr_mul_exp
 
 	def expr_mul_exp       (self, expr_mul_expr):                                      return expr_mul_expr
@@ -1123,15 +1123,15 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
-	# p.set_user_funcs ({'f': 1})
-	# a = p.parse (r'x - {1 * 2}')
-	# a = p.parse (r'x - {{1 * 2} * 3}')
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
+# 	# p.set_user_funcs ({'f': 1})
+# 	# a = p.parse (r'x - {1 * 2}')
+# 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-	a = p.parse ("{{-1}'}")
-	print (a)
+# 	a = p.parse ("x - 1")
+# 	print (a)
 
-	# a = sym.ast2spt (a)
-	# print (a)
+# 	# a = sym.ast2spt (a)
+# 	# print (a)
