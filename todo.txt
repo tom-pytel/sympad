@@ -10,8 +10,6 @@
 > document undefined functions
 > document prime differential operator
 
-> invert cases like 3 > x > -oo
-
 > change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 > overhaul function keyword arguments

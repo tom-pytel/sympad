@@ -15,7 +15,7 @@ def _xlat_f2a_slice (*args):
 
 _xlat_f2a_Add_invert = {'==': '==', '!=': '!=', '<': '>', '<=': '>=', '>': '<', '>=': '<='}
 
-def _xlat_f2a_And (*args): # patch together out of order extended comparison objects potentially inverting comparisons
+def _xlat_f2a_And (*args, canon = False): # patch together out of order extended comparison objects potentially inverting comparisons
 	def concat (lhs, rhs):
 		return AST ('<>', lhs.lhs, lhs.cmp + rhs.cmp)
 
@@ -49,6 +49,10 @@ def _xlat_f2a_And (*args): # patch together out of order extended comparison obj
 
 		return li, ri, ll + rl
 
+	def canonicalize (ast):
+		return invert (ast) if (canon and sum ((r [0] == '>') - (r [0] == '<') for r, c in ast.cmp) > 0) else ast
+
+	# start here
 	itr  = iter (args)
 	args = []
 
@@ -88,9 +92,9 @@ def _xlat_f2a_And (*args): # patch together out of order extended comparison obj
 					del args [i2], args [i1]
 
 	if len (args) == 1:
-		return args [0]
+		return canonicalize (args [0])
 	else:
-		return AST ('and', tuple (args))
+		return AST ('and', tuple (canonicalize (a) for a in args))
 
 def _xlat_f2a_Lambda (args, expr):
 	args = args.strip_paren
