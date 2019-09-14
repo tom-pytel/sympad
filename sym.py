@@ -36,15 +36,6 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
-class ExprDiffP (sp.Expr): # non-variable specified prime derivative
-	def doit (self, *args, **kw):
-		spt = sp.diff (self.args [0], (self.args [0].free_symbols.pop (), self.args [1]))
-
-		if isinstance (spt, sp.Derivative) and len (spt.args) == 2:
-			return ExprDiffP (spt.args [0], spt.args [1] [1])
-
-		return spt
-
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
 	ret = _None
 
@@ -389,7 +380,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'lim'  : _ast2tex_lim,
 		'sum'  : _ast2tex_sum,
 		'diff' : _ast2tex_diff,
-		'diffp': lambda self, ast: self._ast2tex_wrap (ast.diffp, 0, {"=", "<>", "+", "*", "^", "sqrt", "lim", "sum", "diff", "diffp", "intg", "piece", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
+		'diffp': lambda self, ast: self._ast2tex_wrap (ast.diffp, 0, {"=", "<>", "+", "*", "/", "^", "sqrt", "lim", "sum", "diff", "intg", "piece", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
 		'intg' : _ast2tex_intg,
 		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"slice"})}' for p in ast.piece) + ' \\end{cases}',
@@ -612,7 +603,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'lim'  : _ast2nat_lim,
 		'sum'  : _ast2nat_sum,
 		'diff' : _ast2nat_diff,
-		'diffp': lambda self, ast: self._ast2nat_wrap (ast.diffp, 0, {"=", "<>", "+", "*", "/", "^", "lim", "sum", "diff", "diffp", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
+		'diffp': lambda self, ast: self._ast2nat_wrap (ast.diffp, 0, {"=", "<>", "+", "*", "/", "^", "lim", "sum", "diff", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
 		'intg' : _ast2nat_intg,
 		'mat'  : _ast2nat_mat,
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \
@@ -992,12 +983,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_diffp (self, ast):
 		spt = self._ast2spt (ast.diffp)
 
-		if isinstance (spt, ExprDiffP):
-			return ExprDiffP (spt.args [0], spt.args [1] + ast.count)
-		elif len (spt.free_symbols) <= 1:
-			return ExprDiffP (spt, ast.count)
-		else:
-			raise ValueError ('multiple possible variables of differentiation for prime')
+		for _ in range (ast.count):
+			spt = sp.Derivative (spt)
+
+		return spt
+
+			# raise ValueError ('multiple possible variables of differentiation for prime')
 
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
@@ -1212,9 +1203,15 @@ class spt2ast:
 			return AST ('^', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1]))
 
 	def _spt2ast_Derivative (self, spt):
-		return AST ('diff', self._spt2ast (spt.args [0]), tuple ( \
-				('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p))) \
-				for s, p in spt.args [1:]))
+		if len (spt.args) == 2:
+			syms = spt.free_symbols
+
+			if len (syms) == 1 and spt.args [1] [0] == syms.pop ():
+				return AST ('diffp', self._spt2ast (spt.args [0]), int (spt.args [1] [1]))
+
+		return AST ('diff', self._spt2ast (spt.args [0]), tuple (
+			('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p)))
+			for s, p in spt.args [1:]))
 
 	def _spt2ast_Integral (self, spt):
 		return \
@@ -1251,7 +1248,6 @@ class spt2ast:
 
 	_spt2ast_funcs = {
 		ExprNoEval: lambda self, spt: spt.SYMPAD_eval (),
-		ExprDiffP: lambda self, spt: AST ('diffp', self._spt2ast (spt.args [0]), int (spt.args [1])),
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,

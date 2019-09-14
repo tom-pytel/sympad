@@ -1,6 +1,3 @@
-> redo ExprDiffP differential evaluation to use Derivative and checking number of free_symbols
-> 4' evaluation in sym
-
 > remove _expr_mul and other negative manipulations and change test_sym instead!
 > push negation into implicit multiplication?
 > redo minus stuff?
@@ -14,7 +11,7 @@
 
 > index support testing on indexing with symbol "1 [x]"
 
-> change other not wanting to map var specification to strings (diff dvs, int dv, ...)
+> change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 > overhaul function keyword arguments
 
