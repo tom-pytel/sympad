@@ -1049,7 +1049,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not ast.free_vars:
+			if not getattr (spt, 'free_symbols', None) and not hasattr (spt, '__getitem__'): # ast.free_vars:
 				raise
 
 		return ExprNoEval (str (AST ('idx', spt2ast (spt), ast.idx)), 1)

@@ -9,11 +9,8 @@
 
 > document undefined functions
 > document prime differential operator
-> prime test cases
 
 > invert cases like 3 > x > -oo
-
-> index support testing on indexing with symbol "1 [x]"
 
 > change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
