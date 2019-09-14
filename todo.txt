@@ -1,13 +1,17 @@
-> semicolon evaluation separator
-
-> ODE initial conditions
+> ufuncs initialize with expressions instead of only vars?
 > ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)
+> ODE initial conditions
+> ufuncs created in expression persist to end of expression?
 
 > ufunction of same name seems to get kwargs stuck in SymPy
+
+> semicolon evaluation separator
 
 > document undefined functions
 > document prime differential operator
 > prime test cases
+
+> invert cases like 3 > x > -oo
 
 > index support testing on indexing with symbol "1 [x]"
 

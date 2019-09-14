@@ -1,6 +1,6 @@
 v1.0.9:
 -------
-* Added undefined functions.
+* Added undefined functions (for ODEs).
 * Added prime "'" differentiation operator.
 * Changed internal negative object parsing and printing rules.
 * Fixed internal lambda variable representation so lambda var specification doesn't get remapped.
