@@ -226,6 +226,28 @@ a.b ()'
 2y - -3/2 * x
 2y + {-3/2} * x
 2y + {-3/2 * x}
+x - y z
+x + -y z
+x - -y z
+x + {-y} z
+x - {-y} z
+x + {-y z}
+x - {-y z}
+1 / -2 x
+-1''' {d/dx x}
+x + -{1 + -1}
+x + -1'
+1 * -1'
+x * [y]'
+x * [y].a
+x!' + ('str')
+|x|' + ('str')
+{x^y'}'
+sin{x}!
+sin{x}'
+\sqrt{-\partial x  d^{5} / dx^{2} dy^{3} "str"  \{0}}'
+\int a b - 1 dx
+\int {a b - 1} dx
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
@@ -475,6 +497,8 @@ def flatten (ast):
 
 	if ast.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}:
 		t = (ast.op, tuple (sum (((m,) if m.op != ast.op else m [1] for m in t [1]), ())))
+	elif ast.is_diffp and ast.diffp.is_diffp:
+		return AST ('diffp', ast.diffp.diffp, ast.count + ast.diffp.count)
 
 	return AST (*t)
 

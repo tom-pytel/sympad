@@ -56,7 +56,7 @@ def _ast_func_reorder (ast):
 	if wrap2:
 		ast3, wrap3 = _ast_func_reorder (ast2)
 
-		if ast3.is_paren or ast3.is_brack:
+		if ast3.is_curly or ast3.is_paren or ast3.is_brack:
 			return ast3, lambda a: wrap2 (wrap3 (a))
 
 	return ast, lambda a: a
@@ -144,13 +144,14 @@ def _expr_cmp (lhs, CMP, rhs):
 	else:
 		return AST ('<>', lhs, ((cmp, rhs),))
 
-def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy
+def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy missing negative numbers
 	if expr.op in {'!', 'diffp', 'idx'}:
 		if expr [1].is_num_pos:
 			return AST (expr.op, expr [1].neg (), *expr [2:])
 
 	elif expr.is_mul:
-		return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
+		# return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
+		return AST ('*', (_expr_neg (expr.mul [0]),) + expr.mul [1:])
 
 	return expr.neg (stack = True)
 
@@ -341,7 +342,7 @@ def _ast_strip_tail_differential (ast):
 				return (neg (ast.mul [0]), dv)
 
 	elif ast.is_add:
-		ast2, neg = ast.add [-1]._strip_minus (retneg = True)
+		ast2, neg = ast.add [-1]._strip_minus (retneg = True, negnum = False)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv and ast2:
@@ -659,7 +660,7 @@ class Parser (lalr1.LALR1):
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))"),
 		('ATTR',         fr'\.\s*(?:({_LTRU}\w*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
-		('STR',          fr"((?<![.\w')}}\]]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
+		('STR',          fr"((?<![.'|!)}}\]\w]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
 
 		('SUB1',         fr'_{_VARTEX1}'),
 		('SUB',           r'_'),
@@ -1130,7 +1131,7 @@ class sparser: # for single script
 # 	# a = p.parse (r'x - {1 * 2}')
 # 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-# 	a = p.parse ("x - 1")
+# 	a = p.parse ("\int a b - 1 dx")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

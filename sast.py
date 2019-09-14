@@ -168,7 +168,7 @@ class AST (tuple):
 	_strip_curlys = lambda self, count = None: self._strip (count, ('{',))
 	_strip_paren  = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 
-	def _strip_minus (self, count = None, retneg = False):
+	def _strip_minus (self, count = None, retneg = False, negnum = True):
 		count       = -1 if count is None else count
 		neg         = lambda ast: ast
 		neg.has_neg = False
@@ -178,15 +178,21 @@ class AST (tuple):
 			self         = self.minus
 			count       -= 1
 			is_neg       = neg.is_neg
-			neg          = lambda ast, neg = neg: neg (ast.neg (stack = True))
+			neg          = (lambda ast, neg = neg: neg (ast.neg (stack = True))) if negnum else (lambda ast, neg = neg: AST ('-', ast))
 			neg.has_neg  = True
 			neg.is_neg   = not is_neg
 
 		return (self, neg) if retneg else self
 
-	def _strip_mmls (self): # mls = minus, mul, lim, sum
+	def _strip_mmls (self): # mmls = minus, mul, lim, sum
 		while self.op in {'-', '*', 'lim', 'sum'}:
 			self = self.mul [-1] if self.is_mul else self [1]
+
+		return self
+
+	def _strip_fdp (self): # fdp = fact, diffp
+		while self.op in {'!', 'diffp'}:
+			self = self [1]
 
 		return self
 

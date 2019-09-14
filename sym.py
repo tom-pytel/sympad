@@ -235,13 +235,14 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		for n in ast.add:
 			not_first = n is not ast.add [0]
 			not_last  = n is not ast.add [-1]
+			op        = ' + '
 
 			if n.is_minus and not_first: # and n.minus.is_num_pos
-				terms.extend ([' - ', self._ast2tex (n.minus)])
-			else:
-				terms.extend ([' + ', self._ast2tex_wrap (n,
-					(_ast_is_neg_nominus (n) and not_first) or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and not_last),
-					(n.is_piece and not_last) or n.op in {'=', '<>', 'slice', '||', '^^', '&&', 'or', 'and', 'not'})])
+				op, n = ' - ', n.minus
+
+			terms.extend ([op, self._ast2tex_wrap (n,
+				n.is_piece or (not_first and _ast_is_neg_nominus (n)) or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and not_last),
+				(n.is_piece and not_last) or n.op in {'=', '<>', '+', 'slice', '||', '^^', '&&', 'or', 'and', 'not'})])
 
 		return ''.join (terms [1:]).replace (' + -', ' - ')
 
@@ -264,11 +265,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(n.op in {'/', 'diff'} and p.op in {'#', '/'}) or \
 					(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
-					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
+					(n.is_attr and (n.strip_attr.is_brack or n.strip_attr.strip_paren.is_comma)) or \
 					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or \
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma or n.base.is_brack)) or \
 					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren.is_comma)) or \
-					(n.is_fact and n.fact.strip_paren.is_comma)):
+					(n.is_fact and (n.fact.is_brack or n.fact.strip_paren.is_comma)) or \
+					(n.is_diffp and n.diffp.is_brack)):
 				t.append (f' \\cdot {s}')
 				has = True
 
@@ -382,7 +384,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'['    : lambda self, ast: f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
 		'|'    : lambda self, ast: f'\\left|{self._ast2tex (ast.abs)} \\right|',
 		'-'    : lambda self, ast: f'-{self._ast2tex_wrap (ast.minus, ast.minus.is_num_pos or ast.minus.is_mul, {"=", "<>", "+", "slice", "||", "^^", "&&", "or", "and", "not"})}',
-		'!'    : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_num_neg)) + '!',
+		'!'    : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '[', '|', '!', '^', 'func', 'vec', 'mat'} or ast.fact.is_num_neg)) + '!',
 		'+'    : _ast2tex_add,
 		'*'    : _ast2tex_mul,
 		'/'    : lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo))}}}{{{self._ast2tex_wrap (ast.denom, 0, {"slice"})}}}',
@@ -393,7 +395,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'lim'  : _ast2tex_lim,
 		'sum'  : _ast2tex_sum,
 		'diff' : _ast2tex_diff,
-		'diffp': lambda self, ast: self._ast2tex_wrap (ast.diffp, 0, {"=", "<>", "+", "*", "/", "^", "sqrt", "lim", "sum", "diff", "intg", "piece", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
+		'diffp': lambda self, ast: self._ast2tex_wrap (ast.diffp, 0, ast.diffp.is_num_neg or ast.diffp.op in {"=", "<>", "+", "*", "/", "^", "sqrt", "lim", "sum", "diff", "intg", "piece", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
 		'intg' : _ast2tex_intg,
 		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"slice"})}' for p in ast.piece) + ' \\end{cases}',
@@ -484,19 +486,25 @@ class ast2nat: # abstract syntax tree -> native text
 		else:
 			return f'{obj}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}'
 
+	def _ast2nat_str (self, ast):
+		s = repr (ast.str_)
+
+		return s if s [0] != "'" else f' {s}'
+
 	def _ast2nat_add (self, ast):
 		terms = []
 
 		for n in ast.add:
 			not_first = n is not ast.add [0]
 			not_last  = n is not ast.add [-1]
+			op        = ' + '
 
 			if n.is_minus and not_first: # and n.minus.is_num_pos
-				terms.extend ([' - ', self._ast2nat (n.minus)])
-			else:
-				terms.extend ([' + ', self._ast2nat_wrap (n,
-					(_ast_is_neg_nominus (n) and not_first) or n.is_piece or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and not_last),
-					(n.op in ('piece', 'lamb') and not_last) or n.op in {'=', '<>', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'})])
+				op, n = ' - ', n.minus
+
+			terms.extend ([op, self._ast2nat_wrap (n,
+				n.is_piece or (not_first and _ast_is_neg_nominus (n)) or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and not_last),
+				(n.op in ('piece', 'lamb') and not_last) or n.op in {'=', '<>', '+', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'})])
 
 		return ''.join (terms [1:]).replace (' + -', ' - ')
 
@@ -516,9 +524,10 @@ class ast2nat: # abstract syntax tree -> native text
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var or (p.is_pow and p.exp.is_attr_var))) or \
 					(n.is_pow and (n.base.is_num_pos or n.base.is_brack)) or \
-					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
+					(n.is_attr and (n.strip_attr.is_brack or n.strip_attr.strip_paren.is_comma)) or \
 					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren.is_comma)) or \
-					(n.is_fact and n.fact.strip_paren.is_comma)):
+					(n.is_fact and (n.fact.is_brack or n.fact.strip_paren.is_comma)) or \
+					(n.is_diffp and n.diffp.is_brack)):
 				t.append (f' * {s}')
 				has = True
 
@@ -538,10 +547,10 @@ class ast2nat: # abstract syntax tree -> native text
 				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)) else \
 				self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
 
-		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if (not ast.denom.strip_minus.is_num and _ast_is_neg (ast.denom)) else \
+		d, ds = \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
-		s     = ns or ds or ast.numer.strip_minus.op not in {'#', '@', '*'} or ast.denom.strip_minus.op not in {'#', '@', '*'}
+		s     = ns or ds or ast.numer.strip_minus.op not in {'#', '@'} or ast.denom.strip_minus.op not in {'#', '@'}
 
 		return f'{n}{" / " if s else "/"}{d}'
 
@@ -609,13 +618,13 @@ class ast2nat: # abstract syntax tree -> native text
 		'#'    : lambda self, ast: ast.num,
 		'@'    : lambda self, ast: ast.var,
 		'.'    : _ast2nat_attr,
-		'"'    : lambda self, ast: repr (ast.str_),
+		'"'    : _ast2nat_str,
 		','    : lambda self, ast: f'{", ".join (self._ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
 		'('    : lambda self, ast: f'({self._ast2nat (ast.paren)})',
 		'['    : lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
 		'|'    : lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
 		'-'    : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.is_num_pos or ast.minus.op in {"*", "piece"}, {"=", "<>", "+", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})}',
-		'!'    : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '|', '!', '^', 'vec', 'mat'} or ast.fact.is_num_neg) + '!',
+		'!'    : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '[', '|', '!', '^', 'func', 'vec', 'mat'} or ast.fact.is_num_neg) + '!',
 		'+'    : _ast2nat_add,
 		'*'    : _ast2nat_mul,
 		'/'    : _ast2nat_div,
@@ -626,7 +635,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'lim'  : _ast2nat_lim,
 		'sum'  : _ast2nat_sum,
 		'diff' : _ast2nat_diff,
-		'diffp': lambda self, ast: self._ast2nat_wrap (ast.diffp, 0, {"=", "<>", "+", "*", "/", "^", "lim", "sum", "diff", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
+		'diffp': lambda self, ast: self._ast2nat_wrap (ast.diffp, 0, ast.diffp.is_num_neg or ast.diffp.op in {"=", "<>", "+", "*", "/", "^", "lim", "sum", "diff", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
 		'intg' : _ast2nat_intg,
 		'mat'  : _ast2nat_mat,
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \
@@ -1188,7 +1197,6 @@ class spt2ast:
 			elif ast.is_mul and _ast_is_neg (ast.mul [0]):
 				ast = AST ('-', ('*', (ast.mul [0].neg (),) + ast.mul [1:]))
 
-
 			terms.append (ast)
 
 		return AST ('+', tuple (terms))
@@ -1427,7 +1435,7 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('+', (('@', 'x'), ('*', (('-', ('/', ('#', '1'), ('#', '2'))), ('^', ('#', '5'), ('/', ('#', '1'), ('#', '3')))))))
+# 	ast = AST ('+', (('@', 'x'), ('-', ('+', (('#', '1'), ('#', '-1'))))))
 # 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 
