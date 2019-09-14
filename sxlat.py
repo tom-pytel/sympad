@@ -50,7 +50,7 @@ def _xlat_f2a_And (*args, canon = False): # patch together out of order extended
 		return li, ri, ll + rl
 
 	def canonicalize (ast):
-		return invert (ast) if (canon and sum ((r [0] == '>') - (r [0] == '<') for r, c in ast.cmp) > 0) else ast
+		return invert (ast) if (canon and ast.is_cmp and sum ((r [0] == '>') - (r [0] == '<') for r, c in ast.cmp) > 0) else ast
 
 	# start here
 	itr  = iter (args)
