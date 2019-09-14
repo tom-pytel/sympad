@@ -473,7 +473,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 			response = {}
 
-			if asts and asts [0] is not AST.None_:
+			if asts and asts [0] != AST.None_:
 				response.update ({'math': [{
 					'tex': sym.ast2tex (ast),
 					'nat': sym.ast2nat (ast),
@@ -486,6 +486,10 @@ class Handler (SimpleHTTPRequestHandler):
 				response ['msg'] = sys.stdout.read ().strip ().split ('\n')
 
 			return response
+
+			# return {'msg': ['Plotting not available because matplotlib is not installed.'],
+			# 	'img': ret, 'math': [{'tex': r'a = \sin\left(x \right)', 'nat': 'a = sin(x)', 'py': 'a = sin(x)'}, {'tex': r'b = \sin\left(x \right)', 'nat': 'b = sin(x)', 'py': 'b = sin(x)'}],
+			# 	'err': ['test line error 1', 'test line another error 2', 'more error text stuff']}
 
 		except Exception:
 			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')}

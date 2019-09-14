@@ -291,16 +291,45 @@ function ajaxResponse (resp) {
 		updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
 
 	} else { // resp.mode == 'evaluate'
+		console.log (resp);
 		Evaluations [resp.idx] = resp;
 
 		let eLogEval = document.getElementById ('LogEval' + resp.idx);
 
 		eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
 
+		if (resp.math !== undefined && resp.math.length) { // math results present?
+			for (let subidx in resp.math) {
+				let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
+				let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
+
+				$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
+						<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
+						</div>`);
+
+				let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
+				let eLogEvalMath  = document.getElementById (idLogEvalMath);
+
+				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
+					eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
+
+					eLogEvalMath.style.visibility = '';
+
+					logResize ();
+					scrollToEnd ();
+				}]);
+
+				reprioritizeMJQueue ();
+			}
+		}
+
 		if (resp.err !== undefined) { // error?
 			if (resp.err.length > 1) {
+				$(eLogEval).append ('<div style="position: relative"></div>');
+				var eErrorHiddenBox  = eLogEval.lastElementChild;
+
 				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
-				$(eLogEval).append (`<div id="${idLogErrorHidden}" style="display: none"></div>`);
+				$(eErrorHiddenBox).append (`<div id="${idLogErrorHidden}" style="display: none"></div>`);
 				var eLogErrorHidden  = document.getElementById (idLogErrorHidden);
 
 				for (let i = 0; i < resp.err.length - 1; i ++) {
@@ -308,68 +337,52 @@ function ajaxResponse (resp) {
 				}
 			}
 
-			let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
-			$(eLogEval).append (`<div class="LogError">${resp.err [resp.err.length - 1]}</div><div class="LogErrorTriange" id="LogErrorTriangle${resp.idx}">\u25b7</div>`);
-			var eLogErrorTriangle  = document.getElementById (idLogErrorTriangle);
+			let idLogErrorBottom = 'LogErrorBottom' + resp.idx;
+			$(eLogEval).append (`<div class="LogError" id="${idLogErrorBottom}">${resp.err [resp.err.length - 1]}</div>`)
+			var eLogErrorBottom  = document.getElementById (idLogErrorBottom);
 
-			$(eLogEval).click (function () {
-				if (eLogErrorHidden.style.display === 'none') {
-					eLogErrorHidden.style.display = 'block';
-					eLogErrorTriangle.innerText   = '\u25bd';
-				} else {
-					eLogErrorHidden.style.display = 'none';
-					eLogErrorTriangle.innerText   = '\u25b7';
-				}
+			if (resp.err.length > 1) {
+				let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
+				$(eErrorHiddenBox).append (`<div class="LogErrorTriange" id="${idLogErrorTriangle}">\u25b7</div>`);
+				var eLogErrorTriangle  = document.getElementById (idLogErrorTriangle);
 
-				logResize ();
-			});
+				f = function () {
+					if (eLogErrorHidden.style.display === 'none') {
+						eLogErrorHidden.style.display = 'block';
+						eLogErrorTriangle.innerText   = '\u25bd';
+					} else {
+						eLogErrorHidden.style.display = 'none';
+						eLogErrorTriangle.innerText   = '\u25b7';
+					}
+
+					logResize ();
+				};
+
+				$(eLogErrorHidden).click (f);
+				$(eLogErrorBottom).click (f);
+				$(eLogErrorTriangle).click (f);
+			}
 
 			logResize ();
 			scrollToEnd ();
+		}
 
-		} else { // no error
-			if (resp.math !== undefined && resp.math.length) { // math results present?
-				for (let subidx in resp.math) {
-					let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
-					let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
-
-					$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
-							<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
-							</div>`);
-
-					let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
-					let eLogEvalMath  = document.getElementById (idLogEvalMath);
-
-					MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-						eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
-
-						eLogEvalMath.style.visibility = '';
-
-						logResize ();
-						scrollToEnd ();
-					}]);
-
-					reprioritizeMJQueue ();
-				}
+		if (resp.msg !== undefined && resp.msg.length) { // message present?
+			for (let msg of resp.msg) {
+				$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
 			}
 
-			if (resp.img !== undefined) { // image present?
-				$(eLogEval).append (`<div><img src='data:image/png;base64,${resp.img}'></div>`);
+			logResize ();
+			scrollToEnd ();
+		}
 
-				setTimeout (function () { // image seems to take some time to register size even though it is directly present
-					logResize ();
-					scrollToEnd ();
-				}, 0);
-			}
+		if (resp.img !== undefined) { // image present?
+			$(eLogEval).append (`<div><img src='data:image/png;base64,${resp.img}'></div>`);
 
-			if (resp.msg !== undefined && resp.msg.length) { // message present?
-				for (let msg of resp.msg) {
-					$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
-				}
-
+			setTimeout (function () { // image seems to take some time to register size even though it is directly present
 				logResize ();
 				scrollToEnd ();
-			}
+			}, 0);
 		}
 	}
 }
