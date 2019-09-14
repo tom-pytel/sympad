@@ -1,20 +1,22 @@
+> semicolon evaluation separator
+
+> ufunction of same name seems to get kwargs stuck in SymPy
+
 > ufuncs initialize with expressions instead of only vars?
 > ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)
 > ODE initial conditions
 > ufuncs created in expression persist to end of expression?
 
-> ufunction of same name seems to get kwargs stuck in SymPy
-
-> semicolon evaluation separator
-
 > document undefined functions
 > document prime differential operator
-
-> change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 > overhaul function keyword arguments
 
 > parse from python ln x / ln base -> \log_{base} x
+
+> var assumptions (using @ character?)
+
+> change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 > allow leading underscore for vars and funcs and leading \_ for tex
 > clean up sparser TOKENS and centralize repeated patterns
@@ -43,8 +45,6 @@
 > formatting: no spacing for nums - 3 x -> 3x?
 > formatting: quick mode no spacing for vars x y z -> xyz?
 > formatting: non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
-
-> var assumptions (using @ character?)
 
 > SYM.PY REFACTOR!
 
