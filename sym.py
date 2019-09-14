@@ -260,7 +260,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				s = self._ast2tex_wrap (s, 1)
 
 			if p and (n.op in {'#', '[', 'mat'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
-					_ast_is_neg (n) or \
+					_ast_is_neg (n) or n.strip_fdp.is_brack or \
 					n.strip_paren.is_comma or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(n.op in {'/', 'diff'} and p.op in {'#', '/'}) or \
@@ -519,15 +519,14 @@ class ast2nat: # abstract syntax tree -> native text
 					n.op in {'=', '<>', '+', 'lamb', 'slice', '||', '^^', '&&', 'or', 'and', 'not'} or (n.is_piece and n is not ast.mul [-1]))
 
 			if p and (n.op in {'#', '[', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg'} or \
-					n.op in {'/', 'diff'} or p.strip_minus.op in {'/', 'diff'} or \
+					n.op in {'/', 'diff'} or p.strip_minus.op in {'/', 'diff'} or n.strip_fdp.is_brack or \
 					n.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var or (p.is_pow and p.exp.is_attr_var))) or \
 					(n.is_pow and (n.base.is_num_pos or n.base.is_brack)) or \
 					(n.is_attr and (n.strip_attr.is_brack or n.strip_attr.strip_paren.is_comma)) or \
 					(n.is_idx and (n.obj.op in {'[', 'idx'} or n.obj.strip_paren.is_comma)) or \
-					(n.is_fact and (n.fact.is_brack or n.fact.strip_paren.is_comma)) or \
-					(n.is_diffp and n.diffp.is_brack)):
+					(n.is_fact and n.fact.strip_paren.is_comma)):
 				t.append (f' * {s}')
 				has = True
 
@@ -547,7 +546,7 @@ class ast2nat: # abstract syntax tree -> native text
 				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)) else \
 				self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
 
-		d, ds = \
+		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if (_ast_is_neg (ast.denom) and ast.denom.strip_minus.is_div) else \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', 'lim', 'sum', 'diff', 'intg', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'})
 		s     = ns or ds or ast.numer.strip_minus.op not in {'#', '@'} or ast.denom.strip_minus.op not in {'#', '@'}
@@ -623,7 +622,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'('    : lambda self, ast: f'({self._ast2nat (ast.paren)})',
 		'['    : lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
 		'|'    : lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
-		'-'    : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.is_num_pos or ast.minus.op in {"*", "piece"}, {"=", "<>", "+", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})}',
+		'-'    : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.is_num_pos or ast.minus.op in {"*", "diff", "piece"}, {"=", "<>", "+", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})}',
 		'!'    : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '[', '|', '!', '^', 'func', 'vec', 'mat'} or ast.fact.is_num_neg) + '!',
 		'+'    : _ast2nat_add,
 		'*'    : _ast2nat_mul,

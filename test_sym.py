@@ -248,6 +248,9 @@ sin{x}'
 \sqrt{-\partial x  d^{5} / dx^{2} dy^{3} "str"  \{0}}'
 \int a b - 1 dx
 \int {a b - 1} dx
+a * [b]!'
+{\sum_{x=y}^z x} / -{d/dx x}
+Sum (x, (x, y, z)) / -{a/b}
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1
