@@ -65,10 +65,7 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#Booleans">Booleans</a><br>
 &emsp;<a href="#Vectors and Matrices">Vectors and Matrices</a><br>
 &emsp;<a href="#Piecewise Expressions">Piecewise Expressions</a><br>
-&emsp;<a href="#Strings">Strings</a><br>
-&emsp;<a href="#Lists and Tuples">Lists and Tuples</a><br>
-&emsp;<a href="#Dictionaries">Dictionaries</a><br>
-&emsp;<a href="#Sets">Sets</a><br>
+&emsp;<a href="#Strings, Lists, Tuples and Dictionaries">Strings, Lists, Tuples and Dictionaries</a><br>
 &emsp;<a href="#Variables">Variables</a><br>
 
 <h4><a href="#Operations">Operations</a></h4>
@@ -94,6 +91,7 @@ The input will be evaluated symbolically or numerically with the results being c
 <h4><a href="#Functions">Functions</a></h4>
 &emsp;<a href="#SymPy Functions">SymPy Functions</a><br>
 &emsp;<a href="#Lambda Functions">Lambda Functions</a><br>
+&emsp;<a href="#Undefined Functions">Undefined Functions</a><br>
 &emsp;<a href="#Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</a><br>
 
 <h4><a href="#Plotting">Plotting</a></h4>
@@ -101,8 +99,15 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#plotv() - Plot Vector Field (2D)">plotv() - Plot Vector Field (2D)</a><br>
 &emsp;<a href="#plotw() - Plot Walk Over Vector Field">plotw() - Plot Walk Over Vector Field</a><br>
 
+<h4><a href="#More Examples">More Examples</a></h4>
+&emsp;<a href="#Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</a><br>
+&emsp;<a href="#Solving Equations">Solving Equations</a><br>
+&emsp;<a href="#Differential Equations">Differential Equations</a><br>
+&emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><br>
+&emsp;<a href="#Plotting Functions">Plotting Functions</a><br>
+&emsp;<a href="#Plotting Vector Walks">Plotting Vector Walks</a><br>
+
 <h4><a href="#Appendix">Appendix</a></h4>
-&emsp;<a href="#More Examples">More Examples</a><br>
 &emsp;<a href="#Special Characters">Special Characters</a><br>
 &emsp;<a href="#Admin Functions">Admin Functions</a><br>
 &emsp;<a href="#Environment Settings for env()">Environment Settings for env()</a><br>
@@ -226,25 +231,14 @@ These are supported and can be entered as SymPy "<b>Piecewise</b>" functions, La
 They may be arbitrarily long - "<b>a if condition1 else b if condition2 else ...</b>" and may leave off the last "<b>else</b>" which is equivalent to a SymPy "<b>Piecewise</b>" function without a terminating "<b>True</b>" condition.
 </p>
 
-<h4 id="Strings">Strings</h4>
+<h4 id="Strings, Lists, Tuples and Dictionaries">Strings, Lists, Tuples and Dictionaries</h4>
 
 <p>
-These exist for the sole purpose of passing string hints or other arguments to SymPy functions. They work as expected being enclosed by single or double quotes and
-supporting escape sequences. For example "<b>Limit (1/x, x, 0, '-')</b>".
-</p>
-
-<h4 id="Lists and Tuples">Lists and Tuples</h4>
-
-<p>
+These exist for the sole purpose of passing arguments to SymPy functions, not really to be operated on (though basic operations work).
+Strings work as expected being enclosed by single or double quotes and supporting escape sequences, for example "<b>Limit (1/x, x, 0, '-')</b>".
 Standard Python bracket enclosed lists and optionally parentheses enclosed tuples are accepted.
 Like strings these exist for the purpose of passing parameters to functions like "<b>Matrix ([[1, 2], [3, 4]])</b>".
-</p>
-
-<h4 id="Dictionaries">Dictionaries</h4>
-
-<p>
-Standard Python dictionaries entered using the same format "<b>{a: b, c: d}</b>".
-Like strings, lists and tuples these exist for the purpose of passing and recieving parameters to and from functions.
+Standard Python dictionaries are entered using the same format as Python "<b>{a: b, c: d}</b>" and like strings, lists and tuples these exist for the purpose of passing and recieving parameters to and from functions.
 </p>
 
 <h4 id="Sets">Sets</h4>
@@ -514,6 +508,10 @@ Lambdas can not be called directly like "<b>(lambda x: x**2) (3)</b>", only thro
 Lambda recursion is not supported.
 </p>
 
+<h4 id="Undefined Functions">Undefined Functions</h4>
+
+<p><del>THIS!</del></p>
+
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
 
 <p>
@@ -709,38 +707,82 @@ Also due to the fact that the points of the vector field are gotten from SymPy o
 It may also never finish if a complex circular vector field introduces enough errors so that the walk gets back to the starting point but not quite close enough to consider it a full loop then the walk will keep going around and around in circles and the function will not return, you have been warned.
 </p>
 
-<h2 id="Appendix">Appendix</h2>
+<h2 id="More Examples">More Examples</h2>
 
-<h4 id="More Examples">More Examples</h4>
+<p><del>Note multiline examples</del></p>
+
+<h4 id="Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</h4>
 
 <p>
-<b>Limits, Sums, Derivatives and Integrals</b>
-</p><p>
 \lim_{h\to0} {(x + h)**2 - x**2} / h<br>
 Limit ((1 + 1/x)**x, x, \infty)<br>
 {(1 - 1/x)**x}.limit (x, \infty)<br>
+limit (sin x / x, x, 0)<br>
 <br>
-\sum_{n=0}**oo (-1)**n x**{2n} / (2n)!<br>
+\sum_{n=0}^\infty (-1)**n x**{2n} / (2n)!<br>
 Sum ((-1)**n x**{2n + 1} / (2n + 1)!, (n, 0, oo))<br>
+summation ((-3)^n / n 7^{n+1} * (x - 5)^n, (n, 1, oo))<br>
 <br>
 d/dx ln x<br>
-sin (x)'<br>
 Derivative (x**3y**2, x, y)<br>
 diff (sin x + cos x, x, 2)<br>
 {x**2sin**2y}.diff (x, y)<br>
 d**3/dx**2dy x**3y**2<br>
+sin (x)'<br>
+(e**{2x})''<br>
+d/dx ln ?(x)<br>
 <br>
 \int x**a dx<br>
 Integral (a**x, x)<br>
 {x**3y**2}.integrate (x, y)<br>
-\int_0^1 x dx<br>
+\int_0**oo e**{-st} dt<br>
 Integral (r, (r, 0, 1), (theta, 0, 2pi))<br>
-{sin x / x}.integrate ((x, -oo, oo))<br>
+integrate (sin x / x, (x, -oo, oo))<br>
 </p>
 
+<h4 id="Solving Equations">Solving Equations</h4>
+
 <p>
-<b>Calculating Eigenvalues and Eigenvectors</b><i>&emsp; by "hand"</i>
-</p><p>
+solve (x**2 = 4)<i>&emsp; x**2 - 4 = 0</i><br>
+solve (x**2 - 4)<i>&emsp; same</i><br>
+solve (|x| >= x**2)<i>&emsp; inequality</i><br>
+solve (y == x**2 + 2 x - 1, x)<i>&emsp; solve for x from y</i><br>
+solve (x + (e**x)**2, e**x)<i>&emsp; solve for e**x</i><br>
+solve (x + e**x, x)<i>&emsp; explicit solution</i><br>
+solve (x + e**x, x, implicit = True)<i>&emsp; implicit solution</i><br>
+solve ((x + 2y = 5, y - 2x = 0))<i>&emsp; system of equations, solve for x and y</i><br>
+solve ((a + b)x - b + 2, a, b)<i>&emsp; one equation relating two variables</i><br>
+solve ((a + b)x - b**2 + 2, a, b)<i>&emsp; non-linear</i><br>
+<br>
+a = x**2 + y -2<br>
+b = y**2 - 4<br>
+solve ([a, b])<i>&emsp; system of two non-linear</i><br>
+s = _<i>&emsp; store result</i><br>
+a.subs (s [0]), b.subs (s [0])<i>&emsp; test solutions</i><br>
+a.subs (s [1]), b.subs (s [1])<br>
+a.subs (s [2]), b.subs (s [2])<br>
+a.subs (s [3]), b.subs (s [3])<br>
+w = {x: 1, y: 2}<br>
+a.subs (w), b.subs (w)<i>&emsp; test bogus solution</i><br>
+</p>
+
+<h4 id="Differential Equations">Differential Equations</h4>
+
+<p>
+dsolve (d**2/dx**2 ?(x) + 9?(x))<i>&emsp; using undefined functions directly</i><br>
+dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative since function of only one variable</i><br>
+y = ?(x)<br>
+dsolve (y'' + 9y)<i>&emsp; but easiest like this</i><br>
+dsolve (sin x cos y + cos x sin y y')<br>
+<br>
+x, y = ?x(t), ?y(t)<br>
+dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<br>
+<del>THIS!</del><br>
+</p>
+
+<h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; by "hand"</i></h4>
+
+<p>
 m = \[[1, 2], [3, 4]]<br>
 l = m - lambda eye 2<br>
 l.det ()<br>
@@ -756,9 +798,9 @@ solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
 m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
 </p>
 
+<h4 id="Plotting Functions">Plotting Functions</h4>
+
 <p>
-<b>Plotting Functions</b>
-</p><p>
 plotf (2, x**2)<br>
 f = x**2<br>
 plotf (2, f)<br>
@@ -766,15 +808,14 @@ plotf (2, lambda x: f)<br>
 l = lambda x: x**2<br>
 plotf (2, l)<br>
 plotf (2, lambda x: l (x))<br>
-<br>
 plotf (2, f if x &lt; 0, 'r', f if x >= 0, 'g')<br>
 plotf ('+', 2 if l (x) &lt; 2)<br>
 plotf ('+', 2, -4, 4, -x**2)<br>
 </p>
 
+<h4 id="Plotting Vector Walks">Plotting Vector Walks</h4>
+
 <p>
-<b>Plotting Vector Walks</b>
-</p><p>
 f = lambda x, y: (2x + sec**2x) / 2y<br>
 plotv (6, -6, 6, f, fs = -8, res = 33)<i>&emsp;plot vector field</i><br>
 plotw ('+', f, (-1, 0))<i>&emsp;add first walk starting at point (-1, 0)</i><br>
@@ -784,6 +825,8 @@ plotw ('+', f, (-4, 0))<br>
 plotw ('+', f, (-5, 0))<br>
 </p>
 
+<h2 id="Appendix">Appendix</h2>
+
 <h4 id="Special Characters">Special Characters</h4>
 
 <p><b>_</b> - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.
@@ -791,6 +834,8 @@ Even if the object resulting from the expression is not natively known to SymPad
 <p><b>$</b> - "<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
 <p><b>@</b> - "<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value.
 This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</p>
+<p><b>?</b> - "<b>?name(vars)</b>" - <del>THIS!</del></p>
+<p><b>;</b> - <del>THIS!</del></p>
 <p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
 <p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
 

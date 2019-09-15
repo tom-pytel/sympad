@@ -165,11 +165,9 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 			last, wrapl = last.mul [-1], lambda ast, last = last: AST ('*', last.mul [:-1] + (ast,))
 		elif last.is_pow:
 			last, wrapl = last.exp, lambda ast, last = last, wrapl = wrapl: wrapl (AST ('^', last.base, ast))
-
 		elif last.is_minus:
 			last, neg = last._strip_minus (retneg = True)
 			wrapl     = lambda ast, last = last, wrapl = wrapl, neg = neg: wrapl (neg (ast))
-
 		else:
 			break
 
