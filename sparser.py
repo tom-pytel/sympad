@@ -580,10 +580,7 @@ class Parser (lalr1.LALR1):
 			b'1N2lHlRW+lZWXIoBiXo5U2b6WG5AD0dlx/0jHJjuvA+hQG+pp9665qIyJVYbg92B9dftkL4GFWO3/ABb+VUPVA8/qWz1czgZLE4Ew1xZN7zzUHIF5hg+sIOyo2ZCfwbZIbuHdlB2rBuZuaPskHJdlgCFLcsW1R3lAIK9ZSDKntq0iAVNk5PIobRBuj+XdLfq' \
 			b'gHlRa5+55bH/k5RX68ZaHmpe2e4hH5RTG+etPLCcGruHfFBOrRsxuYAZRrCSxPoDV4tI/re9pf7e6ReSyyzMohflB826PNVZNscrBaI794Nyfp3dyyXkvO3O/aCcXz+Ycu45P3TnflDOrx+wOfecH7tzPyjn148NnXnOw+JgZ35QzuvutRQ4n5vh3wQPRgUL' \
 			b'HiBW9Bxh9WO64TpzadlwwocQMDMXtsKExd1w+TF+zVgP7TI3/6d1NnaT0JCh+ITL3uJfSDLQ0X261AoWD/J3lJYWVSpWaXHyRWmEooGTeME3LvBGC6vxomqosfKLqbmva6pErky+Lhaag0gIbfGFMvkUlNaeSiOPYbjvvMa19XY4mwvWdGOLWvfAa1QVwROo' \
-			b'DqL5XrBennt+cOeRQ5q4ggwJHfYkFkaBj6VhR9iV1L0FfAZq6cG+hN7HhXlz/f8BSqqNjg==' 
-
-	_PARSER_TOP             = 'expr_scolon'
-	_PARSER_CONFLICT_REDUCE = {'BAR'}
+			b'DqL5XrBennt+cOeRQ5q4ggwJHfYkFkaBj6VhR9iV1L0FfAZq6cG+hN7HhXlz/f8BSqqNjg=='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -729,9 +726,12 @@ class Parser (lalr1.LALR1):
 
 	TOKENS_LONG    = OrderedDict () # initialized in __init__()
 
+	_PARSER_TOP             = 'expr_scolon'
+	_PARSER_CONFLICT_REDUCE = {'BAR'}
+
 	# grammar definition and implementation
 
-	def expr_scolon_1      (self, expr_scolon, SCOLON, expr_commas):                   return AST.flatcat (';', expr_scolon, expr_commas)
+	def expr_scolon_1      (self, expr_scolon, SCOLON, expr_commas):                   return expr_scolon if expr_commas == AST.CommaEmpty else AST.flatcat (';', expr_scolon, expr_commas)
 	def expr_scolon_2      (self, expr_commas):                                        return expr_commas
 
 	def expr_commas_1      (self, expr_comma, COMMA):                                  return expr_comma if expr_comma.is_comma else AST (',', (expr_comma,))

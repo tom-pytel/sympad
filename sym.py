@@ -374,7 +374,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	_ast2tex_funcs = {
-		';'    : lambda self, ast: '; '.join (self._ast2tex (a) for a in ast.scolon),
+		';'    : lambda self, ast: ';\\: '.join (self._ast2tex (a) for a in ast.scolon),
 		'='    : lambda self, ast: f'{self._ast2tex_ass_hs (ast.lhs)} = {self._ast2tex_ass_hs (ast.rhs, False)}',
 		'<>'   : lambda self, ast: f'{self._ast2tex_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PY2TEX.get (r, r)} {self._ast2tex_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'    : _ast2tex_num,

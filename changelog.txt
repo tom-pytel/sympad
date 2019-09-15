@@ -3,7 +3,7 @@ v1.0.9:
 * Added semicolon separator to allow multiple expressions on single line.
 * Added undefined functions (for ODEs).
 * Added prime "'" differentiation operator.
-* Changed internal negative object parsing and printing rules.
+* Cleaned up internal negative object parsing and printing rules.
 * Fixed internal lambda variable representation so lambda var specification doesn't get remapped.
 
 v1.0.8:
