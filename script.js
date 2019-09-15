@@ -5,6 +5,8 @@
 // TODO: clear() function to delete old log items?
 
 URL              = '/';
+WaitIcon         = 'https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp';
+
 MJQueue          = null;
 MarginTop        = Infinity;
 PreventFocusOut  = true;
@@ -167,7 +169,7 @@ function addLogEntry () {
 
 	$('#Log').append (`
 			<div class="LogEntry"><div class="LogMargin">${LogIdx}.</div><div class="LogBody" id="LogEntry${LogIdx}"><div class="LogInput" id="LogInput${LogIdx}">
-				<img class="LogWait" id="LogInputWait${LogIdx}" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16" style="visibility: hidden">
+				<img class="LogWait" id="LogInputWait${LogIdx}" src="${WaitIcon}" width="16" style="visibility: hidden">
 			</div></div></div>`)
 
 	Validations.push (undefined);
@@ -262,12 +264,11 @@ function ajaxResponse (resp) {
 			})
 
 			let eLogInputWait              = document.getElementById ('LogInputWait' + resp.idx);
+			let math                       = resp.tex ? `$${resp.tex}$` : '';
 			eLogInputWait.style.visibility = '';
 
-			let idMath = 'LogInputMath' + UniqueID ++;
-			let math   = resp.tex ? `$${resp.tex}$` : '';
-			$(eLogInput).append (`<span id="${idMath}" onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
-			let eMath  = document.getElementById (idMath);
+			$(eLogInput).append (`<span onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
+			let eMath = eLogInput.lastElementChild;
 
 			MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
 				if (eMath === eLogInput.children [eLogInput.children.length - 1]) {
@@ -298,18 +299,17 @@ function ajaxResponse (resp) {
 
 		if (resp.math !== undefined && resp.math.length) { // math results present?
 			for (let subidx in resp.math) {
-				let idLogEvalDiv  = `LogEvalDiv${resp.idx}_${subidx}`;
-				let idLogEvalMath = `LogEvalMath${resp.idx}_${subidx}`;
+				$(eLogEval).append (`<div class="LogEval"></div>`);
+				let eLogEvalDiv = eLogEval.lastElementChild;
 
-				$(eLogEval).append (`<div id="${idLogEvalDiv}" class="LogEval"><span id="${idLogEvalMath}" style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>
-						<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
-						</div>`);
+				$(eLogEvalDiv).append (`<span style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>`);
+				let eLogEvalMath = eLogEvalDiv.lastElementChild;
 
-				let eLogEvalDiv  = document.getElementById (idLogEvalDiv);
-				let eLogEvalMath = document.getElementById (idLogEvalMath);
+				$(eLogEvalDiv).append (`<img class="LogWait" src="${WaitIcon}" width="16">`);
+				let eLogEvalWait = eLogEvalDiv.lastElementChild;
 
 				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-					eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
+					eLogEvalDiv.removeChild (eLogEvalWait);
 
 					eLogEvalMath.style.visibility = '';
 
@@ -324,25 +324,22 @@ function ajaxResponse (resp) {
 		if (resp.err !== undefined) { // error?
 			if (resp.err.length > 1) {
 				$(eLogEval).append ('<div style="position: relative"></div>');
-				var eErrorHiddenBox  = eLogEval.lastElementChild;
+				var eErrorHiddenBox = eLogEval.lastElementChild;
 
-				let idLogErrorHidden = 'LogErrorHidden' + resp.idx;
-				$(eErrorHiddenBox).append (`<div id="${idLogErrorHidden}" style="display: none"></div>`);
-				var eLogErrorHidden  = document.getElementById (idLogErrorHidden);
+				$(eErrorHiddenBox).append (`<div style="display: none"></div>`);
+				var eLogErrorHidden = eErrorHiddenBox.lastElementChild;
 
 				for (let i = 0; i < resp.err.length - 1; i ++) {
 					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i].replace (/  /g, '&emsp;')}</div>`);
 				}
 			}
 
-			let idLogErrorBottom = 'LogErrorBottom' + resp.idx;
-			$(eLogEval).append (`<div class="LogError" id="${idLogErrorBottom}">${resp.err [resp.err.length - 1]}</div>`)
-			var eLogErrorBottom  = document.getElementById (idLogErrorBottom);
+			$(eLogEval).append (`<div class="LogError">${resp.err [resp.err.length - 1]}</div>`)
+			let eLogErrorBottom = eLogEval.lastElementChild;
 
 			if (resp.err.length > 1) {
-				let idLogErrorTriangle = 'LogErrorTriangle' + resp.idx;
-				$(eErrorHiddenBox).append (`<div class="LogErrorTriange" id="${idLogErrorTriangle}">\u25b7</div>`);
-				var eLogErrorTriangle  = document.getElementById (idLogErrorTriangle);
+				$(eErrorHiddenBox).append (`<div class="LogErrorTriange">\u25b7</div>`);
+				var eLogErrorTriangle = eErrorHiddenBox.lastElementChild;
 
 				f = function () {
 					if (eLogErrorHidden.style.display === 'none') {
@@ -428,7 +425,7 @@ function inputted (text) {
 
 	$('#LogEntry' + LogIdx).append (`
 			<div class="LogEval" id="LogEval${LogIdx}">
-				<img class="LogWait" id="LogEvalWait${LogIdx}" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
+				<img class="LogWait" id="LogEvalWait${LogIdx}" src="${WaitIcon}" width="16">
 			</div>`);
 
 	History.push (text);

@@ -1,3 +1,5 @@
+> wait icon into sympad
+
 > semicolon evaluation separator
 
 > ufunction of same name seems to get kwargs stuck in SymPy
