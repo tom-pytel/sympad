@@ -258,6 +258,7 @@ a * [a]! [b]
 a * [a].a [b]
 a * [a].a' [b]
 a * [a].a!' [b]
+False * ()'
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

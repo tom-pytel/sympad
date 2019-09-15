@@ -264,15 +264,14 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 			if p and (n.op in {'#', 'mat'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 					_ast_is_neg (n) or s [:6] == '\\left[' or \
-					n.strip_paren.is_comma or \
+					n.strip_fdp.strip_paren.is_comma or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(n.op in {'/', 'diff'} and p.op in {'#', '/'}) or \
 					(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
 					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or \
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or \
-					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or \
-					(n.is_fact and n.fact.strip_paren.is_comma)):
+					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma))):
 				t.append (f' \\cdot {s}')
 				has = True
 
@@ -523,13 +522,12 @@ class ast2nat: # abstract syntax tree -> native text
 
 			if p and (n.op in {'#', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg'} or \
 					n.op in {'/', 'diff'} or p.strip_minus.op in {'/', 'diff'} or s [:1] == '[' or \
-					n.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
+					n.strip_fdp.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var or (p.is_pow and p.exp.is_attr_var))) or \
 					(n.is_pow and n.base.is_num_pos) or \
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
-					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or \
-					(n.is_fact and n.fact.strip_paren.is_comma)):
+					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma))):
 				t.append (f' * {s}')
 				has = True
 
