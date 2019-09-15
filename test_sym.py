@@ -251,6 +251,7 @@ sin{x}'
 a * [b]!'
 {\sum_{x=y}^z x} / -{d/dx x}
 Sum (x, (x, y, z)) / -{a/b}
+{-a / z}'
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

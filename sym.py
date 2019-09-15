@@ -395,7 +395,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'lim'  : _ast2tex_lim,
 		'sum'  : _ast2tex_sum,
 		'diff' : _ast2tex_diff,
-		'diffp': lambda self, ast: self._ast2tex_wrap (ast.diffp, 0, ast.diffp.is_num_neg or ast.diffp.op in {"=", "<>", "+", "*", "/", "^", "sqrt", "lim", "sum", "diff", "intg", "piece", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
+		'diffp': lambda self, ast: self._ast2tex_wrap (ast.diffp, 0, ast.diffp.is_num_neg or ast.diffp.op in {"=", "<>", "-", "+", "*", "/", "^", "sqrt", "lim", "sum", "diff", "intg", "piece", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
 		'intg' : _ast2tex_intg,
 		'mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"slice"})}' for p in ast.piece) + ' \\end{cases}',
@@ -634,7 +634,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'lim'  : _ast2nat_lim,
 		'sum'  : _ast2nat_sum,
 		'diff' : _ast2nat_diff,
-		'diffp': lambda self, ast: self._ast2nat_wrap (ast.diffp, 0, ast.diffp.is_num_neg or ast.diffp.op in {"=", "<>", "+", "*", "/", "^", "lim", "sum", "diff", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
+		'diffp': lambda self, ast: self._ast2nat_wrap (ast.diffp, 0, ast.diffp.is_num_neg or ast.diffp.op in {"=", "<>", "-", "+", "*", "/", "^", "lim", "sum", "diff", "intg", "piece", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"}) + "'" * ast.count,
 		'intg' : _ast2nat_intg,
 		'mat'  : _ast2nat_mat,
 		'piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "piece", "lamb"}, {",", "slice"})}' if p [1] is True else \

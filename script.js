@@ -292,8 +292,7 @@ function ajaxResponse (resp) {
 
 	} else { // resp.mode == 'evaluate'
 		Evaluations [resp.idx] = resp;
-
-		let eLogEval = document.getElementById ('LogEval' + resp.idx);
+		let eLogEval           = document.getElementById ('LogEval' + resp.idx);
 
 		eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
 
@@ -306,8 +305,8 @@ function ajaxResponse (resp) {
 						<img id="LogEvalWait${resp.idx}_${subidx}" class="LogWait" src="https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp" width="16">
 						</div>`);
 
-				let eLogEvalDiv   = document.getElementById (idLogEvalDiv);
-				let eLogEvalMath  = document.getElementById (idLogEvalMath);
+				let eLogEvalDiv  = document.getElementById (idLogEvalDiv);
+				let eLogEvalMath = document.getElementById (idLogEvalMath);
 
 				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
 					eLogEvalDiv.removeChild (document.getElementById (`LogEvalWait${resp.idx}_${subidx}`));
