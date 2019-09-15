@@ -14,7 +14,6 @@
 	h4 { margin: 1.5em 0 0.75em 0; }
 	p { margin: 0 0 1.2em 1em; line-height: 150%; }
 	table { margin: 0 0 1.2em 1em; line-height: 150%; }
-	i { color: #0008; }
 	del { color: red; }
 </style>
 
@@ -272,6 +271,7 @@ There is nothing special about differential variables other than their specific 
 </p><p>
 Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
 They may also be assigned a user function which allows you to use them as macro expression functions, that is covered in the section on functions.
+<del>More on Automatic Substitution</del>
 </p>
 
 <h2 id="Operations">Operations</h2>
@@ -347,11 +347,11 @@ Sums may also be entered using the standard SymPy syntax "<b>Sum (expression, (v
 <h4 id="Differentiation">Differentiation</h4>
 
 <p>
-The derivative of expression "<b>z</b>" with respect to "<b>x</b>" is entered as "<b>d/dx z</b>" or "<b>\frac{d}{dx} z</b>" = $\frac{d}{dx} z$. The
-second derivative is "<b>d^2/dx^2 (z)</b>" or "<b>\frac{d^2}{dx^2} (z)</b>" = $\frac{d^2}{dx^2} (z)$. Using "<b>\partial</b>" ($\partial$) is allowed but
-must be consistent within the expression. Mixed derivatives are entered as "<b>d^2 / dx dy (z)</b>" or "<b>\partial^2 / \partial x\partial y (z)</b>" =
-$\frac{\partial^2}{\partial x\partial y} (z)$. Derivatives may also be entered using the standard SymPy syntax "<b>Derivative (expression, var1, var2,
-power2, ...)</b>".
+The derivative of expression "<b>z</b>" with respect to "<b>x</b>" is entered as "<b>d/dx z</b>" or "<b>\frac{d}{dx} z</b>" = $\frac{d}{dx} z$.
+The second derivative is "<b>d^2/dx^2 (z)</b>" or "<b>\frac{d^2}{dx^2} (z)</b>" = $\frac{d^2}{dx^2} (z)$. Using "<b>\partial</b>" ($\partial$) is allowed but must be consistent within the expression.
+Mixed derivatives are entered as "<b>d^2 / dx dy (z)</b>" or "<b>\partial^2 / \partial x\partial y (z)</b>" = $\frac{\partial^2}{\partial x\partial y} (z)$.
+Derivatives may also be entered using any of the standard SymPy syntaxes like "<b>Derivative (expression, var1, var2, power2, ...)</b>".
+They can also be specified using prime notation if the given expression has exactly one free variable to derivate, line "<b> sin (x)' </b>" or "<b> (x**3)'' </b>".
 </p>
 
 <h4 id="Integration">Integration</h4>
@@ -426,9 +426,9 @@ For example, two ways to get the transpose of a matrix are "<b>\[[1, 2, 3], [4, 
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
 Anything can be assigned to any valid variable like mathematical expressions, Python objects like strings or lists, user lambda functions or even references to other variables.
-To delete an assignment use the "<b>del var</b>" function, to delete all non-lambda variables do "<b>del vars</b>", to delete all user defined lambda functions do "<b>del funcs</b>" and to delete ALL assignments use "<b>delall</b>".
+To delete an assignment use the "<b>del var</b>" function, to delete all non-lambda variables do "<b>del vars</b>", to delete all user defined lambda and undefined functions do "<b>del funcs</b>" and to delete ALL assignments use "<b>delall</b>".
 To see what variables are currently assigned to, use the "<b>vars</b>" function.
-This will not show lambda assignments though, to see those use "<b>funcs</b>".
+This will not show function assignments though, to see those use "<b>funcs</b>".
 </p><p>
 Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object like "<b>x, y = 1, 2</b>".
 A useless example of iterable assignment would be setting "<b> a, b, c = 'str' </b>" which would give you "<b> a = 's' </b>", "<b> b = 't' </b>" and "<b> c = 'r' </b>".
@@ -775,7 +775,7 @@ y = ?(x)<br>
 dsolve (y'' + 9y)<i>&emsp; but easiest like this</i><br>
 dsolve (sin x cos y + cos x sin y y')<br>
 <br>
-x, y = ?x(t), ?y(t)<br>
+x, y = ?x(t), ?y(t)<i>&emsp; two distinct undefined functions so need to name them</i><br>
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<br>
 <del>THIS!</del><br>
 </p>

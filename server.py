@@ -361,7 +361,7 @@ class Handler (SimpleHTTPRequestHandler):
 			self.send_response (200)
 
 			if self.path == '/env.js':
-				content = 'text/javascript'
+				content = 'javascript'
 				data    = f'History = {_HISTORY}\nHistIdx = {len (_HISTORY)}\nVersion = {"v" + _VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
 
 				self.send_header ('Cache-Control', 'no-store')

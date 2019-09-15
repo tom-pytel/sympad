@@ -23,6 +23,7 @@ LastClickTime    = 0;
 NumClicks        = 0;
 
 GreetingFadedOut = false;
+ExceptionDone    = false;
 
 // replaced in env.js
 History          = [];
@@ -72,7 +73,7 @@ function generateBG () {
 function copyInputStyle () {
 	let left = $('#LogEntry1').position ().left;
 
-	JQInput.css ({left: left})
+	JQInput.css ({left: left});
 	JQInput.width (window.innerWidth - left - 32);
 	$('#InputBGLeft').width (left);
 	$('#InputBGRight').css ({left: window.innerWidth - 30});
@@ -106,7 +107,7 @@ function logResize () {
 	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 3)); // +3 is fudge factor
 
 	if (margin < MarginTop) {
-		MarginTop = margin
+		MarginTop = margin;
 		$('body').css ({'margin-top': margin});
 	}
 
@@ -261,7 +262,7 @@ function ajaxResponse (resp) {
 
 			MJQueue.queue = queue.filter (function (obj, idx, arr) { // remove previous pending updates to same element
 				return obj.data [0].parentElement !== eLogInput;
-			})
+			});
 
 			let eLogInputWait              = document.getElementById ('LogInputWait' + resp.idx);
 			let math                       = resp.tex ? `$${resp.tex}$` : '';
@@ -348,10 +349,19 @@ function ajaxResponse (resp) {
 					}
 				}
 
-				$(eLogEval).append (`<div class="LogError">${subresp.err [subresp.err.length - 1]}</div>`)
+				$(eLogEval).append (`<div class="LogError">${subresp.err [subresp.err.length - 1]}</div>`);
 				let eLogErrorBottom = eLogEval.lastElementChild;
 
 				if (subresp.err.length > 1) {
+					let ClickHereToOpen = null;
+
+					if (!ExceptionDone) {
+						$(eLogErrorBottom).append ('<i>&emsp;<-- click here to open</i>');
+
+						ClickHereToOpen = eLogErrorBottom.lastElementChild;
+						ExceptionDone   = true;
+					}
+
 					$(eErrorHiddenBox).append (`<div class="LogErrorTriange">\u25b7</div>`);
 					let eLogErrorTriangle = eErrorHiddenBox.lastElementChild;
 
@@ -362,6 +372,11 @@ function ajaxResponse (resp) {
 						} else {
 							eLogErrorHidden.style.display = 'none';
 							eLogErrorTriangle.innerText   = '\u25b7';
+						}
+
+						if (ClickHereToOpen) {
+							ClickHereToOpen.parentNode.removeChild (ClickHereToOpen);
+							ClickHereToOpen = null;
 						}
 
 						logResize ();
