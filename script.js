@@ -291,7 +291,6 @@ function ajaxResponse (resp) {
 		updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
 
 	} else { // resp.mode == 'evaluate'
-		console.log (resp);
 		Evaluations [resp.idx] = resp;
 
 		let eLogEval = document.getElementById ('LogEval' + resp.idx);

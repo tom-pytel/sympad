@@ -1068,7 +1068,7 @@ class Parser (lalr1.LALR1):
 					(self.stack [-2].red.is_attr or (self.stack [-2].red.is_var and self.stack [-2].red.var in self._USER_FUNCS)):
 				return self._insert_symbol ('PARENR')
 
-		if pos and rule [1] [pos - 1] == 'expr_commas' and rule [0] not in ('expr_abs', 'expr_func', 'expr_ufunc'):
+		if pos and rule [1] [pos - 1] == 'expr_commas' and rule [0] not in {'expr_abs', 'expr_func', 'expr_ufunc', 'varass'}:
 			return self._parse_autocomplete_expr_commas (rule, pos)
 
 		if pos >= len (rule [1]): # end of rule
@@ -1124,15 +1124,15 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
-# 	# p.set_user_funcs ({'f': 1})
-# 	# a = p.parse (r'x - {1 * 2}')
-# 	# a = p.parse (r'x - {{1 * 2} * 3}')
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
+	# p.set_user_funcs ({'f': 1})
+	# a = p.parse (r'x - {1 * 2}')
+	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-# 	a = p.parse ("\int a b - 1 dx")
-# 	print (a)
+	a = p.parse (r"""\sum_{x = {?(reals = False)} if {d^{3} / dy^{3} \partial '  {dx : \int_dy^-1.0 1e-100 dx,\partial x : -1 ["str"],1e100 : []}} else {?f(x, y, z)} if \log_\[[\[\infty zoo,],],[log\partialx,],[{\partial  : -1,None : True},],]{1e+100,.1} : {\partial x||oo||dx}}^[lambda x, y, z: Limit (\{1,xyzd,b}, x, b > 1.0),{\fracpartialx^partial{?f(x, y)}+{?f(x, y)}}] {.1 : {1e-100 : \partialx||d^{7} / dx^{2} dx^{3} dx^{2} \partial x||(partial,1,partial)}''',\partialy : {{oo [\emptyset]  {None  \partial x  a}  sqrtxyzd}*\{\fraccdz,\fracdx\partialy}}}""")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)

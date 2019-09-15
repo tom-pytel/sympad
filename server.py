@@ -110,7 +110,7 @@ def _update_vars ():
 	_UFUNCS2VARS.clear ()
 
 	one_funcs  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
-	user_funcs = {} # dict (va for va in filter (lambda va: va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
+	user_funcs = {}
 
 	for var, ast in _VARS.items ():
 		if ast.is_ufunc:
@@ -426,6 +426,10 @@ class Handler (SimpleHTTPRequestHandler):
 		}
 
 	def evaluate (self, request):
+		# return {'msg': ['Plotting not available because matplotlib is not installed.'],
+		# 	'img': ret, 'math': [{'tex': r'a = \sin\left(x \right)', 'nat': 'a = sin(x)', 'py': 'a = sin(x)'}, {'tex': r'b = \sin\left(x \right)', 'nat': 'b = sin(x)', 'py': 'b = sin(x)'}],
+		# 	'err': ['test line error 1', 'test line another error 2', 'more error text stuff']}
+
 		try:
 			_HISTORY.append (request ['text'])
 
@@ -481,15 +485,9 @@ class Handler (SimpleHTTPRequestHandler):
 				} for ast in asts]})
 
 			if sys.stdout.tell ():
-				sys.stdout.seek (0)
-
-				response ['msg'] = sys.stdout.read ().strip ().split ('\n')
+				response ['msg'] = sys.stdout.getvalue ().strip ().split ('\n')
 
 			return response
-
-			# return {'msg': ['Plotting not available because matplotlib is not installed.'],
-			# 	'img': ret, 'math': [{'tex': r'a = \sin\left(x \right)', 'nat': 'a = sin(x)', 'py': 'a = sin(x)'}, {'tex': r'b = \sin\left(x \right)', 'nat': 'b = sin(x)', 'py': 'b = sin(x)'}],
-			# 	'err': ['test line error 1', 'test line another error 2', 'more error text stuff']}
 
 		except Exception:
 			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')}
