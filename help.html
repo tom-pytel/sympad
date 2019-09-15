@@ -116,9 +116,8 @@ The best way to see what SymPad can do is by doing, so try entering any of the f
 </p><p>
 cos**-1 0 \log_2 8<br>
 expand ((1 + x)**4)<br>
-factor (x**3 + 3 y x**2 + 3 x y**2 + y**3)<br>
+factor (x^3 + 3y x^2 + 3x y^2 + y^3)<br>
 series (e^x, x, 0, 5)<br>
-solve (x**2 + y = 4, x)<br>
 Limit (\frac1x, x, 0, dir='-')<br>
 \sum_{n=0}**oo x^n / n!<br>
 d**6 / dx dy**2 dz**3 x^3 y^3 z^3<br>
@@ -127,6 +126,8 @@ Integral (e^{-x^2}, (x, 0, \infty))<br>
 \[[1, 2], [3, 4]]**-1<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
+solve (x**2 + y = 4, x)<br>
+y = ?(x); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y<br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
 </p>
 

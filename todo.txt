@@ -1,17 +1,17 @@
+> document undefined functions
+> document prime differential operator
+> document semicolon
+
 > ufunction of same name seems to get kwargs stuck in SymPy
 
+> ODE initial conditions
 > ufuncs initialize with expressions instead of only vars?
 > ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)
-> ODE initial conditions
 > ufuncs created in expression persist to end of expression?
 
 > wait icon into sympad
 
 > input shortcut non-opened closing curly and/or paren
-
-> document undefined functions
-> document prime differential operator
-> document semicolon
 
 > overhaul function keyword arguments
 

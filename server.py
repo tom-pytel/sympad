@@ -235,7 +235,7 @@ def _admin_del (*args):
 				raise AE35UnitError (f'Variable {var!r} is not defined, it can only be attributable to human error.')
 
 	for var, ast in vars.items ():
-		msgs.append (f'{"Function" if ast.is_lamb else "Variable"} {var!r} deleted.')
+		msgs.append (f'{"Lambda function" if ast.is_lamb else "Undefined function" if ast.is_ufunc else "Variable"} {var!r} deleted.')
 
 		del _VARS [var]
 
