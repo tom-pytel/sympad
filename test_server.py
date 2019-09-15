@@ -242,7 +242,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('funcs'), {'msg': ['No functions defined.']})
 
 def get (text):
-	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ()
+	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ().get ('data', [{}]) [0]
 	ret  = {}
 
 	if 'math' in resp:

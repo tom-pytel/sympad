@@ -191,7 +191,7 @@ function writeToClipboard (text) {
 }
 
 //...............................................................................................
-function copyToClipboard (e, val_or_eval, idx, subidx = 0) {
+function copyToClipboard (e, val_or_eval, idx, subidx = 0, mathidx = 0) {
 	let t = performance.now ();
 
 	if ((t - LastClickTime) > 500) {
@@ -201,7 +201,7 @@ function copyToClipboard (e, val_or_eval, idx, subidx = 0) {
 	}
 
 	LastClickTime = t;
-	let resp      = val_or_eval ? Evaluations [idx].math [subidx] : Validations [idx];
+	let resp      = val_or_eval ? Evaluations [idx].data [subidx].math [mathidx] : Validations [idx];
 
 	writeToClipboard (NumClicks == 1 ? resp.nat : NumClicks == 2 ? resp.py : resp.tex);
 
@@ -297,87 +297,93 @@ function ajaxResponse (resp) {
 
 		eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
 
-		if (resp.math !== undefined && resp.math.length) { // math results present?
-			for (let subidx in resp.math) {
-				$(eLogEval).append (`<div class="LogEval"></div>`);
-				let eLogEvalDiv = eLogEval.lastElementChild;
+		for (let subidx in resp.data) {
+			subresp = resp.data [subidx];
 
-				$(eLogEvalDiv).append (`<span style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx})">$${resp.math [subidx].tex}$</span>`);
-				let eLogEvalMath = eLogEvalDiv.lastElementChild;
+			if (subresp.msg !== undefined && subresp.msg.length) { // message present?
+				for (let msg of subresp.msg) {
+					$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
+				}
 
-				$(eLogEvalDiv).append (`<img class="LogWait" src="${WaitIcon}" width="16">`);
-				let eLogEvalWait = eLogEvalDiv.lastElementChild;
-
-				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-					eLogEvalDiv.removeChild (eLogEvalWait);
-
-					eLogEvalMath.style.visibility = '';
-
-					logResize ();
-					scrollToEnd ();
-				}]);
-
-				reprioritizeMJQueue ();
+				logResize ();
+				scrollToEnd ();
 			}
-		}
 
-		if (resp.err !== undefined) { // error?
-			if (resp.err.length > 1) {
-				$(eLogEval).append ('<div style="position: relative"></div>');
-				var eErrorHiddenBox = eLogEval.lastElementChild;
+			if (subresp.math !== undefined && subresp.math.length) { // math results present?
+				for (let mathidx in subresp.math) {
+					$(eLogEval).append (`<div class="LogEval"></div>`);
+					let eLogEvalDiv = eLogEval.lastElementChild;
 
-				$(eErrorHiddenBox).append (`<div style="display: none"></div>`);
-				var eLogErrorHidden = eErrorHiddenBox.lastElementChild;
+					$(eLogEvalDiv).append (`<span style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${subresp.math [mathidx].tex}$</span>`);
+					let eLogEvalMath = eLogEvalDiv.lastElementChild;
 
-				for (let i = 0; i < resp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append (`<div class="LogError">${resp.err [i].replace (/  /g, '&emsp;')}</div>`);
+					$(eLogEvalDiv).append (`<img class="LogWait" src="${WaitIcon}" width="16">`);
+					let eLogEvalWait = eLogEvalDiv.lastElementChild;
+
+					MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
+						eLogEvalDiv.removeChild (eLogEvalWait);
+
+						eLogEvalMath.style.visibility = '';
+
+						logResize ();
+						scrollToEnd ();
+					}]);
+
+					reprioritizeMJQueue ();
 				}
 			}
 
-			$(eLogEval).append (`<div class="LogError">${resp.err [resp.err.length - 1]}</div>`)
-			let eLogErrorBottom = eLogEval.lastElementChild;
+			if (subresp.err !== undefined) { // error?
+				let eErrorHiddenBox, eLogErrorHidden;
 
-			if (resp.err.length > 1) {
-				$(eErrorHiddenBox).append (`<div class="LogErrorTriange">\u25b7</div>`);
-				var eLogErrorTriangle = eErrorHiddenBox.lastElementChild;
+				if (subresp.err.length > 1) {
+					$(eLogEval).append ('<div style="position: relative"></div>');
+					eErrorHiddenBox = eLogEval.lastElementChild;
 
-				f = function () {
-					if (eLogErrorHidden.style.display === 'none') {
-						eLogErrorHidden.style.display = 'block';
-						eLogErrorTriangle.innerText   = '\u25bd';
-					} else {
-						eLogErrorHidden.style.display = 'none';
-						eLogErrorTriangle.innerText   = '\u25b7';
+					$(eErrorHiddenBox).append (`<div style="display: none"></div>`);
+					eLogErrorHidden = eErrorHiddenBox.lastElementChild;
+
+					for (let i = 0; i < subresp.err.length - 1; i ++) {
+						$(eLogErrorHidden).append (`<div class="LogError">${subresp.err [i].replace (/  /g, '&emsp;')}</div>`);
 					}
+				}
 
-					logResize ();
-				};
+				$(eLogEval).append (`<div class="LogError">${subresp.err [subresp.err.length - 1]}</div>`)
+				let eLogErrorBottom = eLogEval.lastElementChild;
 
-				$(eLogErrorHidden).click (f);
-				$(eLogErrorBottom).click (f);
-				$(eLogErrorTriangle).click (f);
-			}
+				if (subresp.err.length > 1) {
+					$(eErrorHiddenBox).append (`<div class="LogErrorTriange">\u25b7</div>`);
+					let eLogErrorTriangle = eErrorHiddenBox.lastElementChild;
 
-			logResize ();
-			scrollToEnd ();
-		}
+					f = function () {
+						if (eLogErrorHidden.style.display === 'none') {
+							eLogErrorHidden.style.display = 'block';
+							eLogErrorTriangle.innerText   = '\u25bd';
+						} else {
+							eLogErrorHidden.style.display = 'none';
+							eLogErrorTriangle.innerText   = '\u25b7';
+						}
 
-		if (resp.msg !== undefined && resp.msg.length) { // message present?
-			for (let msg of resp.msg) {
-				$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
-			}
+						logResize ();
+					};
 
-			logResize ();
-			scrollToEnd ();
-		}
+					$(eLogErrorHidden).click (f);
+					$(eLogErrorBottom).click (f);
+					$(eLogErrorTriangle).click (f);
+				}
 
-		if (resp.img !== undefined) { // image present?
-			$(eLogEval).append (`<div><img src='data:image/png;base64,${resp.img}'></div>`);
-
-			setTimeout (function () { // image seems to take some time to register size even though it is directly present
 				logResize ();
 				scrollToEnd ();
-			}, 0);
+			}
+
+			if (subresp.img !== undefined) { // image present?
+				$(eLogEval).append (`<div><img src='data:image/png;base64,${subresp.img}'></div>`);
+
+				setTimeout (function () { // image seems to take some time to register size even though it is directly present
+					logResize ();
+					scrollToEnd ();
+				}, 0);
+			}
 		}
 	}
 }

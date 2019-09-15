@@ -36,6 +36,9 @@ class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantia
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
 
+def _raise (exc):
+	raise exc
+
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
 	ret = _None
 
@@ -373,6 +376,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	_ast2tex_funcs = {
+		';'    : lambda self, ast: '; '.join (self._ast2tex (a) for a in ast.scolon),
 		'='    : lambda self, ast: f'{self._ast2tex_ass_hs (ast.lhs)} = {self._ast2tex_ass_hs (ast.rhs, False)}',
 		'<>'   : lambda self, ast: f'{self._ast2tex_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PY2TEX.get (r, r)} {self._ast2tex_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'    : _ast2tex_num,
@@ -612,6 +616,7 @@ class ast2nat: # abstract syntax tree -> native text
 			return f"""\\[{', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}]' for row in ast.mat)}]"""
 
 	_ast2nat_funcs = {
+		';'    : lambda self, ast: '; '.join (self._ast2nat (a) for a in ast.scolon),
 		'='    : lambda self, ast: f'{self._ast2nat_ass_hs (ast.lhs)} = {self._ast2nat_ass_hs (ast.rhs, False)}',
 		'<>'   : lambda self, ast: f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'    : lambda self, ast: ast.num,
@@ -807,6 +812,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		return sdiff
 
 	_ast2py_funcs = {
+		';'    : lambda self, ast: '; '.join (self._ast2py (a) for a in ast.scolon),
 		'='    : _ast2py_ass,
 		'<>'   : _ast2py_cmp,
 		'#'    : lambda self, ast: ast.num,
@@ -1064,6 +1070,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	_ast2spt_funcs = {
+		';'    : lambda self, ast: _raise (RuntimeError ('semicolon expression should never get here')),
 		'='    : _ast2spt_ass,
 		'<>'   : _ast2spt_cmp,
 		'#'    : lambda self, ast: sp.Integer (ast.num) if ast.is_num_int else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),

@@ -426,16 +426,7 @@ class Handler (SimpleHTTPRequestHandler):
 		}
 
 	def evaluate (self, request):
-		# return {'msg': ['Plotting not available because matplotlib is not installed.'],
-		# 	'img': ret, 'math': [{'tex': r'a = \sin\left(x \right)', 'nat': 'a = sin(x)', 'py': 'a = sin(x)'}, {'tex': r'b = \sin\left(x \right)', 'nat': 'b = sin(x)', 'py': 'b = sin(x)'}],
-		# 	'err': ['test line error 1', 'test line another error 2', 'more error text stuff']}
-
-		try:
-			_HISTORY.append (request ['text'])
-
-			sys.stdout = io.StringIO ()
-			ast, _, _  = _PARSER.parse (request ['text'])
-
+		def evalexpr (ast):
 			if ast.is_func and ast.func in AST.Func.PLOT: # plotting?
 				args, kw = AST.args2kwargs (AST.apply_vars (ast.args, _VARS), sym.ast2spt)
 				ret      = getattr (splot, ast.func) (*args, **kw)
@@ -484,16 +475,36 @@ class Handler (SimpleHTTPRequestHandler):
 					'py' : sym.ast2py (ast),
 				} for ast in asts]})
 
-			if sys.stdout.tell ():
-				response ['msg'] = sys.stdout.getvalue ().strip ().split ('\n')
-
 			return response
 
+		# start here
+		responses = []
+
+		try:
+			_HISTORY.append (request ['text'])
+
+			ast, _, _ = _PARSER.parse (request ['text'])
+
+			if ast:
+				for ast in (ast.scolon if ast.is_scolon else (ast,)):
+					sys.stdout = io.StringIO ()
+					response   = evalexpr (ast)
+
+					if sys.stdout.tell ():
+						responses.append ({'msg': sys.stdout.getvalue ().strip ().split ('\n')})
+
+					responses.append (response)
+
 		except Exception:
-			return {'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')}
+			if sys.stdout is not _SYS_STDOUT and sys.stdout.tell ():
+				responses.append ({'msg': sys.stdout.getvalue ().strip ().split ('\n')})
+
+			responses.append ({'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')})
 
 		finally:
 			sys.stdout = _SYS_STDOUT
+
+		return {'data': responses} if responses else {}
 
 #...............................................................................................
 def start_server (logging = True):

@@ -1,5 +1,6 @@
 # Base classes for abstract math syntax tree, tuple based.
 #
+# (';', (expr1, ...))                              - semicolon expression separator
 # ('=', lhs, rhs)                                  - assignment to Left-Hand-Side of Right-Hand-Side
 # ('<>', lhs, (('rel1', expr1), ...))              - comparisons of type 'rel' relating two or more expressions, potentially x < y < z is x < y and y < z
 # ('#', 'num')                                     - real numbers represented as strings to pass on maximum precision to sympy
@@ -352,6 +353,12 @@ class AST (tuple):
 		AST.CONSTS.update ((AST.E, AST.I))
 
 #...............................................................................................
+class AST_SColon (AST):
+	op, is_scolon = ';', True
+
+	def _init (self, scolon):
+		self.scolon = scolon
+
 class AST_Ass (AST):
 	op, is_ass = '=', True
 
@@ -710,9 +717,9 @@ class AST_UFunc (AST):
 		self.ufunc, self.vars, self.kw = ufunc, vars, kw
 
 #...............................................................................................
-_AST_CLASSES = [AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren, AST_Brack,
-	AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim, AST_Sum,
-	AST_Diff, AST_DiffP, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
+_AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
+	AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim,
+	AST_Sum, AST_Diff, AST_DiffP, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
 	AST_Union, AST_SDiff, AST_XSect, AST_Or, AST_And, AST_Not, AST_UFunc]
 
 for _cls in _AST_CLASSES:
