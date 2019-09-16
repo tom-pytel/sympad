@@ -384,7 +384,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'#'     : _ast2tex_num,
 		'@'     : _ast2tex_var,
 		'.'     : _ast2tex_attr,
-		'"'     : lambda self, ast: f'\\text{{{repr (ast.str_)}}}',
+		'"'     : lambda self, ast: '\\text{' + repr (ast.str_).replace ('}', '\\}') + '}',
 		','     : lambda self, ast: f'{", ".join (self._ast2tex (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
 		'('     : lambda self, ast: self._ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
 		'['     : lambda self, ast: f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',

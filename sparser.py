@@ -905,7 +905,7 @@ class Parser (lalr1.LALR1):
 
 	def expr_term_1        (self, expr_num):                                           return expr_num
 	def expr_term_2        (self, expr_var):                                           return expr_var
-	def expr_term_3        (self, STR):                                                return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1]))
+	def expr_term_3        (self, STR):                                                return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1].replace ('\\}', '}')))
 	def expr_term_4        (self, SUB):                                                return AST ('@', '_') # for last expression variable
 	def expr_term_5        (self, EMPTYSET):                                           return AST.SetEmpty
 
@@ -1069,7 +1069,7 @@ class Parser (lalr1.LALR1):
 					(self.stack [-2].red.is_attr or (self.stack [-2].red.is_var and self.stack [-2].red.var in self._USER_FUNCS)):
 				return self._insert_symbol ('PARENR')
 
-		if pos and rule [1] [pos - 1] == 'expr_commas' and rule [0] not in {'expr_abs', 'varass'}: # {'expr_abs', 'expr_func', 'expr_ufunc', 'varass'}:
+		if pos and rule [1] [pos - 1] == 'expr_commas' and rule [0] not in {'expr_abs', 'varass', 'expr_func'}: # {'expr_abs', 'expr_ufunc', 'varass'}:
 			return self._parse_autocomplete_expr_commas (rule, pos)
 
 		if pos >= len (rule [1]): # end of rule
@@ -1132,11 +1132,11 @@ class sparser: # for single script
 # 	# a = p.parse (r'x - {1 * 2}')
 # 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-# 	p.set_quick (True)
-# 	print (p.tokenize (r'\operatorname{\_}\left(1 \right)'))
+# 	# p.set_quick (True)
+# 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	# a = p.parse (r'\left(1 \right)')
-# 	# print (a)
+# 	a = p.parse (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''""")
+# 	print (a)
 
 # 	# a = sym.ast2spt (a)
 # 	# print (a)
