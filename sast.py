@@ -1,28 +1,28 @@
 # Base classes for abstract math syntax tree, tuple based.
 #
-# (';', (expr1, ...))                              - semicolon expression separator
-# ('=', lhs, rhs)                                  - assignment to Left-Hand-Side of Right-Hand-Side
-# ('<>', lhs, (('rel1', expr1), ...))              - comparisons of type 'rel' relating two or more expressions, potentially x < y < z is x < y and y < z
-# ('#', 'num')                                     - real numbers represented as strings to pass on maximum precision to sympy
-# ('@', 'var')                                     - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
-# ('.', expr, 'name')                              - data member reference
-# ('.', expr, 'name', (arg1, arg2, ...))           - method member call
-# ('"', 'str')                                     - string
-# (',', (expr1, expr2, ...))                       - comma expression (tuple)
-# ('{', expr)                                      - invisible implicit parentheses for grouping and isolation during parsing
-# ('(', expr)                                      - explicit parentheses (not tuple)
-# ('[', (expr1, expr2, ...))                       - brackets (list, not index)
-# ('|', expr)                                      - absolute value
-# ('-', expr)                                      - negative of expression, negative numbers are represented with this at least initially
-# ('!', expr)                                      - factorial
-# ('+', (expr1, expr2, ...))                       - addition
-# ('*', (expr1, expr2, ...))                       - multiplication
-# ('/', numer, denom)                              - fraction numer(ator) / denom(inator)
-# ('^', base, exp)                                 - power base ^ exp(onent)
-# ('log', expr)                                    - natural logarithm of expr
-# ('log', expr, base)                              - logarithm of expr in base
-# ('sqrt', expr)                                   - square root of expr
-# ('sqrt', expr, n)                                - nth root of expr
+# (';', (expr1, ...))                               - semicolon expression separator
+# ('=', lhs, rhs)                                   - assignment to Left-Hand-Side of Right-Hand-Side
+# ('<>', lhs, (('rel1', expr1), ...))               - comparisons of type 'rel' relating two or more expressions, potentially x < y < z is x < y and y < z
+# ('#', 'num')                                      - real numbers represented as strings to pass on maximum precision to sympy
+# ('@', 'var')                                      - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
+# ('.', expr, 'name')                               - data member reference
+# ('.', expr, 'name', (arg1, arg2, ...))            - method member call
+# ('"', 'str')                                      - string
+# (',', (expr1, expr2, ...))                        - comma expression (tuple)
+# ('{', expr)                                       - invisible implicit parentheses for grouping and isolation during parsing
+# ('(', expr)                                       - explicit parentheses (not tuple)
+# ('[', (expr1, expr2, ...))                        - brackets (list, not index)
+# ('|', expr)                                       - absolute value
+# ('-', expr)                                       - negative of expression, negative numbers are represented with this at least initially
+# ('!', expr)                                       - factorial
+# ('+', (expr1, expr2, ...))                        - addition
+# ('*', (expr1, expr2, ...))                        - multiplication
+# ('/', numer, denom)                               - fraction numer(ator) / denom(inator)
+# ('^', base, exp)                                  - power base ^ exp(onent)
+# ('-log', expr)                                    - natural logarithm of expr
+# ('-log', expr, base)                              - logarithm of expr in base
+# ('-sqrt', expr)                                   - square root of expr
+# ('-sqrt', expr, n)                                - nth root of expr
 # ('-func', 'name', (arg1, arg2, ...))              - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
 # ('-lim', expr, var, to)                           - limit of expr when variable var approaches to from both positive and negative directions
 # ('-lim', expr, var, to, 'dir')                    - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
@@ -38,9 +38,9 @@
 # ('-slice', start, stop, step)                     - indexing slice object: obj [start : stop : step], None or False indicates not specified
 # ('-set', (expr1, expr2, ...))                     - set
 # ('-dict', ((k1, v1), (k2, v2), ...))              - python dict
-# ('||', (expr1, expr2, ...))                      - set union
-# ('^^', (expr1, expr2, ...))                      - set symmetric difference
-# ('&&', (expr1, expr2, ...))                      - set intersection
+# ('||', (expr1, expr2, ...))                       - set union
+# ('^^', (expr1, expr2, ...))                       - set symmetric difference
+# ('&&', (expr1, expr2, ...))                       - set intersection
 # ('-or', (expr1, expr2, ...))                      - Python or
 # ('-and', (expr1, expr2, ...))                     - Python and
 # ('-not', expr)                                    - Python not
@@ -538,13 +538,13 @@ class AST_Pow (AST):
 		self.base, self.exp = base, exp
 
 class AST_Log (AST):
-	op, is_log = 'log', True
+	op, is_log = '-log', True
 
 	def _init (self, log, base = None):
 		self.log, self.base = log, base
 
 class AST_Sqrt (AST):
-	op, is_sqrt = 'sqrt', True
+	op, is_sqrt = '-sqrt', True
 
 	def _init (self, rad, idx = None):
 		self.rad, self.idx = rad, idx
