@@ -1,3 +1,6 @@
+> error: Lambda (sqrt{x**2 + y**2}, (x, y))
+> simplify doesn't touch expressions which get sxlat._xlat_f2a_And - solve (x**2 + 2x - 1 > 7)
+
 > document more examples - Note multiline examples
 > document undefined functions
 > document prime differential operator

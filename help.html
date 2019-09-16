@@ -758,7 +758,7 @@ a = x**2 + y -2<br>
 b = y**2 - 4<br>
 solve ([a, b])<i>&emsp; system of two non-linear</i><br>
 s = _<i>&emsp; store result</i><br>
-a.subs (s [0]), b.subs (s [0])<i>&emsp; test solutions</i><br>
+a.subs (s [0]), b.subs (s [0])<i>&emsp; check solutions</i><br>
 a.subs (s [1]), b.subs (s [1])<br>
 a.subs (s [2]), b.subs (s [2])<br>
 a.subs (s [3]), b.subs (s [3])<br>
@@ -772,7 +772,7 @@ a.subs (w), b.subs (w)<i>&emsp; test bogus solution</i><br>
 dsolve (d**2/dx**2 ?(x) + 9?(x))<i>&emsp; using undefined functions directly</i><br>
 dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative since function of only one variable</i><br>
 y = ?(x)<br>
-dsolve (y'' + 9y)<i>&emsp; but easiest like this</i><br>
+dsolve (y'' + 9y)<i>&emsp; easiest like this</i><br>
 dsolve (sin x cos y + cos x sin y y')<br>
 <br>
 x, y = ?x(t), ?y(t)<i>&emsp; two distinct undefined functions so need to name them</i><br>
