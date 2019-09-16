@@ -535,8 +535,11 @@ def test (argv = None):
 
 	_DEPTH  = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpixd:e:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'xlat', 'nc', 'nocurlys', 'depth=', 'expr='])
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpixqd:e:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'xlat', 'nc', 'nocurlys', 'quick', 'depth=', 'expr='])
 	xlat    = ('-x', '') in opts or ('--xlat', '') in opts
+
+	if ('-q', '') in opts or ('--quick', '') in opts:
+		parser.set_quick (True)
 
 	for opt, arg in opts:
 		if opt in ('-d', '--depth'):

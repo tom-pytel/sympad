@@ -5431,7 +5431,7 @@ class Parser (lalr1.LALR1):
 			b'u9XL3cIW97k5Jtgp5RrfzD9wFN5uAUDW7T5w1GG4YYXVGvzmDNQ3l3RwetitBr80A+W2XpyZcHTyXR758N/ZoViLtQlgY67CoXMXdPD4rt2aAA6bq2xzZAersDYcbM5Srrmkg9ODutj0gANaWlVIFzalDdeH9AH/OE4Wxyqf46HAssq0Q7d4P7jidKN3HqVz' \
 			b'i8NylqFyIcvjJKzZB47r3inA6AhznnYIgTOWstlKpPndmjGOVvO6OYWDVV4alH2CKjfNKRys8t1aIG5Z5drsoHY/R/W2uecDaW6xDzZBaYz8jOLA4azQzbGEa3Y6cEbPrmGWHVu+xPZYOLT/yO3RNad2sDVKo/FP3ho4a+bEDp6ktfNEgXOb9oJrBux+0JIA' \
 			b'2f+yt4zfuP7u7HbgZ/ot2cGWPrbpAfdvad2c48HW3W0cwzlat2vO8WDr7t5ocG7W7ZtzPNi6uzdMnJl1cdmCMzzYuru3gZybddvmHA+2rmveaE2TfAWqfXSQ3N2hA6qQ5qKucBlZfgAVodz+oGjygSsEgPpb3BYRZ5nwe0G7Rd+4tsDgn323a77ReBQCTDn6' \
-			b'VzI41g7Wr6CkwO5AP3ly5CSUJx1JNtjyamh2IK6ala2WxStUhdWp+mxVKpwswvqA9PdmtHRXS8skkNj4yfApSpnScBdEtCgyNhPTpCBcHEvLE7AQdVdg9wR1S/S0Egc2EoOrx5XIuIQMMYjLcnDexY0dlXXkIqtM9HhNb5CSF27uFFzAz3fX/w/+3O9K' 
+			b'VzI41g7Wr6CkwO5AP3ly5CSUJx1JNtjyamh2IK6ala2WxStUhdWp+mxVKpwswvqA9PdmtHRXS8skkNj4yfApSpnScBdEtCgyNhPTpCBcHEvLE7AQdVdg9wR1S/S0Egc2EoOrx5XIuIQMMYjLcnDexY0dlXXkIqtM9HhNb5CSF27uFFzAz3fX/w/+3O9K'
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -5462,16 +5462,6 @@ class Parser (lalr1.LALR1):
 		('UFUNC',        fr'\?({_LTR}\w*)?|\\operatorname\s*{{\s*\?((?:{_LTR}|\\_)(?:\w|\\_)*)?\s*}}'),
 		('UFUNCPY',       r'Function'),
 		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(@|\\\%|\$?(?:{_LTR}|\\_)(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
-
-		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in(?!t|fty)|\\notin)(?!{_LTRU})|{"|".join (AST.Cmp.UNI2PY)}'),
-		('IF',            r'if(?!{_LTRU})'),
-		('ELSE',          r'else(?!{_LTRU})'),
-		('OR',           fr'or\b|\\vee(?!{_LTRU})|{_UOR}'),
-		('AND',          fr'and\b|\\wedge(?!{_LTRU})|{_UAND}'),
-		('NOT',          fr'not\b|\\neg(?!{_LTRU})|{_UNOT}'),
-		('SQRT',          r'sqrt\b|\\sqrt(?!{_LTRU})'),
-		('LOG',           r'log\b|\\log(?!{_LTR})'),
-		('LN',            r'ln\b|\\ln(?!{_LTRU})'),
 
 		('LIM',          fr'\\lim(?!{_LTR})'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?(?!{_LTR})|{_USUM}'),
@@ -5505,6 +5495,16 @@ class Parser (lalr1.LALR1):
 		('BINOM2',       fr'\\binom\s*{_VARTEX1}\s*{_VARTEX1}'),
 		('BINOM1',       fr'\\binom\s*{_VARTEX1}'),
 		('BINOM',         r'\\binom(?!{_LTRU})'),
+
+		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LTRU})|{"|".join (AST.Cmp.UNI2PY)}'),
+		('IF',            r'if(?!{_LTRU})'),
+		('ELSE',          r'else(?!{_LTRU})'),
+		('OR',           fr'or\b|\\vee(?!{_LTRU})|{_UOR}'),
+		('AND',          fr'and\b|\\wedge(?!{_LTRU})|{_UAND}'),
+		('NOT',          fr'not\b|\\neg(?!{_LTRU})|{_UNOT}'),
+		('SQRT',          r'sqrt\b|\\sqrt(?!{_LTRU})'),
+		('LOG',           r'log\b|\\log(?!{_LTR})'),
+		('LN',            r'ln\b|\\ln(?!{_LTRU})'),
 
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))"),
@@ -5549,14 +5549,6 @@ class Parser (lalr1.LALR1):
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens
 		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LTR}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
-		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\neq?|\\le|\\lt|\\ge|\\gt|\\in(?!t|fty)|\\notin)|{"|".join (AST.Cmp.UNI2PY)}'),
-		('OR',           fr'or\b|\\vee|{_UOR}'),
-		('AND',          fr'and\b|\\wedge|{_UAND}'),
-		('NOT',          fr'not\b|\\neg|{_UNOT}'),
-		('SQRT',          r'sqrt\b|\\sqrt'),
-		('LOG',           r'log\b|\\log'),
-		('LN',            r'ln\b|\\ln'),
-
 		('LIM',          fr'\\lim'),
 		('SUM',          fr'\\sum(?:\s*\\limits)?|{_USUM}'),
 		('INTG',         fr'\\int(?:\s*\\limits)?|{_UINTG}'),
@@ -5571,6 +5563,14 @@ class Parser (lalr1.LALR1):
 		('EMPTYSET',     fr'\\emptyset'),
 		('SETMINUS',     fr'\\setminus'),
 		('SUBSTACK',      r'\\substack'),
+
+		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)|{"|".join (AST.Cmp.UNI2PY)}'),
+		('OR',           fr'or\b|\\vee|{_UOR}'),
+		('AND',          fr'and\b|\\wedge|{_UAND}'),
+		('NOT',          fr'not\b|\\neg|{_UNOT}'),
+		('SQRT',          r'sqrt\b|\\sqrt'),
+		('LOG',           r'log\b|\\log'),
+		('LN',            r'ln\b|\\ln'),
 
 		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))({_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))"),
 	])
@@ -5981,18 +5981,20 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
-	# p.set_user_funcs ({'f': 1})
-	# a = p.parse (r'x - {1 * 2}')
-	# a = p.parse (r'x - {{1 * 2} * 3}')
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
+# 	# p.set_user_funcs ({'f': 1})
+# 	# a = p.parse (r'x - {1 * 2}')
+# 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-	p.set_quick (True)
-	a = p.parse (r'\int x dx')
-	print (a)
+# 	p.set_quick (True)
+# 	print (p.tokenize (r'\neg x'))
 
-	# a = sym.ast2spt (a)
-	# print (a)
+# 	# a = p.parse (r'\left(1 \right)')
+# 	# print (a)
+
+# 	# a = sym.ast2spt (a)
+# 	# print (a)
 # Patch SymPy bugs and inconveniences.
 
 from collections import defaultdict
@@ -6785,7 +6787,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.9'
+_VERSION         = '1.1'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
