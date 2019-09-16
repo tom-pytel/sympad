@@ -28,9 +28,9 @@
 # ('-lim', expr, var, to, 'dir')                      - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
 # ('-diff', expr, (dvar1, ...))                       - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
-# ('-difp', expr, count)                              - differentiation with respect to unspecified variable count times
-# ('-int', expr, var)                                 - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-# ('-int', expr, var, from, to)                       - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
+# ('-intg', expr, var)                                - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('-intg', expr, var, from, to)                      - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
 # ('-piece', ((v1, c1), ..., (vn, True?)))            - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('-lamb', expr, (v1, v2, ...))                      - lambda expression: v? = ('@', 'var')
@@ -191,7 +191,7 @@ class AST (tuple):
 		return self
 
 	def _strip_fdpi (self): # fdp = fact, diffp, idx
-		while self.op in {'!', '-difp', '-idx'}:
+		while self.op in {'!', '-diffp', '-idx'}:
 			self = self [1]
 
 		return self
@@ -610,13 +610,13 @@ class AST_Diff (AST):
 	_diff_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
 
 class AST_DiffP (AST):
-	op, is_diffp = '-difp', True
+	op, is_diffp = '-diffp', True
 
 	def _init (self, diffp, count):
 		self.diffp, self.count = diffp, count
 
 class AST_Intg (AST):
-	op, is_intg = '-int', True
+	op, is_intg = '-intg', True
 
 	def _init (self, intg, dv, from_ = None, to = None):
 		self.intg, self.dv, self.from_, self.to = intg, dv, from_, to

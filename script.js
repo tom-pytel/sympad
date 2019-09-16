@@ -356,7 +356,7 @@ function ajaxResponse (resp) {
 					let ClickHereToOpen = null;
 
 					if (!ExceptionDone) {
-						$(eLogErrorBottom).append ('<i>&emsp;<-- click here to open</i>');
+						$(eLogErrorBottom).append ('<i>&emsp;<-- click to open</i>');
 
 						ClickHereToOpen = eLogErrorBottom.lastElementChild;
 						ExceptionDone   = true;

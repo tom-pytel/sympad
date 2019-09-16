@@ -191,9 +191,9 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 		# if len (vars) == 1:
 		# 	ds = [AST ('@', f'd{vars.pop ().var}')]
 		if ast.is_diffp:
-			return AST ('-difp', ast.diffp, ast.count + 1)
+			return AST ('-diffp', ast.diffp, ast.count + 1)
 		else:
-			return AST ('-difp', ast, 1)
+			return AST ('-diffp', ast, 1)
 
 	else:
 		dvs = list (dvs [::-1])
@@ -216,15 +216,15 @@ def _xlat_f2a_Integral_NAT (ast = None, dvab = None, *args, **kw):
 
 def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 	if ast is None:
-		return AST ('-int', AST.VarNull, AST.VarNull)
+		return AST ('-intg', AST.VarNull, AST.VarNull)
 
 	if dvab is None:
 		vars = ast.free_vars
 
 		if len (vars) == 1:
-			return AST ('-int', ast, ('@', f'd{vars.pop ().var}'))
+			return AST ('-intg', ast, ('@', f'd{vars.pop ().var}'))
 
-		return AST ('-int', AST.VarNull, AST.VarNull)
+		return AST ('-intg', AST.VarNull, AST.VarNull)
 
 	dvab = dvab.strip_paren
 	ast2 = None
@@ -232,14 +232,14 @@ def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 	if dvab.is_comma:
 		if dvab.comma and dvab.comma [0].is_nonconst_var:
 			if dvab.comma.len == 1:
-				ast2 = AST ('-int', ast, ('@', f'd{dvab.comma [0].var}'))
+				ast2 = AST ('-intg', ast, ('@', f'd{dvab.comma [0].var}'))
 			elif dvab.comma.len == 2:
-				ast2 = AST ('-int', ast, ('@', f'd{dvab.comma [0].var}'), AST.Zero, dvab.comma [1])
+				ast2 = AST ('-intg', ast, ('@', f'd{dvab.comma [0].var}'), AST.Zero, dvab.comma [1])
 			elif dvab.comma.len == 3:
-				ast2 = AST ('-int', ast, ('@', f'd{dvab.comma [0].var}'), dvab.comma [1], dvab.comma [2])
+				ast2 = AST ('-intg', ast, ('@', f'd{dvab.comma [0].var}'), dvab.comma [1], dvab.comma [2])
 
 	elif dvab.is_var:
-		ast2 = AST ('-int', ast, ('@', f'd{dvab.var}'))
+		ast2 = AST ('-intg', ast, ('@', f'd{dvab.var}'))
 
 	if ast2 is None:
 		return None
@@ -521,7 +521,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 
 	# TODO: '<>' might be problematic in cases where it has an 'in' or 'notin'
 	return AST (*tuple (e [0] for e in es)), \
-			ast.op in {'=', '<>', '@', '.', '|', '!', '-log', '-sqrt', '-func', '-lim', '-sum', '-diff', '-int', '-mat', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'} or any (e [1] for e in es)
+			ast.op in {'=', '<>', '@', '.', '|', '!', '-log', '-sqrt', '-func', '-lim', '-sum', '-diff', '-intg', '-mat', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'} or any (e [1] for e in es)
 
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 

@@ -9,6 +9,8 @@
 > ufunction of same name seems to get kwargs stuck in SymPy
 
 
+> change vars to pass into parse
+
 > overhaul function keyword arguments
 > forced function calls expr mul_imp (v,)?
 > or if paren of single free variable treat as call?
