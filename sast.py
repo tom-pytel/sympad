@@ -23,15 +23,14 @@
 # ('log', expr, base)                              - logarithm of expr in base
 # ('sqrt', expr)                                   - square root of expr
 # ('sqrt', expr, n)                                - nth root of expr
-# ('func', 'name', (arg1, arg2, ...))              - sympy or regular Python function 'name', will be called with expressions a1, a2, ...
+# ('func', 'name', (arg1, arg2, ...))              - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
 # ('lim', expr, var, to)                           - limit of expr when variable var approaches to from both positive and negative directions
 # ('lim', expr, var, to, 'dir')                    - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('sum', expr, var, from, to)                     - summation of expr over variable var from from to to
 # ('diff', expr, (dvar1, ...))                     - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
-# ('diffp', expr, count)                           - differentiation wrt unspecified variable count times
+# ('diffp', expr, count)                           - differentiation with respect to unspecified variable count times
 # ('intg', expr, var)                              - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('intg', expr, var, from, to)                    - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-# ('vec', (e1, e2, ...))                           - vector
 # ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 # ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('lamb', expr, (v1, v2, ...))                    - lambda expression: v? = ('@', 'var')
@@ -45,7 +44,7 @@
 # ('or', (expr1, expr2, ...))                      - Python or
 # ('and', (expr1, expr2, ...))                     - Python and
 # ('not', expr)                                    - Python not
-# ('ufunc', 'name', ('v1', ...), (('kw1', a1), ...)) - undefined function with keyword arguments
+# ('ufunc', 'name', ('v1', ...), (('kw1', a1), ...)) - undefined function object with keyword arguments
 
 from collections import OrderedDict
 import re
@@ -621,12 +620,6 @@ class AST_Intg (AST):
 		self.intg, self.dv, self.from_, self.to = intg, dv, from_, to
 
 	_is_intg_definite = lambda self: self.from_ is not None
-
-# class AST_Vec (AST):
-# 	op, is_vec = 'vec', True
-
-# 	def _init (self, vec):
-# 		self.vec = vec
 
 class AST_Mat (AST):
 	op, is_mat = 'mat', True

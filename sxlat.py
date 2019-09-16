@@ -521,7 +521,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 
 	# TODO: '<>' might be problematic in cases where it has an 'in' or 'notin'
 	return AST (*tuple (e [0] for e in es)), \
-			ast.op in {'=', '<>', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'vec', 'mat', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'} or any (e [1] for e in es)
+			ast.op in {'=', '<>', '@', '.', '|', '!', 'log', 'sqrt', 'func', 'lim', 'sum', 'diff', 'intg', 'mat', 'piece', 'lamb', '||', '^^', '&&', 'or', 'and', 'not'} or any (e [1] for e in es)
 
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 

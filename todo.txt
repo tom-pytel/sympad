@@ -1,9 +1,15 @@
-> ufunction of same name seems to get kwargs stuck in SymPy
+> AST LEADING STRING PROBLEM!
 
 > ODE initial conditions
+> determine ics func AST
+> parsing of ufunc to ufuncics
+> sxlat of python representation of ufuncics
 > ufuncs initialize with expressions instead of only vars?
-> ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)
+> ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)?
 > ufuncs created in expression persist to end of expression?
+
+
+> ufunction of same name seems to get kwargs stuck in SymPy
 
 > overhaul function keyword arguments
 > forced function calls expr mul_imp (v,)?
