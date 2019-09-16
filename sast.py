@@ -316,6 +316,8 @@ class AST (tuple):
 			if var: # user var
 				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse)
 
+			return ast
+
 		elif ast.is_func: # function, might be user lambda call
 			lamb = vars.get (ast.func)
 
