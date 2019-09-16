@@ -64,6 +64,7 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#Booleans">Booleans</a><br>
 &emsp;<a href="#Vectors and Matrices">Vectors and Matrices</a><br>
 &emsp;<a href="#Piecewise Expressions">Piecewise Expressions</a><br>
+&emsp;<a href="#Functions Types">Functions</a><br>
 &emsp;<a href="#Strings, Lists, Tuples and Dictionaries">Strings, Lists, Tuples and Dictionaries</a><br>
 &emsp;<a href="#Variables">Variables</a><br>
 
@@ -228,6 +229,15 @@ These can also be entered using LaTeX "<b>\<span></span>begin{(v|b|p|)matrix} \<
 <p>
 These are supported and can be entered as SymPy "<b>Piecewise</b>" functions, LaTeX "<b>\<span></span>begin{cases} \<span></span>end{cases}</b>" notation or the native Python-like conditional expressions of the form "<b>a if condition else b</b>".
 They may be arbitrarily long - "<b>a if condition1 else b if condition2 else ...</b>" and may leave off the last "<b>else</b>" which is equivalent to a SymPy "<b>Piecewise</b>" function without a terminating "<b>True</b>" condition.
+</p>
+
+<h4 id="Functions Types">Fuctions</h4>
+
+<p>
+Apart from the top level SymPy functions which are available for calling but not as objects to be passed around or for assigning, there are two other types of function objects which can be manipulated in SymPad.
+There are lambda functions which can be assigned expressions and executed in SymPad like normal SymPy functions, and even passed into Python code to be executed like normal Python lambdas.
+There are also undefined mathematical function objects to be used mostly in differential equations.
+These last two types are assigned and can be passed around in SymPy just like any other type, the details of their operations are discussed in the "<b>Functions</b>" section below.
 </p>
 
 <h4 id="Strings, Lists, Tuples and Dictionaries">Strings, Lists, Tuples and Dictionaries</h4>

@@ -2,6 +2,8 @@
 
 > change _simplify() to patch sp.simplify()
 
+> sin a.b()
+
 > # comment end of line
 
 > ODE initial conditions
