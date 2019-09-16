@@ -7,11 +7,11 @@ _AST_StrPlus = AST ('"', '+')
 #...............................................................................................
 def _xlat_f2a_slice (*args):
 	if len (args) == 1:
-		return AST ('slice', None, args [0], None)
+		return AST ('-slice', None, args [0], None)
 	if len (args) == 2:
-		return AST ('slice', args [0], args [1], None)
+		return AST ('-slice', args [0], args [1], None)
 	else:
-		return AST ('slice', args [0], args [1], args [2])
+		return AST ('-slice', args [0], args [1], args [2])
 
 _xlat_f2a_Add_invert = {'==': '==', '!=': '!=', '<': '>', '<=': '>=', '>': '<', '>=': '<='}
 
@@ -208,7 +208,7 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 			else:
 				ds.append (AST ('@', f'd{v.var}'))
 
-	return AST ('diff', ast, tuple (ds))
+	return AST ('-diff', ast, tuple (ds))
 
 def _xlat_f2a_Integral_NAT (ast = None, dvab = None, *args, **kw):
 	if not kw:
@@ -521,7 +521,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 
 	# TODO: '<>' might be problematic in cases where it has an 'in' or 'notin'
 	return AST (*tuple (e [0] for e in es)), \
-			ast.op in {'=', '<>', '@', '.', '|', '!', 'log', 'sqrt', '-func', '-lim', '-sum', 'diff', '-intg', '-mat', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'} or any (e [1] for e in es)
+			ast.op in {'=', '<>', '@', '.', '|', '!', 'log', 'sqrt', '-func', '-lim', '-sum', '-diff', '-intg', '-mat', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'} or any (e [1] for e in es)
 
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 

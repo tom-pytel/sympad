@@ -27,15 +27,15 @@
 # ('-lim', expr, var, to)                           - limit of expr when variable var approaches to from both positive and negative directions
 # ('-lim', expr, var, to, 'dir')                    - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
 # ('-sum', expr, var, from, to)                     - summation of expr over variable var from from to to
-# ('diff', expr, (dvar1, ...))                     - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
+# ('-diff', expr, (dvar1, ...))                     - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
 # ('-diffp', expr, count)                           - differentiation with respect to unspecified variable count times
 # ('-intg', expr, var)                              - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('-intg', expr, var, from, to)                    - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
 # ('-piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('-lamb', expr, (v1, v2, ...))                    - lambda expression: v? = ('@', 'var')
-# ('idx', expr, (i0, i1, ...))                     - indexing: expr [i0, i1, ...]
-# ('slice', start, stop, step)                     - indexing slice object: obj [start : stop : step], None or False indicates not specified
+# ('-idx', expr, (i0, i1, ...))                     - indexing: expr [i0, i1, ...]
+# ('-slice', start, stop, step)                     - indexing slice object: obj [start : stop : step], None or False indicates not specified
 # ('-set', (expr1, expr2, ...))                     - set
 # ('-dict', ((k1, v1), (k2, v2), ...))              - python dict
 # ('||', (expr1, expr2, ...))                      - set union
@@ -191,7 +191,7 @@ class AST (tuple):
 		return self
 
 	def _strip_fdpi (self): # fdp = fact, diffp, idx
-		while self.op in {'!', '-diffp', 'idx'}:
+		while self.op in {'!', '-diffp', '-idx'}:
 			self = self [1]
 
 		return self
@@ -602,7 +602,7 @@ class AST_Sum (AST):
 		self.sum, self.svar, self.from_, self.to = sum, svar, from_, to
 
 class AST_Diff (AST):
-	op, is_diff = 'diff', True
+	op, is_diff = '-diff', True
 
 	def _init (self, diff, dvs):
 		self.diff, self.dvs = diff, dvs
@@ -646,13 +646,13 @@ class AST_Lamb (AST):
 		self.lamb, self.vars = lamb, vars
 
 class AST_Idx (AST):
-	op, is_idx = 'idx', True
+	op, is_idx = '-idx', True
 
 	def _init (self, obj, idx):
 		self.obj, self.idx = obj, idx
 
 class AST_Slice (AST):
-	op, is_slice = 'slice', True
+	op, is_slice = '-slice', True
 
 	def _init (self, start, stop, step):
 		self.start, self.stop, self.step = start, stop, step

@@ -63,9 +63,9 @@ def _ast_func_reorder (ast):
 
 def _ast_pre_slice (pre, post):
 	if not post.is_slice:
-		return AST ('slice', pre, post, None)
+		return AST ('-slice', pre, post, None)
 	elif post.step is None:
-		return AST ('slice', pre, post.start, post.stop)
+		return AST ('-slice', pre, post.start, post.stop)
 
 	raise SyntaxError ('invalid slice')
 
@@ -145,7 +145,7 @@ def _expr_cmp (lhs, CMP, rhs):
 		return AST ('<>', lhs, ((cmp, rhs),))
 
 def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy missing negative numbers
-	if expr.op in {'!', '-diffp', 'idx'}:
+	if expr.op in {'!', '-diffp', '-idx'}:
 		if expr [1].is_num_pos:
 			return AST (expr.op, expr [1].neg (), *expr [2:])
 
@@ -196,14 +196,14 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 		if not arg.brack:
 			raise SyntaxError ('missing index')
 
-		ast = wrap (AST ('idx', last, arg.brack))
+		ast = wrap (AST ('-idx', last, arg.brack))
 
 	if ast:
 		return wrapl (ast)
 
 	return AST.flatcat ('*', lhs, rhs)
 
-def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('diff', expr, 'dx')
+def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'dx')
 	def _interpret_divide (ast):
 		if ast.numer.is_diff_or_part_solo:
 			p = 1
@@ -241,11 +241,11 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if not cp:
 				if i == len (ns) - 1:
-					return AST ('diff', None, tuple (ds))
+					return AST ('-diff', None, tuple (ds))
 				elif i == len (ns) - 2:
-					return AST ('diff', ns [-1], tuple (ds))
+					return AST ('-diff', ns [-1], tuple (ds))
 				else:
-					return AST ('diff', AST ('*', ns [i + 1:]), tuple (ds))
+					return AST ('-diff', AST ('*', ns [i + 1:]), tuple (ds))
 
 		return None # raise SyntaxError?
 
@@ -272,7 +272,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 						tail.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
+						tail.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
 
 					else:
 						continue
@@ -309,7 +309,7 @@ def _ast_strip_tail_differential (ast):
 
 		if dv:
 			if ast2:
-				return (AST ('diff', neg (ast2), ast.dvs), dv)
+				return (AST ('-diff', neg (ast2), ast.dvs), dv)
 			elif ast.dvs.len == 1:
 				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv)
 			else:
@@ -736,9 +736,9 @@ class Parser (lalr1.LALR1):
 	def expr_comma_2       (self, expr_colon):                                         return expr_colon
 
 	def expr_colon_1       (self, expr, COLON, expr_colon):                            return _expr_colon (expr, expr_colon)
-	def expr_colon_2       (self, expr, COLON):                                        return AST ('slice', expr, False, None)
+	def expr_colon_2       (self, expr, COLON):                                        return AST ('-slice', expr, False, None)
 	def expr_colon_3       (self, COLON, expr_colon):                                  return _ast_pre_slice (False, expr_colon)
-	def expr_colon_4       (self, COLON):                                              return AST ('slice', False, False, None)
+	def expr_colon_4       (self, COLON):                                              return AST ('-slice', False, False, None)
 	def expr_colon_5       (self, expr):                                               return expr
 
 	def expr               (self, expr_ass):                                           return expr_ass
