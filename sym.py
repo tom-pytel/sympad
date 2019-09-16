@@ -268,7 +268,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 			if p and (n.op in {'#', 'mat'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg', 'mat'} or \
 					_ast_is_neg (n) or s [:6] == '\\left[' or \
-					n.strip_fdp.strip_paren.is_comma or \
+					n.strip_fdpi.strip_paren.is_comma or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(n.op in {'/', 'diff'} and p.op in {'#', '/'}) or \
 					(n.is_paren and p.is_var and p.var in _USER_FUNCS) or \
@@ -389,7 +389,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'('    : lambda self, ast: self._ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
 		'['    : lambda self, ast: f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
 		'|'    : lambda self, ast: f'\\left|{self._ast2tex (ast.abs)} \\right|',
-		'-'    : lambda self, ast: f'-{self._ast2tex_wrap (ast.minus, ast.minus.is_num_pos or ast.minus.is_mul, {"=", "<>", "+", "slice", "||", "^^", "&&", "or", "and", "not"})}',
+		'-'    : lambda self, ast: f'-{self._ast2tex_wrap (ast.minus, ast.minus.strip_fdpi.is_num_pos or ast.minus.is_mul, {"=", "<>", "+", "slice", "||", "^^", "&&", "or", "and", "not"})}',
 		'!'    : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '[', '|', '!', '^', 'func', 'vec', 'mat'} or ast.fact.is_num_neg)) + '!',
 		'+'    : _ast2tex_add,
 		'*'    : _ast2tex_mul,
@@ -526,7 +526,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 			if p and (n.op in {'#', 'lim', 'sum', 'intg'} or n.is_null_var or p.strip_minus.op in {'lim', 'sum', 'diff', 'intg'} or \
 					n.op in {'/', 'diff'} or p.strip_minus.op in {'/', 'diff'} or s [:1] == '[' or \
-					n.strip_fdp.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
+					n.strip_fdpi.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
 					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var or (p.is_pow and p.exp.is_attr_var))) or \
 					(n.is_pow and n.base.is_num_pos) or \
@@ -628,7 +628,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'('    : lambda self, ast: f'({self._ast2nat (ast.paren)})',
 		'['    : lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
 		'|'    : lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
-		'-'    : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.is_num_pos or ast.minus.op in {"*", "diff", "piece"}, {"=", "<>", "+", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})}',
+		'-'    : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.strip_fdpi.is_num_pos or ast.minus.op in {"*", "diff", "piece"}, {"=", "<>", "+", "lamb", "slice", "||", "^^", "&&", "or", "and", "not"})}',
 		'!'    : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '[', '|', '!', '^', 'func', 'vec', 'mat'} or ast.fact.is_num_neg) + '!',
 		'+'    : _ast2nat_add,
 		'*'    : _ast2nat_mul,
@@ -865,7 +865,7 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
-_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__}
+_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, **{'simplify': _simplify}}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def __init__ (self): self.vars = self.eval = [] # pylint kibble
@@ -998,7 +998,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
 			return ExprNoEval (str (ast.args [0]), 1 if ast.args.len == 1 else self._ast2spt (ast.args [1]))
 
-		func = _ast2spt_pyfuncs.get (ast.unescaped) # getattr (sp, ast.unescaped, None) or _ast2spt_func_builtins.get (ast.unescaped) #
+		func = _ast2spt_pyfuncs.get (ast.unescaped)
 
 		if func is not None:
 			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)

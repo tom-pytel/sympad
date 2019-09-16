@@ -259,6 +259,10 @@ a * [a].a [b]
 a * [a].a' [b]
 a * [a].a!' [b]
 False * ()'
+-{1!}
+-{1'}
+-{1 [b]}
+-{1 [b] [c]}
 """.strip ().split ('\n')
 
 _ALLOW_LAMB = 1

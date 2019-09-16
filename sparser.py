@@ -1133,7 +1133,7 @@ class sparser: # for single script
 # 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
 # 	p.set_quick (True)
-# 	print (p.tokenize (r'\neg x'))
+# 	print (p.tokenize (r'\operatorname{\_}\left(1 \right)'))
 
 # 	# a = p.parse (r'\left(1 \right)')
 # 	# print (a)

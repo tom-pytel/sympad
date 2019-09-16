@@ -191,8 +191,8 @@ class AST (tuple):
 
 		return self
 
-	def _strip_fdp (self): # fdp = fact, diffp
-		while self.op in {'!', 'diffp'}:
+	def _strip_fdpi (self): # fdp = fact, diffp, idx
+		while self.op in {'!', 'diffp', 'idx'}:
 			self = self [1]
 
 		return self
