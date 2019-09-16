@@ -346,13 +346,16 @@ f = lambda x: lambda: lambda: x**2
 f (3)
 _ ()
 _ ()
+solve (x**2 + 2 x - 1 > 7)
+f = lambda x: _
+f (-4.1), f (-4), f (0), f (2), f (2.1)
 
 """), ('env', """
 
 env (quick)
 env (noquick)
 env
-env (EI, quick, nopyS, nosimplify, nomatsimp, noeval, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)
+env (EI, quick, nopyS, nosimplify, nomatsimp, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)
 env
 envreset
 env

@@ -270,8 +270,8 @@ If you want to enter "<b>d</b>" * "<b>x</b>" multiplied implicitly then put a sp
 There is nothing special about differential variables other than their specific use in differentiation and integration.
 </p><p>
 Variables may be assigned values, references to other variables or even entire expressions which will subsequently be substituted for those variables in any future expression evaluation.
-They may also be assigned a user function which allows you to use them as macro expression functions, that is covered in the section on functions.
-<del>More on Automatic Substitution</del>
+When variable assignments exist then any instance of that variable used almost anywhere will be replaced with the value of the variable, this can lead to errors if you forgot a variable is assigned and try to use it as a free variable.
+For example, when "<b>x</b>" is not assigned to anything then "<b>series (e**x, x, 0, 5)</b>" will give the correct answer, but set "<b>x = 1</b>" and all of a sudden you have a different result, set it to 2 and you have an error.
 </p>
 
 <h2 id="Operations">Operations</h2>
@@ -510,7 +510,20 @@ Lambda recursion is not supported.
 
 <h4 id="Undefined Functions">Undefined Functions</h4>
 
-<p><del>THIS!</del></p>
+<p>
+Undefined functions are mathematical function objects but without any specific expression or lambda body defined, they are used mainly in differential equations.
+These functions are entered as "<b>?name (x, y, ...)</b>" with the name being optional but necessary if you need to differentiate between various functions (like in a system of differential equations).
+The arguments to an undefined function can only be variable names and optional keyword arguments which will be passed on to the SymPy "<b>Function()</b>" call.
+The variable list for an undefined function just like the variable list for a lambda function is never remapped which means that even if you have the variable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
+</p><p>
+Undefined functions may be used directly in a "<b>dsolve()</b>" function to solve a differential equation, but it is cleaner to first map them to a variable so that the resulting equation looks as it normally does in mathematical syntax.
+For example you can do "<b>dsolve (?(x)'' + 2?(x)' - ?(x))</b>", but it is much cleaner to first set "<b>y = ?(x)</b>" and then do "<b>dsolve (y'' + 2y' - y)</b>", in which case your answer will come back referencing the "<b>y</b>" function as well instead of "<b>?(x)</b>".
+</p><p>
+If you are solving a system of differential equations the it is even more useful to use variables since you will need to differentiate the undefined functions using names like "<b>x, y = ?x(t), ?y(t)</b>".
+This will give you a clean "<b>dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</b>" instead of having to type the functions out constantly like "<b>dsolve ((?x(t)' = 12t?x(t) + 8?y(t), ?y(t)' = 21?x(t) + 7t?y(t)))</b>".
+</p><p>
+Initial values for undefined functions for solving IVPs and BVPs are not implemented yet.
+</p>
 
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
 
@@ -709,7 +722,10 @@ It may also never finish if a complex circular vector field introduces enough er
 
 <h2 id="More Examples">More Examples</h2>
 
-<p><del>Note multiline examples</del></p>
+<p>
+Note that some of these are single line examples and others make use of variables.
+If you see variables being assigned make sure to execute those lines before the lines which follow, also make sure to delete the variable assigment afterwards in order to not affect any other examples which expect those variables to be free.
+</p>
 
 <h4 id="Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</h4>
 
@@ -746,6 +762,7 @@ integrate (sin x / x, (x, -oo, oo))<br>
 solve (x**2 = 4)<i>&emsp; x**2 - 4 = 0</i><br>
 solve (x**2 - 4)<i>&emsp; same</i><br>
 solve (|x| >= x**2)<i>&emsp; inequality</i><br>
+solve (x**2 + 2 x - 1 > 7)<br>
 solve (y == x**2 + 2 x - 1, x)<i>&emsp; solve for x from y</i><br>
 solve (x + (e**x)**2, e**x)<i>&emsp; solve for e**x</i><br>
 solve (x + e**x, x)<i>&emsp; explicit solution</i><br>
@@ -764,11 +781,14 @@ a.subs (s [2]), b.subs (s [2])<br>
 a.subs (s [3]), b.subs (s [3])<br>
 w = {x: 1, y: 2}<br>
 a.subs (w), b.subs (w)<i>&emsp; test bogus solution</i><br>
+delall<i>&emsp; clean up variables</i><br>
 </p>
 
 <h4 id="Differential Equations">Differential Equations</h4>
 
 <p>
+env 'nosimplify'<i>&emsp; better to not use simplification for these</i><br>
+<br>
 dsolve (d**2/dx**2 ?(x) + 9?(x))<i>&emsp; using undefined functions directly</i><br>
 dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative since function of only one variable</i><br>
 y = ?(x)<br>
@@ -776,13 +796,16 @@ dsolve (y'' + 9y)<i>&emsp; easiest like this</i><br>
 dsolve (sin x cos y + cos x sin y y')<br>
 <br>
 x, y = ?x(t), ?y(t)<i>&emsp; two distinct undefined functions so need to name them</i><br>
-dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<br>
-<del>THIS!</del><br>
+dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
+z = ?z(t)<br>
+dsolve((x' = 4x + 7y - z, y' = -2x - 5y + 2 z, z' = x + y))<i>&emsp; system of three equations</i><br>
+delall<i>&emsp; clean up variables</i><br>
 </p>
 
 <h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; by "hand"</i></h4>
 
 <p>
+env 'simplify'<i>&emsp; better to use simplification for these</i><br>
 m = \[[1, 2], [3, 4]]<br>
 l = m - lambda eye 2<br>
 l.det ()<br>
@@ -796,6 +819,7 @@ Subs (l, lambda, b) \[x, y]<br>
 solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
 \[_ [0] [x], y].subs (y, 1)<i>&emsp; second eigenvector for eigenvalue b</i><br>
 m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
+delall<i>&emsp; clean up variables</i><br>
 </p>
 
 <h4 id="Plotting Functions">Plotting Functions</h4>
@@ -834,8 +858,9 @@ Even if the object resulting from the expression is not natively known to SymPad
 <p><b>$</b> - "<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
 <p><b>@</b> - "<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value.
 This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</p>
-<p><b>?</b> - "<b>?name(vars)</b>" - <del>THIS!</del></p>
-<p><b>;</b> - <del>THIS!</del></p>
+<p><b>?</b> - "<b>?name(vars)</b>" - Used for specifying an undefined function to be used for solving differential equations.
+The name is optional but required if different functions of the same signature are needed like "<b>?x(t), ?y(t)</b>", otherwise you can just use "<b>?(t)</b>".</p>
+<p><b>;</b> - Semicolon is used to separate statements on a single line to be executed as if they were indicidual statements on separate lines like in Pyhon, e.g. "<b>1; expand (_(x+1)); expand (_(x+1)); expand (_(x+1))</b>".</p>
 <p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
 <p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
 

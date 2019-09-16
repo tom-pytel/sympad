@@ -71,7 +71,11 @@ def _simplify (spt):
 		return dict ((_simplify (k), _simplify (v)) for k, v in spt.items ())
 
 	try:
-		spt = sp.simplify (spt)
+		spt2 = sp.simplify (spt)
+
+		if sp.count_ops (spt2) <= sp.count_ops (spt): # sometimes simplify doesn't
+			spt = spt2
+
 	except:
 		pass
 
@@ -1438,8 +1442,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('+', (('@', 'x'), ('-', ('+', (('#', '1'), ('#', '-1'))))))
-# 	res = ast2nat (ast)
+# 	ast = AST ('func', 'series', (('^', ('@', 'e'), ('@', 'x')), ('@', 'x'), ('#', '0'), ('#', '5')))
+# 	res = ast2spt (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

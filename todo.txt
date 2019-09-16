@@ -1,12 +1,8 @@
-> error: Lambda (sqrt{x**2 + y**2}, (x, y))
-> simplify doesn't touch expressions which get sxlat._xlat_f2a_And - solve (x**2 + 2x - 1 > 7)
-
-> document more examples - Note multiline examples
-> document undefined functions
-> document prime differential operator
-> document semicolon
-
 > ufunction of same name seems to get kwargs stuck in SymPy
+
+> change _simplify() to patch sp.simplify()
+
+> # comment end of line
 
 > ODE initial conditions
 > ufuncs initialize with expressions instead of only vars?
@@ -55,6 +51,8 @@
 > formatting: non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
 
 > SYM.PY REFACTOR!
+
+> make sympad importable?
 
 > Custom Contains and other set operation fallbacks to allow symbols to stand in for sets?
 > 1 in x and other sets to accept symbols, how?
@@ -112,7 +110,3 @@ Slow Parse:
 Errors:
 
 
-text:   ln{{{{partial^^a} and {?g(x, y, z, reals = False)} and d^{1} / dy^{1} dy} and {\sum_{x = \partialx}^xyzd 1e100 \cdot (1e100,-1.0)}}+Limit (lambda x, y: \fracFalse.1, x, {dz  xyzd}')+{{\partialx \cdot a \cdot \partial } : \partialx / 1e-100 : {partialx  False}  ()'  {?f(x, y, z, reals = False, commutative = False)}}}
-ast:    ('log', ('+', (('and', (('^^', (('@', 'partial'), ('@', 'a'))), ('ufunc', 'g', ('x', 'y', 'z'), (('reals', ('@', 'False')),)), ('diff', ('@', 'dy'), (('^', ('@', 'dy'), ('#', '1')),)), ('*', (('sum', ('*', (('@', 'yzd'), ('#', '1e+100'))), ('@', 'x'), ('@', 'dx'), ('@', 'x')), (',', (('#', '1e+100'), ('#', '-1.0'))))))), ('func', 'Limit', (('lamb', ('*', (('/', ('@', 'F'), ('@', 'a')), ('@', 'lse'), ('#', '0.1'))), ('x', 'y')), ('@', 'x'), ('diffp', ('*', (('@', 'dz'), ('@', 'xyzd'))), 1))), ('slice', ('*', (('@', 'dx'), ('@', 'a'), ('@', 'partial'))), ('/', ('@', 'dx'), ('#', '1e-100')), ('*', (('@', 'dx'), ('@', 'False'), ('diffp', (',', ()), 1), ('ufunc', 'f', ('x', 'y', 'z'), (('commutative', ('@', 'False')), ('reals', ('@', 'False'))))))))))
-tex:    ('log', ('+', (('and', (('^^', (('@', 'partial'), ('@', 'a'))), ('ufunc', 'g', ('x', 'y', 'z'), (('reals', ('@', 'False')),)), ('diff', ('@', 'dy'), (('^', ('@', 'dy'), ('#', '1')),)), ('*', (('sum', ('*', (('@', 'yzd'), ('#', '1e+100'))), ('@', 'x'), ('@', 'dx'), ('@', 'x')), (',', (('#', '1e+100'), ('#', '-1.0'))))))), ('func', 'Limit', (('lamb', ('*', (('/', ('@', 'F'), ('@', 'a')), ('@', 'lse'), ('#', '0.1'))), ('x', 'y')), ('@', 'x'), ('diffp', ('*', (('@', 'dz'), ('@', 'xyzd'))), 1))), ('slice', ('*', (('@', 'dx'), ('@', 'a'), ('@', 'partial'))), ('/', ('@', 'dx'), ('#', '1e-100')), ('*', (('@', 'dx'), ('diffp', ('func', 'False', ()), 1), ('ufunc', 'f', ('x', 'y', 'z'), (('commutative', ('@', 'False')), ('reals', ('@', 'False'))))))))))
-nat:    ('log', ('+', (('and', (('^^', (('@', 'partial'), ('@', 'a'))), ('ufunc', 'g', ('x', 'y', 'z'), (('reals', ('@', 'False')),)), ('diff', ('@', 'dy'), (('^', ('@', 'dy'), ('#', '1')),)), ('*', (('sum', ('*', (('@', 'yzd'), ('#', '1e+100'))), ('@', 'x'), ('@', 'dx'), ('@', 'x')), (',', (('#', '1e+100'), ('#', '-1.0'))))))), ('func', 'Limit', (('lamb', ('*', (('/', ('@', 'F'), ('@', 'a')), ('@', 'lse'), ('#', '0.1'))), ('x', 'y')), ('@', 'x'), ('diffp', ('*', (('@', 'dz'), ('@', 'xyzd'))), 1))), ('slice', ('*', (('@', 'dx'), ('@', 'a'), ('@', 'partial'))), ('/', ('@', 'dx'), ('#', '1e-100')), ('*', (('@', 'dx'), ('diffp', ('func', 'False', ()), 1), ('ufunc', 'f', ('x', 'y', 'z'), (('commutative', ('@', 'False')), ('reals', ('@', 'False'))))))))))
