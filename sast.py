@@ -36,7 +36,7 @@
 # ('-lamb', expr, (v1, v2, ...))                    - lambda expression: v? = ('@', 'var')
 # ('idx', expr, (i0, i1, ...))                     - indexing: expr [i0, i1, ...]
 # ('slice', start, stop, step)                     - indexing slice object: obj [start : stop : step], None or False indicates not specified
-# ('set', (expr1, expr2, ...))                     - set
+# ('-set', (expr1, expr2, ...))                     - set
 # ('-dict', ((k1, v1), (k2, v2), ...))              - python dict
 # ('||', (expr1, expr2, ...))                      - set union
 # ('^^', (expr1, expr2, ...))                      - set symmetric difference
@@ -658,7 +658,7 @@ class AST_Slice (AST):
 		self.start, self.stop, self.step = start, stop, step
 
 class AST_Set (AST):
-	op, is_set = 'set', True
+	op, is_set = '-set', True
 
 	def _init (self, set):
 		self.set = set
@@ -735,7 +735,7 @@ AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
 AST.MatEmpty   = AST ('-mat', ())
-AST.SetEmpty   = AST ('set', ())
+AST.SetEmpty   = AST ('-set', ())
 AST.DictEmpty  = AST ('-dict', ())
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT

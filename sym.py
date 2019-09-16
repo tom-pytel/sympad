@@ -292,7 +292,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return (''.join (t), has) if ret_has else ''.join (t)
 
 	def _ast2tex_pow (self, ast, trighpow = True):
-		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '"', '(', '[', '|', '-func', '-mat', '-lamb', 'set', '-dict'} or ast.base.is_num_pos))
+		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '"', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2tex_curly (ast.exp)
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -408,7 +408,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-lamb' : lambda self, ast: f'\\left({self._ast2tex (AST ("@", ast.vars [0]) if ast.vars.len == 1 else AST ("(", (",", tuple (("@", v) for v in ast.vars))))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 		'idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^", "slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "-", "+", "*", "/", "-lim", "-sum", "diff", "-intg", "-piece", "||", "^^", "&&", "-or", "-and", "-not"})}\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]',
 		'slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and a.op in {'=', ',', 'slice'}) for a in _ast_slice_bounds (ast, '')),
-		'set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex_wrap (c, 0, c.is_slice) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
+		'-set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex_wrap (c, 0, c.is_slice) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'-dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex_wrap (k, 0, k.is_slice)}{{:}} {self._ast2tex_wrap (v, 0, v.is_slice)}" for k, v in ast.dict)} \\right\\}}',
 		'||'   : lambda self, ast: ' \\cup '.join (self._ast2tex_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', '-or', '-and', '-not'} or (a.is_piece and a is not ast.union [-1])) for a in ast.union),
 		'^^'   : lambda self, ast: ' \\ominus '.join (self._ast2tex_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', '||', '-or', '-and', '-not'} or (a.is_piece and a is not ast.sdiff [-1])) for a in ast.sdiff),
@@ -479,7 +479,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_ass_hs (self, hs, lhs = True):
 		return self._ast2nat_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and hs.op in {',', '-piece', '-lamb'}) or \
-				(not lhs and hs.is_lamb and self.parent.op in {'set', '-dict'}))
+				(not lhs and hs.is_lamb and self.parent.op in {'-set', '-dict'}))
 
 	def _ast2nat_cmp_hs (self, hs):
 		return self._ast2nat_wrap (hs, 0, {'=', '<>', '-piece', '-lamb', 'slice', '-or', '-and', '-not'})
@@ -559,7 +559,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'{n}{" / " if s else "/"}{d}'
 
 	def _ast2nat_pow (self, ast, trighpow = True):
-		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '[', '|', '-func', '-mat', 'set', '-dict'} or ast.base.is_num_pos))
+		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '[', '|', '-func', '-mat', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus.op in {'=', '<>', '+', '*', '/', '-lim', '-sum', 'diff', '-intg', '-piece', '-lamb', 'slice', '||', '^^', '&&', '-or', '-and', '-not'}, {","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -648,7 +648,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-lamb' : lambda self, ast: f'lambda{" " + ", ".join (ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.is_lamb, ast.lamb.op in {"=", "<>", "slice"})}',
 		'idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^", "slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "-lim", "-sum", "diff", "-intg", "-piece", "-lamb", "||", "^^", "&&", "-or", "-and", "-not"})}[{self._ast2nat (AST.tuple2ast (ast.idx))}]',
 		'slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-lamb', 'slice'}) for a in _ast_slice_bounds (ast)),
-		'set'  : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (c, 0, c.is_slice) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
+		'-set'  : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (c, 0, c.is_slice) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'-dict' : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (k, 0, k.op in {"-lamb", "slice"}) + f": {self._ast2nat_wrap (v, v.is_lamb, v.is_slice)}" for k, v in ast.dict)}}}',
 		'||'   : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', '-piece', '-lamb', '-or', '-and', '-not'}) for a in ast.union),
 		'^^'   : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', 'slice', '-piece', '-lamb', '||', '-or', '-and', '-not'}) for a in ast.sdiff),
@@ -843,7 +843,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-lamb' : lambda self, ast: f"""Lambda({ast.vars [0] if ast.vars.len == 1 else f'({", ".join (ast.vars)})'}, {self._ast2py (ast.lamb)})""",
 		'idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "diff", "-intg", "-piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
 		'slice': _ast2py_slice,
-		'set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
+		'-set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
 		'-dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
 		'||'   : lambda self, ast: f'Union({", ".join (self._ast2py (a) for a in ast.union)})',
 		'^^'   : _ast2py_sdiff,
@@ -1101,7 +1101,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-lamb' : _ast2spt_lamb,
 		'idx'  : _ast2spt_idx,
 		'slice': lambda self, ast: slice (*(self._ast2spt (a) if a else a for a in _ast_slice_bounds (ast, None))),
-		'set'  : lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)),
+		'-set'  : lambda self, ast: sp.FiniteSet (*(self._ast2spt (a) for a in ast.set)),
 		'-dict' : lambda self, ast: dict ((self._ast2spt (k), self._ast2spt (v)) for k, v in ast.dict),
 		'||'   : lambda self, ast: sp.Union (*(self._ast2spt (a) for a in ast.union)),
 		'^^'   : _ast2spt_sdiff,
@@ -1308,8 +1308,8 @@ class spt2ast:
 		str: lambda self, spt: AST ('"', spt),
 		tuple: lambda self, spt: AST ('(', (',', tuple (self._spt2ast (e) for e in spt))),
 		list: lambda self, spt: AST ('[', tuple (self._spt2ast (e) for e in spt)),
-		set: lambda self, spt: AST ('set', tuple (self._spt2ast (e) for e in spt)),
-		frozenset: lambda self, spt: AST ('set', tuple (self._spt2ast (e) for e in spt)),
+		set: lambda self, spt: AST ('-set', tuple (self._spt2ast (e) for e in spt)),
+		frozenset: lambda self, spt: AST ('-set', tuple (self._spt2ast (e) for e in spt)),
 		dict: lambda self, spt: AST ('-dict', tuple ((self._spt2ast (k), self._spt2ast (v)) for k, v in spt.items ())),
 		slice: lambda self, spt: AST ('slice', False if spt.start is None else self._spt2ast (spt.start), False if spt.stop is None else self._spt2ast (spt.stop), None if spt.step is None else self._spt2ast (spt.step)),
 		_dict_keys: lambda self, spt: AST ('[', tuple (self._spt2ast (e) for e in spt)),
@@ -1346,7 +1346,7 @@ class spt2ast:
 
 		sp.EmptySet: lambda self, spt: AST.SetEmpty,
 		sp.fancysets.Complexes: lambda self, spt: AST.Complexes,
-		sp.FiniteSet: lambda self, spt: AST ('set', tuple (self._spt2ast (arg) for arg in spt.args)),
+		sp.FiniteSet: lambda self, spt: AST ('-set', tuple (self._spt2ast (arg) for arg in spt.args)),
 		sp.Union: _spt2ast_Union,
 		sp.Intersection: lambda self, spt: self._spt2ast (spt.args [0]) if len (spt.args) == 1 else AST.flatcat ('&&', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
 		sp.Complement: lambda self, spt: AST ('+', (self._spt2ast (spt.args [0]), ('-', self._spt2ast (spt.args [1])))),

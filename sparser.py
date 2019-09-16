@@ -418,9 +418,9 @@ def _expr_curly (ast, forceset = False):
 	for kv in e:
 		if not kv.is_slice or kv.step is not None or kv.start is False or kv.stop is False:
 			if ast.is_comma:
-				return AST ('set', ast.comma)
+				return AST ('-set', ast.comma)
 			elif forceset:
-				return AST ('set', e)
+				return AST ('-set', e)
 			else:
 				return AST ('{', ast)
 
@@ -895,7 +895,7 @@ class Parser (lalr1.LALR1):
 	def expr_bracket_3     (self, expr_curly):                                         return expr_curly
 
 	def expr_curly_1       (self, LEFT, SLASHCURLYL, expr_commas, RIGHT, SLASHCURLYR): return _expr_curly (expr_commas, forceset = True)
-	def expr_curly_2       (self, SLASHCURLYL, expr_commas, CURLYR):                   return AST ('set', expr_commas.comma) if expr_commas.is_comma else AST ('set', (expr_commas,))
+	def expr_curly_2       (self, SLASHCURLYL, expr_commas, CURLYR):                   return AST ('-set', expr_commas.comma) if expr_commas.is_comma else AST ('-set', (expr_commas,))
 	def expr_curly_3       (self, CURLYL, expr_commas, CURLYR):                        return _expr_curly (expr_commas)
 	def expr_curly_4       (self, expr_ufunc):                                         return expr_ufunc
 
