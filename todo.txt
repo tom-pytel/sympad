@@ -11,15 +11,16 @@
 
 > overhaul function keyword arguments
 > forced function calls expr mul_imp (v,)?
-> or if paren of single expression treat as call?
+> or if paren of single free variable treat as call?
 
 > sin a.b()
-> input shortcut non-opened closing curly and/or paren
-> parse from python ln x / ln base -> \log_{base} x
-
-> var assumptions (using @ character?)
+> input shortcut non-opened closing curly and/or paren?
+> parse from python ln x / ln base -> \log_{base} x? only for number bases?
 
 > change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
+
+> quick mode: dpartial
+> quick mode: \operatorname{\_}()
 
 > allow leading underscore for vars and funcs and leading \_ for tex
 > clean up sparser TOKENS and centralize repeated patterns
@@ -27,10 +28,9 @@
 > parse subscripts
 > single letter variables can take trailing number
 
-> wait icon into sympad
+> var assumptions (using @ character?)
 
-> quick mode: dpartial
-> quick mode: \operatorname{\_}()
+> wait icon into sympad
 
 > evil extra spacing before single-quote strings!
 > x'**2, how to do?

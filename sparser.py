@@ -1125,18 +1125,18 @@ class Parser (lalr1.LALR1):
 class sparser: # for single script
 	Parser = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
-# 	# p.set_user_funcs ({'f': 1})
-# 	# a = p.parse (r'x - {1 * 2}')
-# 	# a = p.parse (r'x - {{1 * 2} * 3}')
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
+	# p.set_user_funcs ({'f': 1})
+	# a = p.parse (r'x - {1 * 2}')
+	# a = p.parse (r'x - {{1 * 2} * 3}')
 
-# 	# p.set_quick (True)
-# 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
+	# p.set_quick (True)
+	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	a = p.parse (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''""")
-# 	print (a)
+	a = p.parse (r'sin a.b ()')
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)
