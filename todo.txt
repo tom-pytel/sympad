@@ -6,8 +6,8 @@
 > ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)?
 > ufuncs created in expression persist to end of expression?
 
-
 > ufunction of same name seems to get kwargs stuck in SymPy
+
 
 > overhaul function keyword arguments
 > forced function calls expr mul_imp (v,)?
@@ -145,7 +145,3 @@ nat:    ('set', (('slice', ('/', ('func', 'gegenbauer', (('piece', ((('@', 'part
 doo
 
 
-{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''
-displays wrong latex or parses wrong?
-{\sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}]}'
-{\sqrt [\partial ' if \frac1xyzd] Sum (\fracpartialx1, (x, xyzd / "str", x}]}'

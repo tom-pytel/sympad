@@ -305,7 +305,7 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'limit'                : _xlat_f2a_Limit,
 
 	'EmptySet'             : lambda *args: AST.SetEmpty,
-	'FiniteSet'            : lambda *args: AST ('set', tuple (args)),
+	'FiniteSet'            : lambda *args: AST ('-set', tuple (args)),
 	'Contains'             : lambda a, b: AST ('<>', a, (('in', b),)),
 	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
 	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
@@ -397,7 +397,7 @@ def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .s
 				if arg.is_dict:
 					return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
 
-				elif arg.op in {',', '[', 'set'}:
+				elif arg.op in {',', '[', '-set'}:
 					args = []
 
 					for arg in arg [1]:

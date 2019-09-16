@@ -1442,8 +1442,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('-func', 'series', (('^', ('@', 'e'), ('@', 'x')), ('@', 'x'), ('#', '0'), ('#', '5')))
-# 	res = ast2spt (ast)
+# 	ast = AST ('-dict', ((('@', 'partialx'), ('-func', 'Sum', (('-func', 'abs', (('-func', 'abs', (('@', 'dz'),)),)), ('(', (',', (('@', 'x'), ('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'y'), ('-func', 'slice', (('@', 'z'), ('#', '1e+100'), ('-func', 'factorial', (('@', 'partial'),)))), ('/', ('-func', 'Intersection', (('-func', 'FiniteSet', ()), ('#', '0'), ('@', 'None'))), ('-dict', ((('#', '-1.0'), ('@', 'a')), (('"', 'str'), ('@', 'False')), (('#', '1e+100'), ('@', 'True'))))))))))), (('#', '0.1'), ('-sqrt', ('[', (('*', (('@', 'partial'), ('-func', 'diff', (('-func', 'diff', (('"', ' if \x0crac1xyzd]Sum (\x0cracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \\partial ))))}'),)),)))),))))))
+# 	res = ast2tex (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)
