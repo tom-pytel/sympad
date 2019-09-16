@@ -23,28 +23,28 @@
 # ('log', expr, base)                              - logarithm of expr in base
 # ('sqrt', expr)                                   - square root of expr
 # ('sqrt', expr, n)                                - nth root of expr
-# ('func', 'name', (arg1, arg2, ...))              - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
-# ('lim', expr, var, to)                           - limit of expr when variable var approaches to from both positive and negative directions
-# ('lim', expr, var, to, 'dir')                    - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
-# ('sum', expr, var, from, to)                     - summation of expr over variable var from from to to
+# ('-func', 'name', (arg1, arg2, ...))              - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
+# ('-lim', expr, var, to)                           - limit of expr when variable var approaches to from both positive and negative directions
+# ('-lim', expr, var, to, 'dir')                    - limit of expr when variable var approaches to from specified direction dir which may be '+' or '-'
+# ('-sum', expr, var, from, to)                     - summation of expr over variable var from from to to
 # ('diff', expr, (dvar1, ...))                     - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
-# ('diffp', expr, count)                           - differentiation with respect to unspecified variable count times
-# ('intg', expr, var)                              - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-# ('intg', expr, var, from, to)                    - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-# ('mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
-# ('piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
-# ('lamb', expr, (v1, v2, ...))                    - lambda expression: v? = ('@', 'var')
+# ('-diffp', expr, count)                           - differentiation with respect to unspecified variable count times
+# ('-intg', expr, var)                              - anti-derivative of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('-intg', expr, var, from, to)                    - definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('-mat', ((e11, e12, ...), (e21, e22, ...), ...)) - matrix
+# ('-piece', ((v1, c1), ..., (vn, True?)))          - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
+# ('-lamb', expr, (v1, v2, ...))                    - lambda expression: v? = ('@', 'var')
 # ('idx', expr, (i0, i1, ...))                     - indexing: expr [i0, i1, ...]
 # ('slice', start, stop, step)                     - indexing slice object: obj [start : stop : step], None or False indicates not specified
 # ('set', (expr1, expr2, ...))                     - set
-# ('dict', ((k1, v1), (k2, v2), ...))              - python dict
+# ('-dict', ((k1, v1), (k2, v2), ...))              - python dict
 # ('||', (expr1, expr2, ...))                      - set union
 # ('^^', (expr1, expr2, ...))                      - set symmetric difference
 # ('&&', (expr1, expr2, ...))                      - set intersection
-# ('or', (expr1, expr2, ...))                      - Python or
-# ('and', (expr1, expr2, ...))                     - Python and
-# ('not', expr)                                    - Python not
-# ('ufunc', 'name', ('v1', ...), (('kw1', a1), ...)) - undefined function object with keyword arguments
+# ('-or', (expr1, expr2, ...))                      - Python or
+# ('-and', (expr1, expr2, ...))                     - Python and
+# ('-not', expr)                                    - Python not
+# ('-ufunc', 'name', ('v1', ...), (('kw1', a1), ...)) - undefined function object with keyword arguments
 
 from collections import OrderedDict
 import re
@@ -115,8 +115,8 @@ class AST (tuple):
 		else:
 			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
-	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^', '&&', 'or' and 'and' into single ASTs
-		if self.op in {'+', '*', '||', '^^', '&&', 'or', 'and'}: # specifically not '<>' because that would be different meaning
+	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^', '&&', '-or' and '-and' into single ASTs
+		if self.op in {'+', '*', '||', '^^', '&&', '-or', '-and'}: # specifically not '<>' because that would be different meaning
 			if self.op == op:
 				for e in self [1]:
 					e.flat (op, seq)
@@ -185,13 +185,13 @@ class AST (tuple):
 		return (self, neg) if retneg else self
 
 	def _strip_mmls (self): # mmls = minus, mul, lim, sum
-		while self.op in {'-', '*', 'lim', 'sum'}:
+		while self.op in {'-', '*', '-lim', '-sum'}:
 			self = self.mul [-1] if self.is_mul else self [1]
 
 		return self
 
 	def _strip_fdpi (self): # fdp = fact, diffp, idx
-		while self.op in {'!', 'diffp', 'idx'}:
+		while self.op in {'!', '-diffp', 'idx'}:
 			self = self [1]
 
 		return self
@@ -329,7 +329,7 @@ class AST (tuple):
 
 				return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
 
-			return AST ('func', ast.func,
+			return AST ('-func', ast.func,
 					tuple (('(', AST.apply_vars (a, vars, recurse))
 					if (a.is_var and vars.get (a.var, AST.VarNull).is_ass)
 					else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
@@ -550,7 +550,7 @@ class AST_Sqrt (AST):
 		self.rad, self.idx = rad, idx
 
 class AST_Func (AST):
-	op, is_func = 'func', True
+	op, is_func = '-func', True
 
 	_SYMPY_OBJECTS  = dict ((name, obj) for name, obj in filter (lambda no: no [0] [0] != '_', sp.__dict__.items ()))
 	_SYMPY_FUNCS    = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and callable (no [1]), _SYMPY_OBJECTS.items ()))
@@ -590,13 +590,13 @@ class AST_Func (AST):
 	_unescaped            = lambda self: self.func.lstrip (self.ESCAPE)
 
 class AST_Lim (AST):
-	op, is_lim = 'lim', True
+	op, is_lim = '-lim', True
 
 	def _init (self, lim, lvar, to, dir = None):
 		self.lim, self.lvar, self.to, self.dir = lim, lvar, to, dir
 
 class AST_Sum (AST):
-	op, is_sum = 'sum', True
+	op, is_sum = '-sum', True
 
 	def _init (self, sum, svar, from_, to):
 		self.sum, self.svar, self.from_, self.to = sum, svar, from_, to
@@ -610,13 +610,13 @@ class AST_Diff (AST):
 	_diff_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
 
 class AST_DiffP (AST):
-	op, is_diffp = 'diffp', True
+	op, is_diffp = '-diffp', True
 
 	def _init (self, diffp, count):
 		self.diffp, self.count = diffp, count
 
 class AST_Intg (AST):
-	op, is_intg = 'intg', True
+	op, is_intg = '-intg', True
 
 	def _init (self, intg, dv, from_ = None, to = None):
 		self.intg, self.dv, self.from_, self.to = intg, dv, from_, to
@@ -624,7 +624,7 @@ class AST_Intg (AST):
 	_is_intg_definite = lambda self: self.from_ is not None
 
 class AST_Mat (AST):
-	op, is_mat = 'mat', True
+	op, is_mat = '-mat', True
 
 	def _init (self, mat):
 		self.mat = mat
@@ -634,13 +634,13 @@ class AST_Mat (AST):
 	_is_mat_column = lambda self: self.rows and self.cols == 1
 
 class AST_Piece (AST):
-	op, is_piece = 'piece', True
+	op, is_piece = '-piece', True
 
 	def _init (self, piece):
 		self.piece = piece
 
 class AST_Lamb (AST):
-	op, is_lamb = 'lamb', True
+	op, is_lamb = '-lamb', True
 
 	def _init (self, lamb, vars):
 		self.lamb, self.vars = lamb, vars
@@ -664,7 +664,7 @@ class AST_Set (AST):
 		self.set = set
 
 class AST_Dict (AST):
-	op, is_dict = 'dict', True
+	op, is_dict = '-dict', True
 
 	def _init (self, dict):
 		self.dict = dict
@@ -688,25 +688,25 @@ class AST_XSect (AST): # intersection
 		self.xsect = xsect
 
 class AST_Or (AST):
-	op, is_or = 'or', True
+	op, is_or = '-or', True
 
 	def _init (self, or_):
 		self.or_ = or_
 
 class AST_And (AST):
-	op, is_and = 'and', True
+	op, is_and = '-and', True
 
 	def _init (self, and_):
 		self.and_ = and_
 
 class AST_Not (AST):
-	op, is_not = 'not', True
+	op, is_not = '-not', True
 
 	def _init (self, not_):
 		self.not_ = not_
 
 class AST_UFunc (AST):
-	op, is_ufunc = 'ufunc', True
+	op, is_ufunc = '-ufunc', True
 
 	def _init (self, ufunc, vars, kw):
 		self.ufunc, self.vars, self.kw = ufunc, vars, kw
@@ -734,9 +734,9 @@ AST.One        = AST ('#', '1')
 AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
-AST.MatEmpty   = AST ('mat', ())
+AST.MatEmpty   = AST ('-mat', ())
 AST.SetEmpty   = AST ('set', ())
-AST.DictEmpty  = AST ('dict', ())
+AST.DictEmpty  = AST ('-dict', ())
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!

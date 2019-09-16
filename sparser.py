@@ -45,7 +45,7 @@ def _ast_func_reorder (ast):
 	wrap2 = None
 
 	if ast.is_diffp:
-		ast2, wrap2 = ast.diffp, lambda a, count = ast.count: AST ('diffp', a, count)
+		ast2, wrap2 = ast.diffp, lambda a, count = ast.count: AST ('-diffp', a, count)
 	elif ast.is_fact:
 		ast2, wrap2 = ast.fact, lambda a: AST ('!', a)
 	elif ast.is_pow:
@@ -76,23 +76,23 @@ def _expr_comma (lhs, rhs):
 
 	if lhs.is_mul:
 		if lhs.mul.len == 2 and lhs.mul [0].is_var_lambda and lhs.mul [1].is_var:
-			return AST ('lamb', rhs.stop, (lhs.mul [1].var, rhs.start.var))
+			return AST ('-lamb', rhs.stop, (lhs.mul [1].var, rhs.start.var))
 
 	elif lhs.is_ass:
 		if lhs.rhs.is_mul and lhs.rhs.mul.len == 2 and lhs.rhs.mul [0].is_var_lambda and lhs.rhs.mul [1].is_var:
-			return AST ('=', lhs.lhs, ('lamb', rhs.stop, (lhs.rhs.mul [1].var, rhs.start.var)))
+			return AST ('=', lhs.lhs, ('-lamb', rhs.stop, (lhs.rhs.mul [1].var, rhs.start.var)))
 
 	elif lhs.is_comma:
 		for i in range (lhs.comma.len - 1, -1, -1):
 			if lhs.comma [i].is_mul:
 				if lhs.comma [i].mul.len == 2 and lhs.comma [i].mul [0].is_var_lambda and lhs.comma [i].mul [1].is_var:
-					ast = AST ('lamb', rhs.stop, (lhs.comma [i].mul [1].var, *(c.var for c in lhs.comma [i + 1:]), rhs.start.var))
+					ast = AST ('-lamb', rhs.stop, (lhs.comma [i].mul [1].var, *(c.var for c in lhs.comma [i + 1:]), rhs.start.var))
 
 					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
 
 			elif lhs.comma [i].is_ass:
 				if lhs.comma [i].rhs.is_mul and lhs.comma [i].rhs.mul.len == 2 and lhs.comma [i].rhs.mul [0].is_var_lambda and lhs.comma [i].rhs.mul [1].is_var:
-					ast = AST ('=', lhs.comma [i].lhs, ('lamb', rhs.stop, (lhs.comma [i].rhs.mul [1].var, *(c.var for c in lhs.comma [i + 1:]), rhs.start.var)))
+					ast = AST ('=', lhs.comma [i].lhs, ('-lamb', rhs.stop, (lhs.comma [i].rhs.mul [1].var, *(c.var for c in lhs.comma [i + 1:]), rhs.start.var)))
 
 					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
 
@@ -109,32 +109,32 @@ def _expr_colon (lhs, rhs):
 
 	if l.is_var:
 		if l.is_var_lambda:
-			return wrap_ass (AST ('lamb', rhs, ()))
+			return wrap_ass (AST ('-lamb', rhs, ()))
 
 	elif l.is_mul:
 		if l.mul.len == 2 and l.mul [0].is_var_lambda and l.mul [1].is_var:
-			return wrap_ass (AST ('lamb', rhs, (l.mul [1].var,)))
+			return wrap_ass (AST ('-lamb', rhs, (l.mul [1].var,)))
 
 	return _ast_pre_slice (lhs, rhs)
 
 def _expr_mapsto (args, lamb):
 	if args.is_var:
-		return AST ('lamb', lamb, (args.var,))
+		return AST ('-lamb', lamb, (args.var,))
 
 	elif args.is_comma:
 		for var in args.comma:
 			if not var.is_var:
 				break
 		else:
-			return AST ('lamb', lamb, tuple (c.var for c in args.comma))
+			return AST ('-lamb', lamb, tuple (c.var for c in args.comma))
 
 	raise SyntaxError ('invalid lambda function')
 
 def _expr_piece (expr, expr_if, expr_else):
 	if expr_else.is_piece:
-		return AST ('piece', ((expr, expr_if),) + expr_else.piece)
+		return AST ('-piece', ((expr, expr_if),) + expr_else.piece)
 	else:
-		return AST ('piece', ((expr, expr_if), (expr_else, True)))
+		return AST ('-piece', ((expr, expr_if), (expr_else, True)))
 
 def _expr_cmp (lhs, CMP, rhs):
 	cmp = AST.Cmp.ANY2PY.get (CMP.text.replace (' ', ''), CMP.text.replace (' ', ''))
@@ -145,7 +145,7 @@ def _expr_cmp (lhs, CMP, rhs):
 		return AST ('<>', lhs, ((cmp, rhs),))
 
 def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy missing negative numbers
-	if expr.op in {'!', 'diffp', 'idx'}:
+	if expr.op in {'!', '-diffp', 'idx'}:
 		if expr [1].is_num_pos:
 			return AST (expr.op, expr [1].neg (), *expr [2:])
 
@@ -188,9 +188,9 @@ def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjace
 	elif last.is_var: # user_func *imp* () -> user_func (), var (tuple) -> func ()
 		if last.var in user_funcs or arg.strip_paren.is_comma:
 			if arg.is_paren:
-				ast = wrap (AST ('func', last.var, _ast_func_tuple_args (arg)))
+				ast = wrap (AST ('-func', last.var, _ast_func_tuple_args (arg)))
 			else:
-				ast = wrap (AST ('func', last.var, (arg,)))
+				ast = wrap (AST ('-func', last.var, (arg,)))
 
 	if arg.is_brack: # x * [y] -> x [y]
 		if not arg.brack:
@@ -297,11 +297,11 @@ def _ast_strip_tail_differential (ast):
 
 			if dv:
 				if ast2:
-					return (AST ('intg', neg (ast2), dv, *ast [3:]), ast.dv)
+					return (AST ('-intg', neg (ast2), dv, *ast [3:]), ast.dv)
 				elif neg.has_neg:
-					return (AST ('intg', neg (AST.One), dv, *ast [3:]), ast.dv)
+					return (AST ('-intg', neg (AST.One), dv, *ast [3:]), ast.dv)
 				else:
-					return (AST ('intg', None, dv, *ast [3:]), ast.dv)
+					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
 		ast2, neg = ast.diff._strip_minus (retneg = True)
@@ -354,42 +354,42 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 	if dv:
 		if ast:
-			return AST ('intg', neg (ast), dv, *from_to)
+			return AST ('-intg', neg (ast), dv, *from_to)
 		elif neg.has_neg:
-			return AST ('intg', neg (AST.One), dv, *from_to)
+			return AST ('-intg', neg (AST.One), dv, *from_to)
 		else:
-			return neg (AST ('intg', None, dv, *from_to))
+			return neg (AST ('-intg', None, dv, *from_to))
 
 	raise SyntaxError ('integration expecting a differential')
 
 def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	ast, wrap = _ast_func_reorder (args [iparm])
 
-	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == 'func' else ast._strip (strip)),) + args [iparm + 1:])))
+	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == '-func' else ast._strip (strip)),) + args [iparm + 1:])))
 
 def _expr_func_func (FUNC, args, expr_super = None):
 	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
 
 	if expr_super is None:
-		return _expr_func (2, 'func', func, args)
-	elif expr_super.no_curlys != AST.NegOne or not AST ('func', func, ()).is_trigh_func_noninv:
+		return _expr_func (2, '-func', func, args)
+	elif expr_super.no_curlys != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
 		return AST ('^', _expr_func_func (FUNC, args), expr_super)
 	else:
 		return _expr_func_func (f'a{func}', args)
 
 def _expr_subs (expr_commas, subsvars):
 	if len (subsvars) == 1:
-		return AST ('func', 'Subs', (expr_commas, subsvars [0] [0], subsvars [0] [1]))
+		return AST ('-func', 'Subs', (expr_commas, subsvars [0] [0], subsvars [0] [1]))
 	else:
-		return AST ('func', 'Subs', (expr_commas, ('(', (',', tuple (sv [0] for sv in subsvars))), ('(', (',', tuple (sv [1] for sv in subsvars)))))
+		return AST ('-func', 'Subs', (expr_commas, ('(', (',', tuple (sv [0] for sv in subsvars))), ('(', (',', tuple (sv [1] for sv in subsvars)))))
 
 def _expr_mat (mat_rows):
 	if not mat_rows:
 		return AST.MatEmpty
 	elif len (mat_rows [0]) > 1:
-		return AST ('mat', mat_rows)
+		return AST ('-mat', mat_rows)
 	else:
-		return AST ('mat', tuple ((c [0],) for c in mat_rows))
+		return AST ('-mat', tuple ((c [0],) for c in mat_rows))
 
 def _expr_vec (ast):
 	e = ast.comma if ast.is_comma else (ast,)
@@ -400,16 +400,16 @@ def _expr_vec (ast):
 
 		elif len (e) == 1 or len (set (c.brack.len for c in e)) == 1:
 			if e [0].brack.len == 1:
-				return AST ('mat', tuple ((c.brack [0],) for c in e))
+				return AST ('-mat', tuple ((c.brack [0],) for c in e))
 			elif e [0].brack.len:
-				return AST ('mat', tuple (c.brack for c in e))
+				return AST ('-mat', tuple (c.brack for c in e))
 			else:
 				return AST.MatEmpty
 
 		elif e [-1].brack.len < e [0].brack.len:
-			raise lalr1.Incomplete (AST ('mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
+			raise lalr1.Incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
 
-	return AST ('mat', tuple ((c,) for c in e))
+	return AST ('-mat', tuple ((c,) for c in e))
 
 def _expr_curly (ast, forceset = False):
 	e   = ast.comma if ast.is_comma else (ast,)
@@ -426,7 +426,7 @@ def _expr_curly (ast, forceset = False):
 
 		kvs.append ((kv.start, kv.stop))
 
-	return AST ('dict', tuple (kvs))
+	return AST ('-dict', tuple (kvs))
 
 def _expr_ufunc (UFUNC, args, argspy = None):
 	name, kw = None, None
@@ -449,7 +449,7 @@ def _expr_ufunc (UFUNC, args, argspy = None):
 	elif kw2:
 		raise SyntaxError ('keyword arguments not allowed here')
 
-	return AST ('ufunc', name [0].str_ if name else UFUNC.grp [0] or UFUNC.grp [1] or '', tuple (a.var for a in args), tuple (sorted (kw.items ())))
+	return AST ('-ufunc', name [0].str_ if name else UFUNC.grp [0] or UFUNC.grp [1] or '', tuple (a.var for a in args), tuple (sorted (kw.items ())))
 
 def _expr_num (NUM):
 	num = NUM.grp [1] or (NUM.grp [0] if NUM.text [0] != '.' else f'0{NUM.grp [0]}')
@@ -486,7 +486,7 @@ class Parser (lalr1.LALR1):
 
 		self.set_tokens (self.TOKENS)
 
-	_USER_FUNCS = set () # set or dict of names of user functions to map to AST ('func', ...)
+	_USER_FUNCS = set () # set or dict of names of user functions to map to AST ('-func', ...)
 
 	def set_user_funcs (self, user_funcs):
 		self._USER_FUNCS = user_funcs
@@ -750,16 +750,16 @@ class Parser (lalr1.LALR1):
 	def expr_mapsto_2      (self, expr_piece):                                         return expr_piece
 
 	def expr_piece_1       (self, expr_or, IF, expr_ass, ELSE, expr_mapsto):           return _expr_piece (expr_or, expr_ass, expr_mapsto)
-	def expr_piece_2       (self, expr_or, IF, expr_ass):                              return AST ('piece', ((expr_or, expr_ass),))
+	def expr_piece_2       (self, expr_or, IF, expr_ass):                              return AST ('-piece', ((expr_or, expr_ass),))
 	def expr_piece_3       (self, expr_or):                                            return expr_or
 
-	def expr_or_1          (self, expr_or, OR, expr_and):                              return AST.flatcat ('or', expr_or, expr_and)
+	def expr_or_1          (self, expr_or, OR, expr_and):                              return AST.flatcat ('-or', expr_or, expr_and)
 	def expr_or_2          (self, expr_and):                                           return expr_and
 
-	def expr_and_1         (self, expr_and, AND, expr_not):                            return AST.flatcat ('and', expr_and, expr_not)
+	def expr_and_1         (self, expr_and, AND, expr_not):                            return AST.flatcat ('-and', expr_and, expr_not)
 	def expr_and_2         (self, expr_not):                                           return expr_not
 
-	def expr_not_1         (self, NOT, expr_not):                                      return AST ('not', expr_not)
+	def expr_not_1         (self, NOT, expr_not):                                      return AST ('-not', expr_not)
 	def expr_not_2         (self, expr_cmp):                                           return expr_cmp
 
 	def expr_cmp_1         (self, expr_cmp, CMP, expr_union):                          return _expr_cmp (expr_cmp, CMP, expr_union)
@@ -801,15 +801,15 @@ class Parser (lalr1.LALR1):
 	def expr_intg_2        (self, INTG, expr_add):                                     return _expr_intg (expr_add)
 	def expr_intg_3        (self, expr_lim):                                           return expr_lim
 
-	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('lim', expr_neg, expr_var, expr)
-	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('lim', expr_neg, expr_var, expr, '+')
-	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('lim', expr_neg, expr_var, expr, '-')
+	def expr_lim_1         (self, LIM, SUB, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('-lim', expr_neg, expr_var, expr)
+	def expr_lim_2         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('-lim', expr_neg, expr_var, expr, '+')
+	def expr_lim_3         (self, LIM, SUB, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('-lim', expr_neg, expr_var, expr, '-')
 	def expr_lim_6         (self, expr_sum):                                                                        return expr_sum
 
-	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('sum', expr_neg, varass [0], varass [1], expr_super)
+	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('-sum', expr_neg, varass [0], varass [1], expr_super)
 	def expr_sum_2         (self, expr_diffp):                                                                      return expr_diffp
 
-	def expr_diffp_1       (self, expr_diffp, PRIME):                                  return AST ('diffp', expr_diffp.diffp, expr_diffp.count + 1) if expr_diffp.is_diffp else AST ('diffp', expr_diffp, 1)
+	def expr_diffp_1       (self, expr_diffp, PRIME):                                  return AST ('-diffp', expr_diffp.diffp, expr_diffp.count + 1) if expr_diffp.is_diffp else AST ('-diffp', expr_diffp, 1)
 	def expr_diffp_2       (self, expr_func):                                          return expr_func
 
 	def expr_func_1        (self, SQRT, expr_neg_arg):                                 return _expr_func (1, 'sqrt', expr_neg_arg)
@@ -850,9 +850,9 @@ class Parser (lalr1.LALR1):
 	def expr_frac_3        (self, FRAC2):                                              return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
 	def expr_frac_4        (self, expr_binom):                                         return expr_binom
 
-	def expr_binom_1       (self, BINOM, expr_subs1, expr_subs2):                      return AST ('func', 'binomial', (expr_subs1.no_curlys, expr_subs2.no_curlys))
-	def expr_binom_2       (self, BINOM1, expr_subs):                                  return AST ('func', 'binomial', (_ast_from_tok_digit_or_var (BINOM1), expr_subs.no_curlys))
-	def expr_binom_3       (self, BINOM2):                                             return AST ('func', 'binomial', (_ast_from_tok_digit_or_var (BINOM2), _ast_from_tok_digit_or_var (BINOM2, 3)))
+	def expr_binom_1       (self, BINOM, expr_subs1, expr_subs2):                      return AST ('-func', 'binomial', (expr_subs1.no_curlys, expr_subs2.no_curlys))
+	def expr_binom_2       (self, BINOM1, expr_subs):                                  return AST ('-func', 'binomial', (_ast_from_tok_digit_or_var (BINOM1), expr_subs.no_curlys))
+	def expr_binom_3       (self, BINOM2):                                             return AST ('-func', 'binomial', (_ast_from_tok_digit_or_var (BINOM2), _ast_from_tok_digit_or_var (BINOM2, 3)))
 	def expr_binom_4       (self, expr_subs):                                          return expr_subs
 
 	def expr_subs_1        (self, LEFTDOT, expr_commas, RIGHT, BAR, SUB, CURLYL, subsvars, CURLYR): return _expr_subs (expr_commas, subsvars)
@@ -864,7 +864,7 @@ class Parser (lalr1.LALR1):
 	def subsvarsv_1        (self, subsvarsv, DBLSLASH, varass):                        return subsvarsv + (varass,)
 	def subsvarsv_2        (self, varass):                                             return (varass,)
 
-	def expr_cases_1       (self, BEG_CASES, casess, END_CASES):                       return AST ('piece', casess)
+	def expr_cases_1       (self, BEG_CASES, casess, END_CASES):                       return AST ('-piece', casess)
 	def expr_cases_2       (self, expr_mat):                                           return expr_mat
 	def casess_1           (self, casessp, DBLSLASH):                                  return casessp
 	def casess_2           (self, casessp):                                            return casessp

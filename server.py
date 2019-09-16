@@ -93,12 +93,12 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_UFUNCS2VARS  = {} # Yup...
 
 	_ONE_FUNCS    = OrderedDict ([
-		('N',     AST ('lamb', ('func', '$N', (('@', 'x'),)), ('x',))),
-		('O',     AST ('lamb', ('func', '$O', (('@', 'x'),)), ('x',))),
-		('S',     AST ('lamb', ('func', '$S', (('@', 'x'),)), ('x',))),
-		('gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), ('z',))),
-		('Gamma', AST ('lamb', ('func', '$gamma', (('@', 'z'),)), ('z',))),
-		('zeta',  AST ('lamb', ('func', '$zeta', (('@', 'z'),)), ('z',))),
+		('N',     AST ('-lamb', ('-func', '$N', (('@', 'x'),)), ('x',))),
+		('O',     AST ('-lamb', ('-func', '$O', (('@', 'x'),)), ('x',))),
+		('S',     AST ('-lamb', ('-func', '$S', (('@', 'x'),)), ('x',))),
+		('gamma', AST ('-lamb', ('-func', '$gamma', (('@', 'z'),)), ('z',))),
+		('Gamma', AST ('-lamb', ('-func', '$gamma', (('@', 'z'),)), ('z',))),
+		('zeta',  AST ('-lamb', ('-func', '$zeta', (('@', 'z'),)), ('z',))),
 	])
 
 #...............................................................................................
@@ -609,8 +609,8 @@ def parent ():
 #...............................................................................................
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	vars = {'f': AST ('lamb', ('@', 'x'), (('@', 'x'),)), 'g': AST ('lamb', ('func', 'f', (('@', 'x'),)), (('@', 'x'),))}
-# 	ast = AST ('func', 'g', (('#', '1'),))
+# 	vars = {'f': AST ('-lamb', ('@', 'x'), (('@', 'x'),)), 'g': AST ('-lamb', ('-func', 'f', (('@', 'x'),)), (('@', 'x'),))}
+# 	ast = AST ('-func', 'g', (('#', '1'),))
 # 	res = AST.apply_vars (ast, vars)
 # 	print (res)
 # 	sys.exit (0)
