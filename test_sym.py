@@ -513,7 +513,7 @@ def flatten (ast):
 	if ast.op in {'+', '*', '||', '^^', '&&', '-or', '-and'}:
 		t = (ast.op, tuple (sum (((m,) if m.op != ast.op else m [1] for m in t [1]), ())))
 	elif ast.is_diffp and ast.diffp.is_diffp:
-		return AST ('-diffp', ast.diffp.diffp, ast.count + ast.diffp.count)
+		return AST ('-difp', ast.diffp.diffp, ast.count + ast.diffp.count)
 
 	return AST (*t)
 
@@ -709,7 +709,7 @@ if __name__ == '__main__':
 # 			continue
 
 # 		elif ast.is_diffp:
-# 			mcs = lambda ast, mcs = mcs, count = ast.count: AST ('-diffp', mcs (ast), count)
+# 			mcs = lambda ast, mcs = mcs, count = ast.count: AST ('-difp', mcs (ast), count)
 # 			ast = ast.diffp
 # 			do  = True
 

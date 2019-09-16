@@ -45,7 +45,7 @@ def _ast_func_reorder (ast):
 	wrap2 = None
 
 	if ast.is_diffp:
-		ast2, wrap2 = ast.diffp, lambda a, count = ast.count: AST ('-diffp', a, count)
+		ast2, wrap2 = ast.diffp, lambda a, count = ast.count: AST ('-difp', a, count)
 	elif ast.is_fact:
 		ast2, wrap2 = ast.fact, lambda a: AST ('!', a)
 	elif ast.is_pow:
@@ -145,7 +145,7 @@ def _expr_cmp (lhs, CMP, rhs):
 		return AST ('<>', lhs, ((cmp, rhs),))
 
 def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy missing negative numbers
-	if expr.op in {'!', '-diffp', '-idx'}:
+	if expr.op in {'!', '-difp', '-idx'}:
 		if expr [1].is_num_pos:
 			return AST (expr.op, expr [1].neg (), *expr [2:])
 
@@ -297,11 +297,11 @@ def _ast_strip_tail_differential (ast):
 
 			if dv:
 				if ast2:
-					return (AST ('-intg', neg (ast2), dv, *ast [3:]), ast.dv)
+					return (AST ('-int', neg (ast2), dv, *ast [3:]), ast.dv)
 				elif neg.has_neg:
-					return (AST ('-intg', neg (AST.One), dv, *ast [3:]), ast.dv)
+					return (AST ('-int', neg (AST.One), dv, *ast [3:]), ast.dv)
 				else:
-					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
+					return (AST ('-int', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
 		ast2, neg = ast.diff._strip_minus (retneg = True)
@@ -354,11 +354,11 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 	if dv:
 		if ast:
-			return AST ('-intg', neg (ast), dv, *from_to)
+			return AST ('-int', neg (ast), dv, *from_to)
 		elif neg.has_neg:
-			return AST ('-intg', neg (AST.One), dv, *from_to)
+			return AST ('-int', neg (AST.One), dv, *from_to)
 		else:
-			return neg (AST ('-intg', None, dv, *from_to))
+			return neg (AST ('-int', None, dv, *from_to))
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -809,7 +809,7 @@ class Parser (lalr1.LALR1):
 	def expr_sum_1         (self, SUM, SUB, CURLYL, varass, CURLYR, expr_super, expr_neg):                          return AST ('-sum', expr_neg, varass [0], varass [1], expr_super)
 	def expr_sum_2         (self, expr_diffp):                                                                      return expr_diffp
 
-	def expr_diffp_1       (self, expr_diffp, PRIME):                                  return AST ('-diffp', expr_diffp.diffp, expr_diffp.count + 1) if expr_diffp.is_diffp else AST ('-diffp', expr_diffp, 1)
+	def expr_diffp_1       (self, expr_diffp, PRIME):                                  return AST ('-difp', expr_diffp.diffp, expr_diffp.count + 1) if expr_diffp.is_diffp else AST ('-difp', expr_diffp, 1)
 	def expr_diffp_2       (self, expr_func):                                          return expr_func
 
 	def expr_func_1        (self, SQRT, expr_neg_arg):                                 return _expr_func (1, '-sqrt', expr_neg_arg)
