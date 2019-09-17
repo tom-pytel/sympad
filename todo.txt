@@ -1,5 +1,9 @@
 > change vars to pass into parse
 
+> use certain paren expressions to indicate function calls in ast2spt
+> forced function calls expr mul_imp (v,)?
+> or if paren of single free variable treat as call?
+
 > ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)?
 > determine ics func AST
 > parsing of ufunc to ufuncics
@@ -14,8 +18,6 @@
 > overhaul function call keyword arguments: expr -> ('kw', expr)
 > overhaul lambda variables: ('@', 'var') -> 'var'
 
-> forced function calls expr mul_imp (v,)?
-> or if paren of single free variable treat as call?
 
 > sin a.b()
 > input shortcut non-opened closing curly and/or paren?
