@@ -1,46 +1,46 @@
 # Base classes for abstract math syntax tree, tuple based.
 #
-# (';', (expr1, ...))                                   - semicolon expression separator
-# ('=', lhs, rhs)                                       - assignment to Left-Hand-Side of Right-Hand-Side
-# ('<>', lhs, (('rel1', expr1), ...))                   - comparisons of type 'rel' relating two or more expressions, potentially x < y < z is x < y and y < z
-# ('#', 'num')                                          - real numbers represented as strings to pass on maximum precision to sympy
-# ('@', 'var')                                          - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
-# ('.', expr, 'name')                                   - data member reference
-# ('.', expr, 'name', (arg1, arg2, ...))                - method member call
-# ('"', 'str')                                          - string
-# (',', (expr1, expr2, ...))                            - comma expression (tuple)
-# ('{', expr)                                           - invisible implicit parentheses for grouping and isolation during parsing
-# ('(', expr)                                           - explicit parentheses (not tuple)
-# ('[', (expr1, expr2, ...))                            - brackets (list, not index)
-# ('|', expr)                                           - absolute value
-# ('-', expr)                                           - negative of expression, negative numbers are represented with this at least initially
-# ('!', expr)                                           - factorial
-# ('+', (expr1, expr2, ...))                            - addition
-# ('*', (expr1, expr2, ...))                            - multiplication
-# ('/', numer, denom)                                   - fraction numer(ator) / denom(inator)
-# ('^', base, exp)                                      - power base ^ exp(onent)
-# ('-log', expr[, base])                                - logarithm of expr in base, natural log if base not present
-# ('-sqrt', expr[, n])                                  - nth root of expr, square root if n not present
-# ('-func', 'name', (arg1, arg2, ...))                  - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
-# ('-lim', expr, var, to[, 'dir'])                      - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
-# ('-sum', expr, var, from, to)                         - summation of expr over variable var from from to to
-# ('-diff', expr, (dvar1, ...))                         - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
-# ('-diffp', expr, count)                               - differentiation with respect to unspecified variable count times
-# ('-intg', expr, var[, from, to])                      - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
-# ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))     - matrix
-# ('-piece', ((v1, c1), ..., (vn, True?)))              - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
-# ('-lamb', expr, (v1, v2, ...))                        - lambda expression: v? = ('@', 'var')
-# ('-idx', expr, (i0, i1, ...))                         - indexing: expr [i0, i1, ...]
-# ('-slice', start, stop, step)                         - indexing slice object: obj [start : stop : step], None or False indicates not specified
-# ('-set', (expr1, expr2, ...))                         - set
-# ('-dict', ((k1, v1), (k2, v2), ...))                  - python dict
-# ('||', (expr1, expr2, ...))                           - set union
-# ('^^', (expr1, expr2, ...))                           - set symmetric difference
-# ('&&', (expr1, expr2, ...))                           - set intersection
-# ('-or', (expr1, expr2, ...))                          - Python or
-# ('-and', (expr1, expr2, ...))                         - Python and
-# ('-not', expr)                                        - Python not
-# ('-ufunc', 'name', ('v1', ...)[, (('kw1', a1), ...)]) - undefined function object with optional keyword arguments
+# (';', (expr1, ...))                                 - semicolon expression separator
+# ('=', lhs, rhs)                                     - assignment to Left-Hand-Side of Right-Hand-Side
+# ('<>', lhs, (('rel1', expr1), ...))                 - comparisons of type 'rel' relating two or more expressions, potentially x < y < z is x < y and y < z
+# ('#', 'num')                                        - real numbers represented as strings to pass on maximum precision to sympy
+# ('@', 'var')                                        - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
+# ('.', expr, 'name')                                 - data member reference
+# ('.', expr, 'name', (a1, a2, ...))                  - method member call
+# ('"', 'str')                                        - string
+# (',', (expr1, expr2, ...))                          - comma expression (tuple)
+# ('{', expr)                                         - invisible implicit parentheses for grouping and isolation during parsing
+# ('(', expr)                                         - explicit parentheses (not tuple)
+# ('[', (expr1, expr2, ...))                          - brackets (list, not index)
+# ('|', expr)                                         - absolute value
+# ('-', expr)                                         - negative of expression, negative numbers are represented with this at least initially
+# ('!', expr)                                         - factorial
+# ('+', (expr1, expr2, ...))                          - addition
+# ('*', (expr1, expr2, ...))                          - multiplication
+# ('/', numer, denom)                                 - fraction numer(ator) / denom(inator)
+# ('^', base, exp)                                    - power base ^ exp(onent)
+# ('-log', expr[, base])                              - logarithm of expr in base, natural log if base not present
+# ('-sqrt', expr[, n])                                - nth root of expr, square root if n not present
+# ('-func', 'name', (a1, a2, ...))                    - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
+# ('-lim', expr, var, to[, 'dir'])                    - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
+# ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
+# ('-diff', expr, (dvar1, ...))                       - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
+# ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
+# ('-intg', expr, var[, from, to])                    - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
+# ('-piece', ((v1, c1), ..., (vn, True?)))            - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
+# ('-lamb', expr, (v1, v2, ...))                      - lambda expression: v? = ('@', 'var')
+# ('-idx', expr, (i0, i1, ...))                       - indexing: expr [i0, i1, ...]
+# ('-slice', start, stop, step)                       - indexing slice object: obj [start : stop : step], None or False indicates not specified
+# ('-set', (expr1, expr2, ...))                       - set
+# ('-dict', ((k1, v1), (k2, v2), ...))                - python dict
+# ('||', (expr1, expr2, ...))                         - set union
+# ('^^', (expr1, expr2, ...))                         - set symmetric difference
+# ('&&', (expr1, expr2, ...))                         - set intersection
+# ('-or', (expr1, expr2, ...))                        - pythonic or
+# ('-and', (expr1, expr2, ...))                       - pythonic and
+# ('-not', expr)                                      - pythonic not
+# ('-ufunc', 'name', (a1, ...)[, (('kw1', a1), ...)]) - undefined function object with optional keyword arguments
 
 from collections import OrderedDict
 import re
@@ -86,6 +86,12 @@ class AST (tuple):
 			self._init (*cls_args)
 
 		return self
+
+	def __add__ (self, other):
+		if not isinstance (other, tuple):
+			raise TypeError (f'can only concatenate tuple (not "{type (other).__name__}") to AST')
+
+		return self if not other else AST (*tuple.__add__ (self, other))
 
 	def __getattr__ (self, name): # calculate value for nonexistent self.name by calling self._name () and store
 		func                 = getattr (self, f'_{name}') if name [0] != '_' else None
@@ -299,7 +305,7 @@ class AST (tuple):
 
 	@staticmethod
 	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
-		if not isinstance (ast, AST) or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST or stop remap
+		if not isinstance (ast, AST) or ast.is_ufunc or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
 			return ast
 
 		if ast.is_lamb: # lambda definition
@@ -736,6 +742,6 @@ AST.DictEmpty  = AST ('-dict', ())
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('*', (('*', (('@', 'x'), ('@', 'd'))), ('@', 'y')))
-# 	res = ast.flat ()
-# 	print (res)
+# 	ast = AST ('intg', None, ('@', 'dx'))
+# 	res = ast + (('@', 'a'), ('@', 'b'))
+# 	print (res, type (res))

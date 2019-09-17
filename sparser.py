@@ -441,15 +441,13 @@ def _expr_ufunc (UFUNC, args, argspy = None):
 
 	args, kw2 = AST.args2kwargs (args.comma if args.is_comma else (args,))
 
-	if any (not a.is_var for a in args):
-		raise SyntaxError ('undefined functions only take variables')
-
 	if kw is None:
 		kw = kw2
 	elif kw2:
 		raise SyntaxError ('keyword arguments not allowed here')
 
-	return AST ('-ufunc', name [0].str_ if name else UFUNC.grp [0] or UFUNC.grp [1] or '', tuple (a.var for a in args), tuple (sorted (kw.items ())))
+	return AST ('-ufunc', name [0].str_ if name else UFUNC.grp [0] or UFUNC.grp [1] or '', args) + \
+		(tuple (sorted (kw.items ())) if kw else ())
 
 def _expr_num (NUM):
 	num = NUM.grp [1] or (NUM.grp [0] if NUM.text [0] != '.' else f'0{NUM.grp [0]}')
@@ -1135,7 +1133,7 @@ class sparser: # for single script
 # 	# p.set_quick (True)
 # 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	a = p.parse (r'sin a.b ()')
+# 	a = p.parse (r'?(x)')
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

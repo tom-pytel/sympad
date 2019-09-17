@@ -7,9 +7,11 @@
 > ufuncs created in expression persist to end of expression?
 
 
+> overhaul function call keyword arguments: expr -> ('kw', expr)
+> overhaul lambda variables: ('@', 'var') -> 'var'
+
 > change vars to pass into parse
 
-> overhaul function keyword arguments
 > forced function calls expr mul_imp (v,)?
 > or if paren of single free variable treat as call?
 
