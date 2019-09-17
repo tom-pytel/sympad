@@ -1084,6 +1084,9 @@ class Parser (lalr1.LALR1):
 		return True # continue parsing if conflict branches remain to find best resolution
 
 	def parse (self, text):
+		def postprocess (res):
+			return (AST_MulExp.to_mul (res [0].no_curlys).flat (),) + res [1:] if isinstance (res [0], AST) else res
+
 		if not text.strip:
 			return (AST.VarNull, 0, [])
 
@@ -1106,9 +1109,7 @@ class Parser (lalr1.LALR1):
 			print (file = sys.stderr)
 
 			for res in rated [:32]:
-				res = res [-1]
-				res = (AST_MulExp.to_mul (res [0].no_curlys).flat (),) + res [1:] if isinstance (res [0], AST) else res
-
+				res = postprocess (res [-1])
 				print ('parse:', res, file = sys.stderr)
 
 			if len (rated) > 32:
@@ -1118,7 +1119,7 @@ class Parser (lalr1.LALR1):
 
 		res = next (iter (rated)) [-1]
 
-		return (AST_MulExp.to_mul (res [0].no_curlys).flat (),) + res [1:] if isinstance (res [0], AST) else res
+		return postprocess (res)
 
 class sparser: # for single script
 	Parser = Parser
