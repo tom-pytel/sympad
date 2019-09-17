@@ -483,7 +483,7 @@ def fix_vars (ast):
 
 	return AST (*tuple (fix_vars (a) for a in ast))
 
-def fix_rest (ast):
+def fix_comma (ast):
 	if not isinstance (ast, AST):
 		return ast
 
@@ -501,6 +501,9 @@ def process (ast):
 
 	if ast.is_paren:
 		return process (ast.paren)
+
+	if ast.is_mul: # remove explicit multiplication information
+		return AST ('*', tuple (process (a) for a in ast.mul))
 
 	return AST (*tuple (process (a) for a in ast))
 
@@ -583,7 +586,7 @@ def test (argv = None):
 				continue
 
 			ast = flatten (ast)
-			ast = fix_rest (ast)
+			ast = fix_comma (ast)
 
 			if dopy:
 				if not CURLYS:
@@ -600,7 +603,7 @@ def test (argv = None):
 
 					continue
 
-				ast = fix_rest (ast)
+				ast = fix_comma (ast)
 
 			tex = dotex and sym.ast2tex (ast, xlat = xlat)
 			nat = donat and sym.ast2nat (ast, xlat = xlat)
@@ -624,9 +627,9 @@ def test (argv = None):
 
 			ast_tex = dotex and parse (tex) [0]
 			ast_nat = donat and parse (nat) [0]
-			ast_py  = dopy and parse (py) [0]
-			ast_srp = process (ast)
+			ast_py  = dopy and  parse (py) [0]
 
+			ast_srp = process (ast)
 			ast_tex = dotex and process (ast_tex)
 			ast_nat = donat and process (ast_nat)
 			ast_py  = dopy and process (ast_py)

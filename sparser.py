@@ -10,7 +10,7 @@ import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-class AST_MulExp (AST): # for isolating explicit multiplications from implicit mul grammar rewriting rules, appears only in this module
+class AST_MulExp (AST): # for isolating explicit multiplications from implicit mul grammar rewriting rules, only used during parsing and appears only in this module
 	op, is_mulexp = 'mulexp', True
 
 	def _init (self, mul):
@@ -20,11 +20,10 @@ class AST_MulExp (AST): # for isolating explicit multiplications from implicit m
 	def to_mul (ast): # convert explicit multiplication ASTs to normal multiplication ASTs
 		if not isinstance (ast, AST):
 			return ast
-
-		if ast.is_mulexp:
-			return AST ('*', tuple (AST_MulExp.to_mul (a) for a in ast.mul))
-
-		return AST (*tuple (AST_MulExp.to_mul (a) for a in ast))
+		elif ast.is_mulexp:
+			return AST ('*', tuple (AST_MulExp.to_mul (a) for a in ast.mul), frozenset (range (1, ast.mul.len)))
+		else:
+			return AST (*tuple (AST_MulExp.to_mul (a) for a in ast))
 
 AST.register_AST (AST_MulExp)
 
@@ -150,7 +149,6 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 			return AST (expr.op, expr [1].neg (), *expr [2:])
 
 	elif expr.is_mul:
-		# return AST ('*', (expr.mul [0].neg (stack = True),) + expr.mul [1:])
 		return AST ('*', (_expr_neg (expr.mul [0]),) + expr.mul [1:])
 
 	return expr.neg (stack = True)
@@ -1084,7 +1082,7 @@ class Parser (lalr1.LALR1):
 
 	def parse (self, text):
 		def postprocess (res):
-			return (AST_MulExp.to_mul (res [0].no_curlys).flat (),) + res [1:] if isinstance (res [0], AST) else res
+			return (AST_MulExp.to_mul (res [0].no_curlys).flat,) + res [1:] if isinstance (res [0], AST) else res
 
 		if not text.strip:
 			return (AST.VarNull, 0, [])

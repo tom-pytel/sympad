@@ -121,23 +121,34 @@ class AST (tuple):
 		else:
 			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
 
-	def flat (self, op = None, seq = None): # flatten trees of '+', '*', '||', '^^', '&&', '-or' and '-and' into single ASTs
+	def _flat (self, op = None, seq = None, exp = None): # flatten trees of '+', '*', '||', '^^', '&&', '-or' and '-and' into single ASTs
+		def subflat (op, seq, exp):
+			if self.is_mul:
+				for i in range (self.mul.len):
+					if i in self.exp:
+						exp.add (len (seq))
+
+					self.mul [i]._flat (self.op, seq, exp)
+
+			else:
+				for e in self [1]:
+					e._flat (self.op, seq, exp)
+
+		# start here
 		if self.op in {'+', '*', '||', '^^', '&&', '-or', '-and'}: # specifically not '<>' because that would be different meaning
 			if self.op == op:
-				for e in self [1]:
-					e.flat (op, seq)
+				subflat (op, seq, exp)
 
 				return
 
-			seq2 = []
+			seq2, exp2 = [], set ()
 
-			for e in self [1]:
-				e.flat (self.op, seq2)
+			subflat (self.op, seq2, exp2)
 
-			ast = AST (self.op, tuple (seq2))
+			ast = AST (self.op, tuple (seq2), exp2) if self.is_mul else AST (self.op, tuple (seq2))
 
 		else:
-			ast = AST (*tuple (a.flat () if isinstance (a, AST) else a for a in self))
+			ast = AST (*tuple (a.flat if isinstance (a, AST) else a for a in self))
 
 		if op:
 			seq.append (ast)
@@ -285,13 +296,24 @@ class AST (tuple):
 	def flatcat (op, ast0, ast1): # ,,,/O.o\,,,~~
 		if ast0.op == op:
 			if ast1.op == op:
-				return AST (op, ast0 [-1] + ast1 [-1])
-			else:
-				return AST (op, ast0 [-1] + (ast1,))
+				if ast0.is_mul:
+					return AST (op, ast0 [1] + ast1 [1], ast0.exp | frozenset (i + ast0.mul.len for i in ast1.exp))
+				else:
+					return AST (op, ast0 [1] + ast1 [1])
+
+			else: # ast1.op != op:
+				if ast0.is_mul:
+					return AST (op, ast0 [1] + (ast1,), ast0.exp)
+				else:
+					return AST (op, ast0 [1] + (ast1,))
 
 		else: # ast0.op != op
 			if ast1.op == op:
-				return AST (op, (ast0,) + ast1 [-1])
+				if ast1.is_mul:
+					return AST (op, (ast0,) + ast1 [1], frozenset (i + 1 for i in ast1.exp))
+				else:
+					return AST (op, (ast0,) + ast1 [1])
+
 			else:
 				return AST (op, (ast0, ast1))
 
@@ -523,8 +545,12 @@ class AST_Add (AST):
 class AST_Mul (AST):
 	op, is_mul = '*', True
 
-	def _init (self, mul, exps = {}):
-		self.mul, self.exps = mul, exps
+	def __new__ (cls, mul, exp = frozenset ()):
+		exp                = frozenset (exp)
+		self               = tuple.__new__ (cls, ('*', mul, exp) if exp else ('*', mul))
+		self.mul, self.exp = mul, exp
+
+		return self
 
 	def _is_mul_has_abs (self):
 		for m in self.mul:
@@ -749,5 +775,6 @@ AST.DictEmpty  = AST ('-dict', ())
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	res = AST ('-ufunc', '')
-# 	print (res, type (res))
+# 	res = AST ('*', (('*', (('#', '1'), ('#', '2')), {1}), ('*', (('#', '3'), ('#', '4')), {1}), ('#', '5')), {1, 2})
+# 	res = res.flat
+# 	print (res)
