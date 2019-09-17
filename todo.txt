@@ -1,14 +1,18 @@
+> change vars to pass into parse
+
 > ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)?
 > determine ics func AST
 > parsing of ufunc to ufuncics
 > sxlat of python representation of ufuncics
+> creation of ufuncs from undefined vars y(x)?
 > ufuncs created in expression persist to end of expression?
 
 
+> More Examples: Lambdas
+> More Examples: Parentheses
+
 > overhaul function call keyword arguments: expr -> ('kw', expr)
 > overhaul lambda variables: ('@', 'var') -> 'var'
-
-> change vars to pass into parse
 
 > forced function calls expr mul_imp (v,)?
 > or if paren of single free variable treat as call?

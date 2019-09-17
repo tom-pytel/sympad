@@ -446,7 +446,7 @@ def _expr_ufunc (UFUNC, args, argspy = None):
 	elif kw2:
 		raise SyntaxError ('keyword arguments not allowed here')
 
-	return AST ('-ufunc', name [0].str_ if name else UFUNC.grp [0] or UFUNC.grp [1] or '', args) + \
+	return AST ('-ufunc', name [0].str_ if name else UFUNC.grp [0] or UFUNC.grp [1] or '', tuple (args)) + \
 		((tuple (sorted (kw.items ())),) if kw else ())
 
 def _expr_num (NUM):
@@ -1126,9 +1126,6 @@ class sparser: # for single script
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	p = Parser ()
-# 	# p.set_user_funcs ({'f': 1})
-# 	# a = p.parse (r'x - {1 * 2}')
-# 	# a = p.parse (r'x - {{1 * 2} * 3}')
 
 # 	# p.set_quick (True)
 # 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
