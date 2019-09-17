@@ -6,8 +6,6 @@
 > ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)?
 > ufuncs created in expression persist to end of expression?
 
-> ufunction of same name seems to get kwargs stuck in SymPy
-
 
 > change vars to pass into parse
 
@@ -31,6 +29,8 @@
 > single letter variables can take trailing number
 
 > var assumptions (using @ character?)
+
+> server send back AST from validaiton to facilitate evaluation
 
 > wait icon into sympad
 
@@ -147,3 +147,6 @@ nat:    ('set', (('slice', ('/', ('func', 'gegenbauer', (('piece', ((('@', 'part
 doo
 
 
+text:   {{{partialx+1e100+\partial }! == {None : {},\tilde\infty  : 2''}||{d^{2} / dz^{2} {.1*1e100*dz},\int_\lim_{x \to "str"} \tilde\infty ^{partialx : partial,0 : \partialx} {} dx}}&&\int {\{\frac\partialy1}+\tanh({c&&1e-100},{-1  True},\sqrt[oo]oo)+--1.0 / -\emptyset} dx}
+ast:    ('&&', (('<>', ('!', ('+', (('@', 'dx'), ('#', '1e+100'), ('@', 'partial')))), (('==', ('||', (('-dict', ((('@', 'None'), ('-dict', ())), (('@', 'zoo'), ('-diffp', ('#', '2'), 2)))), ('-set', (('-diff', ('*', (('#', '0.1'), ('#', '1e+100'), ('@', 'dz'))), (('^', ('@', 'dz'), ('#', '2')),)), ('-intg', ('*', (('@', 'x'), ('-lim', ('*', (('^', ('@', 'zoo'), ('-dict', ((('@', 'dx'), ('@', 'partial')), (('#', '0'), ('@', 'dx'))))), ('-dict', ()))), ('@', 'x'), ('"', 'str')))), ('@', 'dx'))))))),)), ('-intg', ('+', (('-set', (('*', (('/', ('@', 'partial'), ('@', 'y')), ('#', '1'))),)), ('-func', 'tanh', (('&&', (('@', 'c'), ('#', '1e-100'))), ('*', (('#', '-1'), ('@', 'True'))), ('-sqrt', ('@', 'oo'), ('@', 'oo')))), ('-', ('-', ('/', ('#', '1.0'), ('-', ('-set', ()))))))), ('@', 'dx'))))
+nat:    ('&&', (('<>', ('!', ('+', (('@', 'dx'), ('#', '1e+100'), ('@', 'partial')))), (('==', ('||', (('-dict', ((('@', 'None'), ('-dict', ())), (('@', 'zoo'), ('-diffp', ('#', '2'), 2)))), ('-set', (('-diff', ('*', (('#', '0.1'), ('#', '1e+100'), ('@', 'dz'))), (('^', ('@', 'dz'), ('#', '2')),)), ('-intg', ('*', (('@', 'x'), ('-lim', ('*', (('^', ('@', 'zoo'), ('-dict', ((('@', 'dx'), ('@', 'partial')), (('#', '0'), ('@', 'dx'))))), ('-dict', ()))), ('@', 'x'), ('"', 'str')))), ('@', 'dx'))))))),)), ('-intg', ('+', (('-set', (('*', (('/', ('@', 'partial'), ('@', 'y')), ('#', '1'))),)), ('-func', 'tanh', (('&&', (('@', 'c'), ('#', '1e-100'))), ('*', (('#', '-1'), ('@', 'True'))), ('-sqrt', ('@', 'oo'), ('@', 'oo')))), ('-', ('/', ('#', '1.0'), ('-', ('-set', ())))))), ('@', 'dx'))))
