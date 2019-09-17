@@ -446,8 +446,7 @@ def _expr_ufunc (UFUNC, args, argspy = None):
 	elif kw2:
 		raise SyntaxError ('keyword arguments not allowed here')
 
-	return AST ('-ufunc', name [0].str_ if name else UFUNC.grp [0] or UFUNC.grp [1] or '', tuple (args)) + \
-		((tuple (sorted (kw.items ())),) if kw else ())
+	return AST ('-ufunc', name [0].str_ if name else UFUNC.grp [0] or UFUNC.grp [1] or '', tuple (args), tuple (sorted (kw.items ())))
 
 def _expr_num (NUM):
 	num = NUM.grp [1] or (NUM.grp [0] if NUM.text [0] != '.' else f'0{NUM.grp [0]}')

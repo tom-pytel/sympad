@@ -16,7 +16,7 @@
 # ('-', expr)                                         - negative of expression, negative numbers are represented with this at least initially
 # ('!', expr)                                         - factorial
 # ('+', (expr1, expr2, ...))                          - addition
-# ('*', (expr1, expr2, ...))                          - multiplication
+# ('*', (expr1, expr2, ...)[, {i0, ...}])             - multiplication, with optional set of indices of explicit multiplications (indexes of rhs)
 # ('/', numer, denom)                                 - fraction numer(ator) / denom(inator)
 # ('^', base, exp)                                    - power base ^ exp(onent)
 # ('-log', expr[, base])                              - logarithm of expr in base, natural log if base not present
@@ -80,10 +80,14 @@ class AST (tuple):
 				cls      = cls2
 				cls_args = cls_args [1:]
 
-		self = tuple.__new__ (cls, args)
+		if cls is not AST and '__new__' in cls.__dict__:
+			self = cls.__new__ (cls, *cls_args)
 
-		if self.op:
-			self._init (*cls_args)
+		else:
+			self = tuple.__new__ (cls, args)
+
+			if self.op:
+				self._init (*cls_args)
 
 		return self
 
@@ -519,8 +523,8 @@ class AST_Add (AST):
 class AST_Mul (AST):
 	op, is_mul = '*', True
 
-	def _init (self, mul):
-		self.mul = mul
+	def _init (self, mul, exps = {}):
+		self.mul, self.exps = mul, exps
 
 	def _is_mul_has_abs (self):
 		for m in self.mul:
@@ -710,8 +714,11 @@ class AST_Not (AST):
 class AST_UFunc (AST):
 	op, is_ufunc = '-ufunc', True
 
-	def _init (self, ufunc, vars, kw = ()):
+	def __new__ (cls, ufunc, vars, kw = ()):
+		self                           = tuple.__new__ (cls, ('-ufunc', ufunc, vars, kw) if kw else ('-ufunc', ufunc, vars))
 		self.ufunc, self.vars, self.kw = ufunc, vars, kw
+
+		return self
 
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
@@ -742,6 +749,5 @@ AST.DictEmpty  = AST ('-dict', ())
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('intg', None, ('@', 'dx'))
-# 	res = ast + (('@', 'a'), ('@', 'b'))
+# 	res = AST ('-ufunc', '')
 # 	print (res, type (res))
