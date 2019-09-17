@@ -6,6 +6,7 @@ from functools import reduce
 import re
 import sympy as sp
 from sympy.core.function import AppliedUndef as sp_AppliedUndef
+# from sympy.core.function import UndefinedFunction
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -992,6 +993,46 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return res
 
+	def _ast2spt_mul (self, ast): # handle dynamic cases of function calls due to usage of implicit multiplication
+		mul = list (self._ast2spt (a) for a in ast.mul)
+		out = mul [:1]
+
+		for i in range (1, ast.mul.len):
+			m = mul [i]
+
+			if ast.mul [i].is_paren and i not in ast.exp: # non-explicit multiplication with tuple - possible function call: "y (...)"
+				o = out [-1]
+
+				if not isinstance (m, tuple):
+					m = (m,)
+
+				if isinstance (o, sp.Lambda): # Lambda call?
+					out [-1] = o (*m)
+					continue
+
+				dv = False
+
+				while isinstance (o, sp.Derivative):
+					dv = True
+					o  = o.args [0]
+
+				if isinstance (o, sp_AppliedUndef): # undefined function initial value(s)?
+					if any (not isinstance (a, sp.Symbol) for a in o.args):
+						raise TypeError (f'?{o} object is not callable')
+					elif len (m) != len (o.args):
+						raise TypeError (f'?{o} object takes {len (o.args)} positional argument(s)')
+
+					if dv:
+						out [-1] = sp.Subs (out [-1], o.args, m)
+					else:
+						out [-1] = o.__class__ (*m)
+
+					continue
+
+			out.append (m)
+
+		return out [0] if len (out) == 1 else _Mul (*out)
+
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
 			return self._ast2spt (ast.args [0])
@@ -1086,7 +1127,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-'     : lambda self, ast: -self._ast2spt (ast.minus),
 		'!'     : lambda self, ast: sp.factorial (self._ast2spt (ast.fact)),
 		'+'     : _ast2spt_add,
-		'*'     : lambda self, ast: _Mul (*(self._ast2spt (n) for n in ast.mul)),
+		'*'     : _ast2spt_mul,
 		'/'     : lambda self, ast: _Mul (self._ast2spt (ast.numer), _Pow (self._ast2spt (ast.denom), -1)),
 		'^'     : lambda self, ast: _Pow (self._ast2spt (ast.base), self._ast2spt (ast.exp)),
 		'-log'  : lambda self, ast: sp.log (self._ast2spt (ast.log)) if ast.base is None else sp.log (self._ast2spt (ast.log), self._ast2spt (ast.base)),

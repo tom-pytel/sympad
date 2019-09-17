@@ -389,6 +389,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('{x: 2} [x]'), ('-idx', ('-dict', ((('@', 'x'), ('#', '2')),)), (('@', 'x'),)))
 		self.assertEqual (p ('{y: 2} [x]'), ('-idx', ('-dict', ((('@', 'y'), ('#', '2')),)), (('@', 'x'),)))
 		self.assertEqual (p ("'}'"), ('"', '}'))
+		self.assertEqual (p ('q w * e * {r * t} * y u {i * o} p {a {s * d} f}'), ('*', (('@', 'q'), ('@', 'w'), ('@', 'e'), ('@', 'r'), ('@', 't'), ('@', 'y'), ('@', 'u'), ('@', 'i'), ('@', 'o'), ('@', 'p'), ('@', 'a'), ('@', 's'), ('@', 'd'), ('@', 'f')), frozenset({2, 3, 4, 5, 8, 12})))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -720,6 +721,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{x: 2} [x]')), '\\left\\{x{:} 2 \\right\\}\\left[x \\right]')
 		self.assertEqual (ast2tex (p ('{y: 2} [x]')), '\\left\\{y{:} 2 \\right\\}\\left[x \\right]')
 		self.assertEqual (ast2tex (p ("'}'")), "\\text{'\\}'}")
+		self.assertEqual (ast2tex (p ('q w * e * {r * t} * y u {i * o} p {a {s * d} f}')), 'q w e r t y u i o p a s\\ d\\ f')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -1051,6 +1053,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('{x: 2} [x]')), '{x: 2}[x]')
 		self.assertEqual (ast2nat (p ('{y: 2} [x]')), '{y: 2}[x]')
 		self.assertEqual (ast2nat (p ("'}'")), " '}'")
+		self.assertEqual (ast2nat (p ('q w * e * {r * t} * y u {i * o} p {a {s * d} f}')), 'q w e r t y u i o p a s d f')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -1382,6 +1385,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('{x: 2} [x]')), '{x: 2}[x]')
 		self.assertEqual (ast2py (p ('{y: 2} [x]')), '{y: 2}[x]')
 		self.assertEqual (ast2py (p ("'}'")), "'}'")
+		self.assertEqual (ast2py (p ('q w * e * {r * t} * y u {i * o} p {a {s * d} f}')), 'q*w*e*r*t*y*u*i*o*p*a*s*d*f')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -1713,6 +1717,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('{x: 2} [x]')), ('-idx', ('-dict', ((('@', 'x'), ('#', '2')),)), (('@', 'x'),)))
 		self.assertEqual (ast2tex2ast (p ('{y: 2} [x]')), ('-idx', ('-dict', ((('@', 'y'), ('#', '2')),)), (('@', 'x'),)))
 		self.assertEqual (ast2tex2ast (p ("'}'")), ('"', '}'))
+		self.assertEqual (ast2tex2ast (p ('q w * e * {r * t} * y u {i * o} p {a {s * d} f}')), ('*', (('@', 'q'), ('@', 'w'), ('@', 'e'), ('@', 'r'), ('@', 't'), ('@', 'y'), ('@', 'u'), ('@', 'i'), ('@', 'o'), ('@', 'p'), ('@', 'a'), ('@', 's'), ('@', 'd'), ('@', 'f'))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -2044,6 +2049,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('{x: 2} [x]')), ('-idx', ('-dict', ((('@', 'x'), ('#', '2')),)), (('@', 'x'),)))
 		self.assertEqual (ast2nat2ast (p ('{y: 2} [x]')), ('-idx', ('-dict', ((('@', 'y'), ('#', '2')),)), (('@', 'x'),)))
 		self.assertEqual (ast2nat2ast (p ("'}'")), ('"', '}'))
+		self.assertEqual (ast2nat2ast (p ('q w * e * {r * t} * y u {i * o} p {a {s * d} f}')), ('*', (('@', 'q'), ('@', 'w'), ('@', 'e'), ('@', 'r'), ('@', 't'), ('@', 'y'), ('@', 'u'), ('@', 'i'), ('@', 'o'), ('@', 'p'), ('@', 'a'), ('@', 's'), ('@', 'd'), ('@', 'f'))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -2375,6 +2381,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('{x: 2} [x]')), ('-idx', ('-dict', ((('@', 'x'), ('#', '2')),)), (('@', 'x'),)))
 		self.assertEqual (ast2py2ast (p ('{y: 2} [x]')), ('-idx', ('-dict', ((('@', 'y'), ('#', '2')),)), (('@', 'x'),)))
 		self.assertEqual (ast2py2ast (p ("'}'")), ('"', '}'))
+		self.assertEqual (ast2py2ast (p ('q w * e * {r * t} * y u {i * o} p {a {s * d} f}')), ('*', (('@', 'q'), ('@', 'w'), ('@', 'e'), ('@', 'r'), ('@', 't'), ('@', 'y'), ('@', 'u'), ('@', 'i'), ('@', 'o'), ('@', 'p'), ('@', 'a'), ('@', 's'), ('@', 'd'), ('@', 'f')), frozenset({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13})))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -2706,6 +2713,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('{x: 2} [x]')), ('#', '2'))
 		self.assertRaises (KeyError, ast2spt2ast, p ('{y: 2} [x]'))
 		self.assertEqual (ast2spt2ast (p ("'}'")), ('"', '}'))
+		self.assertEqual (ast2spt2ast (p ('q w * e * {r * t} * y u {i * o} p {a {s * d} f}')), ('*', (('@', 'e'), ('@', 'i'), ('@', 'a'), ('@', 'd'), ('@', 'f'), ('@', 'o'), ('@', 'p'), ('@', 'q'), ('@', 'r'), ('@', 's'), ('@', 't'), ('@', 'u'), ('@', 'w'), ('@', 'y'))))
 
 _EXPRESSIONS = """
 1
@@ -3037,6 +3045,7 @@ x [1]
 {x: 2} [x]
 {y: 2} [x]
 '}'
+q w * e * {r * t} * y u {i * o} p {a {s * d} f}
 """
 # _EXPRESSIONS = """
 
