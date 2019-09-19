@@ -1,16 +1,18 @@
 > add explicit multiply paren to ast2tex and ast2nat
+> x*(y) - needs explicit mul for parens
+> d/dx (x**2)' ?
 
-> change vars to pass into parse
-
-> use certain paren expressions to indicate function calls in ast2spt
-> forced function calls expr mul_imp (v,)?
-> or if paren of single free variable treat as call?
-
-> ufunc conversion in expr_mul_imp ?y(x) (2) -> ?y(2)?
-> determine ics func AST
-> parsing of ufunc to ufuncics
+> ?(x)'(2), spt->?(x)(2) instead of subs of diff
 > sxlat of python representation of ufuncics
-> creation of ufuncs from undefined vars y(x)?
+
+> {lambda x: {lambda x: x**2}} (3) -> TypeError, {lambda y: {lambda x: x**2}} (3) works
+
+> creation of ufuncs from undefined vars y(x)
+
+> patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y' (0) = -7)
+> == -> = in tex
+
+> change vars to pass into parse?
 > ufuncs created in expression persist to end of expression?
 
 
@@ -20,15 +22,14 @@
 > overhaul function call keyword arguments: expr -> ('kw', expr)
 > overhaul lambda variables: ('@', 'var') -> 'var'
 
-
 > sin a.b()
 > input shortcut non-opened closing curly and/or paren?
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
 
 > change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
-> quick mode: dpartial
-> quick mode: \operatorname{\_}()
+> quick mode error: dpartial
+> quick mode error: \operatorname{\_}()
 
 > allow leading underscore for vars and funcs and leading \_ for tex
 > clean up sparser TOKENS and centralize repeated patterns
@@ -58,6 +59,7 @@
 
 > vector calculus
 > nabla, laplacian
+> Proper implementation of vectors with "\vec{x}" and "\hat{i}" variables?
 
 > random server port selection / fallback
 > emptyset Unicode symbol
@@ -92,13 +94,12 @@
 > sequence (factorial (k), (k, 1, oo))
 > ImageSet (Lambda (n, 2 n pi + pi / 2), Integers)
 
-> Proper implementation of vectors with "\vec{x}" and "\hat{i}" variables
-> systems of equations
 > more graphical plots
 > numpy support
 
 
 Slow Parse:
+-----------
 
 11.234375s:  {{d^{2} / dz^{2} c : {c and 1.0 and None} : \sum_{x = \partialy}^c 2 and \frac{\partialy \cdot False \cdot 1}'str' [dy, xyzd, 1e+100]}+{}**{{not partialx}^^'str' : 2^^{True^^1^^\tilde\infty }}+{{\int xyzd dx or logFalse or {1.||\partial x||1}}}} if {{{\lim_{x \to \partial x} c  1e-100 ['str']  {a or \emptyset or dx}}&&{not -1  in  \infty zoo}} \cdot solveset({{'str' and True} and [\partial ,False] and \[\infty zoo,\partial ,1e-100,]},\coth(\frac\tilde\infty dx),{}) \cdot \sqrt[[]]{[partialx,1e100,None]  dx [xyzd, \partial ]  1e+100**dz}} else -{\tilde\infty +dz+-1.0} / \sum_{x = {dy*-1.0*xyzd}}^\fracpartial\partialx c = \infty zoo if \[[\int 1e-100 dx : \partial !,],[{False+oo+\emptyset} / \partial ^.1,],[{\arcsin()||Sum (oo, (x, \partialy, 1.0))||\frac\tilde\infty dz},],] else \[[{\partial x : partial},-1^partial,{not dz},],] [\{False : "str" : -1,{\emptyset \cdot \infty zoo \cdot -1}}, {d^{6} / dy^{3} dy^{3} a+-1.0 [a]+\{dx,1.,-1.0}}] if [{\[[False,.1,],[1e-100,\partial x,],]  dy**\partialx}] if {} else {{not {c == xyzd \cdot [1,False,.1]}}^^[{1.0^^partial} : \[[0,-1.0,],[dy,a,],[xyzd,1e-100,],] : \left|\partial x\right|,{b&&partialx}**b = a,{(\infty zoo,\partialx)||\emptyset : None||Limit (dz, x, xyzd)}]^^\sum_{x = \{{\tilde\infty &&1.0&&.1}}}^[.1,oo] [\lim_{x \to \partialy} \partial , {True,\emptyset,xyzd}] {\[-1.0,1e+100,\tilde\infty ,]||Limit (xyzd, x, 2)}} if {lambda x, y, z: -1.0,{1 or -1},\int False dx} if {-\tilde\infty } else (Sum (dx, (x, 'str', dz)),True if \partialy else False if True else partialx if 1e100) if log{\partial x||\partial x} else \[partialx,1e+100,] == \infty zoo if dx else \infty zoo if partial if d^{3} / dy^{3} Limit (dz, x, 'str') else {Limit (-1, x, -1)*\[[0,-1.0,-1.0,],[\partial ,dx,0,],]*dz > None} / {lambda x, y: -1.0 : {None+0}+{'str' if 1 else \partialy  d^{3} / dy^{3} -1.0}} else {\frac{Sum (1.0, (x, dy, .1)) or oo**partialx or \frac\partialyNone}\left|"str" [None]\right| or \sum_{x = \{None,1e+100}^sqrt1e+100}^\int_True [partialx]^{2 and True} -1^\partialx dx \left|{dx^^-1}\right|}
 8.453125s:   \sum_{x = {\int 1.! dx+\int_{None^^dz}^{a&&1} \{False} dx+1.0 if b else 1e+100 if oo^{partial and xyzd and 1e100}}}^lambda x, y: {} {\left|oo\right| \cdot \sqrt"str"} : {None^0&&\lim_{x \to \infty zoo} \partial &&\sqrt[c]\emptyset} if {[[2,None,dy]] / \left|Sum (\partial x, (x, -1, \partial ))\right|^^{\int \infty zoo dx and {a+b+\partial x}} if d^{1} / dx^{1} c if dx else dz if -1 else \sqrt[oo]1.0! if {oo \cdot oo}! else d^{2} / dx^{1} dz^{1} partialx / a^^\int \int {dz \cdot oo} dx dx} else {[-\{}] or (-1. : 'str',{sqrtpartial^^lambda x: dy^^0 [1.0, xyzd, .1]},{0 : partial : \infty zoo  \left|1\right|}) or \sqrt[{\sum_{x = \infty zoo}^\emptyset None and \[-1,\infty zoo,'str',] and \partial  if b else -1 if b else partial if 2 else 1e-100}]\lim_{x \to dx} b [{dy and -1}, \int dx dx, oo / None]} if {{partial [a, 1.0, \partial ]||\{1.0}}!+{{\partial x**b*False  in  0} or {\partial ||1}^factor_list(a,dx)}} else \log_\sqrt{{b&&True&&1e-100}  {partialx : -1}}lambda x, y, z: {} = {{'str',oo}^^None [\tilde\infty ]^^{1e+100||'str'}} if ({\{}||sqrt.1 if {1e-100||1e+100} else 1 : 1e+100 if {} else oo [1.0] if \tilde\infty ! else Limit (2, x, \tilde\infty )}) else \int {partial \cdot True \cdot partial} dx [{'str'^c^^\fracoo1.0^^d^{7} / dx^{1} dx^{3} dy^{3} b}] : kronecker_product(\left|0 != partial\right|,{not {\infty zoo+xyzd}},{\partialx > \infty zoo and [\partial x,-1.0]})
@@ -132,7 +133,7 @@ Slow Parse:
 
 
 Errors:
-
+-------
 
 -qint
 text:   \[Sum ({-{2&&'str'&&1e+100} \cdot -[\infty zoo,None,oo]}, (x, {{\fracdz\emptyset  {partialx||xyzd}}&&{{\partialx*xyzd*-1.0}^^{1e+100||c||\tilde\infty }}&&{{\infty zoo*\partialx*2}+[]}}, {'str' [True, 1e100] if Sum (\tilde\infty , (x, \partialy, 1)) else {?h(x)} if \lim_{x \to \partial } 0 else \lim_{x \to 1.} False if {1e100 or dx or 0} else \infty zoo**\partial ,{\emptyset  2}  not in  {xyzd||1e100},\sum_{x = {a&&partial}}^{c+\emptyset+2} b'''})),\left|{?(x)}^{not \fracxyzd\partial }\right|,{{\[\sum_{x = 1e100}^\partial  'str',{\partial },partial!,]||{{1e+100 \cdot 1.0}*{\partialx and dx}}||{{.1 \cdot xyzd}+{dx  0  \emptyset}+{\partial x : -1,dz : \tilde\infty ,dz : dy}}} and sqrt{?f(x, y)}},]

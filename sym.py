@@ -61,7 +61,7 @@ def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argu
 
 	return ret
 
-def _simplify (spt):
+def _simplify (spt): # extend sympy simplification into standard python containers
 	if isinstance (spt, (bool, int, float, complex, str, slice)):
 		return spt
 
@@ -81,6 +81,9 @@ def _simplify (spt):
 		pass
 
 	return spt
+
+def _dsolve (*args, **kw): # never automatically simplify dsolve
+	return ExprNoEval (str (spt2ast (sp.dsolve (*args, **kw))), 1)
 
 def _Mul (*args):
 	itr = iter (args)
@@ -293,7 +296,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return (''.join (t), has) if ret_has else ''.join (t)
 
 	def _ast2tex_pow (self, ast, trighpow = True):
-		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '"', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'} or ast.base.is_num_pos))
+		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-lamb', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2tex_curly (ast.exp)
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -392,7 +395,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'['     : lambda self, ast: f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
 		'|'     : lambda self, ast: f'\\left|{self._ast2tex (ast.abs)} \\right|',
 		'-'     : lambda self, ast: f'-{self._ast2tex_wrap (ast.minus, ast.minus.strip_fdpi.is_num_pos or ast.minus.is_mul, {"=", "<>", "+", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}',
-		'!'     : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '"', '(', '[', '|', '!', '^', '-func', '-mat'} or ast.fact.is_num_neg)) + '!',
+		'!'     : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx'} or ast.fact.is_num_neg)) + '!',
 		'+'     : _ast2tex_add,
 		'*'     : _ast2tex_mul,
 		'/'     : lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo))}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}',
@@ -561,7 +564,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'{n}{" / " if s else "/"}{d}'
 
 	def _ast2nat_pow (self, ast, trighpow = True):
-		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '"', '(', '[', '|', '-func', '-mat', '-set', '-dict'} or ast.base.is_num_pos))
+		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus.op in {'=', '<>', '+', '*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'}, {","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -631,7 +634,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'['     : lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
 		'|'     : lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
 		'-'     : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.strip_fdpi.is_num_pos or ast.minus.op in {"*", "-diff", "-piece"}, {"=", "<>", "+", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}',
-		'!'     : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '"', '(', '[', '|', '!', '^', '-func', '-mat'} or ast.fact.is_num_neg) + '!',
+		'!'     : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx'} or ast.fact.is_num_neg) + '!',
 		'+'     : _ast2nat_add,
 		'*'     : _ast2nat_mul,
 		'/'     : _ast2nat_div,
@@ -867,13 +870,12 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
-_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, **{'simplify': _simplify}}
+_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify, 'dsolve': _dsolve}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
-	def __init__ (self): self.vars = self.eval = [] # pylint kibble
+	def __init__ (self): self.eval = True # pylint kibble
 	def __new__ (cls, ast, vars = {}, xlat = True):
 		self      = super ().__new__ (cls)
-		self.vars = [vars]
 		self.eval = True
 
 		if xlat:
@@ -961,7 +963,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		while obj.is_func and obj.args and (obj.func == AST.Func.NOEVAL or obj.func == AST.Func.NOREMAP):
 			obj = obj.args [0]
 
-		if obj.is_var and obj.var not in self.vars: # always support S.Half and the like unless base object redefined by assignment
+		if obj.is_var: # and obj.var not in self.vars: # always support S.Half and the like unless base object redefined by assignment
 			spt = getattr (sp, obj.var, None)
 
 		if spt is None:
@@ -1000,19 +1002,24 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		for i in range (1, ast.mul.len):
 			m = mul [i]
 
-			if ast.mul [i].is_paren and i not in ast.exp: # non-explicit multiplication with tuple - possible function call: "y (...)"
+			if ast.mul [i].is_paren and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
 				o = out [-1]
 
 				if not isinstance (m, tuple):
 					m = (m,)
 
-				if isinstance (o, sp.Lambda): # Lambda call?
+				if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?
 					out [-1] = o (*m)
 					continue
 
+				# TODO: implicit undefined functions: y(x), y'(x), y''(x)
+				# if isinstance (o, sp.Symbol) and all (isinstance (a, (sp.Number, sp.Symbol)) for a in m): # implicit undefined function?
+				# 	out [-1] = sp.Function (o.name) (*m)
+				# 	continue
+
 				dv = False
 
-				while isinstance (o, sp.Derivative):
+				while isinstance (o, sp.Derivative): # strip derivatives
 					dv = True
 					o  = o.args [0]
 
@@ -1029,7 +1036,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 					continue
 
-			out.append (m)
+			out.append (mul [i])
 
 		return out [0] if len (out) == 1 else _Mul (*out)
 
@@ -1051,11 +1058,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		raise NameError (f'function {ast.unescaped!r} is not defined')
 
 	def _ast2spt_diff (self, ast):
-		args = sum (( \
-				(self._ast2spt (n.as_var),) \
-				if n.is_var else \
-				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.as_int)) \
-				for n in ast.dvs \
+		args = sum ((
+				(self._ast2spt (n.as_var),)
+				if n.is_var else
+				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.as_int))
+				for n in ast.dvs
 				), ())
 
 		return sp.Derivative (self._ast2spt (ast [1]), *args)
@@ -1484,8 +1491,8 @@ class sym: # for single script
 # 	# ast = AST ('.', ('@', 'S'), 'Half')
 # 	# res = ast2spt (ast, vars)
 
-# 	ast = AST ('-dict', ((('@', 'partialx'), ('-func', 'Sum', (('-func', 'abs', (('-func', 'abs', (('@', 'dz'),)),)), ('(', (',', (('@', 'x'), ('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'y'), ('-func', 'slice', (('@', 'z'), ('#', '1e+100'), ('-func', 'factorial', (('@', 'partial'),)))), ('/', ('-func', 'Intersection', (('-func', 'FiniteSet', ()), ('#', '0'), ('@', 'None'))), ('-dict', ((('#', '-1.0'), ('@', 'a')), (('"', 'str'), ('@', 'False')), (('#', '1e+100'), ('@', 'True'))))))))))), (('#', '0.1'), ('-sqrt', ('[', (('*', (('@', 'partial'), ('-func', 'diff', (('-func', 'diff', (('"', ' if \x0crac1xyzd]Sum (\x0cracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \\partial ))))}'),)),)))),))))))
-# 	res = ast2tex (ast)
+# 	ast = AST ('*', (('-diffp', ('@', 'y'), 1), ('(', ('@', 'x'))))
+# 	res = ast2spt (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

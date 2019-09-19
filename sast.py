@@ -552,6 +552,12 @@ class AST_Mul (AST):
 
 		return self
 
+	def __repr__ (self):
+		if not self.exp:
+			return tuple.__repr__ (self)
+
+		return tuple.__repr__ (('*', self.mul, set (self.exp)))
+
 	def _is_mul_has_abs (self):
 		for m in self.mul:
 			if m.is_abs:

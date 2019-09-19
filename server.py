@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.1'
+_VERSION         = '1.0.10'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
@@ -446,7 +446,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 				sym.set_precision (ast)
 
-				spt = sym.ast2spt (ast, _VARS)
+				spt = sym.ast2spt (ast) # , _VARS)
 				ast = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
