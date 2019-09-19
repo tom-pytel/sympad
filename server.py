@@ -153,7 +153,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	return AST.apply_vars (ast, _VARS), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
-	def _set_vars (vars):
+	def set_vars (vars):
 		try: # check for circular references
 			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
 		except RecursionError:
@@ -168,7 +168,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		return [ast]
 
 	if len (vars) == 1: # simple assignment
-		_set_vars ({vars [0]: ast})
+		set_vars ({vars [0]: ast})
 
 		asts = [AST ('=', ('@', vars [0]), ast)]
 
@@ -181,7 +181,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		elif len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
-		_set_vars (dict (zip (vars, asts)))
+		set_vars (dict (zip (vars, asts)))
 
 		asts = [AST ('=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
 
@@ -443,8 +443,6 @@ class Handler (SimpleHTTPRequestHandler):
 
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
-
-				sym.set_precision (ast)
 
 				spt = sym.ast2spt (ast) # , _VARS)
 				ast = sym.spt2ast (spt)

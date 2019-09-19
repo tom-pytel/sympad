@@ -873,10 +873,28 @@ _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _bui
 _ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify, 'dsolve': _dsolve}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
+	def _set_precision (self, ast): # recurse through ast to set sympy float precision according to longest string of digits found
+		prec  = 15
+		stack = [ast]
+
+		while stack:
+			ast = stack.pop ()
+
+			if not isinstance (ast, AST):
+				pass # nop
+			elif ast.is_num:
+				prec = max (prec, len (ast.num)) # will be a little more than number of digits to compensate for falling precision with some calculations
+			else:
+				stack.extend (ast [1:])
+
+		self._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
+
 	def __init__ (self): self.eval = True # pylint kibble
-	def __new__ (cls, ast, vars = {}, xlat = True):
+	def __new__ (cls, ast, xlat = True):
 		self      = super ().__new__ (cls)
 		self.eval = True
+
+		self._set_precision (ast)
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -1123,7 +1141,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		';'     : lambda self, ast: _raise (RuntimeError ('semicolon expression should never get here')),
 		'='     : _ast2spt_ass,
 		'<>'    : _ast2spt_cmp,
-		'#'     : lambda self, ast: sp.Integer (ast.num) if ast.is_num_int else sp.Float (ast.num, _SYMPY_FLOAT_PRECISION),
+		'#'     : lambda self, ast: sp.Integer (ast.num) if ast.is_num_int else sp.Float (ast.num, self._SYMPY_FLOAT_PRECISION),
 		'@'     : _ast2spt_var,
 		'.'     : _ast2spt_attr,
 		'"'     : lambda self, ast: ast.str_,
@@ -1436,24 +1454,6 @@ class spt2ast:
 	}
 
 #...............................................................................................
-def set_precision (ast): # recurse through ast to set sympy float precision according to longest string of digits found
-	global _SYMPY_FLOAT_PRECISION
-
-	prec  = 15
-	stack = [ast]
-
-	while stack:
-		ast = stack.pop ()
-
-		if not isinstance (ast, AST):
-			pass # nop
-		elif ast.is_num:
-			prec = max (prec, len (ast.num)) # will be a little more than number of digits to compensate for falling precision with some calculations
-		else:
-			stack.extend (ast [1:])
-
-	_SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
-
 def set_user_funcs (user_funcs):
 	global _USER_FUNCS
 	_USER_FUNCS = user_funcs
@@ -1471,7 +1471,6 @@ def set_doit (state):
 	_DOIT = state
 
 class sym: # for single script
-	set_precision  = set_precision
 	set_user_funcs = set_user_funcs
 	set_pyS        = set_pyS
 	set_simplify   = set_simplify
