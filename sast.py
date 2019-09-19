@@ -24,7 +24,7 @@
 # ('-func', 'name', (a1, a2, ...))                    - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
 # ('-lim', expr, var, to[, 'dir'])                    - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
-# ('-diff', expr, (dvar1, ...))                       - differentiation of expr with respect to dvar(s) of form 'dx' or 'partialx'
+# ('-diff', expr, (dv1, ...))                         - differentiation of expr with respect to dv(s) of form 'dx' or 'partialx'
 # ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
 # ('-intg', expr, var[, from, to])                    - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
