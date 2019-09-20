@@ -1030,10 +1030,14 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 					out [-1] = o (*m)
 					continue
 
-				# TODO: implicit undefined functions: y(x), y'(x), y''(x)
-				# if isinstance (o, sp.Symbol) and all (isinstance (a, (sp.Number, sp.Symbol)) for a in m): # implicit undefined function?
-				# 	out [-1] = sp.Function (o.name) (*m)
-				# 	continue
+
+
+				# TODO: implicit undefined functions: y(x), y(x), y''(x)
+				if isinstance (o, sp.Symbol) and all (isinstance (a, (sp.Number, sp.Symbol)) for a in m): # implicit undefined function?
+					out [-1] = sp.Function (o.name) (*m)
+					continue
+
+
 
 				dv = False
 
