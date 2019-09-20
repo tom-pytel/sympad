@@ -427,6 +427,8 @@ class Handler (SimpleHTTPRequestHandler):
 
 	def evaluate (self, request):
 		def evalexpr (ast):
+			sym.ast2spt.set_precision (ast)
+
 			if ast.is_func and ast.func in AST.Func.PLOT: # plotting?
 				args, kw = AST.args2kwargs (AST.apply_vars (ast.args, _VARS), sym.ast2spt)
 				ret      = getattr (splot, ast.func) (*args, **kw)

@@ -1,5 +1,4 @@
-> ?greek(x)?
->"y" -> ?y(x)
+> "y" -> ?y(x) - do this in sparser
 
 > add explicit multiply paren to ast2tex and ast2nat
 > x*(y) - needs explicit mul for parens

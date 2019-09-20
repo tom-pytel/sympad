@@ -11,11 +11,11 @@ from sympy.core.function import AppliedUndef as sp_AppliedUndef
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SYMPY_FLOAT_PRECISION = None
-_USER_FUNCS            = {} # dict user funcs {name: AST, ...}
-_POST_SIMPLIFY         = True # post-evaluation simplification
-_PYS                   = True # Python S() escaping
-_DOIT                  = True # expression doit()
+
+_USER_FUNCS    = {} # dict user funcs {name: AST, ...}
+_POST_SIMPLIFY = True # post-evaluation simplification
+_PYS           = True # Python S() escaping
+_DOIT          = True # expression doit()
 
 class _None: pass # unique non-None None marker
 
@@ -421,7 +421,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-or'   : lambda self, ast: ' \\vee '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice'} or (a.is_piece and a is not ast.or_ [-1])) for a in ast.or_),
 		'-and'  : lambda self, ast: ' \\wedge '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice', '-or'} or (a.is_piece and a is not ast.and_ [-1])) for a in ast.and_),
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
-		'-ufunc': lambda self, ast: f'\\operatorname{{?{ast.ufunc}}}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
+		'-ufunc': lambda self, ast: f'?{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
 
 		'text'  : lambda self, ast: ast.tex,
 	}
@@ -873,7 +873,10 @@ _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _bui
 _ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify, 'dsolve': _dsolve}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
-	def _set_precision (self, ast): # recurse through ast to set sympy float precision according to longest string of digits found
+	_SYMPY_FLOAT_PRECISION = None
+
+	@staticmethod
+	def set_precision (ast): # recurse through ast to set sympy float precision according to longest string of digits found
 		prec  = 15
 		stack = [ast]
 
@@ -887,14 +890,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			else:
 				stack.extend (ast [1:])
 
-		self._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
+		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
 	def __init__ (self): self.eval = True # pylint kibble
 	def __new__ (cls, ast, xlat = True):
 		self      = super ().__new__ (cls)
 		self.eval = True
-
-		self._set_precision (ast)
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -1145,7 +1146,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		';'     : lambda self, ast: _raise (RuntimeError ('semicolon expression should never get here')),
 		'='     : _ast2spt_ass,
 		'<>'    : _ast2spt_cmp,
-		'#'     : lambda self, ast: sp.Integer (ast.num) if ast.is_num_int else sp.Float (ast.num, self._SYMPY_FLOAT_PRECISION),
+		'#'     : lambda self, ast: sp.Integer (ast.num) if ast.is_num_int else sp.Float (ast.num, ast2spt._SYMPY_FLOAT_PRECISION),
 		'@'     : _ast2spt_var,
 		'.'     : _ast2spt_attr,
 		'"'     : lambda self, ast: ast.str_,
