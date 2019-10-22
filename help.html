@@ -132,6 +132,7 @@ Integral (e^{-x^2}, (x, 0, \infty))<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
 solve (x**2 + y = 4, x)<br>
+dsolve (y(x)'' + 9y(x))<br>
 y = ?(t); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y<br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
 </p>
@@ -790,7 +791,7 @@ a.subs (s [1]), b.subs (s [1])<br>
 a.subs (s [2]), b.subs (s [2])<br>
 a.subs (s [3]), b.subs (s [3])<br>
 w = {x: 1, y: 2}<br>
-a.subs (w), b.subs (w)<i>&emsp; test bogus solution</i><br>
+a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
 delall<i>&emsp; clean up variables</i><br>
 </p>
 
@@ -799,6 +800,7 @@ delall<i>&emsp; clean up variables</i><br>
 <p>
 dsolve (d**2/dx**2 ?(x) + 9?(x))<i>&emsp; using undefined functions directly</i><br>
 dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative since function of only one variable</i><br>
+dsolve (y(x)'' + 9y(x))<i>&emsp; or implicit as long as y is not defined</i><br>
 y = ?(x)<br>
 dsolve (y'' + 9y)<i>&emsp; easiest like this</i><br>
 dsolve (sin x cos y + cos x sin y y')<br>
@@ -924,12 +926,14 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <tr><td><b>-s, --nosimplify</b></td><td>&emsp;- Start without post-evaluation simplification.</td></tr>
 <tr><td><b>-m, --nomatsimp</b></td><td>&emsp;- Start without matrix simplification.</td></tr>
 <tr><td><b>-t, --nodoit</b></td><td>&emsp;- Start without automatic expression doit().</td></tr>
-<tr><td><b>-N, --noN</b></td><td>&emsp;- Start without N lambda function.</td></tr>
-<tr><td><b>-S, --noS</b></td><td>&emsp;- Start without S lambda function.</td></tr>
-<tr><td><b>-O, --noO</b></td><td>&emsp;- Start without O lambda function.</td></tr>
-<tr><td><b>-g, --nogamma</b></td><td>&emsp;- Start without gamma lambda function.</td></tr>
-<tr><td><b>-G, --noGamma</b></td><td>&emsp;- Start without Gamma lambda function.</td></tr>
-<tr><td><b>-z, --nozeta</b></td><td>&emsp;- Start without zeta lambda function.</td></tr>
+<tr><td><b>-N, --noN</b></td><td>&emsp;- Start without N function mapping.</td></tr>
+<tr><td><b>-S, --noS</b></td><td>&emsp;- Start without S function mapping.</td></tr>
+<tr><td><b>-O, --noO</b></td><td>&emsp;- Start without O function mapping.</td></tr>
+<tr><td><b>-g, --nobeta</b></td><td>&emsp;- Start without beta function mapping.</td></tr>
+<tr><td><b>-g, --nogamma</b></td><td>&emsp;- Start without gamma function mapping.</td></tr>
+<tr><td><b>-G, --noGamma</b></td><td>&emsp;- Start without Gamma function mapping.</td></tr>
+<tr><td><b>-G, --noLambda</b></td><td>&emsp;- Start without Lambda function mapping.</td></tr>
+<tr><td><b>-z, --nozeta</b></td><td>&emsp;- Start without zeta function mapping.</td></tr>
 </table>
 
 <h4 id="Notes">Notes</h4>

@@ -230,7 +230,7 @@ def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 	ast2 = None
 
 	if dvab.is_comma:
-		if dvab.comma and dvab.comma [0].is_nonconst_var:
+		if dvab.comma and dvab.comma [0].is_var_nonconst:
 			if dvab.comma.len == 1:
 				ast2 = AST ('-intg', ast, ('@', f'd{dvab.comma [0].var}'))
 			elif dvab.comma.len == 2:

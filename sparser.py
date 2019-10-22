@@ -155,49 +155,41 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 
 def _expr_mul_imp (lhs, rhs, user_funcs = {}): # rewrite certain cases of adjacent terms not handled by grammar
 	ast         = None
-	arg, wrap   = _ast_func_reorder (rhs)
-	last, wrapl = lhs, lambda ast: ast
+	arg, wrapa  = _ast_func_reorder (rhs)
+	tail, wrapt = lhs.tailnwrap # lhs, lambda ast: ast
 
-	while 1:
-		if last.is_mul:
-			last, wrapl = last.mul [-1], lambda ast, last = last: AST ('*', last.mul [:-1] + (ast,))
-		elif last.is_pow:
-			last, wrapl = last.exp, lambda ast, last = last, wrapl = wrapl: wrapl (AST ('^', last.base, ast))
-		elif last.is_minus:
-			last, neg = last._strip_minus (retneg = True)
-			wrapl     = lambda ast, last = last, wrapl = wrapl, neg = neg: wrapl (neg (ast))
-		else:
-			break
-
-	if last.is_attr: # {x.y} *imp* () -> x.y(), x.{y.z} -> {x.y}.z
-		if last.is_attr_var:
+	if tail.is_attr: # {x.y} *imp* () -> x.y(), x.{y.z} -> {x.y}.z
+		if tail.is_attr_var:
 			if arg.is_paren:
-				ast = wrap (AST ('.', last.obj, last.attr, _ast_func_tuple_args (arg)))
+				ast = wrapa (AST ('.', tail.obj, tail.attr, _ast_func_tuple_args (arg)))
 			elif rhs.is_attr:
-				ast = AST ('.', _expr_mul_imp (last, rhs.obj), rhs.attr)
+				ast = AST ('.', _expr_mul_imp (tail, rhs.obj, user_funcs), rhs.attr)
 
-	elif last.is_pow: # {x^y.z} *imp* () -> x^{y.z()}
-		if last.exp.is_attr_var:
+	elif tail.is_pow: # {x^y.z} *imp* () -> x^{y.z()}
+		if tail.exp.is_attr_var:
 			if arg.is_paren:
-				ast = AST ('^', last.base, wrap (AST ('.', last.exp.obj, last.exp.attr, _ast_func_tuple_args (arg))))
+				ast = AST ('^', tail.base, wrapa (AST ('.', tail.exp.obj, tail.exp.attr, _ast_func_tuple_args (arg))))
 			elif rhs.is_attr:
-				ast = AST ('^', last.base, ('.', _expr_mul_imp (last.exp, rhs.obj), rhs.attr))
+				ast = AST ('^', tail.base, ('.', _expr_mul_imp (tail.exp, rhs.obj, user_funcs), rhs.attr))
 
-	elif last.is_var: # user_func *imp* () -> user_func (), var (tuple) -> func ()
-		if last.var in user_funcs or arg.strip_paren.is_comma:
+	elif tail.is_var: # user_func *imp* (...) -> user_func (...)
+		if tail.var in user_funcs: # or arg.strip_paren.is_comma:
 			if arg.is_paren:
-				ast = wrap (AST ('-func', last.var, _ast_func_tuple_args (arg)))
-			else:
-				ast = wrap (AST ('-func', last.var, (arg,)))
+				ast = wrapa (AST ('-func', tail.var, _ast_func_tuple_args (arg)))
+			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
+				ast = wrapa (AST ('-func', tail.var, (arg,)))
 
-	if arg.is_brack: # x * [y] -> x [y]
+		elif not tail.is_diff_or_part and arg.as_pvarlist is not None and len (arg.as_pvarlist): # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
+			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
+
+	if arg.is_brack: # x *imp* [y] -> x [y]
 		if not arg.brack:
 			raise SyntaxError ('missing index')
 
-		ast = wrap (AST ('-idx', last, arg.brack))
+		ast = wrapa (AST ('-idx', tail, arg.brack))
 
 	if ast:
-		return wrapl (ast)
+		return wrapt (ast)
 
 	return AST.flatcat ('*', lhs, rhs)
 
@@ -361,9 +353,9 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 	raise SyntaxError ('integration expecting a differential')
 
 def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
-	ast, wrap = _ast_func_reorder (args [iparm])
+	ast, wrapf = _ast_func_reorder (args [iparm])
 
-	return wrap (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == '-func' else ast._strip (strip)),) + args [iparm + 1:])))
+	return wrapf (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == '-func' else ast._strip (strip)),) + args [iparm + 1:])))
 
 def _expr_func_func (FUNC, args, expr_super = None):
 	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
@@ -477,15 +469,14 @@ class Parser (lalr1.LALR1):
 
 		lalr1.LALR1.__init__ (self)
 
-	def set_quick (self, yes = True):
-		self.TOKENS.update (self.TOKENS_QUICK if yes else self.TOKENS_LONG)
-
-		self.set_tokens (self.TOKENS)
-
-	_USER_FUNCS = set () # set or dict of names of user functions to map to AST ('-func', ...)
+		self._USER_FUNCS = set () # set or dict of names of user function names to map to AST ('-func', ...)
 
 	def set_user_funcs (self, user_funcs):
 		self._USER_FUNCS = user_funcs
+
+	def set_quick (self, yes = True):
+		self.TOKENS.update (self.TOKENS_QUICK if yes else self.TOKENS_LONG)
+		self.set_tokens (self.TOKENS)
 
 	_PARSER_TABLES = \
 			b'eJztXWuP3DaW/TMLTDegBkp8Sv3NcZxZY20nazvBDowgcDyeRbBJHNhOdhbB/Pe9Lz6kYpVUqu6uF9HqkkSR0uW95Dl88+rNX149/vrZ1y/+0vzl397/+nc4hdtnT756DadvHr188uIZXHz18tFjObVyVnD+4umLr5+HcxsulLzgy6/xHS/o94snf/3h8aNX' \
@@ -572,7 +563,7 @@ class Parser (lalr1.LALR1):
 			b'96GgvqPAvEM3XbriYWGrCsqbQBnHYV7Qwelht5EFhwVl1xzZwSpUNUttzFK+uaSD04PeebDOHY7OWZa7CqbDeVuzDxzmvVOA0RGmSO0QgiY4pclNpPndWjOOVvO6OYWDVV4ao32CKjfNKRys8t0aIu5Y5drOVztRxaTqbfPAB9LXYh9sgtKQ+Rk0fzgrrOZY' \
 			b'wjU7HTjBZ9cwy44tX2J7LBzpf+T26JpTO9gapcH5J28NnK9+YgfP2dp53sC5zYLBZQZ2P2gVgex/2VvGb1x/d3Y78DP9luxgSx/bLIGHt7RuzvFg6+42nOEcrds153iwdXdvNDg36/bNOR5s3d0bJs7MuricwRkebN3d20DOzbptc44HW9c1b7SmOb8C1T46' \
 			b'SO7u0AFVSNNSV7ggLT+AilBuf1A0+QB14x6HLZgAZwLJCHewUtE3zi8d/LPvds03Go9CgOlH/0pz27TNl7PQlBTYHegnT46chPKkI8kGFwgxJBcutJUtsMULWoXFrNpsEStc/kFkNsOv4AomGntuSZv4yfApSpnScGdZy5B432DqhpRJ07U6XBOLn4CFqFcY' \
-			b'e4Gx95d6fRVuL+vAFRfG6GRBCZ9W6eAyM24uqUAJ6MJtCbirHLwFXbys5bBKLuDn++v/B1TXtbo=' 
+			b'e4Gx95d6fRVuL+vAFRfG6GRBCZ9W6eAyM24uqUAJ6MJtCbirHLwFXbys5bBKLuDn++v/B1TXtbo='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1131,7 +1122,9 @@ class sparser: # for single script
 # 	# p.set_quick (True)
 # 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	a = p.parse (r'?(x)')
+# 	p.set_user_funcs ({'N'})
+
+# 	a = p.parse (r"N (x)'")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

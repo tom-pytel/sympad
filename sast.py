@@ -213,24 +213,57 @@ class AST (tuple):
 
 		return self
 
-	def as_identifier (self, recursed = False):
-		if self.op in {'#', '@', '"'}:
-			name = self [1]
-		elif not self.is_mul:
-			return None
+	def _tail (self):
+		return self.tailnwrap [0]
 
-		else:
-			try:
-				name = ''.join (m.as_identifier (True) for m in self.mul)
-			except TypeError:
+	def _tailnwrap (self):
+		tail, wrap = self, lambda ast: ast
+
+		while 1:
+			if tail.is_mul:
+				tail, wrap = tail.mul [-1], lambda ast, tail = tail, wrap = wrap: wrap (AST ('*', tail.mul [:-1] + (ast,)))
+			elif tail.is_pow:
+				tail, wrap = tail.exp, lambda ast, tail = tail, wrap = wrap: wrap (AST ('^', tail.base, ast))
+
+			elif tail.is_minus:
+				tail, neg = tail._strip_minus (retneg = True)
+				wrap      = lambda ast, tail = tail, wrap = wrap, neg = neg: wrap (neg (ast))
+
+			else:
+				break
+
+		return tail, wrap
+
+	def _as_identifier (self):
+		def _as_identifier (ast, recursed = False):
+			if ast.op in {'#', '@', '"'}:
+				name = ast [1]
+			elif not ast.is_mul:
 				return None
 
-		return name if recursed or AST._rec_identifier.match (name) else None
+			else:
+				try:
+					name = ''.join (_as_identifier (m, True) for m in ast.mul)
+				except TypeError:
+					return None
+
+			return name if recursed or AST._rec_identifier.match (name) else None
+
+		return _as_identifier (self)
+
+	def _as_pvarlist (self): # parenthesized list of variable names
+		if self.is_paren:
+			vars = self.paren.comma if self.paren.is_comma else (self.paren,)
+
+			if all (v.is_var_nonconst for v in vars):
+				return vars
+
+		return None
 
 	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
-				if ast.is_const_var is False and ast.var:
+				if ast.is_var_const is False and ast.var:
 					vars.add (ast)
 
 				else:
@@ -275,7 +308,7 @@ class AST (tuple):
 
 		for arg in itr:
 			if arg.is_ass:
-				ident = arg.lhs.as_identifier ()
+				ident = arg.lhs.as_identifier
 
 				if ident is not None:
 					kw.append ((ident, func (arg.rhs)))
@@ -461,8 +494,8 @@ class AST_Var (AST):
 	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
-	_is_const_var         = lambda self: self in AST.CONSTS
-	_is_nonconst_var      = lambda self: self not in AST.CONSTS
+	_is_var_const         = lambda self: self in AST.CONSTS
+	_is_var_nonconst      = lambda self: self not in AST.CONSTS
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]

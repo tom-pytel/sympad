@@ -1,18 +1,35 @@
-> "y" -> ?y(x) - do this in sparser
+> \int \frac{d}{dx} x dx
+> frac{d}{dx} x
+
+> "y(x)" -> ?y(x) - do this in sparser
+> creation of ufuncs from undefined vars y(x)
 
 > add explicit multiply paren to ast2tex and ast2nat
 > x*(y) - needs explicit mul for parens
 > d/dx (x**2)' ?
 
+
+> document implicit unknown functions (partials or differentials not converted implicitly)
+> turn off default post-simplification
+
+> unknown function names in different font?
+> single varible query displays undefined function instead of variable if so mapped?
+
+> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > ?(x)'(2), spt->?(x)(2) instead of subs of diff
 > sxlat of python representation of ufuncics
 
+
+> verify all is_var -> is_var_nonconst where consts not allowed
+
+> N beta (2, 3) -> N (beta (2, 3)) instead of N (beta) (2, 3)
+> sin a.b()
 > {lambda x: {lambda x: x**2}} (3) -> TypeError, {lambda y: {lambda x: x**2}} (3) works
 
-> creation of ufuncs from undefined vars y(x)
+> patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
-> patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y' (0) = -7)
 > == -> = in tex
+> assignment detection for python code (Eq (y, 1) -> y = 1)
 
 > change vars to pass into parse?
 > ufuncs created in expression persist to end of expression?
@@ -24,7 +41,6 @@
 > overhaul function call keyword arguments: expr -> ('kw', expr)
 > overhaul lambda variables: ('@', 'var') -> 'var'
 
-> sin a.b()
 > input shortcut non-opened closing curly and/or paren?
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
 

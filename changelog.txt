@@ -1,6 +1,7 @@
 v1.0.10:
 -----
-
+* Added undefined function initial conditions - ?y(x)(0) = something, ?y(x)'(0) = something
+* Added implicit undefined functions - y(x) -> ?y(x)
 
 v1.0.9:
 -------

@@ -46,7 +46,8 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		f'{__name_indent} [-s | --nosimplify] [-m | -nomatsimp] \n' \
 		f'{__name_indent} [-t | --nodoit] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
-		f'{__name_indent} [-g | --nogamma] [-G | --noGamma] \n' \
+		f'{__name_indent} [-b | --nobeta] [-g | --nogamma] \n' \
+		f'{__name_indent} [-G | --noGamma] [-L | --noLambda] \n' \
 		f'{__name_indent} [-z | --nozeta] \n' \
 		f'{__name_indent} [host:port | host | :port]' '''
 
@@ -61,12 +62,14 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
   -s, --nosimplify - Start without post-evaluation simplification
   -m, --nomatsimp  - Start without matrix simplification
   -t, --nodoit     - Start without automatic expression doit()
-  -N, --noN        - Start without N lambda function
-  -S, --noS        - Start without S lambda function
-  -O, --noO        - Start without O lambda function
-  -g, --nogamma    - Start without gamma lambda function
-  -G, --noGamma    - Start without Gamma lambda function
-  -z, --nozeta     - Start without zeta lambda function
+  -N, --noN        - Start without N function
+  -S, --noS        - Start without S function
+  -O, --noO        - Start without O function
+  -b, --nobeta     - Start without beta function
+  -g, --nogamma    - Start without gamma function
+  -G, --noGamma    - Start without Gamma function
+  -L, --noLambda   - Start without Lambda function
+  -z, --nozeta     - Start without zeta function
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
@@ -85,21 +88,14 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_PARSER       = sparser.Parser ()
 	_VAR_LAST     = '_' # name of last evaluated expression variable
-	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', True), ('matsimp', True),
-		('doit', True),('N', True), ('O', True), ('S', True), ('gamma', True), ('Gamma', True), ('zeta', True)])
+	_ONE_FUNCS    = ('N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta')
+
+	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', True), ('matsimp', True), ('doit', True),
+		('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('Lambda', True), ('zeta', True)])
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS         = {_VAR_LAST: AST.Zero} # This also!
 	_UFUNCS2VARS  = {} # Yup...
-
-	_ONE_FUNCS    = OrderedDict ([
-		('N',     1), # AST ('-lamb', ('-func', '$N', (('@', 'x'),)), ('x',))),
-		('O',     1), # AST ('-lamb', ('-func', '$O', (('@', 'x'),)), ('x',))),
-		('S',     1), # AST ('-lamb', ('-func', '$S', (('@', 'x'),)), ('x',))),
-		('gamma', 1), # AST ('-lamb', ('-func', '$gamma', (('@', 'z'),)), ('z',))),
-		('Gamma', 1), # AST ('-lamb', ('-func', '$gamma', (('@', 'z'),)), ('z',))),
-		('zeta',  1), # AST ('-lamb', ('-func', '$zeta', (('@', 'z'),)), ('z',))),
-	])
 
 #...............................................................................................
 class RealityRedefinitionError (NameError):	pass
@@ -109,16 +105,15 @@ class AE35UnitError (Exception): pass
 def _update_vars ():
 	_UFUNCS2VARS.clear ()
 
-	one_funcs  = dict (fa for fa in filter (lambda fa: _ENV.get (fa [0]), _ONE_FUNCS.items ()))
-	user_funcs = {}
+	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS))
+	user_funcs = one_funcs.copy ()
 
 	for var, ast in _VARS.items ():
-		if ast.is_ufunc:
-			_UFUNCS2VARS [ast] = AST ('@', var)
-		elif ast.is_lamb and var != _VAR_LAST:
-			user_funcs [var] = ast
-
-	user_funcs.update (one_funcs)
+		if var != _VAR_LAST:
+			if ast.is_ufunc:
+				_UFUNCS2VARS [ast] = AST ('@', var)
+			elif ast.is_lamb:
+				user_funcs.add (var)
 
 	sym.set_user_funcs (user_funcs)
 	_PARSER.set_user_funcs (user_funcs)
@@ -224,7 +219,7 @@ def _admin_del (*args):
 			vars.update (filter (lambda va: va [1].is_lamb, _VARS.items ()))
 
 		else:
-			var = arg.as_identifier ()
+			var = arg.as_identifier
 
 			if var is None or var == _VAR_LAST:
 				raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
@@ -320,13 +315,13 @@ def _admin_env (*args):
 
 	for arg in args:
 		if arg.is_ass:
-			var = arg.lhs.as_identifier ()
+			var = arg.lhs.as_identifier
 
 			if var:
 				state = bool (sym.ast2spt (arg.rhs))
 
 		else:
-			var = arg.as_identifier ()
+			var = arg.as_identifier
 
 			if var:
 				if var [:2] == 'no':
@@ -515,8 +510,8 @@ def start_server (logging = True):
 		_DISPLAYSTYLE [0] = 0
 
 	# make sure all env options are initialized according to command line options
-	for short, long in zip ('EqysmtNOSgGz', \
-			['EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp', 'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta']):
+	for short, long in zip ('EqysmtNOSbgGLz', \
+			['EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'noLambda', 'nozeta']):
 		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
 			_admin_env (AST ('@', long))
 		else:

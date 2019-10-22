@@ -2337,7 +2337,7 @@ class AST (tuple):
 	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
-				if ast.is_const_var is False and ast.var:
+				if ast.is_var_const is False and ast.var:
 					vars.add (ast)
 
 				else:
@@ -2555,8 +2555,8 @@ class AST_Var (AST):
 	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
 	_is_null_var          = lambda self: not self.var
 	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
-	_is_const_var         = lambda self: self in AST.CONSTS
-	_is_nonconst_var      = lambda self: self not in AST.CONSTS
+	_is_var_const         = lambda self: self in AST.CONSTS
+	_is_var_nonconst      = lambda self: self not in AST.CONSTS
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]
@@ -3101,7 +3101,7 @@ def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 	ast2 = None
 
 	if dvab.is_comma:
-		if dvab.comma and dvab.comma [0].is_nonconst_var:
+		if dvab.comma and dvab.comma [0].is_var_nonconst:
 			if dvab.comma.len == 1:
 				ast2 = AST ('intg', ast, ('@', f'd{dvab.comma [0].var}'))
 			elif dvab.comma.len == 2:
