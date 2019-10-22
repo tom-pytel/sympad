@@ -1,23 +1,10 @@
-> \int \frac{d}{dx} x dx
-> frac{d}{dx} x
+> ?(x)'(2), spt->?(x)(2) instead of subs of diff
+> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
+> sxlat of python representation of ufuncics?
 
-> "y(x)" -> ?y(x) - do this in sparser
-> creation of ufuncs from undefined vars y(x)
-
-> add explicit multiply paren to ast2tex and ast2nat
-> x*(y) - needs explicit mul for parens
-> d/dx (x**2)' ?
-
-
-> document implicit unknown functions (partials or differentials not converted implicitly)
-> turn off default post-simplification
 
 > unknown function names in different font?
 > single varible query displays undefined function instead of variable if so mapped?
-
-> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
-> ?(x)'(2), spt->?(x)(2) instead of subs of diff
-> sxlat of python representation of ufuncics
 
 
 > verify all is_var -> is_var_nonconst where consts not allowed
@@ -28,11 +15,11 @@
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
-> == -> = in tex
+> == -> = in tex?
 > assignment detection for python code (Eq (y, 1) -> y = 1)
 
 > change vars to pass into parse?
-> ufuncs created in expression persist to end of expression?
+> d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function
 
 
 > More Examples: Lambdas

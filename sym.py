@@ -81,9 +81,6 @@ def _simplify (spt): # extend sympy simplification into standard python containe
 
 	return spt
 
-def _dsolve (*args, **kw): # never automatically simplify dsolve
-	return ExprNoEval (str (spt2ast (sp.dsolve (*args, **kw))), 1)
-
 def _Mul (*args):
 	itr = iter (args)
 	res = next (itr)
@@ -422,7 +419,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-or'   : lambda self, ast: ' \\vee '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice'} or (a.is_piece and a is not ast.or_ [-1])) for a in ast.or_),
 		'-and'  : lambda self, ast: ' \\wedge '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice', '-or'} or (a.is_piece and a is not ast.and_ [-1])) for a in ast.and_),
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
-		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or AST ("@", ast.ufunc).is_diff_or_part else ""}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
+		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or ast.kw or ast.ufunc in _USER_FUNCS or AST ("@", ast.ufunc).is_diff_or_part else ""}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
 
 		'text'  : lambda self, ast: ast.tex,
 	}
@@ -663,7 +660,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-or'   : lambda self, ast: ' or '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb'}) for a in ast.or_),
 		'-and'  : lambda self, ast: ' and '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb', '-or'}) for a in ast.and_),
 		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
-		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or AST ("@", ast.ufunc).is_diff_or_part else ""}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
+		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or ast.kw or ast.ufunc in _USER_FUNCS or AST ("@", ast.ufunc).is_diff_or_part else ""}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
 
 		'text'  : lambda self, ast: ast.nat,
 	}
@@ -872,7 +869,7 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
-_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify, 'dsolve': _dsolve}
+_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify} # , 'dsolve': _dsolve}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	_SYMPY_FLOAT_PRECISION = None

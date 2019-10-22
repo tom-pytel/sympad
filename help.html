@@ -133,7 +133,7 @@ Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
 solve (x**2 + y = 4, x)<br>
 dsolve (y(x)'' + 9y(x))<br>
-y = ?(t); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y<br>
+y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y<br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
 </p>
 
@@ -523,17 +523,16 @@ Lambda recursion is not supported.
 
 <p>
 Undefined functions are mathematical function objects but without any specific expression or lambda body defined, they are used mainly in differential equations.
-These functions are entered as "<b>?name (x, y, ...)</b>" with the name being optional but necessary if you need to differentiate between various functions (like in a system of differential equations).
+These functions are entered as "<b>?name (x, y, ...)</b>" with the name being optional but necessary if you need to differentiate between various functions (like in a system of differential equations), or simply "<b>name (x, y, ..._</b>" if the function does not take any hints.
 The arguments to an undefined function can only be variable names and optional keyword arguments which will be passed on to the SymPy "<b>Function()</b>" call.
 The variable list for an undefined function just like the variable list for a lambda function is never remapped which means that even if you have the variable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
 </p><p>
 Undefined functions may be used directly in a "<b>dsolve()</b>" function to solve a differential equation, but it is cleaner to first map them to a variable so that the resulting equation looks as it normally does in mathematical syntax.
-For example you can do "<b>dsolve (?(x)'' + 2?(x)' - ?(x))</b>", but it is much cleaner to first set "<b>y = ?(x)</b>" and then do "<b>dsolve (y'' + 2y' - y)</b>", in which case your answer will come back referencing the "<b>y</b>" function as well instead of "<b>?(x)</b>".
+For example you can do "<b>dsolve (y(x)'' + 2y(x)' - y(x))</b>", but it is much cleaner to first set "<b>y = y(x)</b>" and then do "<b>dsolve (y'' + 2y' - y)</b>", in which case your answer will come back referencing the "<b>y</b>" function as well instead of "<b>y(x)</b>".
 </p><p>
-If you are solving a system of differential equations the it is even more useful to use variables since you will need to differentiate the undefined functions using names like "<b>x, y = ?x(t), ?y(t)</b>".
-This will give you a clean "<b>dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</b>" instead of having to type the functions out constantly like "<b>dsolve ((?x(t)' = 12t?x(t) + 8?y(t), ?y(t)' = 21?x(t) + 7t?y(t)))</b>".
-</p><p>
-Initial values for undefined functions for solving IVPs and BVPs are not implemented yet.
+If you are solving a system of differential equations then it is even more useful to use variables since you will need to differentiate the undefined functions using names like "<b>x, y = x(t), y(t)</b>".
+This will give you a clean "<b>dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</b>" instead of having to type the functions out constantly like "<b>dsolve ((x(t)' = 12t x(t) + 8 y(t), y(t)' = 21x(t) + 7t y(t)))</b>".
+Initial values for differential functions are supported and can be passed of the form "<b>dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</b>" if "<b>y = y(x)</b>" is already defined or "<b>dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(x)(0): 0, y(x)'(0): -7})</b>" if it is not. The "<b>ics</b>" keyword argument is a dictionary of undefined functuions at specific points with their values.
 </p>
 
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>

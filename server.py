@@ -25,7 +25,7 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _VERSION         = '1.0.10'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
-	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp',
+	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
 	'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
@@ -43,7 +43,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
 		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
 		f'{__name_indent} [-u | --ugly] [-E | --EI] \n' \
 		f'{__name_indent} [-q | --quick] [-y | --nopyS] \n' \
-		f'{__name_indent} [-s | --nosimplify] [-m | -nomatsimp] \n' \
+		f'{__name_indent} [-s | --simplify] [-m | -nomatsimp] \n' \
 		f'{__name_indent} [-t | --nodoit] \n' \
 		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
 		f'{__name_indent} [-b | --nobeta] [-g | --nogamma] \n' \
@@ -59,7 +59,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} ' \
   -E, --EI         - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
   -q, --quick      - Start in quick input mode
   -y, --nopyS      - Start without Python S escaping
-  -s, --nosimplify - Start without post-evaluation simplification
+  -s, --simplify   - Start with post-evaluation simplification
   -m, --nomatsimp  - Start without matrix simplification
   -t, --nodoit     - Start without automatic expression doit()
   -N, --noN        - Start without N function
@@ -90,7 +90,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_ONE_FUNCS    = ('N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta')
 
-	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', True), ('matsimp', True), ('doit', True),
+	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', False), ('matsimp', True), ('doit', True),
 		('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('Lambda', True), ('zeta', True)])
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
@@ -511,7 +511,7 @@ def start_server (logging = True):
 
 	# make sure all env options are initialized according to command line options
 	for short, long in zip ('EqysmtNOSbgGLz', \
-			['EI', 'quick', 'nopyS', 'nosimplify', 'nomatsimp', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'noLambda', 'nozeta']):
+			['EI', 'quick', 'nopyS', 'simplify', 'nomatsimp', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'noLambda', 'nozeta']):
 		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
 			_admin_env (AST ('@', long))
 		else:
