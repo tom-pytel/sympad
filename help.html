@@ -463,9 +463,9 @@ In this way you can assign different values to "<b>a</b>" and have the integrati
 <h4 id="Simplification">Simplification</h4>
 
 <p>
-Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, by default SymPad will try to simplify the result of any calculation before returning it.
-This is due to the fact that many times SymPy prefers to return results quicker and leaves the option to simplify to the user - in this case SymPad, whereas SymPad is the kind of application which should always present the simplest possible representation of a result.
-This behavior can be turned off by calling "<b>env(nosimplify)</b>"" and turned back on via "<b>env('simplify')</b>", note the string quotes since "<b>simplify</b>" is a reserved SymPy function name.
+Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, SymPad can try to automatically simplify the result of any calculation before returning it.
+This can be useful due to the fact that many times SymPy prefers to return results quicker and leaves the option to simplify to the user - in this case SymPad, whereas SymPad is the kind of application which should always present the simplest possible representation of a result.
+This behavior can be turned on by calling "<b>env('simplify')</b>" and turned back on via "<b>env(nosimplify)</b>", note the string quotes since "<b>simplify</b>" is a reserved SymPy function name.
 </p><p>
 A separate type of simplification is done for matrix operations since native SymPy matrix operations tend to blow up fairly quickly.
 This simplification is on by default and simplifies matrices any time they are multiplied which helps control intermediate results in complex matrix operations and gives an already simplified answer once the operation completes.
@@ -834,15 +834,15 @@ delall<i>&emsp; clean up variables</i><br>
 <h4 id="Plotting Functions">Plotting Functions</h4>
 
 <p>
-plotf (2, x**2)<br>
+plotf (2, x**2)<i>&emsp; plot expression directly</i><br>
 f = x**2<br>
-plotf (2, f)<br>
-plotf (2, lambda x: f)<br>
+plotf (2, f)<i>&emsp; plot expression from assigned variable</i><br>
+plotf (2, lambda x: x**2)<i>&emsp; plot lambda function directly</i><br>
 l = lambda x: x**2<br>
-plotf (2, l)<br>
-plotf (2, lambda x: l (x))<br>
-plotf (2, f if x &lt; 0, 'r', f if x >= 0, 'g')<br>
-plotf ('+', 2 if l (x) &lt; 2)<br>
+plotf (2, l)<i>&emsp; plot lambda function from variable</i><br>
+plotf (2, lambda x: l (x - 1))<i>&emsp; plot lambda function from variable modifying the argument</i><br>
+plotf (2, f if x &lt; 0, 'r', f if x >= 0, 'g')<i>&emsp; different colors on either side of x = 0</i><br>
+plotf ('+', 2 if l (x) &lt; 2)<i>&emsp; add to previous plot</i><br>
 plotf ('+', 2, -4, 4, -x**2)<br>
 </p>
 
@@ -910,7 +910,7 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <h4 id="Command Line Arguments">Command Line Arguments</h4>
 
 <p>
-<b>sympad.py</b> [-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-u | --ugly] [-E | --EI] [-q | --quick] [-y | --nopyS] [-s | --nosimplify] [-m | -nomatsimp] [-t | --nodoit] [-N | --noN] [-O | --noO] [-S | --noS] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] [host:port | host | :port]
+<b>sympad.py</b> [-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-u | --ugly] [-E | --EI] [-q | --quick] [-y | --nopyS] [-s | --simplify] [-m | -nomatsimp] [-t | --nodoit] [-N | --noN] [-O | --noO] [-S | --noS] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] [host:port | host | :port]
 </p>
 
 <table>
@@ -922,7 +922,7 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <tr><td><b>-E, --EI</b></td><td>&emsp;- Start with SymPy constants 'E' and 'I' not 'e' and 'i'.</td></tr>
 <tr><td><b>-q, --quick</b></td><td>&emsp;- Start in quick input mode.</td></tr>
 <tr><td><b>-y, --nopyS</b></td><td>&emsp;- Start without Python S escaping.</td></tr>
-<tr><td><b>-s, --nosimplify</b></td><td>&emsp;- Start without post-evaluation simplification.</td></tr>
+<tr><td><b>-s, --simplify</b></td><td>&emsp;- Start with post-evaluation simplification.</td></tr>
 <tr><td><b>-m, --nomatsimp</b></td><td>&emsp;- Start without matrix simplification.</td></tr>
 <tr><td><b>-t, --nodoit</b></td><td>&emsp;- Start without automatic expression doit().</td></tr>
 <tr><td><b>-N, --noN</b></td><td>&emsp;- Start without N function mapping.</td></tr>

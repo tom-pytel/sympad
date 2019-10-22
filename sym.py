@@ -419,7 +419,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-or'   : lambda self, ast: ' \\vee '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice'} or (a.is_piece and a is not ast.or_ [-1])) for a in ast.or_),
 		'-and'  : lambda self, ast: ' \\wedge '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice', '-or'} or (a.is_piece and a is not ast.and_ [-1])) for a in ast.and_),
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
-		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or ast.kw or ast.ufunc in _USER_FUNCS or AST ("@", ast.ufunc).is_diff_or_part else ""}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
+		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or ast.kw or not ast.vars or ast.ufunc in _USER_FUNCS or AST ("@", ast.ufunc).is_diff_or_part else ""}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
 
 		'text'  : lambda self, ast: ast.tex,
 	}
@@ -660,7 +660,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-or'   : lambda self, ast: ' or '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb'}) for a in ast.or_),
 		'-and'  : lambda self, ast: ' and '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb', '-or'}) for a in ast.and_),
 		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
-		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or ast.kw or ast.ufunc in _USER_FUNCS or AST ("@", ast.ufunc).is_diff_or_part else ""}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
+		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or ast.kw or not ast.vars or ast.ufunc in _USER_FUNCS or AST ("@", ast.ufunc).is_diff_or_part else ""}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
 
 		'text'  : lambda self, ast: ast.nat,
 	}
