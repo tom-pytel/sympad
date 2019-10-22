@@ -798,16 +798,16 @@ delall<i>&emsp; clean up variables</i><br>
 
 <p>
 dsolve (d**2/dx**2 ?(x) + 9?(x))<i>&emsp; using undefined functions directly</i><br>
-dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative since function of only one variable</i><br>
-dsolve (y(x)'' + 9y(x))<i>&emsp; or implicit as long as y is not defined</i><br>
-y = ?(x)<br>
+dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative of anonymous functrion since function of only one variable</i><br>
+dsolve (y(x)'' + 9y(x))<i>&emsp; or implicit named undefined function</i><br>
+y = y(x)<i>&emsp; define y variable as undefined function of one variable</i><br>
 dsolve (y'' + 9y)<i>&emsp; easiest like this</i><br>
 dsolve (sin x cos y + cos x sin y y')<br>
 dsolve (y' + 4/x * y = x**3 y**2)<br>
 dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})<i>&emsp; with initial condition</i><br>
 dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order initial conditions</i><br>
 <br>
-x, y = ?x(t), ?y(t)<i>&emsp; two distinct undefined functions so need to name them</i><br>
+x, y = x(t), y(t)<i>&emsp; two distinct undefined functions</i><br>
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
 delall<i>&emsp; clean up variables</i><br>
 </p>

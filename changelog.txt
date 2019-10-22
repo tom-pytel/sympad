@@ -1,3 +1,7 @@
+v1.0.11:
+-----
+
+
 v1.0.10:
 -----
 * Added undefined function initial conditions - ?y(x)(0) = something, ?y(x)'(0) = something
