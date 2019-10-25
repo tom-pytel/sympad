@@ -119,31 +119,14 @@ def _update_vars ():
 	_PARSER.set_user_funcs (user_funcs)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
-	vars = None
-
-	if ast.is_ass:
-		if ast.lhs.is_var: # simple assignment?
-			ast, vars = ast.rhs, [ast.lhs.var]
-
-	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parser as ('x', 'y = y', 'x')) so restructure
-		lhss = []
-		itr  = iter (ast.comma)
-
-		for c in itr:
-			if c.is_var:
-				lhss.append (c.var)
-			elif not c.is_ass or not c.lhs.is_var:
-				break
-
-			else:
-				t    = (c.rhs,) + tuple (itr)
-				ast  = t [0] if len (t) == 1 else AST (',', t)
-				vars = lhss + [c.lhs.var]
+	vars = ast.ass_lhs_vars
 
 	if vars:
-		for var in vars: # trying to change a fundemental law of the universe?
-			if AST ('@', var) in AST.CONSTS:
-				raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
+		if any (v.is_var_const for v in vars):
+			raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
+
+		ast  = ast.rhs
+		vars = [v.var for v in vars]
 
 	return AST.apply_vars (ast, _VARS), vars
 

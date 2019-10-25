@@ -1,5 +1,5 @@
 # Convert between internal AST and SymPy expressions and write out LaTeX, native shorthand and Python code.
-# Here be dragons! MUST REFACTOR AT SOME POINT!
+# Here be dragons! MUST REFACTOR AT SOME POINT FOR THE LOVE OF ALL THAT IS GOOD AND PURE!
 
 from ast import literal_eval
 from functools import reduce
@@ -197,7 +197,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return (s, has) if ret_has else s
 
 	def _ast2tex_ass_hs (self, hs, lhs = True):
-		return self._ast2tex_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and hs.op in {',', '-piece'}))
+		return self._ast2tex_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and (hs.is_piece or (hs.is_comma and (self.parent and not self.parent.is_scolon)))))
 
 	def _ast2tex_cmp_hs (self, hs):
 		return self._ast2tex_wrap (hs, 0, {'=', '<>', '-piece', '-slice', '-or', '-and', '-not'})
@@ -481,7 +481,8 @@ class ast2nat: # abstract syntax tree -> native text
 		return (s, has) if ret_has else s
 
 	def _ast2nat_ass_hs (self, hs, lhs = True):
-		return self._ast2nat_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and hs.op in {',', '-piece', '-lamb'}) or \
+		# return self._ast2tex_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and (hs.is_piece or (hs.is_comma and (self.parent and not self.parent.is_scolon)))))
+		return self._ast2nat_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and (hs.op in {'-piece', '-lamb'}) or (hs.is_comma and (self.parent and not self.parent.is_scolon))) or \
 				(not lhs and hs.is_lamb and self.parent.op in {'-set', '-dict'}))
 
 	def _ast2nat_cmp_hs (self, hs):
@@ -713,7 +714,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		return self._ast2py (ast)
 
 	def _ast2py_ass (self, ast):
-		if not self.parent or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
+		if self.parent.is_func or (ast.ass_lhs_vars and (not self.parent or self.parent.is_scolon)): # present assignment with = instead of Eq for keyword argument or at top level?
 			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
 
 		return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'

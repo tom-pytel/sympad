@@ -427,6 +427,8 @@ class AST_Ass (AST):
 	def _init (self, lhs, rhs):
 		self.lhs, self.rhs = lhs, rhs # should be py form
 
+	_ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.is_var else self.lhs.comma if (self.lhs.is_comma and all (a.is_var for a in self.lhs.comma)) else None
+
 class AST_Cmp (AST):
 	op, is_cmp = '<>', True
 
