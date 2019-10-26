@@ -1,18 +1,22 @@
-> verify all is_var -> is_var_nonconst where consts not allowed
-
 > ics sym representations
 > ?(x)'(2), spt->?(x)(2) instead of subs of diff
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 
-> == -> = in tex?
-
-> unknown function names in different font?
 > single varible query displays undefined function instead of variable if so mapped?
 
 
+> == -> = general representation when valid
+
+> display subscripts
+> parse subscripts
+> single letter variables can take trailing number
+
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
+> unify lambda with defined function of form f (x, y, z)
+
+> verify all is_var -> is_var_nonconst where consts not allowed
 
 > N beta (2, 3) -> N (beta (2, 3)) instead of N (beta) (2, 3)
 > sin a.b()
@@ -20,10 +24,6 @@
 
 > change vars to pass into parse?
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function
-
-
-> More Examples: Lambdas
-> More Examples: Parentheses
 
 > overhaul function call keyword arguments: expr -> ('kw', expr)
 > overhaul lambda variables: ('@', 'var') -> 'var'
@@ -36,11 +36,11 @@
 > quick mode error: dpartial
 > quick mode error: \operatorname{\_}()
 
+> More Examples: Lambdas
+> More Examples: Parentheses
+
 > allow leading underscore for vars and funcs and leading \_ for tex
 > clean up sparser TOKENS and centralize repeated patterns
-> display subscripts
-> parse subscripts
-> single letter variables can take trailing number
 
 > var assumptions (using @ character?)
 

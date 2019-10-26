@@ -140,7 +140,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		_VARS.update (vars)
 
 	if not vars: # no assignment
-		ast               = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
+		# ast               = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
 		_VARS [_VAR_LAST] = ast
 
 		return [ast]

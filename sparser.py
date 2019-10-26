@@ -698,7 +698,7 @@ class Parser (lalr1.LALR1):
 	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}|{_LTR})'
 	_VAR_QUICK     = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
 
-	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens
+	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens (differences from normal)
 		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LTR}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'\\lim'),
