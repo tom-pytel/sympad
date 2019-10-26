@@ -973,10 +973,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
-	def __init__ (self): self.eval = True # pylint kibble
+	def __init__ (self): self.parent = self.ast = None; self.eval = True # pylint kibble
 	def __new__ (cls, ast, xlat = True):
-		self      = super ().__new__ (cls)
-		self.eval = True
+		self         = super ().__new__ (cls)
+		self.eval    = True
+		self.parents = [None]
+		self.parent  = self.ast = AST ()
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -989,7 +991,17 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return spt
 
 	def _ast2spt (self, ast):
-		spt = self._ast2spt_funcs [ast.op] (self, ast)
+		self.parents.append (self.ast)
+
+		self.parent = self.ast
+		self.ast    = ast
+
+		spt         = self._ast2spt_funcs [ast.op] (self, ast)
+
+		del self.parents [-1]
+
+		self.ast    = self.parent
+		self.parent = self.parents [-1]
 
 		if _DOIT and self.eval:
 			try:
@@ -1183,6 +1195,14 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.as_var.var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
 	def _ast2spt_lamb (self, ast):
+		i = self.parent.mul.index (ast) if self.parent.is_mul else None
+
+		if not (
+				self.parent.op in {None, ',', '(', '-lamb'} or
+				(self.parent.is_ass and ast is self.parent.rhs) or
+				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren)):
+			return self._ast2spt (ast.lamb)
+
 		oldeval   = self.eval
 		self.eval = False
 		spt       = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))

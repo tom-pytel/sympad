@@ -1,7 +1,7 @@
-> unify lambda with defined function of form f (x, y, z)
-> operations with lambdas as expressions
-
-> derivative and integral of lambda functions? lambdas as expressions?
+* unify lambda with defined function of form f (x, y, z)
+* operations with lambdas as expressions
+* derivative and integral of lambda functions? lambdas as expressions?
+> \int y dx (y = lambda x: x**2)
 
 > overhaul differentiation to allow dy/dx and df/dx
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function
@@ -30,8 +30,8 @@
 
 > hideable variables tab in client
 
-> overhaul function call keyword arguments: expr -> ('kw', expr)
-> overhaul lambda variables: ('@', 'var') -> 'var'
+> overhaul function call keyword arguments: expr -> ('kw', expr)?
+> overhaul lambda variables: ('@', 'var') -> 'var'?
 
 > input shortcut non-opened closing curly and/or paren?
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
