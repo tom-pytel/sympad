@@ -440,6 +440,7 @@ _XLAT_FUNC2TEX = {
 	'im'      : lambda ast2tex, *args: f'\\Im\\left({ast2tex (AST.tuple2ast (args))} \\right)',
 
 	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
+	'set'     : lambda ast2tex, *args: '\\emptyset' if not args else None,
 
 	'Subs'    : lambda ast2tex, *args: _xlat_f2t_SUBS (ast2tex, AST ('-func', 'Subs', args)),
 }

@@ -1,11 +1,19 @@
 > unify lambda with defined function of form f (x, y, z)
 > operations with lambdas as expressions
+
 > derivative and integral of lambda functions? lambdas as expressions?
+
+> overhaul differentiation to allow dy/dx and df/dx
+> d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function
+
 
 > ics sym representations
 > ?(x)'(2), spt->?(x)(2) instead of subs of diff
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
+
+> patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
+
 
 > == -> = general representation when valid (if possible)
 
@@ -14,10 +22,6 @@
 > parse subscripts
 > single letter variables can take trailing number
 
-> patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
-
-> overhaul differentiation to allow dy/dx and df/dx
-> d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function
 
 > verify all is_var -> is_var_nonconst where consts not allowed
 

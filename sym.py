@@ -1157,8 +1157,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				(self._ast2spt (n.as_var),)
 				if n.is_var else
 				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.as_int))
-				for n in ast.dvs
-				), ())
+			for n in ast.dvs), ())
 
 		return sp.Derivative (self._ast2spt (ast [1]), *args)
 
