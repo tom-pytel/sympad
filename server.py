@@ -115,8 +115,10 @@ def _update_vars ():
 			elif ast.is_lamb:
 				user_funcs.add (var)
 
+	# sparser.set_user_vars (_VARS)
+	sparser.set_user_funcs (user_funcs)
+	# sym.set_user_vars (_VARS)
 	sym.set_user_funcs (user_funcs)
-	_PARSER.set_user_funcs (user_funcs)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = ast.ass_lhs_vars
@@ -126,12 +128,14 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 			raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
 
 		ast  = ast.rhs
-		vars = [v.var for v in vars]
+		# vars = [v.var for v in vars]
 
 	return AST.apply_vars (ast, _VARS), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
+		vars = dict ((v.var, a) if v.is_var else (v.ufunc, AST ('-lamb', a, tuple (vv.var for vv in v.vars))) for v, a in vars.items ())
+
 		try: # check for circular references
 			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
 		except RecursionError:
@@ -148,7 +152,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 	if len (vars) == 1: # simple assignment
 		set_vars ({vars [0]: ast})
 
-		asts = [AST ('=', ('@', vars [0]), ast)]
+		asts = [AST ('=', vars [0], ast)]
 
 	else: # tuple assignment
 		ast  = ast.strip_paren
@@ -161,7 +165,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 		set_vars (dict (zip (vars, asts)))
 
-		asts = [AST ('=', ('@', vars [i]), asts [i]) for i in range (len (vars))]
+		asts = [AST ('=', vars [i], asts [i]) for i in range (len (vars))]
 
 	_update_vars ()
 

@@ -251,15 +251,6 @@ class AST (tuple):
 
 		return _as_identifier (self)
 
-	def _as_pvarlist (self): # parenthesized list of variable names
-		if self.is_paren:
-			vars = self.paren.comma if self.paren.is_comma else (self.paren,)
-
-			if all (v.is_var_nonconst for v in vars):
-				return vars
-
-		return None
-
 	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
@@ -427,7 +418,7 @@ class AST_Ass (AST):
 	def _init (self, lhs, rhs):
 		self.lhs, self.rhs = lhs, rhs # should be py form
 
-	_ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.is_var else self.lhs.comma if (self.lhs.is_comma and all (a.is_var for a in self.lhs.comma)) else None
+	_ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.op in {'@', '-ufunc'} else self.lhs.comma if (self.lhs.is_comma and all (a.op in {'@', '-ufunc'} for a in self.lhs.comma)) else None
 
 class AST_Cmp (AST):
 	op, is_cmp = '<>', True
@@ -546,6 +537,14 @@ class AST_Paren (AST):
 
 	def _init (self, paren):
 		self.paren = paren
+
+	def _as_pvarlist (self):
+		vars = self.paren.comma if self.paren.is_comma else (self.paren,)
+
+		if all (v.is_var_nonconst for v in vars):
+			return vars
+
+		return None
 
 class AST_Brack (AST):
 	op, is_brack = '[', True

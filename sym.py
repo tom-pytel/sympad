@@ -10,11 +10,10 @@ from sympy.core.function import AppliedUndef as sp_AppliedUndef
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-
-_USER_FUNCS    = set () # set user funcs {name, ...}
-_POST_SIMPLIFY = True # post-evaluation simplification
-_PYS           = True # Python S() escaping
-_DOIT          = True # expression doit()
+_SYM_USER_FUNCS = set () # set user funcs {name, ...}
+_POST_SIMPLIFY  = True # post-evaluation simplification
+_PYS            = True # Python S() escaping
+_DOIT           = True # expression doit()
 
 class _None: pass # unique non-None None marker
 
@@ -276,8 +275,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
 					(n.is_paren and p.tail.is_var and (
-						(p.tail.var in _USER_FUNCS) or
-						(not p.tail.is_diff_or_part and n.as_pvarlist is not None and len (n.as_pvarlist))
+						(p.tail.var in _SYM_USER_FUNCS) or
+						(not p.tail.is_diff_or_part and n.as_pvarlist)
 					))):
 				t.append (f' \\cdot {s}')
 				has = True
@@ -380,6 +379,18 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		else:
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
+	def _ast2tex_ufunc (self, ast):
+		if not ast.ufunc or ast.kw or not ast.vars or AST ('@', ast.ufunc).is_diff_or_part or \
+				(ast.ufunc in _SYM_USER_FUNCS and \
+				not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
+				not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
+				):
+			pre = '?'
+		else:
+			pre = ''
+
+		return f'{pre}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
+
 	_ast2tex_funcs = {
 		';'     : lambda self, ast: ';\\: '.join (self._ast2tex (a) for a in ast.scolon),
 		'='     : lambda self, ast: f'{self._ast2tex_ass_hs (ast.lhs)} = {self._ast2tex_ass_hs (ast.rhs, False)}',
@@ -419,7 +430,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-or'   : lambda self, ast: ' \\vee '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice'} or (a.is_piece and a is not ast.or_ [-1])) for a in ast.or_),
 		'-and'  : lambda self, ast: ' \\wedge '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice', '-or'} or (a.is_piece and a is not ast.and_ [-1])) for a in ast.and_),
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
-		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or ast.kw or not ast.vars or ast.ufunc in _USER_FUNCS or AST ("@", ast.ufunc).is_diff_or_part else ""}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
+		'-ufunc': _ast2tex_ufunc,
 
 		'text'  : lambda self, ast: ast.tex,
 	}
@@ -532,11 +543,11 @@ class ast2nat: # abstract syntax tree -> native text
 					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or \
 					n.strip_fdpi.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
-					(s [:1] == '(' and ((p.is_var and p.var in _USER_FUNCS) or p.is_attr_var or (p.is_pow and p.exp.is_attr_var))) or \
+					(s [:1] == '(' and ((p.tail.is_var and p.tail.var in _SYM_USER_FUNCS) or p.is_attr_var or (p.is_pow and p.exp.is_attr_var))) or \
 					(n.is_pow and n.base.is_num_pos) or \
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or \
-					(n.is_paren and p.tail.is_var and not p.tail.is_diff_or_part and n.as_pvarlist is not None and len (n.as_pvarlist))):
+					(n.is_paren and p.tail.is_var and not p.tail.is_diff_or_part and n.as_pvarlist)):
 				t.append (f' * {s}')
 				has = True
 
@@ -621,6 +632,18 @@ class ast2nat: # abstract syntax tree -> native text
 		else:
 			return f"""\\[{', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}]' for row in ast.mat)}]"""
 
+	def _ast2nat_ufunc (self, ast):
+		if not ast.ufunc or ast.kw or not ast.vars or AST ('@', ast.ufunc).is_diff_or_part or \
+				(ast.ufunc in _SYM_USER_FUNCS and \
+				not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
+				not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
+				):
+			pre = '?'
+		else:
+			pre = ''
+
+		return f'{pre}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})'
+
 	_ast2nat_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2nat (a) for a in ast.scolon),
 		'='     : lambda self, ast: f'{self._ast2nat_ass_hs (ast.lhs)} = {self._ast2nat_ass_hs (ast.rhs, False)}',
@@ -661,7 +684,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-or'   : lambda self, ast: ' or '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb'}) for a in ast.or_),
 		'-and'  : lambda self, ast: ' and '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb', '-or'}) for a in ast.and_),
 		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
-		'-ufunc': lambda self, ast: f'{"?" if not ast.ufunc or ast.kw or not ast.vars or ast.ufunc in _USER_FUNCS or AST ("@", ast.ufunc).is_diff_or_part else ""}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
+		'-ufunc': _ast2nat_ufunc,
 
 		'text'  : lambda self, ast: ast.nat,
 	}
@@ -714,7 +737,27 @@ class ast2py: # abstract syntax tree -> Python code text
 		return self._ast2py (ast)
 
 	def _ast2py_ass (self, ast):
-		if self.parent.is_func or (ast.ass_lhs_vars and (not self.parent or self.parent.is_scolon)): # present assignment with = instead of Eq for keyword argument or at top level?
+		def ufunc2lamb (ufunc, lamb):
+			return ('-lamb', lamb, tuple (v.var for v in ufunc.vars))
+
+		istop = ast.ass_lhs_vars and (not self.parent or self.parent.is_scolon)
+
+		if istop:
+			if ast.lhs.is_ufunc:
+				ast = AST ('=', ('@', ast.lhs.ufunc), ufunc2lamb (ast.lhs, ast.rhs))
+
+			elif ast.lhs.is_comma:
+				rhs = ast.rhs._strip_paren (1)
+
+				if rhs.op in {',', '[', '-set'}:
+					rhss = rhs.comma if rhs.is_comma else rhs.brack if rhs.is_brack else rhs.set
+
+					if ast.lhs.comma.len == rhss.len:
+						lrs = [(('@', l.ufunc), ufunc2lamb (l, r)) if l.is_ufunc else (l, r) for l, r in zip (ast.lhs.comma, rhss)]
+						rhs = (rhs.op, tuple (r for l, r in lrs))
+						ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
+
+		if istop or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
 			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
 
 		return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
@@ -1066,7 +1109,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if func is not None:
 			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
-		if ast.unescaped in _USER_FUNCS: # user lambda, within other lambda if it got here
+		if ast.unescaped in _SYM_USER_FUNCS: # user lambda, within other lambda if it got here
 			return ExprNoEval (str (ast), 1)
 
 		raise NameError (f'function {ast.unescaped!r} is not defined')
@@ -1449,8 +1492,8 @@ class spt2ast:
 
 #...............................................................................................
 def set_user_funcs (user_funcs):
-	global _USER_FUNCS
-	_USER_FUNCS = user_funcs
+	global _SYM_USER_FUNCS
+	_SYM_USER_FUNCS = user_funcs
 
 def set_pyS (state):
 	global _PYS
