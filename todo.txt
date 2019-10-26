@@ -1,15 +1,14 @@
 > unify lambda with defined function of form f (x, y, z)
 > operations with lambdas as expressions
+> derivative and integral of lambda functions? lambdas as expressions?
 
 > ics sym representations
 > ?(x)'(2), spt->?(x)(2) instead of subs of diff
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 
-> single varible query displays undefined function instead of variable if so mapped?
+> == -> = general representation when valid (if possible)
 
-
-> == -> = general representation when valid
 
 > display subscripts
 > parse subscripts
@@ -17,14 +16,15 @@
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
+> overhaul differentiation to allow dy/dx and df/dx
+> d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function
+
 > verify all is_var -> is_var_nonconst where consts not allowed
 
 > N beta (2, 3) -> N (beta (2, 3)) instead of N (beta) (2, 3)
 > sin a.b()
-> {lambda x: {lambda x: x**2}} (3) -> TypeError, {lambda y: {lambda x: x**2}} (3) works
 
-> change vars to pass into parse?
-> d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function
+> hideable variables tab in client
 
 > overhaul function call keyword arguments: expr -> ('kw', expr)
 > overhaul lambda variables: ('@', 'var') -> 'var'
@@ -87,8 +87,6 @@
 > function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?
 > long variable name shortcut? $?
-> derivative and integral of lambda functions? lambdas as expressions?
-> eliminate potentially pointless minus rewriting by moving negation in parse higherarchy?
 > rewrite sqrt during autocomplete to show radix?
 
 > floor / ceiling

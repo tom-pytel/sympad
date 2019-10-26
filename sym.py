@@ -814,7 +814,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		for i, n in enumerate (ast.mul):
 			s = self._ast2py_paren (n, n.is_cmp_in or n.is_add)
 
-			if p and (s [:1] != '(' or not (p.strip_paren.is_func or p.strip_paren.is_attr_func) or i in ast.exp):
+			if p and (s [:1] != '(' or not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or i in ast.exp):
 				t.append (f'*{s}')
 			else:
 				t.append (s)
