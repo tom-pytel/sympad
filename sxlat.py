@@ -106,7 +106,7 @@ def _xlat_f2a_Pow (ast = AST.VarNull, exp = AST.VarNull):
 	return AST ('^', ast, exp)
 
 def _xlat_f2a_Matrix (ast = AST.VarNull):
-	if ast.is_null_var:
+	if ast.is_var_null:
 		return AST.MatEmpty
 
 	if ast.is_brack:
@@ -145,7 +145,7 @@ def _xlat_f2a_Matrix (ast = AST.VarNull):
 def _xlat_f2a_Piecewise (*args):
 	pcs = []
 
-	if not args or args [0].is_null_var:
+	if not args or args [0].is_var_null:
 		return AST ('-piece', ((AST.VarNull, AST.VarNull),))
 
 	if len (args) > 1:
@@ -502,8 +502,9 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 		es  = [_xlat_pyS (a) for a in ast [1] [1:]]
 		has = any (e [1] for e in es)
 		e0  = _xlat_pyS (ast [1] [0], need and not has)
+		es  = (e0 [0],) + tuple (e [0] for e in es)
 
-		return AST (ast.op, (e0 [0],) + tuple (e [0] for e in es)), has or e0 [1]
+		return (AST ('+', es) if ast.is_add else AST ('*', es, ast.exp)), has or e0 [1]
 
 	if ast.is_div:
 		denom, has = _xlat_pyS (ast.denom)

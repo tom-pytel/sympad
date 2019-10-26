@@ -257,21 +257,27 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		p   = None
 		has = False
 
-		for n in ast.mul:
+		for i, n in enumerate (ast.mul):
 			s = self._ast2tex_wrap (n,
 					(p and _ast_is_neg (n)) or (n.strip_mmls.is_intg and n is not ast.mul [-1]),
 					n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.is_piece and n is not ast.mul [-1]))
 
-			if p and p.is_attr and s [:6] == '\\left(':
-				s = self._ast2tex_wrap (s, 1)
+			# if p and p.is_attr and s [:6] == '\\left(' and i not in ast.exp:
+			# 	s = self._ast2tex_wrap (s, 1)
 
-			if p and (n.op in {'#', '-mat'} or n.is_null_var or p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
-					_ast_is_neg (n) or s [:6] == '\\left[' or
-					n.strip_fdpi.strip_paren.is_comma or
+			if p and (
+					s [:6] == '\\left[' or
+					(s [:6] == '\\left(' and (p.is_attr_var or i in ast.exp)) or
+					_ast_is_neg (n) or
+					n.is_var_null or
+					n.op in {'#', '-mat'} or
+					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
+					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
+					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
+					# (n.strip_fdpi.is_paren and i in ast.exp) or
 					(n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
-					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
 					(n.is_paren and p.tail.is_var and (
@@ -281,9 +287,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				t.append (f' \\cdot {s}')
 				has = True
 
-			elif p and (p.op in {'-sqrt'} or p.num_exp or \
-					p.strip_minus.is_diff_or_part_any or n.is_diff_or_part_any or \
-					(p.is_long_var and n.op not in {'(', '['}) or (n.is_long_var and p.op not in {'(', '['})):
+			elif p and (
+					p.op in {'-sqrt'} or
+					p.num_exp or \
+					(p.is_attr_var and s [:6] != '\\left(') or \
+					p.strip_minus.is_diff_or_part_any or
+					n.is_diff_or_part_any or \
+					(p.is_var_long and n.op not in {'(', '['}) or (n.is_var_long and p.op not in {'(', '['})):
 				t.append (f'\\ {s}')
 
 			else:
@@ -534,24 +544,35 @@ class ast2nat: # abstract syntax tree -> native text
 		p   = None
 		has = False
 
-		for n in ast.mul:
+		for i, n in enumerate (ast.mul):
 			s = self._ast2nat_wrap (n, \
 					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
 					n.op in {'=', '<>', '+', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.is_piece and n is not ast.mul [-1]))
 
-			if p and (n.op in {'#', '-lim', '-sum', '-intg'} or n.is_null_var or p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or \
-					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or \
-					n.strip_fdpi.strip_paren.is_comma or (n.is_pow and n.base.strip_paren.is_comma) or \
-					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or \
-					(s [:1] == '(' and ((p.tail.is_var and p.tail.var in _SYM_USER_FUNCS) or p.is_attr_var or (p.is_pow and p.exp.is_attr_var))) or \
-					(n.is_pow and n.base.is_num_pos) or \
-					(n.is_attr and n.strip_attr.strip_paren.is_comma) or \
-					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or \
+			if p and (
+					n.op in {'#', '-lim', '-sum', '-intg'} or
+					n.is_var_null or
+					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
+					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or
+					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
+					(s [:1] == '(' and (
+						p.is_attr_var or
+						i in ast.exp or
+						(p.tail.is_var and p.tail.var in _SYM_USER_FUNCS) or
+						(p.is_pow and p.exp.is_attr_var))) or
+					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
+					# n.strip_fdpi.strip_paren.is_comma or
+					# (n.strip_fdpi.is_paren and i in ast.exp) or
+					(n.is_pow and n.base.strip_paren.is_comma) or
+					(n.is_pow and n.base.is_num_pos) or
+					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
+					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
 					(n.is_paren and p.tail.is_var and not p.tail.is_diff_or_part and n.as_pvarlist)):
 				t.append (f' * {s}')
 				has = True
 
-			elif p and (p.is_diff_or_part_solo or \
+			elif p and (
+					p.is_diff_or_part_solo or \
 					(n.op not in {'#', '(', '|', '^'} or p.op not in {'#', '(', '|'})):
 				t.append (f' {s}')
 
@@ -786,6 +807,22 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return f'{obj}.{ast.attr}'
 
+	def _ast2py_mul (self, ast):
+		t = []
+		p = None
+
+		for i, n in enumerate (ast.mul):
+			s = self._ast2py_paren (n, n.is_cmp_in or n.is_add)
+
+			if p and (s [:1] != '(' or not (p.strip_paren.is_func or p.strip_paren.is_attr_func) or i in ast.exp):
+				t.append (f'*{s}')
+			else:
+				t.append (s)
+
+			p = n
+
+		return ''.join (t)
+
 	def _ast2py_div (self, ast):
 		n = self._ast2py_curly (ast.numer)
 		d = self._ast2py_curly (ast.denom)
@@ -875,7 +912,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+"})}',
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
 		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n.is_num_neg and n is not ast.add [0])) for n in ast.add).replace (' + -', ' - '),
-		'*'     : lambda self, ast: '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add) for n in ast.mul),
+		# '*'     : lambda self, ast: '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add) for n in ast.mul),
+		'*'     : _ast2py_mul,
 		'/'     : _ast2py_div,
 		'^'     : _ast2py_pow,
 		'-log'  : _ast2py_log,
@@ -1520,15 +1558,13 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), (('@', 'x'),))}
-# 	# vars = {'f': AST ('-lamb', ('-intg', ('@', 'x'), ('@', 'dx')), (('@', 'x'),))}
-# 	# vars = {'theq': AST ('=', '=', ('+', (('@', 'c1'), ('^', ('@', 'x'), ('#', '2')), ('-', ('@', 'c2')), ('*', (('#', '2'), ('@', 'x'))))), ('+', (('@', 'x'), ('@', 'y'), ('-', ('*', (('@', 'c5'), ('@', 'c6')))))))}
-# 	# vars = {'S': AST ('-lamb', ('-func', '$S', (('@', 'x'),)), (('@', 'x'),))}
-# 	# ast = AST ('.', ('@', 'S'), 'Half')
-# 	# res = ast2spt (ast, vars)
+# 	vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
+# 	ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+# 	set_user_funcs (vars)
+# 	res = ast2py (ast)
 
-# 	ast = AST ('*', (('-diffp', ('@', 'y'), 1), ('(', ('@', 'x'))))
-# 	res = ast2spt (ast)
+# 	# ast = AST ('*', (('-diffp', ('@', 'y'), 1), ('(', ('@', 'x'))))
+# 	# res = ast2spt (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

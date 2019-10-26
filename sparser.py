@@ -310,7 +310,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 	return ast
 
 def _ast_strip_tail_differential (ast):
-	if ast.is_differential or ast.is_null_var: # null_var is for autocomplete
+	if ast.is_differential or ast.is_var_null: # null_var is for autocomplete
 		return None, ast
 
 	if ast.is_intg:
@@ -591,7 +591,7 @@ class Parser (lalr1.LALR1):
 			b'ZnXwW2/XMO2yWiZCTfP/YUIYzNFbe4HB+5D4930JBfpXAz815qLy01VYnoZl01zTRQVivzkGx4Vl25zYRVkoa52arlOuuaaLCoTae97OHU7UWVe9RlQHy78WXzBTfK8IgyustNojBq6TSmukMOf3G9I42ZxXzTlclOVjk7rPMMt1cw4XZfl+gxF3nOXS7JHt' \
 			b'7ZKsN80DX0Bfq0OQCsbm2C/g+eNpoVuiCdvsdcEaoX3jrLt2fIn0sXJpwInro2/O7aK1SmPz9M9eG7Ds/cwu0sbeSwgubdkM7Faw/0WbEaT/694yfOP2u7OfRZj5t2QXafrkFgw8uKZVc4kXaXe/SQ2XqN2+ucSLtLv/oMGFaReWzV/gRdrdf2Di0rTbNZd4' \
 			b'kXb3HwO5NO2K5hIv0q5t3kiFq68Zql3w6Lh29+ABWYiesFaFhgl8S+1Nrn+f0RjCZzecnihgnxEITcXIa2k0tFda+Z9Ci63QoDyM4VU/+C8kjU1rme2IIbEokL+nn7w4UhHKi04oNmDcoPWC4Jv26aJ9scKeWCLbCwv2i2CZdfkV2ATFCyE05iZ8MnwKSyYP' \
-			b'3BnKZV9430Dp9iUTVqnAllyKn1hYycV2YLD/ot1XwNG1xvvCThqOhs58gLjRB7WZ4Ww64TMBfGgsAY6k8m8BH0tiw4k0wceH+f72/wELqfIk' 
+			b'3BnKZV9430Dp9iUTVqnAllyKn1hYycV2YLD/ot1XwNG1xvvCThqOhs58gLjRB7WZ4Ww64TMBfGgsAY6k8m8BH0tiw4k0wceH+f72/wELqfIk'
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum

@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.0.11'
+_VERSION         = '1.0.12'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
@@ -115,9 +115,7 @@ def _update_vars ():
 			elif ast.is_lamb:
 				user_funcs.add (var)
 
-	# sparser.set_user_vars (_VARS)
 	sparser.set_user_funcs (user_funcs)
-	# sym.set_user_vars (_VARS)
 	sym.set_user_funcs (user_funcs)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
@@ -544,7 +542,7 @@ def child ():
 	tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 
 	if _SYMPAD_FIRSTRUN:
-		print ('Sympad server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
+		print (f'SymPad v{_VERSION} server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
 
 	log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 

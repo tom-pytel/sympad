@@ -485,8 +485,8 @@ class AST_Var (AST):
 			self.__dict__ [f'is_var_{var}'] = True
 
 	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
-	_is_null_var          = lambda self: not self.var
-	_is_long_var          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
+	_is_var_null          = lambda self: not self.var
+	_is_var_long          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
 	_is_var_const         = lambda self: self in AST.CONSTS
 	_is_var_nonconst      = lambda self: self not in AST.CONSTS
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
@@ -582,7 +582,7 @@ class AST_Mul (AST):
 	def __new__ (cls, mul, exp = frozenset ()):
 		exp                = frozenset (exp)
 		self               = tuple.__new__ (cls, ('*', mul, exp) if exp else ('*', mul))
-		self.mul, self.exp = mul, exp
+		self.mul, self.exp = mul, exp # exp is optional set of indices of rhses of explicitly specified multiplications
 
 		return self
 
