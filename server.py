@@ -185,8 +185,11 @@ def _admin_funcs (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
-		if v != _VAR_LAST and (e.is_lamb or e.is_ufunc):
-			asts.append (AST ('=', ('@', v), e))
+		if v != _VAR_LAST:
+			if e.is_ufunc:
+				asts.append (AST ('=', ('@', v), e))
+			elif e.is_lamb:
+ 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
 
 	if not asts:
 		return 'No functions defined.'
