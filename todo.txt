@@ -1,4 +1,5 @@
-
+> unify lambda with defined function of form f (x, y, z)
+> operations with lambdas as expressions
 
 > ics sym representations
 > ?(x)'(2), spt->?(x)(2) instead of subs of diff
@@ -15,8 +16,6 @@
 > single letter variables can take trailing number
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
-
-> unify lambda with defined function of form f (x, y, z)
 
 > verify all is_var -> is_var_nonconst where consts not allowed
 
