@@ -158,16 +158,25 @@ i {
 	font-weight: bold;
 }
 
+/*
 #Variables {
 	position: fixed;
-	right: 1em;
-	top: 1em;
+	right: 0.5em;
+	top: 0;
 }
 
 #VarContent {
 	padding: 0.125em;
 	background-color: lightgray;
-	border: 1px solid black;
+	border: 1px solid #0006;
+	border-top: 0;
+}
+
+#VarContentBG {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: -1;
 }
 
 #VarTab {
@@ -176,10 +185,17 @@ i {
 	bottom: -1.65em;
 	padding: 0.25em;
 	background-color: lightgray;
-	border: 1px solid black;
+	border: 1px solid #0006;
 	border-top: 0;
+}
+
+#VarTabBG {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: -1;
 }
 
 .VarCell {
 	padding: 0.125em;
-}
+} */

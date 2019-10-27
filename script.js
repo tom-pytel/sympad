@@ -102,21 +102,6 @@ function resize () {
 }
 
 //...............................................................................................
-function logResize () {
-	// let atEnd  = !(document.documentElement.offsetHeight - document.documentElement.scrollTop - window.innerHeight);
-	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 3)); // +3 is fudge factor
-
-	if (margin < MarginTop) {
-		MarginTop = margin;
-		$('body').css ({'margin-top': margin});
-	}
-
-	// if (atEnd) {
-	// 	scrollToEnd ();
-	// }
-}
-
-//...............................................................................................
 var LastDocHeight = undefined;
 var LastWinHeight = undefined;
 
@@ -165,6 +150,21 @@ function reprioritizeMJQueue () {
 }
 
 //...............................................................................................
+function logResize () {
+	// let atEnd  = !(document.documentElement.offsetHeight - document.documentElement.scrollTop - window.innerHeight);
+	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 3)); // +3 is fudge factor
+
+	if (margin < MarginTop) {
+		MarginTop = margin;
+		$('body').css ({'margin-top': margin});
+	}
+
+	// if (atEnd) {
+	// 	scrollToEnd ();
+	// }
+}
+
+//...............................................................................................
 function addLogEntry () {
 	LogIdx += 1;
 
@@ -192,7 +192,7 @@ function writeToClipboard (text) {
 }
 
 //...............................................................................................
-function copyToClipboard (e, val_or_eval, idx, subidx = 0, mathidx = 0) {
+function copyLogToClipboard (e, val_or_eval, idx, subidx = 0, mathidx = 0) {
 	let t = performance.now ();
 
 	if ((t - LastClickTime) > 500) {
@@ -246,160 +246,169 @@ function updateOverlay (text, erridx, autocomplete) {
 }
 
 //...............................................................................................
-function ajaxResponse (resp) {
-	if (resp.mode == 'validate') {
-		if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
-			return; // ignore out of order responses (which should never happen with single threaded server)
-		}
+function ajaxValidate (resp) {
+	if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
+		return; // ignore out of order responses (which should never happen with single threaded server)
+	}
 
-		if (resp.tex !== null) {
-			Validations [resp.idx] = resp;
+	if (resp.tex !== null) {
+		Validations [resp.idx] = resp;
 
-			let eLogInput = document.getElementById ('LogInput' + resp.idx);
+		let eLogInput = document.getElementById ('LogInput' + resp.idx);
 
-			let queue              = [];
-			[queue, MJQueue.queue] = [MJQueue.queue, queue];
+		let queue              = [];
+		[queue, MJQueue.queue] = [MJQueue.queue, queue];
 
-			MJQueue.queue = queue.filter (function (obj, idx, arr) { // remove previous pending updates to same element
-				return obj.data [0].parentElement !== eLogInput;
-			});
+		MJQueue.queue = queue.filter (function (obj, idx, arr) { // remove previous pending updates to same element
+			return obj.data [0].parentElement !== eLogInput;
+		});
 
-			let eLogInputWait              = document.getElementById ('LogInputWait' + resp.idx);
-			let math                       = resp.tex ? `$${resp.tex}$` : '';
-			eLogInputWait.style.visibility = '';
+		let eLogInputWait              = document.getElementById ('LogInputWait' + resp.idx);
+		let math                       = resp.tex ? `$${resp.tex}$` : '';
+		eLogInputWait.style.visibility = '';
 
-			$(eLogInput).append (`<span onclick="copyToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
-			let eMath = eLogInput.lastElementChild;
+		$(eLogInput).append (`<span onclick="copyLogToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
+		let eMath = eLogInput.lastElementChild;
 
-			MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
-				if (eMath === eLogInput.children [eLogInput.children.length - 1]) {
-					eLogInput.appendChild (eLogInputWait);
+		MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
+			if (eMath === eLogInput.children [eLogInput.children.length - 1]) {
+				eLogInput.appendChild (eLogInputWait);
 
-					for (let i = eLogInput.children.length - 3; i >= 0; i --) {
-						eLogInput.removeChild (eLogInput.children [i]);
-					}
-
-					eLogInputWait.style.visibility = 'hidden';
-					eMath.style.visibility         = '';
-
-					logResize ();
-					scrollToEnd (); // ???
+				for (let i = eLogInput.children.length - 3; i >= 0; i --) {
+					eLogInput.removeChild (eLogInput.children [i]);
 				}
-			}]);
 
-			reprioritizeMJQueue ();
-		}
-
-		updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
-
-	} else { // resp.mode == 'evaluate'
-		Evaluations [resp.idx] = resp;
-		let eLogEval           = document.getElementById ('LogEval' + resp.idx);
-
-		eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
-
-		for (let subidx in resp.data) {
-			subresp = resp.data [subidx];
-
-			if (subresp.msg !== undefined && subresp.msg.length) { // message present?
-				for (let msg of subresp.msg) {
-					$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
-				}
+				eLogInputWait.style.visibility = 'hidden';
+				eMath.style.visibility         = '';
 
 				logResize ();
-				scrollToEnd ();
+				scrollToEnd (); // ???
+			}
+		}]);
+
+		reprioritizeMJQueue ();
+	}
+
+	updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
+}
+
+//...............................................................................................
+function ajaxEvaluate (resp) {
+	Evaluations [resp.idx] = resp;
+	let eLogEval           = document.getElementById ('LogEval' + resp.idx);
+
+	eLogEval.removeChild (document.getElementById ('LogEvalWait' + resp.idx));
+
+	for (let subidx in resp.data) {
+		subresp = resp.data [subidx];
+
+		if (subresp.msg !== undefined && subresp.msg.length) { // message present?
+			for (let msg of subresp.msg) {
+				$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
 			}
 
-			if (subresp.math !== undefined && subresp.math.length) { // math results present?
-				for (let mathidx in subresp.math) {
-					$(eLogEval).append (`<div class="LogEval"></div>`);
-					let eLogEvalDiv = eLogEval.lastElementChild;
+			logResize ();
+			scrollToEnd ();
+		}
 
-					$(eLogEvalDiv).append (`<span style="visibility: hidden" onclick="copyToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${subresp.math [mathidx].tex}$</span>`);
-					let eLogEvalMath = eLogEvalDiv.lastElementChild;
+		if (subresp.math !== undefined && subresp.math.length) { // math results present?
+			for (let mathidx in subresp.math) {
+				$(eLogEval).append (`<div class="LogEval"></div>`);
+				let eLogEvalDiv = eLogEval.lastElementChild;
 
-					$(eLogEvalDiv).append (`<img class="LogWait" src="${WaitIcon}" width="16">`);
-					let eLogEvalWait = eLogEvalDiv.lastElementChild;
+				$(eLogEvalDiv).append (`<span style="visibility: hidden" onclick="copyLogToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${subresp.math [mathidx].tex}$</span>`);
+				let eLogEvalMath = eLogEvalDiv.lastElementChild;
 
-					MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
-						eLogEvalDiv.removeChild (eLogEvalWait);
+				$(eLogEvalDiv).append (`<img class="LogWait" src="${WaitIcon}" width="16">`);
+				let eLogEvalWait = eLogEvalDiv.lastElementChild;
 
-						eLogEvalMath.style.visibility = '';
+				MJQueue.Push (['Typeset', MathJax.Hub, eLogEvalMath, function () {
+					eLogEvalDiv.removeChild (eLogEvalWait);
 
-						logResize ();
-						scrollToEnd ();
-					}]);
+					eLogEvalMath.style.visibility = '';
 
-					reprioritizeMJQueue ();
-				}
-			}
-
-			if (subresp.err !== undefined) { // error?
-				let eErrorHiddenBox, eLogErrorHidden;
-
-				if (subresp.err.length > 1) {
-					$(eLogEval).append ('<div style="position: relative"></div>');
-					eErrorHiddenBox = eLogEval.lastElementChild;
-
-					$(eErrorHiddenBox).append (`<div style="display: none"></div>`);
-					eLogErrorHidden = eErrorHiddenBox.lastElementChild;
-
-					for (let i = 0; i < subresp.err.length - 1; i ++) {
-						$(eLogErrorHidden).append (`<div class="LogError">${subresp.err [i].replace (/  /g, '&emsp;')}</div>`);
-					}
-				}
-
-				$(eLogEval).append (`<div class="LogError">${subresp.err [subresp.err.length - 1]}</div>`);
-				let eLogErrorBottom = eLogEval.lastElementChild;
-
-				if (subresp.err.length > 1) {
-					let ClickHereToOpen = null;
-
-					if (!ExceptionDone) {
-						$(eLogErrorBottom).append ('<i>&emsp;<-- click to open</i>');
-
-						ClickHereToOpen = eLogErrorBottom.lastElementChild;
-						ExceptionDone   = true;
-					}
-
-					$(eErrorHiddenBox).append (`<div class="LogErrorTriange">\u25b7</div>`);
-					let eLogErrorTriangle = eErrorHiddenBox.lastElementChild;
-
-					f = function () {
-						if (eLogErrorHidden.style.display === 'none') {
-							eLogErrorHidden.style.display = 'block';
-							eLogErrorTriangle.innerText   = '\u25bd';
-						} else {
-							eLogErrorHidden.style.display = 'none';
-							eLogErrorTriangle.innerText   = '\u25b7';
-						}
-
-						if (ClickHereToOpen) {
-							ClickHereToOpen.parentNode.removeChild (ClickHereToOpen);
-							ClickHereToOpen = null;
-						}
-
-						logResize ();
-					};
-
-					$(eLogErrorHidden).click (f);
-					$(eLogErrorBottom).click (f);
-					$(eLogErrorTriangle).click (f);
-				}
-
-				logResize ();
-				scrollToEnd ();
-			}
-
-			if (subresp.img !== undefined) { // image present?
-				$(eLogEval).append (`<div><img src='data:image/png;base64,${subresp.img}'></div>`);
-
-				setTimeout (function () { // image seems to take some time to register size even though it is directly present
 					logResize ();
 					scrollToEnd ();
-				}, 0);
+				}]);
+
+				reprioritizeMJQueue ();
 			}
 		}
+
+		if (subresp.err !== undefined) { // error?
+			let eErrorHiddenBox, eLogErrorHidden;
+
+			if (subresp.err.length > 1) {
+				$(eLogEval).append ('<div style="position: relative"></div>');
+				eErrorHiddenBox = eLogEval.lastElementChild;
+
+				$(eErrorHiddenBox).append (`<div style="display: none"></div>`);
+				eLogErrorHidden = eErrorHiddenBox.lastElementChild;
+
+				for (let i = 0; i < subresp.err.length - 1; i ++) {
+					$(eLogErrorHidden).append (`<div class="LogError">${subresp.err [i].replace (/  /g, '&emsp;')}</div>`);
+				}
+			}
+
+			$(eLogEval).append (`<div class="LogError">${subresp.err [subresp.err.length - 1]}</div>`);
+			let eLogErrorBottom = eLogEval.lastElementChild;
+
+			if (subresp.err.length > 1) {
+				let ClickHereToOpen = null;
+
+				if (!ExceptionDone) {
+					$(eLogErrorBottom).append ('<i>&emsp;<-- click to open</i>');
+
+					ClickHereToOpen = eLogErrorBottom.lastElementChild;
+					ExceptionDone   = true;
+				}
+
+				$(eErrorHiddenBox).append (`<div class="LogErrorTriange">\u25b7</div>`);
+				let eLogErrorTriangle = eErrorHiddenBox.lastElementChild;
+
+				f = function () {
+					if (eLogErrorHidden.style.display === 'none') {
+						eLogErrorHidden.style.display = 'block';
+						eLogErrorTriangle.innerText   = '\u25bd';
+					} else {
+						eLogErrorHidden.style.display = 'none';
+						eLogErrorTriangle.innerText   = '\u25b7';
+					}
+
+					if (ClickHereToOpen) {
+						ClickHereToOpen.parentNode.removeChild (ClickHereToOpen);
+						ClickHereToOpen = null;
+					}
+
+					logResize ();
+				};
+
+				$(eLogErrorHidden).click (f);
+				$(eLogErrorBottom).click (f);
+				$(eLogErrorTriangle).click (f);
+			}
+
+			logResize ();
+			scrollToEnd ();
+		}
+
+		if (subresp.img !== undefined) { // image present?
+			$(eLogEval).append (`<div><img src='data:image/png;base64,${subresp.img}'></div>`);
+
+			setTimeout (function () { // image seems to take some time to register size even though it is directly present
+				logResize ();
+				scrollToEnd ();
+			}, 0);
+		}
+	}
+}
+
+//...............................................................................................
+function ajaxResponse (resp) {
+	if (resp.mode == 'validate') {
+		ajaxValidate (resp);
+	} else { // resp.mode == 'evaluate'
+		ajaxEvaluate (resp);
 	}
 }
 
