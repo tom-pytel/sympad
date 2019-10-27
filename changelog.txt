@@ -1,7 +1,10 @@
+v1.0.12:
+--------
+* Added lambdas as expression in proper contexts (can add, multiply, differentiate, etc...).
+
 v1.0.11:
 -----
 * Added definition of lambdas via assignment to undefined function - f(x) = x**2.
-* Added lambdas as expression in proper contexts (can add, multiply, differentiate, etc...).
 * Modified undefined functions to be specifiable implicitly without '?' in most contexts.
 
 v1.0.10:
