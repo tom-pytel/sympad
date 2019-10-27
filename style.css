@@ -10,6 +10,10 @@ body {
 	cursor: default;
 }
 
+i {
+	color: #0008;
+}
+
 #Clipboard {
 	position: fixed;
 	bottom: 0;
@@ -154,6 +158,28 @@ body {
 	font-weight: bold;
 }
 
-i {
-	color: #0008;
+#Variables {
+	position: fixed;
+	right: 1em;
+	top: 1em;
+}
+
+#VarContent {
+	padding: 0.125em;
+	background-color: lightgray;
+	border: 1px solid black;
+}
+
+#VarTab {
+	position: absolute;
+	right: 0;
+	bottom: -1.65em;
+	padding: 0.25em;
+	background-color: lightgray;
+	border: 1px solid black;
+	border-top: 0;
+}
+
+.VarCell {
+	padding: 0.125em;
 }
