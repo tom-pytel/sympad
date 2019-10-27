@@ -476,15 +476,15 @@ x or y and not z
 x = 1
 f = lambda x: x**2
 y = ?(x, real = True)
+z = z(x)
+g (x) = x**3
 vars
-funcs
 z = y
-funcs
+vars
 del y
-funcs
+vars
 delall
 vars
-funcs
 
 """),
 

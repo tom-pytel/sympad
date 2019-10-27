@@ -606,7 +606,7 @@ class Parser (lalr1.LALR1):
 	_LTR      = fr'[a-zA-Z]'
 	_LTRU     = fr'[a-zA-Z_]'
 
-	_VARTEX   = '(?:' + '|'.join (reversed (sorted (x.replace ('\\', '\\\\').replace ('+', '\\+').replace ('*', '\\*').replace ('^', '\\^') for x in AST.Var.TEX2PY))) + ')'
+	_VARTEX   = '(?:' + '|'.join (sorted ((x.replace ('\\', '\\\\').replace ('+', '\\+').replace ('*', '\\*').replace ('^', '\\^') for x in AST.Var.TEX2PY), reverse = True)) + ')'
 	_VARTEX1  = fr'(?:(\d)|({_LTR})|(\\partial|\\infty))'
 	_VARPY    = fr'(?:{_LTR}(?:\w|\\_)*)'
 	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'
@@ -615,8 +615,8 @@ class Parser (lalr1.LALR1):
 	_STRS     = r"'(?:\\.|[^'])*'"
 	_STRD     = r'"(?:\\.|[^"])*"'
 
-	_FUNCPY   = f"(?:{'|'.join (reversed (sorted (AST.Func.PY)))})"
-	_FUNCTEX  = f"(?:{'|'.join (reversed (sorted (AST.Func.TEX)))})"
+	_FUNCPY   = f"(?:{'|'.join (sorted (AST.Func.PY, reverse = True))})"
+	_FUNCTEX  = f"(?:{'|'.join (sorted (AST.Func.TEX, reverse = True))})"
 
 	TOKENS    = OrderedDict ([ # order matters
 		('UFUNC',        fr'\?'),
@@ -701,8 +701,8 @@ class Parser (lalr1.LALR1):
 		('ignore',        r'\\[,:;]|\\?\s+|\\text\s*{\s*[^}]*\s*}'),
 	])
 
-	_PYGREEK_QUICK = '(?:' + '|'.join (reversed (sorted (g for g in AST.Var.GREEK))) + ')'
-	_PYMULTI_QUICK = '(?:' + '|'.join (reversed (sorted (g for g in AST.Var.PY2TEXMULTI))) + ')'
+	_PYGREEK_QUICK = '(?:' + '|'.join (sorted ((g for g in AST.Var.GREEK), reverse = True)) + ')'
+	_PYMULTI_QUICK = '(?:' + '|'.join (sorted ((g for g in AST.Var.PY2TEXMULTI), reverse = True)) + ')'
 	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}|{_LTR})'
 	_VAR_QUICK     = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
 

@@ -101,6 +101,18 @@ class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
+def _sorted_vars ():
+	asts = []
+
+	for v, e in sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])):
+		if v != '_':
+			if e.is_lamb:
+ 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
+			else:
+				asts.append (AST ('=', ('@', v), e))
+
+	return asts
+
 def _update_vars ():
 	_UFUNCS2VARS.clear ()
 
@@ -168,29 +180,10 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 	return asts
 
 def _admin_vars (*args):
-	asts = []
-
-	for v, e in sorted (_VARS.items ()):
-		if v != '_' and not e.is_lamb and not e.is_ufunc:
-			asts.append (AST ('=', ('@', v), e))
+	asts = _sorted_vars ()
 
 	if not asts:
 		return 'No variables defined.'
-
-	return asts
-
-def _admin_funcs (*args):
-	asts = []
-
-	for v, e in sorted (_VARS.items ()):
-		if v != '_':
-			if e.is_ufunc:
-				asts.append (AST ('=', ('@', v), e))
-			elif e.is_lamb:
- 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
-
-	if not asts:
-		return 'No functions defined.'
 
 	return asts
 
@@ -329,58 +322,14 @@ def _admin_envreset (*args):
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
-	def do_GET (self):
-		if self.path == '/':
-			self.path = '/index.html'
+	def vars (self, request):
+		asts = _sorted_vars ()
 
-		fnm = os.path.join (_SYMPAD_PATH, self.path.lstrip ('/'))
-
-		if self.path != '/env.js' and (self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm))):
-			self.send_error (404, f'Invalid path {self.path!r}')
-
-		else:
-			self.send_response (200)
-
-			if self.path == '/env.js':
-				content = 'javascript'
-				data    = f'History = {_HISTORY}\nHistIdx = {len (_HISTORY)}\nVersion = {"v" + _VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
-
-				self.send_header ('Cache-Control', 'no-store')
-
-			else:
-				content = _STATIC_FILES [self.path]
-
-				if _RUNNING_AS_SINGLE_SCRIPT:
-					data = _FILES [self.path [1:]]
-				else:
-					data = open (fnm, 'rb').read ()
-
-			self.send_header ('Content-type', f'text/{content}')
-			self.end_headers ()
-			self.wfile.write (data)
-
-	def do_POST (self):
-		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
-
-		for key, val in list (request.items ()):
-			if isinstance (val, list) and len (val) == 1:
-				request [key] = val [0]
-
-		if request ['mode'] == 'validate':
-			response = self.validate (request)
-		else: # request ['mode'] == 'evaluate':
-			response = self.evaluate (request)
-
-		response ['mode'] = request ['mode']
-		response ['idx']  = request ['idx']
-		response ['text'] = request ['text']
-
-		self.send_response (200)
-		self.send_header ('Content-type', 'application/json')
-		self.send_header ('Cache-Control', 'no-store')
-		self.end_headers ()
-		self.wfile.write (json.dumps (response).encode ('utf8'))
-		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
+		return {'vars': [{
+			'tex': sym.ast2tex (ast),
+			'nat': sym.ast2nat (ast),
+			'py' : sym.ast2py (ast),
+			} for ast in asts]}
 
 	def validate (self, request):
 		ast, erridx, autocomplete = _PARSER.parse (request ['text'])
@@ -454,7 +403,7 @@ class Handler (SimpleHTTPRequestHandler):
 					'tex': sym.ast2tex (ast),
 					'nat': sym.ast2nat (ast),
 					'py' : sym.ast2py (ast),
-				} for ast in asts]})
+					} for ast in asts]})
 
 			return response
 
@@ -486,6 +435,64 @@ class Handler (SimpleHTTPRequestHandler):
 			sys.stdout = _SYS_STDOUT
 
 		return {'data': responses} if responses else {}
+
+	def do_GET (self):
+		if self.path == '/':
+			self.path = '/index.html'
+
+		fnm = os.path.join (_SYMPAD_PATH, self.path.lstrip ('/'))
+
+		if self.path != '/env.js' and (self.path not in _STATIC_FILES or (not _RUNNING_AS_SINGLE_SCRIPT and not os.path.isfile (fnm))):
+			self.send_error (404, f'Invalid path {self.path!r}')
+
+		else:
+			self.send_response (200)
+
+			if self.path == '/env.js':
+				content = 'javascript'
+				data    = f'History = {_HISTORY}\nHistIdx = {len (_HISTORY)}\nVersion = {"v" + _VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
+
+				self.send_header ('Cache-Control', 'no-store')
+
+			else:
+				content = _STATIC_FILES [self.path]
+
+				if _RUNNING_AS_SINGLE_SCRIPT:
+					data = _FILES [self.path [1:]]
+				else:
+					data = open (fnm, 'rb').read ()
+
+			self.send_header ('Content-type', f'text/{content}')
+			self.end_headers ()
+			self.wfile.write (data)
+
+	def do_POST (self):
+		request = parse_qs (self.rfile.read (int (self.headers ['Content-Length'])).decode ('utf8'), keep_blank_values = True)
+
+		for key, val in list (request.items ()):
+			if isinstance (val, list) and len (val) == 1:
+				request [key] = val [0]
+
+		if request ['mode'] == 'vars':
+			response = self.vars (request)
+
+		else:
+			if request ['mode'] == 'validate':
+				response = self.validate (request)
+			else: # if request ['mode'] == 'evaluate':
+				response = {**self.evaluate (request), **self.vars (request)}
+
+			response ['idx']  = request ['idx']
+			response ['text'] = request ['text']
+
+		response ['mode'] = request ['mode']
+
+		self.send_response (200)
+		self.send_header ('Content-type', 'application/json')
+		self.send_header ('Cache-Control', 'no-store')
+		self.end_headers ()
+		self.wfile.write (json.dumps (response).encode ('utf8'))
+		# self.wfile.write (json.dumps ({**request, **response}).encode ('utf8'))
 
 #...............................................................................................
 def start_server (logging = True):

@@ -631,7 +631,7 @@ class AST_Func (AST):
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
-	ADMIN           = {'vars', 'funcs', 'del', 'delall', 'env', 'envreset'}
+	ADMIN           = {'vars', 'del', 'delall', 'env', 'envreset'}
 	PLOT            = {'plotf', 'plotv', 'plotw'}
 	PSEUDO          = {NOREMAP, NOEVAL}
 	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum', 'slice'}

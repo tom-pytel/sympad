@@ -255,6 +255,8 @@ function ajaxValidate (resp) {
 
 //...............................................................................................
 function ajaxEvaluate (resp) {
+	Variables.update (resp.vars);
+
 	Evaluations [resp.idx] = resp;
 	let eLogEval           = document.getElementById ('LogEval' + resp.idx);
 
@@ -365,15 +367,6 @@ function ajaxEvaluate (resp) {
 }
 
 //...............................................................................................
-function ajaxResponse (resp) {
-	if (resp.mode == 'validate') {
-		ajaxValidate (resp);
-	} else { // resp.mode == 'evaluate'
-		ajaxEvaluate (resp);
-	}
-}
-
-//...............................................................................................
 function inputting (text, reset = false) {
 	if (reset) {
 		ErrorIdx     = null;
@@ -389,7 +382,7 @@ function inputting (text, reset = false) {
 		type: 'POST',
 		cache: false,
 		dataType: 'json',
-		success: ajaxResponse,
+		success: ajaxValidate,
 		data: {
 			mode: 'validate',
 			idx: LogIdx,
@@ -406,7 +399,7 @@ function inputted (text) {
 		type: 'POST',
 		cache: false,
 		dataType: 'json',
-		success: ajaxResponse,
+		success: ajaxEvaluate,
 		data: {
 			mode: 'evaluate',
 			idx: LogIdx,
@@ -513,20 +506,11 @@ function inputKeydown (e) {
 		if (JQInput.get (0).selectionStart === JQInput.val ().length && Autocomplete.length) {
 			let text = JQInput.val ();
 
-			// if ((Autocomplete [0] === ' \\right') || (Autocomplete [0] === '|')) {
-			// 	text         = text + Autocomplete.slice (0, 2).join ('');
-			// 	Autocomplete = Autocomplete.slice (2);
-
-			// } else {
-			// 	text         = text + Autocomplete [0];
-			// 	Autocomplete = Autocomplete.slice (1);
-			// }
 			text         = text + Autocomplete [0];
 			Autocomplete = Autocomplete.slice (1);
 
 			JQInput.val (text);
 			inputting (text);
-			// updateOverlay (text, ErrorIdx, Autocomplete);
 		}
 	}
 
@@ -536,25 +520,53 @@ function inputKeydown (e) {
 }
 
 //...............................................................................................
-// function inputFocusout (e) {
-// 	if (PreventFocusOut) {
-// 		e.preventDefault ();
-// 		$(this).focus ();
-
-// 		return false;
-// 	}
-// }
-
-//...............................................................................................
 class _Variables {
 	constructor () {
-		this.eVarContent = document.getElementById ('VarContent');
-		this.display     = false;
+		this.eVarsDiv      = document.getElementById ('VarDiv');
+		this.eVarsContent  = document.getElementById ('VarContent');
+		this.eVarsTable    = document.getElementById ('VarTable');
+		this.queued_update = null;
+		this.display       = false;
+
+		setTimeout (function () { document.getElementById ('VarContent').style.minWidth = `${document.getElementById ('VarTab').clientWidth + 2}px`; }, 100);
+	}
+
+
+
+	_update (vars) {
+		while (this.eVarsTable.firstChild) {
+			this.eVarsTable.firstChild.remove ();
+		}
+
+		for (let v of vars) {
+			let p = v.tex.split (' = ');
+
+			$(this.eVarsTable).append (`<tr><td class="VarTableCell">$${p [0]}$</td><td class="VarTableCell">$= ${p.slice (1).join (' = ')}$</td></tr>`);
+		}
+
+		MJQueue.Push (['Typeset', MathJax.Hub, this.eVarsTable]);
+	}
+
+
+
+	update (vars) {
+		if (this.display) {
+			this._update (vars);
+		} else {
+			this.queued_update = vars;
+		}
+
+		this.eVarsDiv.style.display = vars.length ? 'block' : 'none';
 	}
 
 	toggle () {
+		if (!this.display && this.queued_update !== null) {
+			this._update (this.queued_update);
+			this.queued_update = null;
+		}
+
 		this.display                   = !this.display;
-		this.eVarContent.style.display = this.display ? 'block' : 'none';
+		this.eVarsContent.style.display = this.display ? 'block' : 'none';
 	}
 }
 
@@ -577,13 +589,20 @@ $(function () {
 
 	JQInput.keypress (inputKeypress);
 	JQInput.keydown (inputKeydown);
-	// JQInput.focusout (inputFocusout);
-	// JQInput.blur (inputFocusout);
 
 	addLogEntry ();
 	logResize ();
 	resize ();
 	monitorStuff ();
+
+	$.ajax ({
+		url: URL,
+		type: 'POST',
+		cache: false,
+		dataType: 'json',
+		success: function (resp) { Variables.update (resp.vars); },
+		data: {mode: 'vars'},
+	});
 });
 
 

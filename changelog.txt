@@ -1,6 +1,7 @@
 v1.0.12:
 --------
 * Added lambdas as expression in proper contexts (can add, multiply, differentiate, etc...).
+* Added variables tab to browser client.
 
 v1.0.11:
 -----

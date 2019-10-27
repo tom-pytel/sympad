@@ -153,6 +153,7 @@ i {
 }
 
 #VarDiv {
+	display: none;
 	position: fixed;
 	right: 0.5em;
 	top: 0;
@@ -183,12 +184,18 @@ i {
 }
 
 #VarContent {
+	min-width: 6.1em;
 	padding: 0.125em;
 	display: none;
 	border-top: 0;
 	background-image: url('/bg.png');
 }
 
-.VarCell {
+#VarTable {
+	margin-right: 0;
+	margin-left: auto;
+}
+
+.VarTableCell {
 	padding: 0.25em;
 }
