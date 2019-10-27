@@ -77,7 +77,7 @@ body {
 	margin-bottom: 0.5em;
 }
 
-#InputBG {
+#InputCover {
 	position: fixed;
 	z-index: 2;
 	height: 4em;
@@ -87,7 +87,7 @@ body {
 	background-color: #0000;
 }
 
-#InputBGLeft {
+#InputCoverLeft {
 	position: fixed;
 	z-index: 5;
 	height: 4em;
@@ -96,7 +96,7 @@ body {
 	background-color: #0000;
 }
 
-#InputBGRight {
+#InputCoverRight {
 	position: fixed;
 	z-index: 5;
 	height: 4em;
@@ -260,7 +260,7 @@ function generateBG () {
 	ctx.putImageData (imgd, 0, 0);
 
 	if (window.location.pathname == '/') {
-		for (let name of ['#InputBG', '#InputBGLeft', '#InputBGRight']) {
+		for (let name of ['#InputCover', '#InputCoverLeft', '#InputCoverRight']) {
 			canv        = $(name) [0];
 			ctx         = canv.getContext ('2d');
 			canv.width  = window.innerWidth;
@@ -276,8 +276,8 @@ function copyInputStyle () {
 
 	JQInput.css ({left: left});
 	JQInput.width (window.innerWidth - left - 32);
-	$('#InputBGLeft').width (left);
-	$('#InputBGRight').css ({left: window.innerWidth - 30});
+	$('#InputCoverLeft').width (left);
+	$('#InputCoverRight').css ({left: window.innerWidth - 30});
 
 	let style   = getComputedStyle (document.getElementById ('Input'));
 	let overlay = document.getElementById ('InputOverlay');
@@ -791,7 +791,7 @@ $(function () {
 	BodyMarginBottom = Number (margin.slice (0, margin.length - 2));
 
 	$('#Clipboard').prop ('readonly', true);
-	$('#InputBG') [0].height = $('#InputBG').height ();
+	$('#InputCover') [0].height = $('#InputCover').height ();
 
 	JQInput.keypress (inputKeypress);
 	JQInput.keydown (inputKeydown);
@@ -905,9 +905,9 @@ r"""<!DOCTYPE html>
 
 <div id="Log"></div>
 
-<canvas id="InputBG"></canvas>
-<canvas id="InputBGLeft"></canvas>
-<canvas id="InputBGRight"></canvas>
+<canvas id="InputCover"></canvas>
+<canvas id="InputCoverLeft"></canvas>
+<canvas id="InputCoverRight"></canvas>
 <input id="Input" oninput="inputting (this.value)" autofocus>
 <div id="InputOverlay"><span id="OverlayGood"></span><span id="OverlayError"></span><span id="OverlayAutocomplete"></span></div>
 

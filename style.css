@@ -8,6 +8,7 @@ body {
 	margin-top: 1em;
 	margin-bottom: 6em;
 	cursor: default;
+	background-image: url('/bg.png');
 }
 
 i {
@@ -19,13 +20,6 @@ i {
 	bottom: 0;
 	color: transparent;
 	border: 0px;
-}
-
-#Background {
-	position: fixed;
-	z-index: -1;
-	left: 0;
-	top: 0;
 }
 
 #Greeting {
@@ -43,32 +37,32 @@ i {
 	margin-bottom: 0.5em;
 }
 
-#InputBG {
+#InputCover {
 	position: fixed;
 	z-index: 2;
 	height: 4em;
 	bottom: 0;
 	left: 0;
 	right: 0;
-	background-color: #0000;
+	background-image: url('/bg.png');
 }
 
-#InputBGLeft {
+#InputCoverLeft {
 	position: fixed;
 	z-index: 5;
 	height: 4em;
 	bottom: 0;
 	left: 0;
-	background-color: #0000;
+	background-image: url('/bg.png');
 }
 
-#InputBGRight {
+#InputCoverRight {
 	position: fixed;
 	z-index: 5;
 	height: 4em;
 	bottom: 0;
 	right: 0;
-	background-color: #0000;
+	background-image: url('/bg.png');
 }
 
 #Input {
@@ -158,44 +152,43 @@ i {
 	font-weight: bold;
 }
 
-/*
-#Variables {
+#VarDiv {
 	position: fixed;
 	right: 0.5em;
 	top: 0;
 }
 
-#VarContent {
-	padding: 0.125em;
-	background-color: lightgray;
-	border: 1px solid #0006;
-	border-top: 0;
-}
-
-#VarContentBG {
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: -1;
+#VarTab, #VarContent {
+	border: 1px solid #0004;
 }
 
 #VarTab {
+	border-top: 0;
+	background-image: url('/bg.png');
+}
+
+#VarTabShadow {
+	z-index: -1;
+}
+
+#VarTabShadow, #VarDiv {
+	box-shadow: 4px 4px 12px 2px #0002; /* box-shadow: 0 0 12px 4px #0002; */
+}
+
+#VarTabShadow, #VarTab {
 	position: absolute;
 	right: 0;
 	bottom: -1.65em;
 	padding: 0.25em;
-	background-color: lightgray;
-	border: 1px solid #0006;
-	border-top: 0;
 }
 
-#VarTabBG {
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: -1;
+#VarContent {
+	padding: 0.125em;
+	display: none;
+	border-top: 0;
+	background-image: url('/bg.png');
 }
 
 .VarCell {
-	padding: 0.125em;
-} */
+	padding: 0.25em;
+}

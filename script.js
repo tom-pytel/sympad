@@ -32,51 +32,13 @@ Version          = 'None'
 DisplayStyle     = 1
 
 //...............................................................................................
-function generateBG () {
-	function writeRandomData (data, x0, y0, width, height) {
-		let p, d;
-
-		for (let y = y0; y < height; y ++) {
-			p = (width * y + x0) * 4;
-
-			for (let x = x0; x < width; x ++) {
-				d            = 244 + Math.floor (Math.random () * 12);
-				data [p]     = data [p + 1] = d;
-				data [p + 2] = d - 8;
-				data [p + 3] = 255;
-				p            = p + 4;
-			}
-		}
-	}
-
-	let canv    = document.getElementById ('Background');
-	canv.width  = window.innerWidth;
-	canv.height = window.innerHeight;
-	let ctx     = canv.getContext ('2d');
-	let imgd    = ctx.getImageData (0, 0, canv.width, canv.height); // ctx.createImageData (width, height);
-
-	writeRandomData (imgd.data, 0, 0, canv.width, canv.height);
-	ctx.putImageData (imgd, 0, 0);
-
-	if (window.location.pathname == '/') {
-		for (let name of ['#InputBG', '#InputBGLeft', '#InputBGRight']) {
-			canv        = $(name) [0];
-			ctx         = canv.getContext ('2d');
-			canv.width  = window.innerWidth;
-
-			ctx.putImageData (imgd, 0, 0);
-		}
-	}
-}
-
-//...............................................................................................
 function copyInputStyle () {
 	let left = $('#LogEntry1').position ().left;
 
 	JQInput.css ({left: left});
 	JQInput.width (window.innerWidth - left - 32);
-	$('#InputBGLeft').width (left);
-	$('#InputBGRight').css ({left: window.innerWidth - 30});
+	$('#InputCoverLeft').width (left);
+	$('#InputCoverRight').css ({left: window.innerWidth - 30});
 
 	let style   = getComputedStyle (document.getElementById ('Input'));
 	let overlay = document.getElementById ('InputOverlay');
@@ -98,7 +60,6 @@ function scrollToEnd () {
 function resize () {
 	copyInputStyle ();
 	scrollToEnd ();
-	generateBG ();
 }
 
 //...............................................................................................
@@ -585,11 +546,24 @@ function inputKeydown (e) {
 // }
 
 //...............................................................................................
+class _Variables {
+	constructor () {
+		this.eVarContent = document.getElementById ('VarContent');
+		this.display     = false;
+	}
+
+	toggle () {
+		this.display                   = !this.display;
+		this.eVarContent.style.display = this.display ? 'block' : 'none';
+	}
+}
+
+//...............................................................................................
 $(function () {
-	window.JQInput = $('#Input');
+	window.JQInput   = $('#Input');
+	window.Variables = new _Variables ();
 
 	if (window.location.pathname != '/') {
-		generateBG ();
 		return;
 	}
 
@@ -599,7 +573,7 @@ $(function () {
 	BodyMarginBottom = Number (margin.slice (0, margin.length - 2));
 
 	$('#Clipboard').prop ('readonly', true);
-	$('#InputBG') [0].height = $('#InputBG').height ();
+	$('#InputCover') [0].height = $('#InputCover').height ();
 
 	JQInput.keypress (inputKeypress);
 	JQInput.keydown (inputKeydown);

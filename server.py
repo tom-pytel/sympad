@@ -34,7 +34,7 @@ _SYMPAD_CHILD    = ('--child', '') in __OPTS
 _SYMPAD_FIRSTRUN = ('--firstrun', '') in __OPTS
 
 _DEFAULT_ADDRESS = ('localhost', 9000)
-_STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html'}
+_STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html', '/bg.png': 'png'}
 _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 __name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
@@ -87,14 +87,13 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_HISTORY      = []  # persistent history across browser closings
 
 	_PARSER       = sparser.Parser ()
-	_VAR_LAST     = '_' # name of last evaluated expression variable
 	_ONE_FUNCS    = ('N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta')
 
 	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', False), ('matsimp', True), ('doit', True),
 		('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('Lambda', True), ('zeta', True)])
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_VARS         = {_VAR_LAST: AST.Zero} # This also!
+	_VARS         = {'_': AST.Zero} # This also!
 	_UFUNCS2VARS  = {} # Yup...
 
 #...............................................................................................
@@ -109,7 +108,7 @@ def _update_vars ():
 	user_funcs = one_funcs.copy ()
 
 	for var, ast in _VARS.items ():
-		if var != _VAR_LAST:
+		if var != '_':
 			if ast.is_ufunc:
 				_UFUNCS2VARS [ast] = AST ('@', var)
 			elif ast.is_lamb:
@@ -125,8 +124,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 		if any (v.is_var_const for v in vars):
 			raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
 
-		ast  = ast.rhs
-		# vars = [v.var for v in vars]
+		ast = ast.rhs
 
 	return AST.apply_vars (ast, _VARS), vars
 
@@ -142,8 +140,8 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		_VARS.update (vars)
 
 	if not vars: # no assignment
-		# ast               = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
-		_VARS [_VAR_LAST] = ast
+		# ast         = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
+		_VARS ['_'] = ast
 
 		return [ast]
 
@@ -173,7 +171,7 @@ def _admin_vars (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
-		if v != _VAR_LAST and not e.is_lamb and not e.is_ufunc:
+		if v != '_' and not e.is_lamb and not e.is_ufunc:
 			asts.append (AST ('=', ('@', v), e))
 
 	if not asts:
@@ -185,7 +183,7 @@ def _admin_funcs (*args):
 	asts = []
 
 	for v, e in sorted (_VARS.items ()):
-		if v != _VAR_LAST:
+		if v != '_':
 			if e.is_ufunc:
 				asts.append (AST ('=', ('@', v), e))
 			elif e.is_lamb:
@@ -202,14 +200,14 @@ def _admin_del (*args):
 
 	for arg in args:
 		if arg.is_func_vars: # delete all vars?
-			vars.update (filter (lambda va: not va [1].is_lamb and va [0] != _VAR_LAST, _VARS.items ()))
+			vars.update (filter (lambda va: not va [1].is_lamb and va [0] != '_', _VARS.items ()))
 		elif arg.is_func_funcs: # delete all funcs?
 			vars.update (filter (lambda va: va [1].is_lamb, _VARS.items ()))
 
 		else:
 			var = arg.as_identifier
 
-			if var is None or var == _VAR_LAST:
+			if var is None or var == '_':
 				raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
 
 			vars [var] = _VARS.get (var)
@@ -230,12 +228,12 @@ def _admin_del (*args):
 	return msgs
 
 def _admin_delall (*args):
-	last_var = _VARS [_VAR_LAST]
+	last_var = _VARS ['_']
 
 	_VARS.clear ()
 	_update_vars ()
 
-	_VARS [_VAR_LAST] = last_var
+	_VARS ['_'] = last_var
 
 	return 'All assignments deleted.'
 
