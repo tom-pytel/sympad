@@ -157,23 +157,23 @@ i {
 	position: fixed;
 	right: 0.5em;
 	top: 0;
-}
-
-#VarTab, #VarContent {
-	border: 1px solid #0004;
+	box-shadow: 4px 4px 12px 2px #0002;
 }
 
 #VarTab {
+	border: 1px solid #0004;
 	border-top: 0;
 	background-image: url('/bg.png');
+	color: #0008;
+}
+
+#VarTab:hover {
+	color: black;
 }
 
 #VarTabShadow {
 	z-index: -1;
-}
-
-#VarTabShadow, #VarDiv {
-	box-shadow: 4px 4px 12px 2px #0002; /* box-shadow: 0 0 12px 4px #0002; */
+	box-shadow: 4px 4px 12px 2px #0002;
 }
 
 #VarTabShadow, #VarTab {
@@ -187,6 +187,7 @@ i {
 	min-width: 6.1em;
 	padding: 0.125em;
 	display: none;
+	border: 1px solid #0004;
 	border-top: 0;
 	background-image: url('/bg.png');
 }

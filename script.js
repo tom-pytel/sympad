@@ -112,17 +112,12 @@ function reprioritizeMJQueue () {
 
 //...............................................................................................
 function logResize () {
-	// let atEnd  = !(document.documentElement.offsetHeight - document.documentElement.scrollTop - window.innerHeight);
 	let margin = Math.max (BodyMarginTop, Math.floor (window.innerHeight - $('body').height () - BodyMarginBottom + 3)); // +3 is fudge factor
 
 	if (margin < MarginTop) {
 		MarginTop = margin;
 		$('body').css ({'margin-top': margin});
 	}
-
-	// if (atEnd) {
-	// 	scrollToEnd ();
-	// }
 }
 
 //...............................................................................................
@@ -229,6 +224,7 @@ function ajaxValidate (resp) {
 		eLogInputWait.style.visibility = '';
 
 		$(eLogInput).append (`<span onclick="copyLogToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
+
 		let eMath = eLogInput.lastElementChild;
 
 		MJQueue.Push (['Typeset', MathJax.Hub, eMath, function () {
@@ -522,32 +518,72 @@ function inputKeydown (e) {
 //...............................................................................................
 class _Variables {
 	constructor () {
-		this.eVarsDiv      = document.getElementById ('VarDiv');
-		this.eVarsContent  = document.getElementById ('VarContent');
-		this.eVarsTable    = document.getElementById ('VarTable');
+		this.eVarDiv       = document.getElementById ('VarDiv');
+		this.eVarContent   = document.getElementById ('VarContent');
+		this.eVarTable     = document.getElementById ('VarTable');
 		this.queued_update = null;
 		this.display       = false;
+		this.vars          = new Map ();
 
-		setTimeout (function () { document.getElementById ('VarContent').style.minWidth = `${document.getElementById ('VarTab').clientWidth + 2}px`; }, 100);
+		setTimeout (function () { document.getElementById ('VarContent').style.minWidth = `${document.getElementById ('VarTab').clientWidth + 2}px`; }, 250);
 	}
-
-
 
 	_update (vars) {
-		while (this.eVarsTable.firstChild) {
-			this.eVarsTable.firstChild.remove ();
+		function spliteq (text) {
+			let p = text.split (' = ');
+
+			return [p [0], p.slice (1).join (' = ')];
 		}
 
-		for (let v of vars) {
-			let p = v.tex.split (' = ');
+		vars = new Map (vars.map (function (e) {
+			let nat = spliteq (e.nat);
 
-			$(this.eVarsTable).append (`<tr><td class="VarTableCell">$${p [0]}$</td><td class="VarTableCell">$= ${p.slice (1).join (' = ')}$</td></tr>`);
+			return [nat [0], {tex: spliteq (e.tex), nat: nat, py: spliteq (e.py)}];
+		}));
+
+		for (let r of Array.from (this.eVarTable.childNodes)) {
+			let v = vars.get (r.name);
+
+			if (v === undefined || r.val !== v.nat [1]) {
+				this.eVarTable.removeChild (r);
+			} else {
+				vars.delete (r.name);
+			}
 		}
 
-		MJQueue.Push (['Typeset', MathJax.Hub, this.eVarsTable]);
+		let added = false;
+
+		for (let [n, v] of vars) {
+			let e        = $(`<tr><td class="VarTableCell">$${v.tex [0]}$</td><td class="VarTableCell">$= ${v.tex [1]}$</td></tr>`);
+			let inserted = false;
+			let isfunc   = n.includes ('(');
+			e [0].name   = n;
+			e [0].val    = v.nat [1];
+			added        = true;
+
+			for (let r of this.eVarTable.childNodes) {
+				let isfuncr = r.name.includes ('(');
+
+				if ((isfunc && !isfuncr) || ((n < r.name) && (isfunc === isfuncr))) {
+					e.insertBefore (r);
+					inserted = true;
+
+					break;
+				}
+			}
+
+			if (!inserted) {
+				e.appendTo (this.eVarTable);
+			}
+		}
+
+		this.vars = vars;
+
+		if (added) {
+			MJQueue.Push (['Typeset', MathJax.Hub, this.eVarTable]);
+			reprioritizeMJQueue ();
+		}
 	}
-
-
 
 	update (vars) {
 		if (this.display) {
@@ -556,7 +592,7 @@ class _Variables {
 			this.queued_update = vars;
 		}
 
-		this.eVarsDiv.style.display = vars.length ? 'block' : 'none';
+		this.eVarDiv.style.display = vars.length ? 'block' : 'none';
 	}
 
 	toggle () {
@@ -566,7 +602,7 @@ class _Variables {
 		}
 
 		this.display                   = !this.display;
-		this.eVarsContent.style.display = this.display ? 'block' : 'none';
+		this.eVarContent.style.display = this.display ? 'block' : 'none';
 	}
 }
 

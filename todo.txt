@@ -1,4 +1,5 @@
-> variables tab
+> bg.png into single script
+> variables tab copy to clipboard
 
 * unify lambda with defined function of form f (x, y, z)
 * operations with lambdas as expressions

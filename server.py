@@ -192,21 +192,15 @@ def _admin_del (*args):
 	msgs = []
 
 	for arg in args:
-		if arg.is_func_vars: # delete all vars?
-			vars.update (filter (lambda va: not va [1].is_lamb and va [0] != '_', _VARS.items ()))
-		elif arg.is_func_funcs: # delete all funcs?
-			vars.update (filter (lambda va: va [1].is_lamb, _VARS.items ()))
+		var = arg.as_identifier
 
-		else:
-			var = arg.as_identifier
+		if var is None or var == '_':
+			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
 
-			if var is None or var == '_':
-				raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
+		vars [var] = _VARS.get (var)
 
-			vars [var] = _VARS.get (var)
-
-			if vars [var] is None:
-				raise AE35UnitError (f'Variable {var!r} is not defined, it can only be attributable to human error.')
+		if vars [var] is None:
+			raise AE35UnitError (f'Variable {var!r} is not defined, it can only be attributable to human error.')
 
 	for var, ast in vars.items ():
 		msgs.append (f'{"Lambda function" if ast.is_lamb else "Undefined function" if ast.is_ufunc else "Variable"} {var!r} deleted.')
