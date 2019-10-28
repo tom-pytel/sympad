@@ -34,8 +34,9 @@ _SYMPAD_CHILD    = ('--child', '') in __OPTS
 _SYMPAD_FIRSTRUN = ('--firstrun', '') in __OPTS
 
 _DEFAULT_ADDRESS = ('localhost', 9000)
-_STATIC_FILES    = {'/style.css': 'css', '/script.js': 'javascript', '/index.html': 'html', '/help.html': 'html', '/bg.png': 'png'}
 _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
+_STATIC_FILES    = {'/style.css': 'text/css', '/script.js': 'text/javascript', '/index.html': 'text/html',
+	'/help.html': 'text/html', '/bg.png': 'image/png', '/wait.webp': 'image/webp'}
 
 __name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
 _HELP            = f'usage: {_SYMPAD_NAME} ' \
@@ -443,7 +444,7 @@ class Handler (SimpleHTTPRequestHandler):
 			self.send_response (200)
 
 			if self.path == '/env.js':
-				content = 'javascript'
+				content = 'text/javascript'
 				data    = f'History = {_HISTORY}\nHistIdx = {len (_HISTORY)}\nVersion = {"v" + _VERSION!r}\nDisplayStyle = {_DISPLAYSTYLE [0]}'.encode ('utf8')
 
 				self.send_header ('Cache-Control', 'no-store')
@@ -456,7 +457,7 @@ class Handler (SimpleHTTPRequestHandler):
 				else:
 					data = open (fnm, 'rb').read ()
 
-			self.send_header ('Content-type', f'text/{content}')
+			self.send_header ('Content-type', f'{content}')
 			self.end_headers ()
 			self.wfile.write (data)
 

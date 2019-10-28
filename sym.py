@@ -1198,7 +1198,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		i = self.parent.mul.index (ast) if self.parent.is_mul else None
 
 		if not (
-				self.parent.op in {None, ',', '(', '-func', '-lamb'} or
+				self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren)):
 			return self._ast2spt (ast.lamb)

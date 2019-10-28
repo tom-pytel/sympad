@@ -3,8 +3,9 @@
 
 # Collect all source and data files into single stand-alone sympad.py script file.
 
-_PY_FILES    = ('lalr1.py', 'sast.py', 'sxlat.py', 'sym.py', 'sparser.py', 'spatch.py', 'splot.py', 'server.py')
-_OTHER_FILES = ('style.css', 'script.js', 'index.html', 'help.html')
+_TEXT_FILES = ('style.css', 'script.js', 'index.html', 'help.html')
+_BIN_FILES  = ('bg.png', 'wait.webp')
+_PY_FILES   = ('lalr1.py', 'sast.py', 'sxlat.py', 'sym.py', 'sparser.py', 'spatch.py', 'splot.py', 'server.py')
 
 _HEADER = '''
 #!/usr/bin/env python
@@ -48,13 +49,21 @@ if __name__ == '__main__':
 	fdout.write (_HEADER)
 	fdout.write ('\n_FILES = {\n')
 
-	for fnm in _OTHER_FILES:
+	for fnm in _TEXT_FILES:
 		fdout.write (f'''\n\t'{fnm}': # {fnm}\n\nr"""''')
 
 		for line in open (fnm, encoding="utf8"):
 			fdout.write (line)
 
 		fdout.write ('""".encode ("utf8"),\n')
+
+	for fnm in _BIN_FILES:
+		fdout.write (f"\n\t'{fnm}': # {fnm}\n\n")
+
+		data = open (fnm, 'rb').read ()
+
+		for i in range (0, len (data), 64):
+			fdout.write (f"\t\t{data [i : i + 64]!r}{',' if i + 64 >= len (data) else ''}\n")
 
 	fdout.write ('}\n\n')
 

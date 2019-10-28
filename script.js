@@ -5,7 +5,7 @@
 // TODO: clear() function to delete old log items?
 
 URL              = '/';
-WaitIcon         = 'https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp';
+WaitIcon         = '/wait.webp'; // 'https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp';
 
 MJQueue          = null;
 MarginTop        = Infinity;
@@ -552,10 +552,8 @@ class _Variables {
 		this.eVarContent   = document.getElementById ('VarContent');
 		this.eVarTable     = document.getElementById ('VarTable');
 		this.queued_update = null;
-		this.display       = false;
+		this.display       = true;
 		this.vars          = new Map ();
-
-		setTimeout (function () { document.getElementById ('VarContent').style.minWidth = `${document.getElementById ('VarTab').clientWidth + 2}px`; }, 250);
 	}
 
 	_update (vars) {
@@ -632,6 +630,8 @@ class _Variables {
 	}
 
 	toggle () {
+		this.eVarContent.style.minWidth = `${this.eVarTab.clientWidth + 2}px`;
+
 		if (!this.display && this.queued_update !== null) {
 			this._update (this.queued_update);
 			this.queued_update = null;
@@ -644,12 +644,12 @@ class _Variables {
 
 //...............................................................................................
 $(function () {
-	window.JQInput   = $('#Input');
-	window.Variables = new _Variables ();
-
 	if (window.location.pathname != '/') {
 		return;
 	}
+
+	window.JQInput   = $('#Input');
+	window.Variables = new _Variables ();
 
 	let margin       = $('body').css ('margin-top');
 	BodyMarginTop    = Number (margin.slice (0, margin.length - 2));
@@ -667,12 +667,20 @@ $(function () {
 	resize ();
 	monitorStuff ();
 
+	function first_vars_update (resp) {
+		if (MJQueue === null) { // wait for MathJax ready
+			setTimeout (function () { first_vars_update (resp); }, 50);
+		} else {
+			Variables.update (resp.vars);
+		}
+	}
+
 	$.ajax ({
 		url: URL,
 		type: 'POST',
 		cache: false,
 		dataType: 'json',
-		success: function (resp) { Variables.update (resp.vars); },
+		success: first_vars_update, // function (resp) { Variables.update (resp.vars); },
 		data: {mode: 'vars'},
 	});
 });
