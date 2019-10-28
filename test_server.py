@@ -44,9 +44,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('x, y = 1, 2'), {'math': [('x = 1', 'x = 1', 'x = 1'), ('y = 2', 'y = 2', 'y = 2')]})
 		self.assertEqual (get ('x, y = y, x'), {'math': [('x = 2', 'x = 2', 'x = 2'), ('y = 1', 'y = 1', 'y = 1')]})
 		self.assertEqual (get ('x, y'), {'math': ('(2, 1)', '(2, 1)', '\\left(2, 1 \\right)')})
-		self.assertEqual (get ('del vars'), {'msg': ["Variable 'x' deleted.", "Variable 'y' deleted."]})
-		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
-		self.assertEqual (get ('y'), {'math': ('y', 'y', 'y')})
+		self.assertEqual (get ('del vars'), {'err': "TypeError: invalid argument 'vars()'"})
+		self.assertEqual (get ('x'), {'math': ('2', '2', '2')})
+		self.assertEqual (get ('y'), {'math': ('1', '1', '1')})
 
 	def test_lambdas (self):
 		reset ()
@@ -234,15 +234,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('x = 1'), {'math': ('x = 1', 'x = 1', 'x = 1')})
 		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)')})
 		self.assertEqual (get ('y = ?(x, real = True)'), {'math': ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)')})
-		self.assertEqual (get ('vars'), {'math': ('x = 1', 'x = 1', 'x = 1')})
-		self.assertEqual (get ('funcs'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)')]})
+		self.assertEqual (get ('z = z(x)'), {'math': ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)')})
+		self.assertEqual (get ('g (x) = x**3'), {'math': ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1')})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)'), ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('z = y'), {'math': ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)')})
-		self.assertEqual (get ('funcs'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)')]})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('del y'), {'msg': ["Undefined function 'y' deleted."]})
-		self.assertEqual (get ('funcs'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)')]})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('delall'), {'msg': ['All assignments deleted.']})
 		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
-		self.assertEqual (get ('funcs'), {'msg': ['No functions defined.']})
 
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ().get ('data', [{}]) [0]
