@@ -1,10 +1,11 @@
 > bg.png into single script
-> variables tab copy to clipboard
 
 * unify lambda with defined function of form f (x, y, z)
 * operations with lambdas as expressions
 * derivative and integral of lambda functions? lambdas as expressions?
 > \int y dx (y = lambda x: x**2)
+
+> xlat S(num) -> num
 
 > overhaul differentiation to allow dy/dx and df/dx
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function

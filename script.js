@@ -134,6 +134,30 @@ function addLogEntry () {
 }
 
 //...............................................................................................
+function updateNumClicks () {
+	let t = performance.now ();
+
+	if ((t - LastClickTime) > 500) {
+		NumClicks = 1;
+	} else {
+		NumClicks += 1;
+	}
+
+	LastClickTime = t;
+}
+
+//...............................................................................................
+function flashElement (e) {
+	e.style.color      = 'white';
+	e.style.background = 'black';
+
+	setTimeout (function () {
+		e.style.color      = 'black';
+		e.style.background = 'transparent';
+	}, 100);
+}
+
+//...............................................................................................
 function writeToClipboard (text) {
 	PreventFocusOut = false;
 
@@ -149,26 +173,31 @@ function writeToClipboard (text) {
 
 //...............................................................................................
 function copyLogToClipboard (e, val_or_eval, idx, subidx = 0, mathidx = 0) {
-	let t = performance.now ();
+	let resp = val_or_eval ? Evaluations [idx].data [subidx].math [mathidx] : Validations [idx];
 
-	if ((t - LastClickTime) > 500) {
-		NumClicks = 1;
-	} else{
-		NumClicks += 1;
+	updateNumClicks ();
+	writeToClipboard (NumClicks == 1 ? resp.nat : NumClicks == 2 ? resp.py : resp.tex);
+	flashElement (e);
+}
+
+//...............................................................................................
+function copyVarToClipboard (e, full = true) {
+	updateNumClicks ();
+
+	e        = e.parentElement;
+	let text = Variables.vars.get (e.name);
+	text     = NumClicks == 1 ? text.nat : NumClicks == 2 ? text.py : text.tex;
+
+	if (!full && (NumClicks == 2) && text [1].startsWith ('Lambda(')) { // special case process py Lambda body
+		if (text [1] [7] === '(') {
+			text = [text [0], text [1].slice (text [1].indexOf (')') + 2, -1).trim ()];
+		} else {
+			text = [text [0], text [1].slice (text [1].indexOf (',') + 1, -1).trim ()];
+		}
 	}
 
-	LastClickTime = t;
-	let resp      = val_or_eval ? Evaluations [idx].data [subidx].math [mathidx] : Validations [idx];
-
-	writeToClipboard (NumClicks == 1 ? resp.nat : NumClicks == 2 ? resp.py : resp.tex);
-
-	e.style.color      = 'transparent';
-	e.style.background = 'black';
-
-	setTimeout (function () {
-		e.style.color      = 'black';
-		e.style.background = 'transparent';
-	}, 100);
+	writeToClipboard (full ? text.join (' = ') : text [1]);
+	flashElement (full ? e : e.childNodes [2]);
 }
 
 //...............................................................................................
@@ -223,7 +252,7 @@ function ajaxValidate (resp) {
 		let math                       = resp.tex ? `$${resp.tex}$` : '';
 		eLogInputWait.style.visibility = '';
 
-		$(eLogInput).append (`<span onclick="copyLogToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
+		$(eLogInput).append (`<span class="CopySpan" onclick="copyLogToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
 
 		let eMath = eLogInput.lastElementChild;
 
@@ -275,7 +304,7 @@ function ajaxEvaluate (resp) {
 				$(eLogEval).append (`<div class="LogEval"></div>`);
 				let eLogEvalDiv = eLogEval.lastElementChild;
 
-				$(eLogEvalDiv).append (`<span style="visibility: hidden" onclick="copyLogToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${subresp.math [mathidx].tex}$</span>`);
+				$(eLogEvalDiv).append (`<span class="CopySpan" style="visibility: hidden" onclick="copyLogToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${subresp.math [mathidx].tex}$</span>`);
 				let eLogEvalMath = eLogEvalDiv.lastElementChild;
 
 				$(eLogEvalDiv).append (`<img class="LogWait" src="${WaitIcon}" width="16">`);
@@ -519,6 +548,7 @@ function inputKeydown (e) {
 class _Variables {
 	constructor () {
 		this.eVarDiv       = document.getElementById ('VarDiv');
+		this.eVarTab       = document.getElementById ('VarTab');
 		this.eVarContent   = document.getElementById ('VarContent');
 		this.eVarTable     = document.getElementById ('VarTable');
 		this.queued_update = null;
@@ -541,22 +571,28 @@ class _Variables {
 			return [nat [0], {tex: spliteq (e.tex), nat: nat, py: spliteq (e.py)}];
 		}));
 
+		let same = new Set ();
+
 		for (let r of Array.from (this.eVarTable.childNodes)) {
 			let v = vars.get (r.name);
 
 			if (v === undefined || r.val !== v.nat [1]) {
 				this.eVarTable.removeChild (r);
 			} else {
-				vars.delete (r.name);
+				same.add (r.name);
 			}
 		}
 
 		let added = false;
 
 		for (let [n, v] of vars) {
-			let e        = $(`<tr><td class="VarTableCell">$${v.tex [0]}$</td><td class="VarTableCell">$= ${v.tex [1]}$</td></tr>`);
+			if (same.has (n)) {
+				continue;
+			}
+
 			let inserted = false;
 			let isfunc   = n.includes ('(');
+			let e        = $(`<tr><td class="VarTableCell" onclick="copyVarToClipboard (this)">$${v.tex [0]}$</td><td class="VarTableCell" onclick="copyVarToClipboard (this)">$=$</td><td class="VarTableCell" onclick="copyVarToClipboard (this, false)">$${v.tex [1]}$</td></tr>`);
 			e [0].name   = n;
 			e [0].val    = v.nat [1];
 			added        = true;
