@@ -1,5 +1,3 @@
-> Fix - do not map bound variables in lim, sum, diff and intg.
-
 > cleaner \int y dx (y = lambda x: x**2)
 
 > overhaul differentiation to allow dy/dx and df/dx

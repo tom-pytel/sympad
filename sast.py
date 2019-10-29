@@ -32,7 +32,7 @@
 # ('-piece', ((v1, c1), ..., (vn, True?)))            - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('-lamb', expr, (v1, v2, ...))                      - lambda expression: v? = 'var'
 # ('-idx', expr, (i0, i1, ...))                       - indexing: expr [i0, i1, ...]
-# ('-slice', start, stop, step)                       - indexing slice object: obj [start : stop : step], None or False indicates not specified
+# ('-slice', start, stop, step)                       - indexing slice object: obj [start : stop : step], None or False indicates not specified, None for step means no second colon
 # ('-set', (expr1, expr2, ...))                       - set
 # ('-dict', ((k1, v1), (k2, v2), ...))                - python dict
 # ('||', (expr1, expr2, ...))                         - set union
@@ -324,8 +324,9 @@ class AST (tuple):
 	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
-				if ast.is_var_const is False and ast.var:
-					vars.add (ast)
+				if ast.is_var:
+					if ast.is_var_nonconst and ast.var:
+						vars.add (ast)
 
 				else:
 					for e in ast:
@@ -338,7 +339,7 @@ class AST (tuple):
 
 					elif ast.is_diff:
 						for dv in ast.dvs:
-							vars.remove (dv)
+							vars.remove (dv.base if dv.is_pow else dv)
 
 					elif ast.is_intg:
 						vars.remove (ast.dv)
@@ -411,34 +412,50 @@ class AST (tuple):
 			else:
 				return AST (op, (ast0, ast1))
 
-	@staticmethod
-	def remap (ast, map, recurse = False): # remapping of arbitrary ASTs
-		if not isinstance (ast, AST):
-			return ast
+	# @staticmethod
+	# def remap (ast, map, recurse = False): # remapping of arbitrary ASTs
+	# 	if not isinstance (ast, AST):
+	# 		return ast
 
-		mapped = map.get (ast)
+	# 	mapped = map.get (ast)
 
-		if mapped:
-			return AST.remap (mapped, map, recurse) if recurse else mapped
+	# 	if mapped:
+	# 		return AST.remap (mapped, map, recurse) if recurse else mapped
 
-		return AST (*(AST.remap (a, map, recurse) for a in ast))
+	# 	return AST (*(AST.remap (a, map, recurse) for a in ast))
 
 	@staticmethod
 	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
 		if not isinstance (ast, AST) or ast.is_ufunc or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
 			return ast
 
-		if ast.is_lamb: # lambda definition
-			lvars = set (ast.vars)
-			vars  = dict (kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ()))
-
-		elif ast.is_var: # regular var substitution?
+		if ast.is_var: # regular var substitution?
 			var = vars.get (ast.var)
 
 			if var: # user var
 				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse)
 
 			return ast
+
+		elif ast.op in {'-lim', '-sum'}:
+			v    = ast [2].var
+			vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
+
+			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+
+		elif ast.is_diff:
+			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse), ast.dvs)
+
+		elif ast.is_intg:
+			if ast.is_intg_definite:
+				v    = ast.dv.as_var.var
+				vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
+
+			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), ast.dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+
+		elif ast.is_lamb: # lambda definition
+			lvars = set (ast.vars)
+			vars  = dict (kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ()))
 
 		elif ast.is_func: # function, might be user lambda call
 			lamb = vars.get (ast.func)
