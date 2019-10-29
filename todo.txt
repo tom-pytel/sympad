@@ -1,6 +1,6 @@
-> cleaner \int y dx (y = lambda x: x**2)
+> Fix - do not map bound variables in lim, sum, diff and intg.
 
-> sxlat S(num) -> num
+> cleaner \int y dx (y = lambda x: x**2)
 
 > overhaul differentiation to allow dy/dx and df/dx
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
@@ -26,8 +26,6 @@
 
 > N beta (2, 3) -> N (beta (2, 3)) instead of N (beta) (2, 3)
 > sin a.b()
-
-> hideable variables tab in client
 
 > overhaul function call keyword arguments: expr -> ('kw', expr)?
 > overhaul lambda variables: ('@', 'var') -> 'var'?

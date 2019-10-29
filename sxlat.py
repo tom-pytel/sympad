@@ -270,6 +270,7 @@ def _xlat_f2a_Sum (ast = AST.VarNull, ab = None, **kw):
 
 _XLAT_FUNC2AST_ALL    = {
 	'slice'                : _xlat_f2a_slice,
+	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
 
 	'Eq'                   : lambda a, b: AST ('<>', a, (('==', b),)),
 	'Ne'                   : lambda a, b: AST ('<>', a, (('!=', b),)),

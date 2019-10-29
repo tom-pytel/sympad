@@ -435,9 +435,8 @@ For example, two ways to get the transpose of a matrix are "<b>\[[1, 2, 3], [4, 
 Using the syntax "<b>var = expression</b>" you can assign some value to be substituted for that variable in all expressions.
 For example, doing "<b>x = pi</b>" and then evaluating "<b>cos x</b>" will give you "<b>-1</b>".
 Anything can be assigned to any valid variable like mathematical expressions, Python objects like strings or lists, user lambda functions or even references to other variables.
-To delete an assignment use the "<b>del var</b>" function, to delete all non-lambda variables do "<b>del vars</b>", to delete all user defined lambda and undefined functions do "<b>del funcs</b>" and to delete ALL assignments use "<b>delall</b>".
-To see what variables are currently assigned to, use the "<b>vars</b>" function.
-This will not show function assignments though, to see those use "<b>funcs</b>".
+To delete an assignment use the "<b>del var</b>" function or "<b>del (var1, var2, ...)</b>" to delete multiple variables, to delete all variables use "<b>delall()</b>".
+To see what variables are currently assigned use the "<b>vars()</b>" function.
 </p><p>
 Tuple assignment is supported and as in Python the source can be another tuple or a single iterable object like "<b>x, y = 1, 2</b>".
 A useless example of iterable assignment would be setting "<b> a, b, c = 'str' </b>" which would give you "<b> a = 's' </b>", "<b> b = 't' </b>" and "<b> c = 'r' </b>".
@@ -555,7 +554,7 @@ This was not very elegant so the workaround is as follows:
 This is not a problem for "<b>beta</b>" and "<b>Lambda</b>" since they require multiple arguments and can be recognized as function calls from an implicit multiplication with a tuple of size 2, but the others can not be recognized this way.
 </p><p>
 These function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
-These lambda functions do not appear in the normal list of functions shown by "<b>funcs()</b>" but their status can be checked by using the "<b>env()</b>" function.
+These lambda functions do not appear in the normal list of functions shown by "<b>vars()</b>" but their status can be checked by using the "<b>env()</b>" function.
 When these functions are mapped they are treated exactly like variables mapped to a lambda for the purposes of calling them, but they are still available as free variables to use and even assign to.
 To enable or disable environment mapping of these functions like "<b>gamma()</b>" enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>" to disable and "<b>env (gamma)</b>" or "<b>env (gamma=True)</b>" to enable.
 Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always available because they are special cased, even if "<b>S()</b>" is not mapped, though if it is assigned to something else then these attributes are lost.
@@ -875,11 +874,8 @@ The name is optional but required if different functions of the same signature a
 
 <h4 id="Admin Functions">Admin Functions</h4>
 
-<p><b>vars()</b> - Show all currently mapped non-lambda user variables.</p>
-<p><b>funcs()</b> - Show all currently mapped lambda user variables (callable functions).</p>
+<p><b>vars()</b> - Show all currently mapped variables.</p>
 <p><b>del(var1, var2, ...)</b> - Delete variable assignments, lambda or non-lambda.</p>
-<p><b>del(vars())</b> - Delete all non-lambda variables.</p>
-<p><b>del(funcs())</b> - Delete all lambda functions.</p>
 <p><b>delall()</b> - Delete ALL variables, lambda and non-lambda.</p>
 <p><b>env()</b> - Show or change current SymPad runtime environment.
 Called without any arguments it will show the current state of the environment.
