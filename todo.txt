@@ -1,7 +1,9 @@
-> cleaner \int y dx (y = lambda x: x**2)
-
 > overhaul differentiation to allow dy/dx and df/dx
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
+
+> change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...) (what did I mean)?
+
+> cleaner \int y dx (y = lambda x: x**2)
 
 
 > ics sym representations
@@ -31,8 +33,6 @@
 > input shortcut non-opened closing curly and/or paren?
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
 > clean up sym lambda keyword safety wrapping
-
-> change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 > quick mode error: dpartial
 > quick mode error: \operatorname{\_}()

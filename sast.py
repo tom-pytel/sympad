@@ -682,7 +682,7 @@ class AST_Mul (AST):
 			if m.is_abs:
 				return True
 
-class AST_MulExp (AST): # temporary for isolating explicit multiplications from implicit mul grammar rewriting rules, used during parsing only
+class AST_MulExp (AST): # temporary for isolating explicit multiplications from implicit mul grammar rewriting rules, used only during parsing
 	op, is_mulexp = '*exp', True
 
 	def _init (self, mul):
