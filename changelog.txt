@@ -1,7 +1,8 @@
 v1.0.12:
 --------
-* Added lambdas as expression in proper contexts (can add, multiply, differentiate, etc...).
 * Added variables tab to browser client.
+* Added lambdas as expression in proper contexts (can add, multiply, differentiate, etc...).
+* Changed lambda function parsing to be more robust and raised lambda keyword binding precedence.
 
 v1.0.11:
 -----

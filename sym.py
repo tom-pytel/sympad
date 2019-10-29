@@ -280,9 +280,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					(n.is_paren and p.tail.is_var and (
-						(p.tail.var in _SYM_USER_FUNCS) or
-						(not p.tail.is_diff_or_part and n.as_pvarlist)
+					(n.is_paren and p.tail_mul.is_var and (
+						(p.tail_mul.var in _SYM_USER_FUNCS) or
+						(not p.tail_mul.is_diff_or_part and n.as_pvarlist)
 					))):
 				t.append (f' \\cdot {s}')
 				has = True
@@ -337,8 +337,11 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		if ast.func in AST.Func.TEX:
 			return f'\\{ast.func}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+
 		else:
-			return '\\operatorname{' + ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%') + f'}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+			texname = ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%')
+
+			return '\\operatorname{' + AST.Var.PY2TEX.get (texname, texname) + f'}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
 	def _ast2tex_lim (self, ast):
 		s = self._ast2tex_wrap (ast.to, False, ast.to.is_slice) if ast.dir is None else (self._ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -353,6 +356,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	def _ast2tex_diff (self, ast):
 		ds = set ()
 		p  = 0
+		e  = self._ast2tex_wrap (ast.diff, 0, ast.diff.op not in {'(', '-lamb'})
 
 		for n in ast.dvs:
 			if n.is_var:
@@ -366,17 +370,17 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				ds.add (n.base)
 
 		if not ds:
-			return f'\\frac{{d}}{{}}{self._ast2tex_paren (ast.diff)}'
+			return f'\\frac{{d}}{{}}{e}'
 
 		dv = next (iter (ds))
 
 		if len (ds) == 1 and not dv.is_partial:
-			return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (self._ast2tex (n) for n in ast.dvs)}}}{self._ast2tex_paren (ast.diff)}'
+			return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (self._ast2tex (n) for n in ast.dvs)}}}{e}'
 
 		else:
 			s = ''.join (self._rec_diff_var_single_start.sub (r'\\partial ', self._ast2tex (n)) for n in ast.dvs)
 
-			return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{self._ast2tex_paren (ast.diff)}'
+			return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{e}'
 
 	def _ast2tex_intg (self, ast):
 		if ast.intg is None:
@@ -509,6 +513,16 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_cmp_hs (self, hs):
 		return self._ast2nat_wrap (hs, 0, {'=', '<>', '-piece', '-lamb', '-slice', '-or', '-and', '-not'})
 
+	def _ast2nat_var (self, ast):
+		if ast.var == 'lambda': # lambda var in slice should be represented as '\lambda' to avoid accidental creation of lambda functions
+			for parent in reversed (self.parents):
+				if parent.is_slice:
+					return '\\lambda'
+				if parent.op in {None, '-scolon'}:
+					break
+
+		return ast.var
+
 	def _ast2nat_attr (self, ast):
 		obj = self._ast2nat_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-intg", "-piece", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})
 
@@ -558,7 +572,7 @@ class ast2nat: # abstract syntax tree -> native text
 					(s [:1] == '(' and (
 						p.is_attr_var or
 						i in ast.exp or
-						(p.tail.is_var and p.tail.var in _SYM_USER_FUNCS) or
+						(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 						(p.is_pow and p.exp.is_attr_var))) or
 					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
 					# n.strip_fdpi.strip_paren.is_comma or
@@ -567,7 +581,7 @@ class ast2nat: # abstract syntax tree -> native text
 					(n.is_pow and n.base.is_num_pos) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					(n.is_paren and p.tail.is_var and not p.tail.is_diff_or_part and n.as_pvarlist)):
+					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist)):
 				t.append (f' * {s}')
 				has = True
 
@@ -670,7 +684,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'='     : lambda self, ast: f'{self._ast2nat_ass_hs (ast.lhs)} = {self._ast2nat_ass_hs (ast.rhs, False)}',
 		'<>'    : lambda self, ast: f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'     : lambda self, ast: ast.num,
-		'@'     : lambda self, ast: ast.var,
+		'@'     : _ast2nat_var,
 		'.'     : _ast2nat_attr,
 		'"'     : _ast2nat_str,
 		','     : lambda self, ast: f'{", ".join (self._ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',

@@ -4787,9 +4787,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					(n.is_paren and p.tail.is_var and (
-						(p.tail.var in _SYM_USER_FUNCS) or
-						(not p.tail.is_diff_or_part and n.as_pvarlist)
+					(n.is_paren and p.tail_mul.is_var and (
+						(p.tail_mul.var in _SYM_USER_FUNCS) or
+						(not p.tail_mul.is_diff_or_part and n.as_pvarlist)
 					))):
 				t.append (f' \\cdot {s}')
 				has = True
@@ -5065,7 +5065,7 @@ class ast2nat: # abstract syntax tree -> native text
 					(s [:1] == '(' and (
 						p.is_attr_var or
 						i in ast.exp or
-						(p.tail.is_var and p.tail.var in _SYM_USER_FUNCS) or
+						(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 						(p.is_pow and p.exp.is_attr_var))) or
 					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
 					# n.strip_fdpi.strip_paren.is_comma or
@@ -5074,7 +5074,7 @@ class ast2nat: # abstract syntax tree -> native text
 					(n.is_pow and n.base.is_num_pos) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					(n.is_paren and p.tail.is_var and not p.tail.is_diff_or_part and n.as_pvarlist)):
+					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist)):
 				t.append (f' * {s}')
 				has = True
 

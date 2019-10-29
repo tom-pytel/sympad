@@ -1,6 +1,3 @@
-> 2 + lambda x: x**2 - also *, or, and, ^^, etc...
-> \} set closer?
-
 > cleaner \int y dx (y = lambda x: x**2)
 
 > sxlat S(num) -> num
@@ -37,6 +34,7 @@
 
 > input shortcut non-opened closing curly and/or paren?
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
+> clean up sym lambda keyword safety wrapping
 
 > change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 

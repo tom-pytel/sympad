@@ -12,23 +12,6 @@ import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SP_USER_FUNCS = set () # set user funcs {name, ...}
 
-class AST_MulExp (AST): # for isolating explicit multiplications from implicit mul grammar rewriting rules, only used during parsing and appears only in this module
-	op, is_mulexp = 'mulexp', True
-
-	def _init (self, mul):
-		self.mul = mul
-
-	@staticmethod
-	def to_mul (ast): # convert explicit multiplication ASTs to normal multiplication ASTs
-		if not isinstance (ast, AST):
-			return ast
-		elif ast.is_mulexp:
-			return AST ('*', tuple (AST_MulExp.to_mul (a) for a in ast.mul), frozenset (range (1, ast.mul.len)))
-		else:
-			return AST (*tuple (AST_MulExp.to_mul (a) for a in ast))
-
-AST.register_AST (AST_MulExp)
-
 def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
 			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\', '') or FUNC.text
@@ -70,6 +53,14 @@ def _ast_pre_slice (pre, post):
 
 	raise SyntaxError ('invalid slice')
 
+def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal multiplication ASTs with index information for explicit muls
+	if not isinstance (ast, AST):
+		return ast
+	elif ast.is_mulexp:
+		return AST ('*', tuple (_ast_mulexps_to_muls (a) for a in ast.mul), frozenset (range (1, ast.mul.len)))
+	else:
+		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast))
+
 #...............................................................................................
 def _expr_ass_lvals (ast): # process assignment lvalues
 	def is_valid_ufunc (ast):
@@ -103,51 +94,34 @@ def _expr_ass_lvals (ast): # process assignment lvalues
 	return ast
 
 def _expr_comma (lhs, rhs):
-	if not rhs.is_slice or rhs.step is not None or not rhs.stop or not rhs.start or not rhs.start.is_var:
-		return AST.flatcat (',', lhs, rhs)
+	if rhs.is_slice and rhs.step is None and rhs.stop and rhs.start and rhs.start.is_var_nonconst:
+		if lhs.is_comma:
+			for i in range (lhs.comma.len - 1, -1, -1):
+				first_var, wrap = lhs.comma [i]._tail_lambda (has_var = True)
 
-	if lhs.is_mul:
-		if lhs.mul.len == 2 and lhs.mul [0].is_var_lambda and lhs.mul [1].is_var:
-			return AST ('-lamb', rhs.stop, (lhs.mul [1].var, rhs.start.var))
+				if wrap:
+					ast = wrap (AST ('-lamb', rhs.stop, (first_var.var, *(v.var for v in lhs.comma [i + 1:]), rhs.start.var)))
 
-	elif lhs.is_ass:
-		if lhs.rhs.is_mul and lhs.rhs.mul.len == 2 and lhs.rhs.mul [0].is_var_lambda and lhs.rhs.mul [1].is_var:
-			return AST ('=', lhs.lhs, ('-lamb', rhs.stop, (lhs.rhs.mul [1].var, rhs.start.var)))
+					return ast if not i else AST (',', lhs.comma [:i] + (ast,))
 
-	elif lhs.is_comma:
-		for i in range (lhs.comma.len - 1, -1, -1):
-			if lhs.comma [i].is_mul:
-				if lhs.comma [i].mul.len == 2 and lhs.comma [i].mul [0].is_var_lambda and lhs.comma [i].mul [1].is_var:
-					ast = AST ('-lamb', rhs.stop, (lhs.comma [i].mul [1].var, *(c.var for c in lhs.comma [i + 1:]), rhs.start.var))
+				if not lhs.comma [i].is_var_nonconst:
+					break
 
-					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
+		else:
+			first_var, wrap = lhs._tail_lambda (has_var = True)
 
-			elif lhs.comma [i].is_ass:
-				if lhs.comma [i].rhs.is_mul and lhs.comma [i].rhs.mul.len == 2 and lhs.comma [i].rhs.mul [0].is_var_lambda and lhs.comma [i].rhs.mul [1].is_var:
-					ast = AST ('=', lhs.comma [i].lhs, ('-lamb', rhs.stop, (lhs.comma [i].rhs.mul [1].var, *(c.var for c in lhs.comma [i + 1:]), rhs.start.var)))
-
-					return AST (',', lhs.comma [:i] + (ast,)) if i else ast
-
-			if not lhs.comma [i].is_var:
-				break
+			if wrap:
+				return wrap (AST ('-lamb', rhs.stop, (first_var.var, rhs.start.var)))
 
 	return AST.flatcat (',', lhs, rhs)
 
 def _expr_colon (lhs, rhs):
-	if lhs.is_ass:
-		l, wrap_ass = lhs.rhs, lambda rhs, lhs = lhs.lhs: AST ('=', lhs, rhs)
-	else:
-		l, wrap_ass = lhs, lambda rhs: rhs
+	first_var, wrap = lhs.tail_lambda
 
-	if l.is_var:
-		if l.is_var_lambda:
-			return wrap_ass (AST ('-lamb', rhs, ()))
+	if wrap is None:
+		return _ast_pre_slice (lhs, rhs)
 
-	elif l.is_mul:
-		if l.mul.len == 2 and l.mul [0].is_var_lambda and l.mul [1].is_var:
-			return wrap_ass (AST ('-lamb', rhs, (l.mul [1].var,)))
-
-	return _ast_pre_slice (lhs, rhs)
+	return wrap (AST ('-lamb', rhs, () if first_var is None else (first_var.var,)))
 
 def _expr_mapsto (args, lamb):
 	if args.is_var:
@@ -189,7 +163,7 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not handled by grammar
 	ast         = None
 	arg, wrapa  = _ast_func_reorder (rhs)
-	tail, wrapt = lhs.tailnwrap # lhs, lambda ast: ast
+	tail, wrapt = lhs.tail_mul_wrap # lhs, lambda ast: ast
 
 	if tail.is_attr: # {x.y} *imp* () -> x.y(), x.{y.z} -> {x.y}.z
 		if tail.is_attr_var:
@@ -228,30 +202,33 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'dx')
 	def _interpret_divide (ast):
-		if ast.numer.is_diff_or_part_solo:
-			p = 1
-			v = ast.numer
+		numer = ast.numer.strip_curlys
 
-		elif ast.numer.is_pow and ast.numer.base.is_diff_or_part_solo and ast.numer.exp.no_curlys.is_num_pos_int:
-			p = ast.numer.exp.no_curlys.as_int
-			v = ast.numer.base
+		if numer.is_diff_or_part_solo:
+			p = 1
+			v = numer
+
+		elif numer.is_pow and numer.base.is_diff_or_part_solo and numer.exp.strip_curlys.is_num_pos_int:
+			p = numer.exp.strip_curlys.as_int
+			v = numer.base
 
 		else:
 			return None
 
 		ast_dv_check = (lambda n: n.is_differential) if v.is_diff_solo else (lambda n: n.is_partial)
 
-		ns = ast.denom.mul if ast.denom.is_mul else (ast.denom,)
-		ds = []
-		cp = p
+		denom = ast.denom.strip_curlys
+		ns    = denom.mul if denom.is_mul else (denom,)
+		ds    = []
+		cp    = p
 
 		for i in range (len (ns)):
 			n = ns [i]
 
 			if ast_dv_check (n):
 				dec = 1
-			elif n.is_pow and ast_dv_check (n.base) and n.exp.no_curlys.is_num_pos_int:
-				dec = n.exp.no_curlys.as_int
+			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curlys.is_num_pos_int:
+				dec = n.exp.strip_curlys.as_int
 			else:
 				return None
 
@@ -395,7 +372,7 @@ def _expr_func_func (FUNC, args, expr_super = None):
 
 	if expr_super is None:
 		return _expr_func (2, '-func', func, args)
-	elif expr_super.no_curlys != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
+	elif expr_super.strip_curlys != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
 		return AST ('^', _expr_func_func (FUNC, args), expr_super)
 	else:
 		return _expr_func_func (f'a{func}', args)
@@ -493,7 +470,10 @@ def _expr_var (VAR):
 	else:
 		var = AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-	return AST ('@', var)
+	var      = AST ('@', var)
+	var.text = VAR.text # set original text for preventing '\lambda' from creating lambda functions
+
+	return var
 
 #...............................................................................................
 class Parser (lalr1.LALR1):
@@ -799,8 +779,8 @@ class Parser (lalr1.LALR1):
 	def expr_add_4         (self, expr_mul_exp):                                       return expr_mul_exp
 
 	def expr_mul_exp       (self, expr_mul_expr):                                      return expr_mul_expr
-	def expr_mul_expr_1    (self, expr_mul_expr, CDOT, expr_neg):                      return AST.flatcat ('mulexp', expr_mul_expr, expr_neg)
-	def expr_mul_expr_2    (self, expr_mul_expr, STAR, expr_neg):                      return AST.flatcat ('mulexp', expr_mul_expr, expr_neg)
+	def expr_mul_expr_1    (self, expr_mul_expr, CDOT, expr_neg):                      return AST.flatcat ('*exp', expr_mul_expr, expr_neg)
+	def expr_mul_expr_2    (self, expr_mul_expr, STAR, expr_neg):                      return AST.flatcat ('*exp', expr_mul_expr, expr_neg)
 	def expr_mul_expr_3    (self, expr_neg):                                           return expr_neg
 
 	def expr_neg_1         (self, MINUS, expr_neg):                                    return _expr_neg (expr_neg)
@@ -864,13 +844,13 @@ class Parser (lalr1.LALR1):
 	def expr_paren_1       (self, expr_pcommas):                                       return AST ('(', expr_pcommas)
 	def expr_paren_2       (self, expr_frac):                                          return expr_frac
 
-	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                     return AST ('/', expr_binom1.no_curlys, expr_binom2.no_curlys)
-	def expr_frac_2        (self, FRAC1, expr_binom):                                  return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_binom.no_curlys)
+	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                     return AST ('/', expr_binom1, expr_binom2)
+	def expr_frac_2        (self, FRAC1, expr_binom):                                  return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_binom)
 	def expr_frac_3        (self, FRAC2):                                              return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
 	def expr_frac_4        (self, expr_binom):                                         return expr_binom
 
-	def expr_binom_1       (self, BINOM, expr_subs1, expr_subs2):                      return AST ('-func', 'binomial', (expr_subs1.no_curlys, expr_subs2.no_curlys))
-	def expr_binom_2       (self, BINOM1, expr_subs):                                  return AST ('-func', 'binomial', (_ast_from_tok_digit_or_var (BINOM1), expr_subs.no_curlys))
+	def expr_binom_1       (self, BINOM, expr_subs1, expr_subs2):                      return AST ('-func', 'binomial', (expr_subs1, expr_subs2))
+	def expr_binom_2       (self, BINOM1, expr_subs):                                  return AST ('-func', 'binomial', (_ast_from_tok_digit_or_var (BINOM1), expr_subs))
 	def expr_binom_3       (self, BINOM2):                                             return AST ('-func', 'binomial', (_ast_from_tok_digit_or_var (BINOM2), _ast_from_tok_digit_or_var (BINOM2, 3)))
 	def expr_binom_4       (self, expr_subs):                                          return expr_subs
 
@@ -883,7 +863,7 @@ class Parser (lalr1.LALR1):
 	def subsvarsv_1        (self, subsvarsv, DBLSLASH, varass):                        return subsvarsv + (varass,)
 	def subsvarsv_2        (self, varass):                                             return (varass,)
 
-	def expr_cases_1       (self, BEG_CASES, casess, END_CASES):                       return AST ('-piece', casess)
+	def expr_cases_1       (self, BEG_CASES, casess, END_CASES):                       return AST ('{', ('-piece', casess))
 	def expr_cases_2       (self, expr_mat):                                           return expr_mat
 	def casess_1           (self, casessp, DBLSLASH):                                  return casessp
 	def casess_2           (self, casessp):                                            return casessp
@@ -1108,7 +1088,7 @@ class Parser (lalr1.LALR1):
 
 	def parse (self, text):
 		def postprocess (res):
-			return (AST_MulExp.to_mul (res [0].no_curlys).flat,) + res [1:] if isinstance (res [0], AST) else res
+			return (_ast_mulexps_to_muls (res [0].no_curlys).flat,) + res [1:] if isinstance (res [0], AST) else res
 
 		if not text.strip:
 			return (AST.VarNull, 0, [])
@@ -1123,8 +1103,8 @@ class Parser (lalr1.LALR1):
 		if not self.parse_results:
 			return (None, 0, [])
 
-		rated = sorted ((r is None, -e if e is not None else float ('-inf'), len (a), i, (r, e, a)) \
-				for i, (r, e, a) in enumerate (self.parse_results))
+		rated = sorted ((r is None, -e if e is not None else float ('-inf'), len (a), i, (r, e, a))
+			for i, (r, e, a) in enumerate (self.parse_results))
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			rated = list (rated)
@@ -1132,8 +1112,7 @@ class Parser (lalr1.LALR1):
 			print (file = sys.stderr)
 
 			for res in rated [:32]:
-				res = postprocess (res [-1])
-				print ('parse:', res, file = sys.stderr)
+				print ('parse:', res [-1], file = sys.stderr)
 
 			if len (rated) > 32:
 				print (f'... total {len (rated)}', file = sys.stderr)
@@ -1159,9 +1138,9 @@ class sparser: # for single script
 # 	# p.set_quick (True)
 # 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	p.set_user_funcs ({'N'})
+# 	# p.set_user_funcs ({'N'})
 
-# 	a = p.parse (r"N (x)'")
+# 	a = p.parse (r"lambda x, y, z: 1")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

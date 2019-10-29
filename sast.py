@@ -5,8 +5,8 @@
 # ('<>', lhs, (('rel1', expr1), ...))                 - comparisons of type 'rel' relating two or more expressions, potentially x < y < z is x < y and y < z
 # ('#', 'num')                                        - real numbers represented as strings to pass on maximum precision to sympy
 # ('@', 'var')                                        - variable name, can take forms: 'x', "x'", 'dx', '\partial x', 'something'
-# ('.', expr, 'name')                                 - data member reference
-# ('.', expr, 'name', (a1, a2, ...))                  - method member call
+# ('.', expr, 'name')                                 - data attribute reference
+# ('.', expr, 'name', (a1, a2, ...))                  - method attribute call
 # ('"', 'str')                                        - string
 # (',', (expr1, expr2, ...))                          - comma expression (tuple)
 # ('{', expr)                                         - invisible implicit parentheses for grouping and isolation during parsing
@@ -17,6 +17,7 @@
 # ('!', expr)                                         - factorial
 # ('+', (expr1, expr2, ...))                          - addition
 # ('*', (expr1, expr2, ...)[, {i0, ...}])             - multiplication, with optional set of indices of explicit multiplications (indexes of rhs)
+# ('*exp', (expr1, expr2, ...))                       - explicit multiplication, only used during parsing then converted to '*' with indexes of exps
 # ('/', numer, denom)                                 - fraction numer(ator) / denom(inator)
 # ('^', base, exp)                                    - power base ^ exp(onent)
 # ('-log', expr[, base])                              - logarithm of expr in base, natural log if base not present
@@ -29,7 +30,7 @@
 # ('-intg', expr, var[, from, to])                    - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
 # ('-piece', ((v1, c1), ..., (vn, True?)))            - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
-# ('-lamb', expr, (v1, v2, ...))                      - lambda expression: v? = ('@', 'var')
+# ('-lamb', expr, (v1, v2, ...))                      - lambda expression: v? = 'var'
 # ('-idx', expr, (i0, i1, ...))                       - indexing: expr [i0, i1, ...]
 # ('-slice', start, stop, step)                       - indexing slice object: obj [start : stop : step], None or False indicates not specified
 # ('-set', (expr1, expr2, ...))                       - set
@@ -115,7 +116,7 @@ class AST (tuple):
 	def _len (self):
 		return len (self)
 
-	def _no_curlys (self):
+	def _no_curlys (self): # remove ALL curlys from entire tree, not just top level
 		if self.is_curly:
 			return self.curly.no_curlys
 		else:
@@ -213,10 +214,10 @@ class AST (tuple):
 
 		return self
 
-	def _tail (self):
-		return self.tailnwrap [0]
+	def _tail_mul (self):
+		return self.tail_mul_wrap [0]
 
-	def _tailnwrap (self):
+	def _tail_mul_wrap (self):
 		tail, wrap = self, lambda ast: ast
 
 		while 1:
@@ -233,6 +234,75 @@ class AST (tuple):
 				break
 
 		return tail, wrap
+
+	def _tail_lambda (self, has_var = None): # look for 'lambda' or 'lambda var' at the tail end of ast - for use only during parsing (does not handle mul exp indexes)
+		tail, wrap = self, lambda ast: ast
+
+		while 1:
+			if tail.is_var:
+				if tail.is_var_lambda and has_var is not True:
+					return None, wrap
+
+				break
+
+			elif tail.op in {',', '+', '*', '*exp', '||', '^^', '&&', '-or', '-and'}:
+				if tail.is_mul and has_var is not False and tail.mul [-1].is_var_nonconst:
+					_, wrapl = tail.mul [-2]._tail_lambda (has_var = False)
+
+					if wrapl:
+						if tail.mul.len > 2:
+							wrap = lambda ast, tail = tail, wrap = wrap, wrapl = wrapl: wrap (AST ('*', tail.mul [:-2] + (wrapl (ast),)))
+						else:
+							wrap = lambda ast, wrap = wrap, wrapl = wrapl: wrap (wrapl (ast))
+
+						return tail.mul [-1], wrap
+
+				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, tail [1] [:-1] + (ast,)))
+				tail = tail [1] [-1]
+
+			elif tail.op in {'=', '/', '^'}:
+				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, tail [1], ast))
+				tail = tail [2]
+
+			elif tail.op in {'-', '-not'}:
+				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast))
+				tail = tail [1]
+
+			elif tail.op in {'-lim', '-sum', '-diff', '-lamb'}:
+				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:]))
+				tail = tail [1]
+
+			elif tail.is_cmp:
+				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('<>', tail.lhs, tail.cmp [:-1] + ((tail.cmp [-1] [0], ast),)))
+				tail = tail.cmp [-1] [1]
+
+			elif tail.is_piece:
+				if tail.piece [-1] [1] is True:
+					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('-piece', tail.piece [:-1] + ((ast, True),)))
+					tail = tail.piece [-1] [0]
+				else:
+					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('-piece', tail.piece [:-1] + ((tail.piece [-1] [0], ast),)))
+					tail = tail.piece [-1] [1]
+
+			elif tail.is_slice:
+				if tail.step:
+					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('-slice', tail.start, tail.stop, ast))
+					tail = tail.step
+
+				elif tail.step is False:
+					break
+
+				elif tail.stop:
+					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('-slice', tail.start, ast, None))
+					tail = tail.stop
+
+				else:
+					break
+
+			else:
+				break
+
+		return None, None # var, wrap
 
 	def _as_identifier (self):
 		def _as_identifier (ast, recursed = False):
@@ -481,14 +551,12 @@ class AST_Var (AST):
 	def _init (self, var):
 		self.var = var
 
-		if AST._rec_identifier.match (var):
-			self.__dict__ [f'is_var_{var}'] = True
-
 	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
 	_is_var_null          = lambda self: not self.var
 	_is_var_long          = lambda self: len (self.var) > 1 and self.var not in AST_Var.PY2TEX
 	_is_var_const         = lambda self: self in AST.CONSTS
 	_is_var_nonconst      = lambda self: self not in AST.CONSTS
+	_is_var_lambda        = lambda self: self.var == 'lambda' and self.text != '\\lambda'
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]
@@ -596,6 +664,12 @@ class AST_Mul (AST):
 		for m in self.mul:
 			if m.is_abs:
 				return True
+
+class AST_MulExp (AST): # temporary for isolating explicit multiplications from implicit mul grammar rewriting rules, used during parsing only
+	op, is_mulexp = '*exp', True
+
+	def _init (self, mul):
+		self.mul = mul
 
 class AST_Div (AST):
 	op, is_div = '/', True
@@ -788,8 +862,8 @@ class AST_UFunc (AST):
 
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
-	AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func, AST_Lim,
-	AST_Sum, AST_Diff, AST_DiffP, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
+	AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_MulExp, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func,
+	AST_Lim, AST_Sum, AST_Diff, AST_DiffP, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
 	AST_Union, AST_SDiff, AST_XSect, AST_Or, AST_And, AST_Not, AST_UFunc]
 
 for _cls in _AST_CLASSES:
