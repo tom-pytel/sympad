@@ -81,6 +81,14 @@ def _simplify (spt): # extend sympy simplification into standard python containe
 
 	return spt
 
+def _dsolve (*args, **kw):
+	ast = spt2ast (sp.dsolve (*args, **kw))
+
+	if ast.is_cmp and ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
+		ast = AST ('=', ast.lhs, ast.cmp [0] [1])
+
+	return ExprNoEval (str (ast), 1) # never automatically simplify dsolve
+
 def _Mul (*args):
 	itr = iter (args)
 	res = next (itr)
@@ -943,7 +951,6 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+"})}',
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
 		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n.is_num_neg and n is not ast.add [0])) for n in ast.add).replace (' + -', ' - '),
-		# '*'     : lambda self, ast: '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add) for n in ast.mul),
 		'*'     : _ast2py_mul,
 		'/'     : _ast2py_div,
 		'^'     : _ast2py_pow,
@@ -982,7 +989,7 @@ _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr'
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
-_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify} # , 'dsolve': _dsolve}
+_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify, 'dsolve': _dsolve}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	_SYMPY_FLOAT_PRECISION = None
