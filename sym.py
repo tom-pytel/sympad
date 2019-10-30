@@ -303,6 +303,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		return (''.join (t), has) if ret_has else ''.join (t)
 
+	def _ast2tex_div (self, ast):
+		false_diff = (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else \
+				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curlys.is_num_pos_int) if ast.numer.is_mul else \
+				ast.numer.is_diff_or_part_solo
+
+		return f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or false_diff)}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}'
+
 	def _ast2tex_pow (self, ast, trighpow = True):
 		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-lamb', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2tex_curly (ast.exp)
@@ -356,7 +363,14 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	def _ast2tex_diff (self, ast):
 		ds = set ()
 		p  = 0
-		e  = self._ast2tex_wrap (ast.diff, 0, ast.diff.op not in {'(', '-lamb'})
+
+		if ast.diff.is_var:
+			top  = self._ast2tex (ast.diff)
+			topp = f' {top}'
+			side = ''
+		else:
+			top  = topp = ''
+			side = self._ast2tex_wrap (ast.diff, 0, ast.diff.op not in {'(', '-lamb'})
 
 		for n in ast.dvs:
 			if n.is_var:
@@ -370,17 +384,17 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				ds.add (n.base)
 
 		if not ds:
-			return f'\\frac{{d}}{{}}{e}'
+			return f'\\frac{{d{top}}}{{}}{side}'
 
 		dv = next (iter (ds))
 
 		if len (ds) == 1 and not dv.is_partial:
-			return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (self._ast2tex (n) for n in ast.dvs)}}}{e}'
+			return f'\\frac{{d{top if p == 1 else f"^{p}{topp}"}}}{{{" ".join (self._ast2tex (n) for n in ast.dvs)}}}{side}'
 
 		else:
 			s = ''.join (self._rec_diff_var_single_start.sub (r'\\partial ', self._ast2tex (n)) for n in ast.dvs)
 
-			return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{e}'
+			return f'\\frac{{\\partial{top if p == 1 else f"^{p}{topp}"}}}{{{s}}}{side}'
 
 	def _ast2tex_intg (self, ast):
 		if ast.intg is None:
@@ -421,7 +435,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'!'     : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx'} or ast.fact.is_num_neg)) + '!',
 		'+'     : _ast2tex_add,
 		'*'     : _ast2tex_mul,
-		'/'     : lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo))}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}',
+		'/'     : _ast2tex_div,
 		'^'     : _ast2tex_pow,
 		'-log'  : _ast2tex_log,
 		'-sqrt' : lambda self, ast: f'\\sqrt{{{self._ast2tex_wrap (ast.rad, 0, {",", "-slice"})}}}' if ast.idx is None else f'\\sqrt[{self._ast2tex (ast.idx)}]{{{self._ast2tex_wrap (ast.rad, 0, {",", "-slice"})}}}',
@@ -598,13 +612,18 @@ class ast2nat: # abstract syntax tree -> native text
 		return (''.join (t), has) if ret_has else ''.join (t)
 
 	def _ast2nat_div (self, ast):
+		false_diff = (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else \
+				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curlys.is_num_pos_int) if ast.numer.is_mul else \
+				ast.numer.is_diff_or_part_solo
+
 		n, ns = (self._ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
-				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)) else \
+				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or false_diff) else \
 				self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '<>', '+', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'})
 
 		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if (_ast_is_neg (ast.denom) and ast.denom.strip_minus.is_div) else \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'})
+
 		s     = ns or ds or ast.numer.strip_minus.op not in {'#', '@'} or ast.denom.strip_minus.op not in {'#', '@'}
 
 		return f'{n}{" / " if s else "/"}{d}'
@@ -638,6 +657,14 @@ class ast2nat: # abstract syntax tree -> native text
 		p = 0
 		d = ''
 
+		if ast.diff.is_var:
+			top  = self._ast2nat (ast.diff)
+			topp = f' {top}'
+			side = ''
+		else:
+			top  = topp = ''
+			side = f' {self._ast2nat_paren (ast.diff)}'
+
 		for n in ast.dvs:
 			if n.is_var:
 				d  = n.diff_or_part_type
@@ -646,7 +673,7 @@ class ast2nat: # abstract syntax tree -> native text
 				d  = n.base.diff_or_part_type
 				p += n.exp.as_int
 
-		return f'{d.strip () if d else "d"}{"" if p == 1 else f"^{p}"} / {" ".join (self._ast2nat (n) for n in ast.dvs)} {self._ast2nat_paren (ast.diff)}'
+		return f'{d.strip () if d else "d"}{top if p == 1 else f"**{p}{topp}"} / {" ".join (self._ast2nat (n) for n in ast.dvs)}{side}'
 
 	def _ast2nat_intg (self, ast):
 		if ast.intg is None:

@@ -1,4 +1,8 @@
-> overhaul differentiation to allow dy/dx and df/dx
+> error: adjacent implicit mul to function being written out
+
+* overhaul differentiation to allow dy/dx and df/dx
+* write out differentials of form dy/dx
+> do not write out parentheses for differentiation where not needed - d/dx (y z) -> d/dx y z
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
 > change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...) (what did I mean)?
@@ -72,7 +76,7 @@
 
 > formatting: no spacing for nums - 3 x -> 3x?
 > formatting: quick mode no spacing for vars x y z -> xyz?
-> formatting: non-quick mode explicit tex spacing for vars var1 var2 -> var1\ var2?
+> formatting: non-quick mode explicit tex spacing for vars x y -> x\ y?
 
 > SYM.PY REFACTOR!
 

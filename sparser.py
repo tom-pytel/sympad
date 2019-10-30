@@ -200,22 +200,34 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 	return AST.flatcat ('*', lhs, rhs)
 
-def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'dx')
+def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'd', ('x', 1))
 	def _interpret_divide (ast):
 		numer = ast.numer.strip_curlys
+		v     = e = None
+		p     = 1
 
-		if numer.is_diff_or_part_solo:
-			p = 1
-			v = numer
+		if numer.is_var:
+			if numer.is_diff_or_part_solo:
+				v = numer.var
 
-		elif numer.is_pow and numer.base.is_diff_or_part_solo and numer.exp.strip_curlys.is_num_pos_int:
-			p = numer.exp.strip_curlys.as_int
-			v = numer.base
+			elif numer.is_diff_or_part:
+				v = numer.diff_or_part_type
+				e = numer.as_var
 
-		else:
-			return None
+		elif numer.is_pow:
+			if numer.base.is_diff_or_part_solo and numer.exp.strip_curlys.is_num_pos_int:
+				v = numer.base.var
+				p = numer.exp.strip_curlys.as_int
 
-		ast_dv_check = (lambda n: n.is_differential) if v.is_diff_solo else (lambda n: n.is_partial)
+		elif numer.is_mul and numer.mul.len == 2 and numer.mul [1].is_var and numer.mul [0].is_pow and numer.mul [0].base.is_diff_or_part_solo and numer.mul [0].exp.strip_curlys.is_num_pos_int:
+			v = numer.mul [0].base.var
+			p = numer.mul [0].exp.strip_curlys.as_int
+			e = numer.mul [1]
+
+		if v is None:
+			return None, None
+
+		ast_dv_check = (lambda n: n.is_differential) if v == 'd' else (lambda n: n.is_partial)
 
 		denom = ast.denom.strip_curlys
 		ns    = denom.mul if denom.is_mul else (denom,)
@@ -230,59 +242,69 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curlys.is_num_pos_int:
 				dec = n.exp.strip_curlys.as_int
 			else:
-				return None
+				return None, None
 
 			cp -= dec
 
 			if cp < 0:
-				return None # raise SyntaxError?
+				return None, None # raise SyntaxError?
 
 			ds.append (n)
 
 			if not cp:
 				if i == len (ns) - 1:
-					return AST ('-diff', None, tuple (ds))
-				elif i == len (ns) - 2:
-					return AST ('-diff', ns [-1], tuple (ds))
-				else:
-					return AST ('-diff', AST ('*', ns [i + 1:]), tuple (ds))
+					return AST ('-diff', e, tuple (ds)), None
 
-		return None # raise SyntaxError?
+				elif not ast.denom.is_curly:
+					if e:
+						return AST ('-diff', e, tuple (ds)), ns [i + 1:]
+					elif i == len (ns) - 2:
+						return AST ('-diff', ns [-1], tuple (ds)), None
+					else:
+						return AST ('-diff', AST ('*', ns [i + 1:]), tuple (ds)), None
+
+		return None, None # raise SyntaxError?
 
 	# start here
 	if ast.is_div: # this part handles d/dx
-		diff = _interpret_divide (ast)
+		diff, tail = _interpret_divide (ast)
 
-		if diff and diff [1]:
-			return diff
+		if diff and diff.diff:
+			if tail:
+				return AST ('*', (diff, *tail))
+			else:
+				return diff
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
-		tail = []
-		end  = ast.mul.len
+		mul = []
+		end = ast.mul.len
 
 		for i in range (end - 1, -1, -1):
 			if ast.mul [i].is_div:
-				diff = _interpret_divide (ast.mul [i])
+				diff, tail = _interpret_divide (ast.mul [i])
 
 				if diff:
-					if diff.expr:
+					if diff.diff:
 						if i < end - 1:
-							tail [0 : 0] = ast.mul [i + 1 : end]
+							mul [0 : 0] = ast.mul [i + 1 : end]
 
-						tail.insert (0, diff)
+						if tail:
+							mul [0 : 0] = tail
+
+						mul.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
+						mul.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
 
 					else:
 						continue
 
 					end = i
 
-		if tail:
-			tail = tail [0] if len (tail) == 1 else AST ('*', tuple (tail))
+		if mul:
+			mul = mul [0] if len (mul) == 1 else AST ('*', tuple (mul))
 
-			return tail if end == 0 else AST.flatcat ('*', ast.mul [0], tail) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), tail)
+			return mul if end == 0 else AST.flatcat ('*', ast.mul [0], mul) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), mul)
 
 	return ast
 
@@ -1140,7 +1162,7 @@ class sparser: # for single script
 
 # 	# p.set_user_funcs ({'N'})
 
-# 	a = p.parse (r"lambda x, y, z: 1")
+# 	a = p.parse (r"d**2y/dx**2 z")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

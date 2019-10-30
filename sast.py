@@ -25,7 +25,10 @@
 # ('-func', 'name', (a1, a2, ...))                    - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
 # ('-lim', expr, var, to[, 'dir'])                    - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
+
 # ('-diff', expr, (dv1, ...))                         - differentiation of expr with respect to dv(s) of form 'dx' or 'partialx'
+# ('-diff', expr, type, ((v1, p1), ...))              - differentiation of expr with respect to dv(s), type is 'd' or 'partial', dvs are ('var', power)
+
 # ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
 # ('-intg', expr, var[, from, to])                    - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
@@ -111,7 +114,7 @@ class AST (tuple):
 		elif self.op == '#':
 			return len (self.num) == 1
 		else:
-			return self.is_single_var
+			return self.is_var_single
 
 	def _len (self):
 		return len (self)
@@ -574,6 +577,7 @@ class AST_Var (AST):
 	_is_var_const         = lambda self: self in AST.CONSTS
 	_is_var_nonconst      = lambda self: self not in AST.CONSTS
 	_is_var_lambda        = lambda self: self.var == 'lambda' and self.text != '\\lambda'
+	_is_var_single        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted)?
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]
@@ -584,9 +588,8 @@ class AST_Var (AST):
 	_is_diff_or_part_solo = lambda self: (self.grp [0] or self.grp [1]) and not self.grp [2]
 	_is_diff_or_part_any  = lambda self: self.grp [0] or self.grp [1]
 	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] or '' # 'dx' -> 'd', 'partialx' -> 'partial', else ''
-	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted)?
 	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
-	_as_diff              = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
+	_as_differential      = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
 
 class AST_Attr (AST):
 	op, is_attr = '.', True
@@ -771,6 +774,12 @@ class AST_Diff (AST):
 		self.diff, self.dvs = diff, dvs
 
 	_diff_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
+
+# class AST_Diff (AST):
+# 	op, is_diff = '-diff', True
+
+# 	def _init (self, diff, type, dvs):
+# 		self.diff, self.type, self.dvs = diff, type, dvs
 
 class AST_DiffP (AST):
 	op, is_diffp = '-diffp', True

@@ -497,7 +497,7 @@ def process (ast):
 		return ast
 
 	if ast.is_partial:
-		return ast.as_diff
+		return ast.as_differential
 
 	if ast.is_paren:
 		return process (ast.paren)
