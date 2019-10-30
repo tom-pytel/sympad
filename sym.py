@@ -84,8 +84,12 @@ def _simplify (spt): # extend sympy simplification into standard python containe
 def _dsolve (*args, **kw):
 	ast = spt2ast (sp.dsolve (*args, **kw))
 
-	if ast.is_cmp and ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
-		ast = AST ('=', ast.lhs, ast.cmp [0] [1])
+	if ast.is_cmp:
+		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
+			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
+
+	elif ast.is_brack:
+		ast = AST ('[', tuple (AST ('=', a.lhs, a.cmp [0] [1]) if a.cmp.len == 1 and a.cmp [0] [0] == '==' else a for a in ast.brack))
 
 	return ExprNoEval (str (ast), 1) # never automatically simplify dsolve
 

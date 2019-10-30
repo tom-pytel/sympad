@@ -14,14 +14,6 @@
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
 
-> == -> = general representation when valid (if possible)
-
-
-> display subscripts
-> parse subscripts
-> single letter variables can take trailing number
-
-
 > verify all is_var -> is_var_nonconst where consts not allowed
 
 > N beta (2, 3) -> N (beta (2, 3)) instead of N (beta) (2, 3)
