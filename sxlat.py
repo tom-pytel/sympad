@@ -186,10 +186,6 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 	ds = []
 
 	if not dvs:
-		# vars = ast.free_vars
-
-		# if len (vars) == 1:
-		# 	ds = [AST ('@', f'd{vars.pop ().var}')]
 		if ast.is_diffp:
 			return AST ('-diffp', ast.diffp, ast.count + 1)
 		else:
@@ -203,12 +199,10 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 
 			if not v.is_var:
 				return None
-			elif dvs and dvs [-1].is_num_pos_int:
-				ds.append (AST ('^', ('@', f'd{v.var}'), dvs.pop ()))
-			else:
-				ds.append (AST ('@', f'd{v.var}'))
 
-	return AST ('-diff', ast, tuple (ds))
+			ds.append ((v.var, dvs.pop ().as_int if dvs and dvs [-1].is_num_pos_int else 1))
+
+	return AST ('-diff', ast, 'd', tuple (ds))
 
 def _xlat_f2a_Integral_NAT (ast = None, dvab = None, *args, **kw):
 	if not kw:

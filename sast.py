@@ -25,10 +25,7 @@
 # ('-func', 'name', (a1, a2, ...))                    - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
 # ('-lim', expr, var, to[, 'dir'])                    - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
-
-# ('-diff', expr, (dv1, ...))                         - differentiation of expr with respect to dv(s) of form 'dx' or 'partialx'
-# ('-diff', expr, type, ((v1, p1), ...))              - differentiation of expr with respect to dv(s), type is 'd' or 'partial', dvs are ('var', power)
-
+# ('-diff', expr, d, ((v1, p1), ...))                 - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power)
 # ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
 # ('-intg', expr, var[, from, to])                    - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
@@ -65,7 +62,7 @@ class AST (tuple):
 	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
 	_rec_int        = re.compile (r'^-?\d+$')
 
-	def __new__ (cls, *args):
+	def __new__ (cls, *args, **kw):
 		op       = AST._CLS2OP.get (cls)
 		cls_args = tuple (AST (*arg) if arg.__class__ is tuple else arg for arg in args)
 
@@ -92,6 +89,9 @@ class AST (tuple):
 
 			if self.op:
 				self._init (*cls_args)
+
+		if kw:
+			self.__dict__.update (kw)
 
 		return self
 
@@ -238,7 +238,7 @@ class AST (tuple):
 
 		return tail, wrap
 
-	def _tail_lambda (self, has_var = None): # look for 'lambda' or 'lambda var' at the tail end of ast - for use only during parsing (does not handle mul exp indexes)
+	def _tail_lambda (self, has_var = None): # look for 'lambda' or 'lambda var' at the tail end of ast (to replace) - for use only during parsing (does not handle mul exp indexes)
 		tail, wrap = self, lambda ast: ast
 
 		while 1:
@@ -271,9 +271,14 @@ class AST (tuple):
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast))
 				tail = tail [1]
 
-			elif tail.op in {'-lim', '-sum', '-diff', '-lamb'}:
+			elif tail.op in {'-lim', '-sum', '-lamb'}:
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:]))
 				tail = tail [1]
+
+			# TODO: overhaul this for new diff format
+			elif tail.is_diff:
+				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, tail.d, tail.dvs))
+				tail = tail.diff
 
 			elif tail.is_cmp:
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('<>', tail.lhs, tail.cmp [:-1] + ((tail.cmp [-1] [0], ast),)))
@@ -339,10 +344,6 @@ class AST (tuple):
 						vars.remove (ast.lvar)
 					elif ast.is_sum:
 						vars.remove (ast.svar)
-
-					elif ast.is_diff:
-						for dv in ast.dvs:
-							vars.remove (dv.base if dv.is_pow else dv)
 
 					elif ast.is_intg:
 						vars.remove (ast.dv)
@@ -446,9 +447,6 @@ class AST (tuple):
 
 			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
 
-		elif ast.is_diff:
-			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse), ast.dvs)
-
 		elif ast.is_intg:
 			if ast.is_intg_definite:
 				v    = ast.dv.as_var.var
@@ -530,7 +528,7 @@ class AST_Num (AST):
 	_rec_num   = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?)(\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+) (123)
 
 	def _init (self, num):
-		self.num = num
+		self.num = str (num)
 
 	_grp              = lambda self: [g or '' for g in AST_Num._rec_num.match (self.num).groups ()]
 	_is_num_pos       = lambda self: not self.grp [0]
@@ -590,6 +588,7 @@ class AST_Var (AST):
 	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] or '' # 'dx' -> 'd', 'partialx' -> 'partial', else ''
 	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
 	_as_differential      = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
+	_as_partial           = lambda self: AST ('@', f'partial{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'partialx'
 
 class AST_Attr (AST):
 	op, is_attr = '.', True
@@ -770,16 +769,10 @@ class AST_Sum (AST):
 class AST_Diff (AST):
 	op, is_diff = '-diff', True
 
-	def _init (self, diff, dvs):
-		self.diff, self.dvs = diff, dvs
+	def _init (self, diff, d, dvs):
+		self.diff, self.d, self.dvs = diff, d, dvs
 
-	_diff_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
-
-# class AST_Diff (AST):
-# 	op, is_diff = '-diff', True
-
-# 	def _init (self, diff, type, dvs):
-# 		self.diff, self.type, self.dvs = diff, type, dvs
+	_is_diff_d = lambda self: self.d == 'd'
 
 class AST_DiffP (AST):
 	op, is_diffp = '-diffp', True

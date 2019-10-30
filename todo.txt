@@ -5,7 +5,7 @@
 > do not write out parentheses for differentiation where not needed - d/dx (y z) -> d/dx y z
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
-> change lim, sum, diff and intg not wanting to map var specification to strings (diff dvs, int dv, ...) (what did I mean)?
+> change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 > cleaner \int y dx (y = lambda x: x**2)
 

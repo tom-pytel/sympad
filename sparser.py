@@ -97,9 +97,9 @@ def _expr_comma (lhs, rhs):
 	if rhs.is_slice and rhs.step is None and rhs.stop and rhs.start and rhs.start.is_var_nonconst:
 		if lhs.is_comma:
 			for i in range (lhs.comma.len - 1, -1, -1):
-				first_var, wrap = lhs.comma [i]._tail_lambda (has_var = True)
+				first_var, wrap = lhs.comma [i].tail_lambda # ._tail_lambda (has_var = True)
 
-				if wrap:
+				if first_var and wrap:
 					ast = wrap (AST ('-lamb', rhs.stop, (first_var.var, *(v.var for v in lhs.comma [i + 1:]), rhs.start.var)))
 
 					return ast if not i else AST (',', lhs.comma [:i] + (ast,))
@@ -108,9 +108,9 @@ def _expr_comma (lhs, rhs):
 					break
 
 		else:
-			first_var, wrap = lhs._tail_lambda (has_var = True)
+			first_var, wrap = lhs.tail_lambda # ._tail_lambda (has_var = True)
 
-			if wrap:
+			if first_var and wrap:
 				return wrap (AST ('-lamb', rhs.stop, (first_var.var, rhs.start.var)))
 
 	return AST.flatcat (',', lhs, rhs)
@@ -203,31 +203,31 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'd', ('x', 1))
 	def _interpret_divide (ast):
 		numer = ast.numer.strip_curlys
-		v     = e = None
+		d     = e = None
 		p     = 1
 
 		if numer.is_var:
 			if numer.is_diff_or_part_solo:
-				v = numer.var
+				d = numer.var
 
 			elif numer.is_diff_or_part:
-				v = numer.diff_or_part_type
+				d = numer.diff_or_part_type
 				e = numer.as_var
 
 		elif numer.is_pow:
 			if numer.base.is_diff_or_part_solo and numer.exp.strip_curlys.is_num_pos_int:
-				v = numer.base.var
+				d = numer.base.var
 				p = numer.exp.strip_curlys.as_int
 
 		elif numer.is_mul and numer.mul.len == 2 and numer.mul [1].is_var and numer.mul [0].is_pow and numer.mul [0].base.is_diff_or_part_solo and numer.mul [0].exp.strip_curlys.is_num_pos_int:
-			v = numer.mul [0].base.var
+			d = numer.mul [0].base.var
 			p = numer.mul [0].exp.strip_curlys.as_int
 			e = numer.mul [1]
 
-		if v is None:
+		if d is None:
 			return None, None
 
-		ast_dv_check = (lambda n: n.is_differential) if v == 'd' else (lambda n: n.is_partial)
+		ast_dv_check = (lambda n: n.is_differential) if d == 'd' else (lambda n: n.is_partial)
 
 		denom = ast.denom.strip_curlys
 		ns    = denom.mul if denom.is_mul else (denom,)
@@ -239,8 +239,12 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if ast_dv_check (n):
 				dec = 1
+				ds.append ((n.as_var.var, 1))
+
 			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curlys.is_num_pos_int:
 				dec = n.exp.strip_curlys.as_int
+				ds.append ((n.base.as_var.var, dec))
+
 			else:
 				return None, None
 
@@ -249,19 +253,16 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			if cp < 0:
 				return None, None # raise SyntaxError?
 
-			ds.append (n)
-
 			if not cp:
 				if i == len (ns) - 1:
-					return AST ('-diff', e, tuple (ds)), None
-
+					return AST ('-diff', e, d, tuple (ds)), None
 				elif not ast.denom.is_curly:
 					if e:
-						return AST ('-diff', e, tuple (ds)), ns [i + 1:]
+						return AST ('-diff', e, d, tuple (ds)), ns [i + 1:]
 					elif i == len (ns) - 2:
-						return AST ('-diff', ns [-1], tuple (ds)), None
+						return AST ('-diff', ns [-1], d, tuple (ds)), None
 					else:
-						return AST ('-diff', AST ('*', ns [i + 1:]), tuple (ds)), None
+						return AST ('-diff', AST ('*', ns [i + 1:]), d, tuple (ds)), None
 
 		return None, None # raise SyntaxError?
 
@@ -294,7 +295,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 						mul.insert (0, diff)
 
 					elif i < end - 1:
-						mul.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
+						mul.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.d, diff.dvs))
 
 					else:
 						continue
@@ -331,7 +332,7 @@ def _ast_strip_tail_differential (ast):
 
 		if dv:
 			if ast2:
-				return (AST ('-diff', neg (ast2), ast.dvs), dv)
+				return (AST ('-diff', neg (ast2), ast.d, ast.dvs), dv)
 			elif ast.dvs.len == 1:
 				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv)
 			else:
@@ -492,10 +493,7 @@ def _expr_var (VAR):
 	else:
 		var = AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-	var      = AST ('@', var)
-	var.text = VAR.text # set original text for preventing '\lambda' from creating lambda functions
-
-	return var
+	return AST ('@', var, text = VAR.text)
 
 #...............................................................................................
 class Parser (lalr1.LALR1):
@@ -1153,17 +1151,17 @@ class sparser: # for single script
 	set_user_funcs = set_user_funcs
 	Parser         = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# p.set_quick (True)
-# 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
+	# p.set_quick (True)
+	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	# p.set_user_funcs ({'N'})
+	# p.set_user_funcs ({'N'})
 
-# 	a = p.parse (r"d**2y/dx**2 z")
-# 	print (a)
+	a = p.parse (r"\int d/dx dx")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)

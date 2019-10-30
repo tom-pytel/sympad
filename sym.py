@@ -361,40 +361,34 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	_rec_diff_var_single_start = re.compile (r'^d(?=[^_])')
 
 	def _ast2tex_diff (self, ast):
-		ds = set ()
-		p  = 0
-
 		if ast.diff.is_var:
 			top  = self._ast2tex (ast.diff)
 			topp = f' {top}'
 			side = ''
+
 		else:
 			top  = topp = ''
 			side = self._ast2tex_wrap (ast.diff, 0, ast.diff.op not in {'(', '-lamb'})
 
-		for n in ast.dvs:
-			if n.is_var:
-				p += 1
+		ds = set ()
+		dp = 0
 
-				if n.var:
-					ds.add (n)
-
-			else: # n = ('^', ('@', 'diff or part'), ('#', 'int'))
-				p += n.exp.as_int
-				ds.add (n.base)
+		for v, p in ast.dvs:
+			ds.add (v)
+			dp += p
 
 		if not ds:
 			return f'\\frac{{d{top}}}{{}}{side}'
 
-		dv = next (iter (ds))
+		if len (ds) == 1 and ast.is_diff_d:
+			dvs = " ".join (self._ast2tex (AST ('@', v).as_differential if p == 1 else AST ('^', AST ('@', v).as_differential, AST ('#', p))) for v, p in ast.dvs)
 
-		if len (ds) == 1 and not dv.is_partial:
-			return f'\\frac{{d{top if p == 1 else f"^{p}{topp}"}}}{{{" ".join (self._ast2tex (n) for n in ast.dvs)}}}{side}'
+			return f'\\frac{{d{top if dp == 1 else f"^{dp}{topp}"}}}{{{dvs}}}{side}'
 
 		else:
-			s = ''.join (self._rec_diff_var_single_start.sub (r'\\partial ', self._ast2tex (n)) for n in ast.dvs)
+			dvs = " ".join (self._ast2tex (AST ('@', v).as_partial if p == 1 else AST ('^', AST ('@', v).as_partial, AST ('#', p))) for v, p in ast.dvs)
 
-			return f'\\frac{{\\partial{top if p == 1 else f"^{p}{topp}"}}}{{{s}}}{side}'
+			return f'\\frac{{\\partial{topp if dp == 1 else f"^{dp}{topp}"}}}{{{dvs}}}{side}'
 
 	def _ast2tex_intg (self, ast):
 		if ast.intg is None:
@@ -654,26 +648,19 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'\\sum_{{{self._ast2nat (ast.svar)} = {self._ast2nat_curly (ast.from_, {"-lamb", "-piece"})}}}^{self._ast2nat_curly (ast.to)} {self._ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "<>", "+", "-piece", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"} or ast.sum.is_mul_has_abs)}'
 
 	def _ast2nat_diff (self, ast):
-		p = 0
-		d = ''
-
 		if ast.diff.is_var:
 			top  = self._ast2nat (ast.diff)
 			topp = f' {top}'
 			side = ''
+
 		else:
 			top  = topp = ''
 			side = f' {self._ast2nat_paren (ast.diff)}'
 
-		for n in ast.dvs:
-			if n.is_var:
-				d  = n.diff_or_part_type
-				p += 1
-			else: # n = ('^', ('@', 'differential'), ('#', 'int'))
-				d  = n.base.diff_or_part_type
-				p += n.exp.as_int
+		dp  = sum (dv [1] for dv in ast.dvs)
+		dvs = " ".join (self._ast2nat (AST ('@', v).as_differential if p == 1 else AST ('^', AST ('@', v).as_differential, AST ('#', p))) for v, p in ast.dvs)
 
-		return f'{d.strip () if d else "d"}{top if p == 1 else f"**{p}{topp}"} / {" ".join (self._ast2nat (n) for n in ast.dvs)}{side}'
+		return f'd{top if dp == 1 else f"**{dp}{topp}"} / {dvs}{side}'
 
 	def _ast2nat_intg (self, ast):
 		if ast.intg is None:
@@ -893,11 +880,7 @@ class ast2py: # abstract syntax tree -> Python code text
 				f'''{", dir='+-'" if ast.dir is None else ", dir='-'" if ast.dir == '-' else ""})'''
 
 	def _ast2py_diff (self, ast):
-		args = sum ((
-				(self._ast2py (n.as_var),)
-				if n.is_var else
-				(self._ast2py (n.base.as_var), str (n.exp.as_int))
-				for n in ast.dvs), ())
+		args = sum (((self._ast2py (AST ('@', v)),) if p == 1 else (self._ast2py (AST ('@', v)), str (p)) for v, p in ast.dvs), ())
 
 		return f'Derivative({self._ast2py (ast.diff._strip_paren (keeptuple = True))}, {", ".join (args)})'
 
@@ -1206,11 +1189,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		raise NameError (f'function {ast.unescaped!r} is not defined')
 
 	def _ast2spt_diff (self, ast):
-		args = sum ((
-				(self._ast2spt (n.as_var),)
-				if n.is_var else
-				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.as_int))
-			for n in ast.dvs), ())
+		args = sum (((self._ast2spt (AST ('@', v)),) if p == 1 else (self._ast2spt (AST ('@', v)), sp.Integer (p)) for v, p in ast.dvs), ())
 
 		return sp.Derivative (self._ast2spt (ast [1]), *args)
 
@@ -1462,9 +1441,7 @@ class spt2ast:
 			if len (syms) == 1 and spt.args [1] [0] == syms.pop ():
 				return AST ('-diffp', self._spt2ast (spt.args [0]), int (spt.args [1] [1]))
 
-		return AST ('-diff', self._spt2ast (spt.args [0]), tuple (
-			('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p)))
-			for s, p in spt.args [1:]))
+		return AST ('-diff', self._spt2ast (spt.args [0]), 'd', tuple ((s.name, int (p)) for s, p in spt.args [1:]))
 
 	def _spt2ast_Integral (self, spt):
 		return \
