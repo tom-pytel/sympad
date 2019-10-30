@@ -67,29 +67,33 @@ def _dotprodsimp (a, b, simplify = True):
 		pass
 
 	# part 2, the cancelation and grouping
-	exprops  = count_ops (expr)
-	expr2    = expr.expand (power_base = False, power_exp = False, log = False, multinomial = True, basic = False)
-	expr2ops = count_ops (expr2)
+	try:
+		exprops  = count_ops (expr)
+		expr2    = expr.expand (power_base = False, power_exp = False, log = False, multinomial = True, basic = False)
+		expr2ops = count_ops (expr2)
 
-	if expr2ops < exprops:
-		expr    = expr2
-		exprops = expr2ops
+		if expr2ops < exprops:
+			expr    = expr2
+			exprops = expr2ops
 
-	if exprops < 6: # empirically tested cutoff for expensive simplification
-		return expr
+		if exprops < 6: # empirically tested cutoff for expensive simplification
+			return expr
 
-	expr2    = cancel (expr)
-	expr2ops = count_ops (expr2)
+		expr2    = cancel (expr)
+		expr2ops = count_ops (expr2)
 
-	if expr2ops < exprops:
-		expr    = expr2
-		exprops = expr2ops
+		if expr2ops < exprops:
+			expr    = expr2
+			exprops = expr2ops
 
-	expr3    = together (expr2, deep = True)
-	expr3ops = count_ops (expr3)
+		expr3    = together (expr2, deep = True)
+		expr3ops = count_ops (expr3)
 
-	if expr3ops < exprops:
-		return expr3
+		if expr3ops < exprops:
+			return expr3
+
+	except:
+		pass
 
 	return expr
 

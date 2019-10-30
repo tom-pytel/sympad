@@ -1,3 +1,7 @@
+v1.0.14:
+--------
+* Fixed matrix simplification error during integration in ODE solver.
+
 v1.0.13:
 --------
 * Added differentiation now also parses and writes out forms dy/dx and df/dx.
@@ -34,7 +38,7 @@ v1.0.8:
 -------
 * Added extended comparisons: x < y < z >= w != ...
 * Added SymPy set operation Contains usage.
-* Added and expanded some function visual translations: summation(), .limit()/.diff()/.integrate() and more...
+* Added and expanded some function visual translations: summation(), .limit(), .diff(), .integrate() and more...
 * Added compacting of multiple Subs() and .subs().
 * Changed lambdas to bind global variables on definition.
 * Cleaned up passing assignments as equations into functions.

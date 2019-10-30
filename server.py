@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.0.13'
+_VERSION         = '1.0.14'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
