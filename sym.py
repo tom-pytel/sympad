@@ -211,16 +211,19 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		if not ast.var:
 			return '{}' # Null var
 
-		v = ast.as_var.var
-		n = v.replace ('_', '\\_')
-		t = AST.Var.PY2TEX.get (n)
+		n, s = ast.text_and_tail_num
+		n    = n.replace ('_', '\\_')
+		t    = AST.Var.PY2TEX.get (n)
+
+		if s:
+			s = f'_{{{s}}}'
 
 		return \
-				f'{t or n}'      if not ast.diff_or_part_type else \
-				f'd{t or n}'     if ast.is_diff_any else \
-				f'\\partial'     if ast.is_part_solo else \
-				f'\\partial{t}'  if t else \
-				f'\\partial {n}' if n else \
+				f'{t or n}{s}'      if not ast.diff_or_part_type else \
+				f'd{t or n}{s}'     if ast.is_diff_any else \
+				f'\\partial'        if ast.is_part_solo else \
+				f'\\partial{t}{s}'  if t else \
+				f'\\partial {n}{s}' if n else \
 				f'\\partial'
 
 	def _ast2tex_attr (self, ast):

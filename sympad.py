@@ -1014,10 +1014,11 @@ r"""<!DOCTYPE html>
 	<a class="GreetingA" href="javascript:inputting ('\\int_0^\\pi \\int_0^{2pi} \\int_0^1 rho**2 sin\\phi drho dtheta dphi', true)">\int_0^\pi \int_0^{2pi} \int_0^1 rho**2 sin\phi drho dtheta dphi</a>
 	<a class="GreetingA" href="javascript:inputting ('\\[[1, 2], [3, 4]]**-1', true)">\[[1, 2], [3, 4]]**-1</a>
 	<a class="GreetingA" href="javascript:inputting ('Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)', true)">Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)</a>
+	<a class="GreetingA" href="javascript:inputting ('f (x, y) = sqrt (x**2 + y**2); f (3, 4)', true)">f (x, y) = sqrt (x**2 + y**2); f (3, 4)</a>
 	<a class="GreetingA" href="javascript:inputting ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}', true)">(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}</a>
 	<a class="GreetingA" href="javascript:inputting ('solve (x**2 + y = 4, x)', true)">solve (x**2 + y = 4, x)</a>
 	<a class="GreetingA" href="javascript:inputting ('dsolve (y(x)\'\' + 9y(x))', true)">dsolve (y(x)'' + 9y(x))</a>
-	<a class="GreetingA" href="javascript:inputting ('y = y(t); dsolve (y\'\' - 4y\' - 12y = 3e**{5t}); del y', true)">y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y</a>
+	<a class="GreetingA" href="javascript:inputting ('y = y(t); dsolve (y\'\' - 4y\' - 12y = 3e**{5t})', true)">y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})</a>
 	<a class="GreetingA" href="javascript:inputting ('plotf (2pi, -2, 2, sin x, \'r=sin\', cos x, \'g=cos\', tan x, \'b=tan\')', true)">plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')</a>
 	<br>
 	<a class="GreetingA" href="/help.html#More%20Examples" target="_blank">More Examples...</a>
@@ -1183,9 +1184,10 @@ Integral (e^{-x^2}, (x, 0, \infty))<br>
 \[[1, 2], [3, 4]]**-1<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
+f (x, y) = sqrt (x**2 + y**2); f (3, 4)<br>
 solve (x**2 + y = 4, x)<br>
 dsolve (y(x)'' + 9y(x))<br>
-y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y<br>
+y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})<br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<br>
 </p>
 
@@ -3174,14 +3176,14 @@ class lalr1: # for single script
 # ('-func', 'name', (a1, a2, ...))                    - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
 # ('-lim', expr, var, to[, 'dir'])                    - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
-# ('-diff', expr, (dv1, ...))                         - differentiation of expr with respect to dv(s) of form 'dx' or 'partialx'
+# ('-diff', expr, d, ((v1, p1), ...))                 - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power)
 # ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
 # ('-intg', expr, var[, from, to])                    - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
 # ('-piece', ((v1, c1), ..., (vn, True?)))            - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('-lamb', expr, (v1, v2, ...))                      - lambda expression: v? = 'var'
 # ('-idx', expr, (i0, i1, ...))                       - indexing: expr [i0, i1, ...]
-# ('-slice', start, stop, step)                       - indexing slice object: obj [start : stop : step], None or False indicates not specified
+# ('-slice', start, stop, step)                       - indexing slice object: obj [start : stop : step], None or False indicates not specified, None for step means no second colon
 # ('-set', (expr1, expr2, ...))                       - set
 # ('-dict', ((k1, v1), (k2, v2), ...))                - python dict
 # ('||', (expr1, expr2, ...))                         - set union
@@ -3211,7 +3213,7 @@ class AST (tuple):
 	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
 	_rec_int        = re.compile (r'^-?\d+$')
 
-	def __new__ (cls, *args):
+	def __new__ (cls, *args, **kw):
 		op       = AST._CLS2OP.get (cls)
 		cls_args = tuple (AST (*arg) if arg.__class__ is tuple else arg for arg in args)
 
@@ -3239,6 +3241,9 @@ class AST (tuple):
 			if self.op:
 				self._init (*cls_args)
 
+		if kw:
+			self.__dict__.update (kw)
+
 		return self
 
 	def __add__ (self, other):
@@ -3260,7 +3265,7 @@ class AST (tuple):
 		elif self.op == '#':
 			return len (self.num) == 1
 		else:
-			return self.is_single_var
+			return self.is_var_single
 
 	def _len (self):
 		return len (self)
@@ -3384,7 +3389,7 @@ class AST (tuple):
 
 		return tail, wrap
 
-	def _tail_lambda (self, has_var = None): # look for 'lambda' or 'lambda var' at the tail end of ast - for use only during parsing (does not handle mul exp indexes)
+	def _tail_lambda (self, has_var = None): # look for 'lambda' or 'lambda var' at the tail end of ast (to replace) - for use only during parsing (does not handle mul exp indexes)
 		tail, wrap = self, lambda ast: ast
 
 		while 1:
@@ -3417,9 +3422,14 @@ class AST (tuple):
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast))
 				tail = tail [1]
 
-			elif tail.op in {'-lim', '-sum', '-diff', '-lamb'}:
+			elif tail.op in {'-lim', '-sum', '-lamb'}:
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:]))
 				tail = tail [1]
+
+			# TODO: overhaul this for new diff format
+			elif tail.is_diff:
+				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, tail.d, tail.dvs))
+				tail = tail.diff
 
 			elif tail.is_cmp:
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('<>', tail.lhs, tail.cmp [:-1] + ((tail.cmp [-1] [0], ast),)))
@@ -3473,8 +3483,9 @@ class AST (tuple):
 	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
-				if ast.is_var_const is False and ast.var:
-					vars.add (ast)
+				if ast.is_var:
+					if ast.is_var_nonconst and ast.var:
+						vars.add (ast)
 
 				else:
 					for e in ast:
@@ -3484,10 +3495,6 @@ class AST (tuple):
 						vars.remove (ast.lvar)
 					elif ast.is_sum:
 						vars.remove (ast.svar)
-
-					elif ast.is_diff:
-						for dv in ast.dvs:
-							vars.remove (dv)
 
 					elif ast.is_intg:
 						vars.remove (ast.dv)
@@ -3560,34 +3567,47 @@ class AST (tuple):
 			else:
 				return AST (op, (ast0, ast1))
 
-	@staticmethod
-	def remap (ast, map, recurse = False): # remapping of arbitrary ASTs
-		if not isinstance (ast, AST):
-			return ast
+	# @staticmethod
+	# def remap (ast, map, recurse = False): # remapping of arbitrary ASTs
+	# 	if not isinstance (ast, AST):
+	# 		return ast
 
-		mapped = map.get (ast)
+	# 	mapped = map.get (ast)
 
-		if mapped:
-			return AST.remap (mapped, map, recurse) if recurse else mapped
+	# 	if mapped:
+	# 		return AST.remap (mapped, map, recurse) if recurse else mapped
 
-		return AST (*(AST.remap (a, map, recurse) for a in ast))
+	# 	return AST (*(AST.remap (a, map, recurse) for a in ast))
 
 	@staticmethod
 	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
 		if not isinstance (ast, AST) or ast.is_ufunc or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
 			return ast
 
-		if ast.is_lamb: # lambda definition
-			lvars = set (ast.vars)
-			vars  = dict (kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ()))
-
-		elif ast.is_var: # regular var substitution?
+		if ast.is_var: # regular var substitution?
 			var = vars.get (ast.var)
 
 			if var: # user var
 				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse)
 
 			return ast
+
+		elif ast.op in {'-lim', '-sum'}:
+			v    = ast [2].var
+			vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
+
+			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+
+		elif ast.is_intg:
+			if ast.is_intg_definite:
+				v    = ast.dv.as_var.var
+				vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
+
+			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), ast.dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+
+		elif ast.is_lamb: # lambda definition
+			lvars = set (ast.vars)
+			vars  = dict (kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ()))
 
 		elif ast.is_func: # function, might be user lambda call
 			lamb = vars.get (ast.func)
@@ -3659,7 +3679,7 @@ class AST_Num (AST):
 	_rec_num   = re.compile (r'^(-?)(\d*[^0.e])?(0*)(?:(\.)(0*)(\d*[^0e])?(0*))?(?:([eE])([+-]?)(\d+))?$') # -101000.000101000e+123 -> (-) (101) (000) (.) (000) (101) (000) (e) (+) (123)
 
 	def _init (self, num):
-		self.num = num
+		self.num = str (num)
 
 	_grp              = lambda self: [g or '' for g in AST_Num._rec_num.match (self.num).groups ()]
 	_is_num_pos       = lambda self: not self.grp [0]
@@ -3695,7 +3715,7 @@ class AST_Var (AST):
 	UNI2PY      = {**dict (zip (GREEKUNI, GREEK)), '\u2202': 'partial', '\u221e': 'oo'}
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 
-	_rec_groups = re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?(.*)$")
+	_rec_groups = re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
 
 	def _init (self, var):
 		self.var = var
@@ -3706,6 +3726,7 @@ class AST_Var (AST):
 	_is_var_const         = lambda self: self in AST.CONSTS
 	_is_var_nonconst      = lambda self: self not in AST.CONSTS
 	_is_var_lambda        = lambda self: self.var == 'lambda' and self.text != '\\lambda'
+	_is_var_single        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted)?
 	_is_differential      = lambda self: self.grp [0] and self.grp [2]
 	_is_diff_solo         = lambda self: self.grp [0] and not self.grp [2]
 	_is_diff_any          = lambda self: self.grp [0]
@@ -3716,9 +3737,10 @@ class AST_Var (AST):
 	_is_diff_or_part_solo = lambda self: (self.grp [0] or self.grp [1]) and not self.grp [2]
 	_is_diff_or_part_any  = lambda self: self.grp [0] or self.grp [1]
 	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] or '' # 'dx' -> 'd', 'partialx' -> 'partial', else ''
-	_is_single_var        = lambda self: len (self.var) == 1 or self.var in AST_Var.PY2TEX # is single atomic variable (non-differential, non-subscripted)?
 	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
-	_as_diff              = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
+	_as_differential      = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
+	_as_partial           = lambda self: AST ('@', f'partial{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'partialx'
+	_text_and_tail_num    = lambda self: (self.grp [3], self.grp [4]) if self.grp [3] and self.grp [3] [-1] != '_' else (self.grp [2], '')
 
 class AST_Attr (AST):
 	op, is_attr = '.', True
@@ -3814,7 +3836,7 @@ class AST_Mul (AST):
 			if m.is_abs:
 				return True
 
-class AST_MulExp (AST): # temporary for isolating explicit multiplications from implicit mul grammar rewriting rules, used during parsing only
+class AST_MulExp (AST): # temporary for isolating explicit multiplications from implicit mul grammar rewriting rules, used only during parsing
 	op, is_mulexp = '*exp', True
 
 	def _init (self, mul):
@@ -3899,10 +3921,10 @@ class AST_Sum (AST):
 class AST_Diff (AST):
 	op, is_diff = '-diff', True
 
-	def _init (self, diff, dvs):
-		self.diff, self.dvs = diff, dvs
+	def _init (self, diff, d, dvs):
+		self.diff, self.d, self.dvs = diff, d, dvs
 
-	_diff_type = lambda self: '' if not self.dvs else self.dvs [0].diff_or_part_type if self.dvs [0].is_var else self.dvs [0].base.diff_or_part_type
+	_is_diff_d = lambda self: self.d == 'd'
 
 class AST_DiffP (AST):
 	op, is_diffp = '-diffp', True
@@ -4027,6 +4049,7 @@ for _vp, _vv in _AST_CONSTS:
 	AST.CONSTS.add (ast)
 	setattr (AST, _vp, ast)
 
+AST.Null       = AST ()
 AST.Zero       = AST ('#', '0')
 AST.One        = AST ('#', '1')
 AST.NegOne     = AST ('#', '-1')
@@ -4227,10 +4250,6 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 	ds = []
 
 	if not dvs:
-		# vars = ast.free_vars
-
-		# if len (vars) == 1:
-		# 	ds = [AST ('@', f'd{vars.pop ().var}')]
 		if ast.is_diffp:
 			return AST ('-diffp', ast.diffp, ast.count + 1)
 		else:
@@ -4244,12 +4263,10 @@ def _xlat_f2a_Derivative (ast = AST.VarNull, *dvs, **kw):
 
 			if not v.is_var:
 				return None
-			elif dvs and dvs [-1].is_num_pos_int:
-				ds.append (AST ('^', ('@', f'd{v.var}'), dvs.pop ()))
-			else:
-				ds.append (AST ('@', f'd{v.var}'))
 
-	return AST ('-diff', ast, tuple (ds))
+			ds.append ((v.var, dvs.pop ().as_int if dvs and dvs [-1].is_num_pos_int else 1))
+
+	return AST ('-diff', ast, 'd', tuple (ds))
 
 def _xlat_f2a_Integral_NAT (ast = None, dvab = None, *args, **kw):
 	if not kw:
@@ -4595,6 +4612,7 @@ from sympy.core.function import AppliedUndef as sp_AppliedUndef
 
 
 _SYM_USER_FUNCS = set () # set user funcs {name, ...}
+_SYM_USER_VARS  = {} # user vars {name: ast, ...}
 _POST_SIMPLIFY  = True # post-evaluation simplification
 _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
@@ -4794,16 +4812,19 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		if not ast.var:
 			return '{}' # Null var
 
-		v = ast.as_var.var
-		n = v.replace ('_', '\\_')
-		t = AST.Var.PY2TEX.get (n)
+		n, s = ast.text_and_tail_num
+		n    = n.replace ('_', '\\_')
+		t    = AST.Var.PY2TEX.get (n)
+
+		if s:
+			s = f'_{{{s}}}'
 
 		return \
-				f'{t or n}'      if not ast.diff_or_part_type else \
-				f'd{t or n}'     if ast.is_diff_any else \
-				f'\\partial'     if ast.is_part_solo else \
-				f'\\partial{t}'  if t else \
-				f'\\partial {n}' if n else \
+				f'{t or n}{s}'      if not ast.diff_or_part_type else \
+				f'd{t or n}{s}'     if ast.is_diff_any else \
+				f'\\partial'        if ast.is_part_solo else \
+				f'\\partial{t}{s}'  if t else \
+				f'\\partial {n}{s}' if n else \
 				f'\\partial'
 
 	def _ast2tex_attr (self, ast):
@@ -4858,6 +4879,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
 					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
+					(p.is_var and _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
 					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
 					# (n.strip_fdpi.is_paren and i in ast.exp) or
 					(n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
@@ -4886,6 +4908,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			p = n
 
 		return (''.join (t), has) if ret_has else ''.join (t)
+
+	def _ast2tex_div (self, ast):
+		false_diff = (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else \
+				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curlys.is_num_pos_int) if ast.numer.is_mul else \
+				ast.numer.is_diff_or_part_solo
+
+		return f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or false_diff)}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}'
 
 	def _ast2tex_pow (self, ast, trighpow = True):
 		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-lamb', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
@@ -4938,33 +4967,34 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	_rec_diff_var_single_start = re.compile (r'^d(?=[^_])')
 
 	def _ast2tex_diff (self, ast):
-		ds = set ()
-		p  = 0
-		e  = self._ast2tex_wrap (ast.diff, 0, ast.diff.op not in {'(', '-lamb'})
-
-		for n in ast.dvs:
-			if n.is_var:
-				p += 1
-
-				if n.var:
-					ds.add (n)
-
-			else: # n = ('^', ('@', 'diff or part'), ('#', 'int'))
-				p += n.exp.as_int
-				ds.add (n.base)
-
-		if not ds:
-			return f'\\frac{{d}}{{}}{e}'
-
-		dv = next (iter (ds))
-
-		if len (ds) == 1 and not dv.is_partial:
-			return f'\\frac{{d{"" if p == 1 else f"^{p}"}}}{{{" ".join (self._ast2tex (n) for n in ast.dvs)}}}{e}'
+		if ast.diff.is_var:
+			top  = self._ast2tex (ast.diff)
+			topp = f' {top}'
+			side = ''
 
 		else:
-			s = ''.join (self._rec_diff_var_single_start.sub (r'\\partial ', self._ast2tex (n)) for n in ast.dvs)
+			top  = topp = ''
+			side = self._ast2tex_wrap (ast.diff, 0, ast.diff.op not in {'(', '-lamb'})
 
-			return f'\\frac{{\\partial{"" if p == 1 else f"^{p}"}}}{{{s}}}{e}'
+		ds = set ()
+		dp = 0
+
+		for v, p in ast.dvs:
+			ds.add (v)
+			dp += p
+
+		if not ds:
+			return f'\\frac{{d{top}}}{{}}{side}'
+
+		if len (ds) == 1 and ast.is_diff_d:
+			dvs = " ".join (self._ast2tex (AST ('@', v).as_differential if p == 1 else AST ('^', AST ('@', v).as_differential, AST ('#', p))) for v, p in ast.dvs)
+
+			return f'\\frac{{d{top if dp == 1 else f"^{dp}{topp}"}}}{{{dvs}}}{side}'
+
+		else:
+			dvs = " ".join (self._ast2tex (AST ('@', v).as_partial if p == 1 else AST ('^', AST ('@', v).as_partial, AST ('#', p))) for v, p in ast.dvs)
+
+			return f'\\frac{{\\partial{topp if dp == 1 else f"^{dp}{topp}"}}}{{{dvs}}}{side}'
 
 	def _ast2tex_intg (self, ast):
 		if ast.intg is None:
@@ -5005,7 +5035,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'!'     : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx'} or ast.fact.is_num_neg)) + '!',
 		'+'     : _ast2tex_add,
 		'*'     : _ast2tex_mul,
-		'/'     : lambda self, ast: f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo))}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}',
+		'/'     : _ast2tex_div,
 		'^'     : _ast2tex_pow,
 		'-log'  : _ast2tex_log,
 		'-sqrt' : lambda self, ast: f'\\sqrt{{{self._ast2tex_wrap (ast.rad, 0, {",", "-slice"})}}}' if ast.idx is None else f'\\sqrt[{self._ast2tex (ast.idx)}]{{{self._ast2tex_wrap (ast.rad, 0, {",", "-slice"})}}}',
@@ -5153,6 +5183,7 @@ class ast2nat: # abstract syntax tree -> native text
 					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
+					(p.is_var and _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
 					(s [:1] == '(' and (
 						p.is_attr_var or
 						i in ast.exp or
@@ -5182,13 +5213,18 @@ class ast2nat: # abstract syntax tree -> native text
 		return (''.join (t), has) if ret_has else ''.join (t)
 
 	def _ast2nat_div (self, ast):
+		false_diff = (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else \
+				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curlys.is_num_pos_int) if ast.numer.is_mul else \
+				ast.numer.is_diff_or_part_solo
+
 		n, ns = (self._ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
-				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or ((ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else ast.numer.is_diff_or_part_solo)) else \
+				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or false_diff) else \
 				self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '<>', '+', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'})
 
 		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if (_ast_is_neg (ast.denom) and ast.denom.strip_minus.is_div) else \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'})
+
 		s     = ns or ds or ast.numer.strip_minus.op not in {'#', '@'} or ast.denom.strip_minus.op not in {'#', '@'}
 
 		return f'{n}{" / " if s else "/"}{d}'
@@ -5219,18 +5255,20 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'\\sum_{{{self._ast2nat (ast.svar)} = {self._ast2nat_curly (ast.from_, {"-lamb", "-piece"})}}}^{self._ast2nat_curly (ast.to)} {self._ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "<>", "+", "-piece", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"} or ast.sum.is_mul_has_abs)}'
 
 	def _ast2nat_diff (self, ast):
-		p = 0
-		d = ''
+		if ast.diff.is_var:
+			top  = self._ast2nat (ast.diff)
+			topp = f' {top}'
+			side = ''
 
-		for n in ast.dvs:
-			if n.is_var:
-				d  = n.diff_or_part_type
-				p += 1
-			else: # n = ('^', ('@', 'differential'), ('#', 'int'))
-				d  = n.base.diff_or_part_type
-				p += n.exp.as_int
+		else:
+			top  = topp = ''
+			side = f' {self._ast2nat_paren (ast.diff)}'
 
-		return f'{d.strip () if d else "d"}{"" if p == 1 else f"^{p}"} / {" ".join (self._ast2nat (n) for n in ast.dvs)} {self._ast2nat_paren (ast.diff)}'
+		dp  = sum (dv [1] for dv in ast.dvs)
+		dv  = (lambda v: AST ('@', v).as_differential) if ast.is_diff_d else (lambda v: AST ('@', v).as_partial)
+		dvs = " ".join (self._ast2nat (dv (v) if p == 1 else AST ('^', dv (v), AST ('#', p))) for v, p in ast.dvs)
+
+		return f'{ast.d}{top if dp == 1 else f"**{dp}{topp}"} / {dvs}{side}'
 
 	def _ast2nat_intg (self, ast):
 		if ast.intg is None:
@@ -5450,11 +5488,7 @@ class ast2py: # abstract syntax tree -> Python code text
 				f'''{", dir='+-'" if ast.dir is None else ", dir='-'" if ast.dir == '-' else ""})'''
 
 	def _ast2py_diff (self, ast):
-		args = sum ((
-				(self._ast2py (n.as_var),)
-				if n.is_var else
-				(self._ast2py (n.base.as_var), str (n.exp.as_int))
-				for n in ast.dvs), ())
+		args = sum (((self._ast2py (AST ('@', v)),) if p == 1 else (self._ast2py (AST ('@', v)), str (p)) for v, p in ast.dvs), ())
 
 		return f'Derivative({self._ast2py (ast.diff._strip_paren (keeptuple = True))}, {", ".join (args)})'
 
@@ -5763,11 +5797,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		raise NameError (f'function {ast.unescaped!r} is not defined')
 
 	def _ast2spt_diff (self, ast):
-		args = sum ((
-				(self._ast2spt (n.as_var),)
-				if n.is_var else
-				(self._ast2spt (n.base.as_var), sp.Integer (n.exp.as_int))
-			for n in ast.dvs), ())
+		args = sum (((self._ast2spt (AST ('@', v)),) if p == 1 else (self._ast2spt (AST ('@', v)), sp.Integer (p)) for v, p in ast.dvs), ())
 
 		return sp.Derivative (self._ast2spt (ast [1]), *args)
 
@@ -6019,9 +6049,7 @@ class spt2ast:
 			if len (syms) == 1 and spt.args [1] [0] == syms.pop ():
 				return AST ('-diffp', self._spt2ast (spt.args [0]), int (spt.args [1] [1]))
 
-		return AST ('-diff', self._spt2ast (spt.args [0]), tuple (
-			('@', f'd{s.name}') if p == 1 else ('^', ('@', f'd{s.name}'), ('#', str (p)))
-			for s, p in spt.args [1:]))
+		return AST ('-diff', self._spt2ast (spt.args [0]), 'd', tuple ((s.name, int (p)) for s, p in spt.args [1:]))
 
 	def _spt2ast_Integral (self, spt):
 		return \
@@ -6146,9 +6174,13 @@ class spt2ast:
 	}
 
 #...............................................................................................
-def set_user_funcs (user_funcs):
+def set_sym_user_funcs (user_funcs):
 	global _SYM_USER_FUNCS
 	_SYM_USER_FUNCS = user_funcs
+
+def set_sym_user_vars (user_vars):
+	global _SYM_USER_VARS
+	_SYM_USER_VARS = user_vars
 
 def set_pyS (state):
 	global _PYS
@@ -6163,20 +6195,21 @@ def set_doit (state):
 	_DOIT = state
 
 class sym: # for single script
-	set_user_funcs = set_user_funcs
-	set_pyS        = set_pyS
-	set_simplify   = set_simplify
-	set_doit       = set_doit
-	ast2tex        = ast2tex
-	ast2nat        = ast2nat
-	ast2py         = ast2py
-	ast2spt        = ast2spt
-	spt2ast        = spt2ast
+	set_sym_user_funcs = set_sym_user_funcs
+	set_sym_user_vars  = set_sym_user_vars
+	set_pyS            = set_pyS
+	set_simplify       = set_simplify
+	set_doit           = set_doit
+	ast2tex            = ast2tex
+	ast2nat            = ast2nat
+	ast2py             = ast2py
+	ast2spt            = ast2spt
+	spt2ast            = spt2ast
 
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
 # 	ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-# 	set_user_funcs (vars)
+# 	set_sym_user_funcs (vars)
 # 	res = ast2py (ast)
 
 # 	# ast = AST ('*', (('-diffp', ('@', 'y'), 1), ('(', ('@', 'x'))))
@@ -6194,6 +6227,7 @@ import sys
 
 
 _SP_USER_FUNCS = set () # set user funcs {name, ...}
+_SP_USER_VARS  = {} # user vars {name: ast, ...}
 
 def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
@@ -6280,9 +6314,9 @@ def _expr_comma (lhs, rhs):
 	if rhs.is_slice and rhs.step is None and rhs.stop and rhs.start and rhs.start.is_var_nonconst:
 		if lhs.is_comma:
 			for i in range (lhs.comma.len - 1, -1, -1):
-				first_var, wrap = lhs.comma [i]._tail_lambda (has_var = True)
+				first_var, wrap = lhs.comma [i].tail_lambda # ._tail_lambda (has_var = True)
 
-				if wrap:
+				if first_var and wrap:
 					ast = wrap (AST ('-lamb', rhs.stop, (first_var.var, *(v.var for v in lhs.comma [i + 1:]), rhs.start.var)))
 
 					return ast if not i else AST (',', lhs.comma [:i] + (ast,))
@@ -6291,9 +6325,9 @@ def _expr_comma (lhs, rhs):
 					break
 
 		else:
-			first_var, wrap = lhs._tail_lambda (has_var = True)
+			first_var, wrap = lhs.tail_lambda # ._tail_lambda (has_var = True)
 
-			if wrap:
+			if first_var and wrap:
 				return wrap (AST ('-lamb', rhs.stop, (first_var.var, rhs.start.var)))
 
 	return AST.flatcat (',', lhs, rhs)
@@ -6367,7 +6401,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			if arg.is_paren:
 				ast = wrapa (AST ('-func', tail.var, _ast_func_tuple_args (arg)))
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
-				ast = wrapa (AST ('-func', tail.var, (arg,)))
+				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
 		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
@@ -6383,22 +6417,34 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 	return AST.flatcat ('*', lhs, rhs)
 
-def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'dx')
+def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'd', ('x', 1))
 	def _interpret_divide (ast):
 		numer = ast.numer.strip_curlys
+		d     = e = None
+		p     = 1
 
-		if numer.is_diff_or_part_solo:
-			p = 1
-			v = numer
+		if numer.is_var:
+			if numer.is_diff_or_part_solo:
+				d = numer.var
 
-		elif numer.is_pow and numer.base.is_diff_or_part_solo and numer.exp.strip_curlys.is_num_pos_int:
-			p = numer.exp.strip_curlys.as_int
-			v = numer.base
+			elif numer.is_diff_or_part:
+				d = numer.diff_or_part_type
+				e = numer.as_var
 
-		else:
-			return None
+		elif numer.is_pow:
+			if numer.base.is_diff_or_part_solo and numer.exp.strip_curlys.is_num_pos_int:
+				d = numer.base.var
+				p = numer.exp.strip_curlys.as_int
 
-		ast_dv_check = (lambda n: n.is_differential) if v.is_diff_solo else (lambda n: n.is_partial)
+		elif numer.is_mul and numer.mul.len == 2 and numer.mul [1].is_var and numer.mul [0].is_pow and numer.mul [0].base.is_diff_or_part_solo and numer.mul [0].exp.strip_curlys.is_num_pos_int:
+			d = numer.mul [0].base.var
+			p = numer.mul [0].exp.strip_curlys.as_int
+			e = numer.mul [1]
+
+		if d is None:
+			return None, None
+
+		ast_dv_check = (lambda n: n.is_differential) if d == 'd' else (lambda n: n.is_partial)
 
 		denom = ast.denom.strip_curlys
 		ns    = denom.mul if denom.is_mul else (denom,)
@@ -6410,62 +6456,74 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if ast_dv_check (n):
 				dec = 1
+				ds.append ((n.as_var.var, 1))
+
 			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curlys.is_num_pos_int:
 				dec = n.exp.strip_curlys.as_int
+				ds.append ((n.base.as_var.var, dec))
+
 			else:
-				return None
+				return None, None
 
 			cp -= dec
 
 			if cp < 0:
-				return None # raise SyntaxError?
-
-			ds.append (n)
+				return None, None # raise SyntaxError?
 
 			if not cp:
 				if i == len (ns) - 1:
-					return AST ('-diff', None, tuple (ds))
-				elif i == len (ns) - 2:
-					return AST ('-diff', ns [-1], tuple (ds))
-				else:
-					return AST ('-diff', AST ('*', ns [i + 1:]), tuple (ds))
+					return AST ('-diff', e, d, tuple (ds), src = ast), None
 
-		return None # raise SyntaxError?
+				elif not ast.denom.is_curly:
+					if e:
+						return AST ('-diff', e, d, tuple (ds), src = ast), ns [i + 1:]
+					elif i == len (ns) - 2:
+						return AST ('-diff', ns [-1], d, tuple (ds), src = ast), None
+					else:
+						return AST ('-diff', AST ('*', ns [i + 1:]), d, tuple (ds), src = ast), None
+
+		return None, None # raise SyntaxError?
 
 	# start here
 	if ast.is_div: # this part handles d/dx
-		diff = _interpret_divide (ast)
+		diff, tail = _interpret_divide (ast)
 
-		if diff and diff [1]:
-			return diff
+		if diff and diff.diff:
+			if tail:
+				return AST ('*', (diff, *tail))
+			else:
+				return diff
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
-		tail = []
-		end  = ast.mul.len
+		mul = []
+		end = ast.mul.len
 
 		for i in range (end - 1, -1, -1):
 			if ast.mul [i].is_div:
-				diff = _interpret_divide (ast.mul [i])
+				diff, tail = _interpret_divide (ast.mul [i])
 
 				if diff:
-					if diff.expr:
+					if diff.diff:
 						if i < end - 1:
-							tail [0 : 0] = ast.mul [i + 1 : end]
+							mul [0 : 0] = ast.mul [i + 1 : end]
 
-						tail.insert (0, diff)
+						if tail:
+							mul [0 : 0] = tail
+
+						mul.insert (0, diff)
 
 					elif i < end - 1:
-						tail.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.dvs))
+						mul.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.d, diff.dvs, src = AST ('*', ast.mul [i : end])))
 
 					else:
 						continue
 
 					end = i
 
-		if tail:
-			tail = tail [0] if len (tail) == 1 else AST ('*', tuple (tail))
+		if mul:
+			mul = mul [0] if len (mul) == 1 else AST ('*', tuple (mul))
 
-			return tail if end == 0 else AST.flatcat ('*', ast.mul [0], tail) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), tail)
+			return mul if end == 0 else AST.flatcat ('*', ast.mul [0], mul) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), mul)
 
 	return ast
 
@@ -6487,16 +6545,19 @@ def _ast_strip_tail_differential (ast):
 					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
-		ast2, neg = ast.diff._strip_minus (retneg = True)
+		ast2, neg = ast.src._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv:
-			if ast2:
-				return (AST ('-diff', neg (ast2), ast.dvs), dv)
-			elif ast.dvs.len == 1:
-				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv)
-			else:
-				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
+		if dv and ast2:
+			return neg (_expr_diff (ast2)), dv
+
+	elif ast.is_func:
+		if ast.src and _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
+			ast2, neg = ast.src._strip_minus (retneg = True)
+			ast2, dv  = _ast_strip_tail_differential (ast2)
+
+			if dv and ast2:
+				return neg (ast2), dv
 
 	elif ast.is_div:
 		ast2, neg = ast.denom._strip_minus (retneg = True)
@@ -6506,6 +6567,7 @@ def _ast_strip_tail_differential (ast):
 			return AST ('/', ast.numer, neg (ast2)), dv
 
 		ast2, neg = ast.numer._strip_minus (retneg = True)
+		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
 			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
@@ -6653,10 +6715,7 @@ def _expr_var (VAR):
 	else:
 		var = AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-	var      = AST ('@', var)
-	var.text = VAR.text # set original text for preventing '\lambda' from creating lambda functions
-
-	return var
+	return AST ('@', f'{var}{VAR.grp [4]}' if VAR.grp [4] else var, text = VAR.text) # include original text for check to prevent \lambda from creating lambda functions
 
 #...............................................................................................
 class Parser (lalr1.LALR1):
@@ -6772,9 +6831,9 @@ class Parser (lalr1.LALR1):
 
 	_VARTEX   = '(?:' + '|'.join (sorted ((x.replace ('\\', '\\\\').replace ('+', '\\+').replace ('*', '\\*').replace ('^', '\\^') for x in AST.Var.TEX2PY), reverse = True)) + ')'
 	_VARTEX1  = fr'(?:(\d)|({_LTR})|(\\partial|\\infty))'
-	_VARPY    = fr'(?:{_LTR}(?:\w|\\_)*)'
+	_VARPY    = fr'(?:{_LTR}(?:\w|\\_)*(?<!_))'
 	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'
-	_VAR      = fr'(?:{_VARPY}|{_VARTEX}(?!{_LTRU})|{_VARUNI})'
+	_VAR      = fr'(?:{_VARPY}|{_VARTEX}(?!{_LTR})|{_VARUNI})'
 
 	_STRS     = r"'(?:\\.|[^'])*'"
 	_STRD     = r'"(?:\\.|[^"])*"'
@@ -6782,7 +6841,7 @@ class Parser (lalr1.LALR1):
 	_FUNCPY   = f"(?:{'|'.join (sorted (AST.Func.PY, reverse = True))})"
 	_FUNCTEX  = f"(?:{'|'.join (sorted (AST.Func.TEX, reverse = True))})"
 
-	TOKENS    = OrderedDict ([ # order matters
+	TOKENS    = OrderedDict ([ # order matters due to Python regex non-greedy or
 		('UFUNC',        fr'\?'),
 		('UFUNCPY',       r'Function'),
 		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(@|\\\%|\$?(?:{_LTR}|\\_)(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
@@ -6831,7 +6890,7 @@ class Parser (lalr1.LALR1):
 		('LN',            r'ln\b|\\ln(?!{_LTRU})'),
 
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
-		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))"),
+		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))(?:_{{(\d+)}})?"),
 		('ATTR',         fr'\.\s*(?:({_LTRU}\w*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"((?<![.'|!)}}\]\w]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
 
@@ -6896,7 +6955,7 @@ class Parser (lalr1.LALR1):
 		('LOG',           r'log\b|\\log'),
 		('LN',            r'ln\b|\\ln'),
 
-		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))({_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))({_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))(?:_{{(\d+)}})?"),
 	])
 
 	TOKENS_LONG    = OrderedDict () # initialized in __init__()
@@ -7306,27 +7365,32 @@ class Parser (lalr1.LALR1):
 
 		return postprocess (res)
 
-def set_user_funcs (user_funcs):
+def set_sp_user_funcs (user_funcs):
 	global _SP_USER_FUNCS
 	_SP_USER_FUNCS = user_funcs
 
+def set_sp_user_vars (user_vars):
+	global _SP_USER_VARS
+	_SP_USER_VARS = user_vars
+
 class sparser: # for single script
-	set_user_funcs = set_user_funcs
-	Parser         = Parser
+	set_sp_user_funcs = set_sp_user_funcs
+	set_sp_user_vars  = set_sp_user_vars
+	Parser            = Parser
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# p.set_quick (True)
-# 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
+	# p.set_quick (True)
+	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	# p.set_user_funcs ({'N'})
+	# p.set_sp_user_funcs ({'N'})
 
-# 	a = p.parse (r"lambda x, y, z: 1")
-# 	print (a)
+	a = p.parse (r"x_{1}")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)
 # Patch SymPy bugs and inconveniences.
 
 from collections import defaultdict
@@ -8119,7 +8183,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.12'
+_VERSION         = '1.0.13'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
@@ -8217,8 +8281,10 @@ def _update_vars ():
 			elif ast.is_lamb:
 				user_funcs.add (var)
 
-	sparser.set_user_funcs (user_funcs)
-	sym.set_user_funcs (user_funcs)
+	sparser.set_sp_user_funcs (user_funcs)
+	sparser.set_sp_user_vars (_VARS)
+	sym.set_sym_user_funcs (user_funcs)
+	sym.set_sym_user_vars (_VARS)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = ast.ass_lhs_vars

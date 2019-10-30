@@ -1,6 +1,8 @@
 v1.0.13:
 --------
 * Added differentiation now also parses and writes out forms dy/dx and df/dx.
+* Added parsing and representation of numerical subscripts.
+* Modified differential recognition in integral parsing to work better - \int dx/x, \int *lambda* dx, etc...
 * Fixed erroneous mapping of bound variables in lim, sum, diff and intg.
 
 v1.0.12:
