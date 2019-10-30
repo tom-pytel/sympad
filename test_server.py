@@ -110,6 +110,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('solve (x**2 + 2 x - 1 > 7)'), {'math': ('-oo < x < -4 or 2 < x < oo', 'Or(And(Lt(-oo, x), Lt(x, -4)), And(Lt(2, x), Lt(x, oo)))', '-\\infty < x < -4 \\vee 2 < x < \\infty')})
 		self.assertEqual (get ('f = lambda x: _'), {'math': ('f = lambda x: -oo < x < -4 or 2 < x < oo', 'f = Lambda(x, Or(And(Lt(-oo, x), Lt(x, -4)), And(Lt(2, x), Lt(x, oo))))', 'f = \\left(x \\mapsto -\\infty < x < -4 \\vee 2 < x < \\infty \\right)')})
 		self.assertEqual (get ('f (-4.1), f (-4), f (0), f (2), f (2.1)'), {'math': ('(True, False, False, False, True)', '(True, False, False, False, True)', '\\left(True, False, False, False, True \\right)')})
+		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+		self.assertEqual (get ('f (2)'), {'math': ('4', '4', '4')})
+		self.assertEqual (get ('f (x, y) = sqrt {x**2 + y**2}'), {'math': ('f(x, y) = sqrt(x**2 + y**2)', 'f = Lambda((x, y), sqrt(x**2 + y**2))', 'f\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
+		self.assertEqual (get ('f (3, 4)'), {'math': ('5', '5', '5')})
 
 	def test_env (self):
 		reset ()
@@ -244,6 +248,25 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('delall'), {'msg': ['All assignments deleted.']})
 		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
 
+	def test_intro_examples (self):
+		reset ()
+		self.assertEqual (get ('cos**-1 0 \\log_2 8'), {'math': ('3/2 * pi', 'S(3) / 2*pi', '\\frac{3}{2} \\pi')})
+		self.assertEqual (get ('expand ((1 + x)**4)'), {'math': ('x**4 + 4 x + 4x**3 + 6x**2 + 1', 'x**4 + 4*x + 4*x**3 + 6*x**2 + 1', 'x^4 + 4 x + 4 x^3 + 6 x^2 + 1')})
+		self.assertEqual (get ('factor (x^3 + 3y x^2 + 3x y^2 + y^3)'), {'math': ('(x + y)**3', '(x + y)**3', '\\left(x + y \\right)^3')})
+		self.assertEqual (get ('series (e^x, x, 0, 5)'), {'math': ('1 + x + 1/2 * x**2 + 1/6 * x**3 + 1/24 * x**4 + O(x**5)', '1 + x + S(1) / 2*x**2 + S(1) / 6*x**3 + S(1) / 24*x**4 + O(x**5)', '1 + x + \\frac{1}{2} x^2 + \\frac{1}{6} x^3 + \\frac{1}{24} x^4 + \\operatorname{O}\\left(x^5 \\right)')})
+		self.assertEqual (get ("Limit (\x0crac1x, x, 0, dir='-')"), {'math': ('rac1x', 'rac1x', 'rac1x')})
+		self.assertEqual (get ('\\sum_{n=0}**oo x^n / n!'), {'math': ('e**x', 'e**x', 'e^x')})
+		self.assertEqual (get ('d**6 / dx dy**2 dz**3 x^3 y^3 z^3'), {'math': ('108 y x**2', '108*y*x**2', '108 y x^2')})
+		self.assertEqual (get ('Integral (e^{-x^2}, (x, 0, \\infty))'), {'math': ('1/2 * sqrt(pi)', 'S(1) / 2*sqrt(pi)', '\\frac{1}{2} \\sqrt{\\pi}')})
+		self.assertEqual (get ('\\int_0^\\pi \\int_0^{2pi} \\int_0^1 rho**2 sin\\phi drho dtheta dphi'), {'math': ('4/3 * pi', 'S(4) / 3*pi', '\\frac{4}{3} \\pi')})
+		self.assertEqual (get ('\\[[1, 2], [3, 4]]**-1'), {'math': ('\\[[-2, 1], [3/2, -1/2]]', 'Matrix([[-2, 1], [S(3) / 2, -S(1) / 2]])', '\\begin{bmatrix} -2 & 1 \\\\ \\frac{3}{2} & -\\frac{1}{2} \\end{bmatrix}')})
+		self.assertEqual (get ('Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)'), {})
+		self.assertEqual (get ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}'), {'math': ('{2, 5, 7}', 'FiniteSet(2, 5, 7)', '\\left\\{2, 5, 7 \\right\\}')})
+		self.assertEqual (get ('f (x, y) = sqrt (x**2 + y**2); f (3, 4)'), {'math': ('f(x, y) = sqrt(x**2 + y**2)', 'f = Lambda((x, y), sqrt(x**2 + y**2))', 'f\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
+		self.assertEqual (get ('solve (x**2 + y = 4, x)'), {'math': ('[-sqrt(-y + 4), sqrt(-y + 4)]', '[-sqrt(-y + 4), sqrt(-y + 4)]', '\\left[-\\sqrt{-y + 4}, \\sqrt{-y + 4} \\right]')})
+		self.assertEqual (get ("dsolve (y(x)'' + 9y(x))"), {'math': ('y(x) == C1 sin(3 x) + C2 cos(3 x)', "Eq(Function('y')(x), C1*sin(3*x) + C2*cos(3*x))", 'y\\left(x \\right) == C1\\ \\sin\\left(3 x \\right) + C2\\ \\cos\\left(3 x \\right)')})
+		self.assertEqual (get ("y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})"), {'math': ('y = y(t)', "y = Function('y')(t)", 'y = y\\left(t \\right)')})
+
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ().get ('data', [{}]) [0]
 	ret  = {}
@@ -352,6 +375,10 @@ _ ()
 solve (x**2 + 2 x - 1 > 7)
 f = lambda x: _
 f (-4.1), f (-4), f (0), f (2), f (2.1)
+f (x) = x**2
+f (2)
+f (x, y) = sqrt {x**2 + y**2}
+f (3, 4)
 
 """), ('env', """
 
@@ -485,6 +512,25 @@ del y
 vars
 delall
 vars
+
+"""), ('intro_examples', """
+
+cos**-1 0 \\log_2 8
+expand ((1 + x)**4)
+factor (x^3 + 3y x^2 + 3x y^2 + y^3)
+series (e^x, x, 0, 5)
+Limit (\\frac1x, x, 0, dir='-')
+\\sum_{n=0}**oo x^n / n!
+d**6 / dx dy**2 dz**3 x^3 y^3 z^3
+Integral (e^{-x^2}, (x, 0, \\infty))
+\\int_0^\\pi \\int_0^{2pi} \\int_0^1 rho**2 sin\\phi drho dtheta dphi
+\\[[1, 2], [3, 4]]**-1
+Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)
+(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}
+f (x, y) = sqrt (x**2 + y**2); f (3, 4)
+solve (x**2 + y = 4, x)
+dsolve (y(x)'' + 9y(x))
+y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})
 
 """),
 

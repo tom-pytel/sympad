@@ -11,6 +11,7 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SP_USER_FUNCS = set () # set user funcs {name, ...}
+_SP_USER_VARS  = {} # user vars {name: ast, ...}
 
 def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
@@ -184,7 +185,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			if arg.is_paren:
 				ast = wrapa (AST ('-func', tail.var, _ast_func_tuple_args (arg)))
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
-				ast = wrapa (AST ('-func', tail.var, (arg,)))
+				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
 		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
@@ -255,14 +256,15 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if not cp:
 				if i == len (ns) - 1:
-					return AST ('-diff', e, d, tuple (ds)), None
+					return AST ('-diff', e, d, tuple (ds), src = ast), None
+
 				elif not ast.denom.is_curly:
 					if e:
-						return AST ('-diff', e, d, tuple (ds)), ns [i + 1:]
+						return AST ('-diff', e, d, tuple (ds), src = ast), ns [i + 1:]
 					elif i == len (ns) - 2:
-						return AST ('-diff', ns [-1], d, tuple (ds)), None
+						return AST ('-diff', ns [-1], d, tuple (ds), src = ast), None
 					else:
-						return AST ('-diff', AST ('*', ns [i + 1:]), d, tuple (ds)), None
+						return AST ('-diff', AST ('*', ns [i + 1:]), d, tuple (ds), src = ast), None
 
 		return None, None # raise SyntaxError?
 
@@ -295,7 +297,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 						mul.insert (0, diff)
 
 					elif i < end - 1:
-						mul.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.d, diff.dvs))
+						mul.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.d, diff.dvs, src = AST ('*', ast.mul [i : end])))
 
 					else:
 						continue
@@ -327,16 +329,19 @@ def _ast_strip_tail_differential (ast):
 					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
-		ast2, neg = ast.diff._strip_minus (retneg = True)
+		ast2, neg = ast.src._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv:
-			if ast2:
-				return (AST ('-diff', neg (ast2), ast.d, ast.dvs), dv)
-			elif ast.dvs.len == 1:
-				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ast.dvs [0])), dv)
-			else:
-				return (neg (AST ('/', ('@', ast.diff_type or 'd'), ('*', ast.dvs))), dv)
+		if dv and ast2:
+			return neg (_expr_diff (ast2)), dv
+
+	elif ast.is_func:
+		if ast.src and _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
+			ast2, neg = ast.src._strip_minus (retneg = True)
+			ast2, dv  = _ast_strip_tail_differential (ast2)
+
+			if dv and ast2:
+				return neg (ast2), dv
 
 	elif ast.is_div:
 		ast2, neg = ast.denom._strip_minus (retneg = True)
@@ -346,6 +351,7 @@ def _ast_strip_tail_differential (ast):
 			return AST ('/', ast.numer, neg (ast2)), dv
 
 		ast2, neg = ast.numer._strip_minus (retneg = True)
+		ast2, dv  = _ast_strip_tail_differential (ast2)
 
 		if dv:
 			return AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom), dv
@@ -493,7 +499,8 @@ def _expr_var (VAR):
 	else:
 		var = AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-	return AST ('@', var, text = VAR.text)
+	return AST ('@', var, text = VAR.text) # include original text for check to prevent \lambda from creating lambda functions
+	# return AST ('@', f'{var}{VAR.grp [4]}' if VAR.grp [4] else var, text = VAR.text) # include original text for check to prevent \lambda from creating lambda functions
 
 #...............................................................................................
 class Parser (lalr1.LALR1):
@@ -668,7 +675,7 @@ class Parser (lalr1.LALR1):
 		('LN',            r'ln\b|\\ln(?!{_LTRU})'),
 
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
-		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))"),
+		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))"), # (?:_{{(\d+)}})?
 		('ATTR',         fr'\.\s*(?:({_LTRU}\w*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"((?<![.'|!)}}\]\w]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
 
@@ -1143,13 +1150,18 @@ class Parser (lalr1.LALR1):
 
 		return postprocess (res)
 
-def set_user_funcs (user_funcs):
+def set_sp_user_funcs (user_funcs):
 	global _SP_USER_FUNCS
 	_SP_USER_FUNCS = user_funcs
 
+def set_sp_user_vars (user_vars):
+	global _SP_USER_VARS
+	_SP_USER_VARS = user_vars
+
 class sparser: # for single script
-	set_user_funcs = set_user_funcs
-	Parser         = Parser
+	set_sp_user_funcs = set_sp_user_funcs
+	set_sp_user_vars  = set_sp_user_vars
+	Parser            = Parser
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
@@ -1158,9 +1170,9 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# p.set_quick (True)
 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-	# p.set_user_funcs ({'N'})
+	# p.set_sp_user_funcs ({'N'})
 
-	a = p.parse (r"\int d/dx dx")
+	a = p.parse (r"x_{1}")
 	print (a)
 
 	# a = sym.ast2spt (a)

@@ -11,6 +11,7 @@ from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYM_USER_FUNCS = set () # set user funcs {name, ...}
+_SYM_USER_VARS  = {} # user vars {name: ast, ...}
 _POST_SIMPLIFY  = True # post-evaluation simplification
 _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
@@ -143,7 +144,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		self         = super ().__new__ (cls)
 		self.parents = [None]
-		self.parent  = self.ast = AST ()
+		self.parent  = self.ast = AST.Null
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX, func_call = func_call)
@@ -274,6 +275,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
 					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
+					(p.is_var and _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
 					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
 					# (n.strip_fdpi.is_paren and i in ast.exp) or
 					(n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
@@ -463,7 +465,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
-		self.parent  = self.ast = AST ()
+		self.parent  = self.ast = AST.Null
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_NAT)
@@ -577,6 +579,7 @@ class ast2nat: # abstract syntax tree -> native text
 					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
+					(p.is_var and _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
 					(s [:1] == '(' and (
 						p.is_attr_var or
 						i in ast.exp or
@@ -658,9 +661,10 @@ class ast2nat: # abstract syntax tree -> native text
 			side = f' {self._ast2nat_paren (ast.diff)}'
 
 		dp  = sum (dv [1] for dv in ast.dvs)
-		dvs = " ".join (self._ast2nat (AST ('@', v).as_differential if p == 1 else AST ('^', AST ('@', v).as_differential, AST ('#', p))) for v, p in ast.dvs)
+		dv  = (lambda v: AST ('@', v).as_differential) if ast.is_diff_d else (lambda v: AST ('@', v).as_partial)
+		dvs = " ".join (self._ast2nat (dv (v) if p == 1 else AST ('^', dv (v), AST ('#', p))) for v, p in ast.dvs)
 
-		return f'd{top if dp == 1 else f"**{dp}{topp}"} / {dvs}{side}'
+		return f'{ast.d}{top if dp == 1 else f"**{dp}{topp}"} / {dvs}{side}'
 
 	def _ast2nat_intg (self, ast):
 		if ast.intg is None:
@@ -745,7 +749,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		self         = super ().__new__ (cls)
 		self.ass2eq  = ass2eq
 		self.parents = [None]
-		self.parent  = self.ast = AST ()
+		self.parent  = self.ast = AST.Null
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -1002,7 +1006,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		self         = super ().__new__ (cls)
 		self.eval    = True
 		self.parents = [None]
-		self.parent  = self.ast = AST ()
+		self.parent  = self.ast = AST.Null
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -1301,7 +1305,7 @@ class spt2ast:
 	def __new__ (cls, spt):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
-		self.parent  = self.spt = AST ()
+		self.parent  = self.spt = AST.Null
 
 		return self._spt2ast (spt)
 
@@ -1566,9 +1570,13 @@ class spt2ast:
 	}
 
 #...............................................................................................
-def set_user_funcs (user_funcs):
+def set_sym_user_funcs (user_funcs):
 	global _SYM_USER_FUNCS
 	_SYM_USER_FUNCS = user_funcs
+
+def set_sym_user_vars (user_vars):
+	global _SYM_USER_VARS
+	_SYM_USER_VARS = user_vars
 
 def set_pyS (state):
 	global _PYS
@@ -1583,21 +1591,22 @@ def set_doit (state):
 	_DOIT = state
 
 class sym: # for single script
-	set_user_funcs = set_user_funcs
-	set_pyS        = set_pyS
-	set_simplify   = set_simplify
-	set_doit       = set_doit
-	ast2tex        = ast2tex
-	ast2nat        = ast2nat
-	ast2py         = ast2py
-	ast2spt        = ast2spt
-	spt2ast        = spt2ast
+	set_sym_user_funcs = set_sym_user_funcs
+	set_sym_user_vars  = set_sym_user_vars
+	set_pyS            = set_pyS
+	set_simplify       = set_simplify
+	set_doit           = set_doit
+	ast2tex            = ast2tex
+	ast2nat            = ast2nat
+	ast2py             = ast2py
+	ast2spt            = ast2spt
+	spt2ast            = spt2ast
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
 # 	ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-# 	set_user_funcs (vars)
+# 	set_sym_user_funcs (vars)
 # 	res = ast2py (ast)
 
 # 	# ast = AST ('*', (('-diffp', ('@', 'y'), 1), ('(', ('@', 'x'))))

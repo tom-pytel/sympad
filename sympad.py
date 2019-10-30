@@ -4727,7 +4727,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		self         = super ().__new__ (cls)
 		self.parents = [None]
-		self.parent  = self.ast = AST ()
+		self.parent  = self.ast = AST.Null
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX, func_call = func_call)
@@ -5039,7 +5039,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
-		self.parent  = self.ast = AST ()
+		self.parent  = self.ast = AST.Null
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_NAT)
@@ -5315,7 +5315,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		self         = super ().__new__ (cls)
 		self.ass2eq  = ass2eq
 		self.parents = [None]
-		self.parent  = self.ast = AST ()
+		self.parent  = self.ast = AST.Null
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -5576,7 +5576,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		self         = super ().__new__ (cls)
 		self.eval    = True
 		self.parents = [None]
-		self.parent  = self.ast = AST ()
+		self.parent  = self.ast = AST.Null
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
@@ -5879,7 +5879,7 @@ class spt2ast:
 	def __new__ (cls, spt):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
-		self.parent  = self.spt = AST ()
+		self.parent  = self.spt = AST.Null
 
 		return self._spt2ast (spt)
 

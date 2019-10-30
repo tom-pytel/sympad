@@ -127,8 +127,10 @@ def _update_vars ():
 			elif ast.is_lamb:
 				user_funcs.add (var)
 
-	sparser.set_user_funcs (user_funcs)
-	sym.set_user_funcs (user_funcs)
+	sparser.set_sp_user_funcs (user_funcs)
+	sparser.set_sp_user_vars (_VARS)
+	sym.set_sym_user_funcs (user_funcs)
+	sym.set_sym_user_vars (_VARS)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	vars = ast.ass_lhs_vars

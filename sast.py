@@ -897,6 +897,7 @@ for _vp, _vv in _AST_CONSTS:
 	AST.CONSTS.add (ast)
 	setattr (AST, _vp, ast)
 
+AST.Null       = AST ()
 AST.Zero       = AST ('#', '0')
 AST.One        = AST ('#', '1')
 AST.NegOne     = AST ('#', '-1')

@@ -1,6 +1,6 @@
 v1.0.13:
 --------
-* Added differentiation now also works with the forms dy/dx and df/dx.
+* Added differentiation now also parses and writes out forms dy/dx and df/dx.
 * Fixed erroneous mapping of bound variables in lim, sum, diff and intg.
 
 v1.0.12:
