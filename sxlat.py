@@ -218,7 +218,7 @@ def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 		if len (vars) == 1:
 			return AST ('-intg', ast, ('@', f'd{vars.pop ().var}'))
 
-		return AST ('-intg', AST.VarNull, AST.VarNull)
+		return AST ('-intg', ast, AST.VarNull)
 
 	dvab = dvab.strip_paren
 	ast2 = None

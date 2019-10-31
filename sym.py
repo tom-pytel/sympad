@@ -378,7 +378,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	_rec_diff_var_single_start = re.compile (r'^d(?=[^_])')
 
 	def _ast2tex_diff (self, ast):
-		if ast.diff.is_var:
+		if ast.diff.is_var and not ast.diff.is_diff_or_part:
 			top  = self._ast2tex (ast.diff)
 			topp = f' {top}'
 			side = ''
@@ -585,8 +585,8 @@ class ast2nat: # abstract syntax tree -> native text
 
 		for i, n in enumerate (ast.mul):
 			s = self._ast2nat_wrap (n, \
-					(p and _ast_is_neg (n)) or n.is_piece or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
-					n.op in {'=', '<>', '+', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.is_piece and n is not ast.mul [-1]))
+					(p and _ast_is_neg (n)) or n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
+					n.op in {'='})
 
 			if p and (
 					n.op in {'#', '-lim', '-sum', '-intg'} or
@@ -603,8 +603,7 @@ class ast2nat: # abstract syntax tree -> native text
 					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
 					# n.strip_fdpi.strip_paren.is_comma or
 					# (n.strip_fdpi.is_paren and i in ast.exp) or
-					(n.is_pow and n.base.strip_paren.is_comma) or
-					(n.is_pow and n.base.is_num_pos) or
+					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
 					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist)):
@@ -666,7 +665,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'\\sum_{{{self._ast2nat (ast.svar)} = {self._ast2nat_curly (ast.from_, {"-lamb", "-piece"})}}}^{self._ast2nat_curly (ast.to)} {self._ast2nat_curly_mul_exp (ast.sum, False, ast.sum.op in {"=", "<>", "+", "-piece", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"} or ast.sum.is_mul_has_abs)}'
 
 	def _ast2nat_diff (self, ast):
-		if ast.diff.is_var:
+		if ast.diff.is_var and not ast.diff.is_diff_or_part:
 			top  = self._ast2nat (ast.diff)
 			topp = f' {top}'
 			side = ''
@@ -724,7 +723,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'('     : lambda self, ast: f'({self._ast2nat (ast.paren)})',
 		'['     : lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
 		'|'     : lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
-		'-'     : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.strip_fdpi.is_num_pos or ast.minus.op in {"*", "-diff", "-piece"}, {"=", "<>", "+", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}',
+		'-'     : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.strip_fdpi.is_num_pos or ast.minus.op in {"*", "-diff", "-piece", "||", "^^", "&&", "-or", "-and"}, {"=", "<>", "+", "-lamb", "-slice", "-not"})}',
 		'!'     : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx'} or ast.fact.is_num_neg) + '!',
 		'+'     : _ast2nat_add,
 		'*'     : _ast2nat_mul,
@@ -790,10 +789,10 @@ class ast2py: # abstract syntax tree -> Python code text
 		return py
 
 	def _ast2py_curly (self, ast):
-		return \
-				self._ast2py_paren (ast) \
-				if ast.strip_minus.op in {'<>', ',', '+', '*', '/'} or (ast.is_log and ast.base is not None) else \
-				self._ast2py (ast)
+		if ast.strip_minus.op in {',', '+', '*', '/'} or ast.is_cmp_in or (ast.is_log and ast.base is not None):
+			return self._ast2py_paren (ast)
+		else:
+			return self._ast2py (ast)
 
 	def _ast2py_paren (self, ast, paren = _None):
 		if paren is _None:
@@ -835,7 +834,8 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_cmp (self, ast):
 		def cmppy (lhs, rel, rhs):
 			if rel in {'in', 'notin'}:
-				return f'{self._ast2py_paren (lhs, lhs.op in {"<>", "-lamb"})} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py_paren (rhs, rhs.op in {"<>", "-lamb"})}'
+				# return f'{self._ast2py_paren (lhs, lhs.op in {"<>", "-lamb"})} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py_paren (rhs, rhs.op in {"<>", "-lamb"})}'
+				return f'{self._ast2py_paren (lhs, lhs.is_cmp_in)} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py_paren (rhs, rhs.is_cmp_in)}'
 			else:
 				return f'{self._ast2py_cmpfuncs [rel]}({self._ast2py_paren (lhs, bool (lhs.is_comma))}, {self._ast2py_paren (rhs, bool (rhs.is_comma))})'
 
@@ -886,7 +886,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		if ast.base is None:
 			return f'ln{self._ast2py_paren (ast.log)}'
 		else:
-			return f'log{self._ast2py_paren (ast.log)} / log{self._ast2py_paren (ast.base)}'
+			return f'ln{self._ast2py_paren (ast.log)} / ln{self._ast2py_paren (ast.base)}'
 
 	def _ast2py_func (self, ast):
 		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
@@ -896,7 +896,7 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_lim (self, ast):
 		return \
 				f'''Limit({self._ast2py (ast.lim)}, {self._ast2py (ast.lvar)}, {self._ast2py (ast.to)}''' \
-				f'''{", dir='+-'" if ast.dir is None else ", dir='-'" if ast.dir == '-' else ""})'''
+				f'''{", dir = '+-'" if ast.dir is None else ", dir = '-'" if ast.dir == '-' else ""})'''
 
 	def _ast2py_diff (self, ast):
 		args = sum (((self._ast2py (AST ('@', v)),) if p == 1 else (self._ast2py (AST ('@', v)), str (p)) for v, p in ast.dvs), ())
@@ -952,7 +952,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'('     : lambda self, ast: f'({self._ast2py (ast.paren)})',
 		'['     : lambda self, ast: f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
 		'|'     : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
-		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.op in {"+"})}',
+		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.is_add or (ast.minus.is_idx and ast.minus.obj.is_num) or (ast.minus.is_mul and ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))}',
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
 		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n.is_num_neg and n is not ast.add [0])) for n in ast.add).replace (' + -', ' - '),
 		'*'     : _ast2py_mul,
@@ -1618,13 +1618,13 @@ class sym: # for single script
 
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-# 	ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-# 	set_sym_user_funcs (vars)
-# 	res = ast2py (ast)
+# 	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
+# 	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+# 	# set_sym_user_funcs (vars)
+# 	# res = ast2py (ast)
 
-# 	# ast = AST ('*', (('-diffp', ('@', 'y'), 1), ('(', ('@', 'x'))))
-# 	# res = ast2spt (ast)
+# 	ast = AST ('<>', ('-func', 'Eq', (('@', 'z'), ('-func', 'Le', (('@', 'x'), ('@', 'y'))))), (('in', ('[', (('#', '1'), ('#', '2')))),))
+# 	res = ast2py (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

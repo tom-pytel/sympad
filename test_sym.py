@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# Randomized CONSISTENCY testing of parsing vs. writing: text -> ast -> tex/nat/py -> text -> ast
-
-# test_sym.py -i --show --nc
+# Randomized CONSISTENCY testing of parsing vs. writing: text -> ast -> tex/nat/py -> ast -> tex/nat/py
 
 from getopt import getopt
 from random import random, randrange, choice
@@ -15,6 +13,10 @@ import spatch
 import sxlat
 import sym
 import sparser
+
+_FUNCS = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
+sym.set_sym_user_funcs (_FUNCS)
+sparser.set_sp_user_funcs (_FUNCS)
 
 _TERMS = [
 	'0',
@@ -264,6 +266,25 @@ False * ()'
 -{1'}
 -{1 [b]}
 -{1 [b] [c]}
+-{a [b]}
+-{a [b] [c]}
+{x in y} {1 : 2 : 3}
+x^{-{a and b}}
+x^{-{a or b}}
+x^{-{a || b}}
+x^{-{a && b}}
+x^{-{a ^^ b}}
+{x if 2 else z} b^c
+x^{a = b}
+{{\sqrt[{?(x, y, reals = False, commutative = False)}]{{.1} = {\emptyset}}} \cdot {{{partialx}||{oo}}  {{dy}||{'str'}}} \cdot {{Derivative ({dx}, x, 1)} \cdot {{dy}^^{1.}^^{dx}} \cdot {Limit ({dy}, x, {None})}}}
+{\frac{\sqrt{[{.1},{\partial },{1e100}]}}{{{\partialy} / {b}}  {{\partialx}+{\partialx}}  {{-1}**{True}}}}
+{\frac{{not {1e-100}}  {{a}**{False}}}{{{partial}||{True}||{1.0}}&&{{b} / {a}}&&{{\partial x}!}}}
+1 / {a in b}
+{a * -1} {lambda: 2}
+\frac{d\partial x}{dx}
+partial / partialx \partial x
+Derivative ({\partial x}, x, 1)
+-{{1 [2]} c}
 """.strip ().split ('\n')
 
 def expr_eq (): # BROKEN?
@@ -325,9 +346,20 @@ def expr_sqrt ():
 			if random () >= 0.5 else \
 			f'\\sqrt[{expr ()}]{expr ()}'
 
+_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma', 'digamma'}
+
 def expr_func ():
-	py  = choice (list (AST.Func.PY))
-	tex = choice (list (AST.Func.TEX))
+	while 1:
+		py = choice (list (AST.Func.PY))
+
+		if py not in _FORBIDDEN_FUNCS:
+			break
+
+	while 1:
+		tex = choice (list (AST.Func.TEX))
+
+		if tex not in _FORBIDDEN_FUNCS:
+			break
 
 	return \
 			'\\' + f'{tex}{expr_paren ()}' \
@@ -440,7 +472,7 @@ def expr_ufunc ():
 
 #...............................................................................................
 EXPRS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
-CURLYS = True
+CURLYS = True # if False then intentionally introduces grammatical ambiguity to test consistency in those cases
 
 def expr (depth = None):
 	global DEPTH, CURLYS
@@ -482,7 +514,7 @@ def test (argv = None):
 
 	_DEPTH  = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqSd:e:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'quick', 'pyS', 'depth=', 'expr='])
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqSd:e:', ['tex', 'nat', 'py', 'dump', 'inf', 'infinite', 'nc', 'nocurlys', 'quick', 'pyS', 'depth=', 'expr='])
 
 	if ('-q', '') in opts or ('--quick', '') in opts:
 		parser.set_quick (True)
@@ -528,6 +560,8 @@ def test (argv = None):
 
 			ast    = parse (text)
 
+			status.extend (['', f'ast: {ast}'])
+
 			if not ast:
 				if single or not infinite:
 					raise ValueError ("error parsing")
@@ -550,12 +584,14 @@ def test (argv = None):
 					if not rast:
 						raise ValueError ("error parsing")
 
-					status [-1] = f'sym.ast2{rep} ()'
-					text2       = symfunc (rast)
-					status [-1] = f'{rep}2: {text2}'
+					status [-1:] = [f'ast: {rast}', '', f'sym.ast2{rep} ()']
+					text2        = symfunc (rast)
+					status [-1]  = f'{rep}2: {text2}'
 
 					if text2 != text1:
-						raise ValueError ("don't match")
+						raise ValueError ("doesn't match")
+
+					del status [-6:]
 
 	except (KeyboardInterrupt, StopIteration):
 		pass
@@ -566,6 +602,8 @@ def test (argv = None):
 		print ()
 
 		raise
+
+	return True
 
 if __name__ == '__main__':
 	# test (['-nt', '-e', 'x + {-1 * 2}'])
