@@ -187,7 +187,7 @@ i {
 #VarContent {
 	/* display: none; */
 	min-width: 6.1em;
-	padding: 0.125em 0.25em;
+	padding: 0.25em 0.25em;
 	border: 1px solid #0004;
 	border-top: 0;
 	background-image: url('/bg.png');
