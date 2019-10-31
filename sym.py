@@ -1462,10 +1462,10 @@ class spt2ast:
 		return AST ('-diff', self._spt2ast (spt.args [0]), 'd', tuple ((s.name, int (p)) for s, p in spt.args [1:]))
 
 	def _spt2ast_Integral (self, spt):
-		return \
-				AST ('-intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'), self._spt2ast (spt.args [1] [1]), self._spt2ast (spt.args [1] [2])) \
-				if len (spt.args [1]) == 3 else \
-				AST ('-intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'))
+		if len (spt.args [1]) == 3:
+			return AST ('-intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'), self._spt2ast (spt.args [1] [1]), self._spt2ast (spt.args [1] [2]))
+		else:
+			return AST ('-intg', self._spt2ast (spt.args [0]), AST ('@', f'd{self._spt2ast (spt.args [1] [0]) [1]}'))
 
 	def _spt2ast_Function (self, spt, name = None, args = None, kw = None):
 		if name is None:

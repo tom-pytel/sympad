@@ -1,5 +1,6 @@
 v1.0.14:
 --------
+* Expanded handling of undefined functions.
 * Fixed matrix simplification error during integration in ODE solver.
 
 v1.0.13:

@@ -4311,7 +4311,15 @@ d**2 y / dx dy z
 \int d/dx x**2 dx
 \int d/dx y(x) dx
 """
-# _EXPRESSIONS = r"""
+_EXPRESSIONS = r"""
+f (x) (0)
+f (x, y) (0, 0)
+f (x, y, z) (0, 0, 0)
+f (x)' (0)
+{d / dx f (x, y)} (0, 0)
+{d / dx f (x, y, z)} (0, 0, 0)
+{d**2 / dx dy f (x, y, z)} (0, 0, 0)
+"""
 
 if __name__ == '__main__':
 	import os.path

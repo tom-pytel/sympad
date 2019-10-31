@@ -1,3 +1,8 @@
+> parse implicit ufuncs of type f (0), f (0, 0)
+> derivative of undefined function times arguments as call tex, nat and py call
+> ?(x)'(2), spt->?(x)(2) instead of subs of diff
+> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
+
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
 > do not write out parentheses for differentiation where not needed - d/dx (y z) -> d/dx y z
@@ -5,11 +10,6 @@
 
 > change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
-
-> ics sym representations
-> ?(x)'(2), spt->?(x)(2) instead of subs of diff
-
-> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
@@ -62,7 +62,7 @@
 > lighter font color assumptions and info for math returns
 
 > vector calculus
-> nabla, laplacian
+> nabla, gradient, laplacian
 > Proper implementation of vectors with "\vec{x}" and "\hat{i}" variables?
 
 > random server port selection / fallback
