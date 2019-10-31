@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # python 3.6+
 
-# Randomized CONSISTENCY testing of parsing: text -> ast -> tex/nat/py -> text -> ast
+# Randomized CONSISTENCY testing of parsing vs. writing: text -> ast -> tex/nat/py -> text -> ast
 
 # test_sym.py -i --show --nc
 
@@ -57,6 +57,7 @@ _TERMS = [
 ]
 
 # previously problematic static test expressions
+
 _EXPRESSIONS = r"""
 \sqrt[{{1} / {1.0}}]{({oo},{partial})}
 sqrt{{-1.0}**{0}}
@@ -216,7 +217,7 @@ a.b ()'
 {x/y}'
 1'['ac']
 |x|'
-|'str'|'
+| 'str'|'
 {x**y}'
 {{-1}'}
 {a [b]}''
@@ -265,79 +266,68 @@ False * ()'
 -{1 [b] [c]}
 """.strip ().split ('\n')
 
-_ALLOW_LAMB = 1
-
 def expr_eq (): # BROKEN?
-	return f'{expr (_ALLOW_LAMB)} {choice (["=", "==", "!=", "<", "<=", ">", ">=", " in ", " not in "])} {expr (_ALLOW_LAMB)}'
+	return f'{expr ()} {choice (["=", "==", "!=", "<", "<=", ">", ">=", " in ", " not in "])} {expr ()}'
+
+# def expr_cmp ():
 
 def expr_curly ():
-	return '{' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + '}'
+	return '{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
 
 def expr_paren ():
-	return '(' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + ')'
+	return '(' + ','.join (f'{expr ()}' for i in range (randrange (4))) + ')'
 
 def expr_brack ():
-	return '[' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + ']'
+	return '[' + ','.join (f'{expr ()}' for i in range (randrange (4))) + ']'
 
 def expr_abs ():
-	return f'\\left|{expr (1)}\\right|'
+	return f'\\left|{expr ()}\\right|'
 
 def expr_minus ():
-	return f'-{expr (_ALLOW_LAMB)}'
+	return f'-{expr ()}'
 
 def expr_fact ():
-	return f'{expr (_ALLOW_LAMB)}!'
+	return f'{expr ()}!'
 
 def expr_add ():
-	return '{' + '+'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return '+'.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_mul_imp ():
-	return '{' + '  '.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return '  '.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_mul_exp ():
-	return '{' + '*'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return '*'.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_mul_cdot ():
-	return '{' + ' \\cdot '.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return ' \\cdot '.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_div ():
-	return f'{expr (_ALLOW_LAMB)} / {expr (_ALLOW_LAMB)}'
+	return f'{expr ()} / {expr ()}'
 
 def expr_frac ():
-	return f'\\frac{expr (_ALLOW_LAMB)}{expr (_ALLOW_LAMB)}'
+	return f'\\frac{expr ()}{expr ()}'
 
 def expr_caret ():
-	return f'{expr (_ALLOW_LAMB)}^{expr (_ALLOW_LAMB)}'
+	return f'{expr ()}^{expr ()}'
 
 def expr_dblstar ():
-	return f'{expr (_ALLOW_LAMB)}**{expr (_ALLOW_LAMB)}'
+	return f'{expr ()}**{expr ()}'
 
 def expr_log ():
 	return \
-			choice (['', '\\']) + f'{choice (["ln", "log"])}{expr (_ALLOW_LAMB)}' \
+			choice (['', '\\']) + f'{choice (["ln", "log"])}{expr ()}' \
 			if random () >= 0.5 else \
-			f'\\log_{expr (_ALLOW_LAMB)}{expr (_ALLOW_LAMB)}'
+			f'\\log_{expr ()}{expr ()}'
 
 def expr_sqrt ():
 	return \
-			choice (['', '\\']) + f'sqrt{expr (_ALLOW_LAMB)}' \
+			choice (['', '\\']) + f'sqrt{expr ()}' \
 			if random () >= 0.5 else \
-			f'\\sqrt[{expr (_ALLOW_LAMB)}]{expr (_ALLOW_LAMB)}'
-
-_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma', 'digamma'}
+			f'\\sqrt[{expr ()}]{expr ()}'
 
 def expr_func ():
-	while 1:
-		py = choice (list (AST.Func.PY))
-
-		if py not in _FORBIDDEN_FUNCS:
-			break
-
-	while 1:
-		tex = choice (list (AST.Func.TEX))
-
-		if tex not in _FORBIDDEN_FUNCS:
-			break
+	py  = choice (list (AST.Func.PY))
+	tex = choice (list (AST.Func.TEX))
 
 	return \
 			'\\' + f'{tex}{expr_paren ()}' \
@@ -346,18 +336,18 @@ def expr_func ():
 
 def expr_lim ():
 	return \
-			'\\lim_{x \\to ' + f'{expr (_ALLOW_LAMB)}}} {expr (_ALLOW_LAMB)}' \
+			'\\lim_{x \\to ' + f'{expr ()}}} {expr ()}' \
 			if random () >= 0.5 else \
-			f'Limit ({expr (_ALLOW_LAMB)}, x, {expr (_ALLOW_LAMB)})'
+			f'Limit ({expr ()}, x, {expr ()})'
 
 def expr_sum ():
 	return \
-			'\\sum_{x = ' + f'{expr (_ALLOW_LAMB)}}}^{expr (_ALLOW_LAMB)} {expr (_ALLOW_LAMB)}' \
+			'\\sum_{x = ' + f'{expr ()}}}^{expr ()} {expr ()}' \
 			if random () >= 0.5 else \
-			f'Sum ({expr (_ALLOW_LAMB)}, (x, {expr (_ALLOW_LAMB)}, {expr (_ALLOW_LAMB)}))'
+			f'Sum ({expr ()}, (x, {expr ()}, {expr ()}))'
 
 def expr_diff ():
-	d  = 'd' # choice (['d', 'partial'])
+	d  = choice (['d', 'partial'])
 	p  = 0
 	dv = []
 
@@ -368,90 +358,91 @@ def expr_diff ():
 		dv.append ((choice (['x', 'y', 'z']), n))
 
 	return \
-			f'{d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr (_ALLOW_LAMB)}'
-			# if random () >= 0.5 else \
-			# f'Derivative ({expr (_ALLOW_LAMB)}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
+			f'{d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr ()}' \
+			if random () >= 0.5 else \
+			f'Derivative ({expr ()}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
 
 def expr_diffp ():
-	return f"""{expr (1)}{"'" * randrange (1, 4)}"""
+	return f"""{expr ()}{"'" * randrange (1, 4)}"""
 
 def expr_intg ():
 	return \
-			f'\\int_{expr (_ALLOW_LAMB)}^{expr (_ALLOW_LAMB)} {expr (_ALLOW_LAMB)} dx' \
+			f'\\int_{expr ()}^{expr ()} {expr ()} dx' \
 			if random () >= 0.5 else \
-			f'\\int {expr (_ALLOW_LAMB)} dx'
+			f'\\int {expr ()} dx'
 
 def expr_vec ():
-	return '\\[' + ','.join (f'{expr (1)}' for i in range (randrange (1, 4))) + ',]'
+	return '\\[' + ','.join (f'{expr ()}' for i in range (randrange (1, 4))) + ',]'
 
 def expr_mat ():
 	cols = randrange (1, 4)
 
-	return '\\[' + ','.join ('[' + ','.join (f'{expr (1)}' for j in range (cols)) + ',]' for i in range (randrange (1, 4))) + ',]'
+	return '\\[' + ','.join ('[' + ','.join (f'{expr ()}' for j in range (cols)) + ',]' for i in range (randrange (1, 4))) + ',]'
 
 def expr_piece ():
-	p = [f'{expr (1)} if {expr (_ALLOW_LAMB)}']
+	p = [f'{expr ()} if {expr ()}']
 
 	for _ in range (randrange (3)):
-		p.append (f'else {expr (1)} if {expr (_ALLOW_LAMB)}')
+		p.append (f'else {expr ()} if {expr ()}')
 
 	if random () >= 0.5:
-		p.append (f'else {expr (1)}')
+		p.append (f'else {expr ()}')
 
 	return ' '.join (p)
 
 def expr_lamb ():
-	return f'lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr (_ALLOW_LAMB)}'
+	return f'lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr ()}'
 
 def expr_idx ():
 	if random () >= 0.5:
-		return f'{expr (1)} [{expr (1)}]'
+		return f'{expr ()} [{expr ()}]'
 	elif random () >= 0.5:
-		return f'{expr (1)} [{expr (1)}, {expr (1)}]'
+		return f'{expr ()} [{expr ()}, {expr ()}]'
 	else:
-		return f'{expr (1)} [{expr (1)}, {expr (1)}, {expr (1)}]'
+		return f'{expr ()} [{expr ()}, {expr ()}, {expr ()}]'
 
 def expr_slice ():
 	if random () >= 0.5:
-		return f'{expr (1)} : {expr (1)}'
+		return f'{expr ()} : {expr ()}'
 	else:
-		return f'{expr (1)} : {expr (1)} : {expr (1)}'
+		return f'{expr ()} : {expr ()} : {expr ()}'
 
 def expr_set ():
-	return '\\{' + ','.join (f'{expr (1)}' for i in range (randrange (4))) + '}'
+	return '\\{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
 
 def expr_dict ():
-	return '{' + ','.join (f'{choice (_TERMS)} : {expr (1)}' for i in range (randrange (4))) + '}'
+	return '{' + ','.join (f'{choice (_TERMS)} : {expr ()}' for i in range (randrange (4))) + '}'
 
 def expr_union ():
-	return '{' + '||'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return '||'.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_sdiff ():
-	return '{' + '^^'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return '^^'.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_xsect ():
-	return '{' + '&&'.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return '&&'.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_or ():
-	return '{' + ' or '.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return ' or '.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_and ():
-	return '{' + ' and '.join (f'{expr (_ALLOW_LAMB)}' for i in range (randrange (2, 4))) + '}'
+	return ' and '.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_not ():
-	return f'{{not {expr (1)}}}'
+	return f'not {expr ()}'
 
 def expr_ufunc ():
 	name = choice (('', 'f', 'g', 'h'))
 	vars = choice (((), ('x',), ('x, y',), ('x, y, z',)))
 	kw   = choice (((), (), ('reals = False',), ('reals = False, commutative = False',)))
 
-	return f'{{?{name}({", ".join (vars + kw)})}}'
+	return f'?{name}({", ".join (vars + kw)})'
 
 #...............................................................................................
-EXPRS = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
+EXPRS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
+CURLYS = True
 
-def expr (allow_lamb = 0, depth = None):
+def expr (depth = None):
 	global DEPTH, CURLYS
 
 	if depth is not None:
@@ -462,66 +453,12 @@ def expr (allow_lamb = 0, depth = None):
 
 	else:
 		DEPTH -= 1
-
-		while 1:
-			e = choice (EXPRS)
-
-			if e is not expr_lamb or allow_lamb:
-				break
-
-		ret    = e ()
+		ret    = choice (EXPRS) ()
 		DEPTH += 1
 
 	return f'{{{ret}}}' if CURLYS else ret
 
-def fix_vars (ast):
-	if not isinstance (ast, AST):
-		return ast
-
-	if ast == ('@', '_'): # remove LAST_VAR with other innocuous var
-		return AST ('@', 'x')
-
-	return AST (*tuple (fix_vars (a) for a in ast))
-
-def fix_comma (ast):
-	if not isinstance (ast, AST):
-		return ast
-
-	if ast.is_comma: # wrap tuples in parens
-		return AST ('(', AST (*tuple (fix_vars (a) for a in ast)))
-
-	return AST (*tuple (fix_vars (a) for a in ast))
-
-def process (ast):
-	if not isinstance (ast, AST):
-		return ast
-
-	if ast.is_partial:
-		return ast.as_differential
-
-	if ast.is_paren:
-		return process (ast.paren)
-
-	if ast.is_mul: # remove explicit multiplication information
-		return AST ('*', tuple (process (a) for a in ast.mul))
-
-	return AST (*tuple (process (a) for a in ast))
-
-def flatten (ast):
-	if not isinstance (ast, AST):
-		return ast
-
-	t = [flatten (a) for a in ast]
-
-	if ast.op in {'+', '*', '||', '^^', '&&', '-or', '-and'}:
-		t = (ast.op, tuple (sum (((m,) if m.op != ast.op else m [1] for m in t [1]), ())))
-	elif ast.is_diffp and ast.diffp.is_diffp:
-		return AST ('-diffp', ast.diffp.diffp, ast.count + ast.diffp.count)
-
-	return AST (*t)
-
 #...............................................................................................
-CURLYS = True
 parser = sparser.Parser ()
 
 sym.set_pyS (False)
@@ -535,18 +472,23 @@ def parse (text):
 		print ()
 		print (f'Slow parse {t}s: \n{text}', file = sys.stderr)
 
-	return ret
+	if not ret [0] or ret [1] or ret [2]:
+		return None
+
+	return ret [0]
 
 def test (argv = None):
 	global DEPTH, CURLYS
 
 	_DEPTH  = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpixqd:e:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'xlat', 'nc', 'nocurlys', 'quick', 'depth=', 'expr='])
-	xlat    = ('-x', '') in opts or ('--xlat', '') in opts
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqSd:e:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'quick', 'pyS', 'depth=', 'expr='])
 
 	if ('-q', '') in opts or ('--quick', '') in opts:
 		parser.set_quick (True)
+
+	if ('-S', '') in opts or ('--pyS', '') in opts:
+		sym.set_pyS (True)
 
 	for opt, arg in opts:
 		if opt in ('-d', '--depth'):
@@ -569,116 +511,61 @@ def test (argv = None):
 	if not (dotex or donat or dopy):
 		dotex = donat = dopy = True
 
-	CURLYS = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
+	CURLYS   = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
+	infinite = (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts)
 
-	if (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts) and not single:
-		expr_func = lambda: expr (1, _DEPTH)
+	if infinite and not single:
+		expr_func = lambda: expr (_DEPTH)
 	else:
 		expr_func = iter (single or _EXPRESSIONS).__next__
 
 	try:
 		while 1:
-			textpy            = None
-			text              = expr_func ()
-			ast, erridx, auto = parse (text)
+			status = []
+			text   = expr_func ()
 
-			if not ast or erridx or auto:
+			status.append (f'text: {text}')
+
+			ast    = parse (text)
+
+			if not ast:
+				if single or not infinite:
+					raise ValueError ("error parsing")
+
 				continue
 
-			ast = flatten (ast)
-			ast = fix_comma (ast)
+			for rep in ('tex', 'nat', 'py'):
+				if locals () [f'do{rep}']:
+					symfunc     = getattr (sym, f'ast2{rep}')
 
-			if dopy:
-				if not CURLYS:
-					ast = fix_vars (ast)
+					status.extend (['', f'sym.ast2{rep} ()'])
 
-				textpy            = sym.ast2py (ast, xlat = xlat, ass2eq = False)
-				ast, erridx, auto = parse (textpy)
+					text1       = symfunc (ast)
+					status [-1] = f'{rep}1: {text1}'
 
-				if not ast or erridx or auto:
-					print ()
-					print ('Invalid!')
-					print ('text:   ', text)
-					print ('textpy: ', textpy)
+					status.extend (['', 'parse ()'])
 
-					continue
+					rast        = parse (text1)
 
-				ast = fix_comma (ast)
+					if not rast:
+						raise ValueError ("error parsing")
 
-			tex = dotex and sym.ast2tex (ast, xlat = xlat)
-			nat = donat and sym.ast2nat (ast, xlat = xlat)
-			py  = dopy and sym.ast2py (ast, xlat = xlat, ass2eq = False)
+					status [-1] = f'sym.ast2{rep} ()'
+					text2       = symfunc (rast)
+					status [-1] = f'{rep}2: {text2}'
 
-			if ('--show', '') in opts:
-				print ()
-				print ('-' * 78)
-				print ('text:  ', text)
-				if textpy:
-					print ()
-					print ('textpy:', textpy)
-				print ()
-				print ('ast:   ', ast)
-				print ()
-				print ('tex:   ', tex)
-				print ()
-				print ('nat:   ', nat)
-				print ()
-				print ('py:    ', py)
+					if text2 != text1:
+						raise ValueError ("don't match")
 
-			ast_tex = dotex and parse (tex) [0]
-			ast_nat = donat and parse (nat) [0]
-			ast_py  = dopy and  parse (py) [0]
+	except (KeyboardInterrupt, StopIteration):
+		pass
 
-			ast_srp = process (ast)
-			ast_tex = dotex and process (ast_tex)
-			ast_nat = donat and process (ast_nat)
-			ast_py  = dopy and process (ast_py)
-
-			if (dotex and ast_tex != ast_srp) or (donat and ast_nat != ast_srp) or (dopy and ast_py != ast_srp):
-				print ()
-				print ('!' * 78)
-				print ('text:  ', text)
-				if textpy is not None:
-					print ()
-					print ('textpy:', textpy)
-				print ()
-				print ('ast:   ', ast_srp)
-
-				if dotex and ast_tex != ast_srp:
-					print ()
-					print ('tex:   ', ast_tex)
-
-				if donat and ast_nat != ast_srp:
-					print ()
-					print ('nat:   ', ast_nat)
-
-				if dopy and ast_py != ast_srp:
-					print ()
-					print ('py:    ', ast_py)
-
-				print ()
-				print ('FAILED!')
-
-				break
-
-	except (Exception, KeyboardInterrupt) as e:
-		if isinstance (e, StopIteration):
-			return True
-
-		print ()
-		print ('!' * 78)
-		print ('text:   ', text)
-		if textpy is not None:
-			print ('textpy: ', textpy)
-		print ('ast:    ', ast)
-		print ('ast_srp:', ast_srp)
-		print ('ast_tex:', ast_tex)
-		print ('ast_nat:', ast_nat)
-		print ('ast_py: ', ast_py)
+	except:
+		print ('Exception!\n')
+		print ('\n'.join (status))
 		print ()
 
-		if not isinstance (e, KeyboardInterrupt):
-			raise
+		raise
 
 if __name__ == '__main__':
 	# test (['-nt', '-e', 'x + {-1 * 2}'])
