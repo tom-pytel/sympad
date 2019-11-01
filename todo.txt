@@ -138,39 +138,10 @@ Errors:
 -------
 
 
-text: Sum ('str' = b : ?h(x, y, reals = False, commutative = False), (x, 1e100^^1.  not in  dz^False, -\log_None\partialx))
-ast: ('-func', 'Sum', (('-slice', ('=', ('"', 'str'), ('@', 'b')), ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False')))), None), ('(', (',', (('@', 'x'), ('<>', ('^^', (('#', '1e+100'), ('#', '1.'))), (('notin', ('*', (('^', ('@', 'dz'), ('@', 'F')), ('@', 'alse')))),)), ('*', (('-', ('-log', ('@', 'one'), ('@', 'N'))), ('@', 'partialx'))))))))
-ast: ('-sum', ('-dict', ((('(', ('=', ('"', 'str'), ('@', 'b'))), ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False'))))),)), ('@', 'x'), ('<>', ('^^', (('#', '1e+100'), ('#', '1.'))), (('notin', ('*', (('^', ('@', 'dz'), ('@', 'F')), ('@', 'alse')))),)), ('*', (('-', ('-log', ('@', 'one'), ('@', 'N'))), ('@', 'partialx'))))
-nat1: \sum_{x = 1e+100 ^^ 1. not in dz**F alse}^{-\log_N(one) partialx} {( 'str' = b):?h(x, y, commutative = False, reals = False)}
-nat2: \sum_{x = 1e+100 ^^ 1. not in dz**F alse}^{-\log_N(one) partialx} {( 'str' = b): ?h(x, y, commutative = False, reals = False)}
+text: {{{\sum_{x = {{a} : {"str"} : {True}}}^{({\partial x})} {[]}}||{{{1.0} : {False} : {\emptyset}} [{{-1} == {\partialx}}]}||{{{{oo} if {None} else {\partialx}}^^{{.1} [{oo}]}}}}}
+ast:  ('||', (('-sum', ('[', ()), ('@', 'x'), ('-slice', ('@', 'a'), ('"', 'str'), ('@', 'True')), ('(', ('@', 'partialx'))), ('-idx', ('-slice', ('#', '1.0'), ('@', 'False'), ('-set', ())), (('<>', ('#', '-1'), (('==', ('@', 'partialx')),)),)), ('^^', (('-piece', ((('@', 'oo'), ('@', 'None')), (('@', 'partialx'), True))), ('-idx', ('#', '0.1'), (('@', 'oo'),))))))
+ast:  ('||', (('-sum', ('[', ()), ('@', 'x'), ('-slice', ('@', 'a'), ('"', 'str'), ('@', 'True')), ('@', 'partialx')), ('-idx', ('-slice', ('#', '1.0'), ('@', 'False'), ('-set', ())), (('<>', ('#', '-1'), (('==', ('@', 'partialx')),)),)), ('^^', (('-piece', ((('@', 'oo'), ('@', 'None')), (('@', 'partialx'), True))), ('-idx', ('#', '0.1'), (('@', 'oo'),))))))
+ast2: ('||', (('-sum', ('[', ()), ('@', 'x'), ('-slice', ('@', 'a'), ('"', 'str'), ('@', 'True')), ('@', 'partialx')), ('-idx', ('-slice', ('#', '1.0'), ('@', 'False'), ('-set', ())), (('<>', ('#', '-1'), (('==', ('@', 'partialx')),)),)), ('+', (('-piece', ((('@', 'oo'), ('@', 'None')), (('@', 'partialx'), True))), ('-', ('-idx', ('#', '0.1'), (('@', 'oo'),))))), ('+', (('-idx', ('#', '0.1'), (('@', 'oo'),)), ('-', ('-piece', ((('@', 'oo'), ('@', 'None')), (('@', 'partialx'), True))))))))
 
-
-text: \{} and 1e100+dy||?f(x, y, z)||(c,True)^idiff()
-ast: ('-and', (('-set', ()), ('||', (('+', (('#', '1e+100'), ('@', 'dy'))), ('-ufunc', 'f', (('@', 'x'), ('@', 'y'), ('@', 'z'))), ('*', (('^', ('(', (',', (('@', 'c'), ('@', 'True')))), ('@', 'i')), ('-func', 'diff', ())))))))
-ast: ('-and', (('-set', ()), ('||', (('+', (('#', '1e+100'), ('@', 'dy'))), ('-ufunc', 'f', (('@', 'x'), ('@', 'y'), ('@', 'z'))), ('*', (('^', ('(', (',', (('@', 'c'), ('@', 'True')))), ('@', 'i')), ('-diffp', ('-dict', ()), 1)))))))
-tex1: \emptyset \wedge 1{e}{+100} + dy \cup f\left(x, y, z \right) \cup \left(c, True \right)^i {}'
-tex2: \emptyset \wedge 1{e}{+100} + dy \cup f\left(x, y, z \right) \cup \left(c, True \right)^i \left\{ \right\}'
-
-
-text: .1 and partial and None! == None / \partial  : sqrtoo != Sum (\partial  : \infty zoo, (x, 0 / 2, 1.**2)) == \deg()
-ast: ('-slice', ('-and', (('#', '0.1'), ('@', 'partial'), ('<>', ('!', ('@', 'None')), (('==', ('/', ('@', 'None'), ('@', 'partial'))),)))), ('<>', ('@', 'sqrtoo'), (('!=', ('-func', 'Sum', (('-slice', ('@', 'partial'), ('*', (('@', 'oo'), ('@', 'zoo'))), None), ('(', (',', (('@', 'x'), ('/', ('#', '0'), ('#', '2')), ('^', ('#', '1.'), ('#', '2')))))))), ('==', ('-func', 'deg', ())))), None)
-ast: ('-slice', ('-and', (('#', '0.1'), ('@', 'partial'), ('<>', ('!', ('@', 'None')), (('==', ('/', ('@', 'None'), ('@', 'partial'))),)))), ('<>', ('@', 'sqrtoo'), (('!=', ('-sum', ('-dict', ((('@', 'partial'), ('*', (('@', 'oo'), ('@', 'zoo')))),)), ('@', 'x'), ('/', ('#', '0'), ('#', '2')), ('^', ('#', '1.'), ('#', '2')))), ('==', ('-func', 'deg', ())))), None)
-nat1: 0.1 and partial and None! == None/partial:sqrtoo != \sum_{x = 0/2}^{1.**2} {partial:oo zoo} == deg()
-nat2: 0.1 and partial and None! == None/partial:sqrtoo != \sum_{x = 0/2}^{1.**2} {partial: oo zoo} == deg()
-
-
-text: \int_\left|.1\right|^\[\partialy,] -1.0*partial*-1.0 dx [{\logxyzd}]
-ast: ('-idx', ('-intg', ('+', (('*', (('@', '_'), ('^', ('|', ('#', '0.1')), ('-mat', ((('@', 'partialy'),),))))), ('-', ('*', (('#', '1.0'), ('@', 'partial'), ('#', '-1.0')), {1, 2})))), ('@', 'dx')), (('-log', ('@', 'xyzd')),))
-ast: ('-idx', ('(', ('-intg', ('*', (('#', '-1.0'), ('@', 'partial'), ('#', '-1.0')), {2}), ('@', 'dx'), ('|', ('#', '0.1')), ('-mat', ((('@', 'partialy'),),)))), (('-log', ('@', 'xyzd')),))
-nat1: (\int _ {|0.1|}**\[partialy] - 1.0 partial * {-1.0} dx)[ln(xyzd)]
-nat2: (\int_{{|0.1|}}^{\[partialy]} -1.0 partial * {-1.0} dx)[ln(xyzd)]
-
-
-text: \sqrt[[]]Limit (partial : 1, x, not \infty zoo)
-ast: ('-sqrt', ('-func', 'Limit', (('-slice', ('@', 'partial'), ('#', '1'), None), ('@', 'x'), ('-not', ('*', (('@', 'oo'), ('@', 'zoo')))))), ('[', ()))
-ast: ('-sqrt', ('-lim', ('-dict', ((('@', 'partial'), ('#', '1')),)), ('@', 'x'), ('(', ('-not', ('*', (('@', 'oo'), ('@', 'zoo'))))), '+'), ('[', ()))
-nat1: \sqrt[[]]{\lim_{x \to (not oo zoo)**+} {partial:1}}
-nat2: \sqrt[[]]{\lim_{x \to (not oo zoo)**+} {partial: 1}}
-
-
-
+{{oo} if {None} else {\partialx}}^^{{.1} [{oo}]}
+{a if b else c}^^{1 [x]}

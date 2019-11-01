@@ -776,7 +776,8 @@ class AST_Diff (AST):
 	def _init (self, diff, d, dvs):
 		self.diff, self.d, self.dvs = diff, d, dvs
 
-	_is_diff_d = lambda self: self.d == 'd'
+	_is_diff_d       = lambda self: self.d == 'd'
+	_is_diff_partial = lambda self: self.d == 'partial'
 
 class AST_DiffP (AST):
 	op, is_diffp = '-diffp', True

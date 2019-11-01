@@ -11,7 +11,7 @@ def _xlat_f2a_slice (*args):
 	if len (args) == 1:
 		return AST ('-slice', None, args [0], None)
 	if len (args) == 2:
-		return AST ('-slice', args [0], args [1], None)
+		return AST ('-slice', args [0], False if args [1] == AST.None_ else args [1], None)
 	else:
 		return AST ('-slice', args [0], args [1], args [2])
 

@@ -169,14 +169,14 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		self.parent = self.ast
 		self.ast    = ast
 
-		ast         = self._ast2tex_funcs [ast.op] (self, ast)
+		tex         = self._ast2tex_funcs [ast.op] (self, ast)
 
 		del self.parents [-1]
 
 		self.ast    = self.parent
 		self.parent = self.parents [-1]
 
-		return ast
+		return tex
 
 	def _ast2tex_wrap (self, obj, curly = None, paren = None):
 		s = self._ast2tex (obj) if isinstance (obj, AST) else str (obj)
@@ -190,10 +190,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return s
 
 	def _ast2tex_curly (self, ast):
-		return \
-				f'{self._ast2tex (ast)}'     if ast.is_single_unit else \
-				f'{{{self._ast2tex (ast)}}}' if not ast.is_comma else \
-				f'{{\\left({self._ast2tex (ast)}\\right)}}'
+		if ast.is_single_unit:
+			return f'{self._ast2tex (ast)}'
+		elif ast.op not in {',', '-slice'}:
+			return f'{{{self._ast2tex (ast)}}}'
+		else:
+			return f'{{\\left({self._ast2tex (ast)} \\right)}}'
 
 	def _ast2tex_paren (self, ast, ops = {}):
 		return self._ast2tex_wrap (ast, 0, not (ast.op in {'(', '-lamb'} or (ops and ast.op not in ops)))
@@ -519,6 +521,9 @@ class ast2nat: # abstract syntax tree -> native text
 		return s
 
 	def _ast2nat_curly (self, ast, ops = {}):
+		if ast.is_slice:
+			ast = AST ('(', ast)
+
 		return self._ast2nat_wrap (ast, ops if ops else (ast.is_div or not ast.is_single_unit or (ast.is_var and ast.var in AST.Var.PY2TEX)))
 
 	def _ast2nat_paren (self, ast, ops = {}):
@@ -531,7 +536,7 @@ class ast2nat: # abstract syntax tree -> native text
 			s, has = self._ast2nat (ast), False
 
 		has = has or ((ast.op in also) if isinstance (also, set) else also)
-		s   = self._ast2nat_wrap (s, has)
+		s   = self._ast2nat_wrap (s, has, ast.is_slice)
 
 		return (s, has) if ret_has else s
 
@@ -872,7 +877,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		for i, n in enumerate (ast.mul):
 			s = self._ast2py_paren (n, n.is_cmp_in or n.is_add or (i and (n.is_div or n.is_log_with_base)))
 
-			if p and (s [:1] != '(' or not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or i in ast.exp):
+			if p and (not n.is_paren or not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or i in ast.exp):
 				t.append (f'*{s}')
 			else:
 				t.append (s)
@@ -882,10 +887,11 @@ class ast2py: # abstract syntax tree -> Python code text
 		return ''.join (t)
 
 	def _ast2py_div (self, ast):
-		n = self._ast2py_curly (ast.numer)
-		d = self._ast2py_curly (ast.denom)
+		nn = _ast_is_neg (ast.numer)
+		n  = self._ast2py_paren (ast.numer) if nn else self._ast2py_curly (ast.numer)
+		d  = self._ast2py_curly (ast.denom)
 
-		return f'{n}{" / " if ast.numer.strip_minus.op not in {"#", "@"} or ast.denom.strip_minus.op not in {"#", "@"} else "/"}{d}'
+		return f'{n}{" / " if nn or ast.numer.strip_minus.op not in {"#", "@"} or ast.denom.strip_minus.op not in {"#", "@"} else "/"}{d}'
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) else self._ast2py_curly (ast.base)
@@ -1634,8 +1640,8 @@ class sym: # for single script
 # 	# set_sym_user_funcs (vars)
 # 	# res = ast2py (ast)
 
-# 	ast = AST ('<>', ('-func', 'Eq', (('@', 'z'), ('-func', 'Le', (('@', 'x'), ('@', 'y'))))), (('in', ('[', (('#', '1'), ('#', '2')))),))
-# 	res = ast2py (ast)
+# 	ast = AST ('-func', 'Sum', (('@', 'x'), ('(', (',', (('@', 'x'), ('@', 'a'), ('-slice', ('@', 'a'), ('@', 'b'), None))))))
+# 	res = ast2tex (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

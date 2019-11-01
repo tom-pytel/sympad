@@ -155,7 +155,7 @@ x {y**z} [w]
 {1:2:3}[2]
 {1:2:3}.x
 None**-1.0**\[[\emptyset,],[0,],[\partial x,],] / {not \[None,\emptyset,]}
-\int_\lim_{x \to 1} oo^{not 1e100}^\{{partialx+dx},{\partialx*.1},partialx!} \log_\left|partialx\right|{1 \cdot False} dx
+\int_{\lim_{x \to 1} oo^{not 1e100}}^\{{partialx+dx},{\partialx*.1},partialx!} \log_{\left|partialx\right|}{1 \cdot False} dx
 {{\[[{{\emptyset} = {.1}},{\[[{\emptyset},],[{"str"},],]},],]} if {-{{\partial x}!}} else {{{{False}!} and {{{\partial x}||{oo}||{"str"}}}}}}
 {\int {{{{{1e-100}  {1}  {partialx}}}*{{True}^{\tilde\infty }}}} dx}
 {{{{-{"str"}} : {lambda x, y: {\partialx}}} \cdot {{not {{'str'} : {1.} : {.1}}}}}}
@@ -312,6 +312,13 @@ a in {-{b in c}}
 \ln(((a)))
 \sqrt(((a)))
 \ln{({(a, b, c)})}
+Limit(x:1, a, b)
+{-\partialx} / \partialy
+Sum (x, (x, a, a : b))
+-{Derivative (x, x) {a in b}}
+\int dx dx / dx
+b = dx [?h(x, y)]^lambda x, y, z: True!
+dy / dx / 2
 """.strip ().split ('\n')
 
 def expr_ass ():
@@ -382,7 +389,7 @@ def expr_sqrt ():
 			if random () >= 0.5 else \
 			f'\\sqrt[{expr ()}]{expr ()}'
 
-_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma', 'digamma'}
+_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma', 'digamma', 'idiff'}
 
 def expr_func ():
 	while 1:
@@ -556,7 +563,7 @@ def test (argv = None):
 
 	_DEPTH  = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqSd:e:', ['tex', 'nat', 'py', 'dump', 'inf', 'infinite', 'nc', 'nocurlys', 'quick', 'pyS', 'depth=', 'expr='])
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:', ['tex', 'nat', 'py', 'dump', 'inf', 'infinite', 'nc', 'nocurlys', 'quick', 'pyS', 'cross', 'depth=', 'expr='])
 
 	if ('-q', '') in opts or ('--quick', '') in opts:
 		parser.set_quick (True)
@@ -578,9 +585,10 @@ def test (argv = None):
 
 		sys.exit (0)
 
-	dotex = ('--tex', '') in opts or ('-t', '') in opts
-	donat = ('--nat', '') in opts or ('-n', '') in opts
-	dopy  = ('--py', '') in opts or ('-p', '') in opts
+	dotex   = ('--tex', '') in opts or ('-t', '') in opts
+	donat   = ('--nat', '') in opts or ('-n', '') in opts
+	dopy    = ('--py', '') in opts or ('-p', '') in opts
+	docross = ('--cross', '') in opts or ('-c', '') in opts
 
 	if not (dotex or donat or dopy):
 		dotex = donat = dopy = True
@@ -602,7 +610,7 @@ def test (argv = None):
 
 			ast    = parse (text)
 
-			status.extend (['', f'ast: {ast}'])
+			status.extend (['', f'ast:  {ast}'])
 
 			if not ast:
 				if single or not infinite:
@@ -617,7 +625,7 @@ def test (argv = None):
 					status.extend (['', f'sym.ast2{rep} ()'])
 
 					text1       = symfunc (ast)
-					status [-1] = f'{rep}1: {text1}'
+					status [-1] = f'{rep}1: {" " if rep == "py" else ""}{text1}'
 
 					status.extend (['', 'parse ()'])
 
@@ -626,14 +634,73 @@ def test (argv = None):
 					if not rast:
 						raise ValueError ("error parsing")
 
-					status [-1:] = [f'ast: {rast}', '', f'sym.ast2{rep} ()']
+					status [-1:] = [f'ast:  {rast}', '', f'sym.ast2{rep} ()']
 					text2        = symfunc (rast)
-					status [-1]  = f'{rep}2: {text2}'
+					status [-1]  = f'{rep}2: {" " if rep == "py" else ""}{text2}'
 
 					if text2 != text1:
 						raise ValueError ("doesn't match")
 
 					del status [-6:]
+
+			if docross and dotex + donat + dopy > 1:
+				def sanitize (ast): # prune or reformat information not encoded same across different representations and asts which are not possible from parsing
+					if not isinstance (ast, AST):
+						return ast
+
+					elif ast.is_ass:
+						return AST ('<>', sanitize (AST ('(', ast.lhs) if ast.lhs.is_comma else ast.lhs), (('==', sanitize (AST ('(', ast.rhs) if ast.rhs.is_comma else ast.rhs)),))
+
+					elif ast.is_minus:
+						if ast.minus.is_num_pos:
+							return AST ('#', f'-{ast.minus.num}')
+
+					elif ast.is_paren:
+						if not ast.paren.is_comma:
+							return sanitize (ast.paren)
+
+					elif ast.is_mul:
+						return AST ('*', tuple (sanitize (a) for a in ast.mul))
+
+					elif ast.is_log:
+						return AST ('-log', sanitize (ast.log))
+
+					elif ast.is_sqrt:
+						return AST ('-sqrt', sanitize (ast.rad))
+
+					elif ast.is_diff:
+						if len (set (dv [0] for dv in ast.dvs)) == 1 and ast.is_diff_partial:
+							return AST ('-diff', sanitize (ast.diff), 'd', ast.dvs)
+
+					elif ast.is_intg:
+						if ast.intg is None:
+							return AST ('-intg', AST.One, *tuple (sanitize (a) for a in ast [2:]))
+
+					elif ast.is_and:
+						return AST ('-func', 'And', tuple (sanitize (a) for a in ast.and_))
+
+					return AST (*tuple (sanitize (a) for a in ast))
+
+				if dotex:
+					ast2 = ast = sanitize (parse (sym.ast2tex (ast))).flat
+
+					if donat:
+						ast2 = parse (sym.ast2nat (ast2))
+
+					if dopy:
+						ast2 = parse (sym.ast2py (ast2))
+
+					ast2 = sanitize (parse (sym.ast2tex (ast2))).flat
+
+				elif donat:
+					ast2 = ast = sanitize (parse (sym.ast2nat (ast))).flat
+					ast2 = parse (sym.ast2py (ast2))
+					ast2 = sanitize (parse (sym.ast2nat (ast2))).flat
+
+				if ast2 != ast:
+					status.extend (['', f'ast:  {ast}', '', f'ast2: {ast2}'])
+
+					raise ValueError ("doesn't match across reps")
 
 	except (KeyboardInterrupt, StopIteration):
 		pass
