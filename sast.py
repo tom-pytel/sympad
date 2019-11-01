@@ -564,7 +564,8 @@ class AST_Var (AST):
 	UNI2PY      = {**dict (zip (GREEKUNI, GREEK)), '\u2202': 'partial', '\u221e': 'oo'}
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 
-	_rec_groups = re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
+	# _rec_groups = re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
+	_rec_groups = re.compile (r"^(?:(?:(d(?!elta))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
 
 	def _init (self, var):
 		self.var = var
@@ -708,6 +709,8 @@ class AST_Log (AST):
 
 	def _init (self, log, base = None):
 		self.log, self.base = log, base
+
+	_is_log_with_base = lambda self: self.base is not None
 
 class AST_Sqrt (AST):
 	op, is_sqrt = '-sqrt', True

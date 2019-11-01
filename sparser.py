@@ -599,7 +599,7 @@ class Parser (lalr1.LALR1):
 			b'mgz3iN20Do6MzL46McN1aMqo2jKq2uqaDPeIZmddnkMq7ywbYCNth0fIZhtUHN8pwMCEk1o7hKBzVumMFVX9bpsbp1v1tjoHw3U+pux9jnXuqnMwXOe7bUscus6N36He9Zy699U9G6SwxT64Dca072eQ/RGbwcxpirbayeDZn13DLDNbUuIGWXhq4MQbBA9t' \
 			b'n5nhc0xjKvwX0By6OjfDzbHz8YKLO1ODHz7Y3fB3DdL/ZbEMY1yPO/vZ8zMdS2a4qU/vMMG9N7WtLtFw8+6m6HCJzYsfLLlAw827+/bBxTWvqi7RcPPuvkVxcc2rq0s03Ly774ZcXPOa6hINN6+vXpuGDggLWrfRQcZ3hw5YheSIJ1l4eQp1/zrvAFDR5AOb' \
 			b'Daoazxih6ED0v2FyN+obGq3/n33rNd/YeBQCmn7wXzecd2uyb2QY6grsDgyU90fqQr2uE7oNfRWLzhOia/ruF39jK3xfq8m+q4UfMZH6sP1U8Bsp+A1iSwWlJENS2DNlC8/xMINXr7F3Q8+kg13YJ+WNx98iFyZ5MH3Mo8EvquGABNdWKq1N3wLhmRVe6Kud' \
-			b'Ihf+EAFe2wmxoIvnbOPlfMEF/Lx58P8iqmZk' 
+			b'Ihf+EAFe2wmxoIvnbOPlfMEF/Lx58P8iqmZk'
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -665,14 +665,14 @@ class Parser (lalr1.LALR1):
 		('BINOM',         r'\\binom(?!{_LTRU})'),
 
 		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LTRU})|{"|".join (AST.Cmp.UNI2PY)}'),
-		('IF',            r'if(?!{_LTRU})'),
-		('ELSE',          r'else(?!{_LTRU})'),
-		('OR',           fr'or\b|\\vee(?!{_LTRU})|{_UOR}'),
-		('AND',          fr'and\b|\\wedge(?!{_LTRU})|{_UAND}'),
-		('NOT',          fr'not\b|\\neg(?!{_LTRU})|{_UNOT}'),
-		('SQRT',          r'sqrt\b|\\sqrt(?!{_LTRU})'),
-		('LOG',           r'log\b|\\log(?!{_LTR})'),
-		('LN',            r'ln\b|\\ln(?!{_LTRU})'),
+		('IF',            r'if(?!\w|\\_)'),
+		('ELSE',          r'else(?!\w|\\_)'),
+		('OR',           fr'or(?!\w|\\_)|\\vee(?!{_LTRU})|{_UOR}'),
+		('AND',          fr'and(?!\w|\\_)|\\wedge(?!{_LTRU})|{_UAND}'),
+		('NOT',          fr'not(?!\w|\\_)|\\neg(?!{_LTRU})|{_UNOT}'),
+		('SQRT',          r'sqrt(?!\w|\\_)|\\sqrt(?!{_LTRU})'),
+		('LOG',           r'log(?!\w|\\_)|\\log(?!{_LTR})'),
+		('LN',            r'ln(?!\w|\\_)|\\ln(?!{_LTRU})'),
 
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))(?:_{{(\d+)}})?"),
@@ -734,12 +734,12 @@ class Parser (lalr1.LALR1):
 		('SUBSTACK',      r'\\substack'),
 
 		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)|{"|".join (AST.Cmp.UNI2PY)}'),
-		('OR',           fr'or\b|\\vee|{_UOR}'),
-		('AND',          fr'and\b|\\wedge|{_UAND}'),
-		('NOT',          fr'not\b|\\neg|{_UNOT}'),
-		('SQRT',          r'sqrt\b|\\sqrt'),
-		('LOG',           r'log\b|\\log'),
-		('LN',            r'ln\b|\\ln'),
+		('OR',           fr'or(?!\w|\\_)|\\vee|{_UOR}'),
+		('AND',          fr'and(?!\w|\\_)|\\wedge|{_UAND}'),
+		('NOT',          fr'not(?!\w|\\_)|\\neg|{_UNOT}'),
+		('SQRT',          r'sqrt(?!\w|\\_)|\\sqrt'),
+		('LOG',           r'log(?!\w|\\_)|\\log'),
+		('LN',            r'ln(?!\w|\\_)|\\ln'),
 
 		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))({_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))(?:_{{(\d+)}})?"),
 	])

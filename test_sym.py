@@ -14,10 +14,6 @@ import sxlat
 import sym
 import sparser
 
-_FUNCS = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
-sym.set_sym_user_funcs (_FUNCS)
-sparser.set_sp_user_funcs (_FUNCS)
-
 _TERMS = [
 	'0',
 	'1',
@@ -283,14 +279,49 @@ x^{a = b}
 {a * -1} {lambda: 2}
 \frac{d\partial x}{dx}
 partial / partialx \partial x
-Derivative ({\partial x}, x, 1)
 -{{1 [2]} c}
+{{{?h(x, y, z)},{{{partialx}'''}^^{{1e100} or {1}}^^{{}}},{log{lambda x, y: {1.0}}}}}
+sin (x) {a b / c}
+{{{{-1.0}**{a}}^{{\partialy} [{c}, {partial}]}}*{{\sqrt{\tilde\infty }}*{\log_{'str'}{1.}}*{-{dz}}}}
+Derivative ({partial}, x, 1)
+Derivative ({\partial}, x, 1)
+Derivative ({\partial x}, x, 1)
+None {x = y}
+{d / y} * a
+{{-1.0} = {1.}} and {{True}+{False}} and {{\infty zoo} = {-1.0}}
+a * \log_{2}{a} [x]
+{a = b} * c^d
+{lambda x: 1}**{-{x in b}}
+{\[[{{{oo} : {\tilde\infty }}  not in  {Limit ({c}, x, {a})}},{\[{{\tilde\infty }||{\infty zoo}},]},],[{acoth()},{{{1} if {False} else {2} if {\partialy} else {0} if {-1.0}} \cdot {{xyzd}&&{1.0}&&{b}} \cdot {not {-1}}},],[{{{\partialx} if {"str"} else {0} if {\partialx} else {partial} if {1e100}}*{{xyzd}*{partial}}*{\int {False} dx}},{\int_{{2} [{\partialx}]}^{{"str"} and {1.} and {oo}} {[]} dx},],]}
+{\int_{Derivative ({\[{0},{\emptyset},]}, z, 2, z, 2)}^{not {lambda: {-1.0}}} {{{dx} or {1}}**{{2}  not in  {None}}} dx}
+{\{{{{1.}  in  {a}}  {{{1e-100}}}  {{a} = {-1.0}}},{{besselk({a},{\partialy},{1e-100})}''},{{Limit ({dx}, x, {False})}  {\frac{1e-100}{.1}}}}}
+{\int_{{{-1.0}''}||{\int_{None}^{.1} {dz} dx}||{{\tilde\infty }+{None}}}^{{\lim_{x \to {oo}} {\partial }}**{{1.0}**{1e+100}}} {{-{-1}}^{{1.} == {\partialx} == {\emptyset} < {dx}}} dx}
+{{?(x, y)} = {{\[{1e-100},]}||{{\tilde\infty }^{'str'}}}}
+{{{{-1}^^{c}} [{{1e+100}+{1e+100}}, {{True}**{0}}]}**{-{not {1e-100}}}}
+{{\gcd({\sum_{x = {-1.0}}^{\partial x} {\emptyset}})}**{-{{False}+{2}}}}
+{{{d^{6} / dx^{3} dy^{3} {'str'}}+{{False}  {dz}}}**{-{{\partial x} = {\partial }}}}
+{\sqrt[{-{\log_{partialx}{1e+100}}}]{{{.1} if {1e+100}}*{{b} \cdot {b}}}}
+sqrt[log_2{x}]2
+{{{?f()}**{{"str"} = {1e+100}}} = {{-1.0 : {Derivative ({1e100}, z, 1, x, 1, x, 2)},oo : {{}},1e-100 : {{1e100}^{\tilde\infty }}}}}
+{{LeviCivita({?h(x, y, reals = False, commutative = False)},{{{partial},{\partial }}})}**{{Limit ({\emptyset}, x, {b})}+{{1.0}!}+{{"str"}'}}}
+{partialx : {\partial x : \emptyset,-1 : 1e-100},\partial  : (oo,False)} : \lim_{x \to partialx = \emptyset} lambda x, y, z: "str" : \{}
+{{-{{b} [{\tilde\infty }, {dx}]}}**{-{lambda x, y, z: {\partialy}}}}
+{{\min({{None}*{0}},{{True : {1e100},0 : {None},\partial  : {2}}})}^{-{{b} : {.1} : {partialx}}}}
 """.strip ().split ('\n')
 
-def expr_eq (): # BROKEN?
-	return f'{expr ()} {choice (["=", "==", "!=", "<", "<=", ">", ">=", " in ", " not in "])} {expr ()}'
+def expr_ass ():
+	return f'{expr ()} = {expr ()}'
 
-# def expr_cmp ():
+def expr_in ():
+	return f'{expr ()} {choice ([" in ", " not in "])} {expr ()}'
+
+def expr_cmp (): # this gets processed and possibly reordered in sxlat
+	s = expr ()
+
+	for _ in range (randrange (4)):
+		s = s + f' {choice (["==", "!=", "<", "<=", ">", ">="])} {expr ()}'
+
+	return s
 
 def expr_curly ():
 	return '{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
@@ -512,6 +543,12 @@ def parse (text):
 def test (argv = None):
 	global DEPTH, CURLYS
 
+	funcs = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
+
+	sym.set_sym_user_funcs (funcs)
+	sparser.set_sp_user_funcs (funcs)
+	sxlat.set_xlat_And (False)
+
 	_DEPTH  = 3
 	single  = None
 	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqSd:e:', ['tex', 'nat', 'py', 'dump', 'inf', 'infinite', 'nc', 'nocurlys', 'quick', 'pyS', 'depth=', 'expr='])
@@ -602,6 +639,9 @@ def test (argv = None):
 		print ()
 
 		raise
+
+	finally:
+		sxlat.set_xlat_And (True)
 
 	return True
 

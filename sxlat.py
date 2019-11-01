@@ -2,6 +2,8 @@
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+_SX_XLAT_AND = True # ability to turn off And translation for testing
+
 _AST_StrPlus = AST ('"', '+')
 
 #...............................................................................................
@@ -53,6 +55,9 @@ def _xlat_f2a_And (*args, canon = False): # patch together out of order extended
 		return invert (ast) if (canon and ast.is_cmp and sum ((r [0] == '>') - (r [0] == '<') for r, c in ast.cmp) > 0) else ast
 
 	# start here
+	if not _SX_XLAT_AND:
+		return None
+
 	itr  = iter (args)
 	args = []
 
@@ -523,7 +528,12 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 
 #...............................................................................................
+def set_xlat_And (state):
+	global _SX_XLAT_AND
+	_SX_XLAT_AND = state
+
 class sxlat: # for single script
+	set_xlat_And      = set_xlat_And
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
 	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_PY  = XLAT_FUNC2AST_PY

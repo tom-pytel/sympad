@@ -14,7 +14,7 @@
 > change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 
-> sxlat py f = Lambda (x, x**2) -> f (x) = x**2
+> sxlat py f = Lambda (x, x**2) -> f (x) = x**2?
 
 > verify all is_var -> is_var_nonconst where consts not allowed
 
@@ -34,8 +34,8 @@
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
 > clean up sym lambda keyword safety wrapping
 
-> quick mode error: dpartial
-> quick mode error: \operatorname{\_}()
+> quick mode parsing error: dpartial
+> parsing error: \operatorname{\_}()
 
 > More Examples: Lambdas
 > More Examples: Parentheses
@@ -138,8 +138,59 @@ Errors:
 -------
 
 
-text: -{{1 [2]} c}
-ast: ('-', ('*', (('-idx', ('#', '1'), (('#', '2'),)), ('@', 'c'))))
-py1: -1[2]*c
-ast: ('*', (('-idx', ('#', '-1'), (('#', '2'),)), ('@', 'c')), {1})
-py2: (-1)[2]*c
+text: {{\ln{{\infty zoo}  {\partialy}}}  in  {-{{partial}  in  {1e-100}}}}
+ast: ('<>', ('-log', ('*', (('@', 'oo'), ('@', 'zoo'), ('@', 'partialy')))), (('in', ('-', ('<>', ('@', 'partial'), (('in', ('#', '1e-100')),)))),))
+ast: ('<>', ('-log', ('*', (('@', 'oo'), ('@', 'zoo'), ('@', 'partialy')), {1, 2})), (('in', ('-', ('@', 'partial'))), ('in', ('#', '1e-100'))))
+py1: ln(oo*zoo*partialy) in -partial in 1e-100
+py2: And(ln(oo*zoo*partialy) in -partial, -partial in 1e-100)
+
+
+text: {{-{{\tilde\infty }  in  {\partialx}}}  in  {{{b : {partialx},\partialx : {"str"}}}^{{.1} >= {.1} > {\partialx}}}}
+ast: ('<>', ('-', ('<>', ('@', 'zoo'), (('in', ('@', 'partialx')),))), (('in', ('^', ('-dict', ((('@', 'b'), ('@', 'partialx')), (('@', 'partialx'), ('"', 'str')))), ('<>', ('#', '0.1'), (('>=', ('#', '0.1')), ('>', ('@', 'partialx')))))),))
+ast: ('<>', ('-', ('@', 'zoo')), (('in', ('@', 'partialx')), ('in', ('^', ('-dict', ((('@', 'b'), ('@', 'partialx')), (('@', 'partialx'), ('"', 'str')))), ('-func', 'And', (('-func', 'Ge', (('#', '0.1'), ('#', '0.1'))), ('-func', 'Gt', (('#', '0.1'), ('@', 'partialx')))))))))
+py1: -zoo in partialx in {b: partialx, partialx: 'str'}**And(Ge(0.1, 0.1), Gt(0.1, partialx))
+py2: And(-zoo in partialx, partialx in {b: partialx, partialx: 'str'}**And(Ge(0.1, 0.1), Gt(0.1, partialx)))
+
+
+text: {{-{{1e-100}  not in  {.1}}}  in  {not {{\partialy} == {'str'}}}}
+ast: ('<>', ('-', ('<>', ('#', '1e-100'), (('notin', ('#', '0.1')),))), (('in', ('-not', ('<>', ('@', 'partialy'), (('==', ('"', 'str')),)))),))
+ast: ('<>', ('#', '-1e-100'), (('notin', ('#', '0.1')), ('in', ('-func', 'Not', (('-func', 'Eq', (('@', 'partialy'), ('"', 'str'))),)))))
+py1: -1e-100 not in 0.1 in Not(Eq(partialy, 'str'))
+py2: And(-1e-100 not in 0.1, 0.1 in Not(Eq(partialy, 'str')))
+
+
+
+
+text: Sum ('str' = b : ?h(x, y, reals = False, commutative = False), (x, 1e100^^1.  not in  dz^False, -\log_None\partialx))
+ast: ('-func', 'Sum', (('-slice', ('=', ('"', 'str'), ('@', 'b')), ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False')))), None), ('(', (',', (('@', 'x'), ('<>', ('^^', (('#', '1e+100'), ('#', '1.'))), (('notin', ('*', (('^', ('@', 'dz'), ('@', 'F')), ('@', 'alse')))),)), ('*', (('-', ('-log', ('@', 'one'), ('@', 'N'))), ('@', 'partialx'))))))))
+ast: ('-sum', ('-dict', ((('(', ('=', ('"', 'str'), ('@', 'b'))), ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False'))))),)), ('@', 'x'), ('<>', ('^^', (('#', '1e+100'), ('#', '1.'))), (('notin', ('*', (('^', ('@', 'dz'), ('@', 'F')), ('@', 'alse')))),)), ('*', (('-', ('-log', ('@', 'one'), ('@', 'N'))), ('@', 'partialx'))))
+nat1: \sum_{x = 1e+100 ^^ 1. not in dz**F alse}^{-\log_N(one) partialx} {( 'str' = b):?h(x, y, commutative = False, reals = False)}
+nat2: \sum_{x = 1e+100 ^^ 1. not in dz**F alse}^{-\log_N(one) partialx} {( 'str' = b): ?h(x, y, commutative = False, reals = False)}
+
+
+text: \{} and 1e100+dy||?f(x, y, z)||(c,True)^idiff()
+ast: ('-and', (('-set', ()), ('||', (('+', (('#', '1e+100'), ('@', 'dy'))), ('-ufunc', 'f', (('@', 'x'), ('@', 'y'), ('@', 'z'))), ('*', (('^', ('(', (',', (('@', 'c'), ('@', 'True')))), ('@', 'i')), ('-func', 'diff', ())))))))
+ast: ('-and', (('-set', ()), ('||', (('+', (('#', '1e+100'), ('@', 'dy'))), ('-ufunc', 'f', (('@', 'x'), ('@', 'y'), ('@', 'z'))), ('*', (('^', ('(', (',', (('@', 'c'), ('@', 'True')))), ('@', 'i')), ('-diffp', ('-dict', ()), 1)))))))
+tex1: \emptyset \wedge 1{e}{+100} + dy \cup f\left(x, y, z \right) \cup \left(c, True \right)^i {}'
+tex2: \emptyset \wedge 1{e}{+100} + dy \cup f\left(x, y, z \right) \cup \left(c, True \right)^i \left\{ \right\}'
+
+
+text: .1 and partial and None! == None / \partial  : sqrtoo != Sum (\partial  : \infty zoo, (x, 0 / 2, 1.**2)) == \deg()
+ast: ('-slice', ('-and', (('#', '0.1'), ('@', 'partial'), ('<>', ('!', ('@', 'None')), (('==', ('/', ('@', 'None'), ('@', 'partial'))),)))), ('<>', ('@', 'sqrtoo'), (('!=', ('-func', 'Sum', (('-slice', ('@', 'partial'), ('*', (('@', 'oo'), ('@', 'zoo'))), None), ('(', (',', (('@', 'x'), ('/', ('#', '0'), ('#', '2')), ('^', ('#', '1.'), ('#', '2')))))))), ('==', ('-func', 'deg', ())))), None)
+ast: ('-slice', ('-and', (('#', '0.1'), ('@', 'partial'), ('<>', ('!', ('@', 'None')), (('==', ('/', ('@', 'None'), ('@', 'partial'))),)))), ('<>', ('@', 'sqrtoo'), (('!=', ('-sum', ('-dict', ((('@', 'partial'), ('*', (('@', 'oo'), ('@', 'zoo')))),)), ('@', 'x'), ('/', ('#', '0'), ('#', '2')), ('^', ('#', '1.'), ('#', '2')))), ('==', ('-func', 'deg', ())))), None)
+nat1: 0.1 and partial and None! == None/partial:sqrtoo != \sum_{x = 0/2}^{1.**2} {partial:oo zoo} == deg()
+nat2: 0.1 and partial and None! == None/partial:sqrtoo != \sum_{x = 0/2}^{1.**2} {partial: oo zoo} == deg()
+
+
+text: \int_\left|.1\right|^\[\partialy,] -1.0*partial*-1.0 dx [{\logxyzd}]
+ast: ('-idx', ('-intg', ('+', (('*', (('@', '_'), ('^', ('|', ('#', '0.1')), ('-mat', ((('@', 'partialy'),),))))), ('-', ('*', (('#', '1.0'), ('@', 'partial'), ('#', '-1.0')), {1, 2})))), ('@', 'dx')), (('-log', ('@', 'xyzd')),))
+ast: ('-idx', ('(', ('-intg', ('*', (('#', '-1.0'), ('@', 'partial'), ('#', '-1.0')), {2}), ('@', 'dx'), ('|', ('#', '0.1')), ('-mat', ((('@', 'partialy'),),)))), (('-log', ('@', 'xyzd')),))
+nat1: (\int _ {|0.1|}**\[partialy] - 1.0 partial * {-1.0} dx)[ln(xyzd)]
+nat2: (\int_{{|0.1|}}^{\[partialy]} -1.0 partial * {-1.0} dx)[ln(xyzd)]
+
+
+text: \sqrt[[]]Limit (partial : 1, x, not \infty zoo)
+ast: ('-sqrt', ('-func', 'Limit', (('-slice', ('@', 'partial'), ('#', '1'), None), ('@', 'x'), ('-not', ('*', (('@', 'oo'), ('@', 'zoo')))))), ('[', ()))
+ast: ('-sqrt', ('-lim', ('-dict', ((('@', 'partial'), ('#', '1')),)), ('@', 'x'), ('(', ('-not', ('*', (('@', 'oo'), ('@', 'zoo'))))), '+'), ('[', ()))
+nat1: \sqrt[[]]{\lim_{x \to (not oo zoo)**+} {partial:1}}
+nat2: \sqrt[[]]{\lim_{x \to (not oo zoo)**+} {partial: 1}}

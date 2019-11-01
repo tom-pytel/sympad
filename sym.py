@@ -196,7 +196,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				f'{{\\left({self._ast2tex (ast)}\\right)}}'
 
 	def _ast2tex_paren (self, ast, ops = {}):
-		return self._ast2tex_wrap (ast, 0, not (ast.is_paren or (ops and ast.op not in ops)))
+		return self._ast2tex_wrap (ast, 0, not (ast.op in {'(', '-lamb'} or (ops and ast.op not in ops)))
 
 	def _ast2tex_paren_mul_exp (self, ast, ret_has = False, also = {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'}):
 		if ast.is_mul:
@@ -288,8 +288,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
-					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
-					(p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
+					# (p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
+					# (p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
 					(p.is_var and _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
 					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
 					# (n.strip_fdpi.is_paren and i in ast.exp) or
@@ -310,7 +310,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(p.is_attr_var and s [:6] != '\\left(') or \
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or \
-					(p.is_var_long and n.op not in {'(', '['}) or (n.is_var_long and p.op not in {'(', '['})):
+					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or (n.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
 				t.append (f'\\ {s}')
 
 			else:
@@ -611,8 +611,9 @@ class ast2nat: # abstract syntax tree -> native text
 				has = True
 
 			elif p and (
-					p.is_diff_or_part_solo or \
-					(n.op not in {'#', '(', '|', '^'} or p.op not in {'#', '(', '|'})):
+					p.is_diff_or_part_solo or
+					n.op not in {'#', '|', '^'} or
+					p.op not in {'#', '|'}):
 				t.append (f' {s}')
 
 			else:
@@ -641,7 +642,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_pow (self, ast, trighpow = True):
 		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
-		p = self._ast2nat_wrap (ast.exp, ast.exp.strip_minus.op in {'=', '<>', '+', '*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'}, {","})
+		p = self._ast2nat_wrap (ast.exp, ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'}, {","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
 			i = len (ast.base.func)
@@ -789,7 +790,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		return py
 
 	def _ast2py_curly (self, ast):
-		if ast.strip_minus.op in {',', '+', '*', '/'} or ast.is_cmp_in or (ast.is_log and ast.base is not None):
+		if ast.is_cmp_in or ast.strip_minus.op in {',', '+', '*', '/'} or ast.strip_minus.is_log_with_base:
 			return self._ast2py_paren (ast)
 		else:
 			return self._ast2py (ast)
@@ -811,7 +812,7 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		if istop:
 			if ast.lhs.is_ufunc:
-				ast = AST ('=', ('@', ast.lhs.ufunc), ufunc2lamb (ast.lhs, ast.rhs))
+				ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
 
 			elif ast.lhs.is_comma:
 				rhs = ast.rhs._strip_paren (1)
@@ -820,7 +821,7 @@ class ast2py: # abstract syntax tree -> Python code text
 					rhss = rhs.comma if rhs.is_comma else rhs.brack if rhs.is_brack else rhs.set
 
 					if ast.lhs.comma.len == rhss.len:
-						lrs = [(('@', l.ufunc), ufunc2lamb (l, r)) if l.is_ufunc else (l, r) for l, r in zip (ast.lhs.comma, rhss)]
+						lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc else (l, r) for l, r in zip (ast.lhs.comma, rhss)]
 						rhs = (rhs.op, tuple (r for l, r in lrs))
 						ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
 
@@ -859,7 +860,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		p = None
 
 		for i, n in enumerate (ast.mul):
-			s = self._ast2py_paren (n, n.is_cmp_in or n.is_add)
+			s = self._ast2py_paren (n, n.is_cmp_in or n.is_add or (i and (n.is_div or n.is_log_with_base)))
 
 			if p and (s [:1] != '(' or not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or i in ast.exp):
 				t.append (f'*{s}')
@@ -969,7 +970,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-mat'  : _ast2py_mat,
 		'-piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
 		'-lamb' : lambda self, ast: f"""Lambda({ast.vars [0] if ast.vars.len == 1 else f'({", ".join (ast.vars)})'}, {self._ast2py (ast.lamb)})""",
-		'-idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
+		'-idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
 		'-slice': _ast2py_slice,
 		'-set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
 		'-dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
@@ -1530,7 +1531,7 @@ class spt2ast:
 		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
 		sp.Or: lambda self, spt: AST ('-or', tuple (self._spt2ast (a) for a in spt.args)),
-		sp.And: lambda self, spt: sxlat._xlat_f2a_And (*tuple (self._spt2ast (a) for a in spt.args), canon = True), # collapse possibly previously segmented extended comparison
+		sp.And: lambda self, spt: (lambda args: sxlat._xlat_f2a_And (*args, canon = True) or AST ('-and', args)) (tuple (self._spt2ast (a) for a in spt.args)), # collapse possibly previously segmented extended comparison
 		sp.Not: lambda self, spt: AST ('-not', self._spt2ast (spt.args [0])),
 
 		ExprAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
