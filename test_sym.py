@@ -307,6 +307,11 @@ sqrt[log_2{x}]2
 {partialx : {\partial x : \emptyset,-1 : 1e-100},\partial  : (oo,False)} : \lim_{x \to partialx = \emptyset} lambda x, y, z: "str" : \{}
 {{-{{b} [{\tilde\infty }, {dx}]}}**{-{lambda x, y, z: {\partialy}}}}
 {{\min({{None}*{0}},{{True : {1e100},0 : {None},\partial  : {2}}})}^{-{{b} : {.1} : {partialx}}}}
+a in {-{b in c}}
+-{{1'}!}
+\ln(((a)))
+\sqrt(((a)))
+\ln{({(a, b, c)})}
 """.strip ().split ('\n')
 
 def expr_ass ():

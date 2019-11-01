@@ -138,29 +138,6 @@ Errors:
 -------
 
 
-text: {{\ln{{\infty zoo}  {\partialy}}}  in  {-{{partial}  in  {1e-100}}}}
-ast: ('<>', ('-log', ('*', (('@', 'oo'), ('@', 'zoo'), ('@', 'partialy')))), (('in', ('-', ('<>', ('@', 'partial'), (('in', ('#', '1e-100')),)))),))
-ast: ('<>', ('-log', ('*', (('@', 'oo'), ('@', 'zoo'), ('@', 'partialy')), {1, 2})), (('in', ('-', ('@', 'partial'))), ('in', ('#', '1e-100'))))
-py1: ln(oo*zoo*partialy) in -partial in 1e-100
-py2: And(ln(oo*zoo*partialy) in -partial, -partial in 1e-100)
-
-
-text: {{-{{\tilde\infty }  in  {\partialx}}}  in  {{{b : {partialx},\partialx : {"str"}}}^{{.1} >= {.1} > {\partialx}}}}
-ast: ('<>', ('-', ('<>', ('@', 'zoo'), (('in', ('@', 'partialx')),))), (('in', ('^', ('-dict', ((('@', 'b'), ('@', 'partialx')), (('@', 'partialx'), ('"', 'str')))), ('<>', ('#', '0.1'), (('>=', ('#', '0.1')), ('>', ('@', 'partialx')))))),))
-ast: ('<>', ('-', ('@', 'zoo')), (('in', ('@', 'partialx')), ('in', ('^', ('-dict', ((('@', 'b'), ('@', 'partialx')), (('@', 'partialx'), ('"', 'str')))), ('-func', 'And', (('-func', 'Ge', (('#', '0.1'), ('#', '0.1'))), ('-func', 'Gt', (('#', '0.1'), ('@', 'partialx')))))))))
-py1: -zoo in partialx in {b: partialx, partialx: 'str'}**And(Ge(0.1, 0.1), Gt(0.1, partialx))
-py2: And(-zoo in partialx, partialx in {b: partialx, partialx: 'str'}**And(Ge(0.1, 0.1), Gt(0.1, partialx)))
-
-
-text: {{-{{1e-100}  not in  {.1}}}  in  {not {{\partialy} == {'str'}}}}
-ast: ('<>', ('-', ('<>', ('#', '1e-100'), (('notin', ('#', '0.1')),))), (('in', ('-not', ('<>', ('@', 'partialy'), (('==', ('"', 'str')),)))),))
-ast: ('<>', ('#', '-1e-100'), (('notin', ('#', '0.1')), ('in', ('-func', 'Not', (('-func', 'Eq', (('@', 'partialy'), ('"', 'str'))),)))))
-py1: -1e-100 not in 0.1 in Not(Eq(partialy, 'str'))
-py2: And(-1e-100 not in 0.1, 0.1 in Not(Eq(partialy, 'str')))
-
-
-
-
 text: Sum ('str' = b : ?h(x, y, reals = False, commutative = False), (x, 1e100^^1.  not in  dz^False, -\log_None\partialx))
 ast: ('-func', 'Sum', (('-slice', ('=', ('"', 'str'), ('@', 'b')), ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False')))), None), ('(', (',', (('@', 'x'), ('<>', ('^^', (('#', '1e+100'), ('#', '1.'))), (('notin', ('*', (('^', ('@', 'dz'), ('@', 'F')), ('@', 'alse')))),)), ('*', (('-', ('-log', ('@', 'one'), ('@', 'N'))), ('@', 'partialx'))))))))
 ast: ('-sum', ('-dict', ((('(', ('=', ('"', 'str'), ('@', 'b'))), ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False'))))),)), ('@', 'x'), ('<>', ('^^', (('#', '1e+100'), ('#', '1.'))), (('notin', ('*', (('^', ('@', 'dz'), ('@', 'F')), ('@', 'alse')))),)), ('*', (('-', ('-log', ('@', 'one'), ('@', 'N'))), ('@', 'partialx'))))
@@ -194,3 +171,6 @@ ast: ('-sqrt', ('-func', 'Limit', (('-slice', ('@', 'partial'), ('#', '1'), None
 ast: ('-sqrt', ('-lim', ('-dict', ((('@', 'partial'), ('#', '1')),)), ('@', 'x'), ('(', ('-not', ('*', (('@', 'oo'), ('@', 'zoo'))))), '+'), ('[', ()))
 nat1: \sqrt[[]]{\lim_{x \to (not oo zoo)**+} {partial:1}}
 nat2: \sqrt[[]]{\lim_{x \to (not oo zoo)**+} {partial: 1}}
+
+
+

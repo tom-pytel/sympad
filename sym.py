@@ -251,6 +251,11 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		return f'{self._ast2tex_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-intg", "-piece", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}.{a}'
 
+	def _ast2tex_minus (self, ast):
+		s = self._ast2tex_wrap (ast.minus, ast.minus.is_mul, {"=", "<>", "+", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})
+
+		return f'-{{{s}}}' if s [:6] != '\\left(' and ast.minus.strip_fdpi.is_num_pos else f'-{s}'
+
 	def _ast2tex_add (self, ast):
 		terms = []
 
@@ -339,10 +344,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{b}^{p}'
 
 	def _ast2tex_log (self, ast):
-		return \
-				f'\\ln{self._ast2tex_paren (ast.log)}' \
-				if ast.base is None else \
-				f'\\log_{self._ast2tex_curly (ast.base)}{self._ast2tex_paren (ast.log)}'
+		if ast.base is None:
+			return f'\\ln\\left({self._ast2tex (ast.log)} \\right)'
+		else:
+			return f'\\log_{self._ast2tex_curly (ast.base)}\\left({self._ast2tex (ast.log)} \\right)'
 
 	def _ast2tex_func (self, ast):
 		if ast.is_trigh_func:
@@ -442,7 +447,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'('     : lambda self, ast: self._ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
 		'['     : lambda self, ast: f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
 		'|'     : lambda self, ast: f'\\left|{self._ast2tex (ast.abs)} \\right|',
-		'-'     : lambda self, ast: f'-{self._ast2tex_wrap (ast.minus, ast.minus.strip_fdpi.is_num_pos or ast.minus.is_mul, {"=", "<>", "+", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}',
+		'-'     : _ast2tex_minus,
 		'!'     : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx'} or ast.fact.is_num_neg)) + '!',
 		'+'     : _ast2tex_add,
 		'*'     : _ast2tex_mul,
@@ -556,6 +561,11 @@ class ast2nat: # abstract syntax tree -> native text
 		else:
 			return f'{obj}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}'
 
+	def _ast2nat_minus (self, ast):
+		s = self._ast2nat_wrap (ast.minus, ast.minus.op in {"*", "-diff", "-piece", "||", "^^", "&&", "-or", "-and"}, {"=", "<>", "+", "-lamb", "-slice", "-not"})
+
+		return f'-{{{s}}}' if s [:1] != '(' and ast.minus.strip_fdpi.is_num_pos else f'-{s}'
+
 	def _ast2nat_str (self, ast):
 		s = repr (ast.str_)
 
@@ -652,10 +662,10 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'{b}**{p}'
 
 	def _ast2nat_log (self, ast):
-		return \
-				f'ln{self._ast2nat_paren (ast.log)}' \
-				if ast.base is None else \
-				f'\\log_{self._ast2nat_curly (ast.base)}{self._ast2nat_paren (ast.log)}'
+		if ast.base is None:
+			return f'ln({self._ast2nat (ast.log)})'
+		else:
+			return f'\\log_{self._ast2nat_curly (ast.base)}({self._ast2nat (ast.log)})'
 
 	def _ast2nat_lim (self, ast):
 		s = self._ast2nat_wrap (ast.to, (ast.to.is_ass and ast.to.rhs.is_lamb) or ast.to.op in {'-lamb', '-piece'}, ast.to.is_slice) if ast.dir is None else (self._ast2nat_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -724,14 +734,14 @@ class ast2nat: # abstract syntax tree -> native text
 		'('     : lambda self, ast: f'({self._ast2nat (ast.paren)})',
 		'['     : lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
 		'|'     : lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
-		'-'     : lambda self, ast: f'-{self._ast2nat_wrap (ast.minus, ast.minus.strip_fdpi.is_num_pos or ast.minus.op in {"*", "-diff", "-piece", "||", "^^", "&&", "-or", "-and"}, {"=", "<>", "+", "-lamb", "-slice", "-not"})}',
+		'-'     : _ast2nat_minus,
 		'!'     : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx'} or ast.fact.is_num_neg) + '!',
 		'+'     : _ast2nat_add,
 		'*'     : _ast2nat_mul,
 		'/'     : _ast2nat_div,
 		'^'     : _ast2nat_pow,
 		'-log'  : _ast2nat_log,
-		'-sqrt' : lambda self, ast: f'sqrt{self._ast2nat_paren (ast.rad)}' if ast.idx is None else f'\\sqrt[{self._ast2nat (ast.idx)}]{{{self._ast2nat_wrap (ast.rad, 0, {",", "-slice"})}}}',
+		'-sqrt' : lambda self, ast: f'sqrt({self._ast2nat (ast.rad)})' if ast.idx is None else f'\\sqrt[{self._ast2nat (ast.idx)}]{{{self._ast2nat_wrap (ast.rad, 0, {",", "-slice"})}}}',
 		'-func' : lambda self, ast: f'{ast.func}({self._ast2nat (AST.tuple2ast (ast.args))})',
 		'-lim'  : _ast2nat_lim,
 		'-sum'  : _ast2nat_sum,
@@ -885,9 +895,9 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_log (self, ast):
 		if ast.base is None:
-			return f'ln{self._ast2py_paren (ast.log)}'
+			return f'ln({self._ast2py (ast.log)})'
 		else:
-			return f'ln{self._ast2py_paren (ast.log)} / ln{self._ast2py_paren (ast.base)}'
+			return f'ln({self._ast2py (ast.log)}) / ln({self._ast2py (ast.base)})'
 
 	def _ast2py_func (self, ast):
 		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
@@ -953,14 +963,14 @@ class ast2py: # abstract syntax tree -> Python code text
 		'('     : lambda self, ast: f'({self._ast2py (ast.paren)})',
 		'['     : lambda self, ast: f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
 		'|'     : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
-		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.is_add or (ast.minus.is_idx and ast.minus.obj.is_num) or (ast.minus.is_mul and ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))}',
+		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.is_add or ast.minus.is_cmp_in or (ast.minus.is_idx and ast.minus.obj.is_num) or (ast.minus.is_mul and ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))}',
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
 		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n.is_num_neg and n is not ast.add [0])) for n in ast.add).replace (' + -', ' - '),
 		'*'     : _ast2py_mul,
 		'/'     : _ast2py_div,
 		'^'     : _ast2py_pow,
 		'-log'  : _ast2py_log,
-		'-sqrt' : lambda self, ast: f'sqrt{self._ast2py_paren (ast.rad)}' if ast.idx is None else self._ast2py (AST ('^', ast.rad._strip_paren (1), ('/', AST.One, ast.idx))),
+		'-sqrt' : lambda self, ast: f'sqrt({self._ast2py (ast.rad)})' if ast.idx is None else self._ast2py (AST ('^', ast.rad._strip_paren (1), ('/', AST.One, ast.idx))),
 		'-func' : _ast2py_func,
 		'-lim'  : _ast2py_lim,
 		'-sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
