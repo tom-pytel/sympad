@@ -320,6 +320,16 @@ Sum (x, (x, a, a : b))
 b = dx [?h(x, y)]^lambda x, y, z: True!
 dy / dx / 2
 Sum ({2 \cdot {1 x} \cdot {\int_y^x {dy} dx}}, (x, 0, 1)) * 1
+1 if True else 3 if True else 4
+1 if True else 3 if True
+1 if True else 3
+1 if True
+|x, y|
+|lambda: 1|
+|lambda x: 1|
+|lambda x, y: 1|
+x:None
+1 and {-{a * b} + 2}
 """.strip ().split ('\n')
 
 def expr_ass ():
@@ -414,7 +424,7 @@ def expr_lim ():
 	return \
 			'\\lim_{x \\to ' + f'{expr ()}}} {expr ()}' \
 			if random () >= 0.5 else \
-			f'Limit ({expr ()}, x, {expr ()})'
+			f'Limit ({expr ()}, x, ({expr ()}))'
 
 def expr_sum ():
 	return \
@@ -670,7 +680,7 @@ def test (argv = None):
 						return AST ('-sqrt', sanitize (ast.rad))
 
 					elif ast.is_func:
-						if ast.is_func__And:
+						if ast.func == 'And':
 							args = sanitize (ast.args)
 							ast2 = sxlat._xlat_f2a_And (*args, force = True)
 
@@ -686,6 +696,16 @@ def test (argv = None):
 					elif ast.is_intg:
 						if ast.intg is None:
 							return AST ('-intg', AST.One, *tuple (sanitize (a) for a in ast [2:]))
+
+					elif ast.is_piece:
+						if ast.piece [-1] [1] == AST.True_:
+							ast = AST ('-piece', ast.piece [:-1] + ((ast.piece [-1] [0], True),))
+
+						if ast.piece.len == 1 and ast.piece [0] [1] is True:
+							ast = ast.piece [0] [0]
+
+					elif ast.is_slice:
+						ast = AST ('-slice', None if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, None if ast.step == AST.None_ else ast.step)
 
 					elif ast.is_and:
 						args = sanitize (ast.and_)

@@ -972,9 +972,9 @@ class ast2py: # abstract syntax tree -> Python code text
 		'('     : lambda self, ast: f'({self._ast2py (ast.paren)})',
 		'['     : lambda self, ast: f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
 		'|'     : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
-		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.is_add or ast.minus.is_cmp_in or (ast.minus.is_idx and ast.minus.obj.is_num) or (ast.minus.is_mul and (not self.parent.is_add or (ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))))}',
+		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.is_add or ast.minus.is_cmp_in or (ast.minus.is_idx and ast.minus.obj.is_num) or (ast.minus.is_mul and (not self.parent.is_add or ast is self.parent.add [0] or (ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))))}',
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
-		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n.is_num_neg and n is not ast.add [0]) or (n.is_mul and _ast_is_neg (n.mul [0]))) for n in ast.add).replace (' + -', ' - '),
+		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - '),
 		'*'     : _ast2py_mul,
 		'/'     : _ast2py_div,
 		'^'     : _ast2py_pow,
@@ -1643,8 +1643,9 @@ class sym: # for single script
 # 	# set_sym_user_funcs (vars)
 # 	# res = ast2py (ast)
 
-# 	ast = AST ('-func', 'Sum', (('@', 'x'), ('(', (',', (('@', 'x'), ('@', 'a'), ('-slice', ('@', 'a'), ('@', 'b'), None))))))
-# 	res = ast2tex (ast)
+# 	ast = AST ('-func', 'And', (('-func', 'Gt', (('@', 'z'), ('@', 'b'))), ('-func', 'Lt', (('@', 'b'), ('@', 'z'))), ('-func', 'Le', (('@', 'z'), ('@', 'a')))))
+# 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
+# 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

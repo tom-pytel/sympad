@@ -1,3 +1,7 @@
+v1.0.15:
+--------
+* Changed And() parsing to more reliably recover original extended comparisons.
+
 v1.0.14:
 --------
 * Added translation from messy SymPy representation of symmetric set difference to internal simple one.

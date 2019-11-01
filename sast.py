@@ -564,11 +564,13 @@ class AST_Var (AST):
 	UNI2PY      = {**dict (zip (GREEKUNI, GREEK)), '\u2202': 'partial', '\u221e': 'oo'}
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 
-	# _rec_groups = re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
-	_rec_groups = re.compile (r"^(?:(?:(d(?!elta))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
+	_rec_groups = re.compile (r"^(?:(?:(d(?!elta))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$") # re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
 
 	def _init (self, var):
 		self.var = var
+
+		# if AST._rec_identifier.match (var):
+		# 	self.__dict__ [f'is_var__{var}'] = True
 
 	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
 	_is_var_null          = lambda self: not self.var
@@ -749,8 +751,8 @@ class AST_Func (AST):
 	def _init (self, func, args):
 		self.func, self.args = func, args
 
-		if AST._rec_identifier.match (func):
-			self.__dict__ [f'is_func__{func}'] = True
+		# if AST._rec_identifier.match (func):
+		# 	self.__dict__ [f'is_func__{func}'] = True
 
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)

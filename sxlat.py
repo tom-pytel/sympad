@@ -54,14 +54,32 @@ def _xlat_f2a_And (*args, canon = False, force = False): # patch together out of
 	def canonicalize (ast):
 		return invert (ast) if (canon and ast.is_cmp and sum ((r [0] == '>') - (r [0] == '<') for r, c in ast.cmp) > 0) else ast
 
+	def count_ops (ast):
+		if ast.is_and:
+			return ast.and_.len - 1 + sum (count_ops (a) for a in ast.and_)
+		elif ast.is_cmp:
+			return ast.cmp.len + count_ops (ast.lhs) + sum (count_ops (ra [1]) for ra in ast.cmp)
+
+		return 0
+
 	# start here
 	if not _SX_XLAT_AND and not force:
 		return None
 
+	and_ = AST ('-and', tuple (args)) # simple and
+	andc = [args [0]] # build concatenated and from comparisons
+
+	for arg in args [1:]:
+		if arg.is_cmp and andc [-1].is_cmp and arg.lhs == andc [-1].cmp [-1] [1]:
+			andc [-1] = AST ('<>', andc [-1].lhs, andc [-1].cmp + arg.cmp)
+		else:
+			andc.append (arg)
+
+	andc = AST ('-and', tuple (andc)) if len (andc) > 1 else andc [0]
 	itr  = iter (args)
 	args = []
 
-	for arg in itr:
+	for arg in itr: # build optimized and
 		if not args or not arg.is_cmp:
 			args.append (arg)
 
@@ -97,9 +115,11 @@ def _xlat_f2a_And (*args, canon = False, force = False): # patch together out of
 					del args [i2], args [i1]
 
 	if len (args) == 1:
-		return canonicalize (args [0])
+		ast = canonicalize (args [0])
 	else:
-		return AST ('-and', tuple (canonicalize (a) for a in args))
+		ast = AST ('-and', tuple (canonicalize (a) for a in args))
+
+	return min (andc, and_, ast, key = lambda a: count_ops (a))
 
 def _xlat_f2a_Lambda (args, expr):
 	args = args.strip_paren
@@ -296,8 +316,8 @@ _XLAT_FUNC2AST_REIM = {
 }
 
 _XLAT_FUNC2AST_TEXNAT = {
-	'abs'                  : lambda ast: AST ('|', ast),
-	'Abs'                  : lambda ast: AST ('|', ast),
+	'abs'                  : lambda *args: AST ('|', args [0] if len (args) == 1 else AST (',', args)),
+	'Abs'                  : lambda *args: AST ('|', args [0] if len (args) == 1 else AST (',', args)),
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
 	'factorial'            : lambda ast: AST ('!', ast),
 	'Lambda'               : _xlat_f2a_Lambda,
@@ -384,7 +404,7 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 #...............................................................................................
 def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .subs()
 	try:
-		if ast.is_func__Subs:
+		if ast.is_func and ast.func == 'Subs':
 			if len (ast.args) == 3:
 				vars = ast.args [1].strip_paren
 				subs = ast.args [2].strip_paren
