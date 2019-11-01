@@ -1,5 +1,6 @@
 v1.0.14:
 --------
+* Added translation from messy SymPy representation of symmetric set difference to internal simple one.
 * Changed test_sym to work better and test more cases.
 * Fixed many small grammatical inconsistencies.
 * Fixed matrix simplification error during integration for ODE solver.

@@ -319,6 +319,7 @@ Sum (x, (x, a, a : b))
 \int dx dx / dx
 b = dx [?h(x, y)]^lambda x, y, z: True!
 dy / dx / 2
+Sum ({2 \cdot {1 x} \cdot {\int_y^x {dy} dx}}, (x, 0, 1)) * 1
 """.strip ().split ('\n')
 
 def expr_ass ():
@@ -668,6 +669,16 @@ def test (argv = None):
 					elif ast.is_sqrt:
 						return AST ('-sqrt', sanitize (ast.rad))
 
+					elif ast.is_func:
+						if ast.is_func__And:
+							args = sanitize (ast.args)
+							ast2 = sxlat._xlat_f2a_And (*args, force = True)
+
+							if ast2 is not None:
+								ast = ast2
+							else:
+								return AST ('-and', args)
+
 					elif ast.is_diff:
 						if len (set (dv [0] for dv in ast.dvs)) == 1 and ast.is_diff_partial:
 							return AST ('-diff', sanitize (ast.diff), 'd', ast.dvs)
@@ -677,7 +688,11 @@ def test (argv = None):
 							return AST ('-intg', AST.One, *tuple (sanitize (a) for a in ast [2:]))
 
 					elif ast.is_and:
-						return AST ('-func', 'And', tuple (sanitize (a) for a in ast.and_))
+						args = sanitize (ast.and_)
+						ast2 = sxlat._xlat_f2a_And (*args, force = True)
+
+						if ast2 is not None:
+							ast = ast2
 
 					return AST (*tuple (sanitize (a) for a in ast))
 
@@ -700,7 +715,7 @@ def test (argv = None):
 				if ast2 != ast:
 					status.extend (['', f'ast:  {ast}', '', f'ast2: {ast2}'])
 
-					raise ValueError ("doesn't match across reps")
+					raise ValueError ("doesn't match across representations")
 
 	except (KeyboardInterrupt, StopIteration):
 		pass

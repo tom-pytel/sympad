@@ -750,7 +750,7 @@ class AST_Func (AST):
 		self.func, self.args = func, args
 
 		if AST._rec_identifier.match (func):
-			self.__dict__ [f'is_func_{func}'] = True
+			self.__dict__ [f'is_func__{func}'] = True
 
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)

@@ -57,10 +57,7 @@ p = sparser
 
 class Test (unittest.TestCase):
 	def test_sym (self):
-		self.assertEqual (_test_sym.test ([]), True)
-
-	# def test_sym_texnat (self):
-	# 	self.assertEqual (_test_sym.test (['-tn']), True)
+		self.assertEqual (_test_sym.test (['-c']), True)
 
 	#...............................................................................................
 	def test_sparser (self):

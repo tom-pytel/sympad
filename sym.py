@@ -281,9 +281,11 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		has = False
 
 		for i, n in enumerate (ast.mul):
-			s = self._ast2tex_wrap (n,
-					(p and _ast_is_neg (n)) or (n.strip_mmls.is_intg and n is not ast.mul [-1]),
+			s = self._ast2tex_wrap (n, (p and _ast_is_neg (n)),
 					n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.is_piece and n is not ast.mul [-1]))
+
+			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
+				s = f'{{{s}}}'
 
 			# if p and p.is_attr and s [:6] == '\\left(' and i not in ast.exp:
 			# 	s = self._ast2tex_wrap (s, 1)
@@ -599,9 +601,10 @@ class ast2nat: # abstract syntax tree -> native text
 		has = False
 
 		for i, n in enumerate (ast.mul):
-			s = self._ast2nat_wrap (n, \
-					(p and _ast_is_neg (n)) or n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.strip_mmls.is_intg and n is not ast.mul [-1]), \
-					n.op in {'='})
+			s = self._ast2nat_wrap (n, (p and _ast_is_neg (n)) or n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'}, n.op in {'='})
+
+			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
+				s = f'{{{s}}}'
 
 			if p and (
 					n.op in {'#', '-lim', '-sum', '-intg'} or
@@ -969,9 +972,9 @@ class ast2py: # abstract syntax tree -> Python code text
 		'('     : lambda self, ast: f'({self._ast2py (ast.paren)})',
 		'['     : lambda self, ast: f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
 		'|'     : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
-		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.is_add or ast.minus.is_cmp_in or (ast.minus.is_idx and ast.minus.obj.is_num) or (ast.minus.is_mul and ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))}',
+		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.is_add or ast.minus.is_cmp_in or (ast.minus.is_idx and ast.minus.obj.is_num) or (ast.minus.is_mul and (not self.parent.is_add or (ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))))}',
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
-		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n.is_num_neg and n is not ast.add [0])) for n in ast.add).replace (' + -', ' - '),
+		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n.is_num_neg and n is not ast.add [0]) or (n.is_mul and _ast_is_neg (n.mul [0]))) for n in ast.add).replace (' + -', ' - '),
 		'*'     : _ast2py_mul,
 		'/'     : _ast2py_div,
 		'^'     : _ast2py_pow,

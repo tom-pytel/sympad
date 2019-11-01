@@ -17,7 +17,7 @@ def _xlat_f2a_slice (*args):
 
 _xlat_f2a_Add_invert = {'==': '==', '!=': '!=', '<': '>', '<=': '>=', '>': '<', '>=': '<='}
 
-def _xlat_f2a_And (*args, canon = False): # patch together out of order extended comparison objects potentially inverting comparisons
+def _xlat_f2a_And (*args, canon = False, force = False): # patch together out of order extended comparison objects potentially inverting comparisons
 	def concat (lhs, rhs):
 		return AST ('<>', lhs.lhs, lhs.cmp + rhs.cmp)
 
@@ -55,7 +55,7 @@ def _xlat_f2a_And (*args, canon = False): # patch together out of order extended
 		return invert (ast) if (canon and ast.is_cmp and sum ((r [0] == '>') - (r [0] == '<') for r, c in ast.cmp) > 0) else ast
 
 	# start here
-	if not _SX_XLAT_AND:
+	if not _SX_XLAT_AND and not force:
 		return None
 
 	itr  = iter (args)
@@ -267,6 +267,13 @@ def _xlat_f2a_Sum (ast = AST.VarNull, ab = None, **kw):
 
 	return None
 
+def _xlat_f2a_Union (*args):
+	if len (args) == 2 and args [0].is_add and args [1].is_add and args [0].add.len == 2 and args [1].add.len == 2 and \
+			args [0].add [1].is_minus and args [1].add [1].is_minus and args [0].add [0] == args [1].add [1].minus and args [1].add [0] == args [0].add [1].minus:
+		return AST ('^^', (args [0].add [0], args [1].add [0]))
+
+	return AST ('||', tuple (args))
+
 _XLAT_FUNC2AST_ALL    = {
 	'slice'                : _xlat_f2a_slice,
 	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
@@ -309,7 +316,7 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'Contains'             : lambda a, b: AST ('<>', a, (('in', b),)),
 	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
 	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
-	'Union'                : lambda *args: AST ('||', tuple (args)),
+	'Union'                : _xlat_f2a_Union,
 }
 
 XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
@@ -377,7 +384,7 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 #...............................................................................................
 def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .subs()
 	try:
-		if ast.is_func_Subs:
+		if ast.is_func__Subs:
 			if len (ast.args) == 3:
 				vars = ast.args [1].strip_paren
 				subs = ast.args [2].strip_paren
