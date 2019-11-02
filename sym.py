@@ -291,12 +291,15 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			# 	s = self._ast2tex_wrap (s, 1)
 
 			if p and (
+					t [-1] [-1:] == '.' or
+					s [:1].isdigit () or
 					s [:6] == '\\left[' or
 					(s [:6] == '\\left(' and (p.is_attr_var or i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
+					(p.strip_minus.is_attr_var and s [:6] == '\\left(') or
 					# (p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
 					# (p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
 					(p.is_var and _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
@@ -315,10 +318,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 			elif p and (
 					p.op in {'-sqrt'} or
-					p.num_exp or \
-					(p.is_attr_var and s [:6] != '\\left(') or \
+					p.num_exp or
+					(p.is_attr_var and s [:6] != '\\left(') or
 					p.strip_minus.is_diff_or_part_any or
-					n.is_diff_or_part_any or \
+					n.is_diff_or_part_any or
 					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or (n.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
 				t.append (f'\\ {s}')
 
@@ -512,15 +515,11 @@ class ast2nat: # abstract syntax tree -> native text
 		return nat
 
 	def _ast2nat_wrap (self, obj, curly = None, paren = None):
-		s = self._ast2nat (obj) if isinstance (obj, AST) else str (obj)
+		paren = (obj.op in paren) if isinstance (paren, set) else paren
+		curly = (obj.op in curly) if isinstance (curly, set) else curly
+		s     = self._ast2nat (obj if not obj.is_slice or paren or not curly or obj.step is not None else AST ('-slice', obj.start, obj.stop, False)) if isinstance (obj, AST) else str (obj)
 
-		if (obj.op in paren) if isinstance (paren, set) else paren:
-			return f'({s})'
-
-		if (obj.op in curly) if isinstance (curly, set) else curly:
-			return f'{{{s}}}'
-
-		return s
+		return f'({s})' if paren else f'{{{s}}}' if curly else s
 
 	def _ast2nat_curly (self, ast, ops = {}):
 		if ast.is_slice:
@@ -601,12 +600,14 @@ class ast2nat: # abstract syntax tree -> native text
 		has = False
 
 		for i, n in enumerate (ast.mul):
-			s = self._ast2nat_wrap (n, (p and _ast_is_neg (n)) or n.op in {'<>', '+', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'}, n.op in {'=', '-slice'})
+			s = self._ast2nat_wrap (n, (p and _ast_is_neg (n)) or n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'}, n.op in {'='})
 
 			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
 				s = f'{{{s}}}'
 
 			if p and (
+					t [-1] [-1:] == '.' or
+					s [:1].isdigit () or
 					n.op in {'#', '-lim', '-sum', '-intg'} or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
@@ -920,7 +921,7 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_lim (self, ast):
 		return \
-				f'''Limit({self._ast2py (ast.lim)}, {self._ast2py (ast.lvar)}, {self._ast2py (ast.to)}''' \
+				f'''Limit({self._ast2py (ast.lim)}, {self._ast2py (ast.lvar)}, {self._ast2py_paren (ast.to, ast.to.is_comma)}''' \
 				f'''{", dir = '+-'" if ast.dir is None else ", dir = '-'" if ast.dir == '-' else ""})'''
 
 	def _ast2py_diff (self, ast):
@@ -987,7 +988,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-sqrt' : lambda self, ast: f'sqrt({self._ast2py (ast.rad)})' if ast.idx is None else self._ast2py (AST ('^', ast.rad._strip_paren (1), ('/', AST.One, ast.idx))),
 		'-func' : _ast2py_func,
 		'-lim'  : _ast2py_lim,
-		'-sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py (ast.from_)}, {self._ast2py (ast.to)}))',
+		'-sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py_paren (ast.from_, ast.from_.is_comma)}, {self._ast2py (ast.to)}))',
 		'-diff' : _ast2py_diff,
 		'-diffp': lambda self, ast: f'{"diff(" * ast.count}{self._ast2py (ast.diffp)}{")" * ast.count}',
 		'-intg' : _ast2py_intg,
@@ -1641,16 +1642,16 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-# 	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-# 	# set_sym_user_funcs (vars)
-# 	# res = ast2py (ast)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
+	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+	# set_sym_user_funcs (vars)
+	# res = ast2py (ast)
 
-# 	ast = AST ('-sqrt', ('@', 'a'), ('-', ('#', '2')))
-# 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-# 	res = ast2py (ast)
-# 	# res = spt2ast (res)
+	ast = AST ('-func', 'Sum', (('/', ('(', ('*', (('@', 'ot'), ('^', ('@', 'd'), ('#', '1'))), {1})), ('(', ('*', (('^', ('@', 'dy'), ('#', '1')), ('#', '1e+100'), ('-func', 'Integral', (('@', 'True'), ('@', 'x'))), ('-func', 'Matrix', (('[', (('@', 'False'), ('@', 'xyzd'), ('@', 'zoo'))),)), ('-func', 'real_roots', ())), {1, 2, 3, 4}))), ('(', (',', (('@', 'x'), ('*', (('@', 'lambda'), ('@', 'x')), {1}), ('-func', 'slice', (('@', 'y'), ('-func', 'Sum', (('@', 'False'), ('(', (',', (('@', 'x'), ('#', '-1.0'), ('#', '0.1')))))), ('-func', 'Not', (('*', (('^', ('#', '2'), ('@', 'T')), ('@', 'rue')), {1}),)))), ('@', 'n'))))))
+	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
+	res = ast2tex (ast)
+	# res = spt2ast (res)
 
-# 	print (res)
+	print (res)

@@ -1,4 +1,4 @@
-> z > b < z <= a ... And(Gt(z, b), Lt(b, z), Le(z, a))
+> erroneous py representation of f(x)(0) -> Function('f')(x)*(0)
 
 > parse implicit ufuncs of type f (0), f (0, 0)
 > derivative of undefined function times arguments as call tex, nat and py call
@@ -23,8 +23,6 @@
 > N beta (2, 3) -> N (beta (2, 3)) instead of N (beta) (2, 3)
 > sin a.b()
 
-> redo test_sym to cover more cases and only do consistency checks within one sym representation (too many changes possible now between different representations)
-
 > make semicolon separated plots work
 
 > PDEs
@@ -36,16 +34,13 @@
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
 > clean up sym lambda keyword safety wrapping
 
-> quick mode parsing error: dpartial
-> parsing error: \operatorname{\_}()
-
 > More Examples: Lambdas
 > More Examples: Parentheses
 
 > allow leading underscore for vars and funcs and leading \_ for tex
 > clean up sparser TOKENS and centralize repeated patterns
 
-> var assumptions (using @ character?)
+> var assumptions (using @ character? - @(x, real = True, infinite = False))
 
 > server send back AST from validaiton to facilitate evaluation
 
@@ -68,7 +63,6 @@
 > Proper implementation of vectors with "\vec{x}" and "\hat{i}" variables?
 
 > random server port selection / fallback
-> emptyset Unicode symbol
 > ProductSet?
 > ImageSet?
 
@@ -84,16 +78,15 @@
 > 1 in x and other sets to accept symbols, how?
 > plots as objects?
 > flush sys.stdout to msg before sending exception?
-> function names allowed as variables on assignment?
 > xlat different types and initializations of matrices?
-> long variable name shortcut? $?
+> long variable name shortcut in quick mode? $?
 > rewrite sqrt during autocomplete to show radix?
 
 > floor / ceiling
 
 > break out state machine from server
 
-> fix instances unparenthesized tuples in function arguments? Not possible during normal entry but might appear somehow anyway.
+> fix instances unparenthesized tuples in function arguments? Not possible from normal parsing but might appear somehow anyway.
 
 > sequence (factorial (k), (k, 1, oo)) (ellipsis)
 > ImageSet (Lambda (n, 2 n pi + pi / 2), Integers)
@@ -102,8 +95,8 @@
 > numpy support
 
 
-Slow Parse (seems to be in Python regex):
------------------------------------------
+Slow Parse (seems to be in Python regex due to abuse of said):
+--------------------------------------------------------------
 
 11.234375s:  {{d^{2} / dz^{2} c : {c and 1.0 and None} : \sum_{x = \partialy}^c 2 and \frac{\partialy \cdot False \cdot 1}'str' [dy, xyzd, 1e+100]}+{}**{{not partialx}^^'str' : 2^^{True^^1^^\tilde\infty }}+{{\int xyzd dx or logFalse or {1.||\partial x||1}}}} if {{{\lim_{x \to \partial x} c  1e-100 ['str']  {a or \emptyset or dx}}&&{not -1  in  \infty zoo}} \cdot solveset({{'str' and True} and [\partial ,False] and \[\infty zoo,\partial ,1e-100,]},\coth(\frac\tilde\infty dx),{}) \cdot \sqrt[[]]{[partialx,1e100,None]  dx [xyzd, \partial ]  1e+100**dz}} else -{\tilde\infty +dz+-1.0} / \sum_{x = {dy*-1.0*xyzd}}^\fracpartial\partialx c = \infty zoo if \[[\int 1e-100 dx : \partial !,],[{False+oo+\emptyset} / \partial ^.1,],[{\arcsin()||Sum (oo, (x, \partialy, 1.0))||\frac\tilde\infty dz},],] else \[[{\partial x : partial},-1^partial,{not dz},],] [\{False : "str" : -1,{\emptyset \cdot \infty zoo \cdot -1}}, {d^{6} / dy^{3} dy^{3} a+-1.0 [a]+\{dx,1.,-1.0}}] if [{\[[False,.1,],[1e-100,\partial x,],]  dy**\partialx}] if {} else {{not {c == xyzd \cdot [1,False,.1]}}^^[{1.0^^partial} : \[[0,-1.0,],[dy,a,],[xyzd,1e-100,],] : \left|\partial x\right|,{b&&partialx}**b = a,{(\infty zoo,\partialx)||\emptyset : None||Limit (dz, x, xyzd)}]^^\sum_{x = \{{\tilde\infty &&1.0&&.1}}}^[.1,oo] [\lim_{x \to \partialy} \partial , {True,\emptyset,xyzd}] {\[-1.0,1e+100,\tilde\infty ,]||Limit (xyzd, x, 2)}} if {lambda x, y, z: -1.0,{1 or -1},\int False dx} if {-\tilde\infty } else (Sum (dx, (x, 'str', dz)),True if \partialy else False if True else partialx if 1e100) if log{\partial x||\partial x} else \[partialx,1e+100,] == \infty zoo if dx else \infty zoo if partial if d^{3} / dy^{3} Limit (dz, x, 'str') else {Limit (-1, x, -1)*\[[0,-1.0,-1.0,],[\partial ,dx,0,],]*dz > None} / {lambda x, y: -1.0 : {None+0}+{'str' if 1 else \partialy  d^{3} / dy^{3} -1.0}} else {\frac{Sum (1.0, (x, dy, .1)) or oo**partialx or \frac\partialyNone}\left|"str" [None]\right| or \sum_{x = \{None,1e+100}^sqrt1e+100}^\int_True [partialx]^{2 and True} -1^\partialx dx \left|{dx^^-1}\right|}
 8.453125s:   \sum_{x = {\int 1.! dx+\int_{None^^dz}^{a&&1} \{False} dx+1.0 if b else 1e+100 if oo^{partial and xyzd and 1e100}}}^lambda x, y: {} {\left|oo\right| \cdot \sqrt"str"} : {None^0&&\lim_{x \to \infty zoo} \partial &&\sqrt[c]\emptyset} if {[[2,None,dy]] / \left|Sum (\partial x, (x, -1, \partial ))\right|^^{\int \infty zoo dx and {a+b+\partial x}} if d^{1} / dx^{1} c if dx else dz if -1 else \sqrt[oo]1.0! if {oo \cdot oo}! else d^{2} / dx^{1} dz^{1} partialx / a^^\int \int {dz \cdot oo} dx dx} else {[-\{}] or (-1. : 'str',{sqrtpartial^^lambda x: dy^^0 [1.0, xyzd, .1]},{0 : partial : \infty zoo  \left|1\right|}) or \sqrt[{\sum_{x = \infty zoo}^\emptyset None and \[-1,\infty zoo,'str',] and \partial  if b else -1 if b else partial if 2 else 1e-100}]\lim_{x \to dx} b [{dy and -1}, \int dx dx, oo / None]} if {{partial [a, 1.0, \partial ]||\{1.0}}!+{{\partial x**b*False  in  0} or {\partial ||1}^factor_list(a,dx)}} else \log_\sqrt{{b&&True&&1e-100}  {partialx : -1}}lambda x, y, z: {} = {{'str',oo}^^None [\tilde\infty ]^^{1e+100||'str'}} if ({\{}||sqrt.1 if {1e-100||1e+100} else 1 : 1e+100 if {} else oo [1.0] if \tilde\infty ! else Limit (2, x, \tilde\infty )}) else \int {partial \cdot True \cdot partial} dx [{'str'^c^^\fracoo1.0^^d^{7} / dx^{1} dx^{3} dy^{3} b}] : kronecker_product(\left|0 != partial\right|,{not {\infty zoo+xyzd}},{\partialx > \infty zoo and [\partial x,-1.0]})

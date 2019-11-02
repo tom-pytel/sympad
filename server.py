@@ -121,7 +121,7 @@ def _update_vars ():
 	user_funcs = one_funcs.copy ()
 
 	for var, ast in _VARS.items ():
-		if var != '_':
+		# if var != '_':
 			if ast.is_ufunc:
 				_UFUNCS2VARS [ast] = AST ('@', var)
 			elif ast.is_lamb:
@@ -157,6 +157,8 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 	if not vars: # no assignment
 		# ast         = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
 		_VARS ['_'] = ast
+
+		_update_vars ()
 
 		return [ast]
 
@@ -218,12 +220,10 @@ def _admin_del (*args):
 	return msgs
 
 def _admin_delall (*args):
-	last_var = _VARS ['_']
-
+	last_var    = _VARS ['_']
 	_VARS.clear ()
-	_update_vars ()
-
 	_VARS ['_'] = last_var
+	_update_vars ()
 
 	return 'All assignments deleted.'
 

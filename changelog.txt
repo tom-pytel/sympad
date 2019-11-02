@@ -1,5 +1,6 @@
 v1.0.15:
 --------
+* Added union, intersection and symmetric difference unicode characters (which I had forgotten to before).
 * Changed And() parsing to more reliably recover original extended comparisons from mangled SymPy representation.
 * Fixed even more esoteric grammar inconsistencies.
 

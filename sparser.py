@@ -638,9 +638,9 @@ class Parser (lalr1.LALR1):
 		('RIGHT',        fr'\\right(?!{_LTRU})'),
 		('CDOT',         fr'\\cdot(?!{_LTRU})'),
 		('TO',           fr'\\to(?!{_LTRU})'),
-		('UNION',        fr'\\cup(?!{_LTRU})|\|\|'),
-		('SDIFF',        fr'\\ominus(?!{_LTRU})|\^\^'),
-		('XSECT',        fr'\\cap(?!{_LTRU})|&&'),
+		('UNION',        fr'\\cup(?!{_LTRU})|\|\||{_UUNION}'),
+		('SDIFF',        fr'\\ominus(?!{_LTRU})|\^\^|{_USYMDIFF}'),
+		('XSECT',        fr'\\cap(?!{_LTRU})|&&|{_UXSECT}'),
 		('MAPSTO',       fr'\\mapsto(?!{_LTRU})'),
 		('EMPTYSET',     fr'\\emptyset(?!{_LTRU})'),
 		('SETMINUS',     fr'\\setminus(?!{_LTRU})'),
@@ -675,7 +675,7 @@ class Parser (lalr1.LALR1):
 
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))(?:_{{(\d+)}})?"),
-		('ATTR',         fr'\.\s*(?:({_LTRU}\w*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
+		('ATTR',         fr'(?<!\s)\.(?:({_LTRU}\w*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"((?<![.'|!)}}\]\w]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
 
 		('WSUB1',        fr'(?<=\w)_{_VARTEX1}'),
@@ -716,7 +716,7 @@ class Parser (lalr1.LALR1):
 	_VAR_QUICK     = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
 
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens (differences from normal)
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(@|\\\%|{_LTR}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(@|\\\%|\\_|{_LTR}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'\\lim_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
@@ -725,9 +725,9 @@ class Parser (lalr1.LALR1):
 		('RIGHT',        fr'\\right'),
 		('CDOT',         fr'\\cdot'),
 		('TO',           fr'\\to'),
-		('UNION',        fr'\\cup|\|\|'),
-		('SDIFF',        fr'\\ominus|\^\^'),
-		('XSECT',        fr'\\cap|&&'),
+		('UNION',        fr'\\cup|\|\||{_UUNION}'),
+		('SDIFF',        fr'\\ominus|\^\^|{_USYMDIFF}'),
+		('XSECT',        fr'\\cap|&&|{_UXSECT}'),
 		('MAPSTO',       fr'\\mapsto'),
 		('EMPTYSET',     fr'\\emptyset'),
 		('SETMINUS',     fr'\\setminus'),
@@ -741,7 +741,7 @@ class Parser (lalr1.LALR1):
 		('LOG',           r'log(?!\w|\\_)|\\log'),
 		('LN',            r'ln(?!\w|\\_)|\\ln'),
 
-		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))({_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))(?:_{{(\d+)}})?"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))(partial|{_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))(?:_{{(\d+)}})?"),
 	])
 
 	TOKENS_LONG    = OrderedDict () # initialized in __init__()

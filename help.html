@@ -740,6 +740,7 @@ If you see variables being assigned make sure to execute those lines before the 
 <h4 id="Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</h4>
 
 <p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
 \lim_{h\to0} {(x + h)**2 - x**2} / h<br>
 Limit ((1 + 1/x)**x, x, \infty)<br>
 {(1 - 1/x)**x}.limit (x, \infty)<br>
@@ -756,7 +757,7 @@ diff (sin x + cos x, x, 2)<br>
 d**3/dx**2dy x**3y**2<br>
 sin (x)'<br>
 (e**{2x})''<br>
-d/dx ln ?(x)<br>
+d/dx ln (y(x))<i>&emsp; derivative of logarithm of abstract undefined function y(x)</i><br>
 <br>
 \int x**a dx<br>
 Integral (a**x, x)<br>
@@ -769,6 +770,7 @@ integrate (sin x / x, (x, -oo, oo))<br>
 <h4 id="Solving Equations">Solving Equations</h4>
 
 <p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
 solve (x**2 = 4)<i>&emsp; x**2 - 4 = 0</i><br>
 solve (x**2 - 4)<i>&emsp; same</i><br>
 solve (|x| >= x**2)<i>&emsp; inequality</i><br>
@@ -791,12 +793,12 @@ a.subs (s [2]), b.subs (s [2])<br>
 a.subs (s [3]), b.subs (s [3])<br>
 w = {x: 1, y: 2}<br>
 a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
-delall<i>&emsp; clean up variables</i><br>
 </p>
 
 <h4 id="Differential Equations">Differential Equations</h4>
 
 <p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
 dsolve (d**2/dx**2 ?(x) + 9?(x))<i>&emsp; using undefined functions directly</i><br>
 dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative of anonymous functrion since function of only one variable</i><br>
 dsolve (y(x)'' + 9y(x))<i>&emsp; or implicit named undefined function</i><br>
@@ -809,12 +811,12 @@ dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order init
 <br>
 x, y = x(t), y(t)<i>&emsp; two distinct undefined functions</i><br>
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
-delall<i>&emsp; clean up variables</i><br>
 </p>
 
 <h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; by "hand"</i></h4>
 
 <p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
 m = \[[1, 2], [3, 4]]<br>
 l = m - lambda eye 2<br>
 l.det ()<br>
@@ -828,12 +830,12 @@ Subs (l, lambda, b) \[x, y]<br>
 solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
 \[_ [0] [x], y].subs (y, 1)<i>&emsp; second eigenvector for eigenvalue b</i><br>
 m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
-delall<i>&emsp; clean up variables</i><br>
 </p>
 
 <h4 id="Plotting Functions">Plotting Functions</h4>
 
 <p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
 plotf (2, x**2)<i>&emsp; plot expression directly</i><br>
 f = x**2<br>
 plotf (2, f)<i>&emsp; plot expression from assigned variable</i><br>
@@ -849,6 +851,7 @@ plotf ('+', 2, -4, 4, -x**2)<br>
 <h4 id="Plotting Vector Walks">Plotting Vector Walks</h4>
 
 <p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
 f = lambda x, y: (2x + sec**2x) / 2y<br>
 plotv (6, -6, 6, f, fs = -8, res = 33)<i>&emsp;plot vector field</i><br>
 plotw ('+', f, (-1, 0))<i>&emsp;add first walk starting at point (-1, 0)</i><br>

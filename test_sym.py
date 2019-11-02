@@ -186,7 +186,7 @@ a**{-1 [y]}
 \int_a^b {d = c} dx
 {a in b} not in c
 a*()!
-\frac12. and ()
+\frac12.and ()
 lambda: a or lambda: b
 {{a in b} * y} in z
 \[]
@@ -334,6 +334,15 @@ a in -(1)
 :c:
 a {b : c : None}
 \sqrt[-{2}]{a}
+\int_0^1 {x:y:None} dx
+a : b : (None)
+log\left|None+xyzd\right| - (1e+100)
+Limit (1, x, 1) || a in x if True
+not lambda x, y, z: partialx! or -ln1.or lambda x: .1' or [Sum (1e+100, (x, 1, \infty zoo))&&\int 1e100 dx]
+-v1.or lambda: 1
+\sum_{x = a, b}^n 1
+1+1. 1. [None]**2
+0 1\left[x \right]**2
 """.strip ().split ('\n')
 
 def expr_ass ():
@@ -427,14 +436,14 @@ def expr_func ():
 def expr_lim ():
 	return \
 			'\\lim_{x \\to ' + f'{expr ()}}} {expr ()}' \
-			if random () >= 0.5 else \
-			f'Limit ({expr ()}, x, ({expr ()}))'
+			# if random () >= 0.5 else \
+			# f'Limit ({expr ()}, x, ({expr ()}))'
 
 def expr_sum ():
 	return \
 			'\\sum_{x = ' + f'{expr ()}}}^{expr ()} {expr ()}' \
-			if random () >= 0.5 else \
-			f'Sum ({expr ()}, (x, {expr ()}, {expr ()}))'
+			# if random () >= 0.5 else \
+			# f'Sum ({expr ()}, (x, {expr ()}, {expr ()}))'
 
 def expr_diff ():
 	d  = choice (['d', 'partial'])
@@ -449,8 +458,8 @@ def expr_diff ():
 
 	return \
 			f'{d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr ()}' \
-			if random () >= 0.5 else \
-			f'Derivative ({expr ()}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
+			# if random () >= 0.5 else \
+			# f'Derivative ({expr ()}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
 
 def expr_diffp ():
 	return f"""{expr ()}{"'" * randrange (1, 4)}"""
@@ -666,9 +675,9 @@ def test (argv = None):
 					elif ast.is_ass:
 						return AST ('<>', sanitize (AST ('(', ast.lhs) if ast.lhs.is_comma else ast.lhs), (('==', sanitize (AST ('(', ast.rhs) if ast.rhs.is_comma else ast.rhs)),))
 
-					elif ast.is_minus:
-						if ast.minus.is_num_pos:
-							return AST ('#', f'-{ast.minus.num}')
+					# elif ast.is_minus:
+					# 	if ast.minus.is_num_pos:
+					# 		return AST ('#', f'-{ast.minus.num}')
 
 					elif ast.is_paren:
 						if not ast.paren.is_comma:
@@ -693,6 +702,10 @@ def test (argv = None):
 							else:
 								return AST ('-and', args)
 
+					elif ast.is_sum:
+						if ast.from_.is_comma:
+							return AST ('-sum', sanitize (ast.sum), ast.svar, sanitize (AST ('(', ast.from_) if ast.from_.is_comma else ast.from_), ast.to)
+
 					elif ast.is_diff:
 						if len (set (dv [0] for dv in ast.dvs)) == 1 and ast.is_diff_partial:
 							return AST ('-diff', sanitize (ast.diff), 'd', ast.dvs)
@@ -709,7 +722,7 @@ def test (argv = None):
 							ast = ast.piece [0] [0]
 
 					elif ast.is_slice:
-						ast = AST ('-slice', False if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, None if ast.step in {AST.None_, False} else ast.step)
+						ast = AST ('-slice', False if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, None if ast.step in {None, False} or ast.step.strip == AST.None_ else ast.step)
 
 					elif ast.is_and:
 						args = sanitize (ast.and_)
@@ -720,29 +733,46 @@ def test (argv = None):
 
 					return AST (*tuple (sanitize (a) for a in ast))
 
+				# start here
+				ast = sanitize (ast)
+				status.extend (['', f'ast:  {ast}'])
+
 				if dotex:
 					tex1 = sym.ast2tex (ast)
 					status.extend (['', f'tex1: {tex1}'])
 					ast2 = ast = sanitize (parse (tex1)).flat
 
 					if donat:
+						status.extend (['', f'ast:  {ast2}'])
 						nat  = sym.ast2nat (ast2)
 						status.extend (['', f'nat:  {nat}'])
 						ast2 = parse (nat)
 
 					if dopy:
+						status.extend (['', f'ast:  {ast2}'])
 						py   = sym.ast2py (ast2)
 						status.extend (['', f'py:   {py}'])
 						ast2 = parse (py)
 
+					status.extend (['', f'ast:  {ast2}'])
 					tex2 = sym.ast2tex (ast2)
 					status.extend (['', f'tex2: {tex2}'])
 					ast2 = sanitize (parse (tex2)).flat
 
-				elif donat:
-					ast2 = ast = sanitize (parse (sym.ast2nat (ast))).flat
-					ast2 = parse (sym.ast2py (ast2))
-					ast2 = sanitize (parse (sym.ast2nat (ast2))).flat
+				elif donat: # TODO: add more status updates for intermediate steps like above
+					nat1 = sym.ast2nat (ast)
+					status.extend (['', f'nat1: {nat1}'])
+					ast2 = ast = sanitize (parse (nat1)).flat
+
+					status.extend (['', f'ast:  {ast2}'])
+					py   = sym.ast2py (ast2)
+					status.extend (['', f'py:   {py}'])
+					ast2 = parse (py)
+
+					status.extend (['', f'ast:  {ast2}'])
+					nat2 = sym.ast2nat (ast2)
+					status.extend (['', f'nat2: {nat2}'])
+					ast2 = sanitize (parse (nat2)).flat
 
 				if ast2 != ast:
 					status.extend (['', f'ast:  {ast2}', '', f'org:  {ast}'])

@@ -4307,6 +4307,9 @@ d**2 y / dx dy z
 \int dy / dx
 \int d/dx x**2 dx
 \int d/dx y(x) dx
+ln1.or
+ln1. or
+ln1 . or
 """
 # _EXPRESSIONS = r"""
 # f (x) (0)
