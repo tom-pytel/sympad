@@ -571,7 +571,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_minus (self, ast):
 		s = self._ast2nat_wrap (ast.minus, ast.minus.op in {"*", "-diff", "-piece", "||", "^^", "&&", "-or", "-and"}, {"=", "<>", "+", "-lamb", "-slice", "-not"})
 
-		return f'-{{{s}}}' if s [:1] != '(' and ast.minus.strip_fdpi.is_num_pos else f'-{s}'
+		return f'-{{{s}}}' if s [:1] not in {'{', '('} and ast.minus.strip_fdpi.is_num_pos else f'-{s}'
 
 	def _ast2nat_str (self, ast):
 		s = repr (ast.str_)
@@ -601,7 +601,7 @@ class ast2nat: # abstract syntax tree -> native text
 		has = False
 
 		for i, n in enumerate (ast.mul):
-			s = self._ast2nat_wrap (n, (p and _ast_is_neg (n)) or n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'}, n.op in {'='})
+			s = self._ast2nat_wrap (n, (p and _ast_is_neg (n)) or n.op in {'<>', '+', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'}, n.op in {'=', '-slice'})
 
 			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
 				s = f'{{{s}}}'
@@ -853,7 +853,6 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_cmp (self, ast):
 		def cmppy (lhs, rel, rhs):
 			if rel in {'in', 'notin'}:
-				# return f'{self._ast2py_paren (lhs, lhs.op in {"<>", "-lamb"})} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py_paren (rhs, rhs.op in {"<>", "-lamb"})}'
 				return f'{self._ast2py_paren (lhs, lhs.is_cmp_in)} {AST.Cmp.PYFMT.get (rel, rel)} {self._ast2py_paren (rhs, rhs.is_cmp_in)}'
 			else:
 				return f'{self._ast2py_cmpfuncs [rel]}({self._ast2py_paren (lhs, bool (lhs.is_comma))}, {self._ast2py_paren (rhs, bool (rhs.is_comma))})'
@@ -872,6 +871,12 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f'{obj}.{ast.attr}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
 		return f'{obj}.{ast.attr}'
+
+	def _ast2py_minus (self, ast):
+		s = self._ast2py_paren (ast.minus, ast.minus.is_add or ast.minus.is_cmp_in or (ast.minus.is_idx and ast.minus.obj.is_num) or
+				(ast.minus.is_mul and (not self.parent.is_add or ast is self.parent.add [0] or (ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))))
+
+		return f'-({s})' if s [:1] != '(' and (ast.minus.strip_fdpi.is_num_pos and not self.parent.is_add) else f'-{s}'
 
 	def _ast2py_mul (self, ast):
 		t = []
@@ -894,7 +899,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		n  = self._ast2py_paren (ast.numer) if nn else self._ast2py_curly (ast.numer)
 		d  = self._ast2py_curly (ast.denom)
 
-		return f'{n}{" / " if nn or ast.numer.strip_minus.op not in {"#", "@"} or ast.denom.strip_minus.op not in {"#", "@"} else "/"}{d}'
+		return f'{n}{" / " if nn or ast.numer.strip_minus.op not in {"#", "@"} or ast.denom.strip_minus.op not in {"#", "@"} or d.lstrip ("-") [:1] == "(" else "/"}{d}'
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) else self._ast2py_curly (ast.base)
@@ -972,7 +977,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'('     : lambda self, ast: f'({self._ast2py (ast.paren)})',
 		'['     : lambda self, ast: f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
 		'|'     : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
-		'-'     : lambda self, ast: f'-{self._ast2py_paren (ast.minus, ast.minus.is_add or ast.minus.is_cmp_in or (ast.minus.is_idx and ast.minus.obj.is_num) or (ast.minus.is_mul and (not self.parent.is_add or ast is self.parent.add [0] or (ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))))}',
+		'-'     : _ast2py_minus,
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
 		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - '),
 		'*'     : _ast2py_mul,
@@ -1643,9 +1648,9 @@ class sym: # for single script
 # 	# set_sym_user_funcs (vars)
 # 	# res = ast2py (ast)
 
-# 	ast = AST ('-func', 'And', (('-func', 'Gt', (('@', 'z'), ('@', 'b'))), ('-func', 'Lt', (('@', 'b'), ('@', 'z'))), ('-func', 'Le', (('@', 'z'), ('@', 'a')))))
+# 	ast = AST ('-sqrt', ('@', 'a'), ('-', ('#', '2')))
 # 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-# 	res = ast2nat (ast)
+# 	res = ast2py (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

@@ -330,6 +330,10 @@ Sum ({2 \cdot {1 x} \cdot {\int_y^x {dy} dx}}, (x, 0, 1)) * 1
 |lambda x, y: 1|
 x:None
 1 and {-{a * b} + 2}
+a in -(1)
+:c:
+a {b : c : None}
+\sqrt[-{2}]{a}
 """.strip ().split ('\n')
 
 def expr_ass ():
@@ -705,7 +709,7 @@ def test (argv = None):
 							ast = ast.piece [0] [0]
 
 					elif ast.is_slice:
-						ast = AST ('-slice', None if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, None if ast.step == AST.None_ else ast.step)
+						ast = AST ('-slice', False if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, None if ast.step in {AST.None_, False} else ast.step)
 
 					elif ast.is_and:
 						args = sanitize (ast.and_)
@@ -717,15 +721,23 @@ def test (argv = None):
 					return AST (*tuple (sanitize (a) for a in ast))
 
 				if dotex:
-					ast2 = ast = sanitize (parse (sym.ast2tex (ast))).flat
+					tex1 = sym.ast2tex (ast)
+					status.extend (['', f'tex1: {tex1}'])
+					ast2 = ast = sanitize (parse (tex1)).flat
 
 					if donat:
-						ast2 = parse (sym.ast2nat (ast2))
+						nat  = sym.ast2nat (ast2)
+						status.extend (['', f'nat:  {nat}'])
+						ast2 = parse (nat)
 
 					if dopy:
-						ast2 = parse (sym.ast2py (ast2))
+						py   = sym.ast2py (ast2)
+						status.extend (['', f'py:   {py}'])
+						ast2 = parse (py)
 
-					ast2 = sanitize (parse (sym.ast2tex (ast2))).flat
+					tex2 = sym.ast2tex (ast2)
+					status.extend (['', f'tex2: {tex2}'])
+					ast2 = sanitize (parse (tex2)).flat
 
 				elif donat:
 					ast2 = ast = sanitize (parse (sym.ast2nat (ast))).flat
@@ -733,7 +745,7 @@ def test (argv = None):
 					ast2 = sanitize (parse (sym.ast2nat (ast2))).flat
 
 				if ast2 != ast:
-					status.extend (['', f'ast:  {ast}', '', f'ast2: {ast2}'])
+					status.extend (['', f'ast:  {ast2}', '', f'org:  {ast}'])
 
 					raise ValueError ("doesn't match across representations")
 

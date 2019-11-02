@@ -1,6 +1,7 @@
 v1.0.15:
 --------
-* Changed And() parsing to more reliably recover original extended comparisons.
+* Changed And() parsing to more reliably recover original extended comparisons from mangled SymPy representation.
+* Fixed even more esoteric grammar inconsistencies.
 
 v1.0.14:
 --------
