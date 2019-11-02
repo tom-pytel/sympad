@@ -336,7 +336,7 @@ def _ast_strip_tail_differential (ast):
 			return neg (_expr_diff (ast2)), dv
 
 	elif ast.is_func:
-		if ast.src and _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
+		if ast.src and ast.func in _SP_USER_FUNCS: # _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
 			ast2, neg = ast.src._strip_minus (retneg = True)
 			ast2, dv  = _ast_strip_tail_differential (ast2)
 
@@ -393,8 +393,13 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	ast, wrapf = _ast_func_reorder (args [iparm])
+	isfunc     = args [0] == '-func'
+	ast2       = AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if isfunc else ast._strip (strip)),) + args [iparm + 1:]))
 
-	return wrapf (AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if args [0] == '-func' else ast._strip (strip)),) + args [iparm + 1:])))
+	if isfunc:
+		ast2.src = AST ('*', (('@', args [1]), args [iparm]))
+
+	return wrapf (ast2)
 
 def _expr_func_func (FUNC, args, expr_super = None):
 	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
@@ -598,7 +603,7 @@ class Parser (lalr1.LALR1):
 			b'9+5bGAfUj9jHlPSzJvQ1XyjQ5IIi374PJOCH+J98NHqEao8eapu92MQNSK3IvAOZ7eaWHm4Ry7QOTozMbnNmD5ehWXvVjl7Vbm7p4RZRL9blOabyzn4drFB32EM2+4E++SIPgyds11rgAxuusNlKNlpR0S9b3Djfom82l/BwmZc0vi+xzO3mEh4u82XLEscu' \
 			b'c+MWlLueU/Zu88gPKGxvF1wHJe37GWR/wmoosPZ2VbSbRQ+2BC31s9+zIyaukD13DZx5hWDX9oU9vJmppMJ/BdWhN5f2cHUs3l5wdXtqcPLB8ocPN0j/9wtlGOJ22NnPnpu5YdHDVX1+mwkevaqbzTU+XL3LFB2usXpxYskVPly9y5cPrq561eYaH67e5UsU' \
 			b'V1e9enOND1fv8tWQq6tes7nGh6vXbd6YmjYIC1q30UL6dwcLFCFZYicL72n3Zf8mbwC+oMkFqs0XNfYYQXRg5NQGVXbtK63/n13rLdeoPPLhq37wX/M5GTjHKB2UYagpsL1noLw9UhPqNZ3QbHCEAh+zAdt0+BcftBUO2WrS4Vo4WKuR8mj6seDoFDpxmDJK' \
-			b'UYao0DJlCU+kLv7TG7Ru3zJpYxed1cVfHHzXLBOGPJhP9FA4QMVH3uI/j6NwMbduLG2BEb9dOiKE1xRwzaYPBTZObFSywTEiT/4/i5/oig==' 
+			b'UYao0DJlCU+kLv7TG7Ru3zJpYxed1cVfHHzXLBOGPJhP9FA4QMVH3uI/j6NwMbduLG2BEb9dOiKE1xRwzaYPBTZObFSywTEiT/4/i5/oig=='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -675,7 +680,7 @@ class Parser (lalr1.LALR1):
 
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))(?:_{{(\d+)}})?"),
-		('ATTR',         fr'(?<!\s)\.(?:({_LTRU}\w*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
+		('ATTR',         fr'(?<!\s)\.(?:({_LTRU}(?:\w|\\_)*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"((?<![.'|!)}}\]\w]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
 
 		('WSUB1',        fr'(?<=\w)_{_VARTEX1}'),
@@ -862,7 +867,7 @@ class Parser (lalr1.LALR1):
 	def expr_fact_1        (self, expr_fact, EXCL):                                    return AST ('!', expr_fact)
 	def expr_fact_2        (self, expr_attr):                                          return expr_attr
 
-	def expr_attr_1        (self, expr_attr, ATTR):                                    return AST ('.', expr_attr, ATTR.grp [0] or ATTR.grp [1].replace ('\\', ''))
+	def expr_attr_1        (self, expr_attr, ATTR):                                    return AST ('.', expr_attr, (ATTR.grp [0] or ATTR.grp [1]).replace ('\\', ''))
 	def expr_attr_2        (self, expr_abs):                                           return expr_abs
 
 	def expr_abs_1         (self, LEFT, BAR1, expr_commas, RIGHT, BAR2):               return AST ('|', expr_commas)
@@ -1165,17 +1170,18 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# p.set_quick (True)
-# 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
+	# p.set_quick (True)
+	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	# p.set_sp_user_funcs ({'N'})
+	set_sp_user_funcs ({'gamma'})
+	set_sp_user_vars ({'gamma': AST ('-lamb', AST.One, ())})
 
-# 	a = p.parse (r"b = dx [?h(x, y)]^lambda x, y, z: True!")
-# 	print (a)
+	a = p.parse (r"\int gamma dx")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)

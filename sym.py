@@ -120,7 +120,10 @@ def _ast_is_neg (ast):
 def _ast_is_neg_nominus (ast):
 	return ast.is_num_neg or (ast.is_mul and _ast_is_neg (ast.mul [0]))
 
-def _ast_slice_bounds (ast, None_ = AST.VarNull):
+def _ast_slice_bounds (ast, None_ = AST.VarNull, allow1 = False):
+	if allow1 and not ast.start and not ast.step:
+		return (ast.stop or None_,)
+
 	return tuple (a or None_ for a in ((ast.start, ast.stop) if ast.step is None else (ast.start, ast.stop, ast.step)))
 
 def _ast_followed_by_slice (ast, seq):
@@ -251,7 +254,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		if ast.is_attr_func:
 			a = f'\\operatorname{{{a}}}{self._ast2tex_paren (AST.tuple2ast (ast.args))}'
 
-		return f'{self._ast2tex_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-intg", "-piece", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}.{a}'
+		return f'{self._ast2tex_wrap (ast.obj, {"!", "^", "-diffp"}, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}.{a}'
 
 	def _ast2tex_minus (self, ast):
 		s = self._ast2tex_wrap (ast.minus, ast.minus.is_mul, {"=", "<>", "+", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})
@@ -302,7 +305,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(p.strip_minus.is_attr_var and s [:6] == '\\left(') or
 					# (p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
 					# (p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
-					(p.is_var and _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
+					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or # _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
 					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
 					# (n.strip_fdpi.is_paren and i in ast.exp) or
 					(n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
@@ -560,7 +563,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return ast.var
 
 	def _ast2nat_attr (self, ast):
-		obj = self._ast2nat_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-intg", "-piece", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})
+		obj = self._ast2nat_wrap (ast.obj, {"!", "^", "-diffp"}, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})
 
 		if ast.is_attr_var:
 			return f'{obj}.{ast.attr}'
@@ -613,7 +616,7 @@ class ast2nat: # abstract syntax tree -> native text
 					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or
 					(p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
-					(p.is_var and _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
+					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or # _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
 					(s [:1] == '(' and (
 						p.is_attr_var or
 						i in ast.exp or
@@ -764,7 +767,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^", "-slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "-lim", "-sum", "-diff", "-intg", "-piece", "-lamb", "||", "^^", "&&", "-or", "-and", "-not"})}[{self._ast2nat (AST.tuple2ast (ast.idx))}]',
 		'-slice': lambda self, ast: ':'.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-lamb', '-slice'}) for a in _ast_slice_bounds (ast)),
 		'-set'  : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (c, 0, c.is_slice) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
-		'-dict' : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (k, 0, k.op in {"-lamb", "-slice"}) + f": {self._ast2nat_wrap (v, v.is_lamb, v.is_slice)}" for k, v in ast.dict)}}}',
+		'-dict' : lambda self, ast: '{' + ", ".join ((self._ast2nat_wrap (k, 0, k.op in {"-lamb", "-slice"}) if not k.is_var_lambda else "\\lambda") + f": {self._ast2nat_wrap (v, v.is_lamb, v.is_slice)}" for k, v in ast.dict) + '}',
 		'||'    : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', '-slice', '-piece', '-lamb', '-or', '-and', '-not'}) for a in ast.union),
 		'^^'    : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', '-slice', '-piece', '-lamb', '||', '-or', '-and', '-not'}) for a in ast.sdiff),
 		'&&'    : lambda self, ast: ' && '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', '-slice', '-piece', '-lamb', '||', '^^', '-or', '-and', '-not'}) for a in ast.xsect),
@@ -864,7 +867,7 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f'And({cmppy (ast.lhs, *ast.cmp [0])}, {", ".join (cmppy (ast.cmp [i - 1] [1], *ast.cmp [i]) for i in range (1, ast.cmp.len))})'
 
 	def _ast2py_attr (self, ast):
-		obj = self._ast2py_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/"})
+		obj = self._ast2py_paren (ast.obj, {"=", "<>", "#", ",", "-", "+", "*", "/", "^"})
 
 		if ast.is_attr_func:
 			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
@@ -878,6 +881,10 @@ class ast2py: # abstract syntax tree -> Python code text
 				(ast.minus.is_mul and (not self.parent.is_add or ast is self.parent.add [0] or (ast.minus.mul [0].is_idx and ast.minus.mul [0].obj.is_num))))
 
 		return f'-({s})' if s [:1] != '(' and (ast.minus.strip_fdpi.is_num_pos and not self.parent.is_add) else f'-{s}'
+
+	def _ast2py_add (self, ast):
+		return ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - ')
+
 
 	def _ast2py_mul (self, ast):
 		t = []
@@ -955,7 +962,12 @@ class ast2py: # abstract syntax tree -> Python code text
 				self.parent.is_comma and len (self.parents) > 1 and self.parents [-2].is_idx and ast in self.parents [-2].idx:
 			return ':'.join (self._ast2py_paren (a, a.op in {'=', ',', '-slice'}) for a in _ast_slice_bounds (ast))
 
-		return f'slice({", ".join (self._ast2py_paren (a, a.op in {"=", ",", "-slice"}) for a in _ast_slice_bounds (ast, AST.None_))})'
+		args = _ast_slice_bounds (ast, AST.None_, allow1 = True)
+
+		if len (args) == 3 and args [1] is AST.None_ and args [2] is AST.None_:
+			args = args [:2]
+
+		return f'slice({", ".join (self._ast2py_paren (a, a.op in {"=", ",", "-slice"}) for a in args)})'
 
 	def _ast2py_sdiff (self, ast):
 		sdiff = self._ast2py (ast.sdiff [0])
@@ -980,7 +992,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'|'     : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
 		'-'     : _ast2py_minus,
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
-		'+'     : lambda self, ast: ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - '),
+		'+'     : _ast2py_add,
 		'*'     : _ast2py_mul,
 		'/'     : _ast2py_div,
 		'^'     : _ast2py_pow,
@@ -998,7 +1010,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
 		'-slice': _ast2py_slice,
 		'-set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
-		'-dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py (k)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
+		'-dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py_paren (k, k.is_var_lambda)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
 		'||'    : lambda self, ast: f'Union({", ".join (self._ast2py (a) for a in ast.union)})',
 		'^^'    : _ast2py_sdiff,
 		'&&'    : lambda self, ast: f'Intersection({", ".join (self._ast2py (a) for a in ast.xsect)})',
@@ -1649,9 +1661,9 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# set_sym_user_funcs (vars)
 	# res = ast2py (ast)
 
-	ast = AST ('-func', 'Sum', (('/', ('(', ('*', (('@', 'ot'), ('^', ('@', 'd'), ('#', '1'))), {1})), ('(', ('*', (('^', ('@', 'dy'), ('#', '1')), ('#', '1e+100'), ('-func', 'Integral', (('@', 'True'), ('@', 'x'))), ('-func', 'Matrix', (('[', (('@', 'False'), ('@', 'xyzd'), ('@', 'zoo'))),)), ('-func', 'real_roots', ())), {1, 2, 3, 4}))), ('(', (',', (('@', 'x'), ('*', (('@', 'lambda'), ('@', 'x')), {1}), ('-func', 'slice', (('@', 'y'), ('-func', 'Sum', (('@', 'False'), ('(', (',', (('@', 'x'), ('#', '-1.0'), ('#', '0.1')))))), ('-func', 'Not', (('*', (('^', ('#', '2'), ('@', 'T')), ('@', 'rue')), {1}),)))), ('@', 'n'))))))
+	ast = AST ('-func', 'slice', (('@', 'b'), ('@', 'c'), ('@', 'None')))
 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-	res = ast2tex (ast)
+	res = ast2py (ast)
 	# res = spt2ast (res)
 
 	print (res)

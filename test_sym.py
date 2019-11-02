@@ -4,17 +4,20 @@
 # Randomized CONSISTENCY testing of parsing vs. writing: text -> ast -> tex/nat/py -> ast -> tex/nat/py
 
 from getopt import getopt
-from random import random, randrange, choice
+from random import random, randint, randrange, choice
+import math
+import string
 import sys
 import time
 
 from sast import AST
+import sast
 import spatch
 import sxlat
 import sym
 import sparser
 
-_TERMS = [
+_STATIC_TERMS = [
 	'0',
 	'1',
 	'-1',
@@ -36,6 +39,10 @@ _TERMS = [
 	'dx',
 	'dy',
 	'dz',
+	'x0',
+	'y1',
+	'z20',
+	'w_{1}',
 	'partial',
 	'partialx',
 	'\\partial ',
@@ -332,6 +339,7 @@ x:None
 1 and {-{a * b} + 2}
 a in -(1)
 :c:
+x::
 a {b : c : None}
 \sqrt[-{2}]{a}
 \int_0^1 {x:y:None} dx
@@ -343,21 +351,60 @@ not lambda x, y, z: partialx! or -ln1.or lambda x: .1' or [Sum (1e+100, (x, 1, \
 \sum_{x = a, b}^n 1
 1+1. 1. [None]**2
 0 1\left[x \right]**2
+lambda x, y, z: ln lambda x: None
+\int \gamma dx
+gamma * x
+x^{gamma} y
+{\lambda: x}
+{d/dx y}.a
+{y'}.a
+a.b\_c
+{a**b}.c
+{a!}.b
+a.b * c.d
+a.b c.d
 """.strip ().split ('\n')
+
+_LETTERS         = string.ascii_letters
+_LETTERS_NUMBERS = _LETTERS + '_' + string.digits
+
+def _randidentifier ():
+	 return f'{choice (_LETTERS)}{"".join (choice (_LETTERS_NUMBERS) for _ in range (randint (0, 6)))}{choice (_LETTERS)}'
+
+def term_num ():
+	return f' {str (math.exp (random () * 100 - 50) * (-1 if random () > 0.5 else 1))} '
+
+_TERM_VARS = sast.AST_Var.GREEK + tuple ('\\' + g for g in sast.AST_Var.GREEK) + tuple (sast.AST_Var.PY2TEXMULTI.keys ())
+
+def term_var ():
+	return f' {choice (_TERM_VARS)}{f"_{{{randint (0, 100)}}}" if random () > 0.75 else ""} '
+
+def expr_semicolon ():
+	return '; '.join (expr () for _ in range (randrange (2, 5)))
 
 def expr_ass ():
 	return f'{expr ()} = {expr ()}'
 
 def expr_in ():
-	return f'{expr ()} {choice ([" in ", " not in "])} {expr ()}'
+	s = expr ()
+
+	for _ in range (randrange (1, 4)):
+		s = s + f' {choice (["in", "not in"])} {expr ()}'
+
+	return s
 
 def expr_cmp (): # this gets processed and possibly reordered in sxlat
 	s = expr ()
 
-	for _ in range (randrange (4)):
+	for _ in range (randrange (1, 4)):
 		s = s + f' {choice (["==", "!=", "<", "<=", ">", ">="])} {expr ()}'
 
 	return s
+
+def expr_attr ():
+	return f'{expr ()}{"".join (f".{_randidentifier ()}" + ("()" if random () > 0.5 else "") for _ in range (randint (1, 3)))}'
+
+# def expr_comma ():
 
 def expr_curly ():
 	return '{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
@@ -431,7 +478,7 @@ def expr_func ():
 	return \
 			'\\' + f'{tex}{expr_paren ()}' \
 			if random () >= 0.5 else \
-			f'{py}{expr_paren ()}' \
+			f' {py}{expr_paren ()}' \
 
 def expr_lim ():
 	return \
@@ -482,15 +529,15 @@ def expr_piece ():
 	p = [f'{expr ()} if {expr ()}']
 
 	for _ in range (randrange (3)):
-		p.append (f'else {expr ()} if {expr ()}')
+		p.append (f' else {expr ()} if {expr ()}')
 
 	if random () >= 0.5:
-		p.append (f'else {expr ()}')
+		p.append (f' else {expr ()}')
 
 	return ' '.join (p)
 
 def expr_lamb ():
-	return f'lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr ()}'
+	return f' lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr ()}'
 
 def expr_idx ():
 	if random () >= 0.5:
@@ -501,16 +548,20 @@ def expr_idx ():
 		return f'{expr ()} [{expr ()}, {expr ()}, {expr ()}]'
 
 def expr_slice ():
+	start, stop, step = expr ().replace ('None', 'NONE'), expr ().replace ('None', 'NONE'), expr ().replace ('None', 'NONE')
+
 	if random () >= 0.5:
-		return f'{expr ()} : {expr ()}'
+		ret = f'{choice ([start, ""])} : {choice ([stop, ""])}'
 	else:
-		return f'{expr ()} : {expr ()} : {expr ()}'
+		ret = f'{choice ([start, ""])} : {choice ([stop, ""])} : {choice ([step, ""])}'
+
+	return ret if random () >= 0.5 else f'{{{ret}}}' if random () >= 0.5 else f'({ret})'
 
 def expr_set ():
 	return '\\{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
 
 def expr_dict ():
-	return '{' + ','.join (f'{choice (_TERMS)} : {expr ()}' for i in range (randrange (4))) + '}'
+	return '{' + ','.join (f'{choice (_STATIC_TERMS)} : {expr ()}' for i in range (randrange (4))) + '}'
 
 def expr_union ():
 	return '||'.join (f'{expr ()}' for i in range (randrange (2, 4)))
@@ -528,27 +579,33 @@ def expr_and ():
 	return ' and '.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_not ():
-	return f'not {expr ()}'
+	return f' not {expr ()} '
 
 def expr_ufunc ():
 	name = choice (('', 'f', 'g', 'h'))
-	vars = choice (((), ('x',), ('x, y',), ('x, y, z',)))
-	kw   = choice (((), (), ('reals = False',), ('reals = False, commutative = False',)))
+	vars = choice ((('x',), ('x, y',), ('x, y, z',)))
+	kw   = choice (((), (), (), (), (), (), ('reals = False',), ('reals = False, commutative = False',)))
 
-	return f'?{name}({", ".join (vars + kw)})'
+	return f'{"?" if kw or not name else choice ([" ", "?"])}{name}({", ".join (vars + kw)})'
 
 #...............................................................................................
 EXPRS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
+TERMS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'term_', globals ().items ())]
 CURLYS = True # if False then intentionally introduces grammatical ambiguity to test consistency in those cases
 
+def term ():
+	ret = choice (TERMS) () if random () < 0.2 else f' {choice (_STATIC_TERMS)} '
+
+	return f'{{{ret}}}' if CURLYS else ret
+
 def expr (depth = None):
-	global DEPTH, CURLYS
+	global DEPTH
 
 	if depth is not None:
 		DEPTH = depth
 
 	if DEPTH <= 0:
-		ret = choice (_TERMS)
+		return term ()
 
 	else:
 		DEPTH -= 1
@@ -587,7 +644,7 @@ def test (argv = None):
 
 	_DEPTH  = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:', ['tex', 'nat', 'py', 'dump', 'inf', 'infinite', 'nc', 'nocurlys', 'quick', 'pyS', 'cross', 'depth=', 'expr='])
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'ns', 'nospaces', 'quick', 'pyS', 'cross', 'depth=', 'expr='])
 
 	if ('-q', '') in opts or ('--quick', '') in opts:
 		parser.set_quick (True)
@@ -618,10 +675,12 @@ def test (argv = None):
 		dotex = donat = dopy = True
 
 	CURLYS   = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
+	spaces   = not (('--ns', '') in opts or ('--nospaces', '') in opts)
+	show     = ('--show', '') in opts
 	infinite = (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts)
 
 	if infinite and not single:
-		expr_func = lambda: expr (_DEPTH)
+		expr_func = (lambda: expr (_DEPTH)) if spaces else (lambda: expr (_DEPTH).replace (' ', ''))
 	else:
 		expr_func = iter (single or _EXPRESSIONS).__next__
 
@@ -629,6 +688,9 @@ def test (argv = None):
 		while 1:
 			status = []
 			text   = expr_func ()
+
+			if show:
+				print (f'{text}\n')
 
 			status.append (f'text: {text}')
 
@@ -675,9 +737,9 @@ def test (argv = None):
 					elif ast.is_ass:
 						return AST ('<>', sanitize (AST ('(', ast.lhs) if ast.lhs.is_comma else ast.lhs), (('==', sanitize (AST ('(', ast.rhs) if ast.rhs.is_comma else ast.rhs)),))
 
-					# elif ast.is_minus:
-					# 	if ast.minus.is_num_pos:
-					# 		return AST ('#', f'-{ast.minus.num}')
+					elif ast.is_minus:
+						if ast.minus.is_num_pos:
+							return AST ('#', f'-{ast.minus.num}')
 
 					elif ast.is_paren:
 						if not ast.paren.is_comma:
@@ -722,7 +784,7 @@ def test (argv = None):
 							ast = ast.piece [0] [0]
 
 					elif ast.is_slice:
-						ast = AST ('-slice', False if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, None if ast.step in {None, False} or ast.step.strip == AST.None_ else ast.step)
+						ast = AST ('-slice', False if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, AST ('@', 'NONE') if ast.step == AST.None_ else False if ast.step is None else ast.step)
 
 					elif ast.is_and:
 						args = sanitize (ast.and_)
