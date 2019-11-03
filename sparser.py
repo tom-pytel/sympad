@@ -162,6 +162,18 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 	return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not handled by grammar
+	def process_func (ast, arg, tail, makeast):
+		if tail.op not in {'{', '('}:
+			arg2       = _expr_mul_imp (tail, arg)
+			ast2, wrap = arg2.tail_mul_wrap
+
+			if ast2.is_attr_func or ast2.op in {'-func', '-idx'}:
+				ast = makeast (wrap (wrapa (ast2)))
+				arg = AST.Null
+
+		return ast, arg
+
+	# start here
 	ast         = None
 	arg, wrapa  = _ast_func_reorder (rhs)
 	tail, wrapt = lhs.tail_mul_wrap # lhs, lambda ast: ast
@@ -170,8 +182,6 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 		if tail.is_attr_var:
 			if arg.is_paren:
 				ast = wrapa (AST ('.', tail.obj, tail.attr, _ast_func_tuple_args (arg)))
-			# elif rhs.is_attr:
-			# 	ast = AST ('.', _expr_mul_imp (tail, rhs.obj), rhs.attr)
 
 	elif tail.is_pow: # {x^y.z} *imp* () -> x^{y.z()}
 		if tail.exp.is_attr_var:
@@ -190,18 +200,31 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
 
+	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
+		if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
+			ast, arg = process_func (ast, arg, tail.src.mul [1], lambda ast, tail = tail: AST ('-func', tail.src.mul [0].var, (ast,), src = AST ('*', (('@', tail.func), ast))))
 
+		# if tail.src and tail.src.is_mul and tail.src.mul.len == 2 and tail.src.mul [1].op not in {'{', '('}:
+		# 	arg2       = _expr_mul_imp (tail.src.mul [1], arg)
+		# 	ast2, wrap = arg2.tail_mul_wrap
 
-	# # TODO: work in progress
-	# elif tail.is_func: # sin N 2 -> sin (N (2))
-	# 	if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
-	# 		arg2 = _expr_mul_imp (tail.src.mul [1], arg)
+		# 	if ast2.is_attr_func or ast2.op in {'-func', '-idx'}:
+		# 		ast2 = wrap (wrapa (ast2))
+		# 		ast  = AST ('-func', tail.src.mul [0].var, (ast2,), src = AST ('*', (('@', tail.func), ast2)))
+		# 		arg  = AST.Null
 
-	# 		if arg2.is_attr_func or arg2.op in {'-func', '-idx'}:
-	# 			ast = wrapa (AST ('-func', tail.src.mul [0].var, (arg2,), src = AST ('*', (('@', tail.func), arg2))))
-	# 			arg = AST.Null
+	elif tail.op in {'-sqrt', '-log'}: # ln N 2 -> ln (N (2)) instead of ln (N) * 2, log, sqrt
+		if tail.src_arg:
+			ast, arg = process_func (ast, arg, tail.src_arg, lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src_arg = ast))
 
+		# if tail.src_arg and tail.src_arg.op not in {'{', '('}:
+		# 	arg2       = _expr_mul_imp (tail.src_arg, arg)
+		# 	ast2, wrap = arg2.tail_mul_wrap
 
+		# 	if ast2.is_attr_func or ast2.op in {'-func', '-idx'}:
+		# 		ast2 = wrap (wrapa (ast2))
+		# 		ast  = AST (tail.op, ast2, *tail [2:], src_arg = ast2)
+		# 		arg  = AST.Null
 
 	if arg.is_brack: # x *imp* [y] -> x [y]
 		if not arg.brack:
@@ -1202,7 +1225,7 @@ class sparser: # for single script
 # 	set_sp_user_funcs ({'N'})
 # 	set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	a = p.parse (r"N a.b [2]")
+# 	a = p.parse (r"sin**2 N x")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)
