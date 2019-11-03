@@ -355,14 +355,36 @@ lambda x, y, z: ln lambda x: None
 \int \gamma dx
 gamma * x
 x^{gamma} y
-{\lambda: x}
 {d/dx y}.a
 {y'}.a
 a.b\_c
 {a**b}.c
 {a!}.b
-a.b * c.d
 a.b c.d
+{\log_2 b}.c
+a * \log_2 b
+{\lambda: x}
+{-\lambda: x}
+{a = \lambda: x}
+{a != \lambda: x}
+{a, \lambda: x}
+{a - \lambda: x}
+{a + \lambda: x}
+{a * \lambda: x}
+{a / \lambda: x}
+{a ^ \lambda: x}
+{a || \lambda: x}
+{a ^^ \lambda: x}
+{a && \lambda: x}
+{a or \lambda: x}
+{a and \lambda: x}
+{not \lambda: x}
+N lambda: x
+\int 2**gamma dx
+\ln\partialx[.1,z20,\Omega]/"str"!||z20>=oo>2.924745719942591e-14||2.B1Cxzr().sUCb()/{None:lambdax,y,z:(10900247533345.432:dy:),\tilde\infty:False+x0&&\int"str"dx,1:\{}/\partial**b}
+sqrt\[Lambda[dx,0,b][:\lambda:1e-100,\alpha1,\{}],]
+None:1:,c:a
+-a.b{1:None,w:b,a:c}!
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -633,6 +655,8 @@ def parse (text):
 
 	return ret [0]
 
+_RESERVED_WORDS = {'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | sast.AST_Func.PY
+
 def test (argv = None):
 	global DEPTH, CURLYS
 
@@ -686,6 +710,24 @@ def test (argv = None):
 
 	try:
 		while 1:
+			def fixstuff (ast): # reformat certain representations which may get 'optimized' when written out to match original for comparison
+				if not isinstance (ast, AST):
+					return ast
+
+				if ast.is_func:
+					if ast.func == 'slice' and ast.args.len == 2 and ast.args [0] == AST.None_: # :x gets written as slice(x) but may come from slice(None, x)
+						ast = AST ('-slice', AST.None_, ast.args [1], None)
+
+				elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
+					if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
+						return AST ('@', 'CENSORED')
+
+				elif ast.is_slice: # the slice object is evil
+					if ast.step == AST.None_:
+						ast = AST ('-slice', ast.start, ast.stop, None)
+
+				return AST (*tuple (fixstuff (a) for a in ast))
+
 			status = []
 			text   = expr_func ()
 
@@ -693,9 +735,7 @@ def test (argv = None):
 				print (f'{text}\n')
 
 			status.append (f'text: {text}')
-
-			ast    = parse (text)
-
+			ast = fixstuff (parse (text))
 			status.extend (['', f'ast:  {ast}'])
 
 			if not ast:
@@ -715,7 +755,7 @@ def test (argv = None):
 
 					status.extend (['', 'parse ()'])
 
-					rast        = parse (text1)
+					rast        = fixstuff (parse (text1))
 
 					if not rast:
 						raise ValueError ("error parsing")

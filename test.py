@@ -188,8 +188,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()'), ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()'), ('.', ('.', ('.', ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]'), ('*', (('-mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('-mat', ((('@', 'x'),), (('@', 'y'),)))), {1}))
-		self.assertEqual (p ('alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega'), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('-func', 'zeta', (('@', 'eta'),)), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {3, 23}))
-		self.assertEqual (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega'), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('-func', 'zeta', (('@', 'eta'),)), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {3, 23}))
+		self.assertEqual (p ('alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega'), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'zeta'), ('@', 'eta'), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {24, 3, 6}))
+		self.assertEqual (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta * \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega'), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'zeta'), ('@', 'eta'), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {24, 3, 6}))
 		self.assertEqual (p ('1 if x < y'), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))),)))
 		self.assertEqual (p ('1 if x < y else 3'), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))), (('#', '3'), True))))
 		self.assertEqual (p ('1 if x < y else 3 if x < z'), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))), (('#', '3'), ('<>', ('@', 'x'), (('<', ('@', 'z')),))))))
@@ -535,6 +535,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('ln1.or'), ('.', ('@', 'ln1'), 'or'))
 		self.assertEqual (p ('ln1. or'), None)
 		self.assertEqual (p ('ln1 . or'), None)
+		self.assertEqual (p ('a.b * c.d'), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd')), {1}))
+		self.assertEqual (p ('a.b c.d'), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd'))))
+		self.assertEqual (p ('lambda x, y, z: ln lambda x:'), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'y'), ('-slice', ('@', 'z'), ('*', (('-log', ('@', 'lambda')), ('@', 'x'))), False))))
+		self.assertEqual (p ('lambda x, y, z: ln lambda x: 1'), ('-lamb', ('-log', ('-lamb', ('#', '1'), ('x',))), ('x', 'y', 'z')))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -664,8 +668,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right).T.T.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), '\\begin{bmatrix} A & B \\\\ C & D \\end{bmatrix} \\cdot \\begin{bmatrix} x \\\\ y \\end{bmatrix}')
-		self.assertEqual (ast2tex (p ('alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), '\\alpha \\beta \\cdot \\gamma \\cdot \\delta \\epsilon \\zeta\\left(\\eta \\right) \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma \\cdot \\Delta \\Theta \\Lambda \\cdot \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')
-		self.assertEqual (ast2tex (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), '\\alpha \\beta \\cdot \\gamma \\cdot \\delta \\epsilon \\zeta\\left(\\eta \\right) \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma \\cdot \\Delta \\Theta \\Lambda \\cdot \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')
+		self.assertEqual (ast2tex (p ('alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), '\\alpha \\beta \\cdot \\gamma \\cdot \\delta \\epsilon \\zeta \\cdot \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma \\cdot \\Delta \\Theta \\Lambda \\cdot \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')
+		self.assertEqual (ast2tex (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta * \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), '\\alpha \\beta \\cdot \\gamma \\cdot \\delta \\epsilon \\zeta \\cdot \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma \\cdot \\Delta \\Theta \\Lambda \\cdot \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')
 		self.assertEqual (ast2tex (p ('1 if x < y')), '\\begin{cases} 1 & \\text{for}\\: x < y \\end{cases}')
 		self.assertEqual (ast2tex (p ('1 if x < y else 3')), '\\begin{cases} 1 & \\text{for}\\: x < y \\\\ 3 & \\text{otherwise} \\end{cases}')
 		self.assertEqual (ast2tex (p ('1 if x < y else 3 if x < z')), '\\begin{cases} 1 & \\text{for}\\: x < y \\\\ 3 & \\text{for}\\: x < z \\end{cases}')
@@ -1011,6 +1015,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('ln1.or')), 'ln_{1}.or')
 		self.assertRaises (AttributeError, ast2tex, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2tex, p ('ln1 . or'))
+		self.assertEqual (ast2tex (p ('a.b * c.d')), 'a.b\\ c.d')
+		self.assertEqual (ast2tex (p ('a.b c.d')), 'a.b\\ c.d')
+		self.assertEqual (ast2tex (p ('lambda x, y, z: ln lambda x:')), '\\lambda x, y, z{:}\\ln\\left(\\lambda \\right) x{:}')
+		self.assertEqual (ast2tex (p ('lambda x, y, z: ln lambda x: 1')), '\\left(\\left(x, y, z \\right) \\mapsto \\ln\\left(\\left(x \\mapsto 1 \\right) \\right) \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -1140,8 +1148,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), '\\[[1, 2, 3], [4, 5, 6]].transpose().transpose().transpose()')
 		self.assertEqual (ast2nat (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), '\\[[1, 2, 3], [4, 5, 6]].transpose().transpose().T.T.transpose().transpose()')
 		self.assertEqual (ast2nat (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), '\\[[A, B], [C, D]] \\[x, y]')
-		self.assertEqual (ast2nat (p ('alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), 'alpha beta * gamma * delta epsilon zeta(eta) theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda * Xi Pi Sigma Upsilon Phi Psi Omega')
-		self.assertEqual (ast2nat (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), 'alpha beta * gamma * delta epsilon zeta(eta) theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda * Xi Pi Sigma Upsilon Phi Psi Omega')
+		self.assertEqual (ast2nat (p ('alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), 'alpha beta * gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda * Xi Pi Sigma Upsilon Phi Psi Omega')
+		self.assertEqual (ast2nat (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta * \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), 'alpha beta * gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda * Xi Pi Sigma Upsilon Phi Psi Omega')
 		self.assertEqual (ast2nat (p ('1 if x < y')), '1 if x < y')
 		self.assertEqual (ast2nat (p ('1 if x < y else 3')), '1 if x < y else 3')
 		self.assertEqual (ast2nat (p ('1 if x < y else 3 if x < z')), '1 if x < y else 3 if x < z')
@@ -1357,11 +1365,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('f()*()')), 'f () * ()')
 		self.assertEqual (ast2nat (p ('f*()*()')), 'f * () * ()')
 		self.assertEqual (ast2nat (p ('f*()()')), 'f * () ()')
-		self.assertEqual (ast2nat (p ('\\lambda: x')), '\\lambda:x')
-		self.assertEqual (ast2nat (p ('\\lambda x: x')), '\\lambda * x:x')
+		self.assertEqual (ast2nat (p ('\\lambda: x')), '{lambda}:x')
+		self.assertEqual (ast2nat (p ('\\lambda x: x')), 'lambda * x:x')
 		self.assertEqual (ast2nat (p ('\\lambda x, y: x')), 'lambda * x, y:x')
-		self.assertEqual (ast2nat (p ('{lambda}: x')), '\\lambda:x')
-		self.assertEqual (ast2nat (p ('{lambda} x: x')), '\\lambda * x:x')
+		self.assertEqual (ast2nat (p ('{lambda}: x')), '{lambda}:x')
+		self.assertEqual (ast2nat (p ('{lambda} x: x')), 'lambda * x:x')
 		self.assertEqual (ast2nat (p ('{lambda} x, y: x')), 'lambda * x, y:x')
 		self.assertEqual (ast2nat (p ('a, lambda: x')), 'a, lambda: x')
 		self.assertEqual (ast2nat (p ('a + lambda: x')), 'a + (lambda: x)')
@@ -1487,6 +1495,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('ln1.or')), 'ln1.or')
 		self.assertRaises (AttributeError, ast2nat, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2nat, p ('ln1 . or'))
+		self.assertEqual (ast2nat (p ('a.b * c.d')), 'a.b c.d')
+		self.assertEqual (ast2nat (p ('a.b c.d')), 'a.b c.d')
+		self.assertEqual (ast2nat (p ('lambda x, y, z: ln lambda x:')), 'lambda * x, y, z:ln(lambda) x:')
+		self.assertEqual (ast2nat (p ('lambda x, y, z: ln lambda x: 1')), 'lambda x, y, z: ln(lambda x: 1)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -1616,8 +1628,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), 'Matrix([[1, 2, 3], [4, 5, 6]]).transpose().transpose().transpose()')
 		self.assertEqual (ast2py (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), 'Matrix([[1, 2, 3], [4, 5, 6]]).transpose().transpose().T.T.transpose().transpose()')
 		self.assertEqual (ast2py (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), 'Matrix([[A, B], [C, D]])*Matrix([x, y])')
-		self.assertEqual (ast2py (p ('alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), 'alpha*beta*gamma*delta*epsilon*zeta(eta)*theta*iota*kappa*lambda*mu*nu*xi*pi*rho*sigma*tau*upsilon*phi*chi*psi*omega*Gamma*Delta*Theta*Lambda*Xi*Pi*Sigma*Upsilon*Phi*Psi*Omega')
-		self.assertEqual (ast2py (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), 'alpha*beta*gamma*delta*epsilon*zeta(eta)*theta*iota*kappa*lambda*mu*nu*xi*pi*rho*sigma*tau*upsilon*phi*chi*psi*omega*Gamma*Delta*Theta*Lambda*Xi*Pi*Sigma*Upsilon*Phi*Psi*Omega')
+		self.assertEqual (ast2py (p ('alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), 'alpha*beta*gamma*delta*epsilon*zeta*eta*theta*iota*kappa*lambda*mu*nu*xi*pi*rho*sigma*tau*upsilon*phi*chi*psi*omega*Gamma*Delta*Theta*Lambda*Xi*Pi*Sigma*Upsilon*Phi*Psi*Omega')
+		self.assertEqual (ast2py (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta * \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), 'alpha*beta*gamma*delta*epsilon*zeta*eta*theta*iota*kappa*lambda*mu*nu*xi*pi*rho*sigma*tau*upsilon*phi*chi*psi*omega*Gamma*Delta*Theta*Lambda*Xi*Pi*Sigma*Upsilon*Phi*Psi*Omega')
 		self.assertEqual (ast2py (p ('1 if x < y')), 'Piecewise((1, Lt(x, y)))')
 		self.assertEqual (ast2py (p ('1 if x < y else 3')), 'Piecewise((1, Lt(x, y)), (3, True))')
 		self.assertEqual (ast2py (p ('1 if x < y else 3 if x < z')), 'Piecewise((1, Lt(x, y)), (3, Lt(x, z)))')
@@ -1963,6 +1975,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('ln1.or')), 'ln1.or')
 		self.assertRaises (AttributeError, ast2py, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2py, p ('ln1 . or'))
+		self.assertEqual (ast2py (p ('a.b * c.d')), 'a.b*c.d')
+		self.assertEqual (ast2py (p ('a.b c.d')), 'a.b*c.d')
+		self.assertEqual (ast2py (p ('lambda x, y, z: ln lambda x:')), 'lambda*x, y, slice(z, ln(lambda)*x)')
+		self.assertEqual (ast2py (p ('lambda x, y, z: ln lambda x: 1')), 'Lambda((x, y, z), ln(Lambda(x, 1)))')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -2092,8 +2108,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2tex2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2tex2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('-mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('-mat', ((('@', 'x'),), (('@', 'y'),)))), {1}))
-		self.assertEqual (ast2tex2ast (p ('alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('-func', 'zeta', (('@', 'eta'),)), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {26, 2, 3, 23}))
-		self.assertEqual (ast2tex2ast (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('-func', 'zeta', (('@', 'eta'),)), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {26, 2, 3, 23}))
+		self.assertEqual (ast2tex2ast (p ('alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'zeta'), ('@', 'eta'), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {2, 3, 6, 24, 27}))
+		self.assertEqual (ast2tex2ast (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta * \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'zeta'), ('@', 'eta'), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {2, 3, 6, 24, 27}))
 		self.assertEqual (ast2tex2ast (p ('1 if x < y')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))),)))
 		self.assertEqual (ast2tex2ast (p ('1 if x < y else 3')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))), (('#', '3'), True))))
 		self.assertEqual (ast2tex2ast (p ('1 if x < y else 3 if x < z')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))), (('#', '3'), ('<>', ('@', 'x'), (('<', ('@', 'z')),))))))
@@ -2439,6 +2455,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('ln1.or')), ('.', ('@', 'ln1'), 'or'))
 		self.assertRaises (AttributeError, ast2tex2ast, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2tex2ast, p ('ln1 . or'))
+		self.assertEqual (ast2tex2ast (p ('a.b * c.d')), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd'))))
+		self.assertEqual (ast2tex2ast (p ('a.b c.d')), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd'))))
+		self.assertEqual (ast2tex2ast (p ('lambda x, y, z: ln lambda x:')), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'y'), ('-slice', ('@', 'z'), ('*', (('-log', ('@', 'lambda')), ('@', 'x'))), False))))
+		self.assertEqual (ast2tex2ast (p ('lambda x, y, z: ln lambda x: 1')), ('(', ('-lamb', ('-log', ('(', ('-lamb', ('#', '1'), ('x',)))), ('x', 'y', 'z'))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -2568,8 +2588,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2nat2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2nat2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('-mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('-mat', ((('@', 'x'),), (('@', 'y'),))))))
-		self.assertEqual (ast2nat2ast (p ('alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('-func', 'zeta', (('@', 'eta'),)), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {26, 2, 3, 23}))
-		self.assertEqual (ast2nat2ast (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('-func', 'zeta', (('@', 'eta'),)), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {26, 2, 3, 23}))
+		self.assertEqual (ast2nat2ast (p ('alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'zeta'), ('@', 'eta'), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {2, 3, 6, 24, 27}))
+		self.assertEqual (ast2nat2ast (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta * \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'zeta'), ('@', 'eta'), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {2, 3, 6, 24, 27}))
 		self.assertEqual (ast2nat2ast (p ('1 if x < y')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))),)))
 		self.assertEqual (ast2nat2ast (p ('1 if x < y else 3')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))), (('#', '3'), True))))
 		self.assertEqual (ast2nat2ast (p ('1 if x < y else 3 if x < z')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))), (('#', '3'), ('<>', ('@', 'x'), (('<', ('@', 'z')),))))))
@@ -2915,6 +2935,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('ln1.or')), ('.', ('@', 'ln1'), 'or'))
 		self.assertRaises (AttributeError, ast2nat2ast, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2nat2ast, p ('ln1 . or'))
+		self.assertEqual (ast2nat2ast (p ('a.b * c.d')), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd'))))
+		self.assertEqual (ast2nat2ast (p ('a.b c.d')), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd'))))
+		self.assertEqual (ast2nat2ast (p ('lambda x, y, z: ln lambda x:')), (',', (('*', (('@', 'lambda'), ('@', 'x')), {1}), ('@', 'y'), ('-slice', ('@', 'z'), ('*', (('-log', ('@', 'lambda')), ('@', 'x'))), False))))
+		self.assertEqual (ast2nat2ast (p ('lambda x, y, z: ln lambda x: 1')), ('-lamb', ('-log', ('-lamb', ('#', '1'), ('x',))), ('x', 'y', 'z')))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -3044,8 +3068,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), ('.', ('.', ('.', ('-func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))),)), 'transpose', ()), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2py2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('-func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))),)), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2py2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('-func', 'Matrix', (('[', (('[', (('@', 'A'), ('@', 'B'))), ('[', (('@', 'C'), ('@', 'D'))))),)), ('-func', 'Matrix', (('[', (('@', 'x'), ('@', 'y'))),))), {1}))
-		self.assertEqual (ast2py2ast (p ('alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('-func', 'zeta', (('@', 'eta'),)), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}))
-		self.assertEqual (ast2py2ast (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('-func', 'zeta', (('@', 'eta'),)), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32}))
+		self.assertEqual (ast2py2ast (p ('alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'zeta'), ('@', 'eta'), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33}))
+		self.assertEqual (ast2py2ast (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta * \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), ('*', (('@', 'alpha'), ('@', 'beta'), ('@', 'gamma'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'zeta'), ('@', 'eta'), ('@', 'theta'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'xi'), ('@', 'pi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'upsilon'), ('@', 'phi'), ('@', 'chi'), ('@', 'psi'), ('@', 'omega'), ('@', 'Gamma'), ('@', 'Delta'), ('@', 'Theta'), ('@', 'Lambda'), ('@', 'Xi'), ('@', 'Pi'), ('@', 'Sigma'), ('@', 'Upsilon'), ('@', 'Phi'), ('@', 'Psi'), ('@', 'Omega')), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33}))
 		self.assertEqual (ast2py2ast (p ('1 if x < y')), ('-func', 'Piecewise', (('(', (',', (('#', '1'), ('-func', 'Lt', (('@', 'x'), ('@', 'y')))))),)))
 		self.assertEqual (ast2py2ast (p ('1 if x < y else 3')), ('-func', 'Piecewise', (('(', (',', (('#', '1'), ('-func', 'Lt', (('@', 'x'), ('@', 'y')))))), ('(', (',', (('#', '3'), ('@', 'True')))))))
 		self.assertEqual (ast2py2ast (p ('1 if x < y else 3 if x < z')), ('-func', 'Piecewise', (('(', (',', (('#', '1'), ('-func', 'Lt', (('@', 'x'), ('@', 'y')))))), ('(', (',', (('#', '3'), ('-func', 'Lt', (('@', 'x'), ('@', 'z')))))))))
@@ -3391,6 +3415,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('ln1.or')), ('.', ('@', 'ln1'), 'or'))
 		self.assertRaises (AttributeError, ast2py2ast, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2py2ast, p ('ln1 . or'))
+		self.assertEqual (ast2py2ast (p ('a.b * c.d')), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd')), {1}))
+		self.assertEqual (ast2py2ast (p ('a.b c.d')), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd')), {1}))
+		self.assertEqual (ast2py2ast (p ('lambda x, y, z: ln lambda x:')), (',', (('*', (('@', 'lambda'), ('@', 'x')), {1}), ('@', 'y'), ('-func', 'slice', (('@', 'z'), ('*', (('-log', ('@', 'lambda')), ('@', 'x')), {1}))))))
+		self.assertEqual (ast2py2ast (p ('lambda x, y, z: ln lambda x: 1')), ('-func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('-log', ('-func', 'Lambda', (('@', 'x'), ('#', '1')))))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -3520,8 +3548,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()')), ('-mat', ((('#', '1'), ('#', '4')), (('#', '2'), ('#', '5')), (('#', '3'), ('#', '6')))))
 		self.assertEqual (ast2spt2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))))
 		self.assertEqual (ast2spt2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('-mat', ((('+', (('*', (('@', 'A'), ('@', 'x'))), ('*', (('@', 'B'), ('@', 'y'))))),), (('+', (('*', (('@', 'C'), ('@', 'x'))), ('*', (('@', 'D'), ('@', 'y'))))),))))
-		self.assertEqual (ast2spt2ast (p ('alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), ('*', (('@', 'pi'), ('@', 'Delta'), ('@', 'Gamma'), ('@', 'Lambda'), ('@', 'Omega'), ('@', 'Phi'), ('@', 'Pi'), ('@', 'Psi'), ('@', 'Sigma'), ('@', 'Theta'), ('@', 'Upsilon'), ('@', 'Xi'), ('@', 'alpha'), ('@', 'beta'), ('@', 'chi'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'gamma'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'omega'), ('@', 'phi'), ('@', 'psi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'theta'), ('@', 'upsilon'), ('@', 'xi'), ('-func', 'zeta', (('@', 'eta'),)))))
-		self.assertEqual (ast2spt2ast (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), ('*', (('@', 'pi'), ('@', 'Delta'), ('@', 'Gamma'), ('@', 'Lambda'), ('@', 'Omega'), ('@', 'Phi'), ('@', 'Pi'), ('@', 'Psi'), ('@', 'Sigma'), ('@', 'Theta'), ('@', 'Upsilon'), ('@', 'Xi'), ('@', 'alpha'), ('@', 'beta'), ('@', 'chi'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'gamma'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'omega'), ('@', 'phi'), ('@', 'psi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'theta'), ('@', 'upsilon'), ('@', 'xi'), ('-func', 'zeta', (('@', 'eta'),)))))
+		self.assertEqual (ast2spt2ast (p ('alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega')), ('*', (('@', 'pi'), ('@', 'Delta'), ('@', 'Gamma'), ('@', 'Lambda'), ('@', 'Omega'), ('@', 'Phi'), ('@', 'Pi'), ('@', 'Psi'), ('@', 'Sigma'), ('@', 'Theta'), ('@', 'Upsilon'), ('@', 'Xi'), ('@', 'alpha'), ('@', 'beta'), ('@', 'chi'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'eta'), ('@', 'gamma'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'omega'), ('@', 'phi'), ('@', 'psi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'theta'), ('@', 'upsilon'), ('@', 'xi'), ('@', 'zeta'))))
+		self.assertEqual (ast2spt2ast (p ('\\alpha \\beta \\gamma * \\delta \\epsilon \\zeta * \\eta \\theta \\iota \\kappa \\lambda \\mu \\nu \\xi \\pi \\rho \\sigma \\tau \\upsilon \\phi \\chi \\psi \\omega \\Gamma * \\Delta \\Theta \\Lambda \\Xi \\Pi \\Sigma \\Upsilon \\Phi \\Psi \\Omega')), ('*', (('@', 'pi'), ('@', 'Delta'), ('@', 'Gamma'), ('@', 'Lambda'), ('@', 'Omega'), ('@', 'Phi'), ('@', 'Pi'), ('@', 'Psi'), ('@', 'Sigma'), ('@', 'Theta'), ('@', 'Upsilon'), ('@', 'Xi'), ('@', 'alpha'), ('@', 'beta'), ('@', 'chi'), ('@', 'delta'), ('@', 'epsilon'), ('@', 'eta'), ('@', 'gamma'), ('@', 'iota'), ('@', 'kappa'), ('@', 'lambda'), ('@', 'mu'), ('@', 'nu'), ('@', 'omega'), ('@', 'phi'), ('@', 'psi'), ('@', 'rho'), ('@', 'sigma'), ('@', 'tau'), ('@', 'theta'), ('@', 'upsilon'), ('@', 'xi'), ('@', 'zeta'))))
 		self.assertEqual (ast2spt2ast (p ('1 if x < y')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))),)))
 		self.assertEqual (ast2spt2ast (p ('1 if x < y else 3')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))), (('#', '3'), True))))
 		self.assertEqual (ast2spt2ast (p ('1 if x < y else 3 if x < z')), ('-piece', ((('#', '1'), ('<>', ('@', 'x'), (('<', ('@', 'y')),))), (('#', '3'), ('<>', ('@', 'x'), (('<', ('@', 'z')),))))))
@@ -3867,6 +3895,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('ln1.or')), ('.', ('@', 'ln1'), 'or'))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('ln1 . or'))
+		self.assertEqual (ast2spt2ast (p ('a.b * c.d')), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd'))))
+		self.assertEqual (ast2spt2ast (p ('a.b c.d')), ('*', (('.', ('@', 'a'), 'b'), ('.', ('@', 'c'), 'd'))))
+		self.assertEqual (ast2spt2ast (p ('lambda x, y, z: ln lambda x:')), ('(', (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'y'), ('-slice', ('@', 'z'), ('*', (('@', 'x'), ('-log', ('@', 'lambda')))), None)))))
+		self.assertEqual (ast2spt2ast (p ('lambda x, y, z: ln lambda x: 1')), ('-lamb', ('#', '0'), ('x', 'y', 'z')))
 
 _EXPRESSIONS = r"""
 1
@@ -3996,8 +4028,8 @@ integrate (\int y dy, (x, 0, 1))
 \[[1,2,3],[4,5,6]].transpose ().transpose ().transpose ()
 \[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()
 \begin{matrix} A & B \\ C & D \end{matrix} * \[x, y]
-alpha beta gamma * delta epsilon zeta eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega
-\alpha \beta \gamma * \delta \epsilon \zeta \eta \theta \iota \kappa \lambda \mu \nu \xi \pi \rho \sigma \tau \upsilon \phi \chi \psi \omega \Gamma * \Delta \Theta \Lambda \Xi \Pi \Sigma \Upsilon \Phi \Psi \Omega
+alpha beta gamma * delta epsilon zeta * eta theta iota kappa lambda mu nu xi pi rho sigma tau upsilon phi chi psi omega Gamma * Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega
+\alpha \beta \gamma * \delta \epsilon \zeta * \eta \theta \iota \kappa \lambda \mu \nu \xi \pi \rho \sigma \tau \upsilon \phi \chi \psi \omega \Gamma * \Delta \Theta \Lambda \Xi \Pi \Sigma \Upsilon \Phi \Psi \Omega
 1 if x < y
 1 if x < y else 3
 1 if x < y else 3 if x < z
@@ -4343,6 +4375,10 @@ d**2 y / dx dy z
 ln1.or
 ln1. or
 ln1 . or
+a.b * c.d
+a.b c.d
+lambda x, y, z: ln lambda x:
+lambda x, y, z: ln lambda x: 1
 """
 # _EXPRESSIONS = r"""
 # f (x) (0)

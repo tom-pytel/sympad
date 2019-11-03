@@ -3,6 +3,7 @@ v1.0.15:
 * Added union, intersection and symmetric difference unicode characters (which I had forgotten to before).
 * Added more thorough test cases to test_sym.
 * Changed And() parsing to more reliably recover original extended comparisons from mangled SymPy representation.
+* Modified lambda / slice / dict parsing and writing to be more comprehensive.
 * Fixed even more esoteric grammar inconsistencies.
 
 v1.0.14:

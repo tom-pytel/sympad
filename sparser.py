@@ -170,8 +170,8 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 		if tail.is_attr_var:
 			if arg.is_paren:
 				ast = wrapa (AST ('.', tail.obj, tail.attr, _ast_func_tuple_args (arg)))
-			elif rhs.is_attr:
-				ast = AST ('.', _expr_mul_imp (tail, rhs.obj), rhs.attr)
+			# elif rhs.is_attr:
+			# 	ast = AST ('.', _expr_mul_imp (tail, rhs.obj), rhs.attr)
 
 	elif tail.is_pow: # {x^y.z} *imp* () -> x^{y.z()}
 		if tail.exp.is_attr_var:
@@ -189,6 +189,19 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
+
+
+
+	# # TODO: work in progress
+	# elif tail.is_func: # sin N 2 -> sin (N (2))
+	# 	if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
+	# 		arg2 = _expr_mul_imp (tail.src.mul [1], arg)
+
+	# 		if arg2.is_attr_func or arg2.op in {'-func', '-idx'}:
+	# 			ast = wrapa (AST ('-func', tail.src.mul [0].var, (arg2,), src = AST ('*', (('@', tail.func), arg2))))
+	# 			arg = AST.Null
+
+
 
 	if arg.is_brack: # x *imp* [y] -> x [y]
 		if not arg.brack:
@@ -343,6 +356,13 @@ def _ast_strip_tail_differential (ast):
 			if dv and ast2:
 				return neg (ast2), dv
 
+	elif ast.is_pow:
+		ast2, neg = ast.exp._strip_minus (retneg = True)
+		ast2, dv  = _ast_strip_tail_differential (ast2)
+
+		if dv and ast2:
+			return AST ('^', ast.base, neg (ast2)), dv
+
 	elif ast.is_div:
 		ast2, neg = ast.denom._strip_minus (retneg = True)
 		ast2, dv  = _ast_strip_tail_differential (ast2)
@@ -398,6 +418,8 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 
 	if isfunc:
 		ast2.src = AST ('*', (('@', args [1]), args [iparm]))
+	elif args [0] in {'-sqrt', '-log'}:
+		ast2.src_arg = args [iparm]
 
 	return wrapf (ast2)
 
@@ -1170,18 +1192,18 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
 
-	# p.set_quick (True)
-	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
+# 	# p.set_quick (True)
+# 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-	set_sp_user_funcs ({'gamma'})
-	set_sp_user_vars ({'gamma': AST ('-lamb', AST.One, ())})
+# 	set_sp_user_funcs ({'N'})
+# 	set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-	a = p.parse (r"\int gamma dx")
-	print (a)
+# 	a = p.parse (r"N a.b [2]")
+# 	print (a)
 
-	# a = sym.ast2spt (a)
-	# print (a)
+# 	# a = sym.ast2spt (a)
+# 	# print (a)

@@ -238,6 +238,12 @@ class AST (tuple):
 
 		return tail, wrap
 
+	def _has_tail_lambda_solo (self):
+		return self.tail_lambda_solo != (None, None)
+
+	def _tail_lambda_solo (self):
+		return self._tail_lambda (has_var = False)
+
 	def _tail_lambda (self, has_var = None): # look for 'lambda' or 'lambda var' at the tail end of ast (to replace) - for use only during parsing (does not handle mul exp indexes)
 		tail, wrap = self, lambda ast: ast
 
@@ -250,7 +256,7 @@ class AST (tuple):
 
 			elif tail.op in {',', '+', '*', '*exp', '||', '^^', '&&', '-or', '-and'}:
 				if tail.is_mul and has_var is not False and tail.mul [-1].is_var_nonconst:
-					_, wrapl = tail.mul [-2]._tail_lambda (has_var = False)
+					_, wrapl = tail.mul [-2].tail_lambda_solo
 
 					if wrapl:
 						if tail.mul.len > 2:
@@ -283,6 +289,22 @@ class AST (tuple):
 			elif tail.is_cmp:
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('<>', tail.lhs, tail.cmp [:-1] + ((tail.cmp [-1] [0], ast),)))
 				tail = tail.cmp [-1] [1]
+
+			elif tail.op in {'-sqrt', '-log'}:
+				if tail.src_arg:
+					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:]))
+					tail = tail.src_arg
+
+				else:
+					break
+
+			elif tail.is_func:
+				if tail.src and tail.src.is_mul and tail.src.mul.len == 2 and tail.src.mul [0].is_var and tail.src.mul [0].var == tail.func:
+					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('-func', tail.func, (ast,)))
+					tail = tail.src.mul [1]
+
+				else:
+					break
 
 			elif tail.is_piece:
 				if tail.piece [-1] [1] is True:
@@ -415,18 +437,6 @@ class AST (tuple):
 
 			else:
 				return AST (op, (ast0, ast1))
-
-	# @staticmethod
-	# def remap (ast, map, recurse = False): # remapping of arbitrary ASTs
-	# 	if not isinstance (ast, AST):
-	# 		return ast
-
-	# 	mapped = map.get (ast)
-
-	# 	if mapped:
-	# 		return AST.remap (mapped, map, recurse) if recurse else mapped
-
-	# 	return AST (*(AST.remap (a, map, recurse) for a in ast))
 
 	@staticmethod
 	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
@@ -589,6 +599,7 @@ class AST_Var (AST):
 	_is_diff_or_part_solo = lambda self: (self.grp [0] or self.grp [1]) and not self.grp [2]
 	_is_diff_or_part_any  = lambda self: self.grp [0] or self.grp [1]
 	_diff_or_part_type    = lambda self: self.grp [0] or self.grp [1] or '' # 'dx' -> 'd', 'partialx' -> 'partial', else ''
+	_var_name             = lambda self: self.grp [2]
 	_as_var               = lambda self: AST ('@', self.grp [2]) if self.var else self # 'x', dx', 'partialx' -> 'x'
 	_as_differential      = lambda self: AST ('@', f'd{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'dx'
 	_as_partial           = lambda self: AST ('@', f'partial{self.grp [2]}') if self.var else self # 'x', 'dx', 'partialx' -> 'partialx'

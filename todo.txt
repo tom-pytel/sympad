@@ -1,3 +1,8 @@
+> N beta (2, 3) -> N (beta (2, 3)) instead of N (beta) (2, 3), N sin 2
+> sin a.b()
+
+> _tail_lambda to new diff format
+
 > erroneous py representation of f(x)(0) -> Function('f')(x)*(0)
 
 > parse implicit ufuncs of type f (0), f (0, 0)
@@ -12,16 +17,12 @@
 > do not write out parentheses for differentiation where not needed - d/dx (y z) -> d/dx y z
 > do not write out parentheses for integration where not needed - \int {d / dx (x**2)} dx -> \int d / dx (x**2) dx
 
-
 > change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 
 > sxlat py f = Lambda (x, x**2) -> f (x) = x**2?
 
 > verify all is_var -> is_var_nonconst where consts not allowed
-
-> N beta (2, 3) -> N (beta (2, 3)) instead of N (beta) (2, 3)
-> sin a.b()
 
 > make semicolon separated plots work
 
@@ -45,7 +46,9 @@
 > server send back AST from validaiton to facilitate evaluation
 
 > evil extra spacing before single-quote strings!
-> x'**2, how to do?
+> x'**2, how to do in grammar?
+> x'.a, how to do in grammar?
+> x'!, how to do in grammar?
 > # comment end of line?
 
 > substitute shortcut expr (x = ?), or expr |_{x = ?}?
@@ -133,8 +136,3 @@ Errors:
 -------
 
 
-text: {{{{{ \partial x } and { Theta }} [{{ \partial x }.BTEF.Pi7q()}, {{ oo } / { \partial  }}]} / {{\left|{ \partialy }\right|}&&{{ -1 }'}&&{({ y1 } : { c } : { \rho_{90} })}}}*{{[{{ x0 }+{ oo }+{ 0 }}]}.RpivGJW().T7k}*{{\{{{ "str" }*{ False }}}}.MXzE().m7eR1xBN}}
-ast:  ('*', (('/', ('-idx', ('-and', (('@', 'partialx'), ('@', 'Theta'))), (('.', ('.', ('@', 'partialx'), 'BTEF'), 'Pi7q', ()), ('/', ('@', 'oo'), ('@', 'partial')))), ('&&', (('|', ('@', 'partialy')), ('-diffp', ('#', '-1'), 1), ('(', ('-slice', ('@', 'y1'), ('@', 'c'), ('@', 'rho90')))))), ('.', ('.', ('[', (('+', (('@', 'x0'), ('@', 'oo'), ('#', '0'))),)), 'RpivGJW', ()), 'T7k'), ('.', ('.', ('-set', (('*', (('"', 'str'), ('@', 'False')), {1}),)), 'MXzE', ()), 'm7eR1xBN')), {1, 2})
-ast:  ('*', (('/', ('-idx', ('(', ('-and', (('@', 'partialx'), ('@', 'Theta')))), (('.', ('.', ('@', 'partialx'), 'BTEF'), 'Pi7q', ()), ('/', ('@', 'oo'), ('@', 'partial')))), ('&&', (('|', ('@', 'partialy')), ('-diffp', ('(', ('#', '-1')), 1), ('(', ('-slice', ('@', 'y1'), ('@', 'c'), ('@', 'rho90')))))), ('.', ('.', ('*', (('.', ('.', ('[', (('+', (('@', 'x0'), ('@', 'oo'), ('#', '0'))),)), 'RpivGJW', ()), 'T7k'), ('-set', (('*', (('"', 'str'), ('@', 'False'))),)))), 'MXzE', ()), 'm7eR1xBN')), {1})
-tex1: \frac{\left(\partial x \wedge \Theta \right)\left[\partial x.BTEF.\operatorname{Pi7q}\left( \right), \frac{\infty}{\partial} \right]}{\left|\partial y \right| \cap \left(-1 \right)' \cap \left(y_{1}{:}c{:}\rho_{90} \right)} \cdot \left[x_{0} + \infty + 0 \right].\operatorname{RpivGJW}\left( \right).T7k\ \left\{\text{'str'}\ False \right\}.\operatorname{MXzE}\left( \right).m7eR1xBN
-tex2: \frac{\left(\partial x \wedge \Theta \right)\left[\partial x.BTEF.\operatorname{Pi7q}\left( \right), \frac{\infty}{\partial} \right]}{\left|\partial y \right| \cap \left(-1 \right)' \cap \left(y_{1}{:}c{:}\rho_{90} \right)} \cdot \left(\left[x_{0} + \infty + 0 \right].\operatorname{RpivGJW}\left( \right).T7k\ \left\{\text{'str'}\ False \right\} \right).\operatorname{MXzE}\left( \right).m7eR1xBN
