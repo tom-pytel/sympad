@@ -133,36 +133,9 @@ Errors:
 -------
 
 
+* probably breaks in parse of symmetric differences
 text: d^{3}/dz^{3}\frac0\partialx\left|w_{1}\right|6.4380354041832416e-21^dy^^\partial&&b&&'str'**d^{2}/dz^{2}146591184863111.94^^\log_\partialy^^z20^^\emptyset\{True}
 ast:  ('^^', (('-diff', ('*', (('/', ('#', '0'), ('@', 'partial')), ('@', 'x'), ('|', ('@', 'w1')), ('^', ('#', '6.4380354041832416e-21'), ('@', 'd')), ('@', 'y'))), 'd', (('z', 3),)), ('&&', (('@', 'partial'), ('@', 'b'), ('/', ('^', ('"', 'str'), ('^', ('@', 'd'), ('#', '2'))), ('*', (('^', ('@', 'dz'), ('#', '2')), ('#', '146591184863111.94')))))), ('-log', ('@', 'y'), ('@', 'partial')), ('@', 'z20'), ('*', (('-set', ()), ('-set', (('@', 'True'),))))))
 py1:  Union(Complement(Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))))), FiniteSet()*FiniteSet(True)), Complement(FiniteSet()*FiniteSet(True), Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3)))))))))
 
 
-text: \{()or(:)[::]}
-ast:  ('-set', (('-or', (('(', (',', ())), ('-idx', ('(', ('-slice', False, False, None)), (('-slice', False, False, False),)))),))
-ast:  ('-set', (('-or', (('(', (',', ())), ('-idx', ('-slice', False, False, False), (('-slice', False, False, False),)))),))
-tex1: \left\{\left( \right) \vee {{:}{:}}\left[{:}{:} \right] \right\}
-ast:  ('-set', (('-or', (('(', (',', ())), ('-idx', ('-slice', False, False, False), (('-slice', False, False, False),)))),))
-nat:  {() or {::}[::],}
-ast:  ('-set', (('-or', (('(', (',', ())), ('-idx', ('-slice', False, False, False), (('-slice', False, False, False),)))),))
-py:   FiniteSet(Or((), ::[::]))
-ast:  ('-func', 'FiniteSet', (('-func', 'Or', (('(', (',', ())), ('-slice', False, False, ('[', (('-slice', False, False, False),))))),))
-tex2: \left\{\left( \right) \vee \left({:}{:}\left[{:}{:} \right] \right) \right\}
-ast:  ('-set', (('-or', (('(', (',', ())), ('-slice', False, False, ('[', (('-slice', False, False, False),))))),))
-org:  ('-set', (('-or', (('(', (',', ())), ('-idx', ('-slice', False, False, False), (('-slice', False, False, False),)))),))
-
-
-text: \sum_{x=\{(:NONE),-1.0inkappa_{64}}}^sqrtsstr()\tan({0:False,'str':1795445122099743.5,'str':1.0},partial^{1}/partialy^{1}3.3034048853711923e+21)**(1.0,"str")[1.[z20]].wr().CdxxzP().WbQBpi()
-ast:  ('-sum', ('*', (('@', 'qrtsstr'), ('(', (',', ())), ('^', ('-func', 'tan', (('-dict', ((('#', '0'), ('@', 'False')), (('"', 'str'), ('#', '1795445122099743.5')), (('"', 'str'), ('#', '1.0')))), ('-diff', ('#', '3.3034048853711923e+21'), 'partial', (('y', 1),)))), ('.', ('.', ('.', ('-idx', ('(', (',', (('#', '1.0'), ('"', 'str')))), (('-idx', ('#', '1.'), (('@', 'z20'),)),)), 'wr', ()), 'CdxxzP', ()), 'WbQBpi', ())))), ('@', 'x'), ('-set', (('(', ('-slice', False, ('@', 'NONE'), None)), ('*', (('#', '-1.0'), ('@', 'inkappa64'))))), ('@', 's'))
-ast:  ('-func', 'Sum', (('*', (('@', 'qrtsstr'), ('(', (',', ())), ('^', ('-func', 'tan', (('-dict', ((('#', '0'), ('@', 'False')), (('"', 'str'), ('#', '1795445122099743.5')), (('"', 'str'), ('#', '1.0')))), ('-func', 'Derivative', (('#', '3.3034048853711923e+21'), ('@', 'y'))))), ('(', (',', (('#', '1.0'), ('"', 'str'))))), ('.', ('.', ('.', ('[', (('-idx', ('#', '1.'), (('@', 'z20'),)),)), 'wr', ()), 'CdxxzP', ()), 'WbQBpi', ())), {1, 2}), ('(', (',', (('@', 'x'), ('-func', 'FiniteSet', (('(', ('-func', 'slice', (('@', 'NONE'),))), ('*', (('#', '-1.0'), ('@', 'inkappa64')), {1}))), ('@', 's'))))))
-py1:  Sum(qrtsstr*()*tan({0: False, 'str': 1795445122099743.5, 'str': 1.0}, Derivative(3.3034048853711923e+21, y))**(1.0, 'str')[1.[z20]].wr().CdxxzP().WbQBpi(), (x, FiniteSet((slice(NONE)), -1.0*inkappa64), s))
-py2:  Sum(qrtsstr*()*tan({0: False, 'str': 1795445122099743.5, 'str': 1.0}, Derivative(3.3034048853711923e+21, y))**(1.0, 'str')*[1.[z20]].wr().CdxxzP().WbQBpi(), (x, FiniteSet((slice(NONE)), -1.0*inkappa64), s))
-
-\sum_{x=0}^sqrtsstr()\tan({0:False,'str':1795445122099743.5,'str':1.0},partial^{1}/partialy^{1}3.3034048853711923e+21)**(1.0,"str")[1.[z20]].wr().CdxxzP().WbQBpi()
-\sum_{x=0}^1sin(b)\tan(a)**1[c].d
-
-text: sin(b)tan(a)**1[c].d
-ast:  ('*', (('-func', 'sin', (('@', 'b'),)), ('^', ('-func', 'tan', (('@', 'a'),)), ('.', ('-idx', ('#', '1'), (('@', 'c'),)), 'd'))))
-ast:  ('*', (('-func', 'sin', (('@', 'b'),)), ('^', ('-func', 'tan', (('@', 'a'),)), ('#', '1')), ('.', ('[', (('@', 'c'),)), 'd')), {1})
-py1:  sin(b)*tan(a)**1[c].d
-py2:  sin(b)*tan(a)**1*[c].d

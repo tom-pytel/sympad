@@ -391,6 +391,7 @@ None:1:,c:a
 \left|a\right|**-1.00[a]**b
 a**\sqrt[b]-1e+1[c]
 |a|**[a][b].c
+sin(b)tan(a)**1[c].d
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

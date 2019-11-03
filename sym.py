@@ -917,7 +917,7 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow or (ast.base.is_idx and self.parent.is_pow and ast is self.parent.exp) else self._ast2py_curly (ast.base)
-		e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.is_abs and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.is_abs and ast.exp.strip_attrm.is_idx) or (ast.base.is_func and ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
 
@@ -964,7 +964,7 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f"""Matrix([{', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat)}])"""
 
 	def _ast2py_slice (self, ast):
-		if self.parent.is_idx and ast in self.parent.idx or \
+		if self.parent.is_idx and any (i is ast for i in self.parent.idx) or \
 				self.parent.is_comma and len (self.parents) > 1 and self.parents [-2].is_idx and ast in self.parents [-2].idx:
 			b = _ast_slice_bounds (ast)
 
@@ -1662,16 +1662,16 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-	# set_sym_user_funcs (vars)
-	# res = ast2py (ast)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
+# 	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+# 	# set_sym_user_funcs (vars)
+# 	# res = ast2py (ast)
 
-	ast = AST ('^', ('@', 'a'), ('-sqrt', ('-idx', ('#', '-1e+1'), (('@', 'c'),)), ('@', 'b')))
-	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-	res = ast2py (ast)
-	# res = spt2ast (res)
+# 	ast = AST ('-set', (('-or', (('(', (',', ())), ('-idx', ('-slice', False, False, False), (('-slice', False, False, False),)))),))
+# 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
+# 	res = ast2py (ast)
+# 	# res = spt2ast (res)
 
-	print (res)
+# 	print (res)
