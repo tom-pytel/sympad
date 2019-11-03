@@ -916,8 +916,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		return f'{n}{" / " if nn or ast.numer.strip_minus.op not in {"#", "@"} or ast.denom.strip_minus.op not in {"#", "@"} or d.lstrip ("-") [:1] == "(" else "/"}{d}'
 
 	def _ast2py_pow (self, ast):
-		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) else self._ast2py_curly (ast.base)
-		e = self._ast2py_curly (ast.exp)
+		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow or (ast.base.is_idx and self.parent.is_pow and ast is self.parent.exp) else self._ast2py_curly (ast.base)
+		e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.is_abs and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
 
@@ -1015,7 +1015,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-mat'  : _ast2py_mat,
 		'-piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
 		'-lamb' : lambda self, ast: f"""Lambda({ast.vars [0] if ast.vars.len == 1 else f'({", ".join (ast.vars)})'}, {self._ast2py (ast.lamb)})""",
-		'-idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
+		'-idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.is_sqrt_with_base or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
 		'-slice': _ast2py_slice,
 		'-set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
 		'-dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py_paren (k, k.has_tail_lambda_solo)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
@@ -1662,16 +1662,16 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-# 	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-# 	# set_sym_user_funcs (vars)
-# 	# res = ast2py (ast)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
+	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+	# set_sym_user_funcs (vars)
+	# res = ast2py (ast)
 
-# 	ast = AST (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('-slice', ('@', 'y'), ('-log', ('@', 'lambda')), False)))
-# 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-# 	res = ast2nat (ast)
-# 	# res = spt2ast (res)
+	ast = AST ('^', ('@', 'a'), ('-sqrt', ('-idx', ('#', '-1e+1'), (('@', 'c'),)), ('@', 'b')))
+	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
+	res = ast2py (ast)
+	# res = spt2ast (res)
 
-# 	print (res)
+	print (res)

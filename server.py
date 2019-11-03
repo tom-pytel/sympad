@@ -225,7 +225,7 @@ def _admin_delall (*args):
 	_VARS ['_'] = last_var
 	_update_vars ()
 
-	return 'All assignments deleted.'
+	return 'All variables deleted.'
 
 def _admin_env (*args):
 	def _envop (env, apply):

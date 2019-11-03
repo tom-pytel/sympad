@@ -162,14 +162,19 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 	return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not handled by grammar
-	def process_func (ast, arg, tail, makeast):
+	def process_func (ast, arg, tail, wrapa, make):
 		if tail.op not in {'{', '('}:
-			arg2       = _expr_mul_imp (tail, arg)
+			arg2 = _expr_mul_imp (tail, arg)
+
+			if arg2.is_pow and (
+					(arg2.base.is_func and arg2.base.src and arg2.base.src.is_mul and arg2.base.src.mul.len == 2) or
+					(arg2.base.op in {'-sqrt', '-log'} and arg2.base.src_arg)):
+				return make (wrapa (arg2)), AST.Null
+
 			ast2, wrap = arg2.tail_mul_wrap
 
-			if ast2.is_attr_func or ast2.op in {'-func', '-idx'}:
-				ast = makeast (wrap (wrapa (ast2)))
-				arg = AST.Null
+			if (ast2.is_attr_func or ast2.op in {'-func', '-idx'}) and (not arg2.is_pow or not arg2.base.op in {'{', '('}):
+				return make (wrap (wrapa (ast2))), AST.Null
 
 		return ast, arg
 
@@ -202,29 +207,23 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
 		if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
-			ast, arg = process_func (ast, arg, tail.src.mul [1], lambda ast, tail = tail: AST ('-func', tail.src.mul [0].var, (ast,), src = AST ('*', (('@', tail.func), ast))))
-
-		# if tail.src and tail.src.is_mul and tail.src.mul.len == 2 and tail.src.mul [1].op not in {'{', '('}:
-		# 	arg2       = _expr_mul_imp (tail.src.mul [1], arg)
-		# 	ast2, wrap = arg2.tail_mul_wrap
-
-		# 	if ast2.is_attr_func or ast2.op in {'-func', '-idx'}:
-		# 		ast2 = wrap (wrapa (ast2))
-		# 		ast  = AST ('-func', tail.src.mul [0].var, (ast2,), src = AST ('*', (('@', tail.func), ast2)))
-		# 		arg  = AST.Null
+			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, (ast,), src = AST ('*', (('@', tail.func), ast))))
 
 	elif tail.op in {'-sqrt', '-log'}: # ln N 2 -> ln (N (2)) instead of ln (N) * 2, log, sqrt
 		if tail.src_arg:
-			ast, arg = process_func (ast, arg, tail.src_arg, lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src_arg = ast))
+			ast, arg = process_func (ast, arg, tail.src_arg, wrapa, lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src_arg = ast))
 
-		# if tail.src_arg and tail.src_arg.op not in {'{', '('}:
-		# 	arg2       = _expr_mul_imp (tail.src_arg, arg)
-		# 	ast2, wrap = arg2.tail_mul_wrap
+	elif lhs.is_pow: # f**2 N x -> f**2 (N (x))
+		if lhs.base.is_func:
+			if lhs.base.src and lhs.base.src.is_mul and lhs.base.src.mul.len == 2: # this only happens on f**p x, not f (x)**p or f x**p
+				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
 
-		# 	if ast2.is_attr_func or ast2.op in {'-func', '-idx'}:
-		# 		ast2 = wrap (wrapa (ast2))
-		# 		ast  = AST (tail.op, ast2, *tail [2:], src_arg = ast2)
-		# 		arg  = AST.Null
+		elif lhs.base.op in {'-sqrt', '-log'}:
+			if lhs.base.src_arg:
+				ast, arg = process_func (ast, rhs, lhs.base.src_arg, wrapa, lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src_arg = ast), lhs.exp))
+
+		if arg == AST.Null:
+			return ast
 
 	if arg.is_brack: # x *imp* [y] -> x [y]
 		if not arg.brack:
@@ -1225,7 +1224,7 @@ class sparser: # for single script
 # 	set_sp_user_funcs ({'N'})
 # 	set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	a = p.parse (r"sin**2 N x")
+# 	a = p.parse (r"sin(a)**(b)[c]")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

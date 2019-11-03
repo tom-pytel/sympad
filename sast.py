@@ -186,6 +186,7 @@ class AST (tuple):
 		return self
 
 	_strip_attr   = lambda self, count = None: self._strip (count, ('.',))
+	_strip_attrm  = lambda self, count = None: self._strip (count, ('.', '-'))
 	_strip_curlys = lambda self, count = None: self._strip (count, ('{',))
 	_strip_paren  = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 
@@ -730,6 +731,8 @@ class AST_Sqrt (AST):
 
 	def _init (self, rad, idx = None):
 		self.rad, self.idx = rad, idx
+
+	_is_sqrt_with_base = lambda self: self.idx is not None
 
 class AST_Func (AST):
 	op, is_func = '-func', True

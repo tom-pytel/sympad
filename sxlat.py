@@ -124,8 +124,15 @@ def _xlat_f2a_And (*args, canon = False, force = False): # patch together out of
 def _xlat_f2a_Lambda (args, expr):
 	args = args.strip_paren
 	args = args.comma if args.is_comma else (args,)
+	vars = []
 
-	return AST ('-lamb', expr, tuple (c.var for c in args))
+	for v in args:
+		if not v.is_var:
+			return None
+
+		vars.append (v.var)
+
+	return AST ('-lamb', expr, tuple (vars))
 
 def _xlat_f2a_Pow (ast = AST.VarNull, exp = AST.VarNull):
 	return AST ('^', ast, exp)

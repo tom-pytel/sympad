@@ -245,7 +245,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('del y'), {'msg': ["Undefined function 'y' deleted."]})
 		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
-		self.assertEqual (get ('delall'), {'msg': ['All assignments deleted.']})
+		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
 
 	def test_intro_examples (self):

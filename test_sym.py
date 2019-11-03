@@ -385,6 +385,12 @@ N lambda: x
 sqrt\[Lambda[dx,0,b][:\lambda:1e-100,\alpha1,\{}],]
 None:1:,c:a
 -a.b{1:None,w:b,a:c}!
+\sqrt[a]\sqrt a [x]
+\sqrt[x]\{}**1[-1]
+\sqrt[a](:)[b]**c
+\left|a\right|**-1.00[a]**b
+a**\sqrt[b]-1e+1[c]
+|a|**[a][b].c
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

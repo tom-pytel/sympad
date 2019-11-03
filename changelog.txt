@@ -1,6 +1,6 @@
 v1.0.15:
 --------
-* Extended recognition of single unparenthesized arguments to functions - "N ln sin 2" is valid now.
+* Extended recognition of single unparenthesized arguments to functions - "N ln sin**2 3" is valid now.
 * Added union, intersection and symmetric difference unicode characters.
 * Added more thorough test cases to test_sym.
 * Changed And() parsing to more reliably recover original extended comparisons from mangled SymPy representation.
