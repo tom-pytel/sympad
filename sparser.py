@@ -1214,18 +1214,18 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# p.set_quick (True)
-# 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
+	# p.set_quick (True)
+	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
 
-# 	set_sp_user_funcs ({'N'})
-# 	set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
+	set_sp_user_funcs ({'N'})
+	set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	a = p.parse (r"sin(a)**(b)[c]")
-# 	print (a)
+	a = p.parse (r"Union(Complement(Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))))), FiniteSet()*FiniteSet(True)), Complement(FiniteSet()*FiniteSet(True), Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3)))))))))")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)

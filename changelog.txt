@@ -1,3 +1,7 @@
+v1.0.16:
+--------
+
+
 v1.0.15:
 --------
 * Extended recognition of single unparenthesized arguments to functions - "N ln sin**2 3" is valid now.

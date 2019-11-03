@@ -206,7 +206,7 @@ class LALR1:
 					red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
 
 				except SyntaxError as e:
-					rederr = e or True # why did I do this?
+					rederr = e or True
 
 					continue
 
