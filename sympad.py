@@ -1256,7 +1256,7 @@ For convenience certain multi-character variables are accepted in quick mode - G
 
 <p>
 Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
-The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation or referenced variables, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits.
+The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation or referenced variables, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits (where SymPy respects this).
 </p><p>
 Keep in mind that "<b>e</b>" or "<b>E</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be "<b>2 * 10^22</b>".
 Instead, use spaces and/or explicit multiplication: "<b>2 * e + 22</b>".
@@ -3133,7 +3133,7 @@ class LALR1:
 					red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
 
 				except SyntaxError as e:
-					rederr = e or True # why did I do this?
+					rederr = e or True
 
 					continue
 
@@ -3340,10 +3340,11 @@ class AST (tuple):
 
 		return self
 
-	_strip_attr   = lambda self, count = None: self._strip (count, ('.',))
-	_strip_attrm  = lambda self, count = None: self._strip (count, ('.', '-'))
-	_strip_curlys = lambda self, count = None: self._strip (count, ('{',))
-	_strip_paren  = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
+	_strip_attr     = lambda self, count = None: self._strip (count, ('.',))
+	_strip_attrm    = lambda self, count = None: self._strip (count, ('.', '-'))
+	_strip_attrpdpi = lambda self, count = None: self._strip (count, ('.', '^', '-diffp', '-idx'))
+	_strip_curlys   = lambda self, count = None: self._strip (count, ('{',))
+	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 
 	def _strip_minus (self, count = None, retneg = False, negnum = True):
 		count       = -1 if count is None else count
@@ -3378,8 +3379,11 @@ class AST (tuple):
 
 	def _tail_mul_wrap (self):
 		tail, wrap = self, lambda ast: ast
+		wrap.ast   = AST.Null
 
 		while 1:
+			astw = tail
+
 			if tail.is_mul:
 				tail, wrap = tail.mul [-1], lambda ast, tail = tail, wrap = wrap: wrap (AST ('*', tail.mul [:-1] + (ast,)))
 			elif tail.is_pow:
@@ -3392,10 +3396,15 @@ class AST (tuple):
 			else:
 				break
 
+			wrap.ast = astw
+
 		return tail, wrap
 
 	def _has_tail_lambda_solo (self):
 		return self.tail_lambda_solo != (None, None)
+
+	def _has_tail_lambda (self):
+		return self.tail_lambda != (None, None)
 
 	def _tail_lambda_solo (self):
 		return self._tail_lambda (has_var = False)
@@ -4796,10 +4805,14 @@ def _ast_slice_bounds (ast, None_ = AST.VarNull, allow1 = False):
 	return tuple (a or None_ for a in ((ast.start, ast.stop) if ast.step is None else (ast.start, ast.stop, ast.step)))
 
 def _ast_followed_by_slice (ast, seq):
-	for i in range (seq.index (ast) + 1, len (seq)):
-		if seq [i].is_slice:
-			return True
-		elif not seq [i].is_var:
+	for i in range (len (seq)):
+		if seq [i] is ast:
+			for i in range (i + 1, len (seq)):
+				if seq [i].is_slice:
+					return True
+				elif not seq [i].is_var:
+					break
+
 			break
 
 	return False
@@ -4963,7 +4976,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					t [-1] [-1:] == '.' or
 					s [:1].isdigit () or
 					s [:6] == '\\left[' or
-					(s [:6] == '\\left(' and (p.is_attr_var or i in ast.exp)) or
+					(s [:6] == '\\left(' and (p.tail_mul.is_var or p.tail_mul.is_attr_var or i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
@@ -5267,21 +5280,17 @@ class ast2nat: # abstract syntax tree -> native text
 			if p and (
 					t [-1] [-1:] == '.' or
 					s [:1].isdigit () or
-					n.op in {'#', '-lim', '-sum', '-intg'} or
+					n.is_num or #, n.op in {'#', '-lim', '-sum', '-intg'} or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or
-					(p.is_var_lambda and n is ast.mul [-1] and (
-						(self.parent.is_slice and (ast is self.parent.start or (self.parent.step is not None and ast is self.parent.stop))) or
-						(self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
-					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or # _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
+					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
+					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 					(s [:1] == '(' and (
+						p.tail_mul.is_var or
 						p.tail_mul.is_attr_var or
 						(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 						i in ast.exp)) or
-					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
-					# n.strip_fdpi.strip_paren.is_comma or
-					# (n.strip_fdpi.is_paren and i in ast.exp) or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
@@ -5321,7 +5330,11 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_pow (self, ast, trighpow = True):
 		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
-		p = self._ast2nat_wrap (ast.exp, ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'}, {","})
+		p = self._ast2nat_wrap (ast.exp,
+				(ast.exp.strip_attrpdpi.is_ufunc and not (ast.exp.is_pow and ast.exp.strip_attrpdpi is ast.exp.base)) or
+				ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or
+				ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'},
+				{","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
 			i = len (ast.base.func)
@@ -5586,7 +5599,8 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow or (ast.base.is_idx and self.parent.is_pow and ast is self.parent.exp) else self._ast2py_curly (ast.base)
-		e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.is_abs and ast.exp.strip_attrm.is_idx) or (ast.base.is_func and ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		# e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.is_abs and ast.exp.strip_attrm.is_idx) or (ast.base.is_func and ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.op in {'|', '-set'} and ast.exp.strip_attrm.is_idx) or (ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
 
@@ -5726,7 +5740,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			elif ast.is_num:
 				prec = max (prec, len (ast.num)) # will be a little more than number of digits to compensate for falling precision with some calculations
 			else:
-				stack.extend (ast [1:])
+				stack.extend (ast if ast.op is None else ast [1:])
 
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
@@ -6071,7 +6085,12 @@ class spt2ast:
 		return spt
 
 	def _spt2ast_num (self, spt):
-		num = AST ('#', str (spt))
+		s = str (spt)
+
+		if s [:3] == '0.e' or s [:4] == '-0.e':
+			return AST ('#', '0')
+
+		num = AST ('#', s)
 
 		if num.grp [5]:
 			return AST ('#', ''.join (num.grp [:6] + num.grp [7:]))
@@ -6337,9 +6356,9 @@ class sym: # for single script
 # 	# set_sym_user_funcs (vars)
 # 	# res = ast2py (ast)
 
-# 	ast = AST ('-set', (('-or', (('(', (',', ())), ('-idx', ('-slice', False, False, False), (('-slice', False, False, False),)))),))
+# 	ast = AST ('(', ('-func', 'LambertW', (('=', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')), {1, 2})), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), None))))
 # 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-# 	res = ast2py (ast)
+# 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)
@@ -6544,7 +6563,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
-		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
+		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist and not wrapt.ast.is_pow: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
@@ -6557,10 +6576,10 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 	elif lhs.is_pow: # f**2 N x -> f**2 (N (x))
 		if lhs.base.is_func:
-			if lhs.base.src and lhs.base.src.is_mul and lhs.base.src.mul.len == 2: # this only happens on f**p x, not f (x)**p or f x**p
+			if lhs.base.src and lhs.base.src.is_mul and lhs.base.src.mul.len == 2 and lhs.base.src.mul [1].op not in {'{', '(', '^'}: # this only happens on f**p x, not f (x)**p or f x**p
 				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
 
-		elif lhs.base.op in {'-sqrt', '-log'}:
+		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src_arg.op not in {'{', '(', '^'}:
 			if lhs.base.src_arg:
 				ast, arg = process_func (ast, rhs, lhs.base.src_arg, wrapa, lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src_arg = ast), lhs.exp))
 
@@ -6989,7 +7008,7 @@ class Parser (lalr1.LALR1):
 			b'9+5bGAfUj9jHlPSzJvQ1XyjQ5IIi374PJOCH+J98NHqEao8eapu92MQNSK3IvAOZ7eaWHm4Ry7QOTozMbnNmD5ehWXvVjl7Vbm7p4RZRL9blOabyzn4drFB32EM2+4E++SIPgyds11rgAxuusNlKNlpR0S9b3Djfom82l/BwmZc0vi+xzO3mEh4u82XLEscu' \
 			b'c+MWlLueU/Zu88gPKGxvF1wHJe37GWR/wmoosPZ2VbSbRQ+2BC31s9+zIyaukD13DZx5hWDX9oU9vJmppMJ/BdWhN5f2cHUs3l5wdXtqcPLB8ocPN0j/9wtlGOJ22NnPnpu5YdHDVX1+mwkevaqbzTU+XL3LFB2usXpxYskVPly9y5cPrq561eYaH67e5UsU' \
 			b'V1e9enOND1fv8tWQq6tes7nGh6vXbd6YmjYIC1q30UL6dwcLFCFZYicL72n3Zf8mbwC+oMkFqs0XNfYYQXRg5NQGVXbtK63/n13rLdeoPPLhq37wX/M5GTjHKB2UYagpsL1noLw9UhPqNZ3QbHCEAh+zAdt0+BcftBUO2WrS4Vo4WKuR8mj6seDoFDpxmDJK' \
-			b'UYao0DJlCU+kLv7TG7Ru3zJpYxed1cVfHHzXLBOGPJhP9FA4QMVH3uI/j6NwMbduLG2BEb9dOiKE1xRwzaYPBTZObFSywTEiT/4/i5/oig=='
+			b'UYao0DJlCU+kLv7TG7Ru3zJpYxed1cVfHHzXLBOGPJhP9FA4QMVH3uI/j6NwMbduLG2BEb9dOiKE1xRwzaYPBTZObFSywTEiT/4/i5/oig==' 
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -7263,9 +7282,9 @@ class Parser (lalr1.LALR1):
 	def expr_paren_1       (self, expr_pcommas):                                       return AST ('(', expr_pcommas)
 	def expr_paren_2       (self, expr_frac):                                          return expr_frac
 
-	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                     return AST ('/', expr_binom1, expr_binom2)
-	def expr_frac_2        (self, FRAC1, expr_binom):                                  return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_binom)
-	def expr_frac_3        (self, FRAC2):                                              return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
+	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                     return _expr_diff (AST ('/', expr_binom1, expr_binom2))
+	def expr_frac_2        (self, FRAC1, expr_binom):                                  return _expr_diff (AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_binom))
+	def expr_frac_3        (self, FRAC2):                                              return _expr_diff (AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3)))
 	def expr_frac_4        (self, expr_binom):                                         return expr_binom
 
 	def expr_binom_1       (self, BINOM, expr_subs1, expr_subs2):                      return AST ('-func', 'binomial', (expr_subs1, expr_subs2))
@@ -7459,14 +7478,33 @@ class Parser (lalr1.LALR1):
 	def parse_setextrastate (self, state):
 		self.autocomplete, self.autocompleting, self.erridx = state
 
+	def parse_result (self, red, erridx, autocomplete):
+		res             = (red is None, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete))
+		self.parse_idx += 1
+
+		if self.parse_best is None or res < self.parse_best:
+			self.parse_best = res
+
+		if os.environ.get ('SYMPAD_DEBUG'):
+			if self.parse_idx <= 32:
+				print ('parse:', res [-1], file = sys.stderr)
+
+			elif self.parse_idx == 33:
+				sys.stdout.write ('... |')
+				sys.stdout.flush ()
+
+			else:
+				sys.stdout.write ('\x08' + '\\|/-' [self.parse_idx & 3])
+				sys.stdout.flush ()
+
 	def parse_error (self): # add tokens to continue parsing for autocomplete if syntax allows
 		if isinstance (self.rederr, lalr1.Incomplete):
-			self.parse_results.append ((self.rederr.red, self.tok.pos, []))
+			self.parse_result (self.rederr.red, self.tok.pos, [])
 
 			return False
 
 		if self.tok != '$end':
-			self.parse_results.append ((None, self.tok.pos, []))
+			self.parse_result (None, self.tok.pos, [])
 
 			return False
 
@@ -7502,7 +7540,7 @@ class Parser (lalr1.LALR1):
 		return self._insert_symbol (rule [1] [pos])
 
 	def parse_success (self, red):
-		self.parse_results.append ((red, self.erridx, self.autocomplete))
+		self.parse_result (red, self.erridx, self.autocomplete)
 
 		return True # continue parsing if conflict branches remain to find best resolution
 
@@ -7513,33 +7551,26 @@ class Parser (lalr1.LALR1):
 		if not text.strip:
 			return (AST.VarNull, 0, [])
 
-		self.parse_results  = [] # [(reduction, erridx, autocomplete), ...]
+		self.parse_idx      = 0
+		self.parse_best     = None # (values for sorting..., (reduction, erridx, autocomplete))
 		self.autocomplete   = []
 		self.autocompleting = True
 		self.erridx         = None
 
+		if os.environ.get ('SYMPAD_DEBUG'):
+			print (file = sys.stderr)
+
 		lalr1.LALR1.parse (self, text)
 
-		if not self.parse_results:
-			return (None, 0, [])
-
-		rated = sorted ((r is None, -e if e is not None else float ('-inf'), len (a), i, (r, e, a))
-			for i, (r, e, a) in enumerate (self.parse_results))
+		res = self.parse_best [-1] if self.parse_best is not None else (None, 0, [])
 
 		if os.environ.get ('SYMPAD_DEBUG'):
-			rated = list (rated)
+			if self.parse_idx >= 33:
+				print (f'\x08total {self.parse_idx}', file = sys.stderr)
+			elif self.parse_best is None:
+				print (f'no parse', file = sys.stderr)
 
 			print (file = sys.stderr)
-
-			for res in rated [:32]:
-				print ('parse:', res [-1], file = sys.stderr)
-
-			if len (rated) > 32:
-				print (f'... total {len (rated)}', file = sys.stderr)
-
-			print (file = sys.stderr)
-
-		res = next (iter (rated)) [-1]
 
 		return postprocess (res)
 
@@ -7556,20 +7587,19 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# p.set_quick (True)
-# 	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
+	# set_sp_user_funcs ({'N'})
+	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	set_sp_user_funcs ({'N'})
-# 	set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
+	# a = p.parse (r"Union(Complement(Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))))), FiniteSet()*FiniteSet(True)), Complement(FiniteSet()*FiniteSet(True), Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3)))))))))")
+	# a = p.parse (r"x^3 + 3y x^2 + 3x y^2 + y^3")
+	a = p.parse (r"1+2")
+	print (a)
 
-# 	a = p.parse (r"sin(a)**(b)[c]")
-# 	print (a)
-
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)
 # Patch SymPy bugs and inconveniences.
 
 from collections import defaultdict
@@ -8366,7 +8396,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.15'
+_VERSION         = '1.0.16'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
