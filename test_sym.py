@@ -392,6 +392,21 @@ None:1:,c:a
 a**\sqrt[b]-1e+1[c]
 |a|**[a][b].c
 sin(b)tan(a)**1[c].d
+{b,c}**2[d].a()
+sin(a)^h(x)*sin()
+\{}**'str'[b].c[d]
+sin(a)^2 sin(c)
+1 a**f(x)
+a**?f(x)
+a**?f(x).a
+a**?f(x)[0]
+f({x})'
+-f({x})'
+a^\frac{partialx}\partialx
+a^\lambda*lambdax:1
+x**?f(x,y).a^1
+(LambertW(5.194664222299675e-09[1e100]=-4.904486369506518e-17*\lambda*a,lambdax,y,z:\emptyset'''))
+x**?g(x)**x
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -662,7 +677,7 @@ def parse (text):
 
 	return ret [0]
 
-_RESERVED_WORDS = {'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | sast.AST_Func.PY
+_RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | sast.AST_Func.PY
 
 def test (argv = None):
 	global DEPTH, CURLYS

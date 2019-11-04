@@ -127,10 +127,14 @@ def _ast_slice_bounds (ast, None_ = AST.VarNull, allow1 = False):
 	return tuple (a or None_ for a in ((ast.start, ast.stop) if ast.step is None else (ast.start, ast.stop, ast.step)))
 
 def _ast_followed_by_slice (ast, seq):
-	for i in range (seq.index (ast) + 1, len (seq)):
-		if seq [i].is_slice:
-			return True
-		elif not seq [i].is_var:
+	for i in range (len (seq)):
+		if seq [i] is ast:
+			for i in range (i + 1, len (seq)):
+				if seq [i].is_slice:
+					return True
+				elif not seq [i].is_var:
+					break
+
 			break
 
 	return False
@@ -294,7 +298,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					t [-1] [-1:] == '.' or
 					s [:1].isdigit () or
 					s [:6] == '\\left[' or
-					(s [:6] == '\\left(' and (p.is_attr_var or i in ast.exp)) or
+					(s [:6] == '\\left(' and (p.tail_mul.is_var or p.tail_mul.is_attr_var or i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
@@ -602,17 +606,13 @@ class ast2nat: # abstract syntax tree -> native text
 					n.is_var_null or
 					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or
-					(p.is_var_lambda and n is ast.mul [-1] and (
-						(self.parent.is_slice and (ast is self.parent.start or (self.parent.step is not None and ast is self.parent.stop))) or
-						(self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
-					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or # _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
+					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
+					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 					(s [:1] == '(' and (
+						p.tail_mul.is_var or
 						p.tail_mul.is_attr_var or
 						(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 						i in ast.exp)) or
-					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
-					# n.strip_fdpi.strip_paren.is_comma or
-					# (n.strip_fdpi.is_paren and i in ast.exp) or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
@@ -652,7 +652,11 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_pow (self, ast, trighpow = True):
 		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
-		p = self._ast2nat_wrap (ast.exp, ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'}, {","})
+		p = self._ast2nat_wrap (ast.exp,
+				(ast.exp.strip_attrpdpi.is_ufunc and not (ast.exp.is_pow and ast.exp.strip_attrpdpi is ast.exp.base)) or
+				ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or
+				ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'},
+				{","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
 			i = len (ast.base.func)
@@ -917,7 +921,8 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow or (ast.base.is_idx and self.parent.is_pow and ast is self.parent.exp) else self._ast2py_curly (ast.base)
-		e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.is_abs and ast.exp.strip_attrm.is_idx) or (ast.base.is_func and ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		# e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.is_abs and ast.exp.strip_attrm.is_idx) or (ast.base.is_func and ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.op in {'|', '-set'} and ast.exp.strip_attrm.is_idx) or (ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
 
@@ -1057,7 +1062,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			elif ast.is_num:
 				prec = max (prec, len (ast.num)) # will be a little more than number of digits to compensate for falling precision with some calculations
 			else:
-				stack.extend (ast [1:])
+				stack.extend (ast if ast.op is None else ast [1:])
 
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
@@ -1402,7 +1407,12 @@ class spt2ast:
 		return spt
 
 	def _spt2ast_num (self, spt):
-		num = AST ('#', str (spt))
+		s = str (spt)
+
+		if s [:3] == '0.e' or s [:4] == '-0.e':
+			return AST ('#', '0')
+
+		num = AST ('#', s)
 
 		if num.grp [5]:
 			return AST ('#', ''.join (num.grp [:6] + num.grp [7:]))
@@ -1669,9 +1679,9 @@ class sym: # for single script
 # 	# set_sym_user_funcs (vars)
 # 	# res = ast2py (ast)
 
-# 	ast = AST ('^^', (('-diff', ('*', (('/', ('#', '0'), ('@', 'partial')), ('@', 'x'), ('|', ('@', 'w1')), ('^', ('#', '6.4380354041832416e-21'), ('@', 'd')), ('@', 'y'))), 'd', (('z', 3),)), ('&&', (('@', 'partial'), ('@', 'b'), ('/', ('^', ('"', 'str'), ('^', ('@', 'd'), ('#', '2'))), ('*', (('^', ('@', 'dz'), ('#', '2')), ('#', '146591184863111.94')))))), ('-log', ('@', 'y'), ('@', 'partial')), ('@', 'z20'), ('*', (('-set', ()), ('-set', (('@', 'True'),))))))
+# 	ast = AST ('(', ('-func', 'LambertW', (('=', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')), {1, 2})), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), None))))
 # 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-# 	res = ast2py (ast)
+# 	res = ast2nat (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

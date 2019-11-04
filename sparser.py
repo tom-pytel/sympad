@@ -202,7 +202,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
-		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
+		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist and not wrapt.ast.is_pow: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
@@ -215,10 +215,10 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 	elif lhs.is_pow: # f**2 N x -> f**2 (N (x))
 		if lhs.base.is_func:
-			if lhs.base.src and lhs.base.src.is_mul and lhs.base.src.mul.len == 2: # this only happens on f**p x, not f (x)**p or f x**p
+			if lhs.base.src and lhs.base.src.is_mul and lhs.base.src.mul.len == 2 and lhs.base.src.mul [1].op not in {'{', '(', '^'}: # this only happens on f**p x, not f (x)**p or f x**p
 				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
 
-		elif lhs.base.op in {'-sqrt', '-log'}:
+		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src_arg.op not in {'{', '(', '^'}:
 			if lhs.base.src_arg:
 				ast, arg = process_func (ast, rhs, lhs.base.src_arg, wrapa, lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src_arg = ast), lhs.exp))
 
@@ -921,9 +921,9 @@ class Parser (lalr1.LALR1):
 	def expr_paren_1       (self, expr_pcommas):                                       return AST ('(', expr_pcommas)
 	def expr_paren_2       (self, expr_frac):                                          return expr_frac
 
-	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                     return AST ('/', expr_binom1, expr_binom2)
-	def expr_frac_2        (self, FRAC1, expr_binom):                                  return AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_binom)
-	def expr_frac_3        (self, FRAC2):                                              return AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3))
+	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                     return _expr_diff (AST ('/', expr_binom1, expr_binom2))
+	def expr_frac_2        (self, FRAC1, expr_binom):                                  return _expr_diff (AST ('/', _ast_from_tok_digit_or_var (FRAC1), expr_binom))
+	def expr_frac_3        (self, FRAC2):                                              return _expr_diff (AST ('/', _ast_from_tok_digit_or_var (FRAC2), _ast_from_tok_digit_or_var (FRAC2, 3)))
 	def expr_frac_4        (self, expr_binom):                                         return expr_binom
 
 	def expr_binom_1       (self, BINOM, expr_subs1, expr_subs2):                      return AST ('-func', 'binomial', (expr_subs1, expr_subs2))
@@ -1162,6 +1162,11 @@ class Parser (lalr1.LALR1):
 	def parse_success (self, red):
 		self.parse_results.append ((red, self.erridx, self.autocomplete))
 
+
+		if not self.erridx:
+			print (sym.ast2nat (_ast_mulexps_to_muls (red.no_curlys).flat)) # DEBUG
+
+
 		return True # continue parsing if conflict branches remain to find best resolution
 
 	def parse (self, text):
@@ -1218,11 +1223,8 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	p = Parser ()
 
-	# p.set_quick (True)
-	# print (p.tokenize (r"""{\partial x : Sum (\left|\left|dz\right|\right|, (x, lambda x, y, z: 1e100 : \partial !, {\emptyset&&0&&None} / {-1.0 : a,"str" : False,1e100 : True})),.1 : \sqrt[\partial ' if \frac1xyzd]Sum (\fracpartialx1, (x, xyzd / "str", Sum (-1, (x, partialx, \partial ))))}'''"""))
-
-	set_sp_user_funcs ({'N'})
-	set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
+	# set_sp_user_funcs ({'N'})
+	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
 	a = p.parse (r"Union(Complement(Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))))), FiniteSet()*FiniteSet(True)), Complement(FiniteSet()*FiniteSet(True), Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3)))))))))")
 	print (a)

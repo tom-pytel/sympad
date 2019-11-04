@@ -201,7 +201,7 @@ For convenience certain multi-character variables are accepted in quick mode - G
 
 <p>
 Numbers take the standard integer or floating point form or exponential form such as 123, -2.567, 1e+100, 3E-45 or -1.521e22.
-The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation or referenced variables, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits.
+The precision for all SymPy Floats used in evaluation is set to the highest precision number present in the equation or referenced variables, so if you ask for the cosine of a number with 50 decimal digits your answer will have at least 50 decimal digits (where SymPy respects this).
 </p><p>
 Keep in mind that "<b>e</b>" or "<b>E</b>" is the Euler"s number constant $e$ and if you are trying to enter 2 times $e$ plus 22 then do not write it all together as "<b>2e+22</b>" as this will be interpreted to be "<b>2 * 10^22</b>".
 Instead, use spaces and/or explicit multiplication: "<b>2 * e + 22</b>".

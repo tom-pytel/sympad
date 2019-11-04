@@ -185,10 +185,11 @@ class AST (tuple):
 
 		return self
 
-	_strip_attr   = lambda self, count = None: self._strip (count, ('.',))
-	_strip_attrm  = lambda self, count = None: self._strip (count, ('.', '-'))
-	_strip_curlys = lambda self, count = None: self._strip (count, ('{',))
-	_strip_paren  = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
+	_strip_attr     = lambda self, count = None: self._strip (count, ('.',))
+	_strip_attrm    = lambda self, count = None: self._strip (count, ('.', '-'))
+	_strip_attrpdpi = lambda self, count = None: self._strip (count, ('.', '^', '-diffp', '-idx'))
+	_strip_curlys   = lambda self, count = None: self._strip (count, ('{',))
+	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 
 	def _strip_minus (self, count = None, retneg = False, negnum = True):
 		count       = -1 if count is None else count
@@ -223,8 +224,11 @@ class AST (tuple):
 
 	def _tail_mul_wrap (self):
 		tail, wrap = self, lambda ast: ast
+		wrap.ast   = AST.Null
 
 		while 1:
+			astw = tail
+
 			if tail.is_mul:
 				tail, wrap = tail.mul [-1], lambda ast, tail = tail, wrap = wrap: wrap (AST ('*', tail.mul [:-1] + (ast,)))
 			elif tail.is_pow:
@@ -237,10 +241,15 @@ class AST (tuple):
 			else:
 				break
 
+			wrap.ast = astw
+
 		return tail, wrap
 
 	def _has_tail_lambda_solo (self):
 		return self.tail_lambda_solo != (None, None)
+
+	def _has_tail_lambda (self):
+		return self.tail_lambda != (None, None)
 
 	def _tail_lambda_solo (self):
 		return self._tail_lambda (has_var = False)
