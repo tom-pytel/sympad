@@ -1,6 +1,6 @@
 v1.0.16:
 --------
-
+* Fixes, randomized testing no longer returning any errors.
 
 v1.0.15:
 --------
