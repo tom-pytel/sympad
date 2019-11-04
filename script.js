@@ -24,11 +24,13 @@ NumClicks        = 0;
 
 GreetingFadedOut = false;
 ExceptionDone    = false;
+SymPyDevVersion  = '1.4'
 
 // replaced in env.js
 History          = [];
 HistIdx          = 0;
 Version          = 'None'
+SymPyVersion     = 'None'
 DisplayStyle     = 1
 
 //...............................................................................................

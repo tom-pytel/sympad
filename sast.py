@@ -190,6 +190,7 @@ class AST (tuple):
 	_strip_attrpdpi = lambda self, count = None: self._strip (count, ('.', '^', '-diffp', '-idx'))
 	_strip_curlys   = lambda self, count = None: self._strip (count, ('{',))
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
+	_strip_pow      = lambda self, count = None: self._strip (count, ('^',))
 
 	def _strip_minus (self, count = None, retneg = False, negnum = True):
 		count       = -1 if count is None else count
@@ -575,7 +576,7 @@ class AST_Var (AST):
 		'Reals'    : ('\\mathbb{R}',),
 		'Complexes': ('\\mathbb{C}',),
 		'Naturals' : ('\\mathbb{N}', '\\mathbb{N}^*', '\\mathbb{N}^+', '\\mathbb{N}_1', '\\mathbb{N}_{>0}', '\\mathbb{Z}^+'),
-		'Naturals0': ('\\mathbb{N}_0', '\\mathbb{N}^0', '\\mathbb{Z}^{\\ge0}'),
+		'Naturals0': ('\\mathbb{N}_0', '\\mathbb{Z}^{\\ge0}'), # , '\\mathbb{N}^0' - ambiguous
 		'Integers' : ('\\mathbb{Z}',),
 	}
 

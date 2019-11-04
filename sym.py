@@ -594,29 +594,35 @@ class ast2nat: # abstract syntax tree -> native text
 		has = False
 
 		for i, n in enumerate (ast.mul):
-			s = self._ast2nat_wrap (n, (p and _ast_is_neg (n)) or n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'}, n.op in {'='})
+			s = self._ast2nat_wrap (n,
+				n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or
+				(p and (
+					_ast_is_neg (n) or
+					(p.is_div and (p.denom.is_intg or (p.denom.is_mul and p.denom.mul [-1].is_intg)) and n.is_diff and n.diff.is_var and n.dvs [-1] [1] == 1))),
+				n.is_ass)
 
 			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
 				s = f'{{{s}}}'
 
 			if p and (
-					t [-1] [-1:] == '.' or
+					s [:1] == '[' or
 					s [:1].isdigit () or
-					n.is_num or #, n.op in {'#', '-lim', '-sum', '-intg'} or
-					n.is_var_null or
-					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
-					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or
-					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
-					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 					(s [:1] == '(' and (
 						p.tail_mul.is_var or
 						p.tail_mul.is_attr_var or
 						(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 						i in ast.exp)) or
+					t [-1] [-1:] == '.' or
+					n.is_num or #, n.op in {'#', '-lim', '-sum', '-intg'} or
+					n.is_var_null or
+					n.op in {'/', '-diff'} or
+					p.strip_minus.op in {'/', '-lim', '-sum', '-diff', '-intg'} or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist)):
+					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist) or
+					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
+					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS)):
 				t.append (f' * {s}')
 				has = True
 
@@ -653,7 +659,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_pow (self, ast, trighpow = True):
 		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2nat_wrap (ast.exp,
-				(ast.exp.strip_attrpdpi.is_ufunc and not (ast.exp.is_pow and ast.exp.strip_attrpdpi is ast.exp.base)) or
+				(ast.exp.strip_attrpdpi.is_ufunc and not ((ast.exp.is_diffp and not ast.exp.diffp.is_ufunc) or (ast.exp.is_pow and ast.exp.strip_pow.is_ufunc))) or
 				ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or
 				ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'},
 				{","})
@@ -717,7 +723,7 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_slice (self, ast):
 		b = _ast_slice_bounds (ast)
 
-		return ':'.join (self._ast2nat_wrap (a, a is not b [-1] and a.has_tail_lambda_solo, a.op in {'=', ',', '-lamb', '-slice'}) for a in b)
+		return ':'.join (self._ast2nat_wrap (a, a is not b [-1] and not a.is_diff and a.has_tail_lambda_solo, a.op in {'=', ',', '-lamb', '-slice'}) for a in b)
 
 	def _ast2nat_dict (self, ast):
 		items = []

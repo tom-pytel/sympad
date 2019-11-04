@@ -31,7 +31,7 @@
 > PDEs
 
 > overhaul function call keyword arguments: expr -> ('kw', expr)?
-> overhaul lambda variables: ('@', 'var') -> 'var'?
+> overhaul lambda AST variable storage: ('@', 'var') -> 'var'?
 
 > input shortcut non-opened closing curly and/or paren?
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
@@ -133,5 +133,4 @@ Slow Parse (seems to be in Python regex due to abuse of said):
 
 Errors:
 -------
-
 

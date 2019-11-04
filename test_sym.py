@@ -407,6 +407,11 @@ a^\lambda*lambdax:1
 x**?f(x,y).a^1
 (LambertW(5.194664222299675e-09[1e100]=-4.904486369506518e-17*\lambda*a,lambdax,y,z:\emptyset'''))
 x**?g(x)**x
+a**?f(x)^a'
+a**?f(x)^b^c
+a**?f(x)'
+a / c \int dx * d/dx a
+d/dx a \lambda:
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
