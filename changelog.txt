@@ -1,5 +1,6 @@
 v1.0.16:
 --------
+* Added early out for successful parse if all remaining conflicts are trivial.
 * Fixes, randomized testing no longer returning any errors.
 
 v1.0.15:
