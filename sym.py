@@ -602,7 +602,7 @@ class ast2nat: # abstract syntax tree -> native text
 			if p and (
 					t [-1] [-1:] == '.' or
 					s [:1].isdigit () or
-					n.op in {'#', '-lim', '-sum', '-intg'} or
+					n.is_num or #, n.op in {'#', '-lim', '-sum', '-intg'} or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or p.strip_minus.op in {'/', '-diff'} or s [:1] == '[' or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg'} or

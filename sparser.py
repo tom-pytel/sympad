@@ -1117,14 +1117,33 @@ class Parser (lalr1.LALR1):
 	def parse_setextrastate (self, state):
 		self.autocomplete, self.autocompleting, self.erridx = state
 
+	def parse_result (self, red, erridx, autocomplete):
+		res             = (red is None, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete))
+		self.parse_idx += 1
+
+		if self.parse_best is None or res < self.parse_best:
+			self.parse_best = res
+
+		if os.environ.get ('SYMPAD_DEBUG'):
+			if self.parse_idx <= 32:
+				print ('parse:', res [-1], file = sys.stderr)
+
+			elif self.parse_idx == 33:
+				sys.stdout.write ('... |')
+				sys.stdout.flush ()
+
+			else:
+				sys.stdout.write ('\x08' + '\\|/-' [self.parse_idx & 3])
+				sys.stdout.flush ()
+
 	def parse_error (self): # add tokens to continue parsing for autocomplete if syntax allows
 		if isinstance (self.rederr, lalr1.Incomplete):
-			self.parse_results.append ((self.rederr.red, self.tok.pos, []))
+			self.parse_result (self.rederr.red, self.tok.pos, [])
 
 			return False
 
 		if self.tok != '$end':
-			self.parse_results.append ((None, self.tok.pos, []))
+			self.parse_result (None, self.tok.pos, [])
 
 			return False
 
@@ -1160,12 +1179,7 @@ class Parser (lalr1.LALR1):
 		return self._insert_symbol (rule [1] [pos])
 
 	def parse_success (self, red):
-		self.parse_results.append ((red, self.erridx, self.autocomplete))
-
-
-		if not self.erridx:
-			print (sym.ast2nat (_ast_mulexps_to_muls (red.no_curlys).flat)) # DEBUG
-
+		self.parse_result (red, self.erridx, self.autocomplete)
 
 		return True # continue parsing if conflict branches remain to find best resolution
 
@@ -1176,33 +1190,26 @@ class Parser (lalr1.LALR1):
 		if not text.strip:
 			return (AST.VarNull, 0, [])
 
-		self.parse_results  = [] # [(reduction, erridx, autocomplete), ...]
+		self.parse_idx      = 0
+		self.parse_best     = None # (values for sorting..., (reduction, erridx, autocomplete))
 		self.autocomplete   = []
 		self.autocompleting = True
 		self.erridx         = None
 
+		if os.environ.get ('SYMPAD_DEBUG'):
+			print (file = sys.stderr)
+
 		lalr1.LALR1.parse (self, text)
 
-		if not self.parse_results:
-			return (None, 0, [])
-
-		rated = sorted ((r is None, -e if e is not None else float ('-inf'), len (a), i, (r, e, a))
-			for i, (r, e, a) in enumerate (self.parse_results))
+		res = self.parse_best [-1] if self.parse_best is not None else (None, 0, [])
 
 		if os.environ.get ('SYMPAD_DEBUG'):
-			rated = list (rated)
+			if self.parse_idx >= 33:
+				print (f'\x08total {self.parse_idx}', file = sys.stderr)
+			elif self.parse_best is None:
+				print (f'no parse', file = sys.stderr)
 
 			print (file = sys.stderr)
-
-			for res in rated [:32]:
-				print ('parse:', res [-1], file = sys.stderr)
-
-			if len (rated) > 32:
-				print (f'... total {len (rated)}', file = sys.stderr)
-
-			print (file = sys.stderr)
-
-		res = next (iter (rated)) [-1]
 
 		return postprocess (res)
 
@@ -1226,7 +1233,9 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# set_sp_user_funcs ({'N'})
 	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-	a = p.parse (r"Union(Complement(Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))))), FiniteSet()*FiniteSet(True)), Complement(FiniteSet()*FiniteSet(True), Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3)))))))))")
+	# a = p.parse (r"Union(Complement(Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))))), FiniteSet()*FiniteSet(True)), Complement(FiniteSet()*FiniteSet(True), Union(Complement(Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))))), z20), Complement(z20, Union(Complement(Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3))), ln(y) / ln(partial)), Complement(ln(y) / ln(partial), Union(Complement(Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3), Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94))), Complement(Intersection(partial, b, 'str'**d**2 / (dz**2*146591184863111.94)), Derivative(0/partial*x*abs(w1)*6.4380354041832416e-21**d*y, z, 3)))))))))")
+	# a = p.parse (r"x^3 + 3y x^2 + 3x y^2 + y^3")
+	a = p.parse (r"1+2")
 	print (a)
 
 	# a = sym.ast2spt (a)

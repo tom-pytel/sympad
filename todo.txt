@@ -157,3 +157,5 @@ Slow parse 437.1875s:
 
 d^{3}/dz^{3}\frac0\partialx\left|w_{1}\right|6.4380354041832416e-21^dy^^\partial&&b&&'str'**d^{2}/dz^{2}146591184863111.94^^\log_\partialy^^z20^^\emptyset\{True}
 d^{3}/dz^{3}\frac0\partialx\left|w_{1}\right|6.4380354041832416e-21^dy&&\partial&&b&&'str'**d^{2}/dz^{2}146591184863111.94&&\log_\partialy&&z20&&\emptyset\{True}
+
+x^3 + 3y x^2 + 3x y^2 + y^3
