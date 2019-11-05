@@ -749,6 +749,10 @@ def test (argv = None):
 					if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
 						return AST ('@', 'CENSORED')
 
+				elif ast.is_intg:
+					if ast.dv.as_var.var in _RESERVED_WORDS:
+						return AST ('@', 'CENSORED')
+
 				elif ast.is_slice: # the slice object is evil
 					if ast.step == AST.None_:
 						ast = AST ('-slice', ast.start, ast.stop, None)
