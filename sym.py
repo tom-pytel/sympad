@@ -659,9 +659,9 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_pow (self, ast, trighpow = True):
 		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2nat_wrap (ast.exp,
-				(ast.exp.strip_attrpdpi.is_ufunc and not ((ast.exp.is_diffp and not ast.exp.diffp.is_ufunc) or (ast.exp.is_pow and ast.exp.strip_pow.is_ufunc))) or
 				ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or
 				ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'},
+				# (ast.exp.strip_attrpdpi.is_ufunc and not ((ast.exp.is_diffp and not ast.exp.diffp.is_ufunc) or (ast.exp.is_pow and ast.exp.strip_pow.is_ufunc))) or
 				{","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:

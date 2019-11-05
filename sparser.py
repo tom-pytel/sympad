@@ -202,7 +202,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
-		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist and not wrapt.ast.is_pow: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
+		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist:# and not wrapt.ast.is_pow: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
