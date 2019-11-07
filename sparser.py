@@ -691,7 +691,7 @@ class Parser (lalr1.LALR1):
 		('MAPSTO',       fr'\\mapsto(?!{_LTRU})'),
 		('EMPTYSET',     fr'\\emptyset(?!{_LTRU})'),
 		('SETMINUS',     fr'\\setminus(?!{_LTRU})'),
-		('SUBSTACK',      r'\\substack(?!{_LTRU})'),
+		('SUBSTACK',     fr'\\substack(?!{_LTRU})'),
 
 		('BEG_MAT',       r'\\begin\s*{\s*matrix\s*}'),
 		('END_MAT',       r'\\end\s*{\s*matrix\s*}'),
@@ -705,10 +705,10 @@ class Parser (lalr1.LALR1):
 		('END_CASES',     r'\\end\s*{\s*cases\s*}'),
 		('FRAC2',        fr'\\frac\s*{_VARTEX1}\s*{_VARTEX1}'),
 		('FRAC1',        fr'\\frac\s*{_VARTEX1}'),
-		('FRAC',          r'\\frac(?!{_LTRU})'),
+		('FRAC',         fr'\\frac(?!{_LTRU})'),
 		('BINOM2',       fr'\\binom\s*{_VARTEX1}\s*{_VARTEX1}'),
 		('BINOM1',       fr'\\binom\s*{_VARTEX1}'),
-		('BINOM',         r'\\binom(?!{_LTRU})'),
+		('BINOM',        fr'\\binom(?!{_LTRU})'),
 
 		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LTRU})|{"|".join (AST.Cmp.UNI2PY)}'),
 		('IF',            r'if(?!\w|\\_)'),
@@ -716,9 +716,9 @@ class Parser (lalr1.LALR1):
 		('OR',           fr'or(?!\w|\\_)|\\vee(?!{_LTRU})|{_UOR}'),
 		('AND',          fr'and(?!\w|\\_)|\\wedge(?!{_LTRU})|{_UAND}'),
 		('NOT',          fr'not(?!\w|\\_)|\\neg(?!{_LTRU})|{_UNOT}'),
-		('SQRT',          r'sqrt(?!\w|\\_)|\\sqrt(?!{_LTRU})'),
-		('LOG',           r'log(?!\w|\\_)|\\log(?!{_LTR})'),
-		('LN',            r'ln(?!\w|\\_)|\\ln(?!{_LTRU})'),
+		('SQRT',         fr'sqrt(?!\w|\\_)|\\sqrt(?!{_LTRU})'),
+		('LOG',          fr'log(?!\w|\\_)|\\log(?!{_LTR})'),
+		('LN',           fr'ln(?!\w|\\_)|\\ln(?!{_LTRU})'),
 
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
 		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))(?:_{{(\d+)}})?"),
@@ -1238,7 +1238,7 @@ class sparser: # for single script
 # 	# set_sp_user_funcs ({'N'})
 # 	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	a = p.parse (r"\log_y1-4.390610224900228;notb(\lim_{x\to\partialx}3062306634092707.0,partialx&&\emptyset&&Naturals0,d^{4}/dx^{2}dy^{1}dz^{1}2)=\left|\partial\right|andc**y1and\tilde\infty[xyzd]''")
+# 	a = p.parse (r"dlambda / dx : 2")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

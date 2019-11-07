@@ -532,6 +532,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\int dy / dx'), ('-intg', ('/', ('#', '1'), ('@', 'dx')), ('@', 'dy')))
 		self.assertEqual (p ('\\int d/dx x**2 dx'), ('-intg', ('-diff', ('^', ('@', 'x'), ('#', '2')), 'd', (('x', 1),)), ('@', 'dx')))
 		self.assertEqual (p ('\\int d/dx y(x) dx'), ('-intg', ('-diff', ('-ufunc', 'y', (('@', 'x'),)), 'd', (('x', 1),)), ('@', 'dx')))
+		self.assertEqual (p ('dlambda / dx : x'), ('-slice', ('-diff', ('@', 'lambda'), 'd', (('x', 1),)), ('@', 'x'), None))
+		self.assertEqual (p ('d**2 lambda / dx**2 : x'), ('-slice', ('-diff', ('@', 'lambda'), 'd', (('x', 2),)), ('@', 'x'), None))
 		self.assertEqual (p ('ln1.or'), ('.', ('@', 'ln1'), 'or'))
 		self.assertEqual (p ('ln1. or'), None)
 		self.assertEqual (p ('ln1 . or'), None)
@@ -1030,6 +1032,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\int dy / dx')), '\\int \\frac{1}{dx} \\ dy')
 		self.assertEqual (ast2tex (p ('\\int d/dx x**2 dx')), '\\int {\\frac{d}{dx}\\left(x^2 \\right)} \\ dx')
 		self.assertEqual (ast2tex (p ('\\int d/dx y(x) dx')), '\\int {\\frac{d}{dx}\\left(y\\left(x \\right) \\right)} \\ dx')
+		self.assertEqual (ast2tex (p ('dlambda / dx : x')), '\\frac{d\\lambda}{dx}{:}x')
+		self.assertEqual (ast2tex (p ('d**2 lambda / dx**2 : x')), '\\frac{d^2 \\lambda}{dx^2}{:}x')
 		self.assertEqual (ast2tex (p ('ln1.or')), 'ln_{1}.or')
 		self.assertRaises (AttributeError, ast2tex, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2tex, p ('ln1 . or'))
@@ -1528,6 +1532,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\int dy / dx')), '\\int 1/dx dy')
 		self.assertEqual (ast2nat (p ('\\int d/dx x**2 dx')), '\\int {d / dx (x**2)} dx')
 		self.assertEqual (ast2nat (p ('\\int d/dx y(x) dx')), '\\int {d / dx (y(x))} dx')
+		self.assertEqual (ast2nat (p ('dlambda / dx : x')), 'dlambda / dx:x')
+		self.assertEqual (ast2nat (p ('d**2 lambda / dx**2 : x')), 'd**2 lambda / dx**2:x')
 		self.assertEqual (ast2nat (p ('ln1.or')), 'ln1.or')
 		self.assertRaises (AttributeError, ast2nat, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2nat, p ('ln1 . or'))
@@ -2026,6 +2032,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\int dy / dx')), 'Integral(1/dx, y)')
 		self.assertEqual (ast2py (p ('\\int d/dx x**2 dx')), 'Integral(Derivative(x**2, x), x)')
 		self.assertEqual (ast2py (p ('\\int d/dx y(x) dx')), "Integral(Derivative(Function('y')(x), x), x)")
+		self.assertEqual (ast2py (p ('dlambda / dx : x')), 'slice(Derivative(lambda, x), x)')
+		self.assertEqual (ast2py (p ('d**2 lambda / dx**2 : x')), 'slice(Derivative(lambda, x, 2), x)')
 		self.assertEqual (ast2py (p ('ln1.or')), 'ln1.or')
 		self.assertRaises (AttributeError, ast2py, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2py, p ('ln1 . or'))
@@ -2524,6 +2532,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\int dy / dx')), ('-intg', ('/', ('#', '1'), ('@', 'dx')), ('@', 'dy')))
 		self.assertEqual (ast2tex2ast (p ('\\int d/dx x**2 dx')), ('-intg', ('-diff', ('(', ('^', ('@', 'x'), ('#', '2'))), 'd', (('x', 1),)), ('@', 'dx')))
 		self.assertEqual (ast2tex2ast (p ('\\int d/dx y(x) dx')), ('-intg', ('-diff', ('(', ('-ufunc', 'y', (('@', 'x'),))), 'd', (('x', 1),)), ('@', 'dx')))
+		self.assertEqual (ast2tex2ast (p ('dlambda / dx : x')), ('-diff', ('-lamb', ('@', 'x'), ()), 'd', (('x', 1),)))
+		self.assertEqual (ast2tex2ast (p ('d**2 lambda / dx**2 : x')), ('-slice', ('-diff', ('@', 'lambda'), 'd', (('x', 2),)), ('@', 'x'), None))
 		self.assertEqual (ast2tex2ast (p ('ln1.or')), ('.', ('@', 'ln1'), 'or'))
 		self.assertRaises (AttributeError, ast2tex2ast, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2tex2ast, p ('ln1 . or'))
@@ -3022,6 +3032,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\int dy / dx')), ('-intg', ('/', ('#', '1'), ('@', 'dx')), ('@', 'dy')))
 		self.assertEqual (ast2nat2ast (p ('\\int d/dx x**2 dx')), ('-intg', ('-diff', ('(', ('^', ('@', 'x'), ('#', '2'))), 'd', (('x', 1),)), ('@', 'dx')))
 		self.assertEqual (ast2nat2ast (p ('\\int d/dx y(x) dx')), ('-intg', ('-diff', ('(', ('-ufunc', 'y', (('@', 'x'),))), 'd', (('x', 1),)), ('@', 'dx')))
+		self.assertEqual (ast2nat2ast (p ('dlambda / dx : x')), ('-slice', ('-diff', ('@', 'lambda'), 'd', (('x', 1),)), ('@', 'x'), None))
+		self.assertEqual (ast2nat2ast (p ('d**2 lambda / dx**2 : x')), ('-slice', ('-diff', ('@', 'lambda'), 'd', (('x', 2),)), ('@', 'x'), None))
 		self.assertEqual (ast2nat2ast (p ('ln1.or')), ('.', ('@', 'ln1'), 'or'))
 		self.assertRaises (AttributeError, ast2nat2ast, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2nat2ast, p ('ln1 . or'))
@@ -3520,6 +3532,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\int dy / dx')), ('-func', 'Integral', (('/', ('#', '1'), ('@', 'dx')), ('@', 'y'))))
 		self.assertEqual (ast2py2ast (p ('\\int d/dx x**2 dx')), ('-func', 'Integral', (('-func', 'Derivative', (('^', ('@', 'x'), ('#', '2')), ('@', 'x'))), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('\\int d/dx y(x) dx')), ('-func', 'Integral', (('-func', 'Derivative', (('-ufunc', 'y', (('@', 'x'),)), ('@', 'x'))), ('@', 'x'))))
+		self.assertEqual (ast2py2ast (p ('dlambda / dx : x')), ('-func', 'slice', (('-func', 'Derivative', (('@', 'lambda'), ('@', 'x'))), ('@', 'x'))))
+		self.assertEqual (ast2py2ast (p ('d**2 lambda / dx**2 : x')), ('-func', 'slice', (('-func', 'Derivative', (('@', 'lambda'), ('@', 'x'), ('#', '2'))), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('ln1.or')), ('.', ('@', 'ln1'), 'or'))
 		self.assertRaises (AttributeError, ast2py2ast, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2py2ast, p ('ln1 . or'))
@@ -4018,6 +4032,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\int dy / dx')), ('-intg', ('/', ('#', '1'), ('@', 'dx')), ('@', 'dy')))
 		self.assertEqual (ast2spt2ast (p ('\\int d/dx x**2 dx')), ('-intg', ('-diffp', ('^', ('@', 'x'), ('#', '2')), 1), ('@', 'dx')))
 		self.assertEqual (ast2spt2ast (p ('\\int d/dx y(x) dx')), ('-intg', ('-diffp', ('-ufunc', 'y', (('@', 'x'),)), 1), ('@', 'dx')))
+		self.assertEqual (ast2spt2ast (p ('dlambda / dx : x')), ('-slice', ('-diff', ('@', 'lambda'), 'd', (('x', 1),)), ('@', 'x'), None))
+		self.assertEqual (ast2spt2ast (p ('d**2 lambda / dx**2 : x')), ('-slice', ('-diff', ('@', 'lambda'), 'd', (('x', 2),)), ('@', 'x'), None))
 		self.assertEqual (ast2spt2ast (p ('ln1.or')), ('.', ('@', 'ln1'), 'or'))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('ln1. or'))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('ln1 . or'))
@@ -4516,6 +4532,8 @@ d**2 y / dx dy z
 \int dy / dx
 \int d/dx x**2 dx
 \int d/dx y(x) dx
+dlambda / dx : x
+d**2 lambda / dx**2 : x
 ln1.or
 ln1. or
 ln1 . or

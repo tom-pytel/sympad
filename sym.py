@@ -291,8 +291,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			if n.is_minus and not_first: # and n.minus.is_num_pos
 				op, n = ' - ', n.minus
 
-			terms.extend ([op, self._ast2tex_wrap (n,
-				n.is_piece or (not_first and _ast_is_neg_nominus (n)) or ((n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg)) and not_last),
+			s = self._ast2tex (n)
+
+			terms.extend ([op, self._ast2tex_wrap (s,
+				n.is_piece or (not_first and _ast_is_neg_nominus (n)) or (not_last and s [-1:] != ')' and (n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg))),
 				(n.is_piece and not_last) or n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'})])
 
 		return ''.join (terms [1:]).replace (' + -', ' - ')
@@ -1198,11 +1200,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return attr if ast.is_attr_var else _ast_func_call (attr, ast.args, self._ast2spt)
 
 		except AttributeError as e: # unresolved attributes of expressions with free vars remaining should not raise
-			# if not obj.free_vars: # not isinstance (spt, ExprNoEval) and not _free_symbols (spt):
-			# 	raise e
 			try:
 				if not isinstance (spt, ExprNoEval) and not spt.free_symbols:
 					raise e
+
 			except:
 				raise e from None
 
@@ -1696,16 +1697,16 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-# 	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-# 	# set_sym_user_funcs (vars)
-# 	# res = ast2py (ast)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
+	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+	# set_sym_user_funcs (vars)
+	# res = ast2py (ast)
 
-# 	ast = AST ('=', ('-ufunc', 'f', ()), ('^', ('@', 'x'), ('#', '2')))
-# 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-# 	res = ast2py (ast)
-# 	# res = spt2ast (res)
+	ast = AST ('+', (('-sum', ('*', (('#', '0.'), ('-ufunc', 'f', ()), ('-intg', ('#', '0'), ('@', 'dD')))), ('@', 'x'), ('#', '0'), ('#', '1')), ('#', '1')))
+	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
+	res = ast2tex (ast)
+	# res = spt2ast (res)
 
-# 	print (res)
+	print (res)

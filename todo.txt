@@ -1,7 +1,12 @@
-> _tail_lambda to new diff format
+> free_vars, use sxlat?
+
+> diff of multivar function displayed as partial
+
+> subs AST?
 
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
 > ?f(x)'(2), spt -> ?f(x)(2) instead of subs of diff
+
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 
 > option to convert diffs of undefined functions assigned to variables to df/dx instead of d/dx f(x)
@@ -15,8 +20,10 @@
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
 
+> \log loggamma=2 py representation? also sqrt?
 > proper sqrt and log AST initialization via __new__
 
+> quick mode function name characters allow to follow immediately?
 > allow log_base without the \?
 > sum_{start <= x < stop} -> \sum_{x = start}^{stop - 1}?
 
@@ -136,10 +143,3 @@ Errors:
 -------
 
 
-
-text: {{:Falseor1e+100orx0}orprevprime(-1!)}
-
-ast:  ('*', (('-slice', False, ('+', (('@', 'Falseor1e'), ('*', (('#', '100'), ('@', 'orx0'))))), None), ('-ufunc', 'orprevprime', (('!', ('#', '-1')),))))
-ast:  ('*', (('(', ('-slice', False, ('+', (('@', 'Falseor1e'), ('*', (('#', '100'), ('@', 'orx0'))))), None)), ('@', 'orprevprime'), ('(', ('!', ('(', ('#', '-1'))))))
-tex1: \left({:}Falseor1e + 100\ orx_{0} \right) orprevprime\left(\left(-1 \right)! \right)
-tex2: \left({:}Falseor1e + 100\ orx_{0} \right) orprevprime \cdot \left(\left(-1 \right)! \right)

@@ -414,16 +414,22 @@ a / c \int dx * d/dx a
 d/dx a \lambda:
 f(d/dx 1,x)
 f(ln(2))
+\sum_{x=0}^1 0.f()\int0dD + 1
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
 _LETTERS_NUMBERS = _LETTERS + '_' + string.digits
 
 def _randidentifier ():
-	 return f'{choice (_LETTERS)}{"".join (choice (_LETTERS_NUMBERS) for _ in range (randint (0, 6)))}{choice (_LETTERS)}'
+	s = f'{choice (_LETTERS)}{"".join (choice (_LETTERS_NUMBERS) for _ in range (randint (0, 6)))}{choice (_LETTERS)}'
+
+	if s [:2] == 'd_' or s [:8] == 'partial_':
+		s = 'a' + s
+
+	return s
 
 def term_num ():
-	return f' {str (math.exp (random () * 100 - 50) * (-1 if random () > 0.5 else 1))} '
+	return f' {str (math.exp (random () * 100 - 50) * (-1 if random () >= 0.5 else 1))} '
 
 _TERM_VARS = sast.AST_Var.GREEK + tuple ('\\' + g for g in sast.AST_Var.GREEK) + tuple (sast.AST_Var.PY2TEXMULTI.keys ())
 
@@ -453,7 +459,7 @@ def expr_cmp (): # this gets processed and possibly reordered in sxlat
 	return s
 
 def expr_attr ():
-	return f'{expr ()}{"".join (f".{_randidentifier ()}" + ("()" if random () > 0.5 else "") for _ in range (randint (1, 3)))}'
+	return f'{expr ()}{"".join (f".{_randidentifier ()}" + ("()" if random () >= 0.5 else "") for _ in range (randint (1, 3)))}'
 
 def expr_comma ():
 	return ','.join (f'{expr ()}' for i in range (randrange (2, 4)))
@@ -564,10 +570,12 @@ def expr_diffp ():
 	return f"""{expr ()}{"'" * randrange (1, 4)}"""
 
 def expr_intg ():
-	return \
-			f'\\int_{expr ()}^{expr ()} {expr ()} dx' \
-			if random () >= 0.5 else \
-			f'\\int {expr ()} dx'
+	dv = f'd{_randidentifier () if random () >= 0.5 else choice (_LETTERS)}'
+
+	if random () >= 0.5:
+		return f'\\int_{expr ()}^{expr ()} {expr ()} {dv}'
+	else:
+		return f'\\int {expr ()} {dv}'
 
 def expr_vec ():
 	return '\\[' + ','.join (f'{expr ()}' for i in range (randrange (1, 4))) + ',]'

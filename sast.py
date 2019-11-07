@@ -292,10 +292,13 @@ class AST (tuple):
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:]))
 				tail = tail [1]
 
-			# TODO: overhaul this for new diff format
 			elif tail.is_diff:
-				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, tail.d, tail.dvs))
-				tail = tail.diff
+				if (tail.src or not tail.diff.is_var) and not (tail.src and tail.src.is_div and (tail.src.numer.is_mul or tail.src.numer.is_diff_or_part)):
+					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, tail.d, tail.dvs))
+					tail = tail.diff
+
+				else:
+					break
 
 			elif tail.is_cmp:
 				wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('<>', tail.lhs, tail.cmp [:-1] + ((tail.cmp [-1] [0], ast),)))
@@ -381,7 +384,7 @@ class AST (tuple):
 			elif ast.is_sqrt:
 				return is_simple (ast.rad) if ast.idx is None else (is_simple (ast.rad) and is_simple (ast.idx))
 			elif ast.is_func:
-				return is_simple (ast.args [0]) if ast.args.len == 1 and ast.func in {'factorial', 'ln', 'sqrt'} else False
+				return all (is_simple (a) for a in ast.args)
 
 			return False
 
@@ -617,7 +620,7 @@ class AST_Var (AST):
 	UNI2PY      = {**dict (zip (GREEKUNI, GREEK)), '\u2202': 'partial', '\u221e': 'oo'}
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 
-	_rec_groups = re.compile (r"^(?:(?:(d(?!elta))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$") # re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
+	_rec_groups = re.compile (r"^(?:(?:(d(?!elta))|(partial))(?!_)(?!['\d]))?((.*)(?<!\d)(\d*))$") # re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
 
 	def _init (self, var):
 		self.var = var
@@ -954,7 +957,7 @@ class AST_UFunc (AST):
 
 				if self.vars.len == len (args):
 					for v, a in zip (self.vars, args):
-						if not v.is_var_nonconst or (a.is_var and a.var != v.var): # a.is_var_null or (a != v and a.free_vars):
+						if not v.is_var_nonconst or (a.is_var_nonconst and a.var != v.var):
 							return None
 
 					if args != self.vars:
