@@ -1,10 +1,6 @@
-> allow log_base without the \
-> sum_{start <= x < stop} -> \sum_{x = start}^{stop - 1}
-
-> _tail_lambda to new diff format
+> OVERHAUL undefined functions
 
 > erroneous py representation of f(x)(0) -> Function('f')(x)*(0)
-
 > parse implicit ufuncs of type f (0), f (0, 0)
 > derivative of undefined function times arguments as call tex, nat and py call
 > ?(x)'(2), spt->?(x)(2) instead of subs of diff
@@ -12,19 +8,24 @@
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
-> patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
-
 > do not write out parentheses for differentiation where not needed - d/dx (y z) -> d/dx y z
 > do not write out parentheses for integration where not needed - \int {d / dx (x**2)} dx -> \int d / dx (x**2) dx
 > clean up sym lambda keyword safety wrapping
 
-> change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
+> patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
+
+> _tail_lambda to new diff format
+
+> allow log_base without the \?
+> sum_{start <= x < stop} -> \sum_{x = start}^{stop - 1}?
 
 > sxlat py f = Lambda (x, x**2) -> f (x) = x**2?
 
 > verify all is_var -> is_var_nonconst where consts not allowed
 > worry about invalid varnames (reserved function names) or leave as convenience?
+
+> change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
 
 > make semicolon separated plots work
 

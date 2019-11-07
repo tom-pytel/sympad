@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # python 3.6+
 
 # Randomized CONSISTENCY testing of parsing vs. writing: text -> ast -> tex/nat/py -> ast -> tex/nat/py
@@ -453,7 +453,8 @@ def expr_cmp (): # this gets processed and possibly reordered in sxlat
 def expr_attr ():
 	return f'{expr ()}{"".join (f".{_randidentifier ()}" + ("()" if random () > 0.5 else "") for _ in range (randint (1, 3)))}'
 
-# def expr_comma ():
+def expr_comma ():
+	return ','.join (f'{expr ()}' for i in range (randrange (2, 4)))
 
 def expr_curly ():
 	return '{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # python 3.6+
 
 # Server for web component and state machine for expressions.
