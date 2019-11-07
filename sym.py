@@ -226,8 +226,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{m}{{e}}{{{e}}}' if e else m
 
 	def _ast2tex_var (self, ast):
-		if not ast.var:
-			return '{}' # Null var
+		if ast.is_var_null:
+			return '\{' if self.parent.op in {None, ';'} else '{}'
 
 		n, s = ast.text_and_tail_num
 		n    = n.replace ('_', '\\_')
@@ -455,9 +455,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'.'     : _ast2tex_attr,
 		'"'     : lambda self, ast: '\\text{' + repr (ast.str_).replace ('}', '\\}') + '}',
 		','     : lambda self, ast: f'{", ".join (self._ast2tex (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
-		'('     : lambda self, ast: self._ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
-		'['     : lambda self, ast: f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
-		'|'     : lambda self, ast: f'\\left|{self._ast2tex (ast.abs)} \\right|',
+		'('     : lambda self, ast: '(' if ast.paren.is_var_null else self._ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
+		'['     : lambda self, ast: '[' if ast.brack.len == 1 and ast.brack [0].is_var_null else f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
+		'|'     : lambda self, ast: '|' if ast.abs.is_var_null else f'\\left|{self._ast2tex (ast.abs)} \\right|',
 		'-'     : _ast2tex_minus,
 		'!'     : lambda self, ast: self._ast2tex_wrap (ast.fact, {'^'}, (ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx', '-set', '-dict'} or ast.fact.is_num_neg)) + '!',
 		'+'     : _ast2tex_add,
@@ -756,13 +756,13 @@ class ast2nat: # abstract syntax tree -> native text
 		'='     : lambda self, ast: f'{self._ast2nat_ass_hs (ast.lhs)} = {self._ast2nat_ass_hs (ast.rhs, False)}',
 		'<>'    : lambda self, ast: f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}',
 		'#'     : lambda self, ast: ast.num,
-		'@'     : lambda self, ast: ast.var,
+		'@'     : lambda self, ast: '{' if ast.is_var_null and self.parent.op in {None, ';'} else ast.var,
 		'.'     : _ast2nat_attr,
 		'"'     : _ast2nat_str,
 		','     : lambda self, ast: f'{", ".join (self._ast2nat (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
-		'('     : lambda self, ast: f'({self._ast2nat (ast.paren)})',
-		'['     : lambda self, ast: f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
-		'|'     : lambda self, ast: f'{{|{self._ast2nat (ast.abs)}|}}',
+		'('     : lambda self, ast: '(' if ast.paren.is_var_null else f'({self._ast2nat (ast.paren)})',
+		'['     : lambda self, ast: '[' if ast.brack.len == 1 and ast.brack [0].is_var_null else f'[{", ".join (self._ast2nat (b) for b in ast.brack)}]',
+		'|'     : lambda self, ast: '|' if ast.abs.is_var_null else f'{{|{self._ast2nat (ast.abs)}|}}',
 		'-'     : _ast2nat_minus,
 		'!'     : lambda self, ast: self._ast2nat_wrap (ast.fact, {'^'}, ast.fact.op not in {'#', '@', '.', '"', '(', '[', '|', '!', '^', '-func', '-mat', '-idx', '-set', '-dict'} or ast.fact.is_num_neg) + '!',
 		'+'     : _ast2nat_add,
@@ -1002,13 +1002,13 @@ class ast2py: # abstract syntax tree -> Python code text
 		'='     : _ast2py_ass,
 		'<>'    : _ast2py_cmp,
 		'#'     : lambda self, ast: ast.num,
-		'@'     : lambda self, ast: ast.var,
+		'@'     : lambda self, ast: '{' if ast.is_var_null and self.parent.op in {None, ';'} else ast.var,
 		'.'     : _ast2py_attr,
 		'"'     : lambda self, ast: repr (ast.str_),
 		','     : lambda self, ast: f'{", ".join (self._ast2py (parm) for parm in ast.comma)}{_trail_comma (ast.comma)}',
-		'('     : lambda self, ast: f'({self._ast2py (ast.paren)})',
-		'['     : lambda self, ast: f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
-		'|'     : lambda self, ast: f'abs({self._ast2py (ast.abs)})',
+		'('     : lambda self, ast: '(' if ast.paren.is_var_null else f'({self._ast2py (ast.paren)})',
+		'['     : lambda self, ast: '[' if ast.brack.len == 1 and ast.brack [0].is_var_null else f'[{", ".join (self._ast2py (b) for b in ast.brack)}]',
+		'|'     : lambda self, ast: '|' if ast.abs.is_var_null else f'abs({self._ast2py (ast.abs)})',
 		'-'     : _ast2py_minus,
 		'!'     : lambda self, ast: f'factorial({self._ast2py (ast.fact)})',
 		'+'     : _ast2py_add,

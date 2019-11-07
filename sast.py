@@ -41,7 +41,7 @@
 # ('-or', (expr1, expr2, ...))                        - pythonic or
 # ('-and', (expr1, expr2, ...))                       - pythonic and
 # ('-not', expr)                                      - pythonic not
-# ('-ufunc', 'name', (a1, ...)[, (('kw1', a1), ...)]) - undefined function object with optional keyword arguments
+# ('-ufunc', 'name', (a1, ...)[, (('kw1', a1), ...)]) - undefined function object with optional keyword arguments, no arguments means 'pure' unapplied undefined function
 
 from collections import OrderedDict
 import re
@@ -361,6 +361,14 @@ class AST (tuple):
 			return name if recursed or AST._rec_identifier.match (name) else None
 
 		return _as_identifier (self)
+
+	def _as_ufunc_argskw (self):
+		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,))
+
+		if any (a.op not in {'#', '@'} and a.free_vars for a in args):
+			return None
+
+		return tuple (args), tuple (sorted (kw.items ()))
 
 	def _free_vars (self): # return set of unique unbound variables found in tree
 		def _free_vars (ast, vars):
@@ -909,6 +917,24 @@ class AST_UFunc (AST):
 		self.ufunc, self.vars, self.kw = ufunc, vars, kw
 
 		return self
+
+	def apply_argskw (self, argskw):
+		if argskw:
+			args, kw = argskw
+
+			if args and not kw:
+				if not self.vars.len:
+					return AST ('-ufunc', self.ufunc, args, self.kw)
+
+				if self.vars.len == len (args):
+					for v, a in zip (self.vars, args):
+						if not v.is_var_nonconst or a.is_var_null or (a != v and a.free_vars):
+							return None
+
+					if args != self.vars:
+						return AST ('-ufunc', self.ufunc, args, self.kw)
+
+		return None
 
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,

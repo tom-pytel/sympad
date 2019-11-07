@@ -202,8 +202,15 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
-		elif arg.is_paren and not tail.is_diff_or_part and arg.as_pvarlist:# and not wrapt.ast.is_pow: # var (vars) -> ('-ufunc', 'var', (vars)) ... implicit undefined function
-			ast = wrapa (AST ('-ufunc', tail.var, arg.as_pvarlist))
+		elif arg.is_paren and not tail.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
+			ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
+
+	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
+		if arg.is_paren:
+			ast2 = tail.apply_argskw (arg.paren.as_ufunc_argskw)
+
+			if ast2:
+				ast = ast2
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
 		if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
@@ -1240,7 +1247,7 @@ class sparser: # for single script
 # 	# set_sp_user_funcs ({'N'})
 # 	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	a = p.parse (r"1+2")
+# 	a = p.parse (r"?f(x)(")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)
