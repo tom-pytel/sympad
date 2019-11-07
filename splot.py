@@ -100,7 +100,7 @@ def _process_head (obj, args, fs, style = None, ret_xrng = False, ret_yrng = Fal
 	elif ret_yrng:
 		ymin, ymax = obj.ylim ()
 
-	kw = dict ((k, # cast certain SymPy objects which don't play nice with matplotlib using numpy
+	kw = dict ((k, # cast certain sympy objects which don't play nice with matplotlib using numpy
 		int (v) if isinstance (v, sp.Integer) else
 		float (v) if isinstance (v, (sp.Float, sp.Rational)) else
 		v) for k, v in kw.items ())

@@ -412,6 +412,8 @@ a**?f(x)^b^c
 a**?f(x)'
 a / c \int dx * d/dx a
 d/dx a \lambda:
+f(d/dx 1,x)
+f(ln(2))
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

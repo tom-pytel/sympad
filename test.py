@@ -1849,7 +1849,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('{x y}.integrate ((x, 0, 1))')), '(x*y).integrate((x, 0, 1))')
 		self.assertEqual (ast2py (p ('\\sqrt (a:b)')), 'sqrt(slice(a, b))')
 		self.assertEqual (ast2py (p ('\\sqrt[3] (a:b)')), 'slice(a, b)**(1/3)')
-		self.assertEqual (ast2py (p ('? ()')), "Function('')()")
+		self.assertEqual (ast2py (p ('? ()')), "Function('')")
 		self.assertEqual (ast2py (p ('? (x)')), "Function('')(x)")
 		self.assertEqual (ast2py (p ('? (2)')), "Function('')(2)")
 		self.assertEqual (ast2py (p ('?f (x, y, real = True)')), "Function('f', real = True)(x, y)")

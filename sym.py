@@ -60,14 +60,32 @@ def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argu
 
 	return ret
 
+def _free_symbols (spt): # extend sympy .free_symbols into standard python containers
+	if isinstance (spt, (None.__class__, bool, int, float, complex, str)):
+		pass # nop
+	elif isinstance (spt, (tuple, list, set, frozenset)):
+		return set ().union (*(_free_symbols (s) for s in spt))
+	elif isinstance (spt, slice):
+		return _free_symbols (spt.start).union (_free_symbols (spt.stop), _free_symbols (spt.step))
+	elif isinstance (spt, dict):
+		return set ().union (*(_free_symbols (s) for s in sum (spt.items (), ())))
+
+	else:
+		try:
+			return spt.free_symbols
+		except:
+			pass
+
+	return set ()
+
 def _simplify (spt): # extend sympy simplification into standard python containers
-	if isinstance (spt, (bool, int, float, complex, str, slice)):
+	if isinstance (spt, (None.__class__, bool, int, float, complex, str)):
 		return spt
-
-	if isinstance (spt, (tuple, list, set, frozenset)):
+	elif isinstance (spt, (tuple, list, set, frozenset)):
 		return spt.__class__ (_simplify (a) for a in spt)
-
-	if isinstance (spt, dict):
+	elif isinstance (spt, slice):
+		return slice (_simplify (spt.start), _simplify (spt.stop), _simplify (spt.step))
+	elif isinstance (spt, dict):
 		return dict ((_simplify (k), _simplify (v)) for k, v in spt.items ())
 
 	try:
@@ -227,7 +245,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_var (self, ast):
 		if ast.is_var_null:
-			return '\{' if self.parent.op in {None, ';'} else '{}'
+			return '\\{' if self.parent.op in {None, ';'} else '{}'
 
 		n, s = ast.text_and_tail_num
 		n    = n.replace ('_', '\\_')
@@ -291,32 +309,23 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
 				s = f'{{{s}}}'
 
-			# if p and p.is_attr and s [:6] == '\\left(' and i not in ast.exp:
-			# 	s = self._ast2tex_wrap (s, 1)
-
 			if p and (
 					t [-1] [-1:] == '.' or
 					s [:1].isdigit () or
 					s [:6] == '\\left[' or
-					(s [:6] == '\\left(' and (p.tail_mul.is_var or p.tail_mul.is_attr_var or i in ast.exp)) or
+					(s [:6] == '\\left(' and (
+						p.tail_mul.is_attr_var or
+						p.tail_mul.op in {'@', '-ufunc'} or
+						i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
-					(p.strip_minus.is_attr_var and s [:6] == '\\left(') or
-					# (p.is_var_lambda and (self.parent.is_slice or (self.parent.is_comma and _ast_followed_by_slice (ast, self.parent.comma)))) or
-					# (p.is_div and (p.numer.is_diff_or_part_solo or (p.numer.is_pow and p.numer.base.is_diff_or_part_solo))) or
-					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or # _SYM_USER_VARS.get (p.var, AST.Null).is_lamb) or
-					# (n.strip_fdpi.strip_paren.is_comma and i in ast.exp) or
-					# (n.strip_fdpi.is_paren and i in ast.exp) or
+					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 					(n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
-					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					(n.is_paren and p.tail_mul.is_var and (
-						(p.tail_mul.var in _SYM_USER_FUNCS) or
-						(not p.tail_mul.is_diff_or_part and n.as_pvarlist)
-					))):
+					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma))):
 				t.append (f' \\cdot {s}')
 				has = True
 
@@ -608,12 +617,11 @@ class ast2nat: # abstract syntax tree -> native text
 					s [:1] == '[' or
 					s [:1].isdigit () or
 					(s [:1] == '(' and (
-						p.tail_mul.is_var or
 						p.tail_mul.is_attr_var or
-						(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
+						p.tail_mul.op in ('@', '-ufunc') or
 						i in ast.exp)) or
 					t [-1] [-1:] == '.' or
-					n.is_num or #, n.op in {'#', '-lim', '-sum', '-intg'} or
+					n.is_num or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or
 					p.strip_minus.op in {'/', '-lim', '-sum', '-diff', '-intg'} or
@@ -851,7 +859,8 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		if istop:
 			if ast.lhs.is_ufunc:
-				ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
+				if ast.lhs.is_ufunc_pure:
+					ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
 
 			elif ast.lhs.is_comma:
 				rhs = ast.rhs._strip_paren (1)
@@ -909,7 +918,11 @@ class ast2py: # abstract syntax tree -> Python code text
 		for i, n in enumerate (ast.mul):
 			s = self._ast2py_paren (n, n.is_cmp_in or n.is_add or (i and (n.is_div or n.is_log_with_base)))
 
-			if p and (not n.is_paren or not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or i in ast.exp):
+			if p and (
+					not n.is_paren or
+					p.tail_mul.op in {'@', '-ufunc'} or
+					not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or
+					i in ast.exp):
 				t.append (f'*{s}')
 			else:
 				t.append (s)
@@ -927,7 +940,6 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow or (ast.base.is_idx and self.parent.is_pow and ast is self.parent.exp) else self._ast2py_curly (ast.base)
-		# e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.is_abs and ast.exp.strip_attrm.is_idx) or (ast.base.is_func and ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
 		e = self._ast2py_paren (ast.exp) if ast.exp.is_sqrt_with_base or (ast.base.op in {'|', '-set'} and ast.exp.strip_attrm.is_idx) or (ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
@@ -1036,7 +1048,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-or'   : lambda self, ast: f'Or({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.or_)})',
 		'-and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
 		'-not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
-		'-ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})({", ".join (self._ast2py (v) for v in ast.vars)})',
+		'-ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})' + (f'({", ".join (self._ast2py (v) for v in ast.vars)})' if ast.vars else ''),
 
 		'text'  : lambda self, ast: ast.py,
 	}
@@ -1186,7 +1198,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return attr if ast.is_attr_var else _ast_func_call (attr, ast.args, self._ast2spt)
 
 		except AttributeError: # unresolved attributes of expressions with free vars remaining should not raise
-			if not obj.free_vars:
+			if not obj.free_vars: # not isinstance (spt, ExprNoEval) and not _free_symbols (spt):
 				raise
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
@@ -1335,6 +1347,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'.'     : _ast2spt_attr,
 		'"'     : lambda self, ast: ast.str_,
 		','     : lambda self, ast: tuple (self._ast2spt (p) for p in ast.comma),
+		'{'     : lambda self, ast: self._ast2spt (ast.curly),
 		'('     : lambda self, ast: self._ast2spt (ast.paren),
 		'['     : lambda self, ast: [self._ast2spt (b) for b in ast.brack],
 		'|'     : lambda self, ast: sp.Abs (self._ast2spt (ast.abs)),
@@ -1516,7 +1529,7 @@ class spt2ast:
 
 	def _spt2ast_Derivative (self, spt):
 		if len (spt.args) == 2:
-			syms = spt.free_symbols
+			syms = _free_symbols (spt.args [0])
 
 			if len (syms) == 1 and spt.args [1] [0] == syms.pop ():
 				return AST ('-diffp', self._spt2ast (spt.args [0]), int (spt.args [1] [1]))
@@ -1685,9 +1698,9 @@ class sym: # for single script
 # 	# set_sym_user_funcs (vars)
 # 	# res = ast2py (ast)
 
-# 	ast = AST ('(', ('-func', 'LambertW', (('=', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')), {1, 2})), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), None))))
+# 	ast = AST ('=', ('-ufunc', 'f', ()), ('^', ('@', 'x'), ('#', '2')))
 # 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-# 	res = ast2nat (ast)
+# 	res = ast2py (ast)
 # 	# res = spt2ast (res)
 
 # 	print (res)

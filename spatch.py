@@ -149,7 +149,7 @@ def _SparseMatrix_eval_matrix_mul (self, other):
 #...............................................................................................
 SPATCHED = False
 
-try: # try to patch and fail silently if SymPy has changed too much since this was written
+try: # try to patch and fail silently if sympy has changed too much since this was written
 	from sympy import sympify, S, count_ops, cancel, together, SparseMatrix, Basic, Complement, boolalg
 	from sympy.matrices.common import MatrixArithmetic, classof
 	from sympy.matrices.dense import DenseMatrix

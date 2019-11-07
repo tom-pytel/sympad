@@ -363,14 +363,36 @@ class AST (tuple):
 		return _as_identifier (self)
 
 	def _as_ufunc_argskw (self):
+		def is_simple (ast):
+			if ast.is_num:
+				return True
+			elif ast.is_var:
+				return ast.is_var_const
+			elif ast.op in {'{', '(', '-', '!'}:
+				return is_simple (ast [1])
+			elif ast.op in {'+', '*', '*exp'}:
+				return all (is_simple (a) for a in ast [1])
+			elif ast.is_div:
+				return is_simple (ast.numer) and is_simple (ast.denom)
+			elif ast.is_pow:
+				return is_simple (ast.base) and is_simple (ast.exp)
+			elif ast.is_log:
+				return is_simple (ast.log) if ast.base is None else (is_simple (ast.log) and is_simple (ast.base))
+			elif ast.is_sqrt:
+				return is_simple (ast.rad) if ast.idx is None else (is_simple (ast.rad) and is_simple (ast.idx))
+			elif ast.is_func:
+				return is_simple (ast.args [0]) if ast.args.len == 1 and ast.func in {'factorial', 'ln', 'sqrt'} else False
+
+			return False
+
 		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,))
 
-		if any (a.op not in {'#', '@'} and a.free_vars for a in args):
+		if any (not a.is_var and not is_simple (a) for a in args):
 			return None
 
 		return tuple (args), tuple (sorted (kw.items ()))
 
-	def _free_vars (self): # return set of unique unbound variables found in tree
+	def _free_vars (self): # return set of unique unbound variables found in tree, not reliable
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
 				if ast.is_var:
@@ -381,16 +403,18 @@ class AST (tuple):
 					for e in ast:
 						_free_vars (e, vars)
 
-					if ast.is_lim:
-						vars.remove (ast.lvar)
-					elif ast.is_sum:
-						vars.remove (ast.svar)
+					try:
+						if ast.is_lim:
+							vars.remove (ast.lvar)
+						elif ast.is_sum:
+							vars.remove (ast.svar)
 
-					elif ast.is_intg:
-						vars.remove (ast.dv)
+						elif ast.is_intg:
+							if ast.is_intg_definite:
+								vars.remove (ast.dv.as_var)
 
-						if ast.is_intg_definite:
-							vars.remove (ast.dv.as_var)
+					except KeyError:
+						pass
 
 		vars = set ()
 
@@ -918,6 +942,8 @@ class AST_UFunc (AST):
 
 		return self
 
+	_is_ufunc_pure = lambda self: all (v.is_var_nonconst for v in self.vars)
+
 	def apply_argskw (self, argskw):
 		if argskw:
 			args, kw = argskw
@@ -928,7 +954,7 @@ class AST_UFunc (AST):
 
 				if self.vars.len == len (args):
 					for v, a in zip (self.vars, args):
-						if not v.is_var_nonconst or a.is_var_null or (a != v and a.free_vars):
+						if not v.is_var_nonconst or (a.is_var and a.var != v.var): # a.is_var_null or (a != v and a.free_vars):
 							return None
 
 					if args != self.vars:
