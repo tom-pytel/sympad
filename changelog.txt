@@ -1,6 +1,6 @@
 v1.0.17:
 --------
-
+* Added undefined function parsing and writing of immediate value arguments for initial conditions.
 
 v1.0.16:
 --------

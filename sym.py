@@ -102,12 +102,12 @@ def _simplify (spt): # extend sympy simplification into standard python containe
 def _dsolve (*args, **kw):
 	ast = spt2ast (sp.dsolve (*args, **kw))
 
-	if ast.is_cmp:
+	if ast.is_brack:
+		ast = AST ('[', tuple (AST ('=', a.lhs, a.cmp [0] [1]) if a.cmp.len == 1 and a.cmp [0] [0] == '==' else a for a in ast.brack))
+
+	elif ast.is_cmp:
 		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
 			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
-
-	elif ast.is_brack:
-		ast = AST ('[', tuple (AST ('=', a.lhs, a.cmp [0] [1]) if a.cmp.len == 1 and a.cmp [0] [0] == '==' else a for a in ast.brack))
 
 	return ExprNoEval (str (ast), 1) # never automatically simplify dsolve
 
@@ -444,7 +444,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	def _ast2tex_ufunc (self, ast):
-		if not ast.ufunc or ast.kw or not ast.vars or AST ('@', ast.ufunc).is_diff_or_part or \
+		if not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or \
 				(ast.ufunc in _SYM_USER_FUNCS and \
 				not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
 				not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
@@ -748,7 +748,7 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'''{{{", ".join (f'{k}: {v}' for k, v in items)}}}'''
 
 	def _ast2nat_ufunc (self, ast):
-		if not ast.ufunc or ast.kw or not ast.vars or AST ('@', ast.ufunc).is_diff_or_part or \
+		if not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or \
 				(ast.ufunc in _SYM_USER_FUNCS and \
 				not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
 				not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
@@ -1197,9 +1197,14 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 			return attr if ast.is_attr_var else _ast_func_call (attr, ast.args, self._ast2spt)
 
-		except AttributeError: # unresolved attributes of expressions with free vars remaining should not raise
-			if not obj.free_vars: # not isinstance (spt, ExprNoEval) and not _free_symbols (spt):
-				raise
+		except AttributeError as e: # unresolved attributes of expressions with free vars remaining should not raise
+			# if not obj.free_vars: # not isinstance (spt, ExprNoEval) and not _free_symbols (spt):
+			# 	raise e
+			try:
+				if not isinstance (spt, ExprNoEval) and not spt.free_symbols:
+					raise e
+			except:
+				raise e from None
 
 		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
 

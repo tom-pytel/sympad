@@ -1,8 +1,10 @@
-> [1, 2, x].y
+> _tail_lambda to new diff format
 
-> derivative of undefined function times arguments as call tex, nat and py call
-> ?(x)'(2), spt->?(x)(2) instead of subs of diff
+> ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
+> ?f(x)'(2), spt -> ?f(x)(2) instead of subs of diff
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
+
+> option to convert diffs of undefined functions assigned to variables to df/dx instead of d/dx f(x)
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
@@ -13,7 +15,7 @@
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
 
-> _tail_lambda to new diff format
+> proper sqrt and log AST initialization via __new__
 
 > allow log_base without the \?
 > sum_{start <= x < stop} -> \sum_{x = start}^{stop - 1}?
