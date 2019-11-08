@@ -332,11 +332,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				has = True
 
 			elif p and (
-					p.op in {'-sqrt'} or
+					p.is_sqrt or
 					p.num_exp or
 					(p.is_attr_var and s [:6] != '\\left(') or
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
+					# (p.tail_mul.is_var and n.strip_fdpi.is_var) or
 					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or (n.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
 				t.append (f'\\ {s}')
 

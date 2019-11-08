@@ -191,6 +191,7 @@ class AST (tuple):
 	_strip_attrpdpi = lambda self, count = None: self._strip (count, ('.', '^', '-diffp', '-idx'))
 	_strip_curlys   = lambda self, count = None: self._strip (count, ('{',))
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
+	_strip_fdpi     = lambda self, count = None: self._strip (count, ('!', '-diffp', '-idx'))
 	_strip_pow      = lambda self, count = None: self._strip (count, ('^',))
 
 	def _strip_minus (self, count = None, retneg = False, negnum = True):
@@ -215,11 +216,11 @@ class AST (tuple):
 
 		return self
 
-	def _strip_fdpi (self): # fdp = fact, diffp, idx
-		while self.op in {'!', '-diffp', '-idx'}:
-			self = self [1]
+	# def _strip_fdpi (self): # fdp = fact, diffp, idx
+	# 	while self.op in {'!', '-diffp', '-idx'}:
+	# 		self = self [1]
 
-		return self
+	# 	return self
 
 	def _tail_mul (self):
 		return self.tail_mul_wrap [0]

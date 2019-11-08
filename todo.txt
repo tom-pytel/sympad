@@ -1,5 +1,3 @@
-> subs sxlat
-
 > subs AST sxlat
 > subs AST ast2tex
 > subs AST ast2nat
@@ -26,9 +24,8 @@
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
 
-> diff of multivar function displayed as partial
 > unnecessary cdot in front of tex and nat a * d/dx f
-> this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better
+> diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
 > test_server multi maths from semicolon expressions
 
