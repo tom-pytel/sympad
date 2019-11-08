@@ -23,11 +23,11 @@
 # ('-log', expr[, base])                              - logarithm of expr in base, natural log if base not present
 # ('-sqrt', expr[, n])                                - nth root of expr, square root if n not present
 # ('-func', 'name', (a1, a2, ...))                    - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
-# ('-lim', expr, var, to[, 'dir'])                    - limit of expr when 'var' approaches to from both directions, otherwise only from specified '+' or '-' dir
+# ('-lim', expr, var, to[, 'dir'])                    - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
-# ('-diff', expr, d, ((v1, p1), ...))                 - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power)
+# ('-diff', expr, 'd', (('v1', p1), ...))             - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power)
 # ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
-# ('-intg', expr, var[, from, to])                    - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential var ('dx', 'dy', etc ...)
+# ('-intg', expr, dv[, from, to])                     - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential dv ('dx', 'dy', etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
 # ('-piece', ((v1, c1), ..., (vn, True?)))            - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('-lamb', expr, (v1, v2, ...))                      - lambda expression: v? = 'var'

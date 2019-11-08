@@ -1,10 +1,6 @@
-> change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
-> do not map bound variables inside lim, sum, intg and sub
-
 > subs AST
+> substitute shortcut expr (x = ?), or expr |_{x = ?}?
 
-
-> diff of multivar function displayed as partial
 
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
 > ?f(x)'(2), spt -> ?f(x)(2) instead of subs of diff
@@ -21,6 +17,10 @@
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
+
+> diff of multivar function displayed as partial
+> unnecessary cdot in front of tex and nat a * d/dx f
+> this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better
 
 > test_server multi maths from semicolon expressions
 
@@ -61,8 +61,6 @@
 > evil extra spacing before single-quote strings!
 > x'**2, x'.a, x'! - how to do in grammar?
 > # comment end of line?
-
-> substitute shortcut expr (x = ?), or expr |_{x = ?}?
 
 > importing modules to allow custom code execution
 

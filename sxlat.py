@@ -275,7 +275,8 @@ def _xlat_f2a_Integral (ast = None, dvab = None, *args, **kw):
 _xlat_f2a_Limit_dirs = {AST ('"', '+'): ('+',), AST ('"', '-'): ('-',), AST ('"', '+-'): ()}
 
 def _xlat_f2a_Limit (ast = AST.VarNull, var = AST.VarNull, to = AST.VarNull, dir = _AST_StrPlus):
-	return AST ('-lim', ast, var, to, *_xlat_f2a_Limit_dirs [dir])
+	if var.is_var_nonconst:
+		return AST ('-lim', ast, var, to, *_xlat_f2a_Limit_dirs [dir])
 
 def _xlat_f2a_Sum_NAT (ast = AST.VarNull, ab = None, **kw):
 	if not kw:
@@ -454,10 +455,10 @@ def _xlat_f2t_SUBS (ast2tex, ast): # handles both Subs() and .subs() and collaps
 	ast, subs = _xlat_f2t_SUBS_collect (ast, [])
 
 	if len (subs) == 1:
-		return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (subs [0] [0])}={ast2tex (subs [0] [1])}}}'
+		return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (subs [0] [0])} = {ast2tex (subs [0] [1])}}}'
 
 	elif len (subs) > 1:
-		asss = ' \\\\ '.join (f'{ast2tex (v)}={ast2tex (s)}' for v, s in subs)
+		asss = ' \\\\ '.join (f'{ast2tex (v)} = {ast2tex (s)}' for v, s in subs)
 
 		return f'\\left. {ast2tex (ast)} \\right|_{{\\substack{{{asss}}}}}'
 
