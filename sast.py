@@ -640,7 +640,7 @@ class AST_Var (AST):
 	UNI2PY      = {**dict (zip (GREEKUNI, GREEK)), '\u2202': 'partial', '\u221e': 'oo'}
 	ANY2PY      = {**UNI2PY, **TEX2PY}
 
-	_rec_groups = re.compile (r"^(?:(?:(d(?!elta))|(partial))(?!_)(?!['\d]))?((.*)(?<!\d)(\d*))$") # re.compile (r"^(?:(?:(d(?!elta|partial))|(partial))(?!['\d]))?((.*)(?<!\d)(\d*))$")
+	_rec_groups = re.compile (r"^(?:(?:(d(?!elta))|(partial))(?!_)(?!['\d]))?((.*)(?<!\d)(\d*))$")
 
 	def _init (self, var):
 		self.var = var

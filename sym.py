@@ -497,6 +497,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-and'  : lambda self, ast: ' \\wedge '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice', '-or'} or (a.is_piece and a is not ast.and_ [-1])) for a in ast.and_),
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
 		'-ufunc': _ast2tex_ufunc,
+		'-subs' : lambda self, ast: '<SUBS>',
 
 		'text'  : lambda self, ast: ast.tex,
 	}
@@ -802,6 +803,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-and'  : lambda self, ast: ' and '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb', '-or'}) for a in ast.and_),
 		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
 		'-ufunc': _ast2nat_ufunc,
+		'-subs' : lambda self, ast: '<SUBS>',
 
 		'text'  : lambda self, ast: ast.nat,
 	}
@@ -1051,6 +1053,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
 		'-not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
 		'-ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})' + (f'({", ".join (self._ast2py (v) for v in ast.vars)})' if ast.vars else ''),
+		'-subs' : lambda self, ast: '<SUBS>',
 
 		'text'  : lambda self, ast: ast.py,
 	}
@@ -1385,6 +1388,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: self._ast2spt (a) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
+		'-subs' : lambda self, ast: sp.Subs (self._ast2spt (ast.expr), tuple (self._ast2spt (s) for s, d in ast.subs), tuple (self._ast2spt (d) for s, d in ast.subs)),
 
 		'text'  : lambda self, ast: ast.spt,
 	}

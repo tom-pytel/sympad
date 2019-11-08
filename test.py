@@ -4560,6 +4560,13 @@ f (x, y) (0, 0)
 f (x, y, z) (0, 0, 0)
 f (x)' (0)
 """
+_EXPRESSIONS = r"""
+\. x+y |_{x = 1}
+\. x+y |_{x = 1, y = 2}
+\. x+y |_{x, y = 1, 2}
+\. x+y |_{\substack{x = 1}}
+\. x+y |_{\substack{x = 1 \\ y = 2}}
+"""
 # _EXPRESSIONS = r"""
 # {d / dx f (x, y)} (0, 0)
 # {d / dx f (x, y, z)} (0, 0, 0)

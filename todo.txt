@@ -1,4 +1,5 @@
 > subs AST
+> Subs (1, x, x).subs (x, 1/y)
 > substitute shortcut expr (x = ?), or expr |_{x = ?}?
 
 
