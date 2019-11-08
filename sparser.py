@@ -282,11 +282,11 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 			if ast_dv_check (n):
 				dec = 1
-				ds.append ((n.as_var.var, 1))
+				ds.append ((n.var_name, 1))
 
 			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curlys.is_num_pos_int:
 				dec = n.exp.strip_curlys.as_int
-				ds.append ((n.base.as_var.var, dec))
+				ds.append ((n.base.var_name, dec))
 
 			else:
 				return None, None
@@ -645,7 +645,7 @@ class Parser (lalr1.LALR1):
 			b'fX8tDMLgVqZ9S4M8QZ041NbbeqGQ+xD/s5fCwx6gNG87VJvc2MT1pymwPA3LtrqkiyvEeh2DW1Qq2IbQY0XnquUX6rWu8jC4/NKRFT5o4UcfFnxQzuvSFKebYldd0sUVoj2Lpohryh7AxVm+bgrkZLPcVA/h4iwf0wC/tyzXdkW210uy3lb3fCGIbnbBRbBu' \
 			b'MiOwzfFKYYQ2dkvCVasuXKey1s+2a8+XuDzGFPUffnn01UO7uDQ2ri447dLARd0P7OI1T2Oq/he11gPX4q+/eKl9/N8WyjDE3bCTx8zN0rDo4pJevcLh7Eq6rc7x4tI9ubUM9166fXWOF5fuOn2LMyxdXPp9hheX7vqJiXMr3aY6x4tLd/0cyLmVrqrO8eLS' \
 			b'tdVb3dKSYYFq5y0aad0dWmAWkiUutOBhKeT927T8G16g1EB249mACoqA9qHiD0GPbtQ1LqfP/tl1s+MaC498QNEP/pXmuBuVbN2gqSqwPdBPWh25CqVVx1cb2omWFruhbdyFinZ9Cjs+6WSnJ9x+gfMDnGdfwY08aItbyk38pP8U1UyZuDM87QWv3mLthpqJ' \
-			b'Syxq2jiK31j0rVmAicJLElqqBmsphI57QPA+pripxltlWlqiIX67uGmFZCwUGoSCNo5t8OBGb4MbW1z/f7O4DUw=' 
+			b'Syxq2jiK31j0rVmAicJLElqqBmsphI57QPA+pripxltlWlqiIX67uGmFZCwUGoSCNo5t8OBGb4MbW1z/f7O4DUw='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1238,7 +1238,7 @@ class sparser: # for single script
 # 	# set_sp_user_funcs ({'N'})
 # 	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	a = p.parse (r"dlambda / dx : 2")
+# 	a = p.parse (r"notassoc_legendre(Pi_{44},-1.0),z20=phi,1e+100*1e100*theta*variations()")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

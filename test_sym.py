@@ -417,6 +417,7 @@ f(ln(2))
 \sum_{x=0}^1 0.f()\int0dD + 1
 a:b^\Lambda(True,1)
 a**-\sqrt[b]1[c]
+notassoc_legendre(Pi_{44},-1.0),z20=phi,1e+100*1e100*theta*variations()
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

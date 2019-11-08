@@ -871,7 +871,7 @@ class ast2py: # abstract syntax tree -> Python code text
 					rhss = rhs.comma if rhs.is_comma else rhs.brack if rhs.is_brack else rhs.set
 
 					if ast.lhs.comma.len == rhss.len:
-						lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc else (l, r) for l, r in zip (ast.lhs.comma, rhss)]
+						lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc_pure else (l, r) for l, r in zip (ast.lhs.comma, rhss)]
 						rhs = (rhs.op, tuple (r for l, r in lrs))
 						ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
 
@@ -1297,15 +1297,15 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_intg (self, ast):
 		if ast.from_ is None:
 			if ast.intg is None:
-				return sp.Integral (1, sp.Symbol (ast.dv.as_var.var))
+				return sp.Integral (1, sp.Symbol (ast.dv.var_name))
 			else:
-				return sp.Integral (self._ast2spt (ast.intg), sp.Symbol (ast.dv.as_var.var))
+				return sp.Integral (self._ast2spt (ast.intg), sp.Symbol (ast.dv.var_name))
 
 		else:
 			if ast.intg is None:
-				return sp.Integral (1, (sp.Symbol (ast.dv.as_var.var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+				return sp.Integral (1, (sp.Symbol (ast.dv.var_name), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 			else:
-				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.as_var.var), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
+				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.var_name), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
 	def _ast2spt_lamb (self, ast):
 		i = self.parent.mul.index (ast) if self.parent.is_mul else None
@@ -1704,9 +1704,9 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# set_sym_user_funcs (vars)
 	# res = ast2py (ast)
 
-	ast = AST ('+', (('-sum', ('*', (('#', '0.'), ('-ufunc', 'f', ()), ('-intg', ('#', '0'), ('@', 'dD')))), ('@', 'x'), ('#', '0'), ('#', '1')), ('#', '1')))
+	ast = AST ('=', (',', (('-ufunc', 'notassoc_legendre', (('@', 'Pi44'), ('#', '-1.0'))), ('@', 'z20'))), (',', (('@', 'phi'), ('*exp', (('#', '1e+100'), ('#', '1e+100'), ('@', 'theta'), ('-func', 'variations', ()))))))
 	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-	res = ast2tex (ast)
+	res = ast2py (ast)
 	# res = spt2ast (res)
 
 	print (res)
