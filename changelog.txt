@@ -1,5 +1,6 @@
 v1.0.17:
 --------
+* Added explicit substitution shorthand and AST.
 * Added undefined function parsing and writing of immediate value arguments for initial conditions.
 * Changed to allow implicit undefined functions as exponents for grammatical consistency.
 * Fixed certain tokens were not being gramatically rejected as they should with trailing \w.

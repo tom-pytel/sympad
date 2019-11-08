@@ -1053,7 +1053,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
 		'-not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
 		'-ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})' + (f'({", ".join (self._ast2py (v) for v in ast.vars)})' if ast.vars else ''),
-		'-subs' : lambda self, ast: '<SUBS>',
+		'-subs' : lambda self, ast: f'Subs({self._ast2py (ast.expr)}, ({", ".join (self._ast2py (s) for s, d in ast.subs)}), ({", ".join (self._ast2py (d) for s, d in ast.subs)}))' if ast.subs.len > 1 else f'Subs({self._ast2py (ast.expr)}, {self._ast2py (ast.subs [0] [0])}, {self._ast2py (ast.subs [0] [1])})',
 
 		'text'  : lambda self, ast: ast.py,
 	}

@@ -479,7 +479,7 @@ def _expr_subs (expr, subs):
 				src.append (ast.lhs)
 				dst.append (ast.rhs)
 
-		return tuple (src), tuple (dst)
+		return src, dst
 
 	# start here
 	if not isinstance (subs, AST):
@@ -501,10 +501,7 @@ def _expr_subs (expr, subs):
 			else:
 				raise SyntaxError ('invalid tuple assignment')
 
-	if len (src) == 1:
-		return AST ('-func', 'Subs', (expr, src [0], dst [0]))
-	else:
-		return AST ('-func', 'Subs', (expr, ('(', (',', src)), ('(', (',', dst))))
+	return AST ('-subs', expr, tuple (zip (src, dst)))
 
 def _expr_mat (mat_rows):
 	if not mat_rows:

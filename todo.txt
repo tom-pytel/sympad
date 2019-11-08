@@ -1,6 +1,8 @@
-> subs AST
-> Subs (1, x, x).subs (x, 1/y)
-> substitute shortcut expr (x = ?), or expr |_{x = ?}?
+> subs AST sxlat
+> subs AST ast2tex
+> subs AST ast2nat
+> subs AST ast2py
+> Subs (1, x, x).subs (x, 1/y) -> Subs (1, x, 1/y) - make same in apply_vars
 
 
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
