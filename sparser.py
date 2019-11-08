@@ -466,8 +466,24 @@ def _expr_func_func (FUNC, args, expr_super = None):
 		return _expr_func_func (f'a{func}', args)
 
 def _expr_subs (expr, subs):
+	def asslist2srcdst (asslist):
+		src, dst = [], []
+
+		for ast in asslist:
+			if not ast.is_ass:
+				raise SyntaxError ('expecting assignment')
+
+			else:
+				ast = _expr_ass_lvals (ast)
+
+				src.append (ast.lhs)
+				dst.append (ast.rhs)
+
+		return tuple (src), tuple (dst)
+
+	# start here
 	if not isinstance (subs, AST):
-		src, dst = tuple (a.lhs for a in subs), tuple (a.rhs for a in subs)
+		src, dst = asslist2srcdst (subs)
 
 	elif subs.is_ass:
 		ast      = _expr_ass_lvals (subs)
@@ -475,19 +491,7 @@ def _expr_subs (expr, subs):
 
 	elif subs.is_comma:
 		if subs.comma [0].is_ass:
-			src, dst = [], []
-
-			for ast in subs.comma:
-				if not ast.is_ass:
-					raise SyntaxError ('expecting assignment')
-
-				else:
-					ast = _expr_ass_lvals (ast)
-
-					src.append (ast.lhs)
-					dst.append (ast.rhs)
-
-			src, dst = tuple (src), tuple (dst)
+			src, dst = asslist2srcdst (subs.comma)
 
 		else:
 			subs = _expr_ass_lvals (subs)

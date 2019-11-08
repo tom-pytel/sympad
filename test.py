@@ -4566,6 +4566,10 @@ _EXPRESSIONS = r"""
 \. x+y |_{x, y = 1, 2}
 \. x+y |_{\substack{x = 1}}
 \. x+y |_{\substack{x = 1 \\ y = 2}}
+\. f(x) |_{f(x) = y}
+\. f(x) f(y) |_{f(x), f(y) = y, z}
+\. f(x) f(y) |_{f(x) = y, f(y) = z}
+\. f(x) f(y) |_{\substack{f(x) = y \\ f(y) = z}}
 """
 # _EXPRESSIONS = r"""
 # {d / dx f (x, y)} (0, 0)
