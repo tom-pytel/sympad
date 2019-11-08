@@ -1,15 +1,17 @@
-> free_vars, use sxlat?
+> change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
+> do not map bound variables inside lim, sum, intg and sub
+
+> subs AST
+
 
 > diff of multivar function displayed as partial
-
-> subs AST?
 
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
 > ?f(x)'(2), spt -> ?f(x)(2) instead of subs of diff
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 
-> option to convert diffs of undefined functions assigned to variables to df/dx instead of d/dx f(x)
+> option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
@@ -19,6 +21,8 @@
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
+
+> PDEs
 
 > \log loggamma=2 py representation? also sqrt?
 > proper sqrt and log AST initialization via __new__
@@ -32,11 +36,7 @@
 > verify all is_var -> is_var_nonconst where consts not allowed
 > worry about invalid varnames (reserved function names) or leave as convenience?
 
-> change lim, sum and intg not wanting to map var specification to strings (diff dvs, int dv, ...)
-
 > make semicolon separated plots work
-
-> PDEs
 
 > overhaul function call keyword arguments: expr -> ('kw', expr)?
 > overhaul lambda AST variable storage: ('@', 'var') -> 'var'?

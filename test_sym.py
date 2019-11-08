@@ -415,6 +415,8 @@ d/dx a \lambda:
 f(d/dx 1,x)
 f(ln(2))
 \sum_{x=0}^1 0.f()\int0dD + 1
+a:b^\Lambda(True,1)
+a**-\sqrt[b]1[c]
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

@@ -127,7 +127,7 @@ def _xlat_f2a_Lambda (args, expr):
 	vars = []
 
 	for v in args:
-		if not v.is_var:
+		if not v.is_var_nonconst:
 			return None
 
 		vars.append (v.var)

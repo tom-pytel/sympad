@@ -645,7 +645,7 @@ class Parser (lalr1.LALR1):
 			b'fX8tDMLgVqZ9S4M8QZ041NbbeqGQ+xD/s5fCwx6gNG87VJvc2MT1pymwPA3LtrqkiyvEeh2DW1Qq2IbQY0XnquUX6rWu8jC4/NKRFT5o4UcfFnxQzuvSFKebYldd0sUVoj2Lpohryh7AxVm+bgrkZLPcVA/h4iwf0wC/tyzXdkW210uy3lb3fCGIbnbBRbBu' \
 			b'MiOwzfFKYYQ2dkvCVasuXKey1s+2a8+XuDzGFPUffnn01UO7uDQ2ri447dLARd0P7OI1T2Oq/he11gPX4q+/eKl9/N8WyjDE3bCTx8zN0rDo4pJevcLh7Eq6rc7x4tI9ubUM9166fXWOF5fuOn2LMyxdXPp9hheX7vqJiXMr3aY6x4tLd/0cyLmVrqrO8eLS' \
 			b'tdVb3dKSYYFq5y0aad0dWmAWkiUutOBhKeT927T8G16g1EB249mACoqA9qHiD0GPbtQ1LqfP/tl1s+MaC498QNEP/pXmuBuVbN2gqSqwPdBPWh25CqVVx1cb2omWFruhbdyFinZ9Cjs+6WSnJ9x+gfMDnGdfwY08aItbyk38pP8U1UyZuDM87QWv3mLthpqJ' \
-			b'Syxq2jiK31j0rVmAicJLElqqBmsphI57QPA+pripxltlWlqiIX67uGmFZCwUGoSCNo5t8OBGb4MbW1z/f7O4DUw='
+			b'Syxq2jiK31j0rVmAicJLElqqBmsphI57QPA+pripxltlWlqiIX67uGmFZCwUGoSCNo5t8OBGb4MbW1z/f7O4DUw=' 
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum

@@ -395,7 +395,7 @@ class AST (tuple):
 
 		return tuple (args), tuple (sorted (kw.items ()))
 
-	def _free_vars (self): # return set of unique unbound variables found in tree, not reliable
+	def _free_vars (self): # return set of unique unbound variables found in tree, not reliable if used before sxlat due to ('-func', Derivative, ...) and the like
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
 				if ast.is_var:
