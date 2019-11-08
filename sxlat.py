@@ -411,43 +411,39 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 
 #...............................................................................................
 def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .subs()
-	try:
-		if ast.is_func and ast.func == 'Subs':
-			if len (ast.args) == 3:
-				vars = ast.args [1].strip_paren
-				subs = ast.args [2].strip_paren
+	if ast.is_func and ast.func == 'Subs':
+		if len (ast.args) == 3:
+			vars = ast.args [1].strip_paren
+			subs = ast.args [2].strip_paren
 
-				if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
-					return _xlat_f2t_SUBS_collect (ast.args [0], list (zip (vars.comma, subs.comma)) + tail)
+			if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
+				return _xlat_f2t_SUBS_collect (ast.args [0], list (zip (vars.comma, subs.comma)) + tail)
 
-				return _xlat_f2t_SUBS_collect (ast.args [0], [(vars, subs)] + tail)
+			return _xlat_f2t_SUBS_collect (ast.args [0], [(vars, subs)] + tail)
 
-		elif ast.is_attr_func and ast.attr == 'subs':
-			if ast.args.len == 2:
-				return _xlat_f2t_SUBS_collect (ast.obj, [(ast.args [0], ast.args [1])] + tail)
+	elif ast.is_attr_func and ast.attr == 'subs':
+		if ast.args.len == 2:
+			return _xlat_f2t_SUBS_collect (ast.obj, [(ast.args [0], ast.args [1])] + tail)
 
-			elif ast.args.len == 1:
-				arg = ast.args [0].strip_paren
+		elif ast.args.len == 1:
+			arg = ast.args [0].strip_paren
 
-				if arg.is_dict:
-					return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
+			if arg.is_dict:
+				return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
 
-				elif arg.op in {',', '[', '-set'}:
-					args = []
+			elif arg.op in {',', '[', '-set'}:
+				args = []
 
-					for arg in arg [1]:
-						arg = arg.strip_paren
+				for arg in arg [1]:
+					arg = arg.strip_paren
 
-						if arg.op not in {',', '['} or arg [1].len != 2:
-							break
+					if arg.op not in {',', '['} or arg [1].len != 2:
+						break
 
-						args.append (arg [1])
+					args.append (arg [1])
 
-					else:
-						return _xlat_f2t_SUBS_collect (ast.obj, args + tail)
-
-	except:
-		pass
+				else:
+					return _xlat_f2t_SUBS_collect (ast.obj, args + tail)
 
 	return ast, tail
 

@@ -27,7 +27,7 @@
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
 # ('-diff', expr, 'd', (('v1', p1), ...))             - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power)
 # ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
-# ('-intg', expr, dv[, from, to])                     - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential dv ('dx', 'dy', etc ...)
+# ('-intg', expr, dv[, from, to])                     - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential dv (('@', 'dx'), ('@', 'dy'), etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
 # ('-piece', ((v1, c1), ..., (vn, True?)))            - piecewise expression: v = AST, c = condition AST, last condition may be True to catch all other cases
 # ('-lamb', expr, (v1, v2, ...))                      - lambda expression: v? = 'var'
@@ -42,6 +42,7 @@
 # ('-and', (expr1, expr2, ...))                       - pythonic and
 # ('-not', expr)                                      - pythonic not
 # ('-ufunc', 'name', (a1, ...)[, (('kw1', a1), ...)]) - undefined function object with optional keyword arguments, no arguments means 'pure' unapplied undefined function
+# ('-subs', expr, ((s1, d1), ...))                    - substitution - replace all s? with d? in expr
 
 from collections import OrderedDict
 import re
@@ -395,12 +396,28 @@ class AST (tuple):
 
 		return tuple (args), tuple (sorted (kw.items ()))
 
-	def _free_vars (self): # return set of unique unbound variables found in tree, not reliable if used before sxlat due to ('-func', Derivative, ...) and the like
+	def _free_vars (self): # return set of unique unbound variables found in tree, not reliable especially if used before sxlat due to things like ('-func', 'Derivative', ...), '-subs' is particularly problematic
 		def _free_vars (ast, vars):
 			if isinstance (ast, AST):
 				if ast.is_var:
 					if ast.is_var_nonconst and ast.var:
 						vars.add (ast)
+
+				elif ast.is_subs:
+					_free_vars (ast.expr, vars)
+
+					for src, dst in ast.subs:
+						if not src.is_var_nonconst:
+							present = False
+
+						else:
+							present = src in vars
+
+							if present:
+								vars.remove (src)
+
+						if present:
+							_free_vars (dst, vars)
 
 				else:
 					for e in ast:
@@ -496,6 +513,9 @@ class AST (tuple):
 				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse)
 
 			return ast
+
+		elif ast.is_subs:
+			return AST ('-subs', AST.apply_vars (ast.expr, vars, recurse), tuple ((src, AST.apply_vars (dst, vars, recurse)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
 			v    = ast [2].var
@@ -965,11 +985,17 @@ class AST_UFunc (AST):
 
 		return None
 
+class AST_Subs (AST):
+	op, is_subs = '-subs', True
+
+	def _init (self, expr, subs):
+		self.expr, self.subs = expr, subs
+
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
 	AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_MulExp, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func,
 	AST_Lim, AST_Sum, AST_Diff, AST_DiffP, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
-	AST_Union, AST_SDiff, AST_XSect, AST_Or, AST_And, AST_Not, AST_UFunc]
+	AST_Union, AST_SDiff, AST_XSect, AST_Or, AST_And, AST_Not, AST_UFunc, AST_Subs]
 
 for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)
