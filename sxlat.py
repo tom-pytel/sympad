@@ -339,6 +339,44 @@ def _xlat_f2a_Subs (expr = None, src = None, dst = None):
 	else:
 		return AST ('-subs', expr, subs)
 
+def _xlat_f2a_subs (expr, src = AST.VarNull, dst = None):
+	def parse_subs (src, dst):
+		if dst is not None:
+			return ((src, dst),)
+
+		src = src.strip_paren
+
+		if src.is_dict:
+			return src.dict
+		elif src.op not in {',', '[', '-set'}:
+			return ((src, AST.VarNull),)
+
+		else:
+			subs = []
+
+			for arg in src [1]:
+				ast = arg.strip_paren
+
+				if ast.op in {',', '['} and ast [1].len <= 2:
+					subs.append ((ast [1] + (AST.VarNull, AST.VarNull)) [:2])
+				elif arg.is_paren and arg is src [1] [-1]:
+					subs.append ((ast, AST.VarNull))
+				else:
+					return None
+
+			return tuple (subs)
+
+	# start here
+	subs = parse_subs (src, dst)
+
+	if subs is None:
+		return None
+
+	if expr.is_subs:
+		return AST ('-subs', expr.expr, expr.subs + subs)
+	else:
+		return AST ('-subs', expr, subs)
+
 #...............................................................................................
 _XLAT_FUNC2AST_ALL    = {
 	'slice'                : _xlat_f2a_slice,
@@ -385,6 +423,7 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'Union'                : _xlat_f2a_Union,
 
 	'Subs'                 : _xlat_f2a_Subs,
+	'.subs'                : _xlat_f2a_subs,
 }
 
 XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
@@ -428,24 +467,34 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 
 	if ast.is_func:
 		xact = xlat.get (ast.func)
+		args = ast.args
+		ret  = lambda: AST ('-func', ast.func, args)
 
-		if xact is not None:
-			args = AST (*(xlat_funcs2asts (arg, xlat, func_call = func_call) for arg in ast.args))
+	elif ast.is_attr_func:
+		xact = xlat.get (f'.{ast.attr}')
+		args = (ast.obj,) + ast.args
+		ret  = lambda: AST ('.', args [0], ast.attr, tuple (args [1:]))
 
-			try:
-				if xact is True: # True means execute function and use return value for ast
-					return func_call (ast.func, args) # not checking func_call None because that should never happen
+	else:
+		xact = None
 
-				xargs, xkw = AST.args2kwargs (args)
-				ast2       = xact (*xargs, **xkw)
+	if xact is not None:
+		args = AST (*(xlat_funcs2asts (a, xlat, func_call = func_call) for a in args))
 
-				if ast2 is not None:
-					return ast2
+		try:
+			if xact is True: # True means execute function and use return value for ast, only happens for -func
+				return func_call (ast.func, args) # not checking func_call None because that should never happen
 
-			except:
-				pass
+			xargs, xkw = AST.args2kwargs (args)
+			ast2       = xact (*xargs, **xkw)
 
-			return AST ('-func', ast.func, args)
+			if ast2 is not None:
+				return ast2
+
+		except:
+			pass
+
+		return ret ()
 
 	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast))
 
@@ -614,8 +663,8 @@ class sxlat: # for single script
 	xlat_pyS          = xlat_pyS
 	_xlat_f2a_And     = _xlat_f2a_And
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('-func', 'Matrix', (('[', ()),))
-# 	res = _xlat_f2a_Matrix (ast.args [0])
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	ast = AST ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2')))
+	res = xlat_funcs2asts (ast, XLAT_FUNC2AST_TEX)
+	print (res)
