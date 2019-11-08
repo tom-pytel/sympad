@@ -457,6 +457,16 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		return f'{pre}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
 
+	def _ast2tex_subs (self, ast):
+		subs = [AST ('=', s, d) for s, d in ast.subs]
+
+		if ast.subs.len == 1:
+			subs = self._ast2tex (subs [0])
+		else:
+			subs = '\\substack{' + ' \\\\ '.join (self._ast2tex (s) for s in subs) + '}'
+
+		return f'\\left. {self._ast2tex (ast.expr)} \\right|_{{{subs}}}'
+
 	_ast2tex_funcs = {
 		';'     : lambda self, ast: ';\\: '.join (self._ast2tex (a) for a in ast.scolon),
 		'='     : lambda self, ast: f'{self._ast2tex_ass_hs (ast.lhs)} = {self._ast2tex_ass_hs (ast.rhs, False)}',
@@ -497,7 +507,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-and'  : lambda self, ast: ' \\wedge '.join (self._ast2tex_wrap (a, 0, a.op in {'=', ',', '-slice', '-or'} or (a.is_piece and a is not ast.and_ [-1])) for a in ast.and_),
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
 		'-ufunc': _ast2tex_ufunc,
-		'-subs' : lambda self, ast: '<SUBS>',
+		'-subs' : _ast2tex_subs,
 
 		'text'  : lambda self, ast: ast.tex,
 	}
@@ -762,6 +772,16 @@ class ast2nat: # abstract syntax tree -> native text
 
 		return f'{pre}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})'
 
+	def _ast2nat_subs (self, ast):
+		subs = [AST ('=', s, d) for s, d in ast.subs]
+
+		if ast.subs.len == 1:
+			subs = self._ast2nat (subs [0])
+		else:
+			subs = self._ast2nat (AST (',', tuple (subs)))
+
+		return f'\\. {self._ast2nat (ast.expr)} |_{{{subs}}}'
+
 	_ast2nat_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2nat (a) for a in ast.scolon),
 		'='     : lambda self, ast: f'{self._ast2nat_ass_hs (ast.lhs)} = {self._ast2nat_ass_hs (ast.rhs, False)}',
@@ -803,7 +823,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-and'  : lambda self, ast: ' and '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb', '-or'}) for a in ast.and_),
 		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
 		'-ufunc': _ast2nat_ufunc,
-		'-subs' : lambda self, ast: '<SUBS>',
+		'-subs' : _ast2nat_subs,
 
 		'text'  : lambda self, ast: ast.nat,
 	}
@@ -1469,19 +1489,12 @@ class spt2ast:
 			return AST ('-mat', tuple ((self._spt2ast (e),) for e in spt))
 
 	def _spt2ast_Add (self, spt):
-		args = spt.args
-
-		for arg in args:
-			if isinstance (arg, sp.Order):
-				break
-		else:
-			if args [0].is_number:
-				args = spt.args [1:] + (spt.args [0],)
-
 		terms = []
+		hasO  = False
 
-		for arg in args:
-			ast = self._spt2ast (arg)
+		for arg in spt.args:
+			ast  = self._spt2ast (arg)
+			hasO = hasO or isinstance (arg, sp.Order)
 
 			if ast.is_num_neg:
 				ast = AST ('-', ast.neg ())
@@ -1489,6 +1502,9 @@ class spt2ast:
 				ast = AST ('-', ('*', (ast.mul [0].neg (),) + ast.mul [1:]))
 
 			terms.append (ast)
+
+		if not hasO and spt.args [0].is_number and (not terms [1].is_minus or spt.args [0] < 0):
+			terms = terms [1:] + [terms [0]]
 
 		return AST ('+', tuple (terms))
 
@@ -1506,21 +1522,36 @@ class spt2ast:
 
 		numer = []
 		denom = []
+		neg   = False
 
 		for arg in args:
 			if isinstance (arg, sp.Pow) and arg.args [1].is_negative:
 				denom.append (self._spt2ast (arg.args [0] if arg.args [1] is sp.S.NegativeOne else _Pow (arg.args [0], -arg.args [1])))
-			else:
+			elif not isinstance (arg, sp.Rational) or arg.q == 1:
 				numer.append (self._spt2ast (arg))
 
+			else:
+				denom.append (self._spt2ast (arg.q))
+
+				p = arg.p
+
+				if p < 0:
+					neg = not neg
+					p   = -p
+
+				if p != 1:
+					numer.append (self._spt2ast (p))
+
+		neg = (lambda ast: AST ('-', ast)) if neg else (lambda ast: ast)
+
 		if not denom:
-			return AST ('*', tuple (numer)) if len (numer) > 1 else numer [0]
+			return neg (AST ('*', tuple (numer)) if len (numer) > 1 else numer [0])
 
 		if not numer:
-			return AST ('/', AST.One, AST ('*', tuple (denom)) if len (denom) > 1 else denom [0])
+			return neg (AST ('/', AST.One, AST ('*', tuple (denom)) if len (denom) > 1 else denom [0]))
 
-		return AST ('/', AST ('*', tuple (numer)) if len (numer) > 1 else numer [0], \
-				AST ('*', tuple (denom)) if len (denom) > 1 else denom [0])
+		return neg (AST ('/', AST ('*', tuple (numer)) if len (numer) > 1 else numer [0], \
+				AST ('*', tuple (denom)) if len (denom) > 1 else denom [0]))
 
 	def _spt2ast_Pow (self, spt):
 		if spt.args [1].is_negative:
@@ -1708,9 +1739,11 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# set_sym_user_funcs (vars)
 	# res = ast2py (ast)
 
-	ast = AST ('=', (',', (('-ufunc', 'notassoc_legendre', (('@', 'Pi44'), ('#', '-1.0'))), ('@', 'z20'))), (',', (('@', 'phi'), ('*exp', (('#', '1e+100'), ('#', '1e+100'), ('@', 'theta'), ('-func', 'variations', ()))))))
-	# ast = AST ('<>', ('@', 'z'), (('>', ('@', 'b')), ('<', ('@', 'z')), ('<=', ('@', 'a'))))
-	res = ast2py (ast)
-	# res = spt2ast (res)
+	# ast = AST ('-func', 'eye', (('#', '3'),))
+	# ast = AST ('+', (('*', (('+', (('-', ('@', 'lambda')), ('#', '1'))), ('+', (('-', ('@', 'lambda')), ('#', '4'))))), ('-', ('#', '6'))))
+	ast = AST ('+', (('-', ('@', 'lambda')), ('#', '1')))
+	res = ast2spt (ast)
+	res = spt2ast (res)
+	# res = ast2nat (res)
 
 	print (res)

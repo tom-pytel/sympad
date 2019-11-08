@@ -1,5 +1,7 @@
 # AST translations for funtions to display or convert to internal AST or SymPy S() escaping.
 
+import itertools as it
+
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SX_XLAT_AND = True # ability to turn off And translation for testing
@@ -278,9 +280,13 @@ def _xlat_f2a_Limit (ast = AST.VarNull, var = AST.VarNull, to = AST.VarNull, dir
 	if var.is_var_nonconst:
 		return AST ('-lim', ast, var, to, *_xlat_f2a_Limit_dirs [dir])
 
+	return None
+
 def _xlat_f2a_Sum_NAT (ast = AST.VarNull, ab = None, **kw):
 	if not kw:
 		return _xlat_f2a_Sum (ast, ab, **kw)
+
+	return None
 
 def _xlat_f2a_Sum (ast = AST.VarNull, ab = None, **kw):
 	if ab is None:
@@ -302,6 +308,38 @@ def _xlat_f2a_Union (*args):
 
 	return AST ('||', tuple (args))
 
+def _xlat_f2a_Subs (expr = None, src = None, dst = None):
+	def parse_subs (src, dst):
+		if src is None:
+			return ((AST.VarNull, AST.VarNull),)
+
+		src = src.strip_paren.comma if src.strip_paren.is_comma else (src.strip_paren,)
+
+		if dst is None:
+			return tuple (it.zip_longest (src, (), fillvalue = AST.VarNull))
+
+		dst = dst.strip_paren.comma if dst.strip_paren.is_comma else (dst.strip_paren,)
+
+		if len (dst) > len (src):
+			return None
+
+		return tuple (it.zip_longest (src, dst, fillvalue = AST.VarNull))
+
+	# start here
+	if expr is None:
+		return AST ('-subs', AST.VarNull, ((AST.VarNull, AST.VarNull),))
+
+	subs = parse_subs (src, dst)
+
+	if subs is None:
+		return None
+
+	if expr.is_subs:
+		return AST ('-subs', expr.expr, expr.subs + subs)
+	else:
+		return AST ('-subs', expr, subs)
+
+#...............................................................................................
 _XLAT_FUNC2AST_ALL    = {
 	'slice'                : _xlat_f2a_slice,
 	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
@@ -345,6 +383,8 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
 	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
 	'Union'                : _xlat_f2a_Union,
+
+	'Subs'                 : _xlat_f2a_Subs,
 }
 
 XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
@@ -410,55 +450,55 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast))
 
 #...............................................................................................
-def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .subs()
-	if ast.is_func and ast.func == 'Subs':
-		if len (ast.args) == 3:
-			vars = ast.args [1].strip_paren
-			subs = ast.args [2].strip_paren
+# def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .subs()
+# 	if ast.is_func and ast.func == 'Subs':
+# 		if len (ast.args) == 3:
+# 			vars = ast.args [1].strip_paren
+# 			subs = ast.args [2].strip_paren
 
-			if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
-				return _xlat_f2t_SUBS_collect (ast.args [0], list (zip (vars.comma, subs.comma)) + tail)
+# 			if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
+# 				return _xlat_f2t_SUBS_collect (ast.args [0], list (zip (vars.comma, subs.comma)) + tail)
 
-			return _xlat_f2t_SUBS_collect (ast.args [0], [(vars, subs)] + tail)
+# 			return _xlat_f2t_SUBS_collect (ast.args [0], [(vars, subs)] + tail)
 
-	elif ast.is_attr_func and ast.attr == 'subs':
-		if ast.args.len == 2:
-			return _xlat_f2t_SUBS_collect (ast.obj, [(ast.args [0], ast.args [1])] + tail)
+# 	elif ast.is_attr_func and ast.attr == 'subs':
+# 		if ast.args.len == 2:
+# 			return _xlat_f2t_SUBS_collect (ast.obj, [(ast.args [0], ast.args [1])] + tail)
 
-		elif ast.args.len == 1:
-			arg = ast.args [0].strip_paren
+# 		elif ast.args.len == 1:
+# 			arg = ast.args [0].strip_paren
 
-			if arg.is_dict:
-				return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
+# 			if arg.is_dict:
+# 				return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
 
-			elif arg.op in {',', '[', '-set'}:
-				args = []
+# 			elif arg.op in {',', '[', '-set'}:
+# 				args = []
 
-				for arg in arg [1]:
-					arg = arg.strip_paren
+# 				for arg in arg [1]:
+# 					arg = arg.strip_paren
 
-					if arg.op not in {',', '['} or arg [1].len != 2:
-						break
+# 					if arg.op not in {',', '['} or arg [1].len != 2:
+# 						break
 
-					args.append (arg [1])
+# 					args.append (arg [1])
 
-				else:
-					return _xlat_f2t_SUBS_collect (ast.obj, args + tail)
+# 				else:
+# 					return _xlat_f2t_SUBS_collect (ast.obj, args + tail)
 
-	return ast, tail
+# 	return ast, tail
 
-def _xlat_f2t_SUBS (ast2tex, ast): # handles both Subs() and .subs() and collapses nested calls into one substitution
-	ast, subs = _xlat_f2t_SUBS_collect (ast, [])
+# def _xlat_f2t_SUBS (ast2tex, ast): # handles both Subs() and .subs() and collapses nested calls into one substitution
+# 	ast, subs = _xlat_f2t_SUBS_collect (ast, [])
 
-	if len (subs) == 1:
-		return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (subs [0] [0])} = {ast2tex (subs [0] [1])}}}'
+# 	if len (subs) == 1:
+# 		return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (subs [0] [0])} = {ast2tex (subs [0] [1])}}}'
 
-	elif len (subs) > 1:
-		asss = ' \\\\ '.join (f'{ast2tex (v)} = {ast2tex (s)}' for v, s in subs)
+# 	elif len (subs) > 1:
+# 		asss = ' \\\\ '.join (f'{ast2tex (v)} = {ast2tex (s)}' for v, s in subs)
 
-		return f'\\left. {ast2tex (ast)} \\right|_{{\\substack{{{asss}}}}}'
+# 		return f'\\left. {ast2tex (ast)} \\right|_{{\\substack{{{asss}}}}}'
 
-	return None
+# 	return None
 
 _XLAT_FUNC2TEX = {
 	'beta'    : lambda ast2tex, *args: f'\\beta\\left({ast2tex (AST.tuple2ast (args))} \\right)',
@@ -473,7 +513,7 @@ _XLAT_FUNC2TEX = {
 	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
 	'set'     : lambda ast2tex, *args: '\\emptyset' if not args else None,
 
-	'Subs'    : lambda ast2tex, *args: _xlat_f2t_SUBS (ast2tex, AST ('-func', 'Subs', args)),
+	# 'Subs'    : lambda ast2tex, *args: _xlat_f2t_SUBS (ast2tex, AST ('-func', 'Subs', args)),
 }
 
 _XLAT_ATTRFUNC2TEX = {
@@ -481,7 +521,7 @@ _XLAT_ATTRFUNC2TEX = {
 	'integrate': lambda ast2tex, ast, dvab = None, *args, **kw: ast2tex (_xlat_f2a_Integral (ast, dvab, *args, **kw)),
 	'limit'    : lambda ast2tex, ast, var = AST.VarNull, to = AST.VarNull, dir = _AST_StrPlus: ast2tex (_xlat_f2a_Limit (ast, var, to, dir)),
 
-	'subs'     : lambda ast2tex, ast, *args: _xlat_f2t_SUBS (ast2tex, AST ('.', ast, 'subs', args)),
+	# 'subs'     : lambda ast2tex, ast, *args: _xlat_f2t_SUBS (ast2tex, AST ('.', ast, 'subs', args)),
 }
 
 def xlat_func2tex (ast, ast2tex):
@@ -554,7 +594,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 
 	# TODO: '<>' might be problematic in cases where it has an 'in' or 'notin'
 	return AST (*tuple (e [0] for e in es)), \
-			ast.op in {'=', '<>', '@', '.', '|', '!', '-log', '-sqrt', '-func', '-lim', '-sum', '-diff', '-intg', '-mat', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'} or any (e [1] for e in es)
+			ast.op in {'=', '<>', '@', '.', '|', '!', '-log', '-sqrt', '-func', '-lim', '-sum', '-diff', '-intg', '-mat', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not', '-ufunc', '-subs'} or any (e [1] for e in es)
 
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 
