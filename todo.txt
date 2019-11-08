@@ -22,10 +22,14 @@
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
 
+> test_server multi maths from semicolon expressions
+
 > PDEs
 
-> \log loggamma=2 py representation? also sqrt?
+> \log loggamma=2 py representation? also sqrt? (use = instead of Eq due to function names as variables)
 > proper sqrt and log AST initialization via __new__
+
+> f (x) = x**2; f (x)
 
 > quick mode function name characters allow to follow immediately?
 > allow log_base without the \?

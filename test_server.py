@@ -379,6 +379,8 @@ f (x) = x**2
 f (2)
 f (x, y) = sqrt {x**2 + y**2}
 f (3, 4)
+del f
+f (x) = x**2; f (x)
 
 """), ('env', """
 
@@ -527,7 +529,7 @@ Integral (e^{-x^2}, (x, 0, \\infty))
 \\[[1, 2], [3, 4]]**-1
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}
-f (x, y) = sqrt (x**2 + y**2); f (3, 4)
+f (x, y) = sqrt (x**2 + y**2)
 solve (x**2 + y = 4, x)
 dsolve (y(x)'' + 9y(x))
 y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})

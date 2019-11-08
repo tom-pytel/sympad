@@ -129,7 +129,7 @@ Integral (e^{-x^2}, (x, 0, \infty))<br>
 \[[1, 2], [3, 4]]**-1<br>
 Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<br>
-f (x, y) = sqrt (x**2 + y**2); f (3, 4)<br>
+f (x, y) = sqrt (x**2 + y**2)<br>
 solve (x**2 + y = 4, x)<br>
 dsolve (y(x)'' + 9y(x))<br>
 y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})<br>
@@ -873,7 +873,9 @@ Even if the object resulting from the expression is not natively known to SymPad
 This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</p>
 <p><b>?</b> - "<b>?name(vars)</b>" - Used for specifying an undefined function to be used for solving differential equations.
 The name is optional but required if different functions of the same signature are needed like "<b>?x(t), ?y(t)</b>", otherwise you can just use "<b>?(t)</b>".</p>
-<p><b>;</b> - Semicolon is used to separate statements on a single line to be executed as if they were individual statements on separate lines like in Pyhon, e.g. "<b>1; expand (_(x+1)); expand (_(x+1)); expand (_(x+1))</b>".</p>
+<p><b>;</b> - Semicolon is used to separate statements on a single line to be executed as if they were individual statements on separate lines like in Pyhon, e.g. "<b>1; expand (_(x+1)); expand (_(x+1)); expand (_(x+1))</b>".
+There is one caveat at the moment in that parsing is influenced by the variables assigned and these assignments are not done until after the whole line has been parsed.
+What this means for example is that for ambiguous expressions like "<b>f(x)</b>" which can be interpreted either as a concrete lambda call or an undefined function the parser will not get it right if the variable "<b>f</b>" is assigned a lambda and then called on the same line after a semicolon.</p>
 <p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
 <p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
 
