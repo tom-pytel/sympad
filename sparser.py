@@ -467,41 +467,36 @@ def _expr_func_func (FUNC, args, expr_super = None):
 
 def _expr_subs (expr, subs):
 	def asslist2srcdst (asslist):
-		src, dst = [], []
+		subs = []
 
 		for ast in asslist:
-			if not ast.is_ass:
+			if ast.is_ass:
+				subs.append (_expr_ass_lvals (ast) [1:])
+			else:
 				raise SyntaxError ('expecting assignment')
 
-			else:
-				ast = _expr_ass_lvals (ast)
-
-				src.append (ast.lhs)
-				dst.append (ast.rhs)
-
-		return src, dst
+		return tuple (subs)
 
 	# start here
 	if not isinstance (subs, AST):
-		src, dst = asslist2srcdst (subs)
+		subs = asslist2srcdst (subs)
 
 	elif subs.is_ass:
-		ast      = _expr_ass_lvals (subs)
-		src, dst = (ast.lhs,), (ast.rhs,)
+		subs = (_expr_ass_lvals (subs) [1:],)
 
 	elif subs.is_comma:
 		if subs.comma [0].is_ass:
-			src, dst = asslist2srcdst (subs.comma)
+			subs = asslist2srcdst (subs.comma)
 
 		else:
 			subs = _expr_ass_lvals (subs)
 
 			if subs.lhs.is_comma and subs.rhs.is_comma and subs.rhs.comma.len == subs.lhs.comma.len:
-				src, dst = subs.lhs.comma, subs.rhs.comma
+				subs = tuple (zip (subs.lhs.comma, subs.rhs.comma))
 			else:
 				raise SyntaxError ('invalid tuple assignment')
 
-	return AST ('-subs', expr, tuple (zip (src, dst)))
+	return AST ('-subs', expr, subs)
 
 def _expr_mat (mat_rows):
 	if not mat_rows:
