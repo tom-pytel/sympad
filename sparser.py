@@ -66,7 +66,7 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast))
 
 #...............................................................................................
-def _expr_ass_lvals (ast): # process assignment lvalues
+def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 	def is_valid_ufunc (ast):
 		return ast.is_func and ast.func in _SP_USER_FUNCS and all (a.is_var_nonconst for a in ast.args)
 
@@ -84,15 +84,20 @@ def _expr_ass_lvals (ast): # process assignment lvalues
 			elif is_valid_ufunc (c):
 				vars.append (AST ('-ufunc', c.func, c.args))
 
+			elif c.is_ass:
+				t = (c.rhs,) + tuple (itr)
+				v = c.lhs if c.lhs.op in {'@', '-ufunc'} else AST ('-ufunc', c.lhs.func, c.lhs.args) if is_valid_ufunc (c.lhs) else c.lhs if allow_lexprs else None
+
+				if v:
+					ast = AST ('=', (',', tuple (vars) + (v,)) if len (vars) else v, t [0] if len (t) == 1 else AST (',', t))
+
+					vars.append (c.lhs)
+
+				break
+
+			elif allow_lexprs:
+				vars.append (c)
 			else:
-				if c.is_ass:
-					t = (c.rhs,) + tuple (itr)
-					v = c.lhs if c.lhs.op in {'@', '-ufunc'} else AST ('-ufunc', c.lhs.func, c.lhs.args) if is_valid_ufunc (c.lhs) else None
-
-					if v:
-						ast = AST ('=', (',', tuple (vars) + (v,)) if len (vars) else v, t [0] if len (t) == 1 else AST (',', t))
-						vars.append (c.lhs)
-
 				break
 
 	return ast
@@ -471,7 +476,7 @@ def _expr_subs (expr, subs):
 
 		for ast in asslist:
 			if ast.is_ass:
-				subs.append (_expr_ass_lvals (ast) [1:])
+				subs.append (_expr_ass_lvals (ast, True) [1:])
 			else:
 				raise SyntaxError ('expecting assignment')
 
@@ -482,19 +487,22 @@ def _expr_subs (expr, subs):
 		subs = asslist2srcdst (subs)
 
 	elif subs.is_ass:
-		subs = (_expr_ass_lvals (subs) [1:],)
+		subs = (_expr_ass_lvals (subs, True) [1:],)
 
 	elif subs.is_comma:
 		if subs.comma [0].is_ass:
 			subs = asslist2srcdst (subs.comma)
 
 		else:
-			subs = _expr_ass_lvals (subs)
+			subs = _expr_ass_lvals (subs, True)
 
-			if subs.lhs.is_comma and subs.rhs.is_comma and subs.rhs.comma.len == subs.lhs.comma.len:
+			if subs.is_ass and subs.lhs.is_comma and subs.rhs.is_comma and subs.rhs.comma.len == subs.lhs.comma.len:
 				subs = tuple (zip (subs.lhs.comma, subs.rhs.comma))
 			else:
 				raise SyntaxError ('invalid tuple assignment')
+
+	else:
+		raise SyntaxError ('expecting assignment')
 
 	return AST ('-subs', expr, subs)
 
@@ -1266,18 +1274,19 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# set_sp_user_funcs ({'N'})
-# 	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
+	# set_sp_user_funcs ({'N'})
+	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	a = p.parse (r"\. x+y |_{x, y = 1, 2}")
-# 	# a = p.parse (r"\. x+y |_{x = 1, y = 2}")
-# 	# a = p.parse (r"\. x+y |_{x = 1}")
-# 	# a = p.parse (r"\.x+y|_{\substack{x=1\\y=2}}")
-# 	print (a)
+	# a = p.parse (r"\. x+y |_{x, y = 1, 2}")
+	# a = p.parse (r"\. x+y |_{x = 1, y = 2}")
+	# a = p.parse (r"\. x+y |_{x = 1}")
+	# a = p.parse (r"\.x+y|_{\substack{x=1\\y=2}}")
+	a = p.parse (r"\[?g(x)and(\sqrt[2]-1.0,'str'or-.1or.1,-.1!),\left.-{-.1:1e+100}\right|_{-.1.kZSI2A,\pi&&\partialx&&\partialx=lambdax:1/\fracTrueFalse},]")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)

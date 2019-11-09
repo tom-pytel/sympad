@@ -466,10 +466,10 @@ def expr_cmp (): # this gets processed and possibly reordered in sxlat
 	return s
 
 def expr_attr ():
-	return f'{expr ()}{"".join (f".{_randidentifier ()}" + ("()" if random () >= 0.5 else "") for _ in range (randint (1, 3)))}'
+	return f' {expr ()}{"".join (f".{_randidentifier ()}" + ("()" if random () >= 0.5 else "") for _ in range (randint (1, 3)))} '
 
 def expr_comma ():
-	return ','.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {','.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_curly ():
 	return '{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
@@ -484,46 +484,46 @@ def expr_abs ():
 	return f'\\left|{expr ()}\\right|'
 
 def expr_minus ():
-	return f'-{expr ()}'
+	return f' -{expr ()} '
 
 def expr_fact ():
-	return f'{expr ()}!'
+	return f' {expr ()}! '
 
 def expr_add ():
-	return '+'.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {'+'.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_mul_imp ():
-	return '  '.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {'  '.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_mul_exp ():
-	return '*'.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {'*'.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_mul_cdot ():
-	return ' \\cdot '.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return ' ' + ' \\cdot '.join (f'{expr ()}' for i in range (randrange (2, 4))) + ' '
 
 def expr_div ():
-	return f'{expr ()} / {expr ()}'
+	return f' {expr ()} / {expr ()} '
 
 def expr_frac ():
-	return f'\\frac{expr ()}{expr ()}'
+	return f'\\frac{expr ()}{expr ()} '
 
 def expr_caret ():
-	return f'{expr ()}^{expr ()}'
+	return f' {expr ()}^{expr ()} '
 
 def expr_dblstar ():
-	return f'{expr ()}**{expr ()}'
+	return f' {expr ()}**{expr ()} '
 
 def expr_log ():
 	return \
-			choice (['', '\\']) + f'{choice (["ln", "log"])}{expr ()}' \
+			choice ([' ', '\\']) + f'{choice (["ln", "log"])}{expr ()} ' \
 			if random () >= 0.5 else \
-			f'\\log_{expr ()}{expr ()}'
+			f'\\log_{expr ()}{expr ()} '
 
 def expr_sqrt ():
 	return \
-			choice (['', '\\']) + f'sqrt{expr ()}' \
+			choice ([' ', '\\']) + f'sqrt{expr ()} ' \
 			if random () >= 0.5 else \
-			f'\\sqrt[{expr ()}]{expr ()}'
+			f'\\sqrt[{expr ()}]{expr ()} '
 
 _FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma', 'digamma', 'idiff'}
 
@@ -547,13 +547,13 @@ def expr_func ():
 
 def expr_lim ():
 	return \
-			'\\lim_{x \\to ' + f'{expr ()}}} {expr ()}' \
+			'\\lim_{x \\to ' + f'{expr ()}}} {expr ()} ' \
 			# if random () >= 0.5 else \
 			# f'Limit ({expr ()}, x, ({expr ()}))'
 
 def expr_sum ():
 	return \
-			'\\sum_{x = ' + f'{expr ()}}}^{expr ()} {expr ()}' \
+			'\\sum_{x = ' + f'{expr ()}}}^{expr ()} {expr ()} ' \
 			# if random () >= 0.5 else \
 			# f'Sum ({expr ()}, (x, {expr ()}, {expr ()}))'
 
@@ -569,7 +569,7 @@ def expr_diff ():
 		dv.append ((choice (['x', 'y', 'z']), n))
 
 	return \
-			f'{d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr ()}' \
+			f' {d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr ()} ' \
 			# if random () >= 0.5 else \
 			# f'Derivative ({expr ()}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
 
@@ -580,9 +580,9 @@ def expr_intg ():
 	dv = f'd{_randidentifier () if random () >= 0.5 else choice (_LETTERS)}'
 
 	if random () >= 0.5:
-		return f'\\int_{expr ()}^{expr ()} {expr ()} {dv}'
+		return f'\\int_{expr ()}^{expr ()} {expr ()} {dv} '
 	else:
-		return f'\\int {expr ()} {dv}'
+		return f'\\int {expr ()} {dv} '
 
 def expr_vec ():
 	return '\\[' + ','.join (f'{expr ()}' for i in range (randrange (1, 4))) + ',]'
@@ -593,34 +593,34 @@ def expr_mat ():
 	return '\\[' + ','.join ('[' + ','.join (f'{expr ()}' for j in range (cols)) + ',]' for i in range (randrange (1, 4))) + ',]'
 
 def expr_piece ():
-	p = [f'{expr ()} if {expr ()}']
+	p = [f' {expr ()} if {expr ()} ']
 
 	for _ in range (randrange (3)):
-		p.append (f' else {expr ()} if {expr ()}')
+		p.append (f' else {expr ()} if {expr ()} ')
 
 	if random () >= 0.5:
-		p.append (f' else {expr ()}')
+		p.append (f' else {expr ()} ')
 
 	return ' '.join (p)
 
 def expr_lamb ():
-	return f' lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr ()}'
+	return f' lambda{choice (["", " x", " x, y", " x, y, z"])}: {expr ()} '
 
 def expr_idx ():
 	if random () >= 0.5:
-		return f'{expr ()} [{expr ()}]'
+		return f' {expr ()} [{expr ()}]'
 	elif random () >= 0.5:
-		return f'{expr ()} [{expr ()}, {expr ()}]'
+		return f' {expr ()} [{expr ()}, {expr ()}]'
 	else:
-		return f'{expr ()} [{expr ()}, {expr ()}, {expr ()}]'
+		return f' {expr ()} [{expr ()}, {expr ()}, {expr ()}]'
 
 def expr_slice ():
 	start, stop, step = expr ().replace ('None', 'NONE'), expr ().replace ('None', 'NONE'), expr ().replace ('None', 'NONE')
 
 	if random () >= 0.5:
-		ret = f'{choice ([start, ""])} : {choice ([stop, ""])}'
+		ret = f' {choice ([start, ""])} : {choice ([stop, ""])} '
 	else:
-		ret = f'{choice ([start, ""])} : {choice ([stop, ""])} : {choice ([step, ""])}'
+		ret = f' {choice ([start, ""])} : {choice ([stop, ""])} : {choice ([step, ""])} '
 
 	return ret if random () >= 0.5 else f'{{{ret}}}' if random () >= 0.5 else f'({ret})'
 
@@ -628,22 +628,22 @@ def expr_set ():
 	return '\\{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
 
 def expr_dict ():
-	return '{' + ','.join (f'{choice (_STATIC_TERMS)} : {expr ()}' for i in range (randrange (4))) + '}'
+	return f" {' {' + ','.join (f'{choice (_STATIC_TERMS)} : {expr ()}' for i in range (randrange (4))) + '}'} "
 
 def expr_union ():
-	return '||'.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {' || '.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_sdiff ():
-	return '^^'.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {' ^^ '.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_xsect ():
-	return '&&'.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {' && '.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_or ():
-	return ' or '.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {' or '.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_and ():
-	return ' and '.join (f'{expr ()}' for i in range (randrange (2, 4)))
+	return f" {' and '.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
 
 def expr_not ():
 	return f' not {expr ()} '
@@ -653,7 +653,7 @@ def expr_ufunc ():
 	vars = choice ((('x',), ('x, y',), ('x, y, z',)))
 	kw   = choice (((), (), (), (), (), (), ('reals = False',), ('reals = False, commutative = False',)))
 
-	return f'{"?" if kw or not name else choice ([" ", "?"])}{name}({", ".join (vars + kw)})'
+	return f' {"?" if kw or not name else choice ([" ", "?"])}{name}({", ".join (vars + kw)}) '
 
 def expr_subs ():
 	t = [(expr (), expr ()) for _ in range (randint (1, 3))]
@@ -673,6 +673,7 @@ def expr_subs ():
 	# else: Subs ()
 
 #...............................................................................................
+DEPTH  = 0 # pylint snack
 EXPRS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
 TERMS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'term_', globals ().items ())]
 CURLYS = True # if False then intentionally introduces grammatical ambiguity to test consistency in those cases
@@ -682,11 +683,8 @@ def expr_term ():
 
 	return f'{{{ret}}}' if CURLYS else ret
 
-def expr (depth = None):
+def expr ():
 	global DEPTH
-
-	if depth is not None:
-		DEPTH = depth
 
 	if DEPTH <= 0:
 		return expr_term ()
@@ -728,9 +726,10 @@ def test (argv = None):
 	sparser.set_sp_user_funcs (funcs)
 	sxlat.set_xlat_And (False)
 
-	_DEPTH  = 3
+	depth   = 3
 	single  = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'ns', 'nospaces', 'quick', 'pyS', 'cross', 'depth=', 'expr='])
+	topexpr = None
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:E:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'ns', 'nospaces', 'rs', 'randomspaces', 'quick', 'pyS', 'cross', 'depth=', 'expr=', 'topexpr='])
 
 	if ('-q', '') in opts or ('--quick', '') in opts:
 		parser.set_quick (True)
@@ -740,9 +739,16 @@ def test (argv = None):
 
 	for opt, arg in opts:
 		if opt in ('-d', '--depth'):
-			_DEPTH = int (arg)
+			depth = int (arg)
 		elif opt in ('-e', '--expr'):
 			single = [arg]
+		elif opt in ('-E', '--topexpr'):
+			topexpr = globals ().get (f'expr_{arg}')
+
+	if topexpr is None:
+		topexpr = expr
+	else:
+		EXPRS.remove (topexpr)
 
 	if ('--dump', '') in opts:
 		DEPTH = 0
@@ -762,11 +768,12 @@ def test (argv = None):
 
 	CURLYS   = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
 	spaces   = not (('--ns', '') in opts or ('--nospaces', '') in opts)
+	rndspace = not (('--rs', '') in opts or ('--randomspaces', '') in opts)
 	show     = ('--show', '') in opts
 	infinite = (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts)
 
 	if infinite and not single:
-		expr_func = (lambda: expr (_DEPTH)) if spaces else (lambda: expr (_DEPTH).replace (' ', ''))
+		expr_func = (lambda: topexpr ()) if spaces else (lambda: topexpr ().replace (' ', ''))
 	else:
 		expr_func = iter (single or _EXPRESSIONS).__next__
 
@@ -795,7 +802,12 @@ def test (argv = None):
 				return AST (*tuple (fixstuff (a) for a in ast))
 
 			status = []
+			DEPTH  = depth
 			text   = expr_func ()
+
+			if infinite and not single and rndspace:
+				i    = randrange (1, len (text) - 1)
+				text = f'{text [:i]} {text [i:]}'
 
 			if show:
 				print (f'{text}\n')

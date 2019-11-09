@@ -193,7 +193,7 @@ class AST (tuple):
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 	_strip_fdpi     = lambda self, count = None: self._strip (count, ('!', '-diffp', '-idx'))
 	_strip_pow      = lambda self, count = None: self._strip (count, ('^',))
-	_strip_afpdpi   = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx'))
+	# _strip_afpdpi   = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
 
 	def _strip_minus (self, count = None, retneg = False, negnum = True):
 		count       = -1 if count is None else count

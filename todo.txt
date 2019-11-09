@@ -1,14 +1,7 @@
-> add slice() to test_sym
-> add back "forbidden" functions to test_sym?
-
-> subs AST sxlat
-> subs AST ast2tex
-> subs AST ast2nat
-> subs AST ast2py
-
-> AST.args2kwargs (ast.args) -> ast.args2kwargs ()?
 > Subs (1, x, x).subs (x, 1/y) -> Subs (1, x, 1/y) - make same in apply_vars
 > subs of ufunc variables for other variables
+
+> AST.args2kwargs (ast.args) -> ast.args2kwargs ()?
 
 
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
@@ -31,6 +24,9 @@
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
 > test_server multi maths from semicolon expressions
+
+> add slice() to test_sym
+> add back "forbidden" functions to test_sym (reject NullVars sxlats)?
 
 > PDEs
 
