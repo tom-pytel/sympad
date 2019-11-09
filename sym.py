@@ -1335,12 +1335,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_lamb (self, ast):
 		i = self.parent.mul.index (ast) if self.parent.is_mul else None
 
-		if (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or
+		if not (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
-			return sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
+			return self._ast2spt (ast.lamb)
 
-		return self._ast2spt (ast.lamb)
+		return sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
 
 	def _ast2spt_idx (self, ast):
 		spt = self._ast2spt (ast.obj)
