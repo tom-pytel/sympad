@@ -1119,7 +1119,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		self.parent  = self.ast = AST.Null
 
 		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
+			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
 
 		spt = self._ast2spt (ast)
 
@@ -1337,7 +1337,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		if (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or
 				(self.parent.is_ass and ast is self.parent.rhs) or
-				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren)):
+				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
 			return sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
 
 		return self._ast2spt (ast.lamb)
@@ -1404,7 +1404,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: self._ast2spt (a) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
-		'-subs' : lambda self, ast: sp.Subs (self._ast2spt (ast.expr), tuple (self._ast2spt (s) for s, d in ast.subs), tuple (self._ast2spt (d) for s, d in ast.subs)),
+		'-subs' : lambda self, ast: sp.Subs (self._ast2spt (ast.expr), tuple (self._ast2spt (s) for s, d in ast.subs), tuple (self._ast2spt (d) for s, d in ast.subs)).doit (deep = False),
 
 		'text'  : lambda self, ast: ast.spt,
 	}

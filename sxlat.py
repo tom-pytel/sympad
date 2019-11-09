@@ -378,7 +378,17 @@ def _xlat_f2a_subs (expr, src = AST.VarNull, dst = None):
 		return AST ('-subs', expr, subs)
 
 #...............................................................................................
-_XLAT_FUNC2AST_ALL    = {
+_XLAT_FUNC2AST_REIM = {
+	'Re'                   : lambda *args: AST ('-func', 're', tuple (args)),
+	'Im'                   : lambda *args: AST ('-func', 'im', tuple (args)),
+}
+
+_XLAT_FUNC2AST_SUBS = {
+	'Subs'                 : _xlat_f2a_Subs,
+	'.subs'                : _xlat_f2a_subs,
+}
+
+_XLAT_FUNC2AST_TEXNATPY = {
 	'slice'                : _xlat_f2a_slice,
 	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
 
@@ -394,12 +404,7 @@ _XLAT_FUNC2AST_ALL    = {
 	'Not'                  : lambda not_: AST ('-not', not_),
 }
 
-_XLAT_FUNC2AST_REIM = {
-	'Re'                   : lambda *args: AST ('-func', 're', tuple (args)),
-	'Im'                   : lambda *args: AST ('-func', 'im', tuple (args)),
-}
-
-_XLAT_FUNC2AST_TEXNAT = {
+_XLAT_FUNC2AST_TEXNAT = {**_XLAT_FUNC2AST_SUBS,
 	'abs'                  : lambda *args: AST ('|', args [0] if len (args) == 1 else AST (',', args)),
 	'Abs'                  : lambda *args: AST ('|', args [0] if len (args) == 1 else AST (',', args)),
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
@@ -421,12 +426,9 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
 	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
 	'Union'                : _xlat_f2a_Union,
-
-	'Subs'                 : _xlat_f2a_Subs,
-	'.subs'                : _xlat_f2a_subs,
 }
 
-XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
+XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT,
 	'Add'                  : lambda *args, **kw: AST ('+', args),
 	'Mul'                  : lambda *args, **kw: AST ('*', args),
 
@@ -448,7 +450,7 @@ XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
 	'zeros'                : True,
 }
 
-XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2AST_TEXNAT,
+XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT, **_XLAT_FUNC2AST_REIM,
 	'Add'                  : lambda *args, **kw: None if kw else AST ('+', args),
 	'Mul'                  : lambda *args, **kw: None if kw else AST ('*', args),
 
@@ -457,9 +459,11 @@ XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2A
 	'Sum'                  : _xlat_f2a_Sum_NAT,
 }
 
-XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM,
+XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_REIM,
 	'Gamma'                : lambda *args: AST ('-func', 'gamma', tuple (args)),
 }
+
+XLAT_FUNC2AST_SPT = {**XLAT_FUNC2AST_PY, **_XLAT_FUNC2AST_SUBS}
 
 def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
@@ -603,6 +607,7 @@ class sxlat: # for single script
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
 	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_PY  = XLAT_FUNC2AST_PY
+	XLAT_FUNC2AST_SPT = XLAT_FUNC2AST_SPT
 	xlat_funcs2asts   = xlat_funcs2asts
 	xlat_func2tex     = xlat_func2tex
 	xlat_attr2tex     = xlat_attr2tex

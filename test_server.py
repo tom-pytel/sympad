@@ -1,4 +1,4 @@
-	#!/usr/bin/env python3
+#!/usr/bin/env python3
 # python 3.6+
 
 # Testing of server state machine (vars, env, lambdas).
