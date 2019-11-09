@@ -24,6 +24,7 @@ _STATIC_TERMS = [
 	'1.0',
 	'-1.0',
 	'.1',
+	'-.1',
 	'1.',
 	'2',
 	'1e-100',
@@ -418,6 +419,9 @@ f(ln(2))
 a:b^\Lambda(True,1)
 a**-\sqrt[b]1[c]
 notassoc_legendre(Pi_{44},-1.0),z20=phi,1e+100*1e100*theta*variations()
+a = {::b}, c
+\partialx / \partial \partial
+dx / dd
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -437,7 +441,7 @@ def term_num ():
 _TERM_VARS = sast.AST_Var.GREEK + tuple ('\\' + g for g in sast.AST_Var.GREEK) + tuple (sast.AST_Var.PY2TEXMULTI.keys ())
 
 def term_var ():
-	return f' {choice (_TERM_VARS)}{f"_{{{randint (0, 100)}}}" if random () > 0.75 else ""} '
+	return f' {choice (_TERM_VARS)}{f"_{{{randint (0, 100)}}}" if random () < 0.25 else ""} '
 
 def expr_semicolon ():
 	return '; '.join (expr () for _ in range (randrange (2, 5)))
@@ -651,12 +655,29 @@ def expr_ufunc ():
 
 	return f'{"?" if kw or not name else choice ([" ", "?"])}{name}({", ".join (vars + kw)})'
 
+def expr_subs ():
+	t = [(expr (), expr ()) for _ in range (randint (1, 3))]
+	r = randrange (3)
+
+	if r == 0:
+		s = ', '.join (f'{s} = {d}' for s, d in t)
+	elif r == 1:
+		s = f"{', '.join (s for s, d in t)} = {', '.join (d for s, d in t)}"
+	else:
+		s = '\\substack{' + ' \\\\ '.join (f'{s} = {d}' for s, d in t) + '}'
+
+	if random () < 0.5:
+		return f'\\. {expr ()} |_{{{s}}}'
+	else:
+		return f'\\left. {expr ()} \\right|_{{{s}}}'
+	# else: Subs ()
+
 #...............................................................................................
 EXPRS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]
 TERMS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'term_', globals ().items ())]
 CURLYS = True # if False then intentionally introduces grammatical ambiguity to test consistency in those cases
 
-def term ():
+def expr_term ():
 	ret = choice (TERMS) () if random () < 0.2 else f' {choice (_STATIC_TERMS)} '
 
 	return f'{{{ret}}}' if CURLYS else ret
@@ -668,7 +689,7 @@ def expr (depth = None):
 		DEPTH = depth
 
 	if DEPTH <= 0:
-		return term ()
+		return expr_term ()
 
 	else:
 		DEPTH -= 1

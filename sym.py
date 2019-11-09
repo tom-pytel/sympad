@@ -233,7 +233,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return (s, has) if ret_has else s
 
 	def _ast2tex_ass_hs (self, hs, lhs = True):
-		return self._ast2tex_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and (hs.is_piece or (hs.is_comma and (self.parent and not self.parent.is_scolon)))))
+		return self._ast2tex_wrap (hs, 0, hs.is_ass or hs.is_slice or
+			(lhs and (hs.is_piece or (hs.is_comma and (self.parent and not self.parent.is_scolon)))))
 
 	def _ast2tex_cmp_hs (self, hs):
 		return self._ast2tex_wrap (hs, 0, {'=', '<>', '-piece', '-slice', '-or', '-and', '-not'})
@@ -426,12 +427,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\frac{{d{top}}}{{}}{side}'
 
 		if len (ds) == 1 and ast.is_diff_d:
-			dvs = " ".join (self._ast2tex (AST ('@', v).as_differential if p == 1 else AST ('^', AST ('@', v).as_differential, AST ('#', p))) for v, p in ast.dvs)
+			dvs = " ".join (self._ast2tex (AST ('@', f'd{v}') if p == 1 else AST ('^', AST ('@', f'd{v}'), AST ('#', p))) for v, p in ast.dvs)
 
 			return f'\\frac{{d{top if dp == 1 else f"^{dp}{topp}"}}}{{{dvs}}}{side}'
 
 		else:
-			dvs = " ".join (self._ast2tex (AST ('@', v).as_partial if p == 1 else AST ('^', AST ('@', v).as_partial, AST ('#', p))) for v, p in ast.dvs)
+			dvs = " ".join (self._ast2tex (AST ('@', f'partial{v}') if p == 1 else AST ('^', AST ('@', f'partial{v}'), AST ('#', p))) for v, p in ast.dvs)
 
 			return f'\\frac{{\\partial{topp if dp == 1 else f"^{dp}{topp}"}}}{{{dvs}}}{side}'
 
@@ -498,7 +499,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "-slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "-slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"-slice"})}' for p in ast.piece) + ' \\end{cases}',
 		'-lamb' : lambda self, ast: f'\\left({self._ast2tex (AST ("@", ast.vars [0]) if ast.vars.len == 1 else AST ("(", (",", tuple (("@", v) for v in ast.vars))))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 		'-idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^", "-slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "||", "^^", "&&", "-or", "-and", "-not"})}\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]',
-		'-slice': lambda self, ast: '{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and a.op in {'=', ',', '-slice'}) for a in _ast_slice_bounds (ast, '')),
+		'-slice': lambda self, ast: self._ast2tex_wrap ('{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and a.op in {'=', ',', '-slice'}) for a in _ast_slice_bounds (ast, '')), 0, not ast.start and self.parent.is_comma and ast is self.parent.comma [0] and self.parents [-2].is_ass and self.parent is self.parents [-2].rhs),
 		'-set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex_wrap (c, 0, c.is_slice) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'-dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex_wrap (k, 0, k.is_slice)}{{:}} {self._ast2tex_wrap (v, 0, v.is_slice)}" for k, v in ast.dict)} \\right\\}}',
 		'||'    : lambda self, ast: ' \\cup '.join (self._ast2tex_wrap (a, 0, a.op in {'=', '<>', ',', '-slice', '-or', '-and', '-not'} or (a.is_piece and a is not ast.union [-1])) for a in ast.union),
@@ -717,7 +718,7 @@ class ast2nat: # abstract syntax tree -> native text
 			side = f' {self._ast2nat_paren (ast.diff)}'
 
 		dp  = sum (dv [1] for dv in ast.dvs)
-		dv  = (lambda v: AST ('@', v).as_differential) if ast.is_diff_d else (lambda v: AST ('@', v).as_partial)
+		dv  = (lambda v: AST ('@', f'd{v}')) if ast.is_diff_d else (lambda v: AST ('@', f'partial{v}'))
 		dvs = " ".join (self._ast2nat (dv (v) if p == 1 else AST ('^', dv (v), AST ('#', p))) for v, p in ast.dvs)
 
 		return f'{ast.d}{top if dp == 1 else f"**{dp}{topp}"} / {dvs}{side}'
@@ -743,8 +744,9 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_slice (self, ast):
 		b = _ast_slice_bounds (ast)
+		s = ':'.join (self._ast2nat_wrap (a, a is not b [-1] and not a.is_diff and a.has_tail_lambda_solo, a.op in {'=', ',', '-lamb', '-slice'}) for a in b)
 
-		return ':'.join (self._ast2nat_wrap (a, a is not b [-1] and not a.is_diff and a.has_tail_lambda_solo, a.op in {'=', ',', '-lamb', '-slice'}) for a in b)
+		return self._ast2nat_wrap (s, 0, not ast.start and self.parent.is_comma and ast is self.parent.comma [0] and self.parents [-2].is_ass and self.parent is self.parents [-2].rhs)
 
 	def _ast2nat_dict (self, ast):
 		items = []
@@ -1741,9 +1743,9 @@ class sym: # for single script
 
 # 	# ast = AST ('-func', 'eye', (('#', '3'),))
 # 	# ast = AST ('+', (('*', (('+', (('-', ('@', 'lambda')), ('#', '1'))), ('+', (('-', ('@', 'lambda')), ('#', '4'))))), ('-', ('#', '6'))))
-# 	ast = AST ('+', (('-', ('@', 'lambda')), ('#', '1')))
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
+# 	ast = AST (',', ((',', (('-slice', False, False, None), ('@', 'a'))), ('@', 'b')))
+# 	res = ast2tex (ast)
+# 	# res = spt2ast (res)
 # 	# res = ast2nat (res)
 
 # 	print (res)
