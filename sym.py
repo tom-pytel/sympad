@@ -31,11 +31,16 @@ class ExprAss (sp.Eq): # assignment instead of equality comparison
 
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
 	is_number    = False
-	SYMPAD_ast   = lambda self: AST (*literal_eval (self.args [0]))
 	free_symbols = set ()
 
-	def SYMPAD_eval (self):
-		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('-func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
+	def __new__ (cls, ast):
+		self     = sp.Expr.__new__ (cls, str (ast))
+		self.ast = AST (*literal_eval (ast)) if isinstance (ast, str) else ast # SymPy might re-create this object using string argument
+
+		return self
+
+	def doit (self, *args, **kw):
+		return self
 
 def _raise (exc):
 	raise exc
@@ -70,12 +75,8 @@ def _free_symbols (spt): # extend sympy .free_symbols into standard python conta
 		return _free_symbols (spt.start).union (_free_symbols (spt.stop), _free_symbols (spt.step))
 	elif isinstance (spt, dict):
 		return set ().union (*(_free_symbols (s) for s in sum (spt.items (), ())))
-
 	else:
-		try:
-			return spt.free_symbols
-		except:
-			pass
+		return getattr (spt, 'free_symbols', set ())
 
 	return set ()
 
@@ -100,6 +101,23 @@ def _simplify (spt): # extend sympy simplification into standard python containe
 
 	return spt
 
+def _doit (spt): # extend sympy _doit into standard python containers
+	if isinstance (spt, (None.__class__, bool, int, float, complex, str)):
+		return spt
+	elif isinstance (spt, (tuple, list, set, frozenset)):
+		return spt.__class__ (_doit (a) for a in spt)
+	elif isinstance (spt, slice):
+		return slice (_doit (spt.start), _doit (spt.stop), _doit (spt.step))
+	elif isinstance (spt, dict):
+		return dict ((_doit (k), _doit (v)) for k, v in spt.items ())
+
+	try:
+		return spt.doit (deep = True)
+	except:
+		pass
+
+	return spt
+
 def _dsolve (*args, **kw):
 	ast = spt2ast (sp.dsolve (*args, **kw))
 
@@ -110,7 +128,7 @@ def _dsolve (*args, **kw):
 		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
 			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
 
-	return ExprNoEval (str (ast), 1) # never automatically simplify dsolve
+	return ExprNoEval (ast) # never automatically simplify dsolve
 
 def _Mul (*args):
 	itr = iter (args)
@@ -1076,7 +1094,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
 		'-not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
 		'-ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})' + (f'({", ".join (self._ast2py (v) for v in ast.vars)})' if ast.vars else ''),
-		'-subs' : lambda self, ast: f'Subs({self._ast2py (ast.expr)}, ({", ".join (self._ast2py (s) for s, d in ast.subs)}), ({", ".join (self._ast2py (d) for s, d in ast.subs)}))' if ast.subs.len > 1 else f'Subs({self._ast2py (ast.expr)}, {self._ast2py (ast.subs [0] [0])}, {self._ast2py (ast.subs [0] [1])})',
+		'-subs' : lambda self, ast: f'{self._ast2py (ast.expr)}.subs([{", ".join (f"({self._ast2py (s)}, {self._ast2py (d)})" for s, d in ast.subs)}])' if ast.subs.len > 1 else f'{self._ast2py (ast.expr)}.subs({self._ast2py (ast.subs [0] [0])}, {self._ast2py (ast.subs [0] [1])})',
 
 		'text'  : lambda self, ast: ast.py,
 	}
@@ -1112,11 +1130,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
-	def __init__ (self): self.parent = self.ast = None # pylint kibble
+	def __init__ (self): self.parent = self.ast = None # self.eval = None # pylint kibble
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
+		# self.eval    = True
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
@@ -1124,10 +1143,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		spt = self._ast2spt (ast)
 
 		if _DOIT:
-			try:
-				spt = spt.doit (deep = True)
-			except:
-				pass
+			spt = _doit (spt) # spt.doit (deep = True)
 
 		if _POST_SIMPLIFY:
 			spt = _simplify (spt)
@@ -1232,7 +1248,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			except:
 				raise e from None
 
-		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
+		return ExprNoEval (AST ('.', spt2ast (spt), *ast [2:]))
 
 	def _ast2spt_add (self, ast): # specifically try to subtract negated objects (because of sets)
 		itr = iter (ast.add)
@@ -1294,7 +1310,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return self._ast2spt (ast.args [0])
 
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
-			return ExprNoEval (str (ast.args [0]), 1 if ast.args.len == 1 else self._ast2spt (ast.args [1]))
+			return ExprNoEval (ast.args [0])
 
 		func = _ast2spt_pyfuncs.get (ast.unescaped)
 
@@ -1302,7 +1318,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
 		if ast.unescaped in _SYM_USER_FUNCS: # user lambda, within other lambda if it got here
-			return ExprNoEval (str (ast), 1)
+			return ExprNoEval (ast)
 
 		raise NameError (f'function {ast.unescaped!r} is not defined')
 
@@ -1335,12 +1351,21 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_lamb (self, ast):
 		i = self.parent.mul.index (ast) if self.parent.is_mul else None
 
-		if not (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or
+		if not (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or # treat body of lambda as expression for calculation?
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
 			return self._ast2spt (ast.lamb)
 
-		return sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
+		# oldeval   = self.eval
+		# self.eval = ast.lamb.is_func and ast.lamb.func == AST.Func.NOEVAL
+		spt       = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
+
+		# if not self.eval:
+		# 	spt.doit = lambda self, *args, **kw: self # disable doit for lambda definition
+
+		# self.eval = oldeval
+
+		return spt
 
 	def _ast2spt_idx (self, ast):
 		spt = self._ast2spt (ast.obj)
@@ -1349,10 +1374,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not getattr (spt, 'free_symbols', None) and not hasattr (spt, '__getitem__') and not isinstance (spt, ExprNoEval):
+			if not isinstance (spt, ExprNoEval) and not getattr (spt, 'free_symbols', None) and not hasattr (spt, '__getitem__'):
 				raise
 
-		return ExprNoEval (str (AST ('-idx', spt2ast (spt), ast.idx)), 1)
+		return ExprNoEval (AST ('-idx', spt2ast (spt), ast.idx))
 
 	def _ast2spt_sdiff (self, ast):
 		sdiff = self._ast2spt (ast.sdiff [0])
@@ -1404,7 +1429,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: self._ast2spt (a) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
-		'-subs' : lambda self, ast: sp.Subs (self._ast2spt (ast.expr), tuple (self._ast2spt (s) for s, d in ast.subs), tuple (self._ast2spt (d) for s, d in ast.subs)).doit (deep = False),
+		'-subs' : lambda self, ast: self._ast2spt (ast.expr).subs ([(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs]),
 
 		'text'  : lambda self, ast: ast.spt,
 	}
@@ -1607,7 +1632,7 @@ class spt2ast:
 	_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 	_spt2ast_funcs = {
-		ExprNoEval: lambda self, spt: spt.SYMPAD_eval (),
+		ExprNoEval: lambda self, spt: spt.ast,
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,
@@ -1730,14 +1755,13 @@ class sym: # for single script
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 	# set_sym_user_funcs (vars)
-	# res = ast2py (ast)
 
-	ast = AST ('-func', 'Integral', (('+', (('@', 'x'), ('#', '1'))), ('(', (',', (('@', 'x'), ('-', ('@', 'oo')), ('@', 'oo'))))))
+	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
+	ast = AST (',', (('-intg', ('@', 'x'), ('@', 'dx')), ('-intg', ('@', 'y'), ('@', 'dx'))))
 	res = ast2spt (ast)
-	res = spt2ast (res)
+	# res = spt2ast (res)
 	# res = ast2nat (res)
 
-	print (res)
+	print (repr (res))
