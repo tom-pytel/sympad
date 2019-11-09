@@ -437,7 +437,7 @@ solve (x**3 = 5)
 m = \\[[1, 2], [3, 4]]
 l = m - lambda eye 2
 l.det ()
-solve (_)
+solve _
 a, b = _
 m.eigenvals ()
 Subs (l, lambda, a) \\[x, y]
@@ -447,6 +447,7 @@ Subs (l, lambda, b) \\[x, y]
 solve (_ [0], _ [1], x, y)
 \\[_ [0] [x], y].subs (y, 1)
 m.eigenvects ()
+simplify _
 
 """), ('sets', """
 

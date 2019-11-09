@@ -334,10 +334,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			elif p and (
 					p.is_sqrt or
 					p.num_exp or
-					(p.is_attr_var and s [:6] != '\\left(') or
+					(p.is_attr_var and s [:6] != '\\left(') or # comment this out if separating all variables with spaces
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
-					# (p.tail_mul.is_var and n.strip_fdpi.is_var) or
+					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or # space separate ALL individual variables
 					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or (n.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
 				t.append (f'\\ {s}')
 
@@ -350,7 +350,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_div (self, ast):
 		false_diff = (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else \
-				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curlys.is_num_pos_int) if ast.numer.is_mul else \
+				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curly.is_num_pos_int) if ast.numer.is_mul else \
 				ast.numer.is_diff_or_part_solo
 
 		return f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or false_diff)}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}'
@@ -663,7 +663,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_div (self, ast):
 		false_diff = (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else \
-				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curlys.is_num_pos_int) if ast.numer.is_mul else \
+				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curly.is_num_pos_int) if ast.numer.is_mul else \
 				ast.numer.is_diff_or_part_solo
 
 		n, ns = (self._ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
@@ -683,7 +683,6 @@ class ast2nat: # abstract syntax tree -> native text
 		p = self._ast2nat_wrap (ast.exp,
 				ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or
 				ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'},
-				# (ast.exp.strip_attrpdpi.is_ufunc and not ((ast.exp.is_diffp and not ast.exp.diffp.is_ufunc) or (ast.exp.is_pow and ast.exp.strip_pow.is_ufunc))) or
 				{","})
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:

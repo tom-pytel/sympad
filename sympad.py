@@ -5087,7 +5087,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_div (self, ast):
 		false_diff = (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else \
-				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curlys.is_num_pos_int) if ast.numer.is_mul else \
+				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curly.is_num_pos_int) if ast.numer.is_mul else \
 				ast.numer.is_diff_or_part_solo
 
 		return f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or false_diff)}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}'
@@ -5389,7 +5389,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_div (self, ast):
 		false_diff = (ast.numer.base.is_diff_or_part_solo and ast.numer.exp.is_num_pos_int) if ast.numer.is_pow else \
-				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curlys.is_num_pos_int) if ast.numer.is_mul else \
+				(ast.numer.mul.len == 2 and ast.numer.mul [1].is_var and ast.numer.mul [0].is_pow and ast.numer.mul [0].base.is_diff_or_part_solo and ast.numer.mul [0].exp.strip_curly.is_num_pos_int) if ast.numer.is_mul else \
 				ast.numer.is_diff_or_part_solo
 
 		n, ns = (self._ast2nat_wrap (ast.numer, 1), True) if _ast_is_neg (ast.numer) else \
@@ -6691,7 +6691,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'd', ('x', 1))
 	def _interpret_divide (ast):
-		numer = ast.numer.strip_curlys
+		numer = ast.numer.strip_curly
 		d     = e = None
 		p     = 1
 
@@ -6704,13 +6704,13 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				e = numer.as_var
 
 		elif numer.is_pow:
-			if numer.base.is_diff_or_part_solo and numer.exp.strip_curlys.is_num_pos_int:
+			if numer.base.is_diff_or_part_solo and numer.exp.strip_curly.is_num_pos_int:
 				d = numer.base.var
-				p = numer.exp.strip_curlys.as_int
+				p = numer.exp.strip_curly.as_int
 
-		elif numer.is_mul and numer.mul.len == 2 and numer.mul [1].is_var and numer.mul [0].is_pow and numer.mul [0].base.is_diff_or_part_solo and numer.mul [0].exp.strip_curlys.is_num_pos_int:
+		elif numer.is_mul and numer.mul.len == 2 and numer.mul [1].is_var and numer.mul [0].is_pow and numer.mul [0].base.is_diff_or_part_solo and numer.mul [0].exp.strip_curly.is_num_pos_int:
 			d = numer.mul [0].base.var
-			p = numer.mul [0].exp.strip_curlys.as_int
+			p = numer.mul [0].exp.strip_curly.as_int
 			e = numer.mul [1]
 
 		if d is None:
@@ -6718,7 +6718,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 		ast_dv_check = (lambda n: n.is_differential) if d == 'd' else (lambda n: n.is_partial)
 
-		denom = ast.denom.strip_curlys
+		denom = ast.denom.strip_curly
 		ns    = denom.mul if denom.is_mul else (denom,)
 		ds    = []
 		cp    = p
@@ -6730,8 +6730,8 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				dec = 1
 				ds.append ((n.as_var.var, 1))
 
-			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curlys.is_num_pos_int:
-				dec = n.exp.strip_curlys.as_int
+			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curly.is_num_pos_int:
+				dec = n.exp.strip_curly.as_int
 				ds.append ((n.base.as_var.var, dec))
 
 			else:
@@ -6903,7 +6903,7 @@ def _expr_func_func (FUNC, args, expr_super = None):
 
 	if expr_super is None:
 		return _expr_func (2, '-func', func, args)
-	elif expr_super.strip_curlys != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
+	elif expr_super.strip_curly != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
 		return AST ('^', _expr_func_func (FUNC, args), expr_super)
 	else:
 		return _expr_func_func (f'a{func}', args)
@@ -7091,7 +7091,7 @@ class Parser (lalr1.LALR1):
 			b'fX8tDMLgVqZ9S4M8QZ041NbbeqGQ+xD/s5fCwx6gNG87VJvc2MT1pymwPA3LtrqkiyvEeh2DW1Qq2IbQY0XnquUX6rWu8jC4/NKRFT5o4UcfFnxQzuvSFKebYldd0sUVoj2Lpohryh7AxVm+bgrkZLPcVA/h4iwf0wC/tyzXdkW210uy3lb3fCGIbnbBRbBu' \
 			b'MiOwzfFKYYQ2dkvCVasuXKey1s+2a8+XuDzGFPUffnn01UO7uDQ2ri447dLARd0P7OI1T2Oq/he11gPX4q+/eKl9/N8WyjDE3bCTx8zN0rDo4pJevcLh7Eq6rc7x4tI9ubUM9166fXWOF5fuOn2LMyxdXPp9hheX7vqJiXMr3aY6x4tLd/0cyLmVrqrO8eLS' \
 			b'tdVb3dKSYYFq5y0aad0dWmAWkiUutOBhKeT927T8G16g1EB249mACoqA9qHiD0GPbtQ1LqfP/tl1s+MaC498QNEP/pXmuBuVbN2gqSqwPdBPWh25CqVVx1cb2omWFruhbdyFinZ9Cjs+6WSnJ9x+gfMDnGdfwY08aItbyk38pP8U1UyZuDM87QWv3mLthpqJ' \
-			b'Syxq2jiK31j0rVmAicJLElqqBmsphI57QPA+pripxltlWlqiIX67uGmFZCwUGoSCNo5t8OBGb4MbW1z/f7O4DUw=' 
+			b'Syxq2jiK31j0rVmAicJLElqqBmsphI57QPA+pripxltlWlqiIX67uGmFZCwUGoSCNo5t8OBGb4MbW1z/f7O4DUw='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum

@@ -248,7 +248,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'd', ('x', 1))
 	def _interpret_divide (ast):
-		numer = ast.numer.strip_curlys
+		numer = ast.numer.strip_curly
 		d     = e = None
 		p     = 1
 
@@ -261,13 +261,13 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				e = numer.as_var
 
 		elif numer.is_pow:
-			if numer.base.is_diff_or_part_solo and numer.exp.strip_curlys.is_num_pos_int:
+			if numer.base.is_diff_or_part_solo and numer.exp.strip_curly.is_num_pos_int:
 				d = numer.base.var
-				p = numer.exp.strip_curlys.as_int
+				p = numer.exp.strip_curly.as_int
 
-		elif numer.is_mul and numer.mul.len == 2 and numer.mul [1].is_var and numer.mul [0].is_pow and numer.mul [0].base.is_diff_or_part_solo and numer.mul [0].exp.strip_curlys.is_num_pos_int:
+		elif numer.is_mul and numer.mul.len == 2 and numer.mul [1].is_var and numer.mul [0].is_pow and numer.mul [0].base.is_diff_or_part_solo and numer.mul [0].exp.strip_curly.is_num_pos_int:
 			d = numer.mul [0].base.var
-			p = numer.mul [0].exp.strip_curlys.as_int
+			p = numer.mul [0].exp.strip_curly.as_int
 			e = numer.mul [1]
 
 		if d is None:
@@ -275,7 +275,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 		ast_dv_check = (lambda n: n.is_differential) if d == 'd' else (lambda n: n.is_partial)
 
-		denom = ast.denom.strip_curlys
+		denom = ast.denom.strip_curly
 		ns    = denom.mul if denom.is_mul else (denom,)
 		ds    = []
 		cp    = p
@@ -287,8 +287,8 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				dec = 1
 				ds.append ((n.var_name, 1))
 
-			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curlys.is_num_pos_int:
-				dec = n.exp.strip_curlys.as_int
+			elif n.is_pow and ast_dv_check (n.base) and n.exp.strip_curly.is_num_pos_int:
+				dec = n.exp.strip_curly.as_int
 				ds.append ((n.base.var_name, dec))
 
 			else:
@@ -460,7 +460,7 @@ def _expr_func_func (FUNC, args, expr_super = None):
 
 	if expr_super is None:
 		return _expr_func (2, '-func', func, args)
-	elif expr_super.strip_curlys != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
+	elif expr_super.strip_curly != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
 		return AST ('^', _expr_func_func (FUNC, args), expr_super)
 	else:
 		return _expr_func_func (f'a{func}', args)
