@@ -1,8 +1,7 @@
+> PDEs
+
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
 > ?f(x)'(2), spt -> ?f(x)(2) instead of subs of diff
-
-> subs of ufunc variables for other variables?
-> subs of lambda variables for other variables?
 
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
@@ -10,6 +9,9 @@
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
+
+> subs of ufunc variables for other variables?
+> subs of lambda variables for other variables?
 
 > do not write out parentheses for differentiation where not needed - d/dx (y z) -> d/dx y z
 > do not write out parentheses for integration where not needed - \int {d / dx (x**2)} dx -> \int d / dx (x**2) dx
@@ -25,8 +27,6 @@
 
 > add slice() to test_sym
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)?
-
-> PDEs
 
 > \log loggamma=2 py representation? also sqrt? (use = instead of Eq due to function names as variables)
 > proper sqrt and log AST initialization via __new__
