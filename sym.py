@@ -1732,18 +1732,18 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-	# set_sym_user_funcs (vars)
-	# res = ast2py (ast)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
+# 	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+# 	# set_sym_user_funcs (vars)
+# 	# res = ast2py (ast)
 
-	# ast = AST ('-func', 'eye', (('#', '3'),))
-	# ast = AST ('+', (('*', (('+', (('-', ('@', 'lambda')), ('#', '1'))), ('+', (('-', ('@', 'lambda')), ('#', '4'))))), ('-', ('#', '6'))))
-	ast = AST ('+', (('-', ('@', 'lambda')), ('#', '1')))
-	res = ast2spt (ast)
-	res = spt2ast (res)
-	# res = ast2nat (res)
+# 	# ast = AST ('-func', 'eye', (('#', '3'),))
+# 	# ast = AST ('+', (('*', (('+', (('-', ('@', 'lambda')), ('#', '1'))), ('+', (('-', ('@', 'lambda')), ('#', '4'))))), ('-', ('#', '6'))))
+# 	ast = AST ('+', (('-', ('@', 'lambda')), ('#', '1')))
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	# res = ast2nat (res)
 
-	print (res)
+# 	print (res)

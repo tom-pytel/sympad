@@ -90,6 +90,8 @@
 
 > SYM.PY REFACTOR!
 
+> upgrade error marking in sparser to better show where erroneous expressions start (error stack?)
+
 > make sympad importable?
 
 > Custom Contains and other set operation fallbacks to allow symbols to stand in for sets?
@@ -151,3 +153,18 @@ Errors:
 -------
 
 
+---------------------------------------------
+Exception!
+
+text: f(x,y)={::notnu},\[-1.8126654675486712e-12,1e100,]||xyzd^^\partialx||2&&gamma'
+ast:  ('=', ('-ufunc', 'f', (('@', 'x'), ('@', 'y'))), (',', (('-slice', False, False, ('@', 'notnu')), ('||', (('-mat', ((('#', '-1.8126654675486712e-12'),), (('#', '1e+100'),))), ('^^', (('@', 'xyzd'), ('@', 'partialx'))), ('&&', (('#', '2'), ('-diffp', ('@', 'gamma'), 1))))))))
+tex1: f\left(x, y \right) = {:}{:}notnu, \begin{bmatrix} -1.8126654675486712{e}{-12} \\ 1{e}{+100} \end{bmatrix} \cup xyzd \ominus \partial x \cup 2 \cap \gamma'
+
+---------------------------------------------
+Exception!
+
+text: lambdax:None&&\partialx/\partial\partial*\{True,y1,dy}**{x0}||\[xyzd,]**4.652555876633687e-19/\partial
+ast:  ('-slice', ('@', 'lambdax'), ('||', (('&&', (('@', 'None'), ('*', (('-diff', ('@', 'x'), 'partial', (('partial', 1),)), ('^', ('-set', (('@', 'True'), ('@', 'y1'), ('@', 'dy'))), ('@', 'x0'))), {1}))), ('/', ('^', ('-mat', ((('@', 'xyzd'),),)), ('#', '4.652555876633687e-19')), ('@', 'partial')))), None)
+ast:  ('-slice', ('@', 'lambdax'), ('||', (('&&', (('@', 'None'), ('*', (('/', ('@', 'partialx'), ('@', 'partial')), ('^', ('-set', (('@', 'True'), ('@', 'y1'), ('@', 'dy'))), ('@', 'x0'))), {1}))), ('/', ('^', ('-mat', ((('@', 'xyzd'),),)), ('#', '4.652555876633687e-19')), ('@', 'partial')))), None)
+tex1: lambdax{:}None \cap \frac{\partial x}{\partial} \cdot \left\{True, y_{1}, dy \right\}^{x_{0}} \cup \frac{{\begin{bmatrix} xyzd \end{bmatrix}}^{4.652555876633687{e}{-19}}}{\partial}
+tex2: lambdax{:}None \cap \frac{\partial x}{\partial} \left\{True, y_{1}, dy \right\}^{x_{0}} \cup \frac{{\begin{bmatrix} xyzd \end{bmatrix}}^{4.652555876633687{e}{-19}}}{\partial}
