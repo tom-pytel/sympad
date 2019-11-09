@@ -30,8 +30,9 @@ class ExprAss (sp.Eq): # assignment instead of equality comparison
 	pass
 
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
-	is_number  = False
-	SYMPAD_ast = lambda self: AST (*literal_eval (self.args [0]))
+	is_number    = False
+	SYMPAD_ast   = lambda self: AST (*literal_eval (self.args [0]))
+	free_symbols = set ()
 
 	def SYMPAD_eval (self):
 		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('-func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
@@ -1111,10 +1112,9 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
-	def __init__ (self): self.parent = self.ast = None; self.eval = True # pylint kibble
+	def __init__ (self): self.parent = self.ast = None # pylint kibble
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
-		self.eval    = True
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
@@ -1122,6 +1122,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
 
 		spt = self._ast2spt (ast)
+
+		if _DOIT:
+			try:
+				spt = spt.doit (deep = True)
+			except:
+				pass
 
 		if _POST_SIMPLIFY:
 			spt = _simplify (spt)
@@ -1140,12 +1146,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		self.ast    = self.parent
 		self.parent = self.parents [-1]
-
-		if _DOIT and self.eval:
-			try:
-				spt = spt.doit (deep = False)
-			except:
-				pass
 
 		return spt
 
@@ -1335,18 +1335,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_lamb (self, ast):
 		i = self.parent.mul.index (ast) if self.parent.is_mul else None
 
-		if not (
-				self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or
+		if (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren)):
-			return self._ast2spt (ast.lamb)
+			return sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
 
-		oldeval   = self.eval
-		self.eval = False
-		spt       = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
-		self.eval = oldeval
-
-		return spt
+		return self._ast2spt (ast.lamb)
 
 	def _ast2spt_idx (self, ast):
 		spt = self._ast2spt (ast.obj)
@@ -1734,18 +1728,16 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-# 	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-# 	# set_sym_user_funcs (vars)
-# 	# res = ast2py (ast)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
+	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
+	# set_sym_user_funcs (vars)
+	# res = ast2py (ast)
 
-# 	# ast = AST ('-func', 'eye', (('#', '3'),))
-# 	# ast = AST ('+', (('*', (('+', (('-', ('@', 'lambda')), ('#', '1'))), ('+', (('-', ('@', 'lambda')), ('#', '4'))))), ('-', ('#', '6'))))
-# 	ast = AST ('=', ('*', (('-subs', ('*', (('#', '-0.006240361814568329'), ('@', 'andaandy1'))), ('<>', ('#', '0.1'), (('!=', ('+', (('@', 'None'), ('@', 'Sigma')))),))), ('[', (('/', ('#', '1.5880453809316657e-14'), ('#', '1e+100')),)), ('-set', (('@', 'epsilon'), ('#', '1.')))), {1, 2}), ('-diff', ('-diffp', ('@', 'c'), 3), 'partial', (('z', 3),)))
-# 	res = ast2tex (ast)
-# 	# res = spt2ast (res)
-# 	# res = ast2nat (res)
+	ast = AST ('-func', 'Integral', (('+', (('@', 'x'), ('#', '1'))), ('(', (',', (('@', 'x'), ('-', ('@', 'oo')), ('@', 'oo'))))))
+	res = ast2spt (ast)
+	res = spt2ast (res)
+	# res = ast2nat (res)
 
-# 	print (res)
+	print (res)

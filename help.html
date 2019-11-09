@@ -100,6 +100,7 @@ The input will be evaluated symbolically or numerically with the results being c
 
 <h4><a href="#More Examples">More Examples</a></h4>
 &emsp;<a href="#Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</a><br>
+&emsp;<a href="#Lambda Functions Examples">Lambda Functions</a><br>
 &emsp;<a href="#Solving Equations">Solving Equations</a><br>
 &emsp;<a href="#Differential Equations">Differential Equations</a><br>
 &emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><br>
@@ -459,6 +460,10 @@ The "<b>@(expr)</b>" function technically prevents variable remapping for the ex
 Another potentially useful meta-function for assignment is "<b>%(expr)</b>".
 This function defers evaluation of the expression for one round thus allowing things like assigning an integral operation to a variable instead of the result of the integral - "<b>f = %(\int a dx)</b>".
 In this way you can assign different values to "<b>a</b>" and have the integration happen automatically any time you access the "<b>f</b>" variable instead of just using the result of whatever variables were defined at the time of definition.
+</p><p>
+One more thing to be aware of is that differentials in derivatives and integrals get remapped based on the underlying variable, if possible otherwise an exception is raised.
+For example the derivative "<b>dy / dx</b>" will be treated as "<b>dy / dz</b>" if you have a global variable set "<b>x = z</b>", likewise "<b>\int y dx</b>" will be remapped to "<b>\int y dz</b>" in that case.
+This also happens in lambda functions so that you specify differentials to use (as non-d variables), see the <a href="#Lambda Functions Examples">Lambda&nbsp;Functions</a> examples section for more on this.
 </p>
 
 <h4 id="Simplification">Simplification</h4>
@@ -770,6 +775,41 @@ Integral (a**x, x)<br>
 Integral (r, (r, 0, 1), (theta, 0, 2pi))<br>
 integrate (sin x / x, (x, -oo, oo))<br>
 </p>
+
+<h4 id="Lambda Functions Examples">Lambda Functions</h4>
+
+<p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
+f = lambda x: x**2<i>&emsp; simple example of lambda which squares its argument</i><br>
+f (2)<br>
+f (x) = x**2<i>&emsp; differnt syntax to specify the same thing</i><br>
+f (3)<br>
+f (x, y) = sqrt (x**2 + y**2)<i>&emsp; function of two variables</i><br>
+f (3, 4)<br>
+<br>
+x, y = 3, 4<i>&emsp; assign global variables x and y</i><br>
+f (x, y) = sqrt (x**2 + y**2)<i>&emsp; notice they are bound upon definition</i><br>
+f (6, 8)<i>&emsp; function won't do anything with different arguments since it is already defined to be 5</i><br>
+f (x, y) = @sqrt (x**2 + y**2)<i>&emsp; the @() pseudo-function isolates any variables inside from remapping</i><br>
+f (6, 8)<i>&emsp; now the function works as expected</i><br>
+delall<br>
+<br>
+f (x) = \int x dy<i>&emsp; try to do a function to integrate an argument to y</i><br>
+f (sin (y))<i>&emsp; doesn't work because the integral was evaluated on definition of the function</i><br>
+f (x) = @(\int x dy)<i>&emsp; try isolate it with the @() pseudo-function</i><br>
+f (sin (y))<i>&emsp; also doesn't work because @() only defers variable binding, not evaluation</i><br>
+f (x) = %(\int x dy)<i>&emsp; the %() pseudo-function defers evaluation of anything inside it</i><br>
+f (sin (y))<i>&emsp; now it works</i><br>
+<br>
+f (x) = %(\int x dx)
+f (x**2)
+f (y**2)
+</p>
+
+
+<i>&emsp; </i><br>
+
+
 
 <h4 id="Solving Equations">Solving Equations</h4>
 

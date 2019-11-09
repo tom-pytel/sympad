@@ -519,12 +519,39 @@ class AST (tuple):
 
 			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
 
+		elif ast.is_diff:
+			dvs = []
+
+			for v, p in ast.dvs: # remap differentials if possible
+				a = vars.get (v)
+
+				if a:
+					if a.is_var_nonconst:
+						v = a.var
+					else:
+						raise ValueError (f"cannot remap differential 'd{v}' to non-variable in derivative")
+
+				dvs.append ((v, p))
+
+			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse), ast.d, tuple (dvs))
+
 		elif ast.is_intg:
-			if ast.is_intg_definite:
-				v    = ast.dv.var_name
+			dv = ast.dv
+
+			if ast.is_intg_definite: # don't map bound var
+				v    = dv.var_name
 				vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
 
-			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), ast.dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+			else: # remap differential if indefinite integral and possible
+				a = vars.get (ast.dv.var_name)
+
+				if a:
+					if a.is_var_nonconst:
+						dv = AST ('@', f'd{a.var}')
+					else:
+						raise ValueError (f'cannot remap differential {ast.dv.var!r} to non-variable in integral')
+
+			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
 			lvars = set (ast.vars)
