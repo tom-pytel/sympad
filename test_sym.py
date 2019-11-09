@@ -422,6 +422,7 @@ notassoc_legendre(Pi_{44},-1.0),z20=phi,1e+100*1e100*theta*variations()
 a = {::b}, c
 \partialx / \partial \partial
 dx / dd
+partial\theta
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

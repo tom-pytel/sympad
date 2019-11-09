@@ -56,14 +56,13 @@ The input will be evaluated symbolically or numerically with the results being c
 <h4><a href="#Quick Start">Quick Start</a></h4>
 &emsp;<a href="#Multiline Examples">Multiline Examples</a><br>
 &emsp;<a href="#Usage">Usage</a><br>
-&emsp;<a href="#Quick Input Mode">Quick Input Mode</a><br>
 
 <h4><a href="#Types">Types</a></h4>
 &emsp;<a href="#Numbers">Numbers</a><br>
 &emsp;<a href="#Booleans">Booleans</a><br>
 &emsp;<a href="#Vectors and Matrices">Vectors and Matrices</a><br>
 &emsp;<a href="#Piecewise Expressions">Piecewise Expressions</a><br>
-&emsp;<a href="#Functions Types">Functions</a><br>
+&emsp;<a href="#Function Types">Functions</a><br>
 &emsp;<a href="#Strings, Lists, Tuples and Dictionaries">Strings, Lists, Tuples and Dictionaries</a><br>
 &emsp;<a href="#Variables">Variables</a><br>
 
@@ -81,7 +80,7 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#Logic Operations">Logic Operations</a><br>
 &emsp;<a href="#Comparison">Comparison</a><br>
 &emsp;<a href="#Set Operations">Set Operations</a><br>
-&emsp;<a href="#Substitution" class="red">Substitution</a><br>
+&emsp;<a href="#Substitution">Substitution</a><br>
 &emsp;<a href="#Parentheses">Parentheses</a><br>
 &emsp;<a href="#Indexing">Indexing</a><br>
 &emsp;<a href="#Member Access">Member Access</a><br>
@@ -108,6 +107,7 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#Plotting Vector Walks">Plotting Vector Walks</a><br>
 
 <h4><a href="#Appendix">Appendix</a></h4>
+&emsp;<a href="#Quick Input Mode">Quick Input Mode</a><br>
 &emsp;<a href="#Special Characters">Special Characters</a><br>
 &emsp;<a href="#Admin Functions">Admin Functions</a><br>
 &emsp;<a href="#Environment Settings for env()">Environment Settings for env()</a><br>
@@ -185,18 +185,6 @@ Finally, a triple-click will copy the expression in LaTeX format.
 The single-click native and double-click Python formats should almost always be pasteable back into SymPad, whereas the LaTeX format may or may not be depending on what elements are present.
 </p>
 
-<h4 id="Quick Input Mode">Quick Input Mode</h4>
-
-<p>
-This is the input mode SymPad was born in and still my preferred mode for quick calculations due to the ease and speed of input.
-SymPad normally allows long variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
-This can be turned off by switching into quick input mode using the function "<b>env(quick)</b>" or by using the "<b>--quick</b>" option on the command line.
-When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between variables and recognized function names, though they are required AFTER function names.
-This means that an expression entered in normal mode like this "<b>x y z sin w**2</b>" can be entered in quick mode like this "<b>xyzsin w**2</b>".
-Note that a grammatical break is also still required AFTER text operators like "<b>if</b>", "<b>else</b>", "<b>in</b>", "<b>not in</b>", etc... otherwise they would make too many functions inaccessible by being recognized as part of a word.
-For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
-</p>
-
 <h2 id="Types">Types</h2>
 
 <h4 id="Numbers">Numbers</h4>
@@ -233,13 +221,14 @@ These are supported and can be entered as SymPy "<b>Piecewise</b>" functions, La
 They may be arbitrarily long - "<b>a if condition1 else b if condition2 else ...</b>" and may leave off the last "<b>else</b>" which is equivalent to a SymPy "<b>Piecewise</b>" function without a terminating "<b>True</b>" condition.
 </p>
 
-<h4 id="Functions Types">Fuctions</h4>
+<h4 id="Function Types">Fuctions</h4>
 
 <p>
 Apart from the top level SymPy functions which are available for calling but not as objects to be passed around or for assigning, there are two other types of function objects which can be manipulated in SymPad.
 There are lambda functions which can be assigned expressions and executed in SymPad like normal SymPy functions, and even passed into Python code to be executed like normal Python lambdas.
 There are also undefined mathematical function objects to be used mostly in differential equations.
-These last two types are assigned and can be passed around in SymPy just like any other type, the details of their operations are discussed in the "<b>Functions</b>" section below.
+These last two types are assigned and can be passed around in SymPy just like any other type, unlike top-level SymPy module functions which can only be called.
+The details of their operations are discussed in the <a href="#Functions">Functions</a> section below.
 </p>
 
 <h4 id="Strings, Lists, Tuples and Dictionaries">Strings, Lists, Tuples and Dictionaries</h4>
@@ -409,6 +398,17 @@ A partial fix is to wrap the set operations in a lambda or variable assignment u
 variable or view it.
 </p>
 
+<h4 id="Substitution">Substitution</h4>
+
+<p>
+Explicit substitution of variables and even whole expressions with other expressions is supported with the "<b>\. expr |_{x = y}</b>" shorthand.
+This maps directly to SymPy substitution of the form "<b>Subs (expr, x, y)</b>" and will replace any occurrances of the variable "<b>x</b>" in the expression with the variable "<b>y</b>", assuming that "<b>x</b>" has not been globally mapped to something else.
+The LaTeX syntax for this is "<b>\left. expr \right|_{x = y}</b>" with the "<b>\substack</b>" operator being accpeted to specify multiple ordered substitutions like "<b>\left. expr \right|_{\substack{x = y \\ z = w}}</b>".
+Multiple substitutions can also be specified via comma-separated assignments like "<b>\. expr |_{x = y, z = w}</b>" or as a single tuple assignment "<b>\. expr |_{x, z = y, w}</b>".
+The substitutions are not limited to variables, any expression can be substituted for any other expression, so "<b>\. 2x / 3 |_{2/3 = 5/7}</b>" will result in "<b>5x / 7</b>".
+The substituted expressions need not even be exact as SymPy will attempt to discover an implicit variable mapping when it is executing the substitution and thus "<b>\. x |_{1/x = 2}</b>" will result in "<b>1/2</b>" even though "<b>x</b>" is not explicitly listed as a substitution.
+</p>
+
 <h4 id="Parentheses">Parentheses</h4>
 
 <p>
@@ -512,7 +512,7 @@ User created lambda functions are supported and are specified the same way as Py
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", or with the alternative shorthand "<b>f (x) = x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
 When a lambda function is defined any non-lambda argument variables are mapped but no functions are called or expressions doit()-ed, this means that if a lambda references an assigned global variable the variable will be replaced with its value within the lambda definition.
 If you do not want to use the value of a global variable in a lambda definition but rather have the value bound upon execution of the lambda then use the no-remap pseudo-function as such "<b>f = lambda: @(x)</b>", this will leave the lambda definition referencing an "<b>x</b>" variable which will be bound upon execution.
-This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed, upon evaluation though whatever is passed in for "<b>x</b>" argument will be integrated with respect to x.
+This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed, upon evaluation though whatever is passed in for "<b>x</b>" argument will be integrated with respect to "<b>dx</b>" which is fixed and will not change irrespective of if a variable is passed in for "<b>x</b>".
 Lambda functions may reference other lambda functions as long as those are defined at the time of creation.
 </p><p>
 Lambdas may be passed to SymPy and other Python functions and they will be passed as SymPy "<b>Lambda</b>" objects.
@@ -525,17 +525,18 @@ Lambda recursion is not supported because there is no underlying mechanism to ma
 <p>
 Undefined functions are mathematical function objects but without any specific expression or lambda body defined, they are used mainly in differential equations.
 These functions are entered explicitly as "<b>?name (x, y, ...)</b>" with the name being optional but necessary if you need to differentiate between various functions (like in a system of differential equations).
-They can also be specified implicitly as "<b>name (x, y, ...)</b>" without the question mark if the function does not take any hints and the name is not already defined as another lambda function.
-The arguments to an undefined function can only be variable names and optional keyword arguments which will be passed on to the SymPy "<b>Function()</b>" call.
+They can also be specified implicitly as "<b>name (x, y, ...)</b>" without the question mark if the name is not already defined as another lambda function.
+The arguments to an undefined function can only be variable names, concrete immediate values to specify initial conditions and optional keyword arguments which will be passed on to the SymPy "<b>Function()</b>" call.
 The variable list for an undefined function, just like the variable list for a lambda function, is never remapped which means that even if you have the variable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
 Assignment to an undefined function at the highest level of an expression is a shortcut for defining a lambda function, e.g. "<b>f(x) = x**2</b>" is equivalent to "<b>f = lambda x: x**2</b>".
 </p><p>
-Undefined functions may be used directly in a "<b>dsolve()</b>" function to solve a differential equation, but it is cleaner to first map them to a variable so that the resulting equation looks as it normally does in mathematical syntax.
+Undefined functions may be used directly in "<b>dsolve()</b>" and "<b>pdsolve()</b>" functions to solve a differential equation or system of equations, but it is cleaner to first map them to a variable so that the resulting equation looks as it normally does in mathematical syntax.
 For example you can do "<b>dsolve (y(x)'' + 2y(x)' - y(x))</b>", but it is much cleaner to first set "<b>y = y(x)</b>" and then do "<b>dsolve (y'' + 2y' - y)</b>".
 </p><p>
 If you are solving a system of differential equations then it is even more useful to use variables since you will need to differentiate the undefined functions using names like "<b>x, y = x(t), y(t)</b>".
 This will give you a clean "<b>dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</b>" instead of having to type the functions out constantly like "<b>dsolve ((x(t)' = 12t x(t) + 8 y(t), y(t)' = 21x(t) + 7t y(t)))</b>".
-Initial values for differential functions are supported and can be passed of the form "<b>dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</b>" if "<b>y = y(x)</b>" is already defined or "<b>dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(x)(0): 0, y(x)'(0): -7})</b>" if it is not. The "<b>ics</b>" keyword argument is a dictionary of undefined functuions at specific points with their values.
+Initial values for differential functions are supported and can be passed of the form "<b>dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</b>" if "<b>y = y(x)</b>" is already defined or "<b>dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(0): 0, y(x)'(0): -7})</b>" if it is not, notice that the first initial condition "<b>y(0)</b>" did not need to be specified as an undefined function of a variable first.
+The "<b>ics</b>" keyword argument is a dictionary of undefined functuions at specific points with their values.
 </p>
 
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
@@ -866,6 +867,19 @@ plotw ('+', f, (-5, 0))<br>
 </p>
 
 <h2 id="Appendix">Appendix</h2>
+
+<h4 id="Quick Input Mode">Quick Input Mode</h4>
+
+<p>
+This is the input mode SymPad was born in for quick calculations due to speed of input, though I focus less on this and do less testing in this mode nowadays so no guarantees.
+SymPad normally allows multi-character variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
+This can be turned off by switching into quick input mode using the function "<b>env(quick)</b>" or by using the "<b>--quick</b>" option on the command line.
+When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between variables and recognized function names, though they are required AFTER function names.
+This means that an expression entered in normal mode like this "<b>x y z sin w**2</b>" can be entered in quick mode like this "<b>xyzsin w**2</b>".
+Note that a grammatical break is also still required AFTER text operators like "<b>if</b>", "<b>else</b>", "<b>in</b>", "<b>not in</b>", etc... otherwise they would make too many functions inaccessible by being recognized as part of a word.
+For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
+Differentials will also work so "<b>dx</b>", "<b>dtheta</b>", "<b>d\theta</b>" and the partial variations like "<b>partialx</b>" and "<b>\partial x</b>" will all be considered as a single variable.
+</p>
 
 <h4 id="Special Characters">Special Characters</h4>
 

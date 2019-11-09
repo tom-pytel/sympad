@@ -1,11 +1,8 @@
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
 > ?f(x)'(2), spt -> ?f(x)(2) instead of subs of diff
 
-> Subs (1, x, x).subs (x, 1/y) -> Subs (1, x, 1/y) - make same in apply_vars
 > subs of ufunc variables for other variables?
 > subs of lambda variables for other variables?
-
-> AST.args2kwargs (ast.args) -> ast.args2kwargs ()?
 
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
@@ -43,6 +40,7 @@
 
 > xlat py f = Lambda (x, x**2) -> f (x) = x**2?
 
+> make test_sym friendlier to quick mode
 > verify all is_var -> is_var_nonconst where consts not allowed
 > worry about invalid varnames (reserved function names) or leave as convenience?
 

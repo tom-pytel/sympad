@@ -584,7 +584,7 @@ def _expr_var (VAR):
 	else:
 		var = AST.Var.ANY2PY.get (VAR.grp [3].replace (' ', ''), VAR.grp [3].replace ('\\_', '_'))
 
-	return AST ('@', f'{var}{VAR.grp [4]}' if VAR.grp [4] else var, text = VAR.text) # include original text for check to prevent \lambda from creating lambda functions
+	return AST ('@', f'{var}{VAR.grp [4]}' if VAR.grp [4] else var, text = VAR.text) # include original 'text' for check to prevent \lambda from creating lambda functions
 
 #...............................................................................................
 class Parser (lalr1.LALR1):
@@ -593,8 +593,8 @@ class Parser (lalr1.LALR1):
 
 		lalr1.LALR1.__init__ (self)
 
-	def set_quick (self, yes = True):
-		self.TOKENS.update (self.TOKENS_QUICK if yes else self.TOKENS_LONG)
+	def set_quick (self, state = True):
+		self.TOKENS.update (self.TOKENS_QUICK if state else self.TOKENS_LONG)
 		self.set_tokens (self.TOKENS)
 
 	_PARSER_TABLES = \
@@ -762,7 +762,7 @@ class Parser (lalr1.LALR1):
 		('LN',           fr'ln(?!\w|\\_)|\\ln(?!{_LTRU})'),
 
 		('NUM',           r'(?:(\d*\.\d+)|(\d+\.?))((?:[eE]|{[eE]})(?:[+-]?\d+|{[+-]?\d+}))?'),
-		('VAR',          fr"(?:(?:(\\partial\s?|{_UPARTIAL})|(d))({_VAR})|({_VAR}))(?:_{{(\d+)}})?"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d))({_VAR})|({_VAR}))(?:_{{(\d+)}})?"),
 		('ATTR',         fr'(?<!\s)\.(?:({_LTRU}(?:\w|\\_)*)|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)\s*}})'),
 		('STR',          fr"((?<![.'|!)}}\]\w]){_STRS}|{_STRD})|\\text\s*{{\s*({_STRS}|{_STRD})\s*}}"),
 
@@ -830,7 +830,7 @@ class Parser (lalr1.LALR1):
 		('LOG',           r'log(?!\w|\\_)|\\log'),
 		('LN',            r'ln(?!\w|\\_)|\\ln'),
 
-		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))(partial|{_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))(?:_{{(\d+)}})?"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))(partial|{_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))()"),
 	])
 
 	TOKENS_LONG    = OrderedDict () # initialized in __init__()
@@ -1274,19 +1274,19 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
 
-	# set_sp_user_funcs ({'N'})
-	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
+# 	# set_sp_user_funcs ({'N'})
+# 	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-	# a = p.parse (r"\. x+y |_{x, y = 1, 2}")
-	# a = p.parse (r"\. x+y |_{x = 1, y = 2}")
-	# a = p.parse (r"\. x+y |_{x = 1}")
-	# a = p.parse (r"\.x+y|_{\substack{x=1\\y=2}}")
-	a = p.parse (r"\[?g(x)and(\sqrt[2]-1.0,'str'or-.1or.1,-.1!),\left.-{-.1:1e+100}\right|_{-.1.kZSI2A,\pi&&\partialx&&\partialx=lambdax:1/\fracTrueFalse},]")
-	print (a)
+# 	# a = p.parse (r"\. x+y |_{x, y = 1, 2}")
+# 	# a = p.parse (r"\. x+y |_{x = 1, y = 2}")
+# 	# a = p.parse (r"\. x+y |_{x = 1}")
+# 	# a = p.parse (r"\.x+y|_{\substack{x=1\\y=2}}")
+# 	a = p.parse (r"\[?g(x)and(\sqrt[2]-1.0,'str'or-.1or.1,-.1!),\left.-{-.1:1e+100}\right|_{-.1.kZSI2A,\pi&&\partialx&&\partialx=lambdax:1/\fracTrueFalse},]")
+# 	print (a)
 
-	# a = sym.ast2spt (a)
-	# print (a)
+# 	# a = sym.ast2spt (a)
+# 	# print (a)
