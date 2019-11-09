@@ -10,6 +10,7 @@
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
+> apply_vars to differentials if target is another variable?
 > subs of ufunc variables for other variables?
 > subs of lambda variables for other variables?
 
