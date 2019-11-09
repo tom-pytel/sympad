@@ -499,56 +499,6 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast))
 
 #...............................................................................................
-# def _xlat_f2t_SUBS_collect (ast, tail): # collapse multiple nested Subs() and .subs()
-# 	if ast.is_func and ast.func == 'Subs':
-# 		if len (ast.args) == 3:
-# 			vars = ast.args [1].strip_paren
-# 			subs = ast.args [2].strip_paren
-
-# 			if vars.is_comma and subs.is_comma and vars.comma.len == subs.comma.len:
-# 				return _xlat_f2t_SUBS_collect (ast.args [0], list (zip (vars.comma, subs.comma)) + tail)
-
-# 			return _xlat_f2t_SUBS_collect (ast.args [0], [(vars, subs)] + tail)
-
-# 	elif ast.is_attr_func and ast.attr == 'subs':
-# 		if ast.args.len == 2:
-# 			return _xlat_f2t_SUBS_collect (ast.obj, [(ast.args [0], ast.args [1])] + tail)
-
-# 		elif ast.args.len == 1:
-# 			arg = ast.args [0].strip_paren
-
-# 			if arg.is_dict:
-# 				return _xlat_f2t_SUBS_collect (ast.obj, list (arg.dict) + tail)
-
-# 			elif arg.op in {',', '[', '-set'}:
-# 				args = []
-
-# 				for arg in arg [1]:
-# 					arg = arg.strip_paren
-
-# 					if arg.op not in {',', '['} or arg [1].len != 2:
-# 						break
-
-# 					args.append (arg [1])
-
-# 				else:
-# 					return _xlat_f2t_SUBS_collect (ast.obj, args + tail)
-
-# 	return ast, tail
-
-# def _xlat_f2t_SUBS (ast2tex, ast): # handles both Subs() and .subs() and collapses nested calls into one substitution
-# 	ast, subs = _xlat_f2t_SUBS_collect (ast, [])
-
-# 	if len (subs) == 1:
-# 		return f'\\left. {ast2tex (ast)} \\right|_{{{ast2tex (subs [0] [0])} = {ast2tex (subs [0] [1])}}}'
-
-# 	elif len (subs) > 1:
-# 		asss = ' \\\\ '.join (f'{ast2tex (v)} = {ast2tex (s)}' for v, s in subs)
-
-# 		return f'\\left. {ast2tex (ast)} \\right|_{{\\substack{{{asss}}}}}'
-
-# 	return None
-
 _XLAT_FUNC2TEX = {
 	'beta'    : lambda ast2tex, *args: f'\\beta\\left({ast2tex (AST.tuple2ast (args))} \\right)',
 	'gamma'   : lambda ast2tex, *args: f'\\Gamma\\left({ast2tex (AST.tuple2ast (args))} \\right)',
@@ -561,16 +511,12 @@ _XLAT_FUNC2TEX = {
 
 	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
 	'set'     : lambda ast2tex, *args: '\\emptyset' if not args else None,
-
-	# 'Subs'    : lambda ast2tex, *args: _xlat_f2t_SUBS (ast2tex, AST ('-func', 'Subs', args)),
 }
 
 _XLAT_ATTRFUNC2TEX = {
 	'diff'     : lambda ast2tex, ast, *dvs, **kw: ast2tex (_xlat_f2a_Derivative (ast, *dvs, **kw)),
 	'integrate': lambda ast2tex, ast, dvab = None, *args, **kw: ast2tex (_xlat_f2a_Integral (ast, dvab, *args, **kw)),
 	'limit'    : lambda ast2tex, ast, var = AST.VarNull, to = AST.VarNull, dir = _AST_StrPlus: ast2tex (_xlat_f2a_Limit (ast, var, to, dir)),
-
-	# 'subs'     : lambda ast2tex, ast, *args: _xlat_f2t_SUBS (ast2tex, AST ('.', ast, 'subs', args)),
 }
 
 def xlat_func2tex (ast, ast2tex):
