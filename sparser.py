@@ -210,7 +210,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
-		elif arg.is_paren and not tail.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc77', 'f', (vars)[, kws]) ... implicit undefined function
+		elif arg.is_paren and tail.is_var_nonconst and not tail.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc77', 'f', (vars)[, kws]) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
 
 	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
@@ -560,6 +560,9 @@ def _expr_ufunc (args, py = False, name = ''):
 
 		name = args [0].str_
 		args = ()
+
+	if AST ('@', name).is_var_const:
+		raise SyntaxError ('cannot use constant as undefined function name')
 
 	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())))
 

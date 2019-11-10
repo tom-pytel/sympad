@@ -1,9 +1,15 @@
+> ass_validated -> ass_validate
+> ass_validated.error
+> Lambda (_x, _x)
+> anonymous lambdas
+> lambdas variables from 'var' to ('@', 'var')
+> apply_vars to differentials if target is another variable - remove exception on expression and use original differential
+> fix number.subs ()
+
 > PDEs
 
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
 > ?f(x)'(2), spt -> ?f(x)(2) instead of subs of diff
-
-> \limits^x - without the _
 
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
@@ -12,7 +18,8 @@
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
-> apply_vars to differentials if target is another variable?
+> \limits^x - without the _
+
 > subs of ufunc variables for other variables?
 > subs of lambda variables for other variables?
 
@@ -154,3 +161,8 @@ Errors:
 -------
 
 
+text: {\left. { { { partial },{ partialx },{ .1 } }*{\lim_{x \to { 2 } } { \emptyset } }*{ { Sigma }*{ -2157625.805051441 }*{ 1 } } } \right|_{{ {\{{ 1e+100 },{ b },{ Gamma }}} ^^ {\left|{ \Sigma_{40} }\right|} } = {{ { \partial  },{ \infty zoo } } = { { \partialx }  { b } }}}}
+ast:  ('-subs', ('*', (('-set', (('@', 'partial'), ('@', 'partialx'), ('#', '0.1'))), ('-lim', ('-set', ()), ('@', 'x'), ('#', '2')), ('@', 'Sigma'), ('#', '-2157625.805051441'), ('#', '1')), {1, 2, 3, 4}), ((('^^', (('-set', (('#', '1e+100'), ('@', 'b'), ('@', 'Gamma'))), ('|', ('@', 'Sigma40')))), ('=', ('-set', (('@', 'partial'), ('*', (('@', 'oo'), ('@', 'zoo'))))), ('*', (('@', 'partialx'), ('@', 'b'))))),))
+ast:  ('*', (('-func', 'FiniteSet', (('@', 'partial'), ('@', 'partialx'), ('#', '0.1'))), ('-func', 'Limit', (('-func', 'FiniteSet', ()), ('@', 'x'), ('#', '2'), ('=', ('@', 'dir'), ('"', '+-')))), ('@', 'Sigma'), ('#', '-2157625.805051441'), ('#', '1.'), ('@', 'subs'), ('(', (',', (('-func', 'Union', (('-func', 'Complement', (('-func', 'FiniteSet', (('#', '1e+100'), ('@', 'b'), ('@', 'Gamma'))), ('-func', 'abs', (('@', 'Sigma40'),)))), ('-func', 'Complement', (('-func', 'abs', (('@', 'Sigma40'),)), ('-func', 'FiniteSet', (('#', '1e+100'), ('@', 'b'), ('@', 'Gamma'))))))), ('-func', 'Eq', (('-func', 'FiniteSet', (('@', 'partial'), ('*', (('@', 'oo'), ('@', 'zoo')), {1}))), ('*', (('@', 'partialx'), ('@', 'b')), {1}))))))), {1, 2, 3, 4})
+py1:  FiniteSet(partial, partialx, 0.1)*Limit(FiniteSet(), x, 2, dir = '+-')*Sigma*-2157625.805051441*1.subs(Union(Complement(FiniteSet(1e+100, b, Gamma), abs(Sigma40)), Complement(abs(Sigma40), FiniteSet(1e+100, b, Gamma))), Eq(FiniteSet(partial, oo*zoo), partialx*b))
+py2:  FiniteSet(partial, partialx, 0.1)*Limit(FiniteSet(), x, 2, dir = '+-')*Sigma*-2157625.805051441*1.*subs*(Union(Complement(FiniteSet(1e+100, b, Gamma), abs(Sigma40)), Complement(abs(Sigma40), FiniteSet(1e+100, b, Gamma))), Eq(FiniteSet(partial, oo*zoo), partialx*b))

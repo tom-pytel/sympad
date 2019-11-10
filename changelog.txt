@@ -1,6 +1,7 @@
 v1.0.18:
 --------
 * Added remapping of differentials in derivatives and integrals to other variables.
+* Changed lambdas to not automatically doit() their body upon definition by default instead of needing the no-eval pseudo-function.
 * Moved SymPy .doit() from per-object level to end of whole evaluation since it can interfere with certain calculations.
 
 

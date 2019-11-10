@@ -98,92 +98,6 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_UFUNCS2VARS  = {} # Yup...
 
 #...............................................................................................
-class RealityRedefinitionError (NameError):	pass
-class CircularReferenceError (RecursionError): pass
-class AE35UnitError (Exception): pass
-
-def _sorted_vars ():
-	asts = []
-
-	for v, e in sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])):
-		if v != '_':
-			if e.is_lamb:
- 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
-			else:
-				asts.append (AST ('=', ('@', v), e))
-
-	return asts
-
-def _update_vars ():
-	_UFUNCS2VARS.clear ()
-
-	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS))
-	user_funcs = one_funcs.copy ()
-
-	for var, ast in _VARS.items ():
-		# if var != '_':
-			if ast.is_ufunc:
-				_UFUNCS2VARS [ast] = AST ('@', var)
-			elif ast.is_lamb:
-				user_funcs.add (var)
-
-	sparser.set_sp_user_funcs (user_funcs)
-	sparser.set_sp_user_vars (_VARS)
-	sym.set_sym_user_funcs (user_funcs)
-	sym.set_sym_user_vars (_VARS)
-
-def _prepare_ass (ast): # check and prepare for simple or tuple assignment
-	vars = ast.ass_lhs_vars
-
-	if vars:
-		if any (v.is_var_const for v in vars):
-			raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
-
-		ast = ast.rhs
-
-	return AST.apply_vars (ast, _VARS), vars
-
-def _execute_ass (ast, vars): # execute assignment if it was detected
-	def set_vars (vars):
-		vars = dict ((v.var, a) if v.is_var else (v.ufunc, AST ('-lamb', a, tuple (vv.var for vv in v.vars))) for v, a in vars.items ())
-
-		try: # check for circular references
-			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
-		except RecursionError:
-			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
-
-		_VARS.update (vars)
-
-	if not vars: # no assignment
-		# ast         = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
-		_VARS ['_'] = ast
-
-		_update_vars ()
-
-		return [ast]
-
-	if len (vars) == 1: # simple assignment
-		set_vars ({vars [0]: ast})
-
-		asts = [AST ('=', vars [0], ast)]
-
-	else: # tuple assignment
-		ast  = ast.strip_paren
-		asts = ast.comma if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
-
-		if len (vars) < len (asts):
-			raise ValueError (f'too many values to unpack (expected {len (vars)})')
-		elif len (vars) > len (asts):
-			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
-
-		set_vars (dict (zip (vars, asts)))
-
-		asts = [AST ('=', vars [i], asts [i]) for i in range (len (vars))]
-
-	_update_vars ()
-
-	return asts
-
 def _admin_vars (*args):
 	asts = _sorted_vars ()
 
@@ -212,7 +126,7 @@ def _admin_del (*args):
 
 		del _VARS [var]
 
-	_update_vars ()
+	_vars_updated ()
 
 	if not msgs:
 		msgs.append ('No variables specified!')
@@ -223,7 +137,7 @@ def _admin_delall (*args):
 	last_var    = _VARS ['_']
 	_VARS.clear ()
 	_VARS ['_'] = last_var
-	_update_vars ()
+	_vars_updated ()
 
 	return 'All variables deleted.'
 
@@ -279,7 +193,7 @@ def _admin_env (*args):
 				msgs.append (f'Function {var} is {"on" if state else "off"}.')
 
 				if apply:
-					_update_vars ()
+					_vars_updated ()
 
 		return msgs
 
@@ -316,6 +230,132 @@ def _admin_env (*args):
 
 def _admin_envreset (*args):
 	return ['Environment has been reset.'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
+
+#...............................................................................................
+class RealityRedefinitionError (NameError):	pass
+class CircularReferenceError (RecursionError): pass
+class AE35UnitError (Exception): pass
+
+def _present_vars (vars):
+	asts = []
+
+	for v, e in vars:
+		if v != '_':
+			if e.is_lamb:
+ 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
+			else:
+				asts.append (AST ('=', ('@', v), e))
+
+	return asts
+
+def _sorted_vars ():
+	return _present_vars (sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])))
+
+def _vars_updated ():
+	_UFUNCS2VARS.clear ()
+
+	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS))
+	user_funcs = one_funcs.copy ()
+
+	for var, ast in _VARS.items ():
+		# if var != '_':
+			if ast.is_ufunc:
+				_UFUNCS2VARS [ast] = AST ('@', var)
+			elif ast.is_lamb:
+				user_funcs.add (var)
+
+	sparser.set_sp_user_funcs (user_funcs)
+	sparser.set_sp_user_vars (_VARS)
+	sym.set_sym_user_funcs (user_funcs)
+	sym.set_sym_user_vars (_VARS)
+
+def _prepare_ass (ast): # check and prepare for simple or tuple assignment
+	# vars = ast.ass_lhs_vars
+
+	# if vars:
+	# 	if any (v.is_var_const for v in vars):
+	# 		raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
+
+	# 	ast = ast.rhs
+
+	# return AST.apply_vars (ast, _VARS), vars
+
+	if not ast.ass_validated:
+		vars = None
+	elif ast.ass_validated.error:
+		raise RealityRedefinitionError (ast.ass_validated.error)
+
+	else:
+		vars, ast = ast.ass_validated.lhs, ast.ass_validated.rhs
+		vars      = list (vars.comma) if vars.is_comma else [vars]
+
+	return AST.apply_vars (ast, _VARS), vars
+
+def _execute_ass (ast, vars): # execute assignment if it was detected
+	def set_vars (vars):
+		# vars = dict ((v.var, a) if v.is_var else (v.ufunc, AST ('-lamb', a, tuple (vv.var for vv in v.vars))) for v, a in vars.items ())
+		vars = dict ((v.var, a) for v, a in vars.items ())
+
+		try: # check for circular references
+			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
+		except RecursionError:
+			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
+
+		_VARS.update (vars)
+
+	if not vars: # no assignment
+		# ast         = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
+		_VARS ['_'] = ast
+
+		_vars_updated ()
+
+		return [ast]
+
+	if len (vars) == 1: # simple assignment
+		set_vars ({vars [0]: ast})
+
+		# asts = [AST ('=', vars [0], ast)]
+		vars = ((vars [0].var, ast),)
+
+	else: # tuple assignment
+		ast = ast.strip_paren
+
+		if ast.op in {',', '[', '-set'}:
+			asts = ast [1]
+
+		else:
+			asts = []
+			itr  = iter (sym.ast2spt (ast))
+
+			for i in range (len (vars) + 1):
+				try:
+					ast = sym.spt2ast (next (itr))
+				except StopIteration:
+					break
+
+				if vars [i].is_ufunc:
+					asts.append (AST.Ass.ufunc2lamb (vars [i], ast))
+
+					vars [i] = AST ('@', vars [i].ufunc)
+
+				else:
+					asts.append (ast)
+
+		if len (vars) < len (asts):
+			raise ValueError (f'too many values to unpack (expected {len (vars)})')
+		elif len (vars) > len (asts):
+			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
+
+		# set_vars (dict (zip (vars, asts)))
+
+		# asts = [AST ('=', vars [i], asts [i]) for i in range (len (vars))]
+		set_vars (dict (zip (vars, asts)))
+
+		vars = tuple (zip ((v.var for v in vars), asts))
+
+	_vars_updated ()
+
+	return _present_vars (vars)
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -594,10 +634,12 @@ def parent ():
 #...............................................................................................
 # _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	vars = {'f': AST ('-lamb', ('@', 'x'), (('@', 'x'),)), 'g': AST ('-lamb', ('-func', 'f', (('@', 'x'),)), (('@', 'x'),))}
-# 	ast = AST ('-func', 'g', (('#', '1'),))
-# 	res = AST.apply_vars (ast, vars)
-# 	print (res)
+# 	Handler.__init__ = lambda self: None
+
+# 	h = Handler ()
+
+# 	print (h.evaluate ({'text': 'a'}))
+
 # 	sys.exit (0)
 
 if __name__ == '__main__':

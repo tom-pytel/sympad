@@ -605,7 +605,56 @@ class AST_Ass (AST):
 	def _init (self, lhs, rhs):
 		self.lhs, self.rhs = lhs, rhs # should be py form
 
-	_ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.op in {'@', '-ufunc'} else self.lhs.comma if (self.lhs.is_comma and all (a.op in {'@', '-ufunc'} for a in self.lhs.comma)) else None
+	# _ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.op in {'@', '-ufunc'} else self.lhs.comma if (self.lhs.is_comma and all (a.op in {'@', '-ufunc'} for a in self.lhs.comma)) else None
+
+	@staticmethod
+	def ufunc2lamb (ufunc, lamb):
+		return AST ('-lamb', lamb, tuple (v.var or 'NONVARIABLE' for v in ufunc.vars))
+
+	def _ass_validated (self):
+		def verify (dst, src, multi = False):
+			for src in (src if multi else (src,)):
+				if src.is_var_const:
+					dst.error = 'The only thing that is constant is change - Heraclitus; Except for constants, they never change - Math...'
+				elif src.is_ufunc_impure:
+					dst.error = 'cannot assign to a function containing non-variable parameters'
+				elif src.ufunc == '':
+					dst.error = 'cannot assign to an anonymous function'
+				else:
+					continue
+
+				break
+
+			return dst
+
+		if self.lhs.is_var:
+			return verify (self, self.lhs)
+		elif self.lhs.is_ufunc:
+			return verify (AST ('=', ('@', self.lhs.ufunc or 'ANONYMOUS'), self.ufunc2lamb (self.lhs, self.rhs)), self.lhs)
+
+		elif self.lhs.is_comma:
+			rhs = self.rhs.strip_paren
+
+			if rhs.op not in {',', '[', '-set'}:
+				return verify (self, self.lhs.comma, True)
+
+			else:
+				both = min (self.lhs.comma.len, rhs [1].len)
+				lrs  = []
+
+				for l, r in zip (self.lhs.comma, rhs [1]):
+					if l.is_var:
+						lrs.append ((l, r))
+					elif l.is_ufunc:
+						lrs.append ((('@', l.ufunc), self.ufunc2lamb (l, r)))
+					else:
+						return None
+
+				rhs = (rhs.op, tuple (r for _, r in lrs) + rhs [1] [both:])
+
+				return verify (AST ('=', (',', tuple (l for l, _ in lrs) + self.lhs.comma [both:]), ('(', rhs) if self.rhs.is_paren else rhs), self.lhs.comma, True)
+
+		return None
 
 class AST_Cmp (AST):
 	op, is_cmp = '<>', True
@@ -988,7 +1037,8 @@ class AST_UFunc (AST):
 
 		return self
 
-	_is_ufunc_pure = lambda self: all (v.is_var_nonconst for v in self.vars)
+	_is_ufunc_pure   = lambda self: all (v.is_var_nonconst for v in self.vars)
+	_is_ufunc_impure = lambda self: any (not v.is_var_nonconst for v in self.vars)
 
 	def apply_argskw (self, argskw):
 		if argskw:

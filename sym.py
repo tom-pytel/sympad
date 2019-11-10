@@ -897,28 +897,38 @@ class ast2py: # abstract syntax tree -> Python code text
 		return self._ast2py (ast)
 
 	def _ast2py_ass (self, ast):
-		def ufunc2lamb (ufunc, lamb):
-			return ('-lamb', lamb, tuple (v.var for v in ufunc.vars))
+		# def ufunc2lamb (ufunc, lamb):
+		# 	return ('-lamb', lamb, tuple (v.var for v in ufunc.vars))
 
-		istop = ast.ass_lhs_vars and (not self.parent or self.parent.is_scolon)
+		# istop = ast.ass_lhs_vars and self.parent.op in {None, ';'}
 
-		if istop:
-			if ast.lhs.is_ufunc:
-				if ast.lhs.is_ufunc_pure:
-					ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
+		# if istop:
+		# 	if ast.lhs.is_ufunc:
+		# 		if ast.lhs.is_ufunc_pure:
+		# 			ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
 
-			elif ast.lhs.is_comma:
-				rhs = ast.rhs._strip_paren (1)
+		# 	elif ast.lhs.is_comma:
+		# 		rhs = ast.rhs._strip_paren (1)
 
-				if rhs.op in {',', '[', '-set'}:
-					rhss = rhs.comma if rhs.is_comma else rhs.brack if rhs.is_brack else rhs.set
+		# 		if rhs.op in {',', '[', '-set'} and ast.lhs.comma.len == len (rhs [1]):
+		# 			lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc_pure else (l, r) for l, r in zip (ast.lhs.comma, rhs [1])]
+		# 			rhs = (rhs.op, tuple (r for l, r in lrs))
+		# 			ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
 
-					if ast.lhs.comma.len == rhss.len:
-						lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc_pure else (l, r) for l, r in zip (ast.lhs.comma, rhss)]
-						rhs = (rhs.op, tuple (r for l, r in lrs))
-						ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
+		# if istop or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
+		# 	return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
 
-		if istop or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
+		# return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
+
+		istopass = self.parent.op in {None, ';'}
+
+		if istopass:
+			if ast.ass_validated:
+				ast = ast.ass_validated
+			else:
+				istopass = False
+
+		if istopass or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
 			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
 
 		return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
@@ -1130,12 +1140,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
-	def __init__ (self): self.parent = self.ast = None # self.eval = None # pylint kibble
+	def __init__ (self): self.parent = self.ast = None # pylint kibble
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
-		# self.eval    = True
 
 		if xlat:
 			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
@@ -1310,7 +1319,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return self._ast2spt (ast.args [0])
 
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
-			return ExprNoEval (ast.args [0])
+			if self.parent.is_lamb and ast is self.parent.lamb: # if at top-level in lambda body then lambda handles differnt meaning of this pseudo-func
+				return self._ast2spt (ast.args [0])
+			else:
+				return ExprNoEval (ast.args [0])
 
 		func = _ast2spt_pyfuncs.get (ast.unescaped)
 
@@ -1356,14 +1368,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
 			return self._ast2spt (ast.lamb)
 
-		# oldeval   = self.eval
-		# self.eval = ast.lamb.is_func and ast.lamb.func == AST.Func.NOEVAL
-		spt       = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
+		spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
 
-		# if not self.eval:
-		# 	spt.doit = lambda self, *args, **kw: self # disable doit for lambda definition
-
-		# self.eval = oldeval
+		if not (ast.lamb.is_func and ast.lamb.func == AST.Func.NOEVAL):
+			spt.doit = lambda self, *args, **kw: self # disable doit for lambda definition
 
 		return spt
 
@@ -1753,15 +1761,15 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	# set_sym_user_funcs (vars)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+# 	# set_sym_user_funcs (vars)
 
-	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
-	ast = AST (',', (('-intg', ('@', 'x'), ('@', 'dx')), ('-intg', ('@', 'y'), ('@', 'dx'))))
-	res = ast2spt (ast)
-	# res = spt2ast (res)
-	# res = ast2nat (res)
+# 	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
+# 	ast = AST ('=', ('@', 'f'), ('-lamb', ('#', '0'), ()))
+# 	res = ast2py (ast)
+# 	# res = spt2ast (res)
+# 	# res = ast2nat (res)
 
-	print (repr (res))
+# 	print (repr (res))
