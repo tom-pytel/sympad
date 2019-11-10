@@ -787,8 +787,8 @@ f (3)<br>
 f (x, y) = sqrt (x**2 + y**2)<i>&emsp; function of two variables</i><br>
 f (3, 4)<br>
 <br>
-x, y = 3, 4<i>&emsp; assign global variables x and y</i><br>
-f (x, y) = sqrt (x**2 + y**2)<i>&emsp; notice they are bound upon definition</i><br>
+x, y, z = 3, 4, 5<i>&emsp; assign global variables x and y</i><br>
+f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
 f (6, 8)<i>&emsp; function won't do anything with different arguments since it is already defined to be 5</i><br>
 f (x, y) = @sqrt (x**2 + y**2)<i>&emsp; the @() pseudo-function isolates any variables inside from remapping</i><br>
 f (6, 8)<i>&emsp; now the function works as expected</i><br>

@@ -71,7 +71,7 @@ sqrt{{-1.0}**{0}}
 \frac{{partial}**{1}}{{{partialx}*{dx}*{1.0}}}
 {{\frac{1.0}{partialx}} \cdot {\exp({0},{a})} \cdot {{{d}+{oo}}}}
 {\arcsin({-1.0},{dx},{oo})}^{{d} <= {-1}}
-@({{d}**{1}},{\arcsech({partial},{partial})})
+({{d}**{1}},{\arcsech({partial},{partial})})
 Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
 {{d}^{1}} / {{{dx}  {oo}}}
 {{{d}*{1}}} / {partial^{5} / partialy^{1} partialy^{2} partialz^{2} {oo}}

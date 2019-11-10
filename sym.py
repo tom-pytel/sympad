@@ -101,7 +101,7 @@ def _simplify (spt): # extend sympy simplification into standard python containe
 
 	return spt
 
-def _doit (spt): # extend sympy _doit into standard python containers
+def _doit (spt): # extend sympy .doit() into standard python containers
 	if isinstance (spt, (None.__class__, bool, int, float, complex, str)):
 		return spt
 	elif isinstance (spt, (tuple, list, set, frozenset)):
@@ -113,6 +113,27 @@ def _doit (spt): # extend sympy _doit into standard python containers
 
 	try:
 		return spt.doit (deep = True)
+	except:
+		pass
+
+	return spt
+
+def _subs (spt, subs): # extend sympy .subs() into standard python containers
+	if isinstance (spt, (None.__class__, str)):
+		return spt
+	elif isinstance (spt, (tuple, list, set, frozenset)):
+		return spt.__class__ (_subs (a, subs) for a in spt)
+	elif isinstance (spt, slice):
+		return slice (_subs (spt.start, subs), _subs (spt.stop, subs), _subs (spt.step, subs))
+	elif isinstance (spt, dict):
+		return dict ((_subs (k, subs), _subs (v, subs)) for k, v in spt.items ())
+
+	try:
+		if isinstance (spt, (bool, int, float, complex)):
+			return sympify (spt).subs (subs)
+		else:
+			return spt.subs (subs)
+
 	except:
 		pass
 
@@ -409,11 +430,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		if ast.func in AST.Func.TEX:
 			return f'\\{ast.func}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+		elif ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'}:
+			return ast.func.replace (AST.Func.NOEVAL, '\\%') + self._ast2tex (AST.tuple2ast (ast.args))
 
 		else:
 			texname = ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%')
 
-			return '\\operatorname{' + AST.Var.PY2TEX.get (texname, texname) + f'}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+			return f'\\operatorname{{{AST.Var.PY2TEX.get (texname, texname)}}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
 	def _ast2tex_lim (self, ast):
 		s = self._ast2tex_wrap (ast.to, False, ast.to.is_slice) if ast.dir is None else (self._ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -823,7 +846,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'^'     : _ast2nat_pow,
 		'-log'  : _ast2nat_log,
 		'-sqrt' : lambda self, ast: f'sqrt({self._ast2nat (ast.rad)})' if ast.idx is None else f'\\sqrt[{self._ast2nat (ast.idx)}]{{{self._ast2nat_wrap (ast.rad, 0, {",", "-slice"})}}}',
-		'-func' : lambda self, ast: f'{ast.func}({self._ast2nat (AST.tuple2ast (ast.args))})',
+		'-func' : lambda self, ast: f"{ast.func}{self._ast2nat_wrap (AST.tuple2ast (ast.args), 0, not (ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-set', '-dict'}))}",
 		'-lim'  : _ast2nat_lim,
 		'-sum'  : _ast2nat_sum,
 		'-diff' : _ast2nat_diff,
@@ -1006,6 +1029,9 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f'ln({self._ast2py (ast.log)}) / ln({self._ast2py (ast.base)})'
 
 	def _ast2py_func (self, ast):
+		if ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
+			return self._ast2py (ast.args [0])
+
 		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
 		return f'{ast.unescaped}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
@@ -1064,6 +1090,11 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return sdiff
 
+	def _ast2py_subs (self, ast):
+		args = ast.subs [0] if ast.subs.len == 1 else (('[', tuple (('(', (',', s)) for s in ast.subs)),)
+
+		return self._ast2py_attr (AST ('.', ast.expr, 'subs', args))
+
 	_ast2py_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2py (a) for a in ast.scolon),
 		'='     : _ast2py_ass,
@@ -1104,7 +1135,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
 		'-not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
 		'-ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})' + (f'({", ".join (self._ast2py (v) for v in ast.vars)})' if ast.vars else ''),
-		'-subs' : lambda self, ast: f'{self._ast2py (ast.expr)}.subs([{", ".join (f"({self._ast2py (s)}, {self._ast2py (d)})" for s, d in ast.subs)}])' if ast.subs.len > 1 else f'{self._ast2py (ast.expr)}.subs({self._ast2py (ast.subs [0] [0])}, {self._ast2py (ast.subs [0] [1])})',
+		'-subs' : _ast2py_subs,
 
 		'text'  : lambda self, ast: ast.py,
 	}
@@ -1443,7 +1474,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: self._ast2spt (a) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
-		'-subs' : lambda self, ast: self._ast2spt (ast.expr).subs ([(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs]),
+		'-subs' : lambda self, ast: _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs]),
 
 		'text'  : lambda self, ast: ast.spt,
 	}
@@ -1767,15 +1798,16 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	# set_sym_user_funcs (vars)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+# 	# set_sym_user_funcs (vars)
 
-	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
-	ast = AST ('-lamb', ('@', 'y'), ('y',))
-	res = ast2spt (ast)
-	res = spt2ast (res)
-	# res = ast2nat (res)
+# 	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
+# 	ast = AST ('-subs', ('@', 'x'), ((('@', 'x'), ('#', '1')), (('@', 'y'), ('#', '2'))))
+# 	# res = ast2nat (ast)
+# 	res = ast2py (ast)
+# 	# res = ast2spt (ast)
+# 	# res = spt2ast (res)
 
-	print (repr (res))
+# 	print (repr (res))

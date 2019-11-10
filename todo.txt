@@ -1,5 +1,10 @@
+> global var shortcut '@' in lambda definition
+> sin x sin y
+> subs clarity parentheses for tex display
+
+> helpful error message if parsing raises to web client on enter
+
 > apply_vars to differentials if target is another variable - remove exception on expression and use original differential
-> fix number.subs ()
 
 > PDEs
 
@@ -24,8 +29,6 @@
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
-
-> helpful error message if parsing raises to web client on enter
 
 > unnecessary cdot in front of tex and nat a * d/dx f
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
