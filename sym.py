@@ -26,7 +26,7 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 AST.register_AST (AST_Text)
 
-class ExprAss (sp.Eq): # assignment instead of equality comparison
+class EqAss (sp.Eq): # assignment instead of equality comparison
 	pass
 
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
@@ -1178,7 +1178,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		lhs, rhs = self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)
 
 		try:
-			return ExprAss (lhs, rhs) # try to use SymPy comparison object
+			return EqAss (lhs, rhs) # try to use SymPy comparison object
 		except:
 			return lhs == rhs # fall back to Python comparison
 
@@ -1368,10 +1368,16 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
 			return self._ast2spt (ast.lamb)
 
-		spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
+		spt = self._ast2spt (ast.lamb)
 
-		if not (ast.lamb.is_func and ast.lamb.func == AST.Func.NOEVAL):
-			spt.doit = lambda self, *args, **kw: self # disable doit for lambda definition
+		if ast.vars.len == 1 and spt.is_Symbol and not spt.is_Dummy and spt.name == ast.vars [0]:
+			spt = sp.Lambda (sp.Symbol (ast.vars [0]), ast.vars [0]) # having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
+
+		else:
+			spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), spt)
+
+			if not (ast.lamb.is_func and ast.lamb.func == AST.Func.NOEVAL):
+				spt.doit = lambda self, *args, **kw: self # disable doit for lambda definition
 
 		return spt
 
@@ -1678,7 +1684,7 @@ class spt2ast:
 		sp.And: lambda self, spt: (lambda args: sxlat._xlat_f2a_And (*args, canon = True) or AST ('-and', args)) (tuple (self._spt2ast (a) for a in spt.args)), # collapse possibly previously segmented extended comparison
 		sp.Not: lambda self, spt: AST ('-not', self._spt2ast (spt.args [0])),
 
-		ExprAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		EqAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
 		sp.Eq: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('==', self._spt2ast (spt.args [1])),)),
 		sp.Ne: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('!=', self._spt2ast (spt.args [1])),)),
 		sp.Lt: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('<',  self._spt2ast (spt.args [1])),)),
@@ -1761,15 +1767,15 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-# 	# set_sym_user_funcs (vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	# set_sym_user_funcs (vars)
 
-# 	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
-# 	ast = AST ('=', ('@', 'f'), ('-lamb', ('#', '0'), ()))
-# 	res = ast2py (ast)
-# 	# res = spt2ast (res)
-# 	# res = ast2nat (res)
+	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
+	ast = AST ('-lamb', ('@', 'y'), ('y',))
+	res = ast2spt (ast)
+	res = spt2ast (res)
+	# res = ast2nat (res)
 
-# 	print (repr (res))
+	print (repr (res))
