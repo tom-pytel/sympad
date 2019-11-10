@@ -797,7 +797,7 @@ class AST_Comma (AST):
 	def _init (self, comma):
 		self.comma = comma
 
-	_is_empty_comma = lambda self: not (self.comma.len)
+	_is_comma_empty = lambda self: not (self.comma.len)
 
 class AST_Curly (AST):
 	op, is_curly = '{', True

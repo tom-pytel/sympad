@@ -1,7 +1,7 @@
+> helpful error message if parsing raises to web client on enter
+
 > sin x sin y
 > subs clarity parentheses for tex display
-
-> helpful error message if parsing raises to web client on enter
 
 > apply_vars to differentials if target is another variable - remove exception on expression and use original differential
 
@@ -17,6 +17,8 @@
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
+> add slice() to test_sym
+> add back "forbidden" functions to test_sym (reject NullVars sxlats)?
 > \limits^x - without the _
 
 > subs of ufunc variables for other variables?
@@ -28,7 +30,6 @@
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)
 
-
 > double check all _ast2? (AST (...)) for parent issues
 
 > unnecessary cdot in front of tex and nat a * d/dx f
@@ -38,8 +39,6 @@
 
 > test_server multi maths from semicolon expressions
 
-> add slice() to test_sym
-> add back "forbidden" functions to test_sym (reject NullVars sxlats)?
 
 > \log loggamma=2 py representation? also sqrt? (use = instead of Eq due to function names as variables)
 > proper sqrt and log AST initialization via __new__

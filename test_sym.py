@@ -771,7 +771,7 @@ def test (argv = None):
 
 	CURLYS   = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
 	spaces   = not (('--ns', '') in opts or ('--nospaces', '') in opts)
-	rndspace = not (('--rs', '') in opts or ('--randomspaces', '') in opts)
+	rndspace = ('--rs', '') in opts or ('--randomspaces', '') in opts
 	show     = ('--show', '') in opts
 	infinite = (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts)
 
@@ -808,8 +808,8 @@ def test (argv = None):
 			DEPTH  = depth
 			text   = expr_func ()
 
-			if infinite and not single and rndspace:
-				i    = randrange (1, len (text) - 1)
+			if text and infinite and not single and rndspace:
+				i    = randrange (0, len (text))
 				text = f'{text [:i]} {text [i:]}'
 
 			if show:
