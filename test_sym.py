@@ -423,6 +423,8 @@ a = {::b}, c
 \partialx / \partial \partial
 dx / dd
 partial\theta
+\.\.a|_{b=c}|_{d=e}
+a**\.b[c]|_{x=1}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

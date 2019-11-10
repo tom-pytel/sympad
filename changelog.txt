@@ -7,7 +7,6 @@ v1.0.18:
 * Improved assignment parsing to handle assignment to undefined functions better (creation of lambdas).
 * Moved SymPy .doit() from per-object level to end of whole evaluation since it can interfere with certain calculations.
 
-
 v1.0.17:
 --------
 * Added explicit substitution shorthand and AST.

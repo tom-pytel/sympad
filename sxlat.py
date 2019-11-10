@@ -372,10 +372,10 @@ def _xlat_f2a_subs (expr, src = AST.VarNull, dst = None):
 	if subs is None:
 		return None
 
-	if expr.is_subs:
+	if expr.is_subs: # collapse multiple subs into one
 		return AST ('-subs', expr.expr, expr.subs + subs)
-	else:
-		return AST ('-subs', expr, subs)
+
+	return AST ('-subs', expr, subs)
 
 #...............................................................................................
 _XLAT_FUNC2AST_REIM = {

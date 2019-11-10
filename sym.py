@@ -1018,7 +1018,8 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow or (ast.base.is_idx and self.parent.is_pow and ast is self.parent.exp) else self._ast2py_curly (ast.base)
-		e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base or (ast.base.op in {'|', '-set'} and ast.exp.strip_attrm.is_idx) or (ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		# e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base or (ast.base.op in {'|', '-set'} and ast.exp.strip_attrm.is_idx) or (ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
 

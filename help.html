@@ -100,10 +100,10 @@ The input will be evaluated symbolically or numerically with the results being c
 
 <h4><a href="#More Examples">More Examples</a></h4>
 &emsp;<a href="#Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</a><br>
-&emsp;<a href="#Lambda Functions Examples">Lambda Functions</a><br>
 &emsp;<a href="#Solving Equations">Solving Equations</a><br>
 &emsp;<a href="#Differential Equations">Differential Equations</a><br>
 &emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><br>
+&emsp;<a href="#Lambda Functions Examples">Lambda Functions</a><br>
 &emsp;<a href="#Plotting Functions">Plotting Functions</a><br>
 &emsp;<a href="#Plotting Vector Walks">Plotting Vector Walks</a><br>
 
@@ -146,15 +146,15 @@ Enter the lines that follow one by one to see the effect:
 </p><p>
 1<br>
 expand (_(x+1))<br>
-expand (_(x+1))<i>&emsp;**(or press the up arrow)</i><br>
-expand (_(x+1))<i>&emsp;...</i><br>
+expand (_(x+1))<i>&emsp; **(or press the up arrow)</i><br>
+expand (_(x+1))<i>&emsp; ...</i><br>
 </p><p>
 Or the following:
 </p><p>
 a, b = 1, 1<br>
 a, b = b, a + b<br>
-a, b = b, a + b<i>&emsp;**(or press the up arrow)</i><br>
-a, b = b, a + b<i>&emsp;...</i><br>
+a, b = b, a + b<i>&emsp; **(or press the up arrow)</i><br>
+a, b = b, a + b<i>&emsp; ...</i><br>
 </p><p>
 Automatic variable substitution:
 </p><p>
@@ -776,41 +776,6 @@ Integral (r, (r, 0, 1), (theta, 0, 2pi))<br>
 integrate (sin x / x, (x, -oo, oo))<br>
 </p>
 
-<h4 id="Lambda Functions Examples">Lambda Functions</h4>
-
-<p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-f = lambda x: x**2<i>&emsp; simple example of lambda which squares its argument</i><br>
-f (2)<br>
-f (x) = x**2<i>&emsp; differnt syntax to specify the same thing</i><br>
-f (3)<br>
-f (x, y) = sqrt (x**2 + y**2)<i>&emsp; function of two variables</i><br>
-f (3, 4)<br>
-<br>
-x, y, z = 3, 4, 5<i>&emsp; assign global variables x and y</i><br>
-f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
-f (6, 8)<i>&emsp; function won't do anything with different arguments since it is already defined to be 5</i><br>
-f (x, y) = @sqrt (x**2 + y**2)<i>&emsp; the @() pseudo-function isolates any variables inside from remapping</i><br>
-f (6, 8)<i>&emsp; now the function works as expected</i><br>
-delall<br>
-<br>
-f (x) = \int x dy<i>&emsp; try to do a function to integrate an argument to y</i><br>
-f (sin (y))<i>&emsp; doesn't work because the integral was evaluated on definition of the function</i><br>
-f (x) = @(\int x dy)<i>&emsp; try isolate it with the @() pseudo-function</i><br>
-f (sin (y))<i>&emsp; also doesn't work because @() only defers variable binding, not evaluation</i><br>
-f (x) = %(\int x dy)<i>&emsp; the %() pseudo-function defers evaluation of anything inside it</i><br>
-f (sin (y))<i>&emsp; now it works</i><br>
-<br>
-f (x) = %(\int x dx)
-f (x**2)
-f (y**2)
-</p>
-
-
-<i>&emsp; </i><br>
-
-
-
 <h4 id="Solving Equations">Solving Equations</h4>
 
 <p>
@@ -870,12 +835,57 @@ m.eigenvals ()<i>&emsp; verify eigenvalues</i><br>
 Subs (l, lambda, a) \[x, y]<br>
 solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
 \[_ [0] [x], y].subs (y, 1)<i>&emsp; first eigenvector for eigenvalue a</i><br>
-Subs (l, lambda, b) \[x, y]<br>
+\. l |_{lambda = b} \[x, y]<i>&emsp; shorthand for substitution</i><br>
 solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
-\[_ [0] [x], y].subs (y, 1)<i>&emsp; second eigenvector for eigenvalue b</i><br>
+\. \[_ [0] [x], y] |_{y = 1}<i>&emsp; second eigenvector for eigenvalue b</i><br>
 m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
 simplify _<i>&emsp; simplify result to easier see if it matches</i><br>
 </p>
+
+<h4 id="Lambda Functions Examples">Lambda Functions</h4>
+
+<p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
+f = lambda x: x**2<i>&emsp; simple example of lambda which squares its argument</i><br>
+f (2)<br>
+f (x) = x**2<i>&emsp; differnt syntax to specify the same thing</i><br>
+f (3)<br>
+f (x, y) = sqrt (x**2 + y**2)<i>&emsp; function of two variables</i><br>
+f (3, 4)<br>
+<br>
+x, y, z = 3, 4, 5<i>&emsp; assign global variablesy</i><br>
+f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
+f (x, y) = sqrt (x**2 + y**2) + @z<i>&emsp; do not bind global variable</i><br>
+f (x) = x**2<br>
+f (x) = @x**2<i>&emsp; use global value of x</i><br>
+f (x) = y**2<i>&emsp; binds global value of y into lambda</i><br>
+f (2)<i>&emsp; doesn't matter what you pass, f(x) is set to equal 16</i><br>
+f (x) = @y**2<i>&emsp; go up one more scope above global and use pure y variable</i><br>
+f (2)<i>&emsp; still get 16 because global y = 4</i><br>
+y = 6<i>&emsp; change global y</i><br>
+f (2)<i>&emsp; global y = 6 so y**2 = 36</i><br>
+<br>
+delall<br>
+f (x) = x**2<br>
+g (x, y) = sqrt (f(x) + f(y))<i>&emsp; calling other lambda is evaluated immediately</i><br>
+g (3, 4)<i>&emsp; no surprise here</i><br>
+f (x) = x**3<i>&emsp; will have no effect on g() since those were already evaluated at definition</i><br>
+g (3, 4)<i>&emsp; still using old x**2 since that was evaluated upon definition of g()</i><br>
+g (x, y) = @sqrt (f(x) + f(y))<i>&emsp; prevent binding of f() lambda until evaluation of g()</i><br>
+g (3, 4)<i>&emsp; now we get sqrt (x**3 + y**3</i><br>
+f (x) = x**2<i>&emsp; set f() back to x**2</i><br>
+g (3, 4)<i>&emsp; now we get sqrt (x**2 + y**2) since the f() lambda is unevaluated in g()</i><br>
+<br>
+delall<br>
+f (x) = \int x dx<i>&emsp; normally integral, limits, derivatives and things like that are not evaluated on lambda definition</i><br>
+f (sin x)<i>&emsp; only on execution</i><br>
+f (x) = %(\int x dx)<i>&emsp; force evaluation of integral and store result in lambda definition, the %() only works this way at the top level of the lambda body</i><br>
+f (sin x)<i>&emsp; different result since integral was already evaluated</i><br>
+f (sin y)<i>&emsp; this is as expected</i><br>
+f (x) = \int x dx<i>&emsp; going back to the unevaluated integral</i><br>
+f (sin x)<i>&emsp; as expected</i><br>
+f (sin y)<i>&emsp; different, the differential is only changed to dy if the argument is a pure variable, if not then the original dx is used</i><br>
+\int sin y dx<i>&emsp; which results in this expression</i><br>
 
 <h4 id="Plotting Functions">Plotting Functions</h4>
 

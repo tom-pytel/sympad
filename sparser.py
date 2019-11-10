@@ -508,6 +508,9 @@ def _expr_subs (expr, subs):
 	else:
 		raise SyntaxError ('expecting assignment')
 
+	if expr.is_subs: # collapse multiple subs into one
+		return AST ('-subs', expr.expr, expr.subs + subs)
+
 	return AST ('-subs', expr, subs)
 
 def _expr_mat (mat_rows):

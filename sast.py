@@ -499,14 +499,37 @@ class AST (tuple):
 
 	@staticmethod
 	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
-		def pushframe (vars, oldvars):
-			newvars       = dict (vars)
-			newvars ['<'] = oldvars
+		def push (vars, newvars): # create new frame and add new variables
+			frame       = vars.copy ()
+			frame ['<'] = vars
+			frame ['>'] = newvars
 
-			return newvars
+			frame.update (newvars)
+
+			return frame
+
+		def pop (vars): # pop one layer of variables (not frames) and create new frame
+			count = vars.get ('#', 1)
+			frame = {'<': vars.get ('<', {}), '>': vars.get ('>', vars), '#': count + 1}
+
+			for v in vars:
+				if v not in '<>#':
+					f = vars
+
+					for _ in range (count):
+						while f:
+							nvs = f.get ('>', f)
+							f   = f.get ('<', {})
+
+							if not f or v in nvs:
+								break
+
+					frame [v] = f.get (v)
+
+			return frame
 
 		# start here
-		if not isinstance (ast, AST) or ast.is_ufunc or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
+		if not isinstance (ast, AST) or ast.is_ufunc: # or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
 			return ast
 
 		if ast.is_var: # regular var substitution?
@@ -521,8 +544,7 @@ class AST (tuple):
 			return AST ('-subs', AST.apply_vars (ast.expr, vars, recurse), tuple ((src, AST.apply_vars (dst, vars, recurse)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
-			v    = ast [2].var
-			vars = pushframe ((kv for kv in filter (lambda kv: kv [0] != v, vars.items ())), vars)
+			vars = push (vars, {ast [2].var: False})
 
 			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
 
@@ -535,8 +557,8 @@ class AST (tuple):
 				if a:
 					if a.is_var_nonconst:
 						v = a.var
-					else:
-						raise ValueError (f"cannot remap differential 'd{v}' to non-variable in derivative")
+					# else:
+					# 	raise ValueError (f"cannot remap differential 'd{v}' to non-variable in derivative")
 
 				dvs.append ((v, p))
 
@@ -547,7 +569,7 @@ class AST (tuple):
 
 			if ast.is_intg_definite: # don't map bound var
 				v    = dv.var_name
-				vars = pushframe ((kv for kv in filter (lambda kv: kv [0] != v, vars.items ())), vars)
+				vars = push (vars, {dv.var_name: False})
 
 			else: # remap differential if indefinite integral and possible
 				a = vars.get (ast.dv.var_name)
@@ -556,33 +578,33 @@ class AST (tuple):
 					if a.is_var_nonconst:
 						dv = AST ('@', f'd{a.var}')
 					else:
-						raise ValueError (f'cannot remap differential {ast.dv.var!r} to non-variable in integral')
+						dv = ast.dv
+						# raise ValueError (f'cannot remap differential {ast.dv.var!r} to non-variable in integral')
 
 			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
-			lvars = set (ast.vars)
-			vars  = pushframe ((kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ())), vars)
+			vars = push (vars, {v: False for v in ast.vars})
 
 		elif ast.is_func: # function, might be user lambda call
-			# if ast.func == AST.Func.NOREMAP:
-			# 	vars = vars.get ('<', {}) # pop last variable frame
+			if ast.func == AST.Func.NOREMAP:
+				vars = pop (vars)
 
-			# else:
-			lamb = vars.get (ast.func)
+			else:
+				lamb = vars.get (ast.func)
 
-			if lamb and lamb.is_lamb: # 'execute' user lambda
-				if ast.args.len != lamb.vars.len:
-					raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
+				if lamb and lamb.is_lamb: # 'execute' user lambda
+					if ast.args.len != lamb.vars.len:
+						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
-				args = dict (zip (lamb.vars, ast.args))
+					args = dict (zip (lamb.vars, ast.args))
 
-				return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
+					return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
 
-			return AST ('-func', ast.func,
-					tuple (('(', AST.apply_vars (a, vars, recurse))
-					if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
-					else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+				return AST ('-func', ast.func,
+						tuple (('(', AST.apply_vars (a, vars, recurse))
+						if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
+						else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
 		return AST (*(AST.apply_vars (a, vars, recurse) for a in ast))
 
@@ -1103,8 +1125,8 @@ AST.MatEmpty   = AST ('-mat', ())
 AST.SetEmpty   = AST ('-set', ())
 AST.DictEmpty  = AST ('-dict', ())
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	res = AST ('*', (('*', (('#', '1'), ('#', '2')), {1}), ('*', (('#', '3'), ('#', '4')), {1}), ('#', '5')), {1, 2})
-# 	res = res.flat
-# 	print (res)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	ast = AST ('-lamb', ('+', (('-func', '@', (('-func', '@', (('@', 'x'),)),)), ('@', 'y'))), ('x',))
+	res = AST.apply_vars (ast, {'x': AST.One, 'y': AST ('#', '2')})
+	print (res)
