@@ -280,13 +280,13 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 	# return AST.apply_vars (ast, _VARS), vars
 
-	if not ast.ass_validated:
+	if not ast.ass_validate:
 		vars = None
-	elif ast.ass_validated.error:
-		raise RealityRedefinitionError (ast.ass_validated.error)
+	elif ast.ass_validate.error:
+		raise RealityRedefinitionError (ast.ass_validate.error)
 
 	else:
-		vars, ast = ast.ass_validated.lhs, ast.ass_validated.rhs
+		vars, ast = ast.ass_validate.lhs, ast.ass_validate.rhs
 		vars      = list (vars.comma) if vars.is_comma else [vars]
 
 	return AST.apply_vars (ast, _VARS), vars

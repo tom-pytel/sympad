@@ -50,41 +50,41 @@ class Test (unittest.TestCase):
 
 	def test_lambdas (self):
 		reset ()
-		self.assertEqual (get ('f = lambda: 2'), {'math': ('f = lambda: 2', 'f = Lambda((), 2)', 'f = \\left(\\left( \\right) \\mapsto 2 \\right)')})
+		self.assertEqual (get ('f = lambda: 2'), {'math': ('f() = 2', 'f = Lambda((), 2)', 'f\\left( \\right) = 2')})
 		self.assertEqual (get ('f'), {'math': ('lambda: 2', 'Lambda((), 2)', '\\left(\\left( \\right) \\mapsto 2 \\right)')})
 		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
-		self.assertEqual (get ('f = lambda: y'), {'math': ('f = lambda: y', 'f = Lambda((), y)', 'f = \\left(\\left( \\right) \\mapsto y \\right)')})
+		self.assertEqual (get ('f = lambda: y'), {'math': ('f() = y', 'f = Lambda((), y)', 'f\\left( \\right) = y')})
 		self.assertEqual (get ('f'), {'math': ('lambda: y', 'Lambda((), y)', '\\left(\\left( \\right) \\mapsto y \\right)')})
 		self.assertEqual (get ('f ()'), {'math': ('y', 'y', 'y')})
 		self.assertEqual (get ('y = 2'), {'math': ('y = 2', 'y = 2', 'y = 2')})
 		self.assertEqual (get ('f'), {'math': ('lambda: y', 'Lambda((), y)', '\\left(\\left( \\right) \\mapsto y \\right)')})
 		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
-		self.assertEqual (get ('f = lambda: y'), {'math': ('f = lambda: 2', 'f = Lambda((), 2)', 'f = \\left(\\left( \\right) \\mapsto 2 \\right)')})
+		self.assertEqual (get ('f = lambda: y'), {'math': ('f() = 2', 'f = Lambda((), 2)', 'f\\left( \\right) = 2')})
 		self.assertEqual (get ('f'), {'math': ('lambda: 2', 'Lambda((), 2)', '\\left(\\left( \\right) \\mapsto 2 \\right)')})
 		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
-		self.assertEqual (get ('f = lambda: @y'), {'math': ('f = lambda: y', 'f = Lambda((), y)', 'f = \\left(\\left( \\right) \\mapsto y \\right)')})
+		self.assertEqual (get ('f = lambda: @y'), {'math': ('f() = y', 'f = Lambda((), y)', 'f\\left( \\right) = y')})
 		self.assertEqual (get ('f'), {'math': ('lambda: y', 'Lambda((), y)', '\\left(\\left( \\right) \\mapsto y \\right)')})
 		self.assertEqual (get ('f ()'), {'math': ('2', '2', '2')})
 		self.assertEqual (get ('del y'), {'msg': ["Variable 'y' deleted."]})
-		self.assertEqual (get ('f = lambda x: x'), {'math': ('f = lambda x: x', 'f = Lambda(x, x)', 'f = \\left(x \\mapsto x \\right)')})
+		self.assertEqual (get ('f = lambda x: x'), {'math': ('f(x) = x', 'f = Lambda(x, x)', 'f\\left(x \\right) = x')})
 		self.assertEqual (get ('f'), {'math': ('lambda x: x', 'Lambda(x, x)', '\\left(x \\mapsto x \\right)')})
 		self.assertEqual (get ('f (x)'), {'math': ('x', 'x', 'x')})
 		self.assertEqual (get ('f (y)'), {'math': ('y', 'y', 'y')})
 		self.assertEqual (get ('f (2)'), {'math': ('2', '2', '2')})
-		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)')})
+		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('f (x)'), {'math': ('x**2', 'x**2', 'x^2')})
 		self.assertEqual (get ('f (y)'), {'math': ('y**2', 'y**2', 'y^2')})
 		self.assertEqual (get ('f (2)'), {'math': ('4', '4', '4')})
-		self.assertEqual (get ('g = lambda x: f(x) + f(2x)'), {'math': ('g = lambda x: 5x**2', 'g = Lambda(x, 5*x**2)', 'g = \\left(x \\mapsto 5 x^2 \\right)')})
+		self.assertEqual (get ('g = lambda x: f(x) + f(2x)'), {'math': ('g(x) = 5x**2', 'g = Lambda(x, 5*x**2)', 'g\\left(x \\right) = 5 x^2')})
 		self.assertEqual (get ('g'), {'math': ('lambda x: 5x**2', 'Lambda(x, 5*x**2)', '\\left(x \\mapsto 5 x^2 \\right)')})
 		self.assertEqual (get ('g (x)'), {'math': ('5x**2', '5*x**2', '5 x^2')})
 		self.assertEqual (get ('g (y)'), {'math': ('5y**2', '5*y**2', '5 y^2')})
 		self.assertEqual (get ('g (2)'), {'math': ('20', '20', '20')})
 		self.assertEqual (get ('del f'), {'msg': ["Lambda function 'f' deleted."]})
 		self.assertEqual (get ('g (2)'), {'math': ('20', '20', '20')})
-		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)')})
-		self.assertEqual (get ('g = lambda x: @(f(x) + f(2x))'), {'math': ('g = lambda x: f(2 x) + f(x)', 'g = Lambda(x, f(2*x) + f(x))', 'g = \\left(x \\mapsto \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right) \\right)')})
-		self.assertEqual (get ('h = lambda x: @(f(x)) + @(f(2x))'), {'math': ('h = lambda x: f(2 x) + f(x)', 'h = Lambda(x, f(2*x) + f(x))', 'h = \\left(x \\mapsto \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right) \\right)')})
+		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+		self.assertEqual (get ('g = lambda x: @(f(x) + f(2x))'), {'math': ('g(x) = f(2 x) + f(x)', 'g = Lambda(x, f(2*x) + f(x))', 'g\\left(x \\right) = \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right)')})
+		self.assertEqual (get ('h = lambda x: @(f(x)) + @(f(2x))'), {'math': ('h(x) = f(2 x) + f(x)', 'h = Lambda(x, f(2*x) + f(x))', 'h\\left(x \\right) = \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right)')})
 		self.assertEqual (get ('g == h'), {'math': ('True', 'True', 'True')})
 		self.assertEqual (get ('g'), {'math': ('lambda x: f(2 x) + f(x)', 'Lambda(x, f(2*x) + f(x))', '\\left(x \\mapsto \\operatorname{f}\\left(2 x \\right) + \\operatorname{f}\\left(x \\right) \\right)')})
 		self.assertEqual (get ('g (x)'), {'math': ('5x**2', '5*x**2', '5 x^2')})
@@ -92,23 +92,23 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('g (2)'), {'math': ('20', '20', '20')})
 		self.assertEqual (get ('del f'), {'msg': ["Lambda function 'f' deleted."]})
 		self.assertEqual (get ('g (2)'), {'err': "NameError: function 'f' is not defined"})
-		self.assertEqual (get ('f = lambda x, y: x + y'), {'math': ('f = lambda x, y: x + y', 'f = Lambda((x, y), x + y)', 'f = \\left(\\left(x, y \\right) \\mapsto x + y \\right)')})
+		self.assertEqual (get ('f = lambda x, y: x + y'), {'math': ('f(x, y) = x + y', 'f = Lambda((x, y), x + y)', 'f\\left(x, y \\right) = x + y')})
 		self.assertEqual (get ('f (1, 2)'), {'math': ('3', '3', '3')})
-		self.assertEqual (get ('f = lambda x, y, z: x + y + z'), {'math': ('f = lambda x, y, z: x + y + z', 'f = Lambda((x, y, z), x + y + z)', 'f = \\left(\\left(x, y, z \\right) \\mapsto x + y + z \\right)')})
+		self.assertEqual (get ('f = lambda x, y, z: x + y + z'), {'math': ('f(x, y, z) = x + y + z', 'f = Lambda((x, y, z), x + y + z)', 'f\\left(x, y, z \\right) = x + y + z')})
 		self.assertEqual (get ('f (1, 2, 3)'), {'math': ('6', '6', '6')})
-		self.assertEqual (get ('f = lambda x, y, z, w: x + y + z + w'), {'math': ('f = lambda x, y, z, w: w + x + y + z', 'f = Lambda((x, y, z, w), w + x + y + z)', 'f = \\left(\\left(x, y, z, w \\right) \\mapsto w + x + y + z \\right)')})
+		self.assertEqual (get ('f = lambda x, y, z, w: x + y + z + w'), {'math': ('f(x, y, z, w) = w + x + y + z', 'f = Lambda((x, y, z, w), w + x + y + z)', 'f\\left(x, y, z, w \\right) = w + x + y + z')})
 		self.assertEqual (get ('f (1, 2, 3, 4)'), {'math': ('10', '10', '10')})
 		self.assertEqual (get ('f (1, 2, 3)'), {'err': "TypeError: lambda function 'f' takes 4 argument(s)"})
 		self.assertEqual (get ('f (1, 2, 3, 4, 5)'), {'err': "TypeError: lambda function 'f' takes 4 argument(s)"})
-		self.assertEqual (get ('f = lambda x: lambda: x**2'), {'math': ('f = lambda x: {lambda: x**2}', 'f = Lambda(x, Lambda((), x**2))', 'f = \\left(x \\mapsto \\left(\\left( \\right) \\mapsto x^2 \\right) \\right)')})
+		self.assertEqual (get ('f = lambda x: lambda: x**2'), {'math': ('f(x) = lambda: x**2', 'f = Lambda(x, Lambda((), x**2))', 'f\\left(x \\right) = \\left(\\left( \\right) \\mapsto x^2 \\right)')})
 		self.assertEqual (get ('f (2)'), {'math': ('lambda: 4', 'Lambda((), 4)', '\\left(\\left( \\right) \\mapsto 4 \\right)')})
 		self.assertEqual (get ('_ ()'), {'math': ('4', '4', '4')})
-		self.assertEqual (get ('f = lambda x: lambda: lambda: x**2'), {'math': ('f = lambda x: {lambda: {lambda: x**2}}', 'f = Lambda(x, Lambda((), Lambda((), x**2)))', 'f = \\left(x \\mapsto \\left(\\left( \\right) \\mapsto \\left(\\left( \\right) \\mapsto x^2 \\right) \\right) \\right)')})
+		self.assertEqual (get ('f = lambda x: lambda: lambda: x**2'), {'math': ('f(x) = lambda: {lambda: x**2}', 'f = Lambda(x, Lambda((), Lambda((), x**2)))', 'f\\left(x \\right) = \\left(\\left( \\right) \\mapsto \\left(\\left( \\right) \\mapsto x^2 \\right) \\right)')})
 		self.assertEqual (get ('f (3)'), {'math': ('lambda: {lambda: 9}', 'Lambda((), Lambda((), 9))', '\\left(\\left( \\right) \\mapsto \\left(\\left( \\right) \\mapsto 9 \\right) \\right)')})
 		self.assertEqual (get ('_ ()'), {'math': ('lambda: 9', 'Lambda((), 9)', '\\left(\\left( \\right) \\mapsto 9 \\right)')})
 		self.assertEqual (get ('_ ()'), {'math': ('9', '9', '9')})
 		self.assertEqual (get ('solve (x**2 + 2 x - 1 > 7)'), {'math': ('-oo < x < -4 or 2 < x < oo', 'Or(And(Lt(-oo, x), Lt(x, -4)), And(Lt(2, x), Lt(x, oo)))', '-\\infty < x < -4 \\vee 2 < x < \\infty')})
-		self.assertEqual (get ('f = lambda x: _'), {'math': ('f = lambda x: -oo < x < -4 or 2 < x < oo', 'f = Lambda(x, Or(And(Lt(-oo, x), Lt(x, -4)), And(Lt(2, x), Lt(x, oo))))', 'f = \\left(x \\mapsto -\\infty < x < -4 \\vee 2 < x < \\infty \\right)')})
+		self.assertEqual (get ('f = lambda x: _'), {'math': ('f(x) = -oo < x < -4 or 2 < x < oo', 'f = Lambda(x, Or(And(Lt(-oo, x), Lt(x, -4)), And(Lt(2, x), Lt(x, oo))))', 'f\\left(x \\right) = -\\infty < x < -4 \\vee 2 < x < \\infty')})
 		self.assertEqual (get ('f (-4.1), f (-4), f (0), f (2), f (2.1)'), {'math': ('(True, False, False, False, True)', '(True, False, False, False, True)', '\\left(True, False, False, False, True \\right)')})
 		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('f (2)'), {'math': ('4', '4', '4')})
@@ -170,7 +170,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('m = \\[[1, 2], [3, 4]]'), {'math': ('m = \\[[1, 2], [3, 4]]', 'm = Matrix([[1, 2], [3, 4]])', 'm = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix}')})
 		self.assertEqual (get ('l = m - lambda eye 2'), {'math': ('l = \\[[1 - lambda, 2], [3, 4 - lambda]]', 'l = Matrix([[1 - lambda, 2], [3, 4 - lambda]])', 'l = \\begin{bmatrix} 1 - \\lambda & 2 \\\\ 3 & 4 - \\lambda \\end{bmatrix}')})
 		self.assertEqual (get ('l.det ()'), {'math': ('{1 - lambda} {4 - lambda} - 6', '(1 - lambda)*(4 - lambda) - 6', '\\left(1 - \\lambda \\right) \\left(4 - \\lambda \\right) - 6')})
-		self.assertEqual (get ('solve (_)'), {'math': ('[5/2 - sqrt(33) / 2, sqrt(33) / 2 + 5/2]', '[S(5) / 2 - sqrt(33) / 2, sqrt(33) / 2 + S(5) / 2]', '\\left[\\frac{5}{2} - \\frac{\\sqrt{33}}{2}, \\frac{\\sqrt{33}}{2} + \\frac{5}{2} \\right]')})
+		self.assertEqual (get ('solve _'), {'math': ('[5/2 - sqrt(33) / 2, sqrt(33) / 2 + 5/2]', '[S(5) / 2 - sqrt(33) / 2, sqrt(33) / 2 + S(5) / 2]', '\\left[\\frac{5}{2} - \\frac{\\sqrt{33}}{2}, \\frac{\\sqrt{33}}{2} + \\frac{5}{2} \\right]')})
 		self.assertEqual (get ('a, b = _'), {'math': [('a = 5/2 - sqrt(33) / 2', 'a = S(5) / 2 - sqrt(33) / 2', 'a = \\frac{5}{2} - \\frac{\\sqrt{33}}{2}'), ('b = sqrt(33) / 2 + 5/2', 'b = sqrt(33) / 2 + S(5) / 2', 'b = \\frac{\\sqrt{33}}{2} + \\frac{5}{2}')]})
 		self.assertEqual (get ('m.eigenvals ()'), {'math': ('{5/2 - sqrt(33) / 2: 1, sqrt(33) / 2 + 5/2: 1}', '{S(5) / 2 - sqrt(33) / 2: 1, sqrt(33) / 2 + S(5) / 2: 1}', '\\left\\{\\frac{5}{2} - \\frac{\\sqrt{33}}{2}{:} 1, \\frac{\\sqrt{33}}{2} + \\frac{5}{2}{:} 1 \\right\\}')})
 		self.assertEqual (get ('Subs (l, lambda, a) \\[x, y]'), {'math': ('\\[2 y - 3 x / 2 + x sqrt(33) / 2, 3 x + 3 y / 2 + y sqrt(33) / 2]', 'Matrix([2*y - (3*x) / 2 + (x*sqrt(33)) / 2, 3*x + (3*y) / 2 + (y*sqrt(33)) / 2])', '\\begin{bmatrix} 2 y - \\frac{3 x}{2} + \\frac{x \\sqrt{33}}{2} \\\\ 3 x + \\frac{3 y}{2} + \\frac{y \\sqrt{33}}{2} \\end{bmatrix}')})
@@ -180,6 +180,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('solve (_ [0], _ [1], x, y)'), {'math': ('[{x: -y/2 + y sqrt(33) / 6}]', '[{x: -y/2 + (y*sqrt(33)) / 6}]', '\\left[\\left\\{x{:} -\\frac{y}{2} + \\frac{y \\sqrt{33}}{6} \\right\\} \\right]')})
 		self.assertEqual (get ('\\[_ [0] [x], y].subs (y, 1)'), {'math': ('\\[sqrt(33) / 6 - 1/2, 1]', 'Matrix([sqrt(33) / 6 - S(1) / 2, 1])', '\\begin{bmatrix} \\frac{\\sqrt{33}}{6} - \\frac{1}{2} \\\\ 1 \\end{bmatrix}')})
 		self.assertEqual (get ('m.eigenvects ()'), {'math': ('[(5/2 - sqrt(33) / 2, 1, [\\[{-2} / {sqrt(33) / 2 - 3/2}, 1]]), (sqrt(33) / 2 + 5/2, 1, [\\[{-2} / {-sqrt(33) / 2 - 3/2}, 1]])]', '[(S(5) / 2 - sqrt(33) / 2, 1, [Matrix([(-2) / (sqrt(33) / 2 - S(3) / 2), 1])]), (sqrt(33) / 2 + S(5) / 2, 1, [Matrix([(-2) / (-sqrt(33) / 2 - S(3) / 2), 1])])]', '\\left[\\left(\\frac{5}{2} - \\frac{\\sqrt{33}}{2}, 1, \\left[\\begin{bmatrix} \\frac{-2}{\\frac{\\sqrt{33}}{2} - \\frac{3}{2}} \\\\ 1 \\end{bmatrix} \\right] \\right), \\left(\\frac{\\sqrt{33}}{2} + \\frac{5}{2}, 1, \\left[\\begin{bmatrix} \\frac{-2}{-\\frac{\\sqrt{33}}{2} - \\frac{3}{2}} \\\\ 1 \\end{bmatrix} \\right] \\right) \\right]')})
+		self.assertEqual (get ('simplify _'), {'math': ('[(5/2 - sqrt(33) / 2, 1, [\\[-sqrt(33) / 6 - 1/2, 1]]), (sqrt(33) / 2 + 5/2, 1, [\\[sqrt(33) / 6 - 1/2, 1]])]', '[(S(5) / 2 - sqrt(33) / 2, 1, [Matrix([-sqrt(33) / 6 - S(1) / 2, 1])]), (sqrt(33) / 2 + S(5) / 2, 1, [Matrix([sqrt(33) / 6 - S(1) / 2, 1])])]', '\\left[\\left(\\frac{5}{2} - \\frac{\\sqrt{33}}{2}, 1, \\left[\\begin{bmatrix} -\\frac{\\sqrt{33}}{6} - \\frac{1}{2} \\\\ 1 \\end{bmatrix} \\right] \\right), \\left(\\frac{\\sqrt{33}}{2} + \\frac{5}{2}, 1, \\left[\\begin{bmatrix} \\frac{\\sqrt{33}}{6} - \\frac{1}{2} \\\\ 1 \\end{bmatrix} \\right] \\right) \\right]')})
 
 	def test_sets (self):
 		reset ()
@@ -238,15 +239,15 @@ class Test (unittest.TestCase):
 	def test_server_funcs (self):
 		reset ()
 		self.assertEqual (get ('x = 1'), {'math': ('x = 1', 'x = 1', 'x = 1')})
-		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f = lambda x: x**2', 'f = Lambda(x, x**2)', 'f = \\left(x \\mapsto x^2 \\right)')})
+		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('y = ?(x, real = True)'), {'math': ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)')})
 		self.assertEqual (get ('z = z(x)'), {'math': ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)')})
-		self.assertEqual (get ('g (x) = x**3'), {'math': ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1')})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)'), ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
+		self.assertEqual (get ('g (x) = x**3'), {'math': ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3')})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)'), ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('z = y'), {'math': ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)')})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?(x, real = True)', "y = Function('', real = True)(x)", 'y = ?\\left(x, real = True \\right)'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('del y'), {'msg': ["Undefined function 'y' deleted."]})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = 1', 'g = Lambda(x, 1)', 'g\\left(x \\right) = 1'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
 
@@ -561,3 +562,32 @@ if __name__ == '__main__':
 
 			for text in texts:
 				print (f'\t\tself.assertEqual (get ({text!r}), {get (text)!r})')
+
+	elif SYSARGV [1] == '--human':
+		for name, texts in _SESSIONS:
+			reset ()
+
+			print (f'\n{name}\n')
+
+			texts = [s.strip () for s in texts.strip ().split ('\n')]
+
+			for text in texts:
+				resp = get (text)
+
+				print (text)
+
+				if 'msg' in resp:
+					print ('\n'.join (resp ['msg']))
+
+				if 'err' in resp:
+					print (resp ['err'])
+
+				if 'math' in resp:
+					math = resp ['math']
+
+					if isinstance (math [0], tuple):
+						math = ['\n'.join (m) for m in math]
+
+					print ('\n'.join (math))
+
+				print ()

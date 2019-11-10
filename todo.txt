@@ -1,8 +1,5 @@
-> ass_validated -> ass_validate
-> ass_validated.error
+> ass_validate -> ass_validate
 > Lambda (_x, _x)
-> anonymous lambdas
-> lambdas variables from 'var' to ('@', 'var')
 > apply_vars to differentials if target is another variable - remove exception on expression and use original differential
 > fix number.subs ()
 

@@ -923,8 +923,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		istopass = self.parent.op in {None, ';'}
 
 		if istopass:
-			if ast.ass_validated:
-				ast = ast.ass_validated
+			if ast.ass_validate:
+				ast = ast.ass_validate
 			else:
 				istopass = False
 

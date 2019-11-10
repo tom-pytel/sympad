@@ -611,7 +611,7 @@ class AST_Ass (AST):
 	def ufunc2lamb (ufunc, lamb):
 		return AST ('-lamb', lamb, tuple (v.var or 'NONVARIABLE' for v in ufunc.vars))
 
-	def _ass_validated (self):
+	def _ass_validate (self):
 		def verify (dst, src, multi = False):
 			for src in (src if multi else (src,)):
 				if src.is_var_const:
