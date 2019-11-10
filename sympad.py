@@ -1162,6 +1162,7 @@ The input will be evaluated symbolically or numerically with the results being c
 &emsp;<a href="#Solving Equations">Solving Equations</a><br>
 &emsp;<a href="#Differential Equations">Differential Equations</a><br>
 &emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><br>
+&emsp;<a href="#Lambda Functions Examples">Lambda Functions</a><br>
 &emsp;<a href="#Plotting Functions">Plotting Functions</a><br>
 &emsp;<a href="#Plotting Vector Walks">Plotting Vector Walks</a><br>
 
@@ -1204,15 +1205,15 @@ Enter the lines that follow one by one to see the effect:
 </p><p>
 1<br>
 expand (_(x+1))<br>
-expand (_(x+1))<i>&emsp;**(or press the up arrow)</i><br>
-expand (_(x+1))<i>&emsp;...</i><br>
+expand (_(x+1))<i>&emsp; **(or press the up arrow)</i><br>
+expand (_(x+1))<i>&emsp; ...</i><br>
 </p><p>
 Or the following:
 </p><p>
 a, b = 1, 1<br>
 a, b = b, a + b<br>
-a, b = b, a + b<i>&emsp;**(or press the up arrow)</i><br>
-a, b = b, a + b<i>&emsp;...</i><br>
+a, b = b, a + b<i>&emsp; **(or press the up arrow)</i><br>
+a, b = b, a + b<i>&emsp; ...</i><br>
 </p><p>
 Automatic variable substitution:
 </p><p>
@@ -1518,6 +1519,10 @@ The "<b>@(expr)</b>" function technically prevents variable remapping for the ex
 Another potentially useful meta-function for assignment is "<b>%(expr)</b>".
 This function defers evaluation of the expression for one round thus allowing things like assigning an integral operation to a variable instead of the result of the integral - "<b>f = %(\int a dx)</b>".
 In this way you can assign different values to "<b>a</b>" and have the integration happen automatically any time you access the "<b>f</b>" variable instead of just using the result of whatever variables were defined at the time of definition.
+</p><p>
+One more thing to be aware of is that differentials in derivatives and integrals get remapped based on the underlying variable, if possible otherwise an exception is raised.
+For example the derivative "<b>dy / dx</b>" will be treated as "<b>dy / dz</b>" if you have a global variable set "<b>x = z</b>", likewise "<b>\int y dx</b>" will be remapped to "<b>\int y dz</b>" in that case.
+This also happens in lambda functions so that you specify differentials to use (as non-d variables), see the <a href="#Lambda Functions Examples">Lambda&nbsp;Functions</a> examples section for more on this.
 </p>
 
 <h4 id="Simplification">Simplification</h4>
@@ -1889,12 +1894,57 @@ m.eigenvals ()<i>&emsp; verify eigenvalues</i><br>
 Subs (l, lambda, a) \[x, y]<br>
 solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
 \[_ [0] [x], y].subs (y, 1)<i>&emsp; first eigenvector for eigenvalue a</i><br>
-Subs (l, lambda, b) \[x, y]<br>
+\. l |_{lambda = b} \[x, y]<i>&emsp; shorthand for substitution</i><br>
 solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
-\[_ [0] [x], y].subs (y, 1)<i>&emsp; second eigenvector for eigenvalue b</i><br>
+\. \[_ [0] [x], y] |_{y = 1}<i>&emsp; second eigenvector for eigenvalue b</i><br>
 m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
 simplify _<i>&emsp; simplify result to easier see if it matches</i><br>
 </p>
+
+<h4 id="Lambda Functions Examples">Lambda Functions</h4>
+
+<p>
+delall<i>&emsp; make sure no variables are mapped</i><br>
+f = lambda x: x**2<i>&emsp; simple example of lambda which squares its argument</i><br>
+f (2)<br>
+f (x) = x**2<i>&emsp; differnt syntax to specify the same thing</i><br>
+f (3)<br>
+f (x, y) = sqrt (x**2 + y**2)<i>&emsp; function of two variables</i><br>
+f (3, 4)<br>
+<br>
+x, y, z = 3, 4, 5<i>&emsp; assign global variablesy</i><br>
+f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
+f (x, y) = sqrt (x**2 + y**2) + @z<i>&emsp; do not bind global variable</i><br>
+f (x) = x**2<br>
+f (x) = @x**2<i>&emsp; use global value of x</i><br>
+f (x) = y**2<i>&emsp; binds global value of y into lambda</i><br>
+f (2)<i>&emsp; doesn't matter what you pass, f(x) is set to equal 16</i><br>
+f (x) = @y**2<i>&emsp; go up one more scope above global and use pure y variable</i><br>
+f (2)<i>&emsp; still get 16 because global y = 4</i><br>
+y = 6<i>&emsp; change global y</i><br>
+f (2)<i>&emsp; global y = 6 so y**2 = 36</i><br>
+<br>
+delall<br>
+f (x) = x**2<br>
+g (x, y) = sqrt (f(x) + f(y))<i>&emsp; calling other lambda is evaluated immediately</i><br>
+g (3, 4)<i>&emsp; no surprise here</i><br>
+f (x) = x**3<i>&emsp; will have no effect on g() since those were already evaluated at definition</i><br>
+g (3, 4)<i>&emsp; still using old x**2 since that was evaluated upon definition of g()</i><br>
+g (x, y) = @sqrt (f(x) + f(y))<i>&emsp; prevent binding of f() lambda until evaluation of g()</i><br>
+g (3, 4)<i>&emsp; now we get sqrt (x**3 + y**3</i><br>
+f (x) = x**2<i>&emsp; set f() back to x**2</i><br>
+g (3, 4)<i>&emsp; now we get sqrt (x**2 + y**2) since the f() lambda is unevaluated in g()</i><br>
+<br>
+delall<br>
+f (x) = \int x dx<i>&emsp; normally integral, limits, derivatives and things like that are not evaluated on lambda definition</i><br>
+f (sin x)<i>&emsp; only on execution</i><br>
+f (x) = %(\int x dx)<i>&emsp; force evaluation of integral and store result in lambda definition, the %() only works this way at the top level of the lambda body</i><br>
+f (sin x)<i>&emsp; different result since integral was already evaluated</i><br>
+f (sin y)<i>&emsp; this is as expected</i><br>
+f (x) = \int x dx<i>&emsp; going back to the unevaluated integral</i><br>
+f (sin x)<i>&emsp; as expected</i><br>
+f (sin y)<i>&emsp; different, the differential is only changed to dy if the argument is a pure variable, if not then the original dx is used</i><br>
+\int sin y dx<i>&emsp; which results in this expression</i><br>
 
 <h4 id="Plotting Functions">Plotting Functions</h4>
 
@@ -3677,7 +3727,37 @@ class AST (tuple):
 
 	@staticmethod
 	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
-		if not isinstance (ast, AST) or ast.is_ufunc or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
+		def push (vars, newvars): # create new frame and add new variables
+			frame       = vars.copy ()
+			frame ['<'] = vars
+			frame ['>'] = newvars
+
+			frame.update (newvars)
+
+			return frame
+
+		def pop (vars): # pop one layer of variables (not frames) and create new frame
+			count = vars.get ('#', 1)
+			frame = {'<': vars.get ('<', {}), '>': vars.get ('>', vars), '#': count + 1}
+
+			for v in vars:
+				if v not in '<>#':
+					f = vars
+
+					for _ in range (count):
+						while f:
+							nvs = f.get ('>', f)
+							f   = f.get ('<', {})
+
+							if not f or v in nvs:
+								break
+
+					frame [v] = f.get (v)
+
+			return frame
+
+		# start here
+		if not isinstance (ast, AST) or ast.is_ufunc: # or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
 			return ast
 
 		if ast.is_var: # regular var substitution?
@@ -3692,37 +3772,67 @@ class AST (tuple):
 			return AST ('-subs', AST.apply_vars (ast.expr, vars, recurse), tuple ((src, AST.apply_vars (dst, vars, recurse)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
-			v    = ast [2].var
-			vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
+			vars = push (vars, {ast [2].var: False})
 
 			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
 
-		elif ast.is_intg:
-			if ast.is_intg_definite:
-				v    = ast.dv.var_name
-				vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
+		elif ast.is_diff:
+			dvs = []
 
-			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), ast.dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+			for v, p in ast.dvs: # remap differentials if possible
+				a = vars.get (v)
+
+				if a:
+					if a.is_var_nonconst:
+						v = a.var
+					# else:
+					# 	raise ValueError (f"cannot remap differential 'd{v}' to non-variable in derivative")
+
+				dvs.append ((v, p))
+
+			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse), ast.d, tuple (dvs))
+
+		elif ast.is_intg:
+			dv = ast.dv
+
+			if ast.is_intg_definite: # don't map bound var
+				v    = dv.var_name
+				vars = push (vars, {dv.var_name: False})
+
+			else: # remap differential if indefinite integral and possible
+				a = vars.get (ast.dv.var_name)
+
+				if a:
+					if a.is_var_nonconst:
+						dv = AST ('@', f'd{a.var}')
+					else:
+						dv = ast.dv
+						# raise ValueError (f'cannot remap differential {ast.dv.var!r} to non-variable in integral')
+
+			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
-			lvars = set (ast.vars)
-			vars  = dict (kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ()))
+			vars = push (vars, {v: False for v in ast.vars})
 
 		elif ast.is_func: # function, might be user lambda call
-			lamb = vars.get (ast.func)
+			if ast.func == AST.Func.NOREMAP:
+				vars = pop (vars)
 
-			if lamb and lamb.is_lamb: # 'execute' user lambda
-				if ast.args.len != lamb.vars.len:
-					raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
+			else:
+				lamb = vars.get (ast.func)
 
-				args = dict (zip (lamb.vars, ast.args))
+				if lamb and lamb.is_lamb: # 'execute' user lambda
+					if ast.args.len != lamb.vars.len:
+						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
-				return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
+					args = dict (zip (lamb.vars, ast.args))
 
-			return AST ('-func', ast.func,
-					tuple (('(', AST.apply_vars (a, vars, recurse))
-					if (a.is_var and vars.get (a.var, AST.VarNull).is_ass)
-					else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+					return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
+
+				return AST ('-func', ast.func,
+						tuple (('(', AST.apply_vars (a, vars, recurse))
+						if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
+						else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
 		return AST (*(AST.apply_vars (a, vars, recurse) for a in ast))
 
@@ -3756,7 +3866,56 @@ class AST_Ass (AST):
 	def _init (self, lhs, rhs):
 		self.lhs, self.rhs = lhs, rhs # should be py form
 
-	_ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.op in {'@', '-ufunc'} else self.lhs.comma if (self.lhs.is_comma and all (a.op in {'@', '-ufunc'} for a in self.lhs.comma)) else None
+	# _ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.op in {'@', '-ufunc'} else self.lhs.comma if (self.lhs.is_comma and all (a.op in {'@', '-ufunc'} for a in self.lhs.comma)) else None
+
+	@staticmethod
+	def ufunc2lamb (ufunc, lamb):
+		return AST ('-lamb', lamb, tuple (v.var or 'NONVARIABLE' for v in ufunc.vars))
+
+	def _ass_validate (self):
+		def verify (dst, src, multi = False):
+			for src in (src if multi else (src,)):
+				if src.is_var_const:
+					dst.error = 'The only thing that is constant is change - Heraclitus; Except for constants, they never change - Math...'
+				elif src.is_ufunc_impure:
+					dst.error = 'cannot assign to a function containing non-variable parameters'
+				elif src.ufunc == '':
+					dst.error = 'cannot assign to an anonymous function'
+				else:
+					continue
+
+				break
+
+			return dst
+
+		if self.lhs.is_var:
+			return verify (self, self.lhs)
+		elif self.lhs.is_ufunc:
+			return verify (AST ('=', ('@', self.lhs.ufunc or 'ANONYMOUS'), self.ufunc2lamb (self.lhs, self.rhs)), self.lhs)
+
+		elif self.lhs.is_comma:
+			rhs = self.rhs.strip_paren
+
+			if rhs.op not in {',', '[', '-set'}:
+				return verify (self, self.lhs.comma, True)
+
+			else:
+				both = min (self.lhs.comma.len, rhs [1].len)
+				lrs  = []
+
+				for l, r in zip (self.lhs.comma, rhs [1]):
+					if l.is_var:
+						lrs.append ((l, r))
+					elif l.is_ufunc:
+						lrs.append ((('@', l.ufunc), self.ufunc2lamb (l, r)))
+					else:
+						return None
+
+				rhs = (rhs.op, tuple (r for _, r in lrs) + rhs [1] [both:])
+
+				return verify (AST ('=', (',', tuple (l for l, _ in lrs) + self.lhs.comma [both:]), ('(', rhs) if self.rhs.is_paren else rhs), self.lhs.comma, True)
+
+		return None
 
 class AST_Cmp (AST):
 	op, is_cmp = '<>', True
@@ -3866,7 +4025,7 @@ class AST_Comma (AST):
 	def _init (self, comma):
 		self.comma = comma
 
-	_is_empty_comma = lambda self: not (self.comma.len)
+	_is_comma_empty = lambda self: not (self.comma.len)
 
 class AST_Curly (AST):
 	op, is_curly = '{', True
@@ -4139,7 +4298,8 @@ class AST_UFunc (AST):
 
 		return self
 
-	_is_ufunc_pure = lambda self: all (v.is_var_nonconst for v in self.vars)
+	_is_ufunc_pure   = lambda self: all (v.is_var_nonconst for v in self.vars)
+	_is_ufunc_impure = lambda self: any (not v.is_var_nonconst for v in self.vars)
 
 	def apply_argskw (self, argskw):
 		if argskw:
@@ -4193,10 +4353,10 @@ AST.MatEmpty   = AST ('-mat', ())
 AST.SetEmpty   = AST ('-set', ())
 AST.DictEmpty  = AST ('-dict', ())
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	res = AST ('*', (('*', (('#', '1'), ('#', '2')), {1}), ('*', (('#', '3'), ('#', '4')), {1}), ('#', '5')), {1, 2})
-# 	res = res.flat
-# 	print (res)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	ast = AST ('-lamb', ('+', (('-func', '@', (('-func', '@', (('@', 'x'),)),)), ('@', 'y'))), ('x',))
+	res = AST.apply_vars (ast, {'x': AST.One, 'y': AST ('#', '2')})
+	print (res)
 # AST translations for funtions to display or convert to internal AST or SymPy S() escaping.
 
 import itertools as it
@@ -4570,13 +4730,23 @@ def _xlat_f2a_subs (expr, src = AST.VarNull, dst = None):
 	if subs is None:
 		return None
 
-	if expr.is_subs:
+	if expr.is_subs: # collapse multiple subs into one
 		return AST ('-subs', expr.expr, expr.subs + subs)
-	else:
-		return AST ('-subs', expr, subs)
+
+	return AST ('-subs', expr, subs)
 
 #...............................................................................................
-_XLAT_FUNC2AST_ALL    = {
+_XLAT_FUNC2AST_REIM = {
+	'Re'                   : lambda *args: AST ('-func', 're', tuple (args)),
+	'Im'                   : lambda *args: AST ('-func', 'im', tuple (args)),
+}
+
+_XLAT_FUNC2AST_ALL = {
+	'Subs'                 : _xlat_f2a_Subs,
+	'.subs'                : _xlat_f2a_subs,
+}
+
+_XLAT_FUNC2AST_TEXNATPY = {**_XLAT_FUNC2AST_ALL,
 	'slice'                : _xlat_f2a_slice,
 	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
 
@@ -4590,11 +4760,6 @@ _XLAT_FUNC2AST_ALL    = {
 	'Or'                   : lambda *args: AST ('-or', tuple (args)),
 	'And'                  : _xlat_f2a_And,
 	'Not'                  : lambda not_: AST ('-not', not_),
-}
-
-_XLAT_FUNC2AST_REIM = {
-	'Re'                   : lambda *args: AST ('-func', 're', tuple (args)),
-	'Im'                   : lambda *args: AST ('-func', 'im', tuple (args)),
 }
 
 _XLAT_FUNC2AST_TEXNAT = {
@@ -4619,12 +4784,9 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
 	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
 	'Union'                : _xlat_f2a_Union,
-
-	'Subs'                 : _xlat_f2a_Subs,
-	'.subs'                : _xlat_f2a_subs,
 }
 
-XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
+XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT,
 	'Add'                  : lambda *args, **kw: AST ('+', args),
 	'Mul'                  : lambda *args, **kw: AST ('*', args),
 
@@ -4646,7 +4808,7 @@ XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_TEXNAT,
 	'zeros'                : True,
 }
 
-XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2AST_TEXNAT,
+XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT, **_XLAT_FUNC2AST_REIM,
 	'Add'                  : lambda *args, **kw: None if kw else AST ('+', args),
 	'Mul'                  : lambda *args, **kw: None if kw else AST ('*', args),
 
@@ -4655,9 +4817,11 @@ XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM, **_XLAT_FUNC2A
 	'Sum'                  : _xlat_f2a_Sum_NAT,
 }
 
-XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_ALL, **_XLAT_FUNC2AST_REIM,
+XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_REIM,
 	'Gamma'                : lambda *args: AST ('-func', 'gamma', tuple (args)),
 }
+
+XLAT_FUNC2AST_SPT = XLAT_FUNC2AST_PY
 
 def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
@@ -4801,6 +4965,7 @@ class sxlat: # for single script
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
 	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_PY  = XLAT_FUNC2AST_PY
+	XLAT_FUNC2AST_SPT = XLAT_FUNC2AST_SPT
 	xlat_funcs2asts   = xlat_funcs2asts
 	xlat_func2tex     = xlat_func2tex
 	xlat_attr2tex     = xlat_attr2tex
@@ -4837,15 +5002,21 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 AST.register_AST (AST_Text)
 
-class ExprAss (sp.Eq): # assignment instead of equality comparison
+class EqAss (sp.Eq): # assignment instead of equality comparison
 	pass
 
 class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
-	is_number  = False
-	SYMPAD_ast = lambda self: AST (*literal_eval (self.args [0]))
+	is_number    = False
+	free_symbols = set ()
 
-	def SYMPAD_eval (self):
-		return self.SYMPAD_ast () if self.args [1] == 1 else AST ('-func', AST.Func.NOEVAL, (self.SYMPAD_ast (), spt2ast (self.args [1] - 1)))
+	def __new__ (cls, ast):
+		self     = sp.Expr.__new__ (cls, str (ast))
+		self.ast = AST (*literal_eval (ast)) if isinstance (ast, str) else ast # SymPy might re-create this object using string argument
+
+		return self
+
+	def doit (self, *args, **kw):
+		return self
 
 def _raise (exc):
 	raise exc
@@ -4880,12 +5051,8 @@ def _free_symbols (spt): # extend sympy .free_symbols into standard python conta
 		return _free_symbols (spt.start).union (_free_symbols (spt.stop), _free_symbols (spt.step))
 	elif isinstance (spt, dict):
 		return set ().union (*(_free_symbols (s) for s in sum (spt.items (), ())))
-
 	else:
-		try:
-			return spt.free_symbols
-		except:
-			pass
+		return getattr (spt, 'free_symbols', set ())
 
 	return set ()
 
@@ -4910,6 +5077,44 @@ def _simplify (spt): # extend sympy simplification into standard python containe
 
 	return spt
 
+def _doit (spt): # extend sympy .doit() into standard python containers
+	if isinstance (spt, (None.__class__, bool, int, float, complex, str)):
+		return spt
+	elif isinstance (spt, (tuple, list, set, frozenset)):
+		return spt.__class__ (_doit (a) for a in spt)
+	elif isinstance (spt, slice):
+		return slice (_doit (spt.start), _doit (spt.stop), _doit (spt.step))
+	elif isinstance (spt, dict):
+		return dict ((_doit (k), _doit (v)) for k, v in spt.items ())
+
+	try:
+		return spt.doit (deep = True)
+	except:
+		pass
+
+	return spt
+
+def _subs (spt, subs): # extend sympy .subs() into standard python containers
+	if isinstance (spt, (None.__class__, str)):
+		return spt
+	elif isinstance (spt, (tuple, list, set, frozenset)):
+		return spt.__class__ (_subs (a, subs) for a in spt)
+	elif isinstance (spt, slice):
+		return slice (_subs (spt.start, subs), _subs (spt.stop, subs), _subs (spt.step, subs))
+	elif isinstance (spt, dict):
+		return dict ((_subs (k, subs), _subs (v, subs)) for k, v in spt.items ())
+
+	try:
+		if isinstance (spt, (bool, int, float, complex)):
+			return sympify (spt).subs (subs)
+		else:
+			return spt.subs (subs)
+
+	except:
+		pass
+
+	return spt
+
 def _dsolve (*args, **kw):
 	ast = spt2ast (sp.dsolve (*args, **kw))
 
@@ -4920,7 +5125,7 @@ def _dsolve (*args, **kw):
 		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
 			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
 
-	return ExprNoEval (str (ast), 1) # never automatically simplify dsolve
+	return ExprNoEval (ast) # never automatically simplify dsolve
 
 def _Mul (*args):
 	itr = iter (args)
@@ -5201,11 +5406,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		if ast.func in AST.Func.TEX:
 			return f'\\{ast.func}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+		elif ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'}:
+			return ast.func.replace (AST.Func.NOEVAL, '\\%') + self._ast2tex (AST.tuple2ast (ast.args))
 
 		else:
 			texname = ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%')
 
-			return '\\operatorname{' + AST.Var.PY2TEX.get (texname, texname) + f'}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+			return f'\\operatorname{{{AST.Var.PY2TEX.get (texname, texname)}}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
 	def _ast2tex_lim (self, ast):
 		s = self._ast2tex_wrap (ast.to, False, ast.to.is_slice) if ast.dir is None else (self._ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -5615,7 +5822,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'^'     : _ast2nat_pow,
 		'-log'  : _ast2nat_log,
 		'-sqrt' : lambda self, ast: f'sqrt({self._ast2nat (ast.rad)})' if ast.idx is None else f'\\sqrt[{self._ast2nat (ast.idx)}]{{{self._ast2nat_wrap (ast.rad, 0, {",", "-slice"})}}}',
-		'-func' : lambda self, ast: f'{ast.func}({self._ast2nat (AST.tuple2ast (ast.args))})',
+		'-func' : lambda self, ast: f"{ast.func}{self._ast2nat_wrap (AST.tuple2ast (ast.args), 0, not (ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-set', '-dict'}))}",
 		'-lim'  : _ast2nat_lim,
 		'-sum'  : _ast2nat_sum,
 		'-diff' : _ast2nat_diff,
@@ -5689,28 +5896,38 @@ class ast2py: # abstract syntax tree -> Python code text
 		return self._ast2py (ast)
 
 	def _ast2py_ass (self, ast):
-		def ufunc2lamb (ufunc, lamb):
-			return ('-lamb', lamb, tuple (v.var for v in ufunc.vars))
+		# def ufunc2lamb (ufunc, lamb):
+		# 	return ('-lamb', lamb, tuple (v.var for v in ufunc.vars))
 
-		istop = ast.ass_lhs_vars and (not self.parent or self.parent.is_scolon)
+		# istop = ast.ass_lhs_vars and self.parent.op in {None, ';'}
 
-		if istop:
-			if ast.lhs.is_ufunc:
-				if ast.lhs.is_ufunc_pure:
-					ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
+		# if istop:
+		# 	if ast.lhs.is_ufunc:
+		# 		if ast.lhs.is_ufunc_pure:
+		# 			ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
 
-			elif ast.lhs.is_comma:
-				rhs = ast.rhs._strip_paren (1)
+		# 	elif ast.lhs.is_comma:
+		# 		rhs = ast.rhs._strip_paren (1)
 
-				if rhs.op in {',', '[', '-set'}:
-					rhss = rhs.comma if rhs.is_comma else rhs.brack if rhs.is_brack else rhs.set
+		# 		if rhs.op in {',', '[', '-set'} and ast.lhs.comma.len == len (rhs [1]):
+		# 			lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc_pure else (l, r) for l, r in zip (ast.lhs.comma, rhs [1])]
+		# 			rhs = (rhs.op, tuple (r for l, r in lrs))
+		# 			ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
 
-					if ast.lhs.comma.len == rhss.len:
-						lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc_pure else (l, r) for l, r in zip (ast.lhs.comma, rhss)]
-						rhs = (rhs.op, tuple (r for l, r in lrs))
-						ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
+		# if istop or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
+		# 	return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
 
-		if istop or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
+		# return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
+
+		istopass = self.parent.op in {None, ';'}
+
+		if istopass:
+			if ast.ass_validate:
+				ast = ast.ass_validate
+			else:
+				istopass = False
+
+		if istopass or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
 			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
 
 		return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
@@ -5777,7 +5994,8 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow or (ast.base.is_idx and self.parent.is_pow and ast is self.parent.exp) else self._ast2py_curly (ast.base)
-		e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base or (ast.base.op in {'|', '-set'} and ast.exp.strip_attrm.is_idx) or (ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		# e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base or (ast.base.op in {'|', '-set'} and ast.exp.strip_attrm.is_idx) or (ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
+		e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
 
@@ -5788,6 +6006,9 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f'ln({self._ast2py (ast.log)}) / ln({self._ast2py (ast.base)})'
 
 	def _ast2py_func (self, ast):
+		if ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
+			return self._ast2py (ast.args [0])
+
 		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
 		return f'{ast.unescaped}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
@@ -5846,6 +6067,11 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return sdiff
 
+	def _ast2py_subs (self, ast):
+		args = ast.subs [0] if ast.subs.len == 1 else (('[', tuple (('(', (',', s)) for s in ast.subs)),)
+
+		return self._ast2py_attr (AST ('.', ast.expr, 'subs', args))
+
 	_ast2py_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2py (a) for a in ast.scolon),
 		'='     : _ast2py_ass,
@@ -5886,7 +6112,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-and'  : lambda self, ast: f'And({", ".join (self._ast2py_paren (a, a.is_comma) for a in ast.and_)})',
 		'-not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
 		'-ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})' + (f'({", ".join (self._ast2py (v) for v in ast.vars)})' if ast.vars else ''),
-		'-subs' : lambda self, ast: f'Subs({self._ast2py (ast.expr)}, ({", ".join (self._ast2py (s) for s, d in ast.subs)}), ({", ".join (self._ast2py (d) for s, d in ast.subs)}))' if ast.subs.len > 1 else f'Subs({self._ast2py (ast.expr)}, {self._ast2py (ast.subs [0] [0])}, {self._ast2py (ast.subs [0] [1])})',
+		'-subs' : _ast2py_subs,
 
 		'text'  : lambda self, ast: ast.py,
 	}
@@ -5922,17 +6148,19 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
-	def __init__ (self): self.parent = self.ast = None; self.eval = True # pylint kibble
+	def __init__ (self): self.parent = self.ast = None # pylint kibble
 	def __new__ (cls, ast, xlat = True):
 		self         = super ().__new__ (cls)
-		self.eval    = True
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
 		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
+			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
 
 		spt = self._ast2spt (ast)
+
+		if _DOIT:
+			spt = _doit (spt) # spt.doit (deep = True)
 
 		if _POST_SIMPLIFY:
 			spt = _simplify (spt)
@@ -5952,19 +6180,13 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		self.ast    = self.parent
 		self.parent = self.parents [-1]
 
-		if _DOIT and self.eval:
-			try:
-				spt = spt.doit (deep = False)
-			except:
-				pass
-
 		return spt
 
 	def _ast2spt_ass (self, ast):
 		lhs, rhs = self._ast2spt (ast.lhs), self._ast2spt (ast.rhs)
 
 		try:
-			return ExprAss (lhs, rhs) # try to use SymPy comparison object
+			return EqAss (lhs, rhs) # try to use SymPy comparison object
 		except:
 			return lhs == rhs # fall back to Python comparison
 
@@ -6043,7 +6265,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			except:
 				raise e from None
 
-		return ExprNoEval (str (AST ('.', spt2ast (spt), *ast [2:])), 1)
+		return ExprNoEval (AST ('.', spt2ast (spt), *ast [2:]))
 
 	def _ast2spt_add (self, ast): # specifically try to subtract negated objects (because of sets)
 		itr = iter (ast.add)
@@ -6105,7 +6327,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return self._ast2spt (ast.args [0])
 
 		if ast.func == AST.Func.NOEVAL: # special no-evaluate meta-function
-			return ExprNoEval (str (ast.args [0]), 1 if ast.args.len == 1 else self._ast2spt (ast.args [1]))
+			if self.parent.is_lamb and ast is self.parent.lamb: # if at top-level in lambda body then lambda handles differnt meaning of this pseudo-func
+				return self._ast2spt (ast.args [0])
+			else:
+				return ExprNoEval (ast.args [0])
 
 		func = _ast2spt_pyfuncs.get (ast.unescaped)
 
@@ -6113,7 +6338,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
 
 		if ast.unescaped in _SYM_USER_FUNCS: # user lambda, within other lambda if it got here
-			return ExprNoEval (str (ast), 1)
+			return ExprNoEval (ast)
 
 		raise NameError (f'function {ast.unescaped!r} is not defined')
 
@@ -6146,16 +6371,22 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_lamb (self, ast):
 		i = self.parent.mul.index (ast) if self.parent.is_mul else None
 
-		if not (
-				self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or
+		if not (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or # treat body of lambda as expression for calculation?
 				(self.parent.is_ass and ast is self.parent.rhs) or
-				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren)):
+				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
 			return self._ast2spt (ast.lamb)
 
-		oldeval   = self.eval
-		self.eval = False
-		spt       = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
-		self.eval = oldeval
+		spt = self._ast2spt (ast.lamb)
+
+		if ast.vars.len == 1 and spt.is_Symbol and not spt.is_Dummy and spt.name == ast.vars [0]:
+			spt      = sp.Lambda (sp.Symbol (ast.vars [0]), ast.vars [0]) # having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
+			spt.doit = lambda self, *args, **kw: self
+
+		else:
+			spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), spt)
+
+			if not (ast.lamb.is_func and ast.lamb.func == AST.Func.NOEVAL):
+				spt.doit = lambda self, *args, **kw: self # disable doit for lambda definition
 
 		return spt
 
@@ -6166,10 +6397,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not getattr (spt, 'free_symbols', None) and not hasattr (spt, '__getitem__') and not isinstance (spt, ExprNoEval):
+			if not isinstance (spt, ExprNoEval) and not getattr (spt, 'free_symbols', None) and not hasattr (spt, '__getitem__'):
 				raise
 
-		return ExprNoEval (str (AST ('-idx', spt2ast (spt), ast.idx)), 1)
+		return ExprNoEval (AST ('-idx', spt2ast (spt), ast.idx))
 
 	def _ast2spt_sdiff (self, ast):
 		sdiff = self._ast2spt (ast.sdiff [0])
@@ -6221,7 +6452,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: self._ast2spt (a) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
-		'-subs' : lambda self, ast: sp.Subs (self._ast2spt (ast.expr), tuple (self._ast2spt (s) for s, d in ast.subs), tuple (self._ast2spt (d) for s, d in ast.subs)),
+		'-subs' : lambda self, ast: _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs]),
 
 		'text'  : lambda self, ast: ast.spt,
 	}
@@ -6424,7 +6655,7 @@ class spt2ast:
 	_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 	_spt2ast_funcs = {
-		ExprNoEval: lambda self, spt: spt.SYMPAD_eval (),
+		ExprNoEval: lambda self, spt: spt.ast,
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,
@@ -6462,7 +6693,7 @@ class spt2ast:
 		sp.And: lambda self, spt: (lambda args: sxlat._xlat_f2a_And (*args, canon = True) or AST ('-and', args)) (tuple (self._spt2ast (a) for a in spt.args)), # collapse possibly previously segmented extended comparison
 		sp.Not: lambda self, spt: AST ('-not', self._spt2ast (spt.args [0])),
 
-		ExprAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		EqAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
 		sp.Eq: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('==', self._spt2ast (spt.args [1])),)),
 		sp.Ne: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('!=', self._spt2ast (spt.args [1])),)),
 		sp.Lt: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('<',  self._spt2ast (spt.args [1])),)),
@@ -6545,20 +6776,18 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('-lamb', ('#', '2'), ()), ())}
-# 	# ast = AST ('*', (('-func', 'f', ()), ('(', (',', ()))), {1})
-# 	# set_sym_user_funcs (vars)
-# 	# res = ast2py (ast)
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	# set_sym_user_funcs (vars)
 
-# 	# ast = AST ('-func', 'eye', (('#', '3'),))
-# 	# ast = AST ('+', (('*', (('+', (('-', ('@', 'lambda')), ('#', '1'))), ('+', (('-', ('@', 'lambda')), ('#', '4'))))), ('-', ('#', '6'))))
-# 	ast = AST ('=', ('*', (('-subs', ('*', (('#', '-0.006240361814568329'), ('@', 'andaandy1'))), ('<>', ('#', '0.1'), (('!=', ('+', (('@', 'None'), ('@', 'Sigma')))),))), ('[', (('/', ('#', '1.5880453809316657e-14'), ('#', '1e+100')),)), ('-set', (('@', 'epsilon'), ('#', '1.')))), {1, 2}), ('-diff', ('-diffp', ('@', 'c'), 3), 'partial', (('z', 3),)))
-# 	res = ast2tex (ast)
-# 	# res = spt2ast (res)
-# 	# res = ast2nat (res)
+	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
+	ast = AST ('-lamb', ('@', 'y'), ('y',))
+	# res = ast2nat (ast)
+	# res = ast2py (ast)
+	res = ast2spt (ast)
+	# res = spt2ast (res)
 
-# 	print (res)
+	print (repr (res))
 # Builds expression tree from text, nodes are nested AST tuples.
 
 import ast as py_ast
@@ -6576,7 +6805,7 @@ def _raise (exc):
 
 def _FUNC_name (FUNC):
 	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
-			FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3].replace ('\\', '') or FUNC.text
+			(FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3] or FUNC.text).replace ('\\', '')
 
 def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
@@ -6768,7 +6997,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
-		elif arg.is_paren and not tail.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc77', 'f', (vars)[, kws]) ... implicit undefined function
+		elif arg.is_paren and tail.is_var_nonconst and not tail.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc77', 'f', (vars)[, kws]) ... implicit undefined function
 			ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
 
 	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
@@ -7013,6 +7242,10 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 
 	if isfunc:
 		ast2.src = AST ('*', (('@', args [1]), args [iparm]))
+
+		if ast2.args.len != 1 and ast2.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
+			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseaudo-function takes a single argument')
+
 	elif args [0] in {'-sqrt', '-log'}:
 		ast2.src_arg = args [iparm]
 
@@ -7061,6 +7294,9 @@ def _expr_subs (expr, subs):
 
 	else:
 		raise SyntaxError ('expecting assignment')
+
+	if expr.is_subs: # collapse multiple subs into one
+		return AST ('-subs', expr.expr, expr.subs + subs)
 
 	return AST ('-subs', expr, subs)
 
@@ -7118,6 +7354,9 @@ def _expr_ufunc (args, py = False, name = ''):
 
 		name = args [0].str_
 		args = ()
+
+	if AST ('@', name).is_var_const:
+		raise SyntaxError ('cannot use constant as undefined function name')
 
 	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())))
 
@@ -7274,7 +7513,7 @@ class Parser (lalr1.LALR1):
 	TOKENS    = OrderedDict ([ # order matters due to Python regex non-greedy or
 		('UFUNC',        fr'\?'),
 		('UFUNCPY',       r'Function(?!\w|\\_)'),
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(@|\\\%|\$?(?:{_LTR}|\\_)(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|\\\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(\$?(?:{_LTR}|\\_)(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'(?:\\lim)_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
@@ -7511,8 +7750,8 @@ class Parser (lalr1.LALR1):
 	def expr_attr_1        (self, expr_attr, ATTR):                                    return AST ('.', expr_attr, (ATTR.grp [0] or ATTR.grp [1]).replace ('\\', ''))
 	def expr_attr_2        (self, expr_abs):                                           return expr_abs
 
-	def expr_abs_1         (self, LEFT, BAR1, expr_commas, RIGHT, BAR2):               return AST ('|', expr_commas)
-	def expr_abs_2         (self, BAR1, expr_commas, BAR2):                            return AST ('|', expr_commas)
+	def expr_abs_1         (self, LEFT, BAR1, expr_commas, RIGHT, BAR2):               return AST ('|', expr_commas) if not expr_commas.is_comma_empty else _raise (SyntaxError ('absolute value expecting an expression'))
+	def expr_abs_2         (self, BAR1, expr_commas, BAR2):                            return AST ('|', expr_commas) if not expr_commas.is_comma_empty else _raise (SyntaxError ('absolute value expecting an expression'))
 	def expr_abs_3         (self, expr_paren):                                         return expr_paren
 
 	def expr_paren_1       (self, expr_pcommas):                                       return AST ('(', expr_pcommas)
@@ -8643,7 +8882,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.17'
+_VERSION         = '1.0.18'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
@@ -8712,92 +8951,6 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_UFUNCS2VARS  = {} # Yup...
 
 #...............................................................................................
-class RealityRedefinitionError (NameError):	pass
-class CircularReferenceError (RecursionError): pass
-class AE35UnitError (Exception): pass
-
-def _sorted_vars ():
-	asts = []
-
-	for v, e in sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])):
-		if v != '_':
-			if e.is_lamb:
- 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
-			else:
-				asts.append (AST ('=', ('@', v), e))
-
-	return asts
-
-def _update_vars ():
-	_UFUNCS2VARS.clear ()
-
-	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS))
-	user_funcs = one_funcs.copy ()
-
-	for var, ast in _VARS.items ():
-		# if var != '_':
-			if ast.is_ufunc:
-				_UFUNCS2VARS [ast] = AST ('@', var)
-			elif ast.is_lamb:
-				user_funcs.add (var)
-
-	sparser.set_sp_user_funcs (user_funcs)
-	sparser.set_sp_user_vars (_VARS)
-	sym.set_sym_user_funcs (user_funcs)
-	sym.set_sym_user_vars (_VARS)
-
-def _prepare_ass (ast): # check and prepare for simple or tuple assignment
-	vars = ast.ass_lhs_vars
-
-	if vars:
-		if any (v.is_var_const for v in vars):
-			raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
-
-		ast = ast.rhs
-
-	return AST.apply_vars (ast, _VARS), vars
-
-def _execute_ass (ast, vars): # execute assignment if it was detected
-	def set_vars (vars):
-		vars = dict ((v.var, a) if v.is_var else (v.ufunc, AST ('-lamb', a, tuple (vv.var for vv in v.vars))) for v, a in vars.items ())
-
-		try: # check for circular references
-			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
-		except RecursionError:
-			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
-
-		_VARS.update (vars)
-
-	if not vars: # no assignment
-		# ast         = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
-		_VARS ['_'] = ast
-
-		_update_vars ()
-
-		return [ast]
-
-	if len (vars) == 1: # simple assignment
-		set_vars ({vars [0]: ast})
-
-		asts = [AST ('=', vars [0], ast)]
-
-	else: # tuple assignment
-		ast  = ast.strip_paren
-		asts = ast.comma if ast.is_comma else tuple (sym.spt2ast (a) for a in sym.ast2spt (ast))
-
-		if len (vars) < len (asts):
-			raise ValueError (f'too many values to unpack (expected {len (vars)})')
-		elif len (vars) > len (asts):
-			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
-
-		set_vars (dict (zip (vars, asts)))
-
-		asts = [AST ('=', vars [i], asts [i]) for i in range (len (vars))]
-
-	_update_vars ()
-
-	return asts
-
 def _admin_vars (*args):
 	asts = _sorted_vars ()
 
@@ -8826,7 +8979,7 @@ def _admin_del (*args):
 
 		del _VARS [var]
 
-	_update_vars ()
+	_vars_updated ()
 
 	if not msgs:
 		msgs.append ('No variables specified!')
@@ -8837,7 +8990,7 @@ def _admin_delall (*args):
 	last_var    = _VARS ['_']
 	_VARS.clear ()
 	_VARS ['_'] = last_var
-	_update_vars ()
+	_vars_updated ()
 
 	return 'All variables deleted.'
 
@@ -8893,7 +9046,7 @@ def _admin_env (*args):
 				msgs.append (f'Function {var} is {"on" if state else "off"}.')
 
 				if apply:
-					_update_vars ()
+					_vars_updated ()
 
 		return msgs
 
@@ -8930,6 +9083,132 @@ def _admin_env (*args):
 
 def _admin_envreset (*args):
 	return ['Environment has been reset.'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
+
+#...............................................................................................
+class RealityRedefinitionError (NameError):	pass
+class CircularReferenceError (RecursionError): pass
+class AE35UnitError (Exception): pass
+
+def _present_vars (vars):
+	asts = []
+
+	for v, e in vars:
+		if v != '_':
+			if e.is_lamb:
+ 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
+			else:
+				asts.append (AST ('=', ('@', v), e))
+
+	return asts
+
+def _sorted_vars ():
+	return _present_vars (sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])))
+
+def _vars_updated ():
+	_UFUNCS2VARS.clear ()
+
+	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS))
+	user_funcs = one_funcs.copy ()
+
+	for var, ast in _VARS.items ():
+		# if var != '_':
+			if ast.is_ufunc:
+				_UFUNCS2VARS [ast] = AST ('@', var)
+			elif ast.is_lamb:
+				user_funcs.add (var)
+
+	sparser.set_sp_user_funcs (user_funcs)
+	sparser.set_sp_user_vars (_VARS)
+	sym.set_sym_user_funcs (user_funcs)
+	sym.set_sym_user_vars (_VARS)
+
+def _prepare_ass (ast): # check and prepare for simple or tuple assignment
+	# vars = ast.ass_lhs_vars
+
+	# if vars:
+	# 	if any (v.is_var_const for v in vars):
+	# 		raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
+
+	# 	ast = ast.rhs
+
+	# return AST.apply_vars (ast, _VARS), vars
+
+	if not ast.ass_validate:
+		vars = None
+	elif ast.ass_validate.error:
+		raise RealityRedefinitionError (ast.ass_validate.error)
+
+	else:
+		vars, ast = ast.ass_validate.lhs, ast.ass_validate.rhs
+		vars      = list (vars.comma) if vars.is_comma else [vars]
+
+	return AST.apply_vars (ast, _VARS), vars
+
+def _execute_ass (ast, vars): # execute assignment if it was detected
+	def set_vars (vars):
+		# vars = dict ((v.var, a) if v.is_var else (v.ufunc, AST ('-lamb', a, tuple (vv.var for vv in v.vars))) for v, a in vars.items ())
+		vars = dict ((v.var, a) for v, a in vars.items ())
+
+		try: # check for circular references
+			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
+		except RecursionError:
+			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
+
+		_VARS.update (vars)
+
+	if not vars: # no assignment
+		# ast         = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
+		_VARS ['_'] = ast
+
+		_vars_updated ()
+
+		return [ast]
+
+	if len (vars) == 1: # simple assignment
+		set_vars ({vars [0]: ast})
+
+		# asts = [AST ('=', vars [0], ast)]
+		vars = ((vars [0].var, ast),)
+
+	else: # tuple assignment
+		ast = ast.strip_paren
+
+		if ast.op in {',', '[', '-set'}:
+			asts = ast [1]
+
+		else:
+			asts = []
+			itr  = iter (sym.ast2spt (ast))
+
+			for i in range (len (vars) + 1):
+				try:
+					ast = sym.spt2ast (next (itr))
+				except StopIteration:
+					break
+
+				if vars [i].is_ufunc:
+					asts.append (AST.Ass.ufunc2lamb (vars [i], ast))
+
+					vars [i] = AST ('@', vars [i].ufunc)
+
+				else:
+					asts.append (ast)
+
+		if len (vars) < len (asts):
+			raise ValueError (f'too many values to unpack (expected {len (vars)})')
+		elif len (vars) > len (asts):
+			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
+
+		# set_vars (dict (zip (vars, asts)))
+
+		# asts = [AST ('=', vars [i], asts [i]) for i in range (len (vars))]
+		set_vars (dict (zip (vars, asts)))
+
+		vars = tuple (zip ((v.var for v in vars), asts))
+
+	_vars_updated ()
+
+	return _present_vars (vars)
 
 #...............................................................................................
 class Handler (SimpleHTTPRequestHandler):
@@ -9207,10 +9486,12 @@ def parent ():
 
 #...............................................................................................
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	vars = {'f': AST ('-lamb', ('@', 'x'), (('@', 'x'),)), 'g': AST ('-lamb', ('-func', 'f', (('@', 'x'),)), (('@', 'x'),))}
-# 	ast = AST ('-func', 'g', (('#', '1'),))
-# 	res = AST.apply_vars (ast, vars)
-# 	print (res)
+# 	Handler.__init__ = lambda self: None
+
+# 	h = Handler ()
+
+# 	print (h.evaluate ({'text': 'f = lambda: @y'}))
+
 # 	sys.exit (0)
 
 if __name__ == '__main__':
