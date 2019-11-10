@@ -1,8 +1,10 @@
 v1.0.18:
 --------
+* Added variable stack frames to variable mapping.
 * Added remapping of differentials in derivatives and integrals.
-* Improved assignment parsing to handle assignment to undefined functions better (creation of lambdas).
+* Changed lambdas to not automatically bind global variables if they have the same names as parameters, instead they can be accessed with @().
 * Changed lambdas to not automatically doit() their body upon definition by default instead of needing the no-eval pseudo-function.
+* Improved assignment parsing to handle assignment to undefined functions better (creation of lambdas).
 * Moved SymPy .doit() from per-object level to end of whole evaluation since it can interfere with certain calculations.
 
 

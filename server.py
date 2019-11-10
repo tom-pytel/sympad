@@ -638,7 +638,7 @@ def parent ():
 
 # 	h = Handler ()
 
-# 	print (h.evaluate ({'text': 'a'}))
+# 	print (h.evaluate ({'text': 'f = lambda: @y'}))
 
 # 	sys.exit (0)
 

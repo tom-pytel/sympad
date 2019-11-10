@@ -499,6 +499,13 @@ class AST (tuple):
 
 	@staticmethod
 	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
+		def pushframe (vars, oldvars):
+			newvars       = dict (vars)
+			newvars ['<'] = oldvars
+
+			return newvars
+
+		# start here
 		if not isinstance (ast, AST) or ast.is_ufunc or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
 			return ast
 
@@ -515,7 +522,7 @@ class AST (tuple):
 
 		elif ast.op in {'-lim', '-sum'}:
 			v    = ast [2].var
-			vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
+			vars = pushframe ((kv for kv in filter (lambda kv: kv [0] != v, vars.items ())), vars)
 
 			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
 
@@ -540,7 +547,7 @@ class AST (tuple):
 
 			if ast.is_intg_definite: # don't map bound var
 				v    = dv.var_name
-				vars = dict (kv for kv in filter (lambda kv: kv [0] != v, vars.items ()))
+				vars = pushframe ((kv for kv in filter (lambda kv: kv [0] != v, vars.items ())), vars)
 
 			else: # remap differential if indefinite integral and possible
 				a = vars.get (ast.dv.var_name)
@@ -555,9 +562,13 @@ class AST (tuple):
 
 		elif ast.is_lamb: # lambda definition
 			lvars = set (ast.vars)
-			vars  = dict (kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ()))
+			vars  = pushframe ((kv for kv in filter (lambda kv: kv [0] not in lvars, vars.items ())), vars)
 
 		elif ast.is_func: # function, might be user lambda call
+			# if ast.func == AST.Func.NOREMAP:
+			# 	vars = vars.get ('<', {}) # pop last variable frame
+
+			# else:
 			lamb = vars.get (ast.func)
 
 			if lamb and lamb.is_lamb: # 'execute' user lambda
@@ -570,7 +581,7 @@ class AST (tuple):
 
 			return AST ('-func', ast.func,
 					tuple (('(', AST.apply_vars (a, vars, recurse))
-					if (a.is_var and vars.get (a.var, AST.VarNull).is_ass)
+					if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
 					else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
 		return AST (*(AST.apply_vars (a, vars, recurse) for a in ast))

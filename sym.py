@@ -1402,7 +1402,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		spt = self._ast2spt (ast.lamb)
 
 		if ast.vars.len == 1 and spt.is_Symbol and not spt.is_Dummy and spt.name == ast.vars [0]:
-			spt = sp.Lambda (sp.Symbol (ast.vars [0]), ast.vars [0]) # having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
+			spt      = sp.Lambda (sp.Symbol (ast.vars [0]), ast.vars [0]) # having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
+			spt.doit = lambda self, *args, **kw: self
 
 		else:
 			spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), spt)
@@ -1798,16 +1799,16 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-# 	# set_sym_user_funcs (vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	# set_sym_user_funcs (vars)
 
-# 	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
-# 	ast = AST ('-subs', ('@', 'x'), ((('@', 'x'), ('#', '1')), (('@', 'y'), ('#', '2'))))
-# 	# res = ast2nat (ast)
-# 	res = ast2py (ast)
-# 	# res = ast2spt (ast)
-# 	# res = spt2ast (res)
+	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
+	ast = AST ('-lamb', ('@', 'y'), ('y',))
+	# res = ast2nat (ast)
+	# res = ast2py (ast)
+	res = ast2spt (ast)
+	# res = spt2ast (res)
 
-# 	print (repr (res))
+	print (repr (res))
