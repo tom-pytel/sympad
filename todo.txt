@@ -1,12 +1,9 @@
 > PDEs
 
 * {d/dx u(x, y)} (0, y) -> \. du/dx |_{x = 0}
-> du/dx (0, y) -> \. du/dx |_{x = 0}
-> parse: diff(ufunc(x)) * (0) -> subs(diff(ufunc(x)), x, 0)
+* du/dx (0, y) -> \. du/dx |_{x = 0}
+* parse: diff(ufunc(x)) * (0) -> subs(diff(ufunc(x)), x, 0)
 > display: subs(diff(ufunc(x)), x, 0) -> diff(ufunc(x)) (0)
-
-> allow variables mapped to simple for ufunc args?
-> give ufunc parsing awareness of variables to allow those mapping to simple expressions in argument lists
 
 > doc: ufunc initial condition binding with -diff must use curlys
 > doc: reference SymPy documentation

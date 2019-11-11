@@ -497,14 +497,36 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{pre}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
 
 	def _ast2tex_subs (self, ast):
-		subs = [AST ('=', s, d) for s, d in ast.subs]
+		ufunc = ast.expr
 
-		if ast.subs.len == 1:
+		if ufunc.is_diff:
+			ufunc = ufunc.diff
+			wrap  = lambda a: AST ('-diff', a, ast.d, ast.dvs)
+
+		elif ufunc.is_diffp:
+			ufunc = ufunc.diffp
+			wrap  = lambda a: AST ('-diffp', a, ast.count)
+
+		ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
+
+		if 0:#ufunc.is_ufunc_pure:
+			pass
+
+
+
+
+
+
+		else:
+			subs = [AST ('=', s, d) for s, d in ast.subs]
+			expr = ast.expr
+
+		if len (subs) == 1:
 			subs = self._ast2tex (subs [0])
 		else:
 			subs = '\\substack{' + ' \\\\ '.join (self._ast2tex (s) for s in subs) + '}'
 
-		return f'\\left. {self._ast2tex (ast.expr)} \\right|_{{{subs}}}'
+		return f'\\left. {self._ast2tex (expr)} \\right|_{{{subs}}}'
 
 	_ast2tex_funcs = {
 		';'     : lambda self, ast: ';\\: '.join (self._ast2tex (a) for a in ast.scolon),

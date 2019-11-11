@@ -316,7 +316,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 				except StopIteration:
 					break
 
-				if vars [i].is_ufunc:
+				if vars [i].is_ufunc_named:
 					asts.append (AST.Ass.ufunc2lamb (vars [i], ast))
 
 					vars [i] = AST ('@', vars [i].ufunc)

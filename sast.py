@@ -658,8 +658,6 @@ class AST_Ass (AST):
 
 		if self.lhs.is_var:
 			return verify (self, self.lhs)
-		elif self.lhs.is_ufunc:
-			return verify (AST ('=', ('@', self.lhs.ufunc or 'ANONYMOUS'), self.ufunc2lamb (self.lhs, self.rhs)), self.lhs)
 
 		elif self.lhs.is_comma:
 			rhs = self.rhs.strip_paren
@@ -682,6 +680,9 @@ class AST_Ass (AST):
 				rhs = (rhs.op, tuple (r for _, r in lrs) + rhs [1] [both:])
 
 				return verify (AST ('=', (',', tuple (l for l, _ in lrs) + self.lhs.comma [both:]), ('(', rhs) if self.rhs.is_paren else rhs), self.lhs.comma, True)
+
+		elif self.lhs.is_ufunc_named:
+			return verify (AST ('=', ('@', self.lhs.ufunc), self.ufunc2lamb (self.lhs, self.rhs)), self.lhs)
 
 		return None
 
@@ -1060,8 +1061,10 @@ class AST_UFunc (AST):
 
 		return self
 
-	_is_ufunc_pure   = lambda self: all (v.is_var_nonconst for v in self.vars)
-	_is_ufunc_impure = lambda self: any (not v.is_var_nonconst for v in self.vars)
+	_is_ufunc_pure    = lambda self: self.vars and all (v.is_var_nonconst for v in self.vars)
+	_is_ufunc_impure  = lambda self: self.vars and any (not v.is_var_nonconst for v in self.vars)
+	_is_ufunc_named   = lambda self: self.ufunc
+	_is_ufunc_applied = lambda self: self.vars
 
 	def can_apply_argskw (self, argskw):
 		if argskw:
