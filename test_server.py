@@ -626,7 +626,10 @@ f (0)
 f' (x)
 {d/dx f} (x)
 
-
+u = u (x, t)
+du/dx (x, t)
+du/dx (1, t)
+du/dx (1, 0)
 
 
 
