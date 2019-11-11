@@ -1,8 +1,6 @@
 > sin x sin y
 > subs clarity parentheses for tex display
 
-> apply_vars to differentials if target is another variable - remove exception on expression and use original differential
-
 > PDEs
 
 > ?f(x)'(2), py -> Subs (diff (Function ('f')), x, 2)
