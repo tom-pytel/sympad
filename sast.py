@@ -362,32 +362,32 @@ class AST (tuple):
 
 		return _as_identifier (self)
 
+	def _is_const (self):
+		if self.is_num:
+			return True
+		elif self.is_var:
+			return self.is_var_const
+		elif self.op in {'{', '(', '-', '!'}:
+			return self [1].is_const
+		elif self.op in {'+', '*', '*exp'}:
+			return all (a.is_const for a in self [1])
+		elif self.is_div:
+			return self.numer.is_const and self.denom.is_const
+		elif self.is_pow:
+			return self.base.is_const and self.exp.is_const
+		elif self.is_log:
+			return self.log.is_const if self.base is None else (self.log.is_const and self.base.is_const)
+		elif self.is_sqrt:
+			return self.rad.is_const if self.idx is None else (self.rad.is_const and self.idx.is_const)
+		elif self.is_func:
+			return all (a.is_const for a in self.args)
+
+		return False
+
 	def _as_ufunc_argskw (self):
-		def is_simple (ast):
-			if ast.is_num:
-				return True
-			elif ast.is_var:
-				return ast.is_var_const
-			elif ast.op in {'{', '(', '-', '!'}:
-				return is_simple (ast [1])
-			elif ast.op in {'+', '*', '*exp'}:
-				return all (is_simple (a) for a in ast [1])
-			elif ast.is_div:
-				return is_simple (ast.numer) and is_simple (ast.denom)
-			elif ast.is_pow:
-				return is_simple (ast.base) and is_simple (ast.exp)
-			elif ast.is_log:
-				return is_simple (ast.log) if ast.base is None else (is_simple (ast.log) and is_simple (ast.base))
-			elif ast.is_sqrt:
-				return is_simple (ast.rad) if ast.idx is None else (is_simple (ast.rad) and is_simple (ast.idx))
-			elif ast.is_func:
-				return all (is_simple (a) for a in ast.args)
-
-			return False
-
 		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,))
 
-		if any (not a.is_var and not is_simple (a) for a in args):
+		if any (not a.is_var and not a.is_const for a in args):
 			return None
 
 		return tuple (args), tuple (sorted (kw.items ()))
@@ -1061,10 +1061,11 @@ class AST_UFunc (AST):
 
 		return self
 
-	_is_ufunc_pure    = lambda self: self.vars and all (v.is_var_nonconst for v in self.vars)
-	_is_ufunc_impure  = lambda self: self.vars and any (not v.is_var_nonconst for v in self.vars)
-	_is_ufunc_named   = lambda self: self.ufunc
-	_is_ufunc_applied = lambda self: self.vars
+	_is_ufunc_named     = lambda self: self.ufunc
+	_is_ufunc_unapplied = lambda self: not self.vars
+	_is_ufunc_applied   = lambda self: self.vars
+	_is_ufunc_pure      = lambda self: self.vars and all (v.is_var_nonconst for v in self.vars)
+	_is_ufunc_impure    = lambda self: self.vars and any (not v.is_var_nonconst for v in self.vars)
 
 	def can_apply_argskw (self, argskw):
 		if argskw:

@@ -382,6 +382,7 @@ f = lambda x: x**2
 f (x)
 f (y)
 f (2)
+
 g = lambda x: f(x) + f(2x)
 g
 g (x)
@@ -408,6 +409,7 @@ f = lambda x, y, z, w: x + y + z + w
 f (1, 2, 3, 4)
 f (1, 2, 3)
 f (1, 2, 3, 4, 5)
+
 f = lambda x: lambda: x**2
 f (2)
 _ ()
@@ -443,6 +445,7 @@ f (x) = @y**2
 f (2)
 y = 6
 f (2)
+
 delall
 f (x) = x**2
 g (x, y) = sqrt (f(x) + f(y))
@@ -453,6 +456,7 @@ g (x, y) = @sqrt (f(x) + f(y))
 g (3, 4)
 f (x) = x**2
 g (3, 4)
+
 delall
 f (x) = \\int x dx
 f (sin x)
@@ -608,7 +612,19 @@ f = ?g()
 f (x)
 f (x) (0)
 f (0)
+f' (x)
+{d/dx f} (x)
 
+f = f (x)
+f (x)
+f (x) (0)
+f (0)
+f = ?g()
+f (x)
+f (x) (0)
+f (0)
+f' (x)
+{d/dx f} (x)
 
 
 
@@ -657,7 +673,8 @@ if __name__ == '__main__':
 			texts = [s.strip () for s in texts.strip ().split ('\n')]
 
 			for text in texts:
-				print (f'\t\tself.assertEqual (get ({text!r}), {get (text)!r})')
+				if text:
+					print (f'\t\tself.assertEqual (get ({text!r}), {get (text)!r})')
 
 	elif SYSARGV [1] == '--human':
 		for name, texts in _SESSIONS:
@@ -668,22 +685,26 @@ if __name__ == '__main__':
 			texts = [s.strip () for s in texts.strip ().split ('\n')]
 
 			for text in texts:
-				resp = get (text)
+				if not text:
+					print ()
 
-				print (text)
+				else:
+					resp = get (text)
 
-				if 'msg' in resp:
-					print ('\n'.join (resp ['msg']))
+					print (text)
 
-				if 'err' in resp:
-					print (resp ['err'])
+					if 'msg' in resp:
+						print ('\n'.join (resp ['msg']))
 
-				if 'math' in resp:
-					math = resp ['math']
+					if 'err' in resp:
+						print (resp ['err'])
 
-					if isinstance (math [0], tuple):
-						math = ['\n'.join (m) for m in math]
+					if 'math' in resp:
+						math = resp ['math']
 
-					print ('\n'.join (math))
+						if isinstance (math [0], tuple):
+							math = ['\n'.join (m) for m in math]
 
-				print ()
+						print ('\n'.join (math))
+
+					print ()

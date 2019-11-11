@@ -443,10 +443,15 @@ class Handler (SimpleHTTPRequestHandler):
 					responses.append (response)
 
 		except Exception:
-			if sys.stdout is not _SYS_STDOUT and sys.stdout.tell ():
+			if sys.stdout is not _SYS_STDOUT and sys.stdout.tell (): # flush any printed messages before exception
 				responses.append ({'msg': sys.stdout.getvalue ().strip ().split ('\n')})
 
-			responses.append ({'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')})
+			etype, exc, tb = sys.exc_info ()
+
+			if exc.args and isinstance (exc.args [0], str):
+				exc = etype (exc.args [0].replace ('\n', ' ').strip (), *exc.args [1:]).with_traceback (tb) # reformat text to remove newlines
+
+			responses.append ({'err': ''.join (traceback.format_exception (etype, exc, tb)).strip ().split ('\n')})
 
 		finally:
 			sys.stdout = _SYS_STDOUT

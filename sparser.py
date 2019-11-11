@@ -216,11 +216,15 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			if ufunc.op is None:
 				ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
 
-			elif ufunc.is_ufunc and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-				if ufunc.is_ufunc_applied:
+			elif ufunc.is_ufunc:
+				if ufunc.is_ufunc_unapplied:
+					ast2 = wrapa (ufunc.apply_argskw (arg.paren.as_ufunc_argskw))
+
+					if ast2:
+						ast = ast2
+
+				elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
 					ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
-				else:
-					ast = wrapa (ufunc.apply_argskw (arg.paren.as_ufunc_argskw))
 
 	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
 		if arg.is_paren:

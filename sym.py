@@ -2,6 +2,7 @@
 # Here be dragons! MUST REFACTOR AT SOME POINT FOR THE LOVE OF ALL THAT IS GOOD AND PURE!
 
 from ast import literal_eval
+from collections import OrderedDict
 from functools import reduce
 import re
 import sympy as sp
@@ -485,48 +486,59 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	def _ast2tex_ufunc (self, ast):
-		if not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or \
-				(ast.ufunc in _SYM_USER_FUNCS and \
-				not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
-				not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
-				):
-			pre = '?'
-		else:
-			pre = ''
+		ufunctex = ast.ufunctex # ufunc name override from subs to print possible function of derivative format
 
-		return f'{pre}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
+		if ufunctex is None:
+			if not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or \
+					(ast.ufunc in _SYM_USER_FUNCS and \
+					not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
+					not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
+					):
+				pre = '?'
+			else:
+				pre = ''
+
+			ufunctex = f'{pre}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}'
+
+		return f'{ufunctex}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
 
 	def _ast2tex_subs (self, ast):
 		ufunc = ast.expr
 
-		if ufunc.is_diff:
-			ufunc = ufunc.diff
-			wrap  = lambda a: AST ('-diff', a, ast.d, ast.dvs)
-
-		elif ufunc.is_diffp:
-			ufunc = ufunc.diffp
-			wrap  = lambda a: AST ('-diffp', a, ast.count)
+		if ufunc.op in {'-diff', '-diffp'}:
+			ufunc = ufunc [1]
 
 		ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
 
-		if 0:#ufunc.is_ufunc_pure:
-			pass
+		if ufunc.is_ufunc_pure:
+			subs = []
+			vars = OrderedDict ((v, v) for v in ufunc.vars)
 
+			for s, d in ast.subs:
+				if s.is_var_nonconst and d.is_const and vars.get (s) == s:
+					vars [s] = d
+				else:
+					subs.append (AST ('=', s, d))
 
+			if len (subs) == ast.subs.len:
+				expr = self._ast2tex (ast.expr)
 
+			else:
+				expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex (ast.expr)))
 
-
+				if not subs:
+					return expr
 
 		else:
 			subs = [AST ('=', s, d) for s, d in ast.subs]
-			expr = ast.expr
+			expr = self._ast2tex (ast.expr)
 
 		if len (subs) == 1:
 			subs = self._ast2tex (subs [0])
 		else:
 			subs = '\\substack{' + ' \\\\ '.join (self._ast2tex (s) for s in subs) + '}'
 
-		return f'\\left. {self._ast2tex (expr)} \\right|_{{{subs}}}'
+		return f'\\left. {expr} \\right|_{{{subs}}}'
 
 	_ast2tex_funcs = {
 		';'     : lambda self, ast: ';\\: '.join (self._ast2tex (a) for a in ast.scolon),
@@ -985,25 +997,6 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_mul (self, ast):
 		return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
 
-		# t = []
-		# p = None
-
-		# for i, n in enumerate (ast.mul):
-		# 	s = self._ast2py_paren (n, n.is_cmp_in or n.is_add or (i and (n.is_div or n.is_log_with_base)))
-
-		# 	if p and (
-		# 			not n.is_paren or
-		# 			p.tail_mul.is_ufunc or # p.tail_mul.op in {'@', '-ufunc'} or
-		# 			not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or
-		# 			i in ast.exp):
-		# 		t.append (f'*{s}')
-		# 	else:
-		# 		t.append (s)
-
-		# 	p = n
-
-		# return ''.join (t)
-
 	def _ast2py_div (self, ast):
 		nn = _ast_is_neg (ast.numer)
 		n  = self._ast2py_paren (ast.numer) if nn else self._ast2py_curly (ast.numer)
@@ -1301,6 +1294,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return res
 
+	# TODO: update this!
 	def _ast2spt_mul (self, ast): # handle dynamic cases of function calls due to usage of implicit multiplication
 		mul = list (self._ast2spt (a) for a in ast.mul)
 		out = mul [:1]
@@ -1311,32 +1305,37 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			if ast.mul [i].is_paren and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
 				o = out [-1]
 
-				if not isinstance (m, tuple):
-					m = (m,)
-
 				if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?
-					out [-1] = o (*m)
+					out [-1] = o (*m) if isinstance (m, tuple) else o (m)
 
 					continue
 
-				dv = False
+				# if not isinstance (m, tuple):
+				# 	m = (m,)
 
-				while isinstance (o, sp.Derivative): # strip derivatives
-					dv = True
-					o  = o.args [0]
+				# if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?
+				# 	out [-1] = o (*m)
 
-				if isinstance (o, sp_AppliedUndef): # undefined function initial value(s)?
-					if any (not isinstance (a, sp.Symbol) for a in o.args):
-						raise TypeError (f'?{o} object is not callable')
-					elif len (m) != len (o.args):
-						raise TypeError (f'?{o} object takes {len (o.args)} positional argument(s)')
+				# 	continue
 
-					if dv:
-						out [-1] = sp.Subs (out [-1], o.args, m)
-					else:
-						out [-1] = o.__class__ (*m)
+				# dv = False
 
-					continue
+				# while isinstance (o, sp.Derivative): # strip derivatives
+				# 	dv = True
+				# 	o  = o.args [0]
+
+				# if isinstance (o, sp_AppliedUndef): # undefined function initial value(s)?
+				# 	if any (not isinstance (a, sp.Symbol) for a in o.args):
+				# 		raise TypeError (f'?{o} object is not callable')
+				# 	elif len (m) != len (o.args):
+				# 		raise TypeError (f'?{o} object takes {len (o.args)} positional argument(s)')
+
+				# 	if dv:
+				# 		out [-1] = sp.Subs (out [-1], o.args, m)
+				# 	else:
+				# 		out [-1] = o.__class__ (*m)
+
+				# 	continue
 
 			out.append (mul [i])
 

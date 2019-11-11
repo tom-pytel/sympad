@@ -5,6 +5,9 @@
 * parse: diff(ufunc(x)) * (0) -> subs(diff(ufunc(x)), x, 0)
 > display: subs(diff(ufunc(x)), x, 0) -> diff(ufunc(x)) (0)
 
+> display assignedvar (x) -> assignedvar * (x)
+> ast2spt mul overhaul
+
 > doc: ufunc initial condition binding with -diff must use curlys
 > doc: reference SymPy documentation
 > doc: parentheses as multiplies and not function calls
@@ -20,10 +23,9 @@
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 > allow vars in diff for power to be resolved at runtime?
-> syntax error of diffp of multivar ufunc?
+> syntax error of diffp of multivar ufunc in sparser?
 
 
-> multiline exception values - diff (x + y)
 > sin x sin y
 > subs clarity parentheses for tex display
 
@@ -50,6 +52,7 @@
 > unnecessary cdot in front of tex and nat a * d/dx f
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
+> not keyword precedence
 > More Examples: Parentheses (unnecessary)
 
 > test_server multi maths from semicolon expressions
