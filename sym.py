@@ -46,25 +46,20 @@ def _raise (exc):
 	raise exc
 
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
-	ret = _None
-
-	if fallback is True: # True for return original value
-		ret = spt
-
-	else: # func for conversion function
-		try:
-			ret = fallback (spt)
-		except:
-			pass
-
 	try:
-		ret = sympify (spt)
+		return sympify (spt)
 
 	except:
-		if ret is _None:
+		if fallback is True: # True for return original value
+			return spt
+		elif fallback is None:
 			raise
 
-	return ret
+		else:
+			try:
+				return fallback (spt)
+			except Exception as e:
+				raise e from None
 
 def _free_symbols (spt): # extend sympy .free_symbols into standard python containers
 	if isinstance (spt, (None.__class__, bool, int, float, complex, str)):
@@ -130,7 +125,7 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers
 
 	try:
 		if isinstance (spt, (bool, int, float, complex)):
-			return sympify (spt).subs (subs)
+			return sp.sympify (spt).subs (subs)
 		else:
 			return spt.subs (subs)
 
