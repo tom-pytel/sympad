@@ -211,7 +211,12 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
 		elif arg.is_paren and tail.is_var_nonconst and not tail.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc77', 'f', (vars)[, kws]) ... implicit undefined function
-			ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
+			ufunc = _SP_USER_VARS.get (tail.var, AST.Null)
+
+			if ufunc.op is None:
+				ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
+			elif ufunc.is_ufunc and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
+				ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
 		if arg.is_paren:
@@ -333,7 +338,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 				elif not ast.denom.is_curly:
 					if e:
-						return AST ('-diff', e, d, tuple (ds), src = ast), ns [i + 1:]
+						return AST ('-diff', e, d, tuple (ds), src = AST ('/', ast.numer, ('*', ns [:i + 1]) if i else ns [0])), ns [i + 1:]
 					elif i == len (ns) - 2:
 						return AST ('-diff', ns [-1], d, tuple (ds), src = ast), None
 					else:
@@ -342,7 +347,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		return None, None # raise SyntaxError?
 
 	# start here
-	if ast.is_div: # this part handles d/dx
+	if ast.is_div: # this part handles d/dx y and dy/dx
 		diff, tail = _interpret_divide (ast)
 
 		if diff and diff.diff:
