@@ -1077,7 +1077,7 @@ class AST_UFunc (AST):
 
 				if self.vars.len == len (args):
 					for v, a in zip (self.vars, args):
-						if not v.is_var_nonconst or (a.is_var_nonconst and a.var != v.var):
+						if (not v.is_var_nonconst or a.is_var_nonconst) and a != v:
 							return False
 
 					return args != self.vars

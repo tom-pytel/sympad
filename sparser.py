@@ -224,7 +224,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 						ast = ast2
 
 				elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-					ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+					ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
 		if arg.is_paren:
@@ -238,23 +238,13 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 		ufunc = _SP_USER_VARS.get (diff.diff.var, diff.diff)
 
 		if arg.is_paren and ufunc.is_ufunc_applied and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-			if diff.diff.is_var:
-				ast = wrapa (AST ('-subs', diff, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
-
-			else:
-				dvs    = set (dp [0] for dp in diff.dvs)
-				vas    = list (zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))
-				subs   = tuple (filter (lambda va: not va [1].is_var_nonconst and va [0].var in dvs, vas))
-				vars   = tuple (map (lambda va: va [0] if va [0].var in dvs else va [1], vas))
-				ufunc2 = AST ('-ufunc', ufunc.ufunc, vars, ufunc.kw)
-				diff   = AST ('-diff', ufunc2, diff.d, diff.dvs)
-				ast    = wrapa (AST ('-subs', diff, subs)) if subs else diff
+			ast = wrapa (AST ('-subs', diff, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_diffp: # f (x)' * (0) -> \. f (x) |_{x = 0}
 		diffp = _SP_USER_VARS.get (tail.diffp.var, tail.diffp)
 
 		if arg.is_paren and diffp.is_ufunc_applied and diffp.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
-			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
 		if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
