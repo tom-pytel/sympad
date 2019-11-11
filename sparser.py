@@ -215,8 +215,12 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 			if ufunc.op is None:
 				ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
+
 			elif ufunc.is_ufunc and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-				ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+				if ufunc.is_ufunc_applied:
+					ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+				else:
+					ast = wrapa (ufunc.apply_argskw (arg.paren.as_ufunc_argskw))
 
 	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
 		if arg.is_paren:
@@ -229,7 +233,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 		diff  = tail.strip_curly
 		ufunc = _SP_USER_VARS.get (diff.diff.var, diff.diff)
 
-		if arg.is_paren and ufunc.is_ufunc and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
+		if arg.is_paren and ufunc.is_ufunc_applied and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
 			if diff.diff.is_var:
 				ast = wrapa (AST ('-subs', diff, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
@@ -245,7 +249,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 	elif tail.is_diffp: # f (x)' * (0) -> \. f (x) |_{x = 0}
 		diffp = _SP_USER_VARS.get (tail.diffp.var, tail.diffp)
 
-		if arg.is_paren and diffp.is_ufunc and diffp.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
+		if arg.is_paren and diffp.is_ufunc_applied and diffp.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
 			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2

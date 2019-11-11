@@ -600,7 +600,15 @@ vars
 
 """), ('server_ufuncs', """
 
+f = ?()
 f (x)
+f (x) (0)
+f (0)
+f = ?g()
+f (x)
+f (x) (0)
+f (0)
+
 
 
 
