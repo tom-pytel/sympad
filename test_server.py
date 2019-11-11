@@ -401,6 +401,7 @@ del f
 g (2)
 f = lambda x, y: x + y
 f (1, 2)
+g (2)
 f = lambda x, y, z: x + y + z
 f (1, 2, 3)
 f = lambda x, y, z, w: x + y + z + w

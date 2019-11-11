@@ -258,7 +258,7 @@ def _vars_updated ():
 		if ast.is_lamb:
 			user_funcs.add (var)
 
-	vars = {v: AST.apply_vars (a, _VARS) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
+	vars = {v: AST.apply_vars (a, _VARS, exc = False) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
 
 	sym.set_sym_user_funcs (user_funcs)
 	sym.set_sym_user_vars (vars)

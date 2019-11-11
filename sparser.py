@@ -221,19 +221,27 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 				ast = wrapa (ast2)
 
 	elif tail.strip_curly.is_diff: # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
-		if arg.is_paren and tail.strip_curly.diff.is_ufunc and tail.strip_curly.diff.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
-			tail  = tail.strip_curly
-			dvs   = set (dp [0] for dp in tail.dvs)
-			vas   = list (zip (tail.diff.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))
-			subs  = tuple (filter (lambda va: not va [1].is_var_nonconst and va [0].var in dvs, vas))
-			vars  = tuple (map (lambda va: va [0] if va [0].var in dvs else va [1], vas))
-			ufunc = AST ('-ufunc', tail.diff.ufunc, vars, tail.diff.kw)
-			diff  = AST ('-diff', ufunc, tail.d, tail.dvs)
-			ast   = wrapa (AST ('-subs', diff, subs)) if subs else diff
+		diff  = tail.strip_curly
+		ufunc = _SP_USER_VARS.get (diff.diff.var, diff.diff)
+
+		if arg.is_paren and ufunc.is_ufunc and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
+			if diff.diff.is_var:
+				ast = wrapa (AST ('-subs', diff, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+
+			else:
+				dvs    = set (dp [0] for dp in diff.dvs)
+				vas    = list (zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))
+				subs   = tuple (filter (lambda va: not va [1].is_var_nonconst and va [0].var in dvs, vas))
+				vars   = tuple (map (lambda va: va [0] if va [0].var in dvs else va [1], vas))
+				ufunc2 = AST ('-ufunc', ufunc.ufunc, vars, ufunc.kw)
+				diff   = AST ('-diff', ufunc2, diff.d, diff.dvs)
+				ast    = wrapa (AST ('-subs', diff, subs)) if subs else diff
 
 	elif tail.is_diffp: # f (x)' * (0) -> \. f (x) |_{x = 0}
-		if arg.is_paren and tail.diffp.is_ufunc and tail.diffp.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
-			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (tail.diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+		diffp = _SP_USER_VARS.get (tail.diffp.var, tail.diffp)
+
+		if arg.is_paren and diffp.is_ufunc and diffp.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
+			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
 		if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
@@ -338,10 +346,12 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		diff, tail = _interpret_divide (ast)
 
 		if diff and diff.diff:
-			if tail:
-				return AST ('*', (diff, *tail))
-			else:
+			if not tail:
 				return diff
+			elif len (tail) == 1:
+				return _expr_mul_imp (diff, tail [0])
+			else:
+				return AST.flatcat ('*', _expr_mul_imp (diff, tail [0]), AST ('*', tail [1:]))
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
 		mul = []
@@ -394,11 +404,12 @@ def _ast_strip_tail_differential (ast):
 					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
-		ast2, neg = ast.src._strip_minus (retneg = True)
-		ast2, dv  = _ast_strip_tail_differential (ast2)
+		if hasattr (ast, 'src'):
+			ast2, neg = ast.src._strip_minus (retneg = True)
+			ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv and ast2:
-			return neg (_expr_diff (ast2)), dv
+			if dv and ast2:
+				return neg (_expr_diff (ast2)), dv
 
 	elif ast.is_func:
 		if ast.src and ast.func in _SP_USER_FUNCS: # _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
@@ -1304,13 +1315,10 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	p = Parser ()
 
 	# set_sp_user_funcs ({'N'})
-	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
+	set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-	# a = p.parse (r"\. x+y |_{x, y = 1, 2}")
-	# a = p.parse (r"\. x+y |_{x = 1, y = 2}")
-	# a = p.parse (r"\. x+y |_{x = 1}")
-	# a = p.parse (r"\.x+y|_{\substack{x=1\\y=2}}")
-	a = p.parse (r"f(x)'(0)")
+	# a = p.parse (r"du/dx (0, t) c")
+	a = p.parse (r"\int dy/dx c")
 	print (a)
 
 	# a = sym.ast2spt (a)

@@ -498,7 +498,7 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
-	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
+	def apply_vars (ast, vars, recurse = True, exc = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
 		def push (vars, newvars): # create new frame and add new variables
 			frame       = vars.copy ()
 			frame ['<'] = vars
@@ -536,17 +536,17 @@ class AST (tuple):
 			var = vars.get (ast.var)
 
 			if var: # user var
-				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse)
+				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse, exc)
 
 			return ast
 
 		elif ast.is_subs:
-			return AST ('-subs', AST.apply_vars (ast.expr, vars, recurse), tuple ((src, AST.apply_vars (dst, vars, recurse)) for src, dst in ast.subs))
+			return AST ('-subs', AST.apply_vars (ast.expr, vars, recurse, exc), tuple ((src, AST.apply_vars (dst, vars, recurse, exc)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})
 
-			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse, exc), ast [2], *(AST.apply_vars (a, vars, recurse, exc) for a in ast [3:]))
 
 		elif ast.is_diff:
 			dvs = []
@@ -557,12 +557,10 @@ class AST (tuple):
 				if a:
 					if a.is_var_nonconst:
 						v = a.var
-					# else:
-					# 	raise ValueError (f"cannot remap differential 'd{v}' to non-variable in derivative")
 
 				dvs.append ((v, p))
 
-			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse), ast.d, tuple (dvs))
+			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse, exc), ast.d, tuple (dvs))
 
 		elif ast.is_intg:
 			dv = ast.dv
@@ -579,9 +577,8 @@ class AST (tuple):
 						dv = AST ('@', f'd{a.var}')
 					else:
 						dv = ast.dv
-						# raise ValueError (f'cannot remap differential {ast.dv.var!r} to non-variable in integral')
 
-			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse, exc), dv, *(AST.apply_vars (a, vars, recurse, exc) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
 			vars = push (vars, {v: False for v in ast.vars})
@@ -594,19 +591,20 @@ class AST (tuple):
 				lamb = vars.get (ast.func)
 
 				if lamb and lamb.is_lamb: # 'execute' user lambda
-					if ast.args.len != lamb.vars.len:
+					if ast.args.len == lamb.vars.len:
+						args = dict (zip (lamb.vars, ast.args))
+
+						return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False, exc), vars, recurse, exc) # remap lambda vars to func args then global remap
+
+					elif exc:
 						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
-					args = dict (zip (lamb.vars, ast.args))
-
-					return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
-
 				return AST ('-func', ast.func,
-						tuple (('(', AST.apply_vars (a, vars, recurse))
+						tuple (('(', AST.apply_vars (a, vars, recurse, exc))
 						if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
-						else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+						else AST.apply_vars (a, vars, recurse, exc) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
-		return AST (*(AST.apply_vars (a, vars, recurse) for a in ast))
+		return AST (*(AST.apply_vars (a, vars, recurse, exc) for a in ast))
 
 	@staticmethod
 	def register_AST (cls):

@@ -8,6 +8,7 @@
 > allow variables mapped to simple for ufunc args?
 > give ufunc parsing awareness of variables to allow those mapping to simple expressions in argument lists
 
+> doc: ufunc initial condition binding with -diff must use curlys
 > doc: reference SymPy documentation
 > doc: parentheses as multiplies and not function calls
 > doc: new functionality of @ and %
