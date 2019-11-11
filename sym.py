@@ -612,7 +612,6 @@ class ast2nat: # abstract syntax tree -> native text
 		return (s, has) if ret_has else s
 
 	def _ast2nat_ass_hs (self, hs, lhs = True):
-		# return self._ast2tex_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and (hs.is_piece or (hs.is_comma and (self.parent and not self.parent.is_scolon)))))
 		return self._ast2nat_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and (hs.op in {'-piece', '-lamb'}) or (hs.is_comma and (self.parent and not self.parent.is_scolon))) or \
 				(not lhs and hs.is_lamb and self.parent.op in {'-set', '-dict'}))
 
@@ -920,29 +919,6 @@ class ast2py: # abstract syntax tree -> Python code text
 		return self._ast2py (ast)
 
 	def _ast2py_ass (self, ast):
-		# def ufunc2lamb (ufunc, lamb):
-		# 	return ('-lamb', lamb, tuple (v.var for v in ufunc.vars))
-
-		# istop = ast.ass_lhs_vars and self.parent.op in {None, ';'}
-
-		# if istop:
-		# 	if ast.lhs.is_ufunc:
-		# 		if ast.lhs.is_ufunc_pure:
-		# 			ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
-
-		# 	elif ast.lhs.is_comma:
-		# 		rhs = ast.rhs._strip_paren (1)
-
-		# 		if rhs.op in {',', '[', '-set'} and ast.lhs.comma.len == len (rhs [1]):
-		# 			lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc_pure else (l, r) for l, r in zip (ast.lhs.comma, rhs [1])]
-		# 			rhs = (rhs.op, tuple (r for l, r in lrs))
-		# 			ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
-
-		# if istop or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
-		# 	return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
-
-		# return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
-
 		istopass = self.parent.op in {None, ';'}
 
 		if istopass:
@@ -1800,16 +1776,16 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	# set_sym_user_funcs (vars)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+# 	# set_sym_user_funcs (vars)
 
-	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
-	ast = AST ('-lamb', ('@', 'y'), ('y',))
-	# res = ast2nat (ast)
-	# res = ast2py (ast)
-	res = ast2spt (ast)
-	# res = spt2ast (res)
+# 	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
+# 	ast = AST ('-lamb', ('@', 'y'), ('y',))
+# 	# res = ast2nat (ast)
+# 	# res = ast2py (ast)
+# 	res = ast2spt (ast)
+# 	# res = spt2ast (res)
 
-	print (repr (res))
+# 	print (repr (res))

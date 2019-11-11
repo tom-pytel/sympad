@@ -115,7 +115,46 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (x, y) = sqrt {x**2 + y**2}'), {'math': ('f(x, y) = sqrt(x**2 + y**2)', 'f = Lambda((x, y), sqrt(x**2 + y**2))', 'f\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
 		self.assertEqual (get ('f (3, 4)'), {'math': ('5', '5', '5')})
 		self.assertEqual (get ('del f'), {'msg': ["Lambda function 'f' deleted."]})
-		self.assertEqual (get ('f (x) = x**2; f (x)'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+
+	def test_lambdas2 (self):
+		reset ()
+		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+		self.assertEqual (get ('f (2)'), {'math': ('4', '4', '4')})
+		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+		self.assertEqual (get ('f (3)'), {'math': ('9', '9', '9')})
+		self.assertEqual (get ('f (x, y) = sqrt (x**2 + y**2)'), {'math': ('f(x, y) = sqrt(x**2 + y**2)', 'f = Lambda((x, y), sqrt(x**2 + y**2))', 'f\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
+		self.assertEqual (get ('f (3, 4)'), {'math': ('5', '5', '5')})
+		self.assertEqual (get ('x, y, z = 3, 4, 5'), {'math': [('x = 3', 'x = 3', 'x = 3'), ('y = 4', 'y = 4', 'y = 4'), ('z = 5', 'z = 5', 'z = 5')]})
+		self.assertEqual (get ('f (x, y) = sqrt (x**2 + y**2) + z'), {'math': ('f(x, y) = sqrt(x**2 + y**2) + 5', 'f = Lambda((x, y), sqrt(x**2 + y**2) + 5)', 'f\\left(x, y \\right) = \\sqrt{x^2 + y^2} + 5')})
+		self.assertEqual (get ('f (x, y) = sqrt (x**2 + y**2) + @z'), {'math': ('f(x, y) = z + sqrt(x**2 + y**2)', 'f = Lambda((x, y), z + sqrt(x**2 + y**2))', 'f\\left(x, y \\right) = z + \\sqrt{x^2 + y^2}')})
+		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+		self.assertEqual (get ('f (x) = @x**2'), {'math': ('f(x) = 9', 'f = Lambda(x, 9)', 'f\\left(x \\right) = 9')})
+		self.assertEqual (get ('f (x) = y**2'), {'math': ('f(x) = 16', 'f = Lambda(x, 16)', 'f\\left(x \\right) = 16')})
+		self.assertEqual (get ('f (2)'), {'math': ('16', '16', '16')})
+		self.assertEqual (get ('f (x) = @y**2'), {'math': ('f(x) = y**2', 'f = Lambda(x, y**2)', 'f\\left(x \\right) = y^2')})
+		self.assertEqual (get ('f (2)'), {'math': ('16', '16', '16')})
+		self.assertEqual (get ('y = 6'), {'math': ('y = 6', 'y = 6', 'y = 6')})
+		self.assertEqual (get ('f (2)'), {'math': ('36', '36', '36')})
+		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+		self.assertEqual (get ('g (x, y) = sqrt (f(x) + f(y))'), {'math': ('g(x, y) = sqrt(x**2 + y**2)', 'g = Lambda((x, y), sqrt(x**2 + y**2))', 'g\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
+		self.assertEqual (get ('g (3, 4)'), {'math': ('5', '5', '5')})
+		self.assertEqual (get ('f (x) = x**3'), {'math': ('f(x) = x**3', 'f = Lambda(x, x**3)', 'f\\left(x \\right) = x^3')})
+		self.assertEqual (get ('g (3, 4)'), {'math': ('5', '5', '5')})
+		self.assertEqual (get ('g (x, y) = @sqrt (f(x) + f(y))'), {'math': ('g(x, y) = sqrt(f(x) + f(y))', 'g = Lambda((x, y), sqrt(f(x) + f(y)))', 'g\\left(x, y \\right) = \\sqrt{\\operatorname{f}\\left(x \\right) + \\operatorname{f}\\left(y \\right)}')})
+		self.assertEqual (get ('g (3, 4)'), {'math': ('sqrt(91)', 'sqrt(91)', '\\sqrt{91}')})
+		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+		self.assertEqual (get ('g (3, 4)'), {'math': ('5', '5', '5')})
+		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('f (x) = \\int x dx'), {'math': ('f(x) = \\int x dx', 'f = Lambda(x, Integral(x, x))', 'f\\left(x \\right) = \\int x \\ dx')})
+		self.assertEqual (get ('f (sin x)'), {'math': ('-cos(x)', '-cos(x)', '-\\cos\\left(x \\right)')})
+		self.assertEqual (get ('f (x) = %(\\int x dx)'), {'math': ('f(x) = x**2 / 2', 'f = Lambda(x, x**2 / 2)', 'f\\left(x \\right) = \\frac{x^2}{2}')})
+		self.assertEqual (get ('f (sin x)'), {'math': ('sin**2(x) / 2', 'sin(x)**2 / 2', '\\frac{\\sin^2\\left(x \\right)}{2}')})
+		self.assertEqual (get ('f (sin y)'), {'math': ('sin**2(y) / 2', 'sin(y)**2 / 2', '\\frac{\\sin^2\\left(y \\right)}{2}')})
+		self.assertEqual (get ('f (x) = \\int x dx'), {'math': ('f(x) = \\int x dx', 'f = Lambda(x, Integral(x, x))', 'f\\left(x \\right) = \\int x \\ dx')})
+		self.assertEqual (get ('f (sin x)'), {'math': ('-cos(x)', '-cos(x)', '-\\cos\\left(x \\right)')})
+		self.assertEqual (get ('f (sin y)'), {'math': ('x sin(y)', 'x*sin(y)', 'x \\sin\\left(y \\right)')})
+		self.assertEqual (get ('\\int sin y dx'), {'math': ('x sin(y)', 'x*sin(y)', 'x \\sin\\left(y \\right)')})
 
 	def test_env (self):
 		reset ()
@@ -383,7 +422,46 @@ f (2)
 f (x, y) = sqrt {x**2 + y**2}
 f (3, 4)
 del f
-f (x) = x**2; f (x)
+
+"""), ('lambdas2', """
+
+f = lambda x: x**2
+f (2)
+f (x) = x**2
+f (3)
+f (x, y) = sqrt (x**2 + y**2)
+f (3, 4)
+x, y, z = 3, 4, 5
+f (x, y) = sqrt (x**2 + y**2) + z
+f (x, y) = sqrt (x**2 + y**2) + @z
+f (x) = x**2
+f (x) = @x**2
+f (x) = y**2
+f (2)
+f (x) = @y**2
+f (2)
+y = 6
+f (2)
+delall
+f (x) = x**2
+g (x, y) = sqrt (f(x) + f(y))
+g (3, 4)
+f (x) = x**3
+g (3, 4)
+g (x, y) = @sqrt (f(x) + f(y))
+g (3, 4)
+f (x) = x**2
+g (3, 4)
+delall
+f (x) = \\int x dx
+f (sin x)
+f (x) = %(\\int x dx)
+f (sin x)
+f (sin y)
+f (x) = \\int x dx
+f (sin x)
+f (sin y)
+\\int sin y dx
 
 """), ('env', """
 

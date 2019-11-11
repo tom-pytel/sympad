@@ -638,8 +638,6 @@ class AST_Ass (AST):
 	def _init (self, lhs, rhs):
 		self.lhs, self.rhs = lhs, rhs # should be py form
 
-	# _ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.op in {'@', '-ufunc'} else self.lhs.comma if (self.lhs.is_comma and all (a.op in {'@', '-ufunc'} for a in self.lhs.comma)) else None
-
 	@staticmethod
 	def ufunc2lamb (ufunc, lamb):
 		return AST ('-lamb', lamb, tuple (v.var or 'NONVARIABLE' for v in ufunc.vars))
@@ -749,9 +747,6 @@ class AST_Var (AST):
 
 	def _init (self, var):
 		self.var = var
-
-		# if AST._rec_identifier.match (var):
-		# 	self.__dict__ [f'is_var__{var}'] = True
 
 	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
 	_is_var_null          = lambda self: not self.var
@@ -934,9 +929,6 @@ class AST_Func (AST):
 
 	def _init (self, func, args):
 		self.func, self.args = func, args
-
-		# if AST._rec_identifier.match (func):
-		# 	self.__dict__ [f'is_func__{func}'] = True
 
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)

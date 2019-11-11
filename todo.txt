@@ -1,5 +1,3 @@
-> helpful error message if parsing raises to web client on enter
-
 > sin x sin y
 > subs clarity parentheses for tex display
 
@@ -16,6 +14,8 @@
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
+
+> helpful error message if parsing raises to web client on enter
 
 > add slice() to test_sym
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)?
@@ -160,3 +160,95 @@ Errors:
 -------
 
 
+---------------------------------------------
+Exception!
+
+text: ?h(x,y,z,re als=False)
+
+ast:  ('-ufunc', 'h', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))))
+
+tex1: h\left(x, y, z, \Re\left(als \right) = False \right)
+
+ast:  ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')))))))
+
+tex2: h \cdot \left(x, y, z, \Re\left(als \right) = False \right)
+
+---------------------------------------------
+Exception!
+
+text: ?g(x,y,z,re als=False,commutative=False)
+
+ast:  ('-ufunc', 'g', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),))
+
+tex1: g\left(x, y, z, \Re\left(als \right) = False, commutative = False \right)
+
+ast:  ('*', (('@', 'g'), ('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))))))
+
+tex2: g \cdot \left(x, y, z, \Re\left(als \right) = False, commutative = False \right)
+
+---------------------------------------------
+Exception!
+
+text: ({},?f(x,y,re als=False,commutative=False))
+
+ast:  ('(', (',', (('-dict', ()), ('-ufunc', 'f', (('@', 'x'), ('@', 'y'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),)))))
+
+tex1: \left(\left\{ \right\}, f\left(x, y, \Re\left(als \right) = False, commutative = False \right) \right)
+
+ast:  ('(', (',', (('-dict', ()), ('*', (('@', 'f'), ('(', (',', (('@', 'x'), ('@', 'y'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False'))))))))))
+
+tex2: \left(\left\{ \right\}, f \cdot \left(x, y, \Re\left(als \right) = False, commutative = False \right) \right)
+
+---------------------------------------------
+Exception!
+
+text: ?h(x,re als=False,commutative=False)
+
+ast:  ('-ufunc', 'h', (('@', 'x'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),))
+
+tex1: h\left(x, \Re\left(als \right) = False, commutative = False \right)
+
+ast:  ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))))))
+
+tex2: h \cdot \left(x, \Re\left(als \right) = False, commutative = False \right)
+
+---------------------------------------------
+Exception!
+
+text: ?h(x,y,re als=False)
+
+ast:  ('-ufunc', 'h', (('@', 'x'), ('@', 'y'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))))
+
+tex1: h\left(x, y, \Re\left(als \right) = False \right)
+
+ast:  ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('@', 'y'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')))))))
+
+tex2: h \cdot \left(x, y, \Re\left(als \right) = False \right)
+
+---------------------------------------------
+Exception!
+
+text: ?h(x,re als=False,commutative=False)
+
+ast:  ('-ufunc', 'h', (('@', 'x'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),))
+
+tex1: h\left(x, \Re\left(als \right) = False, commutative = False \right)
+
+ast:  ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))))))
+
+tex2: h \cdot \left(x, \Re\left(als \right) = False, commutative = False \right)
+
+---------------------------------------------
+Exception!
+
+text: ?h(x,y,reals=False,commutative=False)**\tilde\infty+'str':lnaand\partialxand\partial&&?h(x,y,re als=False,commutative=False)
+
+ast:  ('-slice', ('+', (('^', ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False')))), ('@', 'zoo')), ('"', 'str'))), ('&&', (('*', (('@', 'lnaand'), ('@', 'partialxand'), ('@', 'partial'))), ('-ufunc', 'h', (('@', 'x'), ('@', 'y'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),)))), None)
+
+tex1: \left(h\left(x, y, commutative = False, reals = False \right) \right)^\widetilde\infty + \text{'str'}{:}lnaand\ \partial xand\ \partial \cap h\left(x, y, \Re\left(als \right) = False, commutative = False \right)
+
+ast:  ('-slice', ('+', (('^', ('(', ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False'))))), ('@', 'zoo')), ('"', 'str'))), ('&&', (('*', (('@', 'lnaand'), ('@', 'partialxand'), ('@', 'partial'))), ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('@', 'y'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False'))))))))), None)
+
+tex2: \left(h\left(x, y, commutative = False, reals = False \right) \right)^\widetilde\infty + \text{'str'}{:}lnaand\ \partial xand\ \partial \cap h \cdot \left(x, y, \Re\left(als \right) = False, commutative = False \right)
+
+---------------------------------------------

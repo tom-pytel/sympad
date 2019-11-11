@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.0.18'
+_VERSION         = '1.0.19'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
@@ -258,11 +258,10 @@ def _vars_updated ():
 	user_funcs = one_funcs.copy ()
 
 	for var, ast in _VARS.items ():
-		# if var != '_':
-			if ast.is_ufunc:
-				_UFUNCS2VARS [ast] = AST ('@', var)
-			elif ast.is_lamb:
-				user_funcs.add (var)
+		if ast.is_ufunc:
+			_UFUNCS2VARS [ast] = AST ('@', var)
+		elif ast.is_lamb:
+			user_funcs.add (var)
 
 	sparser.set_sp_user_funcs (user_funcs)
 	sparser.set_sp_user_vars (_VARS)
@@ -270,16 +269,6 @@ def _vars_updated ():
 	sym.set_sym_user_vars (_VARS)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
-	# vars = ast.ass_lhs_vars
-
-	# if vars:
-	# 	if any (v.is_var_const for v in vars):
-	# 		raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
-
-	# 	ast = ast.rhs
-
-	# return AST.apply_vars (ast, _VARS), vars
-
 	if not ast.ass_validate:
 		vars = None
 	elif ast.ass_validate.error:
@@ -293,7 +282,6 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
-		# vars = dict ((v.var, a) if v.is_var else (v.ufunc, AST ('-lamb', a, tuple (vv.var for vv in v.vars))) for v, a in vars.items ())
 		vars = dict ((v.var, a) for v, a in vars.items ())
 
 		try: # check for circular references
@@ -304,7 +292,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		_VARS.update (vars)
 
 	if not vars: # no assignment
-		# ast         = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
 		_VARS ['_'] = ast
 
 		_vars_updated ()
@@ -314,7 +301,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 	if len (vars) == 1: # simple assignment
 		set_vars ({vars [0]: ast})
 
-		# asts = [AST ('=', vars [0], ast)]
 		vars = ((vars [0].var, ast),)
 
 	else: # tuple assignment
@@ -346,9 +332,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		elif len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
-		# set_vars (dict (zip (vars, asts)))
-
-		# asts = [AST ('=', vars [i], asts [i]) for i in range (len (vars))]
 		set_vars (dict (zip (vars, asts)))
 
 		vars = tuple (zip ((v.var for v in vars), asts))
