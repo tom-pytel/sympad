@@ -597,6 +597,15 @@ vars
 delall
 vars
 
+"""), ('server_ufuncs', """
+
+f (x)
+
+
+
+
+
+
 """), ('intro_examples', """
 
 cos**-1 0 \\log_2 8

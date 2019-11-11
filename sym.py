@@ -353,7 +353,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					s [:6] == '\\left[' or
 					(s [:6] == '\\left(' and (
 						p.tail_mul.is_attr_var or
-						p.tail_mul.op in {'@', '-ufunc'} or
+						p.tail_mul.op in {'@', '-diffp', '-ufunc'} or
 						i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
@@ -669,7 +669,7 @@ class ast2nat: # abstract syntax tree -> native text
 					s [:1].isdigit () or
 					(s [:1] == '(' and (
 						p.tail_mul.is_attr_var or
-						p.tail_mul.op in ('@', '-ufunc') or
+						p.tail_mul.op in ('@', '-diffp', '-ufunc') or
 						i in ast.exp)) or
 					t [-1] [-1:] == '.' or
 					n.is_num or
@@ -969,7 +969,7 @@ class ast2py: # abstract syntax tree -> Python code text
 
 			if p and (
 					not n.is_paren or
-					p.tail_mul.op in {'@', '-ufunc'} or
+					p.tail_mul.is_ufunc or # p.tail_mul.op in {'@', '-ufunc'} or
 					not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or
 					i in ast.exp):
 				t.append (f'*{s}')
@@ -1292,6 +1292,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 				if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?
 					out [-1] = o (*m)
+
 					continue
 
 				dv = False

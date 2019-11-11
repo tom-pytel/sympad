@@ -1,3 +1,8 @@
+v1.0.19:
+--------
+* Added parsing and writing of initial conditions of derivatives of undefined functions.
+
+
 v1.0.18:
 --------
 * Added variable stack frames to variable mapping.

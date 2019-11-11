@@ -220,6 +220,21 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			if ast2:
 				ast = wrapa (ast2)
 
+	elif tail.strip_curly.is_diff: # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
+		if arg.is_paren and tail.strip_curly.diff.is_ufunc and tail.strip_curly.diff.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
+			tail  = tail.strip_curly
+			dvs   = set (dp [0] for dp in tail.dvs)
+			vas   = list (zip (tail.diff.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))
+			subs  = tuple (filter (lambda va: not va [1].is_var_nonconst and va [0].var in dvs, vas))
+			vars  = tuple (map (lambda va: va [0] if va [0].var in dvs else va [1], vas))
+			ufunc = AST ('-ufunc', tail.diff.ufunc, vars, tail.diff.kw)
+			diff  = AST ('-diff', ufunc, tail.d, tail.dvs)
+			ast   = wrapa (AST ('-subs', diff, subs)) if subs else diff
+
+	elif tail.is_diffp: # f (x)' * (0) -> \. f (x) |_{x = 0}
+		if arg.is_paren and tail.diffp.is_ufunc and tail.diffp.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
+			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (tail.diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
 		if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
 			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, (ast,), src = AST ('*', (('@', tail.func), ast))))
@@ -1284,19 +1299,19 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# set_sp_user_funcs ({'N'})
-# 	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
+	# set_sp_user_funcs ({'N'})
+	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
 
-# 	# a = p.parse (r"\. x+y |_{x, y = 1, 2}")
-# 	# a = p.parse (r"\. x+y |_{x = 1, y = 2}")
-# 	# a = p.parse (r"\. x+y |_{x = 1}")
-# 	# a = p.parse (r"\.x+y|_{\substack{x=1\\y=2}}")
-# 	a = p.parse (r"\[?g(x)and(\sqrt[2]-1.0,'str'or-.1or.1,-.1!),\left.-{-.1:1e+100}\right|_{-.1.kZSI2A,\pi&&\partialx&&\partialx=lambdax:1/\fracTrueFalse},]")
-# 	print (a)
+	# a = p.parse (r"\. x+y |_{x, y = 1, 2}")
+	# a = p.parse (r"\. x+y |_{x = 1, y = 2}")
+	# a = p.parse (r"\. x+y |_{x = 1}")
+	# a = p.parse (r"\.x+y|_{\substack{x=1\\y=2}}")
+	a = p.parse (r"f(x)'(0)")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)

@@ -1,10 +1,13 @@
 > PDEs
 
-> {d/dx u(x, y)} (0, t) -> \. du/dx |_{}
+* {d/dx u(x, y)} (0, y) -> \. du/dx |_{x = 0}
+> du/dx * (0, y) -> \. du/dx |_{x = 0}
 > parse: diff(ufunc(x)) * (0) -> subs(diff(ufunc(x)), x, 0)
 > display: subs(diff(ufunc(x)), x, 0) -> diff(ufunc(x)) (0)
 
+> give ufunc parsing awareness of variables to allow those mapping to simple expressions in argument lists
 
+> doc: reference SymPy documentation
 > doc: new functionality of @ and %
 > doc: new binding of lambda functions
 
@@ -15,8 +18,11 @@
 > @ and % without parentheses consistency?
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
+> allow vars in diff for power to be resolved at runtime?
+> syntax error of diffp of multivar ufunc?
 
 
+> multiline exception values - diff (x + y)
 > sin x sin y
 > subs clarity parentheses for tex display
 

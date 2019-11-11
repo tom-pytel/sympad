@@ -25,7 +25,7 @@
 # ('-func', 'name', (a1, a2, ...))                    - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
 # ('-lim', expr, var, to[, 'dir'])                    - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
-# ('-diff', expr, 'd', (('v1', p1), ...))             - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power)
+# ('-diff', expr, 'd', (('v1', p1), ...))             - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power) - power is int
 # ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
 # ('-intg', expr, dv[, from, to])                     - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential dv (('@', 'dx'), ('@', 'dy'), etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
@@ -1065,7 +1065,7 @@ class AST_UFunc (AST):
 	_is_ufunc_pure   = lambda self: all (v.is_var_nonconst for v in self.vars)
 	_is_ufunc_impure = lambda self: any (not v.is_var_nonconst for v in self.vars)
 
-	def apply_argskw (self, argskw):
+	def can_apply_argskw (self, argskw):
 		if argskw:
 			args, kw = argskw
 
@@ -1076,10 +1076,15 @@ class AST_UFunc (AST):
 				if self.vars.len == len (args):
 					for v, a in zip (self.vars, args):
 						if not v.is_var_nonconst or (a.is_var_nonconst and a.var != v.var):
-							return None
+							return False
 
-					if args != self.vars:
-						return AST ('-ufunc', self.ufunc, args, self.kw)
+					return args != self.vars
+
+		return False
+
+	def apply_argskw (self, argskw):
+		if self.can_apply_argskw (argskw):
+			return AST ('-ufunc', self.ufunc, argskw [0], self.kw)
 
 		return None
 
