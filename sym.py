@@ -10,8 +10,8 @@ from sympy.core.function import AppliedUndef as sp_AppliedUndef
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SYM_USER_FUNCS = set () # set user funcs {name, ...}
-_SYM_USER_VARS  = {} # user vars {name: ast, ...}
+_SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
+_SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
 _POST_SIMPLIFY  = True # post-evaluation simplification
 _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
@@ -340,7 +340,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		p   = None
 		has = False
 
-		for i, n in enumerate (ast.mul):
+		for n in ast.mul: # i, n in enumerate (ast.mul):
 			s = self._ast2tex_wrap (n, (p and _ast_is_neg (n)),
 					n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.is_piece and n is not ast.mul [-1]))
 
@@ -353,8 +353,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					s [:6] == '\\left[' or
 					(s [:6] == '\\left(' and (
 						p.tail_mul.is_attr_var or
-						p.tail_mul.op in {'@', '-diffp', '-ufunc'} or
-						i in ast.exp)) or
+						p.tail_mul.op in {'@', '-diffp', '-ufunc'})) or
+						# i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
@@ -653,7 +653,7 @@ class ast2nat: # abstract syntax tree -> native text
 		p   = None
 		has = False
 
-		for i, n in enumerate (ast.mul):
+		for n in ast.mul: # i, n in enumerate (ast.mul):
 			s = self._ast2nat_wrap (n,
 				n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or
 				(p and (
@@ -669,8 +669,8 @@ class ast2nat: # abstract syntax tree -> native text
 					s [:1].isdigit () or
 					(s [:1] == '(' and (
 						p.tail_mul.is_attr_var or
-						p.tail_mul.op in ('@', '-diffp', '-ufunc') or
-						i in ast.exp)) or
+						p.tail_mul.op in ('@', '-diffp', '-ufunc'))) or
+						# i in ast.exp)) or
 					t [-1] [-1:] == '.' or
 					n.is_num or
 					n.is_var_null or
@@ -961,24 +961,26 @@ class ast2py: # abstract syntax tree -> Python code text
 		return ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - ')
 
 	def _ast2py_mul (self, ast):
-		t = []
-		p = None
+		return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
 
-		for i, n in enumerate (ast.mul):
-			s = self._ast2py_paren (n, n.is_cmp_in or n.is_add or (i and (n.is_div or n.is_log_with_base)))
+		# t = []
+		# p = None
 
-			if p and (
-					not n.is_paren or
-					p.tail_mul.is_ufunc or # p.tail_mul.op in {'@', '-ufunc'} or
-					not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or
-					i in ast.exp):
-				t.append (f'*{s}')
-			else:
-				t.append (s)
+		# for i, n in enumerate (ast.mul):
+		# 	s = self._ast2py_paren (n, n.is_cmp_in or n.is_add or (i and (n.is_div or n.is_log_with_base)))
 
-			p = n
+		# 	if p and (
+		# 			not n.is_paren or
+		# 			p.tail_mul.is_ufunc or # p.tail_mul.op in {'@', '-ufunc'} or
+		# 			not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or
+		# 			i in ast.exp):
+		# 		t.append (f'*{s}')
+		# 	else:
+		# 		t.append (s)
 
-		return ''.join (t)
+		# 	p = n
+
+		# return ''.join (t)
 
 	def _ast2py_div (self, ast):
 		nn = _ast_is_neg (ast.numer)

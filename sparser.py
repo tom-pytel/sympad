@@ -10,8 +10,8 @@ import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SP_USER_FUNCS = set () # set user funcs {name, ...}
-_SP_USER_VARS  = {} # user vars {name: ast, ...}
+_SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
+_SP_USER_VARS  = {} # flattened user vars {name: ast, ...}
 
 def _raise (exc):
 	raise exc

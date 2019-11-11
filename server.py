@@ -95,7 +95,6 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS         = {'_': AST.Zero} # This also!
-	_UFUNCS2VARS  = {} # Yup...
 
 #...............................................................................................
 def _admin_vars (*args):
@@ -252,21 +251,19 @@ def _sorted_vars ():
 	return _present_vars (sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])))
 
 def _vars_updated ():
-	_UFUNCS2VARS.clear ()
-
-	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS))
+	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS)) # hidden functions for stuff like N and gamma
 	user_funcs = one_funcs.copy ()
 
 	for var, ast in _VARS.items ():
-		if ast.is_ufunc:
-			_UFUNCS2VARS [ast] = AST ('@', var)
-		elif ast.is_lamb:
+		if ast.is_lamb:
 			user_funcs.add (var)
 
-	sparser.set_sp_user_funcs (user_funcs)
-	sparser.set_sp_user_vars (_VARS)
+	vars = {v: AST.apply_vars (a, _VARS) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
+
 	sym.set_sym_user_funcs (user_funcs)
-	sym.set_sym_user_vars (_VARS)
+	sym.set_sym_user_vars (vars)
+	sparser.set_sp_user_funcs (user_funcs)
+	sparser.set_sp_user_vars (vars)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	if not ast.ass_validate:
