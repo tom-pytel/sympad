@@ -50,9 +50,7 @@
 > upgrade error marking in sparser to better show where erroneous expressions start (error stack?)
 > helpful error message in web client if parsing raises
 
-> unnecessary cdot in front of tex and nat a * d/dx f
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
-> do not write out parentheses for differentiation where not needed - d/dx (y z) -> d/dx y z?
 > do not write out parentheses for integration where not needed - \int {d / dx (x**2)} dx -> \int d / dx (x**2) dx?
 > clean up sym lambda keyword safety wrapping
 
