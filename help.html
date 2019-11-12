@@ -517,7 +517,9 @@ User created lambda functions are supported and are specified the same way as Py
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", or with the alternative shorthand "<b>f (x) = x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
 When a lambda function is defined any non-lambda argument variables are mapped but no functions are called or expressions doit()-ed, this means that if a lambda references an assigned global variable the variable will be replaced with its value within the lambda definition.
 If you do not want to use the value of a global variable in a lambda definition but rather have the value bound upon execution of the lambda then use the no-remap pseudo-function as such "<b>f = lambda: @(x)</b>", this will leave the lambda definition referencing an "<b>x</b>" variable which will be bound upon execution.
-This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed, upon evaluation though whatever is passed in for "<b>x</b>" argument will be integrated with respect to "<b>dx</b>" which is fixed and will not change irrespective of if a variable is passed in for "<b>x</b>".
+This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed.
+Upon evaluation whatever is passed in for the "<b>x</b>" be integrated will attempt to replace the "<b>dx</b>" with its value, and if it resolves to a pure variable like "<b>y</b>" and not an expression then the "<b>dx</b>" will be changed to a "<b>dy</b>", otherwise the integration is done with respect to the original "<b>dx</b>".
+This does not apply if you use the lowercase SymPy functions like "<b>integrate()</b>" or "<b>.limit()</b>" which are always evaluated even in the definition of a lambda function.
 Lambda functions may reference other lambda functions as long as those are defined at the time of creation.
 </p><p>
 Lambdas may be passed to SymPy and other Python functions and they will be passed as SymPy "<b>Lambda</b>" objects.

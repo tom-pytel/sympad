@@ -385,7 +385,7 @@ class AST (tuple):
 		return False
 
 	def _as_ufunc_argskw (self):
-		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,))
+		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,) if self.op is not None else self)
 
 		if any (not a.is_var and not a.is_const for a in args):
 			return None

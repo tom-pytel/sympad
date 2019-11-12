@@ -3,9 +3,16 @@
 * {d/dx u(x, y)} (0, y) -> \. du/dx |_{x = 0}
 * du/dx (0, y) -> \. du/dx |_{x = 0}
 * parse: diff(ufunc(x)) * (0) -> subs(diff(ufunc(x)), x, 0)
-> display: subs(diff(ufunc(x)), x, 0) -> diff(ufunc(x)) (0)
+* display: subs(diff(ufunc(x)), x, 0) -> diff(ufunc(x)) (0)
+* dont execute spt subs (diff (ufunc)) to preserve variables
+* invalid implicit undefined functions written as explicit
 
-> display assignedvar (x) -> assignedvar * (x)
+> d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))
+> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
+
+> undefined functions assigned to vars must have same name for sanity?
+
+> display assignedvar (x) -> assignedvar * (x) if assigned in user_vars
 > ast2spt mul overhaul
 
 > doc: ufunc initial condition binding with -diff must use curlys
@@ -14,8 +21,8 @@
 > doc: new functionality of @ and %
 > doc: new binding of lambda functions
 > doc: writeout dependant of variable state
+> doc: lambda function execution and binding
 
-> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
@@ -41,6 +48,8 @@
 > upgrade error marking in sparser to better show where erroneous expressions start (error stack?)
 > helpful error message in web client if parsing raises
 
+> unnecessary cdot in front of tex and nat a * d/dx f
+> diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 > do not write out parentheses for differentiation where not needed - d/dx (y z) -> d/dx y z?
 > do not write out parentheses for integration where not needed - \int {d / dx (x**2)} dx -> \int d / dx (x**2) dx?
 > clean up sym lambda keyword safety wrapping
@@ -48,9 +57,6 @@
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)?
 
 > double check all _ast2? (AST (...)) for parent issues
-
-> unnecessary cdot in front of tex and nat a * d/dx f
-> diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
 > not keyword precedence
 > More Examples: Parentheses (unnecessary)

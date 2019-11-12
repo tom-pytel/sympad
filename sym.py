@@ -141,9 +141,9 @@ def _dsolve (*args, **kw):
 	if ast.is_brack:
 		ast = AST ('[', tuple (AST ('=', a.lhs, a.cmp [0] [1]) if a.cmp.len == 1 and a.cmp [0] [0] == '==' else a for a in ast.brack))
 
-	elif ast.is_cmp:
-		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
-			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
+	# elif ast.is_cmp:
+	# 	if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
+	# 		ast = AST ('=', ast.lhs, ast.cmp [0] [1])
 
 	return ExprNoEval (ast) # never automatically simplify dsolve
 
@@ -354,7 +354,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					s [:6] == '\\left[' or
 					(s [:6] == '\\left(' and (
 						p.tail_mul.is_attr_var or
-						p.tail_mul.op in {'@', '-diffp', '-ufunc'})) or
+						p.tail_mul.op in {'@', '-diffp', '-ufunc', '-subs'})) or
 						# i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
@@ -489,12 +489,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		ufunctex = ast.ufunctex # ufunc name override from subs to print possible function of derivative format
 
 		if ufunctex is None:
-			if not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or \
-					(ast.ufunc in _SYM_USER_FUNCS and \
-					not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
-					not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
-					):
-				pre = '?'
+			if (not ast.ufunc or
+					AST ('@', ast.ufunc).is_diff_or_part or
+					(ast.ufunc in _SYM_USER_FUNCS and
+						not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
+						not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+					not ast.vars.as_ufunc_argskw):
+				pre = '\\: ?'
 			else:
 				pre = ''
 
@@ -703,7 +704,7 @@ class ast2nat: # abstract syntax tree -> native text
 					s [:1].isdigit () or
 					(s [:1] == '(' and (
 						p.tail_mul.is_attr_var or
-						p.tail_mul.op in ('@', '-diffp', '-ufunc'))) or
+						p.tail_mul.op in ('@', '-diffp', '-ufunc', '-subs'))) or
 						# i in ast.exp)) or
 					t [-1] [-1:] == '.' or
 					n.is_num or
@@ -833,11 +834,11 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'''{{{", ".join (f'{k}: {v}' for k, v in items)}}}'''
 
 	def _ast2nat_ufunc (self, ast):
-		if not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or \
-				(ast.ufunc in _SYM_USER_FUNCS and \
-				not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
-				not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
-				):
+		if (not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or
+				(ast.ufunc in _SYM_USER_FUNCS and
+					not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
+					not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+				not ast.vars.as_ufunc_argskw):
 			pre = '?'
 		else:
 			pre = ''
@@ -1294,7 +1295,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return res
 
-	# TODO: update this!
 	def _ast2spt_mul (self, ast): # handle dynamic cases of function calls due to usage of implicit multiplication
 		mul = list (self._ast2spt (a) for a in ast.mul)
 		out = mul [:1]
@@ -1309,33 +1309,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 					out [-1] = o (*m) if isinstance (m, tuple) else o (m)
 
 					continue
-
-				# if not isinstance (m, tuple):
-				# 	m = (m,)
-
-				# if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?
-				# 	out [-1] = o (*m)
-
-				# 	continue
-
-				# dv = False
-
-				# while isinstance (o, sp.Derivative): # strip derivatives
-				# 	dv = True
-				# 	o  = o.args [0]
-
-				# if isinstance (o, sp_AppliedUndef): # undefined function initial value(s)?
-				# 	if any (not isinstance (a, sp.Symbol) for a in o.args):
-				# 		raise TypeError (f'?{o} object is not callable')
-				# 	elif len (m) != len (o.args):
-				# 		raise TypeError (f'?{o} object takes {len (o.args)} positional argument(s)')
-
-				# 	if dv:
-				# 		out [-1] = sp.Subs (out [-1], o.args, m)
-				# 	else:
-				# 		out [-1] = o.__class__ (*m)
-
-				# 	continue
 
 			out.append (mul [i])
 
@@ -1430,6 +1403,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return sdiff
 
+	def _ast2spt_subs (self, ast):
+		if ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc:
+			return ExprNoEval (ast) # do not execute because loses information about variables
+		else:
+			return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
+
 	_ast2spt_funcs = {
 		';'     : lambda self, ast: _raise (RuntimeError ('semicolon expression should never get here')),
 		'='     : _ast2spt_ass,
@@ -1471,7 +1450,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: self._ast2spt (a) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
-		'-subs' : lambda self, ast: _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs]),
+		'-subs' : _ast2spt_subs,
 
 		'text'  : lambda self, ast: ast.spt,
 	}
@@ -1555,7 +1534,7 @@ class spt2ast:
 		terms = []
 		hasO  = False
 
-		for arg in spt.args:
+		for arg in spt._sorted_args: # spt.args:
 			ast  = self._spt2ast (arg)
 			hasO = hasO or isinstance (arg, sp.Order)
 
@@ -1795,17 +1774,18 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	# set_sym_user_funcs (vars)
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+# 	# set_sym_user_funcs (vars)
 
-	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
-	ast = AST ('-subs', ('-diffp', ('-ufunc', 'u', (('@', 'x'), ('#', '0'))), 1), ((('@', 'x'), ('#', '1')),))
-	res = ast2tex (ast)
-	# res = ast2nat (ast)
-	# res = ast2py (ast)
-	# res = ast2spt (ast)
-	# res = spt2ast (res)
+# 	ast = AST ('-func', 'pdsolve', (('=', ('+', (('/', ('*', (('#', '2'), ('-diff', ('(', ('-ufunc', 'f', (('@', 'x'), ('@', 'y')))), 'd', (('x', 1),))), {1}), ('-ufunc', 'f', (('@', 'x'), ('@', 'y')))), ('/', ('*', (('#', '3'), ('-diff', ('(', ('-ufunc', 'f', (('@', 'x'), ('@', 'y')))), 'd', (('y', 1),))), {1}), ('-ufunc', 'f', (('@', 'x'), ('@', 'y')))), ('#', '1'))), ('#', '0')),))
+# 	# res = ast2tex (ast)
+# 	# res = ast2nat (ast)
+# 	# res = ast2py (ast)
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
 
-	print (repr (res))
+# 	# res = ast2nat (res)
+
+# 	print (repr (res))

@@ -1,7 +1,7 @@
 v1.0.19:
 --------
 * Added parsing and writing of initial conditions of derivatives of undefined functions.
-* Added proper formatting of exceptions with newlines in the text.
+* Added proper formatting of exceptions which contain newlines in the exception text.
 
 v1.0.18:
 --------

@@ -226,12 +226,16 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 				elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
 					ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
-	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
+	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
 		if arg.is_paren:
-			ast2 = tail.apply_argskw (arg.paren.as_ufunc_argskw)
+			if tail.is_from_Function:
+				ast = wrapa (AST ('-ufunc', tail.ufunc, (arg.paren.comma if arg.paren.is_comma else (arg.paren,)), tail.kw))
 
-			if ast2:
-				ast = wrapa (ast2)
+			else:
+				ast2 = tail.apply_argskw (arg.paren.as_ufunc_argskw)
+
+				if ast2:
+					ast = wrapa (ast2)
 
 	elif tail.strip_curly.is_diff: # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
 		diff  = tail.strip_curly
@@ -600,7 +604,7 @@ def _expr_ufunc (args, py = False, name = ''):
 	if AST ('@', name).is_var_const:
 		raise SyntaxError ('cannot use constant as undefined function name')
 
-	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())))
+	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())), is_from_Function = py)
 
 def _expr_num (NUM):
 	num = NUM.grp [1] or (NUM.grp [0] if NUM.text [0] != '.' else f'0{NUM.grp [0]}')
@@ -1313,16 +1317,16 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
 
-	# set_sp_user_funcs ({'N'})
-	set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
+# 	# set_sp_user_funcs ({'N'})
+# 	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-	# a = p.parse (r"du/dx (0, t) c")
-	a = p.parse (r"\int dy/dx c")
-	print (a)
+# 	# a = p.parse (r"du/dx (0, t) c")
+# 	a = p.parse (r"Function ('F') (x)")
+# 	print (a)
 
-	# a = sym.ast2spt (a)
-	# print (a)
+# 	# a = sym.ast2spt (a)
+# 	# print (a)
