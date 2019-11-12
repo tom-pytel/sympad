@@ -1,20 +1,12 @@
 > PDEs
 
-* {d/dx u(x, y)} (0, y) -> \. du/dx |_{x = 0}
-* du/dx (0, y) -> \. du/dx |_{x = 0}
-* parse: diff(ufunc(x)) * (0) -> subs(diff(ufunc(x)), x, 0)
-* display: subs(diff(ufunc(x)), x, 0) -> diff(ufunc(x)) (0)
-* dont execute spt subs (diff (ufunc)) to preserve variables
-* invalid implicit undefined functions written as explicit
-* _ast2nat_subs
-
 > test_sym ufunc cases
 > subs clarity parentheses for tex display
 
 > d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))?
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
-> \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) and the parsing
+> \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
 
 
 > display assignedvar (x) -> assignedvar * (x) if assigned in user_vars

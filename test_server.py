@@ -25,6 +25,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω'), {'math': ('(alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, nu, xi, pi, rho, sigma, tau, upsilon, phi, chi, psi, omega, Gamma, Delta, Theta, Lambda, Xi, Pi, Sigma, Upsilon, Phi, Psi, Omega)', '(alpha, beta, gamma, delta, epsilon, zeta, eta, theta, iota, kappa, lambda, mu, nu, xi, pi, rho, sigma, tau, upsilon, phi, chi, psi, omega, Gamma, Delta, Theta, Lambda, Xi, Pi, Sigma, Upsilon, Phi, Psi, Omega)', '\\left(\\alpha, \\beta, \\gamma, \\delta, \\epsilon, \\zeta, \\eta, \\theta, \\iota, \\kappa, \\lambda, \\mu, \\nu, \\xi, \\pi, \\rho, \\sigma, \\tau, \\upsilon, \\phi, \\chi, \\psi, \\omega, \\Gamma, \\Delta, \\Theta, \\Lambda, \\Xi, \\Pi, \\Sigma, \\Upsilon, \\Phi, \\Psi, \\Omega \\right)')})
 
 	#...............................................................................................
+	# BEGIN UPDATE BLOCK
 	def test_vars (self):
 		reset ()
 		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
@@ -94,6 +95,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('g (2)'), {'err': "NameError: function 'f' is not defined"})
 		self.assertEqual (get ('f = lambda x, y: x + y'), {'math': ('f(x, y) = x + y', 'f = Lambda((x, y), x + y)', 'f\\left(x, y \\right) = x + y')})
 		self.assertEqual (get ('f (1, 2)'), {'math': ('3', '3', '3')})
+		self.assertEqual (get ('g (2)'), {'err': "TypeError: lambda function 'f' takes 2 argument(s)"})
 		self.assertEqual (get ('f = lambda x, y, z: x + y + z'), {'math': ('f(x, y, z) = x + y + z', 'f = Lambda((x, y, z), x + y + z)', 'f\\left(x, y, z \\right) = x + y + z')})
 		self.assertEqual (get ('f (1, 2, 3)'), {'math': ('6', '6', '6')})
 		self.assertEqual (get ('f = lambda x, y, z, w: x + y + z + w'), {'math': ('f(x, y, z, w) = w + x + y + z', 'f = Lambda((x, y, z, w), w + x + y + z)', 'f\\left(x, y, z, w \\right) = w + x + y + z')})
@@ -275,7 +277,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('(1 < 0) + (1 < 1) + (1 < 2)'), {'math': ('1', '1', '1')})
 		self.assertEqual (get ('(1 <= 0) + (1 <= 1) + (1 <= 2)'), {'math': ('2', '2', '2')})
 
-	def test_server_funcs (self):
+	def test_funcs (self):
 		reset ()
 		self.assertEqual (get ('x = 1'), {'math': ('x = 1', 'x = 1', 'x = 1')})
 		self.assertEqual (get ('f = lambda x: x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
@@ -289,6 +291,38 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('z = ?(x, real = True)', "z = Function('', real = True)(x)", 'z = ?\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
+
+	def test_ufuncs (self):
+		reset ()
+		self.assertEqual (get ('f = ? ()'), {'math': ('f = ?()', "f = Function('')", 'f = ?\\left( \\right)')})
+		self.assertEqual (get ('f (x)'), {'math': ('?(x)', "Function('')(x)", '?\\left(x \\right)')})
+		self.assertEqual (get ('f (x) (0)'), {'math': ('?(0)', "Function('')(0)", '?\\left(0 \\right)')})
+		self.assertEqual (get ('f (0)'), {'math': ('?(0)', "Function('')(0)", '?\\left(0 \\right)')})
+		self.assertEqual (get ('f = ?g ()'), {'math': ('f = g()', "f = Function('g')", 'f = g\\left( \\right)')})
+		self.assertEqual (get ('f (x)'), {'math': ('g(x)', "Function('g')(x)", 'g\\left(x \\right)')})
+		self.assertEqual (get ('f (x) (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
+		self.assertEqual (get ('f (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
+		self.assertEqual (get ("f' (x)"), {'err': 'ValueError: Since there are no variables in the expression, the variable(s) of differentiation must be supplied to differentiate g()'})
+		self.assertEqual (get ('d/dx (f) (x)'), {'math': ('0', '0', '0')})
+		self.assertEqual (get ('f = f (x)'), {'math': ('f = g(x)', "f = Function('g')(x)", 'f = g\\left(x \\right)')})
+		self.assertEqual (get ('f (x)'), {'math': ('x g(x)', "x*Function('g')(x)", 'x g\\left(x \\right)')})
+		self.assertEqual (get ('f (x) (0)'), {'math': ('0', '0', '0')})
+		self.assertEqual (get ('f (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
+		self.assertEqual (get ('f = ?g (x)'), {'math': ('f = g(x)', "f = Function('g')(x)", 'f = g\\left(x \\right)')})
+		self.assertEqual (get ('f (x)'), {'math': ('x g(x)', "x*Function('g')(x)", 'x g\\left(x \\right)')})
+		self.assertEqual (get ('f (x) (0)'), {'math': ('0', '0', '0')})
+		self.assertEqual (get ('f (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
+		self.assertEqual (get ("f' (x)"), {'math': ("x g(x)'", "x*diff(Function('g')(x))", "x g\\left(x \\right)'")})
+		self.assertEqual (get ('d/dx (f) (x)'), {'math': ("x g(x)'", "x*diff(Function('g')(x))", "x g\\left(x \\right)'")})
+		self.assertEqual (get ('u = u (x, t)'), {'math': ('u = u(x, t)', "u = Function('u')(x, t)", 'u = u\\left(x, t \\right)')})
+		self.assertEqual (get ('du/dx (x, t)'), {'math': ('d / dx (u(x, t)) * (x, t)', "Derivative(Function('u')(x, t), x)*(x, t)", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right) \\cdot \\left(x, t \\right)')})
+		self.assertEqual (get ('du/dx (1, t)'), {'math': ('d / dx (u(x, t))(1, t)', "Derivative(Function('u')(x, t), x).subs(x, 1)", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, t \\right)')})
+		self.assertEqual (get ('du/dx (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Derivative(Function('u')(x, t), x).subs([(x, 1), (t, 0)])", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d**2u / dx dt (1, 0)'), {'math': ('d**2 / dx dt (u(x, t))(1, 0)', "Derivative(Function('u')(x, t), x, t).subs([(x, 1), (t, 0)])", '\\frac{\\partial^2}{\\partial x \\partial t}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d/dx u (1, 0)'), {'math': ('0', '0', '0')})
+		self.assertEqual (get ('d/dx (u) (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Derivative(Function('u')(x, t), x).subs([(x, 1), (t, 0)])", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d**2 / dx dt u (1, 0)'), {'math': ('0', '0', '0')})
+		self.assertEqual (get ('d**2 / dx dt (u) (1, 0)'), {'math': ('d**2 / dx dt (u(x, t))(1, 0)', "Derivative(Function('u')(x, t), x, t).subs([(x, 1), (t, 0)])", '\\frac{\\partial^2}{\\partial x \\partial t}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
 
 	def test_intro_examples (self):
 		reset ()
@@ -306,8 +340,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}'), {'math': ('{2, 5, 7}', 'FiniteSet(2, 5, 7)', '\\left\\{2, 5, 7 \\right\\}')})
 		self.assertEqual (get ('f (x, y) = sqrt (x**2 + y**2)'), {'math': ('f(x, y) = sqrt(x**2 + y**2)', 'f = Lambda((x, y), sqrt(x**2 + y**2))', 'f\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
 		self.assertEqual (get ('solve (x**2 + y = 4, x)'), {'math': ('[-sqrt(4 - y), sqrt(4 - y)]', '[-sqrt(4 - y), sqrt(4 - y)]', '\\left[-\\sqrt{4 - y}, \\sqrt{4 - y} \\right]')})
-		# self.assertEqual (get ("dsolve (y(x)'' + 9y(x))"), {'math': ('y(x) = C1 sin(3 x) + C2 cos(3 x)', "Eq(Function('y')(x), C1*sin(3*x) + C2*cos(3*x))", 'y\\left(x \\right) = C_{1}\\ \\sin\\left(3 x \\right) + C_{2}\\ \\cos\\left(3 x \\right)')})
+		self.assertEqual (get ("dsolve (y(x)'' + 9y(x))"), {'math': ('y(x) == C1 sin(3 x) + C2 cos(3 x)', "Eq(Function('y')(x), C1*sin(3*x) + C2*cos(3*x))", 'y\\left(x \\right) == C_{1}\\ \\sin\\left(3 x \\right) + C_{2}\\ \\cos\\left(3 x \\right)')})
 		self.assertEqual (get ("y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})"), {'math': ('y = y(t)', "y = Function('y')(t)", 'y = y\\left(t \\right)')})
+	# END UPDATE BLOCK
 
 def get (text):
 	resp = requests.post (URL, {'idx': 1, 'mode': 'evaluate', 'text': text}).json ().get ('data', [{}]) [0]
@@ -587,7 +622,7 @@ x or y and not z
 (1 < 0) + (1 < 1) + (1 < 2)
 (1 <= 0) + (1 <= 1) + (1 <= 2)
 
-"""), ('server_funcs', """
+"""), ('funcs', """
 
 x = 1
 f = lambda x: x**2
@@ -602,7 +637,7 @@ vars
 delall
 vars
 
-"""), ('server_ufuncs', """
+"""), ('ufuncs', """
 
 f = ? ()
 f (x)
@@ -669,20 +704,41 @@ URL   = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
 # URL   = f'http://127.0.0.1:9000/'
 
 if __name__ == '__main__':
-	if SYSARGV [1] == '--print':
+	if SYSARGV [1] in {'--print', '--update'}:
+		lines = []
+
 		for name, texts in _SESSIONS:
 			reset ()
 
-			print (f'\n\tdef test_{name} (self):\n\t\treset ()')
+			lines.extend (['', f'\tdef test_{name} (self):\n\t\treset ()'])
 
 			texts = [s.strip () for s in texts.strip ().split ('\n')]
 
 			for text in texts:
 				if text:
-					print (f'\t\tself.assertEqual (get ({text!r}), {get (text)!r})')
+					lines.append (f'\t\tself.assertEqual (get ({text!r}), {get (text)!r})')
+
+		if SYSARGV [1] == '--print':
+			for line in lines:
+				print (line)
+
+		else: # '--update'
+			testserver = open ('test_server.py', encoding = 'utf8').readlines ()
+
+			start  = testserver.index ('\t# BEGIN UPDATE BLOCK\n')
+			end    = testserver.index ('\t# END UPDATE BLOCK\n')
+
+			testserver [start + 1 : end] = (f'{line}\n' for line in lines [1:])
+
+			open ('test_server.py', 'w', encoding = 'utf8').writelines (testserver)
 
 	elif SYSARGV [1] == '--human':
+		session = SYSARGV [2] if len (SYSARGV) > 2 else None
+
 		for name, texts in _SESSIONS:
+			if session and name != session:
+				continue
+
 			reset ()
 
 			print (f'\n{name}\n')
