@@ -1096,6 +1096,8 @@ class AST_Subs (AST):
 	def _init (self, expr, subs):
 		self.expr, self.subs = expr, subs
 
+	_is_subs_diff_ufunc = lambda self: self.expr.is_diff and self.expr.diff._strip_paren (1).is_ufunc
+
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
 	AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_MulExp, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func,

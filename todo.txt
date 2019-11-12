@@ -1,9 +1,7 @@
-> PDEs
-
-> test_sym ufunc cases
 > subs clarity parentheses for tex display
 
-> d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))?
+> option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
+> syntax error of diffp of multivar ufunc in sparser?
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
@@ -12,7 +10,7 @@
 > display assignedvar (x) -> assignedvar * (x) if assigned in user_vars
 > ast2spt mul overhaul
 
-> doc: ufunc initial condition binding with -diff must use curlys
+> doc: ufuncs
 > doc: reference SymPy documentation
 > doc: parentheses as multiplies and not function calls
 > doc: new functionality of @ and %
@@ -21,13 +19,12 @@
 > doc: lambda function execution and binding
 
 
-> option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
+> d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))?
 
 > @ and % without parentheses consistency?
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 > allow vars in diff for power to be resolved at runtime?
-> syntax error of diffp of multivar ufunc in sparser?
 
 
 > sin x sin y
@@ -35,10 +32,9 @@
 > overhaul = and == to try to minimize where == is needed for display
 
 > add slice() to test_sym
-> add back "forbidden" functions to test_sym (reject NullVars sxlats)?
+> add back "forbidden" functions to test_sym (reject NullVars sxlats)? - remove or reject null vars after
 > \limits^x - without the _
 
-> subs of ufunc variables for other variables?
 > subs of lambda variables for other variables?
 
 > upgrade error marking in sparser to better show where erroneous expressions start (error stack?)
@@ -59,7 +55,7 @@
 
 
 > \log loggamma=2 py representation? also sqrt? (use = instead of Eq due to function names as variables)
-> proper sqrt and log AST initialization via __new__
+> proper sqrt and log AST initialization via __new__, maybe others
 
 > f (x) = x**2; f (x)
 
@@ -176,67 +172,4 @@ Slow Parse (seems to be in Python regex due to abuse of said):
 Errors:
 -------
 
-
----------------------------------------------
-Exception!
-
-text: ?h(x,y,z,re als=False)
-ast:  ('-ufunc', 'h', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))))
-ast:  ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')))))))
-tex1: h\left(x, y, z, \Re\left(als \right) = False \right)
-tex2: h \cdot \left(x, y, z, \Re\left(als \right) = False \right)
-
----------------------------------------------
-Exception!
-
-text: ?g(x,y,z,re als=False,commutative=False)
-ast:  ('-ufunc', 'g', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),))
-ast:  ('*', (('@', 'g'), ('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))))))
-tex1: g\left(x, y, z, \Re\left(als \right) = False, commutative = False \right)
-tex2: g \cdot \left(x, y, z, \Re\left(als \right) = False, commutative = False \right)
-
----------------------------------------------
-Exception!
-
-text: ({},?f(x,y,re als=False,commutative=False))
-ast:  ('(', (',', (('-dict', ()), ('-ufunc', 'f', (('@', 'x'), ('@', 'y'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),)))))
-ast:  ('(', (',', (('-dict', ()), ('*', (('@', 'f'), ('(', (',', (('@', 'x'), ('@', 'y'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False'))))))))))
-tex1: \left(\left\{ \right\}, f\left(x, y, \Re\left(als \right) = False, commutative = False \right) \right)
-tex2: \left(\left\{ \right\}, f \cdot \left(x, y, \Re\left(als \right) = False, commutative = False \right) \right)
-
----------------------------------------------
-Exception!
-
-text: ?h(x,re als=False,commutative=False)
-ast:  ('-ufunc', 'h', (('@', 'x'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),))
-ast:  ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))))))
-tex1: h\left(x, \Re\left(als \right) = False, commutative = False \right)
-tex2: h \cdot \left(x, \Re\left(als \right) = False, commutative = False \right)
-
----------------------------------------------
-Exception!
-
-text: ?h(x,y,re als=False)
-ast:  ('-ufunc', 'h', (('@', 'x'), ('@', 'y'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))))
-ast:  ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('@', 'y'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')))))))
-tex1: h\left(x, y, \Re\left(als \right) = False \right)
-tex2: h \cdot \left(x, y, \Re\left(als \right) = False \right)
-
----------------------------------------------
-Exception!
-
-text: ?h(x,re als=False,commutative=False)
-ast:  ('-ufunc', 'h', (('@', 'x'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),))
-ast:  ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False')))))))
-tex1: h\left(x, \Re\left(als \right) = False, commutative = False \right)
-tex2: h \cdot \left(x, \Re\left(als \right) = False, commutative = False \right)
-
----------------------------------------------
-Exception!
-
-text: ?h(x,y,reals=False,commutative=False)**\tilde\infty+'str':lnaand\partialxand\partial&&?h(x,y,re als=False,commutative=False)
-ast:  ('-slice', ('+', (('^', ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False')))), ('@', 'zoo')), ('"', 'str'))), ('&&', (('*', (('@', 'lnaand'), ('@', 'partialxand'), ('@', 'partial'))), ('-ufunc', 'h', (('@', 'x'), ('@', 'y'), ('=', ('-func', 're', (('@', 'als'),)), ('@', 'False'))), (('commutative', ('@', 'False')),)))), None)
-ast:  ('-slice', ('+', (('^', ('(', ('-ufunc', 'h', (('@', 'x'), ('@', 'y')), (('commutative', ('@', 'False')), ('reals', ('@', 'False'))))), ('@', 'zoo')), ('"', 'str'))), ('&&', (('*', (('@', 'lnaand'), ('@', 'partialxand'), ('@', 'partial'))), ('*', (('@', 'h'), ('(', (',', (('@', 'x'), ('@', 'y'), ('=', ('-func', 'Re', (('@', 'als'),)), ('@', 'False')), ('=', ('@', 'commutative'), ('@', 'False'))))))))), None)
-tex1: \left(h\left(x, y, commutative = False, reals = False \right) \right)^\widetilde\infty + \text{'str'}{:}lnaand\ \partial xand\ \partial \cap h\left(x, y, \Re\left(als \right) = False, commutative = False \right)
-tex2: \left(h\left(x, y, commutative = False, reals = False \right) \right)^\widetilde\infty + \text{'str'}{:}lnaand\ \partial xand\ \partial \cap h \cdot \left(x, y, \Re\left(als \right) = False, commutative = False \right)
 

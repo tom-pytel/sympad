@@ -425,6 +425,9 @@ dx / dd
 partial\theta
 \.\.a|_{b=c}|_{d=e}
 a**\.b[c]|_{x=1}
+{d / dx (f(x))(0)} [1]
+a*d/dx(h(x))(0)
+\. {\. a |_{x = 1}} |_{c = d}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -652,11 +655,33 @@ def expr_not ():
 	return f' not {expr ()} '
 
 def expr_ufunc ():
-	name = choice (('', 'f', 'g', 'h'))
-	vars = choice ((('x',), ('x, y',), ('x, y, z',)))
-	kw   = choice (((), (), (), (), (), (), ('reals = False',), ('reals = False, commutative = False',)))
+	name = choice (('', 'f', 'g', 'h', 'u'))
+	vars = choice (((), ('x',), ('x', 'y'), ('x', 'y', 'z')))
+	kw   = (() if random () < 0.8 else ('real = True',)) + (() if random () < 0.8 else ('commutative = True',))
 
-	return f' {"?" if kw or not name else choice ([" ", "?"])}{name}({", ".join (vars + kw)}) '
+	if random () < 0.25:
+		s = f"Function({name!r}, {', '.join (kw)})({', '.join (vars)})"
+
+	else:
+		q = '?' if not name or random () < 0.25 else ''
+
+		if random () < 0.5:
+			s = f"{q}{name}({', '.join (kw)})({', '.join (vars)})"
+		else:
+			s = f"{q}{name}({', '.join (vars + kw)})"
+
+	if len (vars) == 1 and random () < 0.2:
+		s = s + choice (("'", "''", "'''"))
+
+	elif vars and random () < 0.5:
+		p = randint (1, 3)
+		d = f"d{f'**{p}' if p > 1 else ''} / {' '.join (f'd{choice (vars)}' for _ in range (randint (1, 3)))}"
+		s = f'{d} {s}' if random () < 0.25 else f'{d} ({s})'
+
+	if vars and random () < 0.5:
+		s = f"{s}({', '.join (str (i) for i in range (len (vars)))})"
+
+	return s
 
 def expr_subs ():
 	t = [(expr (), expr ()) for _ in range (randint (1, 3))]
@@ -732,7 +757,7 @@ def test (argv = None):
 	depth   = 3
 	single  = None
 	topexpr = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:E:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'ns', 'nospaces', 'rs', 'randomspaces', 'quick', 'pyS', 'cross', 'depth=', 'expr=', 'topexpr='])
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:E:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'ns', 'nospaces', 'rs', 'randomspaces', 'tp', 'transpose', 'quick', 'pyS', 'cross', 'depth=', 'expr=', 'topexpr='])
 
 	if ('-q', '') in opts or ('--quick', '') in opts:
 		parser.set_quick (True)
@@ -769,11 +794,12 @@ def test (argv = None):
 	if not (dotex or donat or dopy):
 		dotex = donat = dopy = True
 
-	CURLYS   = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
-	spaces   = not (('--ns', '') in opts or ('--nospaces', '') in opts)
-	rndspace = ('--rs', '') in opts or ('--randomspaces', '') in opts
-	show     = ('--show', '') in opts
-	infinite = (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts)
+	CURLYS    = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
+	spaces    = not (('--ns', '') in opts or ('--nospaces', '') in opts)
+	rndspace  = ('--rs', '') in opts or ('--randomspaces', '') in opts
+	transpose = ('--tp', '') in opts or ('--transpose', '') in opts
+	show      = ('--show', '') in opts
+	infinite  = (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts)
 
 	if infinite and not single:
 		expr_func = (lambda: topexpr ()) if spaces else (lambda: topexpr ().replace (' ', ''))
@@ -802,18 +828,25 @@ def test (argv = None):
 					if ast.step == AST.None_:
 						ast = AST ('-slice', ast.start, ast.stop, None)
 
+				elif ast.is_ufunc: # remove spaces inserted into ufunc name
+					if ' ' in ast.ufunc:
+						ast = AST ('-ufunc', ast.ufunc.replace (' ', ''), ast.vars, ast.kw)
+
 				return AST (*tuple (fixstuff (a) for a in ast))
 
 			status = []
 			DEPTH  = depth
 			text   = expr_func ()
 
-			if text and infinite and not single and rndspace:
+			if text and infinite and not single and rndspace: # insert a random space to break shit
 				i    = randrange (0, len (text))
 				text = f'{text [:i]} {text [i:]}'
 
-			if show:
-				print (f'{text}\n')
+			if transpose: # transpose random block of text to another location overwriting that location
+				s0, s1, d0, d1 = (randrange (len (text)) for _ in range (4))
+				s0, s1         = sorted ((s0, s1))
+				d0, d1         = sorted ((d0, d1))
+				text           = text [:d0] + text [s0 : s1] + text [d1:]
 
 			status.append (f'text: {text}')
 			ast = fixstuff (parse (text))
@@ -824,6 +857,9 @@ def test (argv = None):
 					raise ValueError ("error parsing")
 
 				continue
+
+			if show:
+				print (f'{text}\n')
 
 			for rep in ('tex', 'nat', 'py'):
 				if locals () [f'do{rep}']:

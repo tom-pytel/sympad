@@ -567,8 +567,8 @@ def _expr_subs (expr, subs):
 	else:
 		raise SyntaxError ('expecting assignment')
 
-	if expr.is_subs: # collapse multiple subs into one
-		return AST ('-subs', expr.expr, expr.subs + subs)
+	if expr.strip_curly.is_subs: # collapse multiple subs into one
+		return AST ('-subs', expr.strip_curly.expr, expr.strip_curly.subs + subs)
 
 	return AST ('-subs', expr, subs)
 
