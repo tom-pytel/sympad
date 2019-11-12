@@ -519,7 +519,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 						not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
 						not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
 					not ast.vars.as_ufunc_argskw):
-				pre = '\\: ?'
+				pre = '?' # '\\: ?'
 			else:
 				pre = ''
 
@@ -549,7 +549,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				expr = self._ast2tex (ast.expr)
 
 			else:
-				expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex (ast.expr)))
+				expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex_wrap (ast.expr, ast.expr.is_diff)))
 
 				if not subs:
 					return expr
@@ -1571,7 +1571,7 @@ class spt2ast:
 		terms = []
 		hasO  = False
 
-		for arg in spt._sorted_args: # spt.args:
+		for arg in spt.args: # spt._sorted_args: #
 			ast  = self._spt2ast (arg)
 			hasO = hasO or isinstance (arg, sp.Order)
 

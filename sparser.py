@@ -243,6 +243,17 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 		if arg.is_paren and ufunc.is_ufunc_applied and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
 			ast = wrapa (AST ('-subs', diff, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+			# if diff.diff.is_var:
+			# 	ast = wrapa (AST ('-subs', diff, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+
+			# else:
+			# 	dvs    = set (dp [0] for dp in diff.dvs)
+			# 	vas    = list (zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))
+			# 	subs   = tuple (filter (lambda va: not va [1].is_var_nonconst and va [0].var in dvs, vas))
+			# 	vars   = tuple (map (lambda va: va [0] if va [0].var in dvs else va [1], vas))
+			# 	ufunc2 = AST ('-ufunc', ufunc.ufunc, vars, ufunc.kw)
+			# 	diff   = AST ('-diff', ufunc2, diff.d, diff.dvs)
+			# 	ast    = wrapa (AST ('-subs', diff, subs)) if subs else diff
 
 	elif tail.is_diffp: # f (x)' * (0) -> \. f (x) |_{x = 0}
 		diffp = _SP_USER_VARS.get (tail.diffp.var, tail.diffp)
@@ -343,8 +354,10 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 						return AST ('-diff', e, d, tuple (ds), src = AST ('/', ast.numer, ('*', ns [:i + 1]) if i else ns [0])), ns [i + 1:]
 					elif i == len (ns) - 2:
 						return AST ('-diff', ns [-1], d, tuple (ds), src = ast), None
-					else:
+					elif not ns [i + 1].is_paren:
 						return AST ('-diff', AST ('*', ns [i + 1:]), d, tuple (ds), src = ast), None
+					else:
+						return AST ('-diff', ns [i + 1], d, tuple (ds), src = AST ('/', ast.numer, ('*', ns [:i + 2]) if i < len (ns) - 3 else ns [i + 2])), ns [i + 2:]
 
 		return None, None # raise SyntaxError?
 
@@ -1317,16 +1330,16 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# set_sp_user_funcs ({'N'})
-# 	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
+	# set_sp_user_funcs ({'N'})
+	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-# 	# a = p.parse (r"du/dx (0, t) c")
-# 	a = p.parse (r"Function ('F') (x)")
-# 	print (a)
+	# a = p.parse (r"du/dx (0, t) c")
+	a = p.parse (r"d/dx (f) (2")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)
