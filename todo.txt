@@ -6,11 +6,14 @@
 * display: subs(diff(ufunc(x)), x, 0) -> diff(ufunc(x)) (0)
 * dont execute spt subs (diff (ufunc)) to preserve variables
 * invalid implicit undefined functions written as explicit
+> _ast2nat_subs
 
 > d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 
-> undefined functions assigned to vars must have same name for sanity?
+> subs clarity parentheses for tex display
+
+> test_sym ufunc cases
 
 > display assignedvar (x) -> assignedvar * (x) if assigned in user_vars
 > ast2spt mul overhaul
@@ -34,7 +37,6 @@
 
 
 > sin x sin y
-> subs clarity parentheses for tex display
 
 > overhaul = and == to try to minimize where == is needed for display
 

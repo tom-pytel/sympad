@@ -209,6 +209,28 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 	return spt
 
+def _ast_subs2ufunc (ast):
+	ufunc = ast.expr
+
+	if ufunc.op in {'-diff', '-diffp'}:
+		ufunc = ufunc [1]
+
+	ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
+
+	if ufunc.is_ufunc_unapplied:
+		return [AST ('=', s, d) for s, d in ast.subs], None
+
+	subs = []
+	vars = OrderedDict ((v, v) for v in ufunc.vars)
+
+	for s, d in ast.subs:
+		if s.is_var_nonconst and d.is_const and vars.get (s) == s:
+			vars [s] = d
+		else:
+			subs.append (AST ('=', s, d))
+
+	return subs, vars
+
 #...............................................................................................
 class ast2tex: # abstract syntax tree -> LaTeX text
 	def __init__ (self): self.parent = self.ast = None # pylint medication
@@ -345,7 +367,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			s = self._ast2tex_wrap (n, (p and _ast_is_neg (n)),
 					n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.is_piece and n is not ast.mul [-1]))
 
-			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
+			if ((p and n.op in {'/', '-diff'} and p.op in {'#', '/'} and n.op != p.op) or
+					(n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'})):
 				s = f'{{{s}}}'
 
 			if p and (
@@ -361,7 +384,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					n.op in {'#', '-mat'} or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
-					(n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
+					# (n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
+					(n.is_div and p.is_div) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma))):
@@ -533,6 +557,19 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		else:
 			subs = [AST ('=', s, d) for s, d in ast.subs]
 			expr = self._ast2tex (ast.expr)
+
+
+		# subs, vars = _ast_subs2ufunc (ast)
+
+		# if len (subs) == ast.subs.len:
+		# 	expr = self._ast2tex (ast.expr)
+
+		# else:
+		# 	expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex (ast.expr)))
+
+		# 	if not subs:
+		# 		return expr
+
 
 		if len (subs) == 1:
 			subs = self._ast2tex (subs [0])
