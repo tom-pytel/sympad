@@ -1,6 +1,9 @@
+> validation error text
+> 1 + (lambda y: y)
+> _ast2tex/nat/py do not close unfinished -idx
 > erroneout -2x + 3y in _ast2spt_Add
 > subs autocomplete
-> validation error text
+
 > sin x sin y
 > \limits^x - without the _
 > subs of lambda variables for other variables? what does that mean?

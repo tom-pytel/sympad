@@ -1191,20 +1191,20 @@ class Parser (lalr1.LALR1):
 
 	def _parse_autocomplete_expr_intg (self):
 		s               = self.stack [-1]
-		self.stack [-1] = lalr1.State (s.idx, s.sym, AST ('*', (s.red, AST.VarNull)))
+		self.stack [-1] = lalr1.State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
 		expr_vars       = set ()
 
 		if self.autocompleting:
-			stack = [s [2]]
+			reds = [s.red]
 
-			while stack:
-				ast = stack.pop ()
+			while reds:
+				ast = reds.pop ()
 
 				if ast.is_var:
 					if not (ast.is_differential or ast.is_part_any):
 						expr_vars.add (ast.var)
 				else:
-					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
+					reds.extend (filter (lambda a: isinstance (a, tuple), ast))
 
 		expr_vars = expr_vars - {'_'} - {ast.var for ast in AST.CONSTS}
 
@@ -1222,7 +1222,7 @@ class Parser (lalr1.LALR1):
 		self.autocomplete, self.autocompleting, self.erridx, self.has_error = state
 
 	def parse_result (self, red, erridx, autocomplete):
-		res             = (red is None, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete, self.rederr))
+		res             = (red is None, not self.rederr, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete, self.rederr))
 		self.parse_idx += 1
 
 		if self.parse_best is None or res < self.parse_best:
@@ -1248,7 +1248,7 @@ class Parser (lalr1.LALR1):
 		if isinstance (self.rederr, lalr1.Incomplete):
 			return self.parse_result (self.rederr.red, self.tok.pos, [])
 		if self.tok != '$end':
-			return self.parse_result (None, self.tok.pos, [])
+			return self.parse_result (None, self.pos, [])
 
 		if self.tokidx and self.tokens [self.tokidx - 1] == 'LEFT':
 			for irule, pos in self.strules [self.stidx]:
@@ -1277,7 +1277,7 @@ class Parser (lalr1.LALR1):
 			if rule [0] == 'expr_intg':
 				return self._parse_autocomplete_expr_intg ()
 
-			return False # self.parse_result (None, self.tok.pos, [])
+			return self.parse_result (None, self.pos, []) if self.rederr else False
 
 		return self._insert_symbol (rule [1] [pos])
 
@@ -1335,17 +1335,18 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	p = Parser ()
+# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	p = Parser ()
 
-	# set_sp_user_funcs ({'N'})
-	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
+# 	# set_sp_user_funcs ({'N'})
+# 	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-	# a = p.parse (r"du/dx (0, t) c")
-	# a = p.parse (r"\frac{d}{dx}\left(f\left(x \right) \right)\left(0 \right)")
-	a = p.parse (r"\.x|_{x}")
-	print (a)
+# 	# a = p.parse (r"du/dx (0, t) c")
+# 	# a = p.parse (r"\frac{d}{dx}\left(f\left(x \right) \right)\left(0 \right)")
+# 	a = p.parse (r"\.x|_{x}")
+# 	# a = p.parse (r"((pi) \mapsto 0)")
+# 	print (a)
 
-	# a = sym.ast2spt (a)
-	# print (a)
+# 	# a = sym.ast2spt (a)
+# 	# print (a)

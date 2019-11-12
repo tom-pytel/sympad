@@ -22,10 +22,12 @@ class State (tuple): # easier on the eyes
 		return tuple.__new__ (cls, args)
 
 	def __init__ (self, *args): # idx = state index, sym = symbol (TOKEN or 'expression'), red = reduction (if present)
-		if len (self) == 2:
+		if len (self) == 4:
+			self.idx, self.sym, self.pos, self.red = self
+
+		else: # must be 2
 			self.idx, self.sym = self
-		else: # must be 3
-			self.idx, self.sym, self.red = self
+			self.pos           = self.sym.pos
 
 class LALR1:
 	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])_?(\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
@@ -144,9 +146,10 @@ class LALR1:
 		tokens = self.tokenize (src)
 		tokidx = 0
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
-		stack  = [State (0, None, None)] # [(stidx, symbol, reduction) or (stidx, token), ...]
+		stack  = [State (0, None, 0, None)] # [(stidx, symbol, pos, reduction) or (stidx, token), ...]
 		stidx  = 0
 		rederr = None # reduction function raised exception (SyntaxError or Incomplete usually)
+		pos    = 0
 
 		while 1:
 			if not rederr:
@@ -154,8 +157,8 @@ class LALR1:
 				act, conf = terms [stidx].get (tok, (None, None))
 
 			if rederr or act is None:
-				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr = \
-						tokens, tokidx, cstack, stack, stidx, tok, rederr
+				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr, self.pos = \
+						tokens, tokidx, cstack, stack, stidx, tok, rederr, pos
 
 				rederr = None
 
@@ -201,6 +204,7 @@ class LALR1:
 				rule  = rules [-act]
 				rnlen = -len (rule [1])
 				prod  = rule [0]
+				pos   = stack [rnlen].pos
 
 				try:
 					red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
@@ -219,7 +223,7 @@ class LALR1:
 
 				stidx = nterms [stack [-1].idx] [prod]
 
-				stack.append (State (stidx, prod, red))
+				stack.append (State (stidx, prod, pos, red))
 
 class lalr1: # for single script
 	Incomplete = Incomplete
