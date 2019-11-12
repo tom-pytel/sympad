@@ -206,3 +206,7 @@ i {
 .CopySpan {
 	display: inline-block;
 }
+
+#ValidationError {
+	color: #f99;
+}

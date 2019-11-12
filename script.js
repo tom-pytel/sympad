@@ -14,6 +14,7 @@ PreventFocusOut  = true;
 LogIdx           = 0;
 UniqueID         = 1;
 
+LastValidation   = null;
 Validations      = [undefined];
 Evaluations      = [undefined];
 ErrorIdx         = null;
@@ -237,6 +238,8 @@ function ajaxValidate (resp) {
 	if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
 		return; // ignore out of order responses (which should never happen with single threaded server)
 	}
+
+	LastValidation = resp;
 
 	if (resp.tex !== null) {
 		Validations [resp.idx] = resp;
@@ -476,6 +479,12 @@ function inputKeypress (e) {
 			inputted (s);
 
 			return false;
+
+		} else if (LastValidation !== null && LastValidation.error) { // last validation had error, display
+			let eLogInput = document.getElementById (`LogInput${LastValidation.idx}`);
+
+			$('#ValidationError').remove ();
+			$(eLogInput).append (`<span id="ValidationError">&lt;-- ${LastValidation.error}</span>`)
 		}
 
 	} else if (e.which == 32) {

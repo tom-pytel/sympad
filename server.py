@@ -77,6 +77,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version) # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 	import sympy as sp
+	import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import sparser       # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -349,8 +350,8 @@ class Handler (SimpleHTTPRequestHandler):
 			} for ast in asts]}
 
 	def validate (self, request):
-		ast, erridx, autocomplete = _PARSER.parse (request ['text'])
-		tex = nat = py            = None
+		ast, erridx, autocomplete, error = _PARSER.parse (request ['text'])
+		tex = nat = py                   = None
 
 		if ast is not None:
 			tex = sym.ast2tex (ast)
@@ -364,12 +365,19 @@ class Handler (SimpleHTTPRequestHandler):
 				print ('py: ', py, file = sys.stderr)
 				print (file = sys.stderr)
 
+		if isinstance (error, Exception):
+			if isinstance (error, lalr1.Incomplete):
+				error = 'incomplete'
+			else:
+				error = (f'{error.__class__.__name__}: ' if not isinstance (error, SyntaxError) else '') + error.args [0].replace ('\n', ' ').strip ()
+
 		return {
 			'tex'         : tex,
 			'nat'         : nat,
 			'py'          : py,
 			'erridx'      : erridx,
 			'autocomplete': autocomplete,
+			'error'       : error,
 		}
 
 	def evaluate (self, request):
@@ -430,7 +438,7 @@ class Handler (SimpleHTTPRequestHandler):
 		try:
 			_HISTORY.append (request ['text'])
 
-			ast, _, _ = _PARSER.parse (request ['text'])
+			ast, _, _, _ = _PARSER.parse (request ['text'])
 
 			if ast:
 				for ast in (ast.scolon if ast.is_scolon else (ast,)):

@@ -146,7 +146,7 @@ class LALR1:
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
 		stack  = [State (0, None, None)] # [(stidx, symbol, reduction) or (stidx, token), ...]
 		stidx  = 0
-		rederr = None # reduction function raised exception (SyntaxError or Incomplete)
+		rederr = None # reduction function raised exception (SyntaxError or Incomplete usually)
 
 		while 1:
 			if not rederr:

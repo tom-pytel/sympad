@@ -1,3 +1,10 @@
+> erroneout -2x + 3y in _ast2spt_Add
+> subs autocomplete
+> validation error text
+> sin x sin y
+> \limits^x - without the _
+> subs of lambda variables for other variables? what does that mean?
+
 > subs clarity parentheses for tex display
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
@@ -24,18 +31,13 @@
 > @ and % without parentheses consistency?
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
-> allow vars in diff for power to be resolved at runtime?
+> allow vars in diff for power to be resolved at runtime for diff fucntions?
 
-
-> sin x sin y
 
 > overhaul = and == to try to minimize where == is needed for display
 
 > add slice() to test_sym
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)? - remove or reject null vars after
-> \limits^x - without the _
-
-> subs of lambda variables for other variables?
 
 > upgrade error marking in sparser to better show where erroneous expressions start (error stack?)
 > helpful error message in web client if parsing raises

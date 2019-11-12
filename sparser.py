@@ -133,17 +133,12 @@ def _expr_colon (lhs, rhs):
 	return wrap (AST ('-lamb', rhs, () if first_var is None else (first_var.var,)))
 
 def _expr_mapsto (args, lamb):
-	if args.is_var:
+	if args.is_var_nonconst:
 		return AST ('-lamb', lamb, (args.var,))
+	elif args.is_comma and all (v.is_var_nonconst for v in args.comma):
+		return AST ('-lamb', lamb, tuple (v.var for v in args.comma))
 
-	elif args.is_comma:
-		for var in args.comma:
-			if not var.is_var:
-				break
-		else:
-			return AST ('-lamb', lamb, tuple (c.var for c in args.comma))
-
-	raise SyntaxError ('invalid lambda function')
+	raise SyntaxError ('mapsto parameters can only be variables')
 
 def _expr_piece (expr, expr_if, expr_else):
 	if expr_else.is_piece:
@@ -516,7 +511,7 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 		ast2.src = AST ('*', (('@', args [1]), args [iparm]))
 
 		if ast2.args.len != 1 and ast2.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
-			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseaudo-function takes a single argument')
+			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseudo-function takes a single argument')
 
 	elif args [0] in {'-sqrt', '-log'}:
 		ast2.src_arg = args [iparm]
@@ -1227,7 +1222,7 @@ class Parser (lalr1.LALR1):
 		self.autocomplete, self.autocompleting, self.erridx, self.has_error = state
 
 	def parse_result (self, red, erridx, autocomplete):
-		res             = (red is None, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete))
+		res             = (red is None, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete, self.rederr))
 		self.parse_idx += 1
 
 		if self.parse_best is None or res < self.parse_best:
@@ -1245,18 +1240,15 @@ class Parser (lalr1.LALR1):
 				sys.stdout.write ('\x08' + '\\|/-' [self.parse_idx & 3])
 				sys.stdout.flush ()
 
+		return False # for convenience
+
 	def parse_error (self): # add tokens to continue parsing for autocomplete if syntax allows
 		self.has_error = True
 
 		if isinstance (self.rederr, lalr1.Incomplete):
-			self.parse_result (self.rederr.red, self.tok.pos, [])
-
-			return False
-
+			return self.parse_result (self.rederr.red, self.tok.pos, [])
 		if self.tok != '$end':
-			self.parse_result (None, self.tok.pos, [])
-
-			return False
+			return self.parse_result (None, self.tok.pos, [])
 
 		if self.tokidx and self.tokens [self.tokidx - 1] == 'LEFT':
 			for irule, pos in self.strules [self.stidx]:
@@ -1285,7 +1277,7 @@ class Parser (lalr1.LALR1):
 			if rule [0] == 'expr_intg':
 				return self._parse_autocomplete_expr_intg ()
 
-			return False
+			return False # self.parse_result (None, self.tok.pos, [])
 
 		return self._insert_symbol (rule [1] [pos])
 
@@ -1318,7 +1310,7 @@ class Parser (lalr1.LALR1):
 
 		lalr1.LALR1.parse (self, text)
 
-		res = self.parse_best [-1] if self.parse_best is not None else (None, 0, [])
+		res = self.parse_best [-1] if self.parse_best is not None else (None, 0, [], None)
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			if self.parse_idx >= 33:
@@ -1352,7 +1344,7 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 
 	# a = p.parse (r"du/dx (0, t) c")
 	# a = p.parse (r"\frac{d}{dx}\left(f\left(x \right) \right)\left(0 \right)")
-	a = p.parse (r"\frac{d}{dx} (f (x)) (0)")
+	a = p.parse (r"\.x|_{x}")
 	print (a)
 
 	# a = sym.ast2spt (a)
