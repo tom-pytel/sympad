@@ -8,8 +8,10 @@
 * invalid implicit undefined functions written as explicit
 > _ast2nat_subs
 
-> d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))
+> d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))?
+
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
+> \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) and the parsing
 
 > subs clarity parentheses for tex display
 

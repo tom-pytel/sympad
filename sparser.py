@@ -373,31 +373,42 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			elif len (tail) == 1:
 				return _expr_mul_imp (diff, tail [0])
 			else:
-				return AST.flatcat ('*', _expr_mul_imp (diff, tail [0]), AST ('*', tail [1:]))
+				return AST.flatcat ('*', _expr_mul_imp (diff, tail [0]), AST ('*', tail [1:])) # only reanalyzes first element of tail for diff of ufunc ics
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
 		mul = []
 		end = ast.mul.len
 
-		for i in range (end - 1, -1, -1):
+		for i in range (end - 2, -1, -1):
 			if ast.mul [i].is_div:
 				diff, tail = _interpret_divide (ast.mul [i])
 
 				if diff:
 					if diff.diff:
 						if i < end - 1:
-							mul [0 : 0] = ast.mul [i + 1 : end]
+							mul [0:0] = ast.mul [i + 1 : end]
 
 						if tail:
-							mul [0 : 0] = tail
+							mul [0:0] = tail
 
 						mul.insert (0, diff)
 
-					elif i < end - 1:
-						mul.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.d, diff.dvs, src = AST ('*', ast.mul [i : end])))
+					if i == end - 2:
+						mul.insert (0, AST ('-diff', ast.mul [i + 1], diff.d, diff.dvs, src = AST ('*', ast.mul [i : end])))
+					elif not ast.mul [i + 1].is_paren:
+						mul.insert (0, AST ('-diff', AST ('*', ast.mul [i + 1 : end]), diff.d, diff.dvs, src = AST ('*', ast.mul [i : end])))
 
 					else:
-						continue
+						diff = AST ('-diff', ast.mul [i + 1], diff.d, diff.dvs, src = AST ('*', ast.mul [i : i + 2]))
+						expr = _expr_mul_imp (diff, ast.mul [i + 2]) # only reanalyzes first element of tail for diff of ufunc ics
+
+						if expr.is_mul:
+							mul [0:0] = ast.mul [i + 2 : end]
+							mul.insert (0, diff)
+
+						else:
+							mul [0:0] = ast.mul [i + 3 : end]
+							mul.insert (0, expr)
 
 					end = i
 
@@ -1332,16 +1343,17 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# set_sp_user_funcs ({'N'})
-# 	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
+	# set_sp_user_funcs ({'N'})
+	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-# 	# a = p.parse (r"du/dx (0, t) c")
-# 	a = p.parse (r"d / dx (u (x, y)) (x, y)")
-# 	print (a)
+	# a = p.parse (r"du/dx (0, t) c")
+	# a = p.parse (r"\frac{d}{dx}\left(f\left(x \right) \right)\left(0 \right)")
+	a = p.parse (r"\frac{d}{dx} (f (x)) (0)")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)

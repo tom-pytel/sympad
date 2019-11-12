@@ -217,7 +217,7 @@ def _ast_subs2ufunc (ast):
 
 	ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
 
-	if ufunc.is_ufunc_unapplied:
+	if not ufunc.is_ufunc_applied:
 		return [AST ('=', s, d) for s, d in ast.subs], None
 
 	subs = []
@@ -528,48 +528,46 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{ufunctex}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
 
 	def _ast2tex_subs (self, ast):
-		ufunc = ast.expr
+		# ufunc = ast.expr
 
-		if ufunc.op in {'-diff', '-diffp'}:
-			ufunc = ufunc [1]
+		# if ufunc.op in {'-diff', '-diffp'}:
+		# 	ufunc = ufunc [1]
 
-		ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
+		# ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
 
-		if ufunc.is_ufunc_applied:
-			subs = []
-			vars = OrderedDict ((v, v) for v in ufunc.vars)
+		# if ufunc.is_ufunc_applied:
+		# 	subs = []
+		# 	vars = OrderedDict ((v, v) for v in ufunc.vars)
 
-			for s, d in ast.subs:
-				if s.is_var_nonconst and d.is_const and vars.get (s) == s:
-					vars [s] = d
-				else:
-					subs.append (AST ('=', s, d))
+		# 	for s, d in ast.subs:
+		# 		if s.is_var_nonconst and d.is_const and vars.get (s) == s:
+		# 			vars [s] = d
+		# 		else:
+		# 			subs.append (AST ('=', s, d))
 
-			if len (subs) == ast.subs.len:
-				expr = self._ast2tex (ast.expr)
+		# 	if len (subs) == ast.subs.len:
+		# 		expr = self._ast2tex (ast.expr)
 
-			else:
-				expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex_wrap (ast.expr, ast.expr.is_diff)))
+		# 	else:
+		# 		expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex_wrap (ast.expr, ast.expr.is_diff)))
 
-				if not subs:
-					return expr
-
-		else:
-			subs = [AST ('=', s, d) for s, d in ast.subs]
-			expr = self._ast2tex (ast.expr)
-
-
-		# subs, vars = _ast_subs2ufunc (ast)
-
-		# if len (subs) == ast.subs.len:
-		# 	expr = self._ast2tex (ast.expr)
+		# 		if not subs:
+		# 			return expr
 
 		# else:
-		# 	expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex (ast.expr)))
+		# 	subs = [AST ('=', s, d) for s, d in ast.subs]
+		# 	expr = self._ast2tex (ast.expr)
 
-		# 	if not subs:
-		# 		return expr
+		subs, vars = _ast_subs2ufunc (ast)
 
+		if len (subs) == ast.subs.len:
+			expr = self._ast2tex (ast.expr)
+
+		else:
+			expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex (ast.expr)))
+
+			if not subs:
+				return expr
 
 		if len (subs) == 1:
 			subs = self._ast2tex (subs [0])
@@ -1816,12 +1814,12 @@ class sym: # for single script
 # 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 # 	# set_sym_user_funcs (vars)
 
-# 	ast = AST ('-func', 'pdsolve', (('=', ('+', (('/', ('*', (('#', '2'), ('-diff', ('(', ('-ufunc', 'f', (('@', 'x'), ('@', 'y')))), 'd', (('x', 1),))), {1}), ('-ufunc', 'f', (('@', 'x'), ('@', 'y')))), ('/', ('*', (('#', '3'), ('-diff', ('(', ('-ufunc', 'f', (('@', 'x'), ('@', 'y')))), 'd', (('y', 1),))), {1}), ('-ufunc', 'f', (('@', 'x'), ('@', 'y')))), ('#', '1'))), ('#', '0')),))
-# 	# res = ast2tex (ast)
+# 	ast = AST ('-func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('@', 'x'), ('#', '2')))
+# 	res = ast2tex (ast)
 # 	# res = ast2nat (ast)
 # 	# res = ast2py (ast)
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
+# 	# res = ast2spt (ast)
+# 	# res = spt2ast (res)
 
 # 	# res = ast2nat (res)
 
