@@ -6,16 +6,16 @@
 * display: subs(diff(ufunc(x)), x, 0) -> diff(ufunc(x)) (0)
 * dont execute spt subs (diff (ufunc)) to preserve variables
 * invalid implicit undefined functions written as explicit
-> _ast2nat_subs
+* _ast2nat_subs
+
+> test_sym ufunc cases
+> subs clarity parentheses for tex display
 
 > d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))?
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) and the parsing
 
-> subs clarity parentheses for tex display
-
-> test_sym ufunc cases
 
 > display assignedvar (x) -> assignedvar * (x) if assigned in user_vars
 > ast2spt mul overhaul

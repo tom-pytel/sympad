@@ -604,11 +604,11 @@ vars
 
 """), ('server_ufuncs', """
 
-f = ?()
+f = ? ()
 f (x)
 f (x) (0)
 f (0)
-f = ?g()
+f = ?g ()
 f (x)
 f (x) (0)
 f (0)
@@ -619,7 +619,7 @@ f = f (x)
 f (x)
 f (x) (0)
 f (0)
-f = ?g()
+f = ?g (x)
 f (x)
 f (x) (0)
 f (0)
@@ -630,9 +630,11 @@ u = u (x, t)
 du/dx (x, t)
 du/dx (1, t)
 du/dx (1, 0)
-
-
-
+d**2u / dx dt (1, 0)
+d/dx u (1, 0)
+d/dx (u) (1, 0)
+d**2 / dx dt u (1, 0)
+d**2 / dx dt (u) (1, 0)
 
 """), ('intro_examples', """
 

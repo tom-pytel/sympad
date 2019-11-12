@@ -528,36 +528,6 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{ufunctex}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
 
 	def _ast2tex_subs (self, ast):
-		# ufunc = ast.expr
-
-		# if ufunc.op in {'-diff', '-diffp'}:
-		# 	ufunc = ufunc [1]
-
-		# ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
-
-		# if ufunc.is_ufunc_applied:
-		# 	subs = []
-		# 	vars = OrderedDict ((v, v) for v in ufunc.vars)
-
-		# 	for s, d in ast.subs:
-		# 		if s.is_var_nonconst and d.is_const and vars.get (s) == s:
-		# 			vars [s] = d
-		# 		else:
-		# 			subs.append (AST ('=', s, d))
-
-		# 	if len (subs) == ast.subs.len:
-		# 		expr = self._ast2tex (ast.expr)
-
-		# 	else:
-		# 		expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex_wrap (ast.expr, ast.expr.is_diff)))
-
-		# 		if not subs:
-		# 			return expr
-
-		# else:
-		# 	subs = [AST ('=', s, d) for s, d in ast.subs]
-		# 	expr = self._ast2tex (ast.expr)
-
 		subs, vars = _ast_subs2ufunc (ast)
 
 		if len (subs) == ast.subs.len:
@@ -869,26 +839,40 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'''{{{", ".join (f'{k}: {v}' for k, v in items)}}}'''
 
 	def _ast2nat_ufunc (self, ast):
-		if (not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or
-				(ast.ufunc in _SYM_USER_FUNCS and
-					not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
-					not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
-				not ast.vars.as_ufunc_argskw):
-			pre = '?'
-		else:
-			pre = ''
+		ufuncnat = ast.ufuncnat # ufunc name override from subs to print possible function of derivative format
 
-		return f'{pre}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})'
+		if ufuncnat is None:
+			if (not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or
+					(ast.ufunc in _SYM_USER_FUNCS and
+						not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
+						not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+					not ast.vars.as_ufunc_argskw):
+				pre = '?'
+			else:
+				pre = ''
+
+			ufuncnat = f'{pre}{ast.ufunc}'
+
+		return f'{ufuncnat}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})'
 
 	def _ast2nat_subs (self, ast):
-		subs = [AST ('=', s, d) for s, d in ast.subs]
+		subs, vars = _ast_subs2ufunc (ast)
 
-		if ast.subs.len == 1:
+		if len (subs) == ast.subs.len:
+			expr = self._ast2nat (ast.expr)
+
+		else:
+			expr = self._ast2nat (AST ('-ufunc', None, tuple (vars.values ()), ufuncnat = self._ast2nat (ast.expr)))
+
+			if not subs:
+				return expr
+
+		if len (subs) == 1:
 			subs = self._ast2nat (subs [0])
 		else:
 			subs = self._ast2nat (AST (',', tuple (subs)))
 
-		return f'\\. {self._ast2nat (ast.expr)} |_{{{subs}}}'
+		return f'\\. {expr} |_{{{subs}}}'
 
 	_ast2nat_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2nat (a) for a in ast.scolon),
