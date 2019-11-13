@@ -1575,8 +1575,16 @@ class spt2ast:
 
 			terms.append (ast)
 
-		if not hasO and spt.args [0].is_number and (not terms [1].is_minus or spt.args [0] < 0):
-			terms = terms [1:] + [terms [0]]
+		if not hasO: # try to order so negative is not first
+			if spt.args [0].is_number and (not _ast_is_neg (terms [1]) or spt.args [0] < 0):
+				terms = terms [1:] + [terms [0]]
+
+			elif _ast_is_neg (terms [0]):
+				for i, t in enumerate (terms):
+					if not _ast_is_neg (t):
+						terms = [t] + terms [:i] + terms [i + 1:]
+
+						break
 
 		return AST ('+', tuple (terms))
 
@@ -1804,18 +1812,22 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-# 	# set_sym_user_funcs (vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	# set_sym_user_funcs (vars)
 
-# 	ast = AST ('^', ('-func', 'sin', (('@', 'y'),)), ('^', ('@', 'x'), ('#', '2')))
-# 	res = ast2tex (ast)
-# 	# res = ast2nat (ast)
-# 	# res = ast2py (ast)
-# 	# res = ast2spt (ast)
-# 	# res = spt2ast (res)
+	# ast = AST ('^', ('-func', 'sin', (('@', 'y'),)), ('^', ('@', 'x'), ('#', '2')))
+	# res = ast2tex (ast)
+	# res = ast2nat (ast)
+	# res = ast2py (ast)
+	# res = ast2spt (ast)
+	# res = spt2ast (res)
 
-# 	# res = ast2nat (res)
+	# res = ast2nat (res)
 
-# 	print (repr (res))
+	x, y = sp.symbols ('x, y')
+	res = -3*y + 2*x
+	res = str (res)
+
+	print (repr (res))
