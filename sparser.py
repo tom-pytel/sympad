@@ -740,7 +740,7 @@ class Parser (lalr1.LALR1):
 			b'F9rnropAls3QmhZCsR343sW6rfMp65slGvZd9cVVZ/V8ysnNMq8Vd9pEcWfEPV/51oNTE2GLwa3zMqfZPtxFa8VTGBHgHrfVumbLhbYdG5M48tK4rATju/t8CdcoVcF/fTXyzXVfXHVOsrC5S5OazTxwsJD7ZtWFxu9r4+RX2Iu2Oh6aPPe0jQxvvIsMnFxG' \
 			b'pjbv9c17aK774qrTPenmjRtfL/Liwlk9EXVZheOay7y4cGZ2mzxc4QRIPbqAulMKyTcPfyGq300g2f9kVs8sRVZ85PKaoLflMuubtRduzzsh2mnXkS/jkpvZNvQ0Sw7PZLj4i8vt9I1Pl1huurn8i3eKzmxCevwdFY+9ywZPSjnp4nNQ0v+TE5pKdO/XyHls' \
 			b'WjN+XCdO2YN1HXXCNtdxcT04291Wj10P8Mykq7i4Hqw2SbqaeqCa67i4Hpw0eXQV9UA313FxPThpnuoq6oFpruPieuCa18bSsQECED4+kJrS4wNUMj3E83gkKgwX82qi+AweXM7AvXsad3zjLiqezoEaNBkaiq/8z6HVXmgsXooBFWH0X3fc2bE6PwsIT8/h' \
-			b'LFjDz8sTEzGEtnQSEA04NVc0qmRYuTxXoJAGAGeeQKqoNounKS5UNEzVYqrYxPgsRT63sEvnFcazCvHgHzmOx+L2b6rCtH0StS36cygn7fnSItHoiCNcauJ5ThAHfuMBStpzqULrATfqRUvB4zfRwxN493e3/x/cVPv2' 
+			b'LFjDz8sTEzGEtnQSEA04NVc0qmRYuTxXoJAGAGeeQKqoNounKS5UNEzVYqrYxPgsRT63sEvnFcazCvHgHzmOx+L2b6rCtH0StS36cygn7fnSItHoiCNcauJ5ThAHfuMBStpzqULrATfqRUvB4zfRwxN493e3/x/cVPv2'
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1330,13 +1330,10 @@ class sparser: # for single script
 # if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 # 	p = Parser ()
 
-# 	set_sp_user_funcs ({'N'})
-# 	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
+# 	# set_sp_user_funcs ({'N'})
+# 	# set_sp_user_vars ({'f': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-# 	# a = p.parse (r"sin(x)**y[a][b][c].z")
-# 	# a = p.parse (r"sin(v)**[a][b].c")
-# 	# a = p.parse (r"sin(v)**-[a][b].c")
-# 	a = p.parse (r"sin(x)**a[b][d].c")
+# 	a = p.parse (r"Subs(x, x, (sin(x)))")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)

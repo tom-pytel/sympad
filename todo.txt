@@ -1,20 +1,20 @@
-> allow N**2 y?
+> f (x) = x**2 when f is assigned and non-lambda
 
+> allow N**2 y?
 > _spt2ast_Mul - do not absorb fraction into non-fraction?
-> _spt2ast_Add - erroneous -2x + 3y
+> subs clarity parentheses for tex display - attr, etc?
 
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
-> syntax error of diffp of multivar ufunc in sparser?
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
 
 > subs autocomplete
 > improve error reporting with position of error returned from reduction functions if possible lalr1.Syntax (text, pos)
+> syntax error of diffp of multivar ufunc in sparser?
 
-> subs clarity parentheses for tex display - attr, etc?
 
 
 > display assignedvar (x) -> assignedvar * (x) if assigned in user_vars
@@ -184,3 +184,35 @@ Errors:
 -------
 
 
+text: \.[[-820947.6685066979]]|_{\{}=(:)}.K3YuuJq.C5TH7Z.OYxzX()\[sqrt{2:-121286.70767984728},-3.4070228187959974e+170.073488360130702551.0or{{{xyzd,partial,Delta}}}or\mu.Juw.YmZ(),]((()))
+ast:  ('*', (('.', ('.', ('.', ('-subs', ('[', (('[', (('#', '-820947.6685066979'),)),)), ((('-set', ()), ('(', ('-slice', False, False, None))),)), 'K3YuuJq'), 'C5TH7Z'), 'OYxzX', ()), ('-mat', ((('-sqrt', ('-dict', ((('#', '2'), ('#', '-121286.70767984728')),))),), (('-or', (('*', (('#', '-3.4070228187959974e+170'), ('#', '0.073488360130702551'), ('#', '0.0'))), ('-set', (('@', 'xyzd'), ('@', 'partial'), ('@', 'Delta'))), ('.', ('.', ('@', 'mu'), 'Juw'), 'YmZ', ()))),))), ('(', ('(', ('(', (',', ()))))))
+ast:  ('*', (('.', ('.', ('.', ('-func', 'Subs', (('[', (('[', (('#', '-820947.6685066979'),)),)), ('-func', 'FiniteSet', ()), ('(', ('-func', 'slice', (('@', 'None'),))))), 'K3YuuJq'), 'C5TH7Z'), 'OYxzX', ()), ('-func', 'Matrix', (('[', (('-sqrt', ('-dict', ((('#', '2'), ('#', '-121286.70767984728')),))), ('-func', 'Or', (('*', (('#', '-3.4070228187959974e+170'), ('#', '0.073488360130702551'), ('#', '0.0')), {1, 2}), ('-func', 'FiniteSet', (('@', 'xyzd'), ('@', 'partial'), ('@', 'Delta'))), ('.', ('.', ('@', 'mu'), 'Juw'), 'YmZ', ()))))),)), ('(', ('(', ('(', (',', ()))))), {1, 2})
+py1:  Subs([[-820947.6685066979]], FiniteSet(), (slice(None))).K3YuuJq.C5TH7Z.OYxzX()*Matrix([sqrt({2: -121286.70767984728}), Or(-3.4070228187959974e+170*0.073488360130702551*0.0, FiniteSet(xyzd, partial, Delta), mu.Juw.YmZ())])*((()))
+py2:  Subs([[-820947.6685066979]], FiniteSet(), slice(None)).K3YuuJq.C5TH7Z.OYxzX()*Matrix([sqrt({2: -121286.70767984728}), Or(-3.4070228187959974e+170*0.073488360130702551*0.0, FiniteSet(xyzd, partial, Delta), mu.Juw.YmZ())])*((()))
+
+text: \.[[-820947.6685066979]]|_{\{}=(:)}.K3YuuJq.C5TH7Z.OYxzX()\[sqrt{2:-121286.70767984728},-3.4070228187959974e+170.073488360130702551.0or{{{xyzd,partial,Delta}}}or\mu.Juw.YmZ(),]((()))
+ast:  ('*', (('.', ('.', ('.', ('-subs', ('[', (('[', (('#', '-820947.6685066979'),)),)), ((('-set', ()), ('(', ('-slice', False, False, None))),)), 'K3YuuJq'), 'C5TH7Z'), 'OYxzX', ()), ('-mat', ((('-sqrt', ('-dict', ((('#', '2'), ('#', '-121286.70767984728')),))),), (('-or', (('*', (('#', '-3.4070228187959974e+170'), ('#', '0.073488360130702551'), ('#', '0.0'))), ('-set', (('@', 'xyzd'), ('@', 'partial'), ('@', 'Delta'))), ('.', ('.', ('@', 'mu'), 'Juw'), 'YmZ', ()))),))), ('(', ('(', ('(', (',', ()))))))
+ast:  ('*', (('.', ('.', ('.', ('-func', 'Subs', (('[', (('[', (('#', '-820947.6685066979'),)),)), ('-func', 'FiniteSet', ()), ('(', ('-func', 'slice', (('@', 'None'),))))), 'K3YuuJq'), 'C5TH7Z'), 'OYxzX', ()), ('-func', 'Matrix', (('[', (('-sqrt', ('-dict', ((('#', '2'), ('#', '-121286.70767984728')),))), ('-func', 'Or', (('*', (('#', '-3.4070228187959974e+170'), ('#', '0.073488360130702551'), ('#', '0.0')), {1, 2}), ('-func', 'FiniteSet', (('@', 'xyzd'), ('@', 'partial'), ('@', 'Delta'))), ('.', ('.', ('@', 'mu'), 'Juw'), 'YmZ', ()))))),)), ('(', ('(', ('(', (',', ()))))), {1, 2})
+py1:  Subs([[-820947.6685066979]], FiniteSet(), (slice(None))).K3YuuJq.C5TH7Z.OYxzX()*Matrix([sqrt({2: -121286.70767984728}), Or(-3.4070228187959974e+170*0.073488360130702551*0.0, FiniteSet(xyzd, partial, Delta), mu.Juw.YmZ())])*((()))
+py2:  Subs([[-820947.6685066979]], FiniteSet(), slice(None)).K3YuuJq.C5TH7Z.OYxzX()*Matrix([sqrt({2: -121286.70767984728}), Or(-3.4070228187959974e+170*0.073488360130702551*0.0, FiniteSet(xyzd, partial, Delta), mu.Juw.YmZ())])*((()))
+
+text: \.x|_{x=(:)}
+ast:  ('-subs', ('@', 'x'), ((('@', 'x'), ('(', ('-slice', False, False, None))),))
+ast:  ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'slice', (('@', 'None'),)))))
+py1:  Subs(x, x, (slice(None)))
+py2:  Subs(x, x, slice(None))
+
+text: \.x|_{x=(sin x)}
+ast:  ('-subs', ('@', 'x'), ((('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))),))
+ast:  ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
+py1:  Subs(x, x, (sin(x)))
+py2:  Subs(x, x, sin(x))
+
+sin ((x))
+
+
+text: ({{{-{cse()}},{{{{partial} != {-1}}*{{{-1.0}  {1.0}}}}},{lambda: {{-1.0} == {dx}}},},{{\lim_{x \to \log_{0}{d}} {[{-1.0}]}},{partial^{7} / partialx^{3} partialy^{1} partialx^{3} {{partialx} if {a} else {-1.0} if {a} else {d} if {1.0} else {partialx}}},{{lambda x, y, z: {oo}} = {\tanh()}},},{{partial^{3} / partialz^{3} {{oo} / {'str'}}},{({{{\left|{dx}\right|},{{a} if {d}},},{{-{oo}},{({{-1.0},{oo},{-1.0},})},},})},{partial^{5} / partialx^{1} partialy^{1} partialz^{3} {{-1}!}},},})
+ast:  ('(', ('-set', (('-set', (('-', ('-func', 'cse', ())), ('*', (('<>', ('@', 'partial'), (('!=', ('#', '-1')),)), ('#', '-1.0'), ('#', '1.0')), {1}), ('-lamb', ('<>', ('#', '-1.0'), (('==', ('@', 'dx')),)), ()))), ('-set', (('-lim', ('[', (('#', '-1.0'),)), ('@', 'x'), ('-log', ('@', 'd'), ('#', '0'))), ('-diff', ('-piece', ((('@', 'partialx'), ('@', 'a')), (('#', '-1.0'), ('@', 'a')), (('@', 'd'), ('#', '1.0')), (('@', 'partialx'), True))), 'partial', (('x', 3), ('y', 1), ('x', 3))), ('=', ('-lamb', ('@', 'oo'), ('x', 'y', 'z')), ('-func', 'tanh', ())))), ('-set', (('-diff', ('/', ('@', 'oo'), ('"', 'str')), 'partial', (('z', 3),)), ('(', ('-set', (('-set', (('|', ('@', 'dx')), ('-piece', ((('@', 'a'), ('@', 'd')),)))), ('-set', (('-', ('@', 'oo')), ('(', ('-set', (('#', '-1.0'), ('@', 'oo'), ('#', '-1.0'))))))))), ('-diff', ('!', ('#', '-1')), 'partial', (('x', 1), ('y', 1), ('z', 3))))))))
+ast:  ('(', ('-func', 'FiniteSet', (('-func', 'FiniteSet', (('-', ('-func', 'cse', ())), ('*', (('-func', 'Ne', (('@', 'partial'), ('#', '-1'))), ('#', '-1.0'), ('#', '1.0')), {1, 2}), ('-func', 'Lambda', (('(', (',', ())), ('-func', 'Eq', (('#', '-1.0'), ('@', 'dx'))))))), ('-func', 'FiniteSet', (('-func', 'Limit', (('[', (('#', '-1.0'),)), ('@', 'x'), ('/', ('-log', ('@', 'd')), ('-log', ('#', '0'))), ('=', ('@', 'dir'), ('"', '+-')))), ('-func', 'Derivative', (('-func', 'Piecewise', (('(', (',', (('@', 'partialx'), ('@', 'a')))), ('(', (',', (('#', '-1.0'), ('@', 'a')))), ('(', (',', (('@', 'd'), ('#', '1.0')))), ('(', (',', (('@', 'partialx'), ('@', 'True')))))), ('@', 'x'), ('#', '3'), ('@', 'y'), ('@', 'x'), ('#', '3'))), ('-func', 'Eq', (('-func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('@', 'oo'))), ('-func', 'tanh', ()))))), ('-func', 'FiniteSet', (('-func', 'Derivative', (('/', ('@', 'oo'), ('"', 'str')), ('@', 'z'), ('#', '3'))), ('(', ('-func', 'FiniteSet', (('-func', 'FiniteSet', (('-func', 'abs', (('@', 'dx'),)), ('-func', 'Piecewise', (('(', (',', (('@', 'a'), ('@', 'd')))),)))), ('-func', 'FiniteSet', (('-', ('@', 'oo')), ('(', ('-func', 'FiniteSet', (('#', '-1.0'), ('@', 'oo'), ('#', '-1.0'))))))))), ('-func', 'Derivative', (('-func', 'factorial', (('#', '-1'),)), ('@', 'x'), ('@', 'y'), ('@', 'z'), ('#', '3'))))))))
+py1:  (FiniteSet(FiniteSet(-cse(), Ne(partial, -1)*-1.0*1.0, Lambda((), Eq(-1.0, dx))), FiniteSet(Limit([-1.0], x, ln(d) / ln(0), dir = '+-'), Derivative(Piecewise((partialx, a), (-1.0, a), (d, 1.0), (partialx, True)), x, 3, y, x, 3), Eq(Lambda((x, y, z), oo), tanh())), FiniteSet(Derivative(oo / 'str', z, 3), (FiniteSet(FiniteSet(abs(dx), Piecewise((a, d))), FiniteSet(-oo, (FiniteSet(-1.0, oo, -1.0))))), Derivative(factorial(-1), x, y, z, 3))))
+py2:  (FiniteSet(FiniteSet(-cse(), Ne(partial, -1)*-1.0*1.0, Lambda((), Eq(-1.0, dx))), FiniteSet(Limit([-1.0], x, ln(d) / ln(0), dir = '+-'), Derivative(Piecewise((partialx, a), (-1.0, a), (d, 1.0), (partialx, True)), x, 3, y, x, 3), Eq(Lambda((x, y, z), oo), tanh())), FiniteSet(Derivative(oo / 'str', z, 3), FiniteSet(FiniteSet(abs(dx), Piecewise((a, d))), FiniteSet(-oo, FiniteSet(-1.0, oo, -1.0))), Derivative(factorial(-1), x, y, z, 3))))

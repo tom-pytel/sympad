@@ -1080,7 +1080,13 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_idx (self, ast):
 		obj = self._ast2py_paren (ast.obj, ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.is_sqrt_with_base or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"})
-		idx = '[' if ast.idx.len and ast.idx [0].is_var_null else f'[{self._ast2py (AST.tuple2ast (ast.idx))}]'
+
+		if ast.idx.len and ast.idx [0].is_var_null:
+			idx = '['
+		elif ast.idx.len == 1 and ast.idx [0].strip_paren.is_slice:
+			idx = f'[{self._ast2py (ast.idx [0])}]'
+		else:
+			idx = f'[{self._ast2py (AST.tuple2ast (ast.idx))}]'
 
 		return f'{obj}{idx}'
 
@@ -1817,17 +1823,14 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 	# set_sym_user_funcs (vars)
 
-	# ast = AST ('^', ('-func', 'sin', (('@', 'y'),)), ('^', ('@', 'x'), ('#', '2')))
+	ast = AST ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
+	ast = AST ('-func', 'sin', (('(', ('@', 'x')),))
 	# res = ast2tex (ast)
 	# res = ast2nat (ast)
-	# res = ast2py (ast)
+	res = ast2py (ast)
 	# res = ast2spt (ast)
 	# res = spt2ast (res)
 
 	# res = ast2nat (res)
-
-	x, y = sp.symbols ('x, y')
-	res = -3*y + 2*x
-	res = str (res)
 
 	print (repr (res))

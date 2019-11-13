@@ -446,10 +446,7 @@ class AST (tuple):
 	@staticmethod
 	def tuple2ast (args, paren = False):
 		if len (args) == 1:
-			ast = args [0]._strip_paren (keeptuple = True)
-
-			return args [0] if ast.is_slice else ast
-
+			return args [0]._strip_paren (keeptuple = True)
 		elif paren:
 			return AST ('(', (',', args))
 		else:
