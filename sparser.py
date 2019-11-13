@@ -255,7 +255,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
-		if tail.src and (not (arg.op in {'-log', '-sqrt', '-func'} and arg.src) or tail.src.mul [1].tail_mul.var in _SP_USER_FUNCS):
+		if tail.src and (not (arg.op in {'-log', '-sqrt', '-func'} and arg.src) or tail.src.mul [1].tail_mul.op in {'-log', '-sqrt', '-func'} or tail.src.mul [1].tail_mul.var in _SP_USER_FUNCS):
 			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', tail.func), ast))))
 
 	elif tail.op in {'-sqrt', '-log'}: # ln N 2 -> ln (N (2)) instead of ln (N) * 2, log, sqrt
@@ -1337,7 +1337,7 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	set_sp_user_funcs ({'N'})
 	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-	a = p.parse (r"N sin N sin x")
+	a = p.parse (r"N - N N 2")
 	print (a)
 
 	# a = sym.ast2spt (a)

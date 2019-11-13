@@ -407,6 +407,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('f()*()'), ('*', (('-ufunc', 'f', ()), ('(', (',', ()))), {1}))
 		self.assertEqual (p ('f*()*()'), ('*', (('@', 'f'), ('(', (',', ())), ('(', (',', ()))), {1, 2}))
 		self.assertEqual (p ('f*()()'), ('*', (('@', 'f'), ('(', (',', ())), ('(', (',', ()))), {1}))
+
 		self.assertEqual (p ('\\lambda: x'), ('-slice', ('@', 'lambda'), ('@', 'x'), None))
 		self.assertEqual (p ('\\lambda x: x'), ('-slice', ('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'x'), None))
 		self.assertEqual (p ('\\lambda x, y: x'), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('-slice', ('@', 'y'), ('@', 'x'), None))))
@@ -517,6 +518,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('a:b: lambda x, y, z: x'), ('-slice', ('@', 'a'), ('@', 'b'), ('-lamb', ('@', 'x'), ('x', 'y', 'z'))))
 		self.assertEqual (p ('::c lambda x, y, z: x'), ('-slice', False, False, ('*', (('@', 'c'), ('-lamb', ('@', 'x'), ('x', 'y', 'z'))))))
 		self.assertEqual (p ('a:b:c lambda x, y, z: x'), ('-slice', ('@', 'a'), ('@', 'b'), ('*', (('@', 'c'), ('-lamb', ('@', 'x'), ('x', 'y', 'z'))))))
+
 		self.assertEqual (p ('dy / dx'), ('-diff', ('@', 'y'), 'd', (('x', 1),)))
 		self.assertEqual (p ('dy / dx z'), ('*', (('-diff', ('@', 'y'), 'd', (('x', 1),)), ('@', 'z'))))
 		self.assertEqual (p ('d**2 y / dx**2'), ('-diff', ('@', 'y'), 'd', (('x', 2),)))
@@ -556,7 +558,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('sqrt[3] -N () [2] [3].c [4].d () [5]'), ('-sqrt', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),))), ('#', '3')))
 		self.assertEqual (p ('log -N () [2] [3].c [4].d () [5]'), ('-log', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),)))))
 		self.assertEqual (p ('\\log_2 -N () [2] [3].c [4].d () [5]'), ('-log', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),))), ('#', '2')))
-		# self.assertEqual (p ('N sin**2 ln**2 N x'), ('*', (('-func', 'N', (('^', ('-func', 'sin', (('^', ('-log', ('@', 'N')), ('#', '2')),)), ('#', '2')),)), ('@', 'x'))))
+		self.assertEqual (p ('N sin**2 ln**2 N x'), ('-func', 'N', (('^', ('-func', 'sin', (('^', ('-log', ('-func', 'N', (('@', 'x'),))), ('#', '2')),)), ('#', '2')),)))
+		self.assertEqual (p ('sin ln N x'), ('-func', 'sin', (('-log', ('-func', 'N', (('@', 'x'),))),)))
+		self.assertEqual (p ('sin(a)**[a][b].c'), ('^', ('-func', 'sin', (('@', 'a'),)), ('.', ('-idx', ('[', (('@', 'a'),)), (('@', 'b'),)), 'c')))
+		self.assertEqual (p ('N sin N sin x'), ('-func', 'N', (('-func', 'sin', (('-func', 'N', (('-func', 'sin', (('@', 'x'),)),)),)),)))
+		self.assertEqual (p ('cos**-1 0 \\log_2 8'), ('*', (('-func', 'acos', (('#', '0'),)), ('-log', ('#', '8'), ('#', '2')))))
+		self.assertEqual (p ('N sin sqrt[3] \\log_2 8'), ('-func', 'N', (('-func', 'sin', (('-sqrt', ('-log', ('#', '8'), ('#', '2')), ('#', '3')),)),)))
+		self.assertEqual (p ('N - N N 2'), ('+', (('@', 'N'), ('-', ('-func', 'N', (('-func', 'N', (('#', '2'),)),))))))
+
 		self.assertEqual (p ('f (x) (0)'), ('-ufunc', 'f', (('#', '0'),)))
 		self.assertEqual (p ('f (x, y) (0, 0)'), ('-ufunc', 'f', (('#', '0'), ('#', '0'))))
 		self.assertEqual (p ('f (x, y, z) (0, 0, 0)'), ('-ufunc', 'f', (('#', '0'), ('#', '0'), ('#', '0'))))
@@ -927,6 +936,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('f()*()')), 'f\\left( \\right) \\cdot \\left( \\right)')
 		self.assertEqual (ast2tex (p ('f*()*()')), 'f \\cdot \\left( \\right) \\left( \\right)')
 		self.assertEqual (ast2tex (p ('f*()()')), 'f \\cdot \\left( \\right) \\left( \\right)')
+
 		self.assertEqual (ast2tex (p ('\\lambda: x')), '\\lambda{:}x')
 		self.assertEqual (ast2tex (p ('\\lambda x: x')), '\\lambda x{:}x')
 		self.assertEqual (ast2tex (p ('\\lambda x, y: x')), '\\lambda x, y{:}x')
@@ -1037,6 +1047,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('a:b: lambda x, y, z: x')), 'a{:}b{:}\\left(\\left(x, y, z \\right) \\mapsto x \\right)')
 		self.assertEqual (ast2tex (p ('::c lambda x, y, z: x')), '{:}{:}c \\cdot \\left(\\left(x, y, z \\right) \\mapsto x \\right)')
 		self.assertEqual (ast2tex (p ('a:b:c lambda x, y, z: x')), 'a{:}b{:}c \\cdot \\left(\\left(x, y, z \\right) \\mapsto x \\right)')
+
 		self.assertEqual (ast2tex (p ('dy / dx')), '\\frac{dy}{dx}')
 		self.assertEqual (ast2tex (p ('dy / dx z')), '\\frac{dy}{dx} \\cdot z')
 		self.assertEqual (ast2tex (p ('d**2 y / dx**2')), '\\frac{d^2 y}{dx^2}')
@@ -1076,7 +1087,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('sqrt[3] -N () [2] [3].c [4].d () [5]')), '\\sqrt[3]{-\\operatorname{N}\\left( \\right)\\left[2 \\right]\\left[3 \\right].c\\left[4 \\right].\\operatorname{d}\\left( \\right)\\left[5 \\right]}')
 		self.assertEqual (ast2tex (p ('log -N () [2] [3].c [4].d () [5]')), '\\ln\\left(-\\operatorname{N}\\left( \\right)\\left[2 \\right]\\left[3 \\right].c\\left[4 \\right].\\operatorname{d}\\left( \\right)\\left[5 \\right] \\right)')
 		self.assertEqual (ast2tex (p ('\\log_2 -N () [2] [3].c [4].d () [5]')), '\\log_2\\left(-\\operatorname{N}\\left( \\right)\\left[2 \\right]\\left[3 \\right].c\\left[4 \\right].\\operatorname{d}\\left( \\right)\\left[5 \\right] \\right)')
-		# self.assertEqual (ast2tex (p ('N sin**2 ln**2 N x')), '\\operatorname{N}\\left(\\sin^2\\left(\\left(\\ln\\left(N \\right) \\right)^2 \\right) \\right) x')
+		self.assertEqual (ast2tex (p ('N sin**2 ln**2 N x')), '\\operatorname{N}\\left(\\sin^2\\left(\\left(\\ln\\left(\\operatorname{N}\\left(x \\right) \\right) \\right)^2 \\right) \\right)')
+		self.assertEqual (ast2tex (p ('sin ln N x')), '\\sin\\left(\\ln\\left(\\operatorname{N}\\left(x \\right) \\right) \\right)')
+		self.assertEqual (ast2tex (p ('sin(a)**[a][b].c')), '\\sin\\left(a \\right)^{\\left[a \\right]\\left[b \\right].c}')
+		self.assertEqual (ast2tex (p ('N sin N sin x')), '\\operatorname{N}\\left(\\sin\\left(\\operatorname{N}\\left(\\sin\\left(x \\right) \\right) \\right) \\right)')
+		self.assertEqual (ast2tex (p ('cos**-1 0 \\log_2 8')), '\\cos^{-1}\\left(0 \\right) \\log_2\\left(8 \\right)')
+		self.assertEqual (ast2tex (p ('N sin sqrt[3] \\log_2 8')), '\\operatorname{N}\\left(\\sin\\left(\\sqrt[3]{\\log_2\\left(8 \\right)} \\right) \\right)')
+		self.assertEqual (ast2tex (p ('N - N N 2')), 'N - \\operatorname{N}\\left(\\operatorname{N}\\left(2 \\right) \\right)')
+
 		self.assertEqual (ast2tex (p ('f (x) (0)')), 'f\\left(0 \\right)')
 		self.assertEqual (ast2tex (p ('f (x, y) (0, 0)')), 'f\\left(0, 0 \\right)')
 		self.assertEqual (ast2tex (p ('f (x, y, z) (0, 0, 0)')), 'f\\left(0, 0, 0 \\right)')
@@ -1447,6 +1465,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('f()*()')), 'f() * ()')
 		self.assertEqual (ast2nat (p ('f*()*()')), 'f * () ()')
 		self.assertEqual (ast2nat (p ('f*()()')), 'f * () ()')
+
 		self.assertEqual (ast2nat (p ('\\lambda: x')), '{lambda}:x')
 		self.assertEqual (ast2nat (p ('\\lambda x: x')), 'lambda * x:x')
 		self.assertEqual (ast2nat (p ('\\lambda x, y: x')), 'lambda * x, y:x')
@@ -1557,6 +1576,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('a:b: lambda x, y, z: x')), 'a:b:(lambda x, y, z: x)')
 		self.assertEqual (ast2nat (p ('::c lambda x, y, z: x')), '::c {lambda x, y, z: x}')
 		self.assertEqual (ast2nat (p ('a:b:c lambda x, y, z: x')), 'a:b:c {lambda x, y, z: x}')
+
 		self.assertEqual (ast2nat (p ('dy / dx')), 'dy / dx')
 		self.assertEqual (ast2nat (p ('dy / dx z')), 'dy / dx * z')
 		self.assertEqual (ast2nat (p ('d**2 y / dx**2')), 'd**2 y / dx**2')
@@ -1596,7 +1616,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('sqrt[3] -N () [2] [3].c [4].d () [5]')), '\\sqrt[3]{-N()[2][3].c[4].d()[5]}')
 		self.assertEqual (ast2nat (p ('log -N () [2] [3].c [4].d () [5]')), 'ln(-N()[2][3].c[4].d()[5])')
 		self.assertEqual (ast2nat (p ('\\log_2 -N () [2] [3].c [4].d () [5]')), '\\log_2(-N()[2][3].c[4].d()[5])')
-		# self.assertEqual (ast2nat (p ('N sin**2 ln**2 N x')), 'N(sin**2((ln(N))**2)) x')
+		self.assertEqual (ast2nat (p ('N sin**2 ln**2 N x')), 'N(sin**2((ln(N(x)))**2))')
+		self.assertEqual (ast2nat (p ('sin ln N x')), 'sin(ln(N(x)))')
+		self.assertEqual (ast2nat (p ('sin(a)**[a][b].c')), 'sin(a)**[a][b].c')
+		self.assertEqual (ast2nat (p ('N sin N sin x')), 'N(sin(N(sin(x))))')
+		self.assertEqual (ast2nat (p ('cos**-1 0 \\log_2 8')), 'acos(0) \\log_2(8)')
+		self.assertEqual (ast2nat (p ('N sin sqrt[3] \\log_2 8')), 'N(sin(\\sqrt[3]{\\log_2(8)}))')
+		self.assertEqual (ast2nat (p ('N - N N 2')), 'N - N(N(2))')
+
 		self.assertEqual (ast2nat (p ('f (x) (0)')), 'f(0)')
 		self.assertEqual (ast2nat (p ('f (x, y) (0, 0)')), 'f(0, 0)')
 		self.assertEqual (ast2nat (p ('f (x, y, z) (0, 0, 0)')), 'f(0, 0, 0)')
@@ -1967,6 +1994,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('f()*()')), "Function('f')*()")
 		self.assertEqual (ast2py (p ('f*()*()')), 'f*()*()')
 		self.assertEqual (ast2py (p ('f*()()')), 'f*()*()')
+
 		self.assertEqual (ast2py (p ('\\lambda: x')), 'slice(lambda, x)')
 		self.assertEqual (ast2py (p ('\\lambda x: x')), 'slice(lambda*x, x)')
 		self.assertEqual (ast2py (p ('\\lambda x, y: x')), 'lambda*x, slice(y, x)')
@@ -2077,6 +2105,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('a:b: lambda x, y, z: x')), 'slice(a, b, Lambda((x, y, z), x))')
 		self.assertEqual (ast2py (p ('::c lambda x, y, z: x')), 'slice(None, None, c*Lambda((x, y, z), x))')
 		self.assertEqual (ast2py (p ('a:b:c lambda x, y, z: x')), 'slice(a, b, c*Lambda((x, y, z), x))')
+
 		self.assertEqual (ast2py (p ('dy / dx')), 'Derivative(y, x)')
 		self.assertEqual (ast2py (p ('dy / dx z')), 'Derivative(y, x)*z')
 		self.assertEqual (ast2py (p ('d**2 y / dx**2')), 'Derivative(y, x, 2)')
@@ -2116,7 +2145,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('sqrt[3] -N () [2] [3].c [4].d () [5]')), '(-N()[2][3].c[4].d()[5])**(1/3)')
 		self.assertEqual (ast2py (p ('log -N () [2] [3].c [4].d () [5]')), 'ln(-N()[2][3].c[4].d()[5])')
 		self.assertEqual (ast2py (p ('\\log_2 -N () [2] [3].c [4].d () [5]')), 'ln(-N()[2][3].c[4].d()[5]) / ln(2)')
-		# self.assertEqual (ast2py (p ('N sin**2 ln**2 N x')), 'N(sin(ln(N)**2)**2)*x')
+		self.assertEqual (ast2py (p ('N sin**2 ln**2 N x')), 'N(sin(ln(N(x))**2)**2)')
+		self.assertEqual (ast2py (p ('sin ln N x')), 'sin(ln(N(x)))')
+		self.assertEqual (ast2py (p ('sin(a)**[a][b].c')), 'sin(a)**[a][b].c')
+		self.assertEqual (ast2py (p ('N sin N sin x')), 'N(sin(N(sin(x))))')
+		self.assertEqual (ast2py (p ('cos**-1 0 \\log_2 8')), 'acos(0)*(ln(8) / ln(2))')
+		self.assertEqual (ast2py (p ('N sin sqrt[3] \\log_2 8')), 'N(sin((ln(8) / ln(2))**(1/3)))')
+		self.assertEqual (ast2py (p ('N - N N 2')), 'N - N(N(2))')
+
 		self.assertEqual (ast2py (p ('f (x) (0)')), "Function('f')(0)")
 		self.assertEqual (ast2py (p ('f (x, y) (0, 0)')), "Function('f')(0, 0)")
 		self.assertEqual (ast2py (p ('f (x, y, z) (0, 0, 0)')), "Function('f')(0, 0, 0)")
@@ -2487,6 +2523,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('f()*()')), ('*', (('-ufunc', 'f', ()), ('(', (',', ()))), {1}))
 		self.assertEqual (ast2tex2ast (p ('f*()*()')), ('*', (('@', 'f'), ('(', (',', ())), ('(', (',', ()))), {1}))
 		self.assertEqual (ast2tex2ast (p ('f*()()')), ('*', (('@', 'f'), ('(', (',', ())), ('(', (',', ()))), {1}))
+
 		self.assertEqual (ast2tex2ast (p ('\\lambda: x')), ('-slice', ('@', 'lambda'), ('@', 'x'), None))
 		self.assertEqual (ast2tex2ast (p ('\\lambda x: x')), ('-slice', ('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'x'), None))
 		self.assertEqual (ast2tex2ast (p ('\\lambda x, y: x')), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('-slice', ('@', 'y'), ('@', 'x'), None))))
@@ -2597,6 +2634,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('a:b: lambda x, y, z: x')), ('-slice', ('@', 'a'), ('@', 'b'), ('(', ('-lamb', ('@', 'x'), ('x', 'y', 'z')))))
 		self.assertEqual (ast2tex2ast (p ('::c lambda x, y, z: x')), ('-slice', False, False, ('*', (('@', 'c'), ('(', ('-lamb', ('@', 'x'), ('x', 'y', 'z')))), {1})))
 		self.assertEqual (ast2tex2ast (p ('a:b:c lambda x, y, z: x')), ('-slice', ('@', 'a'), ('@', 'b'), ('*', (('@', 'c'), ('(', ('-lamb', ('@', 'x'), ('x', 'y', 'z')))), {1})))
+
 		self.assertEqual (ast2tex2ast (p ('dy / dx')), ('-diff', ('@', 'y'), 'd', (('x', 1),)))
 		self.assertEqual (ast2tex2ast (p ('dy / dx z')), ('*', (('-diff', ('@', 'y'), 'd', (('x', 1),)), ('@', 'z')), {1}))
 		self.assertEqual (ast2tex2ast (p ('d**2 y / dx**2')), ('-diff', ('@', 'y'), 'd', (('x', 2),)))
@@ -2636,7 +2674,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('sqrt[3] -N () [2] [3].c [4].d () [5]')), ('-sqrt', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),))), ('#', '3')))
 		self.assertEqual (ast2tex2ast (p ('log -N () [2] [3].c [4].d () [5]')), ('-log', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),)))))
 		self.assertEqual (ast2tex2ast (p ('\\log_2 -N () [2] [3].c [4].d () [5]')), ('-log', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),))), ('#', '2')))
-		# self.assertEqual (ast2tex2ast (p ('N sin**2 ln**2 N x')), ('*', (('-func', 'N', (('^', ('-func', 'sin', (('^', ('(', ('-log', ('@', 'N'))), ('#', '2')),)), ('#', '2')),)), ('@', 'x'))))
+		self.assertEqual (ast2tex2ast (p ('N sin**2 ln**2 N x')), ('-func', 'N', (('^', ('-func', 'sin', (('^', ('(', ('-log', ('-func', 'N', (('@', 'x'),)))), ('#', '2')),)), ('#', '2')),)))
+		self.assertEqual (ast2tex2ast (p ('sin ln N x')), ('-func', 'sin', (('-log', ('-func', 'N', (('@', 'x'),))),)))
+		self.assertEqual (ast2tex2ast (p ('sin(a)**[a][b].c')), ('^', ('-func', 'sin', (('@', 'a'),)), ('.', ('-idx', ('[', (('@', 'a'),)), (('@', 'b'),)), 'c')))
+		self.assertEqual (ast2tex2ast (p ('N sin N sin x')), ('-func', 'N', (('-func', 'sin', (('-func', 'N', (('-func', 'sin', (('@', 'x'),)),)),)),)))
+		self.assertEqual (ast2tex2ast (p ('cos**-1 0 \\log_2 8')), ('*', (('-func', 'acos', (('#', '0'),)), ('-log', ('#', '8'), ('#', '2')))))
+		self.assertEqual (ast2tex2ast (p ('N sin sqrt[3] \\log_2 8')), ('-func', 'N', (('-func', 'sin', (('-sqrt', ('-log', ('#', '8'), ('#', '2')), ('#', '3')),)),)))
+		self.assertEqual (ast2tex2ast (p ('N - N N 2')), ('+', (('@', 'N'), ('-', ('-func', 'N', (('-func', 'N', (('#', '2'),)),))))))
+
 		self.assertEqual (ast2tex2ast (p ('f (x) (0)')), ('-ufunc', 'f', (('#', '0'),)))
 		self.assertEqual (ast2tex2ast (p ('f (x, y) (0, 0)')), ('-ufunc', 'f', (('#', '0'), ('#', '0'))))
 		self.assertEqual (ast2tex2ast (p ('f (x, y, z) (0, 0, 0)')), ('-ufunc', 'f', (('#', '0'), ('#', '0'), ('#', '0'))))
@@ -3007,6 +3052,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('f()*()')), ('*', (('-ufunc', 'f', ()), ('(', (',', ()))), {1}))
 		self.assertEqual (ast2nat2ast (p ('f*()*()')), ('*', (('@', 'f'), ('(', (',', ())), ('(', (',', ()))), {1}))
 		self.assertEqual (ast2nat2ast (p ('f*()()')), ('*', (('@', 'f'), ('(', (',', ())), ('(', (',', ()))), {1}))
+
 		self.assertEqual (ast2nat2ast (p ('\\lambda: x')), ('-slice', ('@', 'lambda'), ('@', 'x'), None))
 		self.assertEqual (ast2nat2ast (p ('\\lambda x: x')), ('-slice', ('*', (('@', 'lambda'), ('@', 'x')), {1}), ('@', 'x'), None))
 		self.assertEqual (ast2nat2ast (p ('\\lambda x, y: x')), (',', (('*', (('@', 'lambda'), ('@', 'x')), {1}), ('-slice', ('@', 'y'), ('@', 'x'), None))))
@@ -3117,6 +3163,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('a:b: lambda x, y, z: x')), ('-slice', ('@', 'a'), ('@', 'b'), ('(', ('-lamb', ('@', 'x'), ('x', 'y', 'z')))))
 		self.assertEqual (ast2nat2ast (p ('::c lambda x, y, z: x')), ('-slice', False, False, ('*', (('@', 'c'), ('-lamb', ('@', 'x'), ('x', 'y', 'z'))))))
 		self.assertEqual (ast2nat2ast (p ('a:b:c lambda x, y, z: x')), ('-slice', ('@', 'a'), ('@', 'b'), ('*', (('@', 'c'), ('-lamb', ('@', 'x'), ('x', 'y', 'z'))))))
+
 		self.assertEqual (ast2nat2ast (p ('dy / dx')), ('-diff', ('@', 'y'), 'd', (('x', 1),)))
 		self.assertEqual (ast2nat2ast (p ('dy / dx z')), ('*', (('-diff', ('@', 'y'), 'd', (('x', 1),)), ('@', 'z')), {1}))
 		self.assertEqual (ast2nat2ast (p ('d**2 y / dx**2')), ('-diff', ('@', 'y'), 'd', (('x', 2),)))
@@ -3156,7 +3203,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('sqrt[3] -N () [2] [3].c [4].d () [5]')), ('-sqrt', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),))), ('#', '3')))
 		self.assertEqual (ast2nat2ast (p ('log -N () [2] [3].c [4].d () [5]')), ('-log', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),)))))
 		self.assertEqual (ast2nat2ast (p ('\\log_2 -N () [2] [3].c [4].d () [5]')), ('-log', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),))), ('#', '2')))
-		# self.assertEqual (ast2nat2ast (p ('N sin**2 ln**2 N x')), ('*', (('-func', 'N', (('^', ('-func', 'sin', (('^', ('(', ('-log', ('@', 'N'))), ('#', '2')),)), ('#', '2')),)), ('@', 'x'))))
+		self.assertEqual (ast2nat2ast (p ('N sin**2 ln**2 N x')), ('-func', 'N', (('^', ('-func', 'sin', (('^', ('(', ('-log', ('-func', 'N', (('@', 'x'),)))), ('#', '2')),)), ('#', '2')),)))
+		self.assertEqual (ast2nat2ast (p ('sin ln N x')), ('-func', 'sin', (('-log', ('-func', 'N', (('@', 'x'),))),)))
+		self.assertEqual (ast2nat2ast (p ('sin(a)**[a][b].c')), ('^', ('-func', 'sin', (('@', 'a'),)), ('.', ('-idx', ('[', (('@', 'a'),)), (('@', 'b'),)), 'c')))
+		self.assertEqual (ast2nat2ast (p ('N sin N sin x')), ('-func', 'N', (('-func', 'sin', (('-func', 'N', (('-func', 'sin', (('@', 'x'),)),)),)),)))
+		self.assertEqual (ast2nat2ast (p ('cos**-1 0 \\log_2 8')), ('*', (('-func', 'acos', (('#', '0'),)), ('-log', ('#', '8'), ('#', '2')))))
+		self.assertEqual (ast2nat2ast (p ('N sin sqrt[3] \\log_2 8')), ('-func', 'N', (('-func', 'sin', (('-sqrt', ('-log', ('#', '8'), ('#', '2')), ('#', '3')),)),)))
+		self.assertEqual (ast2nat2ast (p ('N - N N 2')), ('+', (('@', 'N'), ('-', ('-func', 'N', (('-func', 'N', (('#', '2'),)),))))))
+
 		self.assertEqual (ast2nat2ast (p ('f (x) (0)')), ('-ufunc', 'f', (('#', '0'),)))
 		self.assertEqual (ast2nat2ast (p ('f (x, y) (0, 0)')), ('-ufunc', 'f', (('#', '0'), ('#', '0'))))
 		self.assertEqual (ast2nat2ast (p ('f (x, y, z) (0, 0, 0)')), ('-ufunc', 'f', (('#', '0'), ('#', '0'), ('#', '0'))))
@@ -3527,6 +3581,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('f()*()')), ('*', (('-ufunc', 'f', ()), ('(', (',', ()))), {1}))
 		self.assertEqual (ast2py2ast (p ('f*()*()')), ('*', (('@', 'f'), ('(', (',', ())), ('(', (',', ()))), {1, 2}))
 		self.assertEqual (ast2py2ast (p ('f*()()')), ('*', (('@', 'f'), ('(', (',', ())), ('(', (',', ()))), {1, 2}))
+
 		self.assertEqual (ast2py2ast (p ('\\lambda: x')), ('-func', 'slice', (('@', 'lambda'), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('\\lambda x: x')), ('-func', 'slice', (('*', (('@', 'lambda'), ('@', 'x')), {1}), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('\\lambda x, y: x')), (',', (('*', (('@', 'lambda'), ('@', 'x')), {1}), ('-func', 'slice', (('@', 'y'), ('@', 'x'))))))
@@ -3637,6 +3692,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('a:b: lambda x, y, z: x')), ('-func', 'slice', (('@', 'a'), ('@', 'b'), ('-func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('@', 'x'))))))
 		self.assertEqual (ast2py2ast (p ('::c lambda x, y, z: x')), ('-func', 'slice', (('@', 'None'), ('@', 'None'), ('*', (('@', 'c'), ('-func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('@', 'x')))), {1}))))
 		self.assertEqual (ast2py2ast (p ('a:b:c lambda x, y, z: x')), ('-func', 'slice', (('@', 'a'), ('@', 'b'), ('*', (('@', 'c'), ('-func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('@', 'x')))), {1}))))
+
 		self.assertEqual (ast2py2ast (p ('dy / dx')), ('-func', 'Derivative', (('@', 'y'), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('dy / dx z')), ('*', (('-func', 'Derivative', (('@', 'y'), ('@', 'x'))), ('@', 'z')), {1}))
 		self.assertEqual (ast2py2ast (p ('d**2 y / dx**2')), ('-func', 'Derivative', (('@', 'y'), ('@', 'x'), ('#', '2'))))
@@ -3676,7 +3732,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('sqrt[3] -N () [2] [3].c [4].d () [5]')), ('^', ('(', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),)))), ('(', ('/', ('#', '1'), ('#', '3')))))
 		self.assertEqual (ast2py2ast (p ('log -N () [2] [3].c [4].d () [5]')), ('-log', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),)))))
 		self.assertEqual (ast2py2ast (p ('\\log_2 -N () [2] [3].c [4].d () [5]')), ('/', ('-log', ('-', ('-idx', ('.', ('-idx', ('.', ('-idx', ('-idx', ('-func', 'N', ()), (('#', '2'),)), (('#', '3'),)), 'c'), (('#', '4'),)), 'd', ()), (('#', '5'),)))), ('-log', ('#', '2'))))
-		# self.assertEqual (ast2py2ast (p ('N sin**2 ln**2 N x')), ('*', (('-func', 'N', (('^', ('-func', 'sin', (('^', ('-log', ('@', 'N')), ('#', '2')),)), ('#', '2')),)), ('@', 'x')), {1}))
+		self.assertEqual (ast2py2ast (p ('N sin**2 ln**2 N x')), ('-func', 'N', (('^', ('-func', 'sin', (('^', ('-log', ('-func', 'N', (('@', 'x'),))), ('#', '2')),)), ('#', '2')),)))
+		self.assertEqual (ast2py2ast (p ('sin ln N x')), ('-func', 'sin', (('-log', ('-func', 'N', (('@', 'x'),))),)))
+		self.assertEqual (ast2py2ast (p ('sin(a)**[a][b].c')), ('^', ('-func', 'sin', (('@', 'a'),)), ('.', ('-idx', ('[', (('@', 'a'),)), (('@', 'b'),)), 'c')))
+		self.assertEqual (ast2py2ast (p ('N sin N sin x')), ('-func', 'N', (('-func', 'sin', (('-func', 'N', (('-func', 'sin', (('@', 'x'),)),)),)),)))
+		self.assertEqual (ast2py2ast (p ('cos**-1 0 \\log_2 8')), ('*', (('-func', 'acos', (('#', '0'),)), ('(', ('/', ('-log', ('#', '8')), ('-log', ('#', '2'))))), {1}))
+		self.assertEqual (ast2py2ast (p ('N sin sqrt[3] \\log_2 8')), ('-func', 'N', (('-func', 'sin', (('^', ('(', ('/', ('-log', ('#', '8')), ('-log', ('#', '2')))), ('(', ('/', ('#', '1'), ('#', '3')))),)),)))
+		self.assertEqual (ast2py2ast (p ('N - N N 2')), ('+', (('@', 'N'), ('-', ('-func', 'N', (('-func', 'N', (('#', '2'),)),))))))
+
 		self.assertEqual (ast2py2ast (p ('f (x) (0)')), ('-ufunc', 'f', (('#', '0'),)))
 		self.assertEqual (ast2py2ast (p ('f (x, y) (0, 0)')), ('-ufunc', 'f', (('#', '0'), ('#', '0'))))
 		self.assertEqual (ast2py2ast (p ('f (x, y, z) (0, 0, 0)')), ('-ufunc', 'f', (('#', '0'), ('#', '0'), ('#', '0'))))
@@ -4047,6 +4110,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('f()*()')), ('*', (('-ufunc', 'f', ()), ('(', (',', ())))))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('f*()*()'))
 		self.assertRaises (AttributeError, ast2spt2ast, p ('f*()()'))
+
 		self.assertEqual (ast2spt2ast (p ('\\lambda: x')), ('-slice', ('@', 'lambda'), ('@', 'x'), None))
 		self.assertEqual (ast2spt2ast (p ('\\lambda x: x')), ('-slice', ('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'x'), None))
 		self.assertEqual (ast2spt2ast (p ('\\lambda x, y: x')), ('(', (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('-slice', ('@', 'y'), ('@', 'x'), None)))))
@@ -4157,6 +4221,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('a:b: lambda x, y, z: x')), ('-slice', ('@', 'a'), ('@', 'b'), ('@', 'x')))
 		self.assertEqual (ast2spt2ast (p ('::c lambda x, y, z: x')), ('-slice', False, False, ('*', (('@', 'c'), ('@', 'x')))))
 		self.assertEqual (ast2spt2ast (p ('a:b:c lambda x, y, z: x')), ('-slice', ('@', 'a'), ('@', 'b'), ('*', (('@', 'c'), ('@', 'x')))))
+
 		self.assertEqual (ast2spt2ast (p ('dy / dx')), ('-diff', ('@', 'y'), 'd', (('x', 1),)))
 		self.assertEqual (ast2spt2ast (p ('dy / dx z')), ('*', (('@', 'z'), ('-diff', ('@', 'y'), 'd', (('x', 1),)))))
 		self.assertEqual (ast2spt2ast (p ('d**2 y / dx**2')), ('-diff', ('@', 'y'), 'd', (('x', 2),)))
@@ -4196,7 +4261,14 @@ class Test (unittest.TestCase):
 		self.assertRaises (TypeError, ast2spt2ast, p ('sqrt[3] -N () [2] [3].c [4].d () [5]'))
 		self.assertRaises (TypeError, ast2spt2ast, p ('log -N () [2] [3].c [4].d () [5]'))
 		self.assertRaises (TypeError, ast2spt2ast, p ('\\log_2 -N () [2] [3].c [4].d () [5]'))
-		# self.assertEqual (ast2spt2ast (p ('N sin**2 ln**2 N x')), ('*', (('@', 'x'), ('^', ('-func', 'sin', (('^', ('-log', ('@', 'N')), ('#', '2')),)), ('#', '2')))))
+		self.assertEqual (ast2spt2ast (p ('N sin**2 ln**2 N x')), ('^', ('-func', 'sin', (('^', ('-log', ('@', 'x')), ('#', '2')),)), ('#', '2')))
+		self.assertEqual (ast2spt2ast (p ('sin ln N x')), ('-func', 'sin', (('-log', ('@', 'x')),)))
+		self.assertEqual (ast2spt2ast (p ('sin(a)**[a][b].c')), ('^', ('-func', 'sin', (('@', 'a'),)), ('.', ('-idx', ('[', (('@', 'a'),)), (('@', 'b'),)), 'c')))
+		self.assertEqual (ast2spt2ast (p ('N sin N sin x')), ('-func', 'sin', (('-func', 'sin', (('@', 'x'),)),)))
+		self.assertEqual (ast2spt2ast (p ('cos**-1 0 \\log_2 8')), ('/', ('*', (('#', '3'), ('@', 'pi'))), ('#', '2')))
+		self.assertEqual (ast2spt2ast (p ('N sin sqrt[3] \\log_2 8')), ('#', '0.991749236577359'))
+		self.assertEqual (ast2spt2ast (p ('N - N N 2')), ('+', (('@', 'N'), ('-', ('#', '2')))))
+
 		self.assertEqual (ast2spt2ast (p ('f (x) (0)')), ('-ufunc', 'f', (('#', '0'),)))
 		self.assertEqual (ast2spt2ast (p ('f (x, y) (0, 0)')), ('-ufunc', 'f', (('#', '0'), ('#', '0'))))
 		self.assertEqual (ast2spt2ast (p ('f (x, y, z) (0, 0, 0)')), ('-ufunc', 'f', (('#', '0'), ('#', '0'), ('#', '0'))))
@@ -4568,6 +4640,7 @@ f()()
 f()*()
 f*()*()
 f*()()
+
 \lambda: x
 \lambda x: x
 \lambda x, y: x
@@ -4678,6 +4751,7 @@ a: lambda x, y, z: x
 a:b: lambda x, y, z: x
 ::c lambda x, y, z: x
 a:b:c lambda x, y, z: x
+
 dy / dx
 dy / dx z
 d**2 y / dx**2
@@ -4721,8 +4795,10 @@ N sin**2 ln**2 N x
 sin ln N x
 sin(a)**[a][b].c
 N sin N sin x
-
+cos**-1 0 \log_2 8
+N sin sqrt[3] \log_2 8
 N - N N 2
+
 f (x) (0)
 f (x, y) (0, 0)
 f (x, y, z) (0, 0, 0)
@@ -4764,6 +4840,11 @@ if __name__ == '__main__':
 
 	if sys.argv [1] == '--human':
 		for expr in exprs:
+			if not expr.strip ():
+				lines.append ('')
+
+				continue
+
 			lines.extend (['', expr])
 
 			try:
@@ -4779,6 +4860,11 @@ if __name__ == '__main__':
 			lines.extend (['', f'\tdef test_{func.__name__} (self):'])
 
 			for expr in exprs:
+				if not expr.strip ():
+					lines.append ('')
+
+					continue
+
 				try:
 					if func == sparser:
 						lines.append (f'\t\tself.assertEqual (p ({expr!r}), ' + repr (p (expr)).replace ('\n', '') + ')')
