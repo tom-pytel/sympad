@@ -240,18 +240,6 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			diff = AST ('-diff', diff, tail.d, tail.dvs)
 			ast  = wrapa (AST ('-subs', diff, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
-			# if diff.is_var:
-			# 	ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: not va [1].is_var_nonconst, zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
-
-			# else:
-			# 	dvs    = set (dp [0] for dp in tail.dvs)
-			# 	vas    = list (zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))
-			# 	subs   = tuple (filter (lambda va: not va [1].is_var_nonconst and va [0].var in dvs, vas))
-			# 	vars   = tuple (map (lambda va: va [0] if va [0].var in dvs else va [1], vas))
-			# 	ufunc2 = AST ('-ufunc', ufunc.ufunc, vars, ufunc.kw)
-			# 	diff   = AST ('-diff', ufunc2, tail.d, tail.dvs)
-			# 	ast    = wrapa (AST ('-subs', diff, subs)) if subs else diff
-
 	elif tail.is_diffp: # f (x)' * (0) -> \. f (x) |_{x = 0}
 		diffp = _SP_USER_VARS.get (tail.diffp.var, tail.diffp)
 
@@ -259,7 +247,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
-		if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
+		if tail.src and tail.src.is_mul and tail.src.mul.len == 2 and (not (arg.is_func and arg.src and arg.src.is_mul) or tail.src.mul [1].tail_mul.var in _SP_USER_FUNCS):
 			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, (ast,), src = AST ('*', (('@', tail.func), ast))))
 
 	elif tail.op in {'-sqrt', '-log'}: # ln N 2 -> ln (N (2)) instead of ln (N) * 2, log, sqrt
@@ -1335,18 +1323,21 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# set_sp_user_funcs ({'N'})
-# 	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
+	set_sp_user_funcs ({'N'})
+	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-# 	# a = p.parse (r"du/dx (0, t) c")
-# 	# a = p.parse (r"\frac{d}{dx}\left(f\left(x \right) \right)\left(0 \right)")
-# 	a = p.parse (r"\.x|_{x}")
-# 	# a = p.parse (r"((pi) \mapsto 0)")
-# 	print (a)
+	# print (f'lhs:  {lhs} - {lhs.src} - {lhs.src_arg}\nrhs:  {rhs} - {rhs.src} - {rhs.src_arg}\ntail: {tail} - {tail.src} - {tail.src_arg}\narg:  {arg} - {arg.src} - {arg.src_arg}\ntailf: wrapt (AST.VarNull)\nast:  {ast}')
+	# a = p.parse (r"((pi) \mapsto 0)")
+	# a = p.parse (r"sin a sin b")
+	# a = p.parse (r"N N sin 1")
+	# a = p.parse ("sin -N sin 2")
+	a = p.parse (r"ln ln N x")
+	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = sym.ast2spt (a)
+	# print (a)
+

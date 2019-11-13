@@ -599,10 +599,11 @@ class AST (tuple):
 					elif exc:
 						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
-				return AST ('-func', ast.func,
-						tuple (('(', AST.apply_vars (a, vars, recurse, exc))
-						if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
-						else AST.apply_vars (a, vars, recurse, exc) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+					else:
+						return AST ('-func', ast.func,
+								tuple (('(', AST.apply_vars (a, vars, recurse, exc))
+								if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
+								else AST.apply_vars (a, vars, recurse, exc) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
 		return AST (*(AST.apply_vars (a, vars, recurse, exc) for a in ast))
 
