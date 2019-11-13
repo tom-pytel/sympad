@@ -316,13 +316,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('d/dx (f) (x)'), {'math': ("x g(x)'", "x*diff(Function('g')(x))", "x g\\left(x \\right)'")})
 		self.assertEqual (get ('u = u (x, t)'), {'math': ('u = u(x, t)', "u = Function('u')(x, t)", 'u = u\\left(x, t \\right)')})
 		self.assertEqual (get ('du/dx (x, t)'), {'math': ('d / dx (u(x, t)) * (x, t)', "Derivative(Function('u')(x, t), x)*(x, t)", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right) \\cdot \\left(x, t \\right)')})
-		self.assertEqual (get ('du/dx (1, t)'), {'math': ('d / dx (u(x, t))(1, t)', "Derivative(Function('u')(x, t), x).subs(x, 1)", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, t \\right)')})
-		self.assertEqual (get ('du/dx (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Derivative(Function('u')(x, t), x).subs([(x, 1), (t, 0)])", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
-		self.assertEqual (get ('d**2u / dx dt (1, 0)'), {'math': ('d**2 / dx dt (u(x, t))(1, 0)', "Derivative(Function('u')(x, t), x, t).subs([(x, 1), (t, 0)])", '\\frac{\\partial^2}{\\partial x \\partial t}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('du/dx (1, t)'), {'math': ('d / dx (u(x, t))(1, t)', "Subs(Derivative(Function('u')(x, t), x), x, 1)", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, t \\right)')})
+		self.assertEqual (get ('du/dx (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), x), (x, t), (1, 0))", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d**2u / dx dt (1, 0)'), {'math': ('d**2 / dx dt (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), x, t), (x, t), (1, 0))", '\\frac{\\partial^2}{\\partial x \\partial t}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
 		self.assertEqual (get ('d/dx u (1, 0)'), {'math': ('0', '0', '0')})
-		self.assertEqual (get ('d/dx (u) (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Derivative(Function('u')(x, t), x).subs([(x, 1), (t, 0)])", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d/dx (u) (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), x), (x, t), (1, 0))", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
 		self.assertEqual (get ('d**2 / dx dt u (1, 0)'), {'math': ('0', '0', '0')})
-		self.assertEqual (get ('d**2 / dx dt (u) (1, 0)'), {'math': ('d**2 / dx dt (u(x, t))(1, 0)', "Derivative(Function('u')(x, t), x, t).subs([(x, 1), (t, 0)])", '\\frac{\\partial^2}{\\partial x \\partial t}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d**2 / dx dt (u) (1, 0)'), {'math': ('d**2 / dx dt (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), x, t), (x, t), (1, 0))", '\\frac{\\partial^2}{\\partial x \\partial t}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
 
 	def test_intro_examples (self):
 		reset ()

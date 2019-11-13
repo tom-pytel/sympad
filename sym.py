@@ -417,7 +417,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or false_diff)}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}'
 
 	def _ast2tex_pow (self, ast, trighpow = True):
-		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-lamb', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
+		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-log', '-func', '-mat', '-lamb', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2tex_curly (ast.exp)
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -435,11 +435,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_func (self, ast):
 		if ast.is_trigh_func:
-			n = (f'\\operatorname{{{ast.func [1:]}}}^{{-1}}' \
-					if ast.func in {'asech', 'acsch'} else \
-					f'\\{ast.func [1:]}^{{-1}}') \
-					if ast.func [0] == 'a' else \
-					(f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}')
+			if ast.func [0] != 'a':
+				n = f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}'
+			elif ast.func in {'asech', 'acsch'}:
+				n = f'\\operatorname{{{ast.func [1:]}}}^{{-1}}'
+			else:
+				n = f'\\{ast.func [1:]}^{{-1}}'
 
 			return f'{n}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
@@ -1107,9 +1108,12 @@ class ast2py: # abstract syntax tree -> Python code text
 		return sdiff
 
 	def _ast2py_subs (self, ast):
-		args = ast.subs [0] if ast.subs.len == 1 else (('[', tuple (('(', (',', s)) for s in ast.subs)),)
+		if ast.subs.len > 1:
+			subs = f'({", ".join (self._ast2py (s) for s, d in ast.subs)}), ({", ".join (self._ast2py (d) for s, d in ast.subs)})'
+		else:
+			subs = f'{self._ast2py (ast.subs [0] [0])}, {self._ast2py (ast.subs [0] [1])}'
 
-		return self._ast2py_attr (AST ('.', ast.expr, 'subs', args))
+		return f'Subs({self._ast2py (ast.expr)}, {subs})'
 
 	_ast2py_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2py (a) for a in ast.scolon),
@@ -1805,7 +1809,7 @@ class sym: # for single script
 # 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 # 	# set_sym_user_funcs (vars)
 
-# 	ast = AST ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),))
+# 	ast = AST ('^', ('-func', 'sin', (('@', 'y'),)), ('^', ('@', 'x'), ('#', '2')))
 # 	res = ast2tex (ast)
 # 	# res = ast2nat (ast)
 # 	# res = ast2py (ast)

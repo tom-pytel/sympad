@@ -1,13 +1,7 @@
-> subs clarity parentheses for tex display - attr, etc...
-
 > allow N**2 y?
-> writeout - N**{x**2} y
-> writeout - sin**{x**2} y
 
 > _spt2ast_Mul - do not absorb fraction into non-fraction?
 > _spt2ast_Add - erroneous -2x + 3y
-
-> \limits^x - without the _
 
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 
@@ -19,6 +13,8 @@
 
 > subs autocomplete
 > improve error reporting with position of error returned from reduction functions if possible lalr1.Syntax (text, pos)
+
+> subs clarity parentheses for tex display - attr, etc?
 
 
 > display assignedvar (x) -> assignedvar * (x) if assigned in user_vars
