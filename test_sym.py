@@ -428,6 +428,10 @@ a**\.b[c]|_{x=1}
 {d / dx (f(x))(0)} [1]
 a*d/dx(h(x))(0)
 \. {\. a |_{x = 1}} |_{c = d}
+FiniteSet()**1[b].c
+ln**2 lambda: 1
+sin(v)**[a][b].c
+a * d/dx(f(x,y))(0,1).c
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

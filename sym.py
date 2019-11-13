@@ -715,7 +715,7 @@ class ast2nat: # abstract syntax tree -> native text
 					n.is_num or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or
-					n.is_subs_diff_ufunc or
+					n.strip_attr.is_subs_diff_ufunc or
 					p.strip_minus.op in {'/', '-lim', '-sum', '-diff', '-intg'} or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
@@ -1799,8 +1799,8 @@ class sym: # for single script
 # 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 # 	# set_sym_user_funcs (vars)
 
-# 	ast = AST ('-func', 'Subs', (('*', (('@', 'x'), ('@', 'y'))), ('@', 'x'), ('#', '2')))
-# 	res = ast2tex (ast)
+# 	ast = AST ('^', ('-func', 'FiniteSet', ((',', ()),)), ('.', ('-idx', ('"', 'a'), (('@', 'b'),)), 'c'))
+# 	res = ast2nat (ast)
 # 	# res = ast2nat (ast)
 # 	# res = ast2py (ast)
 # 	# res = ast2spt (ast)

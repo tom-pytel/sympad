@@ -1,13 +1,14 @@
-> sin x sin y
-> 1 + (lambda y: y)
+> N sin N sin x
+
+> 1 + (lambda y: y) vs. 1 + lambda y: y
 > _ast2tex/nat/py do not close unfinished -idx
-> erroneout -2x + 3y in _ast2spt_Add
+> erroneous -2x + 3y in _ast2spt_Add
 
 > \limits^x - without the _
 > subs of lambda variables for other variables? what does that mean?
 
 > subs autocomplete
-> subs clarity parentheses for tex display
+> subs clarity parentheses for tex display - attr, etc...
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 > syntax error of diffp of multivar ufunc in sparser?
@@ -62,6 +63,7 @@
 
 > \log loggamma=2 py representation? also sqrt? (use = instead of Eq due to function names as variables)
 > proper sqrt and log AST initialization via __new__, maybe others
+> sin**[a][b].c v - allow more complex inline powers to functions?
 
 > f (x) = x**2; f (x)
 
@@ -179,20 +181,3 @@ Errors:
 -------
 
 
-sin a sin b
-lhs:  ('-func', 'sin', (('@', 'a'),)) - ('*', (('@', 'sin'), ('@', 'a')))
-rhs:  ('-func', 'sin', (('@', 'b'),)) - ('*', (('@', 'sin'), ('@', 'b')))
-tail: ('-func', 'sin', (('@', 'a'),)) - ('*', (('@', 'sin'), ('@', 'a')))
-arg:  ('-func', 'sin', (('@', 'b'),)) - ('*', (('@', 'sin'), ('@', 'b')))
-tailf: wrapt (AST.VarNull)
-ast:  None
-
-N N sin 1
-print (f'lhs:  {lhs} - {lhs.src}\nrhs:  {rhs} - {rhs.src}\ntail: {tail} - {tail.src}\narg:  {arg} - {arg.src}\ntailf: wrapt (AST.VarNull)\nast:  {ast}')
-lhs:  ('-func', 'N', (('@', 'N'),)) - ('*', (('@', 'N'), ('@', 'N')))
-rhs:  ('-func', 'sin', (('#', '1'),)) - ('*', (('@', 'sin'), ('#', '1')))
-tail: ('-func', 'N', (('@', 'N'),)) - ('*', (('@', 'N'), ('@', 'N')))
-arg:  ('-func', 'sin', (('#', '1'),)) - ('*', (('@', 'sin'), ('#', '1')))
-tailf: wrapt (AST.VarNull)
-ast:  None
-None

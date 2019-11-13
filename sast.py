@@ -290,7 +290,7 @@ class AST (tuple):
 				tail = tail [1]
 
 			elif tail.is_diff:
-				if (tail.src or not tail.diff.is_var) and not (tail.src and tail.src.is_div and (tail.src.numer.is_mul or tail.src.numer.is_diff_or_part)):
+				if (tail.src or not tail.diff.is_var) and not (tail.src and tail.src.is_div and (tail.src.numer.is_mul or tail.src.numer.is_diff_or_part)): # checking .src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, tail.d, tail.dvs))
 					tail = tail.diff
 
@@ -302,15 +302,15 @@ class AST (tuple):
 				tail = tail.cmp [-1] [1]
 
 			elif tail.op in {'-sqrt', '-log'}:
-				if tail.src_arg:
+				if tail.src: # checking .src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:]))
-					tail = tail.src_arg
+					tail = tail.src.mul [1]
 
 				else:
 					break
 
 			elif tail.is_func:
-				if tail.src and tail.src.is_mul and tail.src.mul.len == 2 and tail.src.mul [0].is_var and tail.src.mul [0].var == tail.func:
+				if tail.src and tail.src.mul [0].is_var and tail.src.mul [0].var == tail.func: # checking .src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('-func', tail.func, (ast,)))
 					tail = tail.src.mul [1]
 

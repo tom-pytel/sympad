@@ -165,18 +165,26 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 	return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not handled by grammar
+	# print (f'lhs:  {lhs} - {lhs.src}\nrhs:  {rhs} - {rhs.src}\ntail: {tail} - {tail.src}\narg:  {arg} - {arg.src}\ntailf: {wrapt (AST.VarNull)}\nast:  {ast}')
 	def process_func (ast, arg, tail, wrapa, make):
+		# print (f'arg:  {arg}\ntail: {tail}\narg2: {arg2}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}')
+		# print (f'arg:  {arg}\ntail: {tail}\narg2: {arg2}\nast2: {ast2}\nwrap: {wrap (AST.One)}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}')
 		if tail.op not in {'{', '('}:
 			arg2 = _expr_mul_imp (tail, arg)
 
-			if arg2.is_pow and (
-					(arg2.base.is_func and arg2.base.src and arg2.base.src.is_mul and arg2.base.src.mul.len == 2) or
-					(arg2.base.op in {'-sqrt', '-log'} and arg2.base.src_arg)):
-				return make (wrapa (arg2)), AST.Null
+			if arg2.is_pow:
+				if arg2.base.op in {'-sqrt', '-log', '-func'} and arg2.base.src:
+					return make (wrapa (arg2)), AST.Null
+
+				elif arg2.exp.is_attr_var and tail.is_pow and arg2.base.is_paren and arg2.exp.obj.is_idx and tail.exp == arg2.exp.obj.obj: # not sure how this works
+					ast = make (arg2.base.paren)
+
+					if ast.is_pow and ast.exp == tail.exp:
+						return AST ('^', ast.base, arg2.exp), AST.Null
 
 			ast2, wrap = arg2.tail_mul_wrap
 
-			if (ast2.is_attr_func or ast2.op in {'-func', '-idx'}) and (not arg2.is_pow or not arg2.base.op in {'{', '('}):
+			if (ast2.is_attr_func or ast2.op in {'-log', '-sqrt', '-func', '-idx'}) and (not arg2.is_pow or not arg2.base.op in {'{', '('}):
 				return make (wrap (wrapa (ast2))), AST.Null
 
 		return ast, arg
@@ -247,21 +255,20 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
-		if tail.src and tail.src.is_mul and tail.src.mul.len == 2 and (not (arg.is_func and arg.src and arg.src.is_mul) or tail.src.mul [1].tail_mul.var in _SP_USER_FUNCS):
-			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, (ast,), src = AST ('*', (('@', tail.func), ast))))
+		if tail.src and (not (arg.op in {'-log', '-sqrt', '-func'} and arg.src) or tail.src.mul [1].tail_mul.var in _SP_USER_FUNCS):
+			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', tail.func), ast))))
 
 	elif tail.op in {'-sqrt', '-log'}: # ln N 2 -> ln (N (2)) instead of ln (N) * 2, log, sqrt
-		if tail.src_arg:
-			ast, arg = process_func (ast, arg, tail.src_arg, wrapa, lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src_arg = ast))
+		if tail.src:
+			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src = AST ('*', (AST.VarNull, ast))))
 
 	elif lhs.is_pow: # f**2 N x -> f**2 (N (x))
 		if lhs.base.is_func:
-			if lhs.base.src and lhs.base.src.is_mul and lhs.base.src.mul.len == 2 and lhs.base.src.mul [1].op not in {'{', '(', '^'}: # this only happens on f**p x, not f (x)**p or f x**p
-				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
+			if lhs.base and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].exp.op in {'{', '('}):
+				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
 
-		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src_arg.op not in {'{', '(', '^'}:
-			if lhs.base.src_arg:
-				ast, arg = process_func (ast, rhs, lhs.base.src_arg, wrapa, lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src_arg = ast), lhs.exp))
+		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].exp.op in {'{', '('}):
+			ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src = AST ('*', (AST.VarNull, ast))), lhs.exp))
 
 		if arg == AST.Null:
 			return ast
@@ -420,7 +427,7 @@ def _ast_strip_tail_differential (ast):
 					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
-		if hasattr (ast, 'src'):
+		if ast.src:
 			ast2, neg = ast.src._strip_minus (retneg = True)
 			ast2, dv  = _ast_strip_tail_differential (ast2)
 
@@ -502,7 +509,7 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseudo-function takes a single argument')
 
 	elif args [0] in {'-sqrt', '-log'}:
-		ast2.src_arg = args [iparm]
+		ast2.src = AST ('*', (AST.VarNull, args [iparm])) # VarNull is placeholder
 
 	return wrapf (ast2)
 
@@ -1330,12 +1337,7 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	set_sp_user_funcs ({'N'})
 	# set_sp_user_vars ({'u': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-	# print (f'lhs:  {lhs} - {lhs.src} - {lhs.src_arg}\nrhs:  {rhs} - {rhs.src} - {rhs.src_arg}\ntail: {tail} - {tail.src} - {tail.src_arg}\narg:  {arg} - {arg.src} - {arg.src_arg}\ntailf: wrapt (AST.VarNull)\nast:  {ast}')
-	# a = p.parse (r"((pi) \mapsto 0)")
-	# a = p.parse (r"sin a sin b")
-	# a = p.parse (r"N N sin 1")
-	# a = p.parse ("sin -N sin 2")
-	a = p.parse (r"ln ln N x")
+	a = p.parse (r"N sin N sin x")
 	print (a)
 
 	# a = sym.ast2spt (a)
