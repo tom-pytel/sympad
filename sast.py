@@ -188,6 +188,7 @@ class AST (tuple):
 
 	_strip_attr     = lambda self, count = None: self._strip (count, ('.',))
 	_strip_attrm    = lambda self, count = None: self._strip (count, ('.', '-'))
+	_strip_attrdp   = lambda self, count = None: self._strip (count, ('.', '-diffp'))
 	_strip_attrpdpi = lambda self, count = None: self._strip (count, ('.', '^', '-diffp', '-idx'))
 	_strip_curly    = lambda self, count = None: self._strip (count, ('{',))
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
@@ -444,7 +445,15 @@ class AST (tuple):
 
 	@staticmethod
 	def tuple2ast (args, paren = False):
-		return args [0] if len (args) == 1 else AST ('(', (',', args)) if paren else AST (',', args)
+		if len (args) == 1:
+			ast = args [0]._strip_paren (keeptuple = True)
+
+			return args [0] if ast.is_slice else ast
+
+		elif paren:
+			return AST ('(', (',', args))
+		else:
+			return AST (',', args)
 
 	@staticmethod
 	def args2kwargs (args, func = None, ass2eq = False):

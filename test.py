@@ -564,6 +564,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('N sin N sin x'), ('-func', 'N', (('-func', 'sin', (('-func', 'N', (('-func', 'sin', (('@', 'x'),)),)),)),)))
 		self.assertEqual (p ('cos**-1 0 \\log_2 8'), ('*', (('-func', 'acos', (('#', '0'),)), ('-log', ('#', '8'), ('#', '2')))))
 		self.assertEqual (p ('N sin sqrt[3] \\log_2 8'), ('-func', 'N', (('-func', 'sin', (('-sqrt', ('-log', ('#', '8'), ('#', '2')), ('#', '3')),)),)))
+		self.assertEqual (p ('sin(x)**-a[b][c].d'), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (p ('N - N N 2'), ('+', (('@', 'N'), ('-', ('-func', 'N', (('-func', 'N', (('#', '2'),)),))))))
 
 		self.assertEqual (p ('f (x) (0)'), ('-ufunc', 'f', (('#', '0'),)))
@@ -1093,6 +1094,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('N sin N sin x')), '\\operatorname{N}\\left(\\sin\\left(\\operatorname{N}\\left(\\sin\\left(x \\right) \\right) \\right) \\right)')
 		self.assertEqual (ast2tex (p ('cos**-1 0 \\log_2 8')), '\\cos^{-1}\\left(0 \\right) \\log_2\\left(8 \\right)')
 		self.assertEqual (ast2tex (p ('N sin sqrt[3] \\log_2 8')), '\\operatorname{N}\\left(\\sin\\left(\\sqrt[3]{\\log_2\\left(8 \\right)} \\right) \\right)')
+		self.assertEqual (ast2tex (p ('sin(x)**-a[b][c].d')), '\\sin\\left(x \\right)^{-a\\left[b \\right]\\left[c \\right].d}')
 		self.assertEqual (ast2tex (p ('N - N N 2')), 'N - \\operatorname{N}\\left(\\operatorname{N}\\left(2 \\right) \\right)')
 
 		self.assertEqual (ast2tex (p ('f (x) (0)')), 'f\\left(0 \\right)')
@@ -1622,6 +1624,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('N sin N sin x')), 'N(sin(N(sin(x))))')
 		self.assertEqual (ast2nat (p ('cos**-1 0 \\log_2 8')), 'acos(0) \\log_2(8)')
 		self.assertEqual (ast2nat (p ('N sin sqrt[3] \\log_2 8')), 'N(sin(\\sqrt[3]{\\log_2(8)}))')
+		self.assertEqual (ast2nat (p ('sin(x)**-a[b][c].d')), 'sin(x)**-a[b][c].d')
 		self.assertEqual (ast2nat (p ('N - N N 2')), 'N - N(N(2))')
 
 		self.assertEqual (ast2nat (p ('f (x) (0)')), 'f(0)')
@@ -2151,6 +2154,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('N sin N sin x')), 'N(sin(N(sin(x))))')
 		self.assertEqual (ast2py (p ('cos**-1 0 \\log_2 8')), 'acos(0)*(ln(8) / ln(2))')
 		self.assertEqual (ast2py (p ('N sin sqrt[3] \\log_2 8')), 'N(sin((ln(8) / ln(2))**(1/3)))')
+		self.assertEqual (ast2py (p ('sin(x)**-a[b][c].d')), 'sin(x)**-a[b][c].d')
 		self.assertEqual (ast2py (p ('N - N N 2')), 'N - N(N(2))')
 
 		self.assertEqual (ast2py (p ('f (x) (0)')), "Function('f')(0)")
@@ -2680,6 +2684,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('N sin N sin x')), ('-func', 'N', (('-func', 'sin', (('-func', 'N', (('-func', 'sin', (('@', 'x'),)),)),)),)))
 		self.assertEqual (ast2tex2ast (p ('cos**-1 0 \\log_2 8')), ('*', (('-func', 'acos', (('#', '0'),)), ('-log', ('#', '8'), ('#', '2')))))
 		self.assertEqual (ast2tex2ast (p ('N sin sqrt[3] \\log_2 8')), ('-func', 'N', (('-func', 'sin', (('-sqrt', ('-log', ('#', '8'), ('#', '2')), ('#', '3')),)),)))
+		self.assertEqual (ast2tex2ast (p ('sin(x)**-a[b][c].d')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2tex2ast (p ('N - N N 2')), ('+', (('@', 'N'), ('-', ('-func', 'N', (('-func', 'N', (('#', '2'),)),))))))
 
 		self.assertEqual (ast2tex2ast (p ('f (x) (0)')), ('-ufunc', 'f', (('#', '0'),)))
@@ -3209,6 +3214,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('N sin N sin x')), ('-func', 'N', (('-func', 'sin', (('-func', 'N', (('-func', 'sin', (('@', 'x'),)),)),)),)))
 		self.assertEqual (ast2nat2ast (p ('cos**-1 0 \\log_2 8')), ('*', (('-func', 'acos', (('#', '0'),)), ('-log', ('#', '8'), ('#', '2')))))
 		self.assertEqual (ast2nat2ast (p ('N sin sqrt[3] \\log_2 8')), ('-func', 'N', (('-func', 'sin', (('-sqrt', ('-log', ('#', '8'), ('#', '2')), ('#', '3')),)),)))
+		self.assertEqual (ast2nat2ast (p ('sin(x)**-a[b][c].d')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2nat2ast (p ('N - N N 2')), ('+', (('@', 'N'), ('-', ('-func', 'N', (('-func', 'N', (('#', '2'),)),))))))
 
 		self.assertEqual (ast2nat2ast (p ('f (x) (0)')), ('-ufunc', 'f', (('#', '0'),)))
@@ -3738,6 +3744,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('N sin N sin x')), ('-func', 'N', (('-func', 'sin', (('-func', 'N', (('-func', 'sin', (('@', 'x'),)),)),)),)))
 		self.assertEqual (ast2py2ast (p ('cos**-1 0 \\log_2 8')), ('*', (('-func', 'acos', (('#', '0'),)), ('(', ('/', ('-log', ('#', '8')), ('-log', ('#', '2'))))), {1}))
 		self.assertEqual (ast2py2ast (p ('N sin sqrt[3] \\log_2 8')), ('-func', 'N', (('-func', 'sin', (('^', ('(', ('/', ('-log', ('#', '8')), ('-log', ('#', '2')))), ('(', ('/', ('#', '1'), ('#', '3')))),)),)))
+		self.assertEqual (ast2py2ast (p ('sin(x)**-a[b][c].d')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2py2ast (p ('N - N N 2')), ('+', (('@', 'N'), ('-', ('-func', 'N', (('-func', 'N', (('#', '2'),)),))))))
 
 		self.assertEqual (ast2py2ast (p ('f (x) (0)')), ('-ufunc', 'f', (('#', '0'),)))
@@ -4267,6 +4274,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('N sin N sin x')), ('-func', 'sin', (('-func', 'sin', (('@', 'x'),)),)))
 		self.assertEqual (ast2spt2ast (p ('cos**-1 0 \\log_2 8')), ('/', ('*', (('#', '3'), ('@', 'pi'))), ('#', '2')))
 		self.assertEqual (ast2spt2ast (p ('N sin sqrt[3] \\log_2 8')), ('#', '0.991749236577359'))
+		self.assertEqual (ast2spt2ast (p ('sin(x)**-a[b][c].d')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2spt2ast (p ('N - N N 2')), ('+', (('@', 'N'), ('-', ('#', '2')))))
 
 		self.assertEqual (ast2spt2ast (p ('f (x) (0)')), ('-ufunc', 'f', (('#', '0'),)))
@@ -4797,6 +4805,7 @@ sin(a)**[a][b].c
 N sin N sin x
 cos**-1 0 \log_2 8
 N sin sqrt[3] \log_2 8
+sin(x)**-a[b][c].d
 N - N N 2
 
 f (x) (0)

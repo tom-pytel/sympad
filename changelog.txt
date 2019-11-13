@@ -2,6 +2,7 @@ v1.0.19:
 --------
 * Added parsing and writing of initial conditions of derivatives of undefined functions in function format (complicated).
 * Added proper formatting of exceptions which contain newlines in the exception text.
+* Added error hint text to web client.
 * Improved unparenthesized argument parsing for functions.
 * Improved error reporting from the parser.
 * Fixed "d / dx (a) b" and "\frac{d}{dx} (a) b" to work properly.

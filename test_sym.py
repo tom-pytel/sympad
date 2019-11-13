@@ -431,7 +431,12 @@ a*d/dx(h(x))(0)
 FiniteSet()**1[b].c
 ln**2 lambda: 1
 sin(v)**[a][b].c
-a * d/dx(f(x,y))(0,1).c
+a * d / dx (f(x,y))(0,1).c
+a * d / dx (h(x))(0)''
+a.b(((c)))
+a[((()))]
+a[(:)]
+\[a]**b[c][d].e
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -479,16 +484,31 @@ def expr_attr ():
 	return f' {expr ()}{"".join (f".{_randidentifier ()}" + ("()" if random () >= 0.5 else "") for _ in range (randint (1, 3)))} '
 
 def expr_comma ():
-	return f" {','.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
+	return f" {','.join (f'{expr ()}' for _ in range (randint (2, 3)))} "
 
 def expr_curly ():
-	return '{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
+	s = ','.join (f'{expr ()}' for _ in range (randint (1, 3))) if random () < 0.8 else ''
+
+	for _ in range (randint (1, 3)):
+		s = f'{{{s}}}'
+
+	return s
 
 def expr_paren ():
-	return '(' + ','.join (f'{expr ()}' for i in range (randrange (4))) + ')'
+	s = ','.join (f'{expr ()}' for _ in range (randint (1, 3))) if random () < 0.8 else ''
+
+	for _ in range (randint (1, 3)):
+		s = f'({s})'
+
+	return s
 
 def expr_brack ():
-	return '[' + ','.join (f'{expr ()}' for i in range (randrange (4))) + ']'
+	s = ','.join (f'{expr ()}' for _ in range (randint (1, 3))) if random () < 0.8 else ''
+
+	for _ in range (randint (1, 3)):
+		s = f'[{s}]'
+
+	return s
 
 def expr_abs ():
 	return f'\\left|{expr ()}\\right|'
@@ -638,7 +658,7 @@ def expr_set ():
 	return '\\{' + ','.join (f'{expr ()}' for i in range (randrange (4))) + '}'
 
 def expr_dict ():
-	return f" {' {' + ','.join (f'{choice (_STATIC_TERMS)} : {expr ()}' for i in range (randrange (4))) + '}'} "
+	return f" {' {' + ','.join (f'{expr ()} : {expr ()}' for i in range (randrange (4))) + '}'} "
 
 def expr_union ():
 	return f" {' || '.join (f'{expr ()}' for i in range (randrange (2, 4)))} "
