@@ -1584,16 +1584,11 @@ class spt2ast:
 
 			terms.append (ast)
 
-		if not hasO: # try to order so negative is not first
+		if not hasO: # try to order so negative is not first, but not extensively where it might change standard equation forms returned from SymPy
 			if spt.args [0].is_number and (not _ast_is_neg (terms [1]) or spt.args [0] < 0):
 				terms = terms [1:] + [terms [0]]
-
-			elif _ast_is_neg (terms [0]):
-				for i, t in enumerate (terms):
-					if not _ast_is_neg (t):
-						terms = [t] + terms [:i] + terms [i + 1:]
-
-						break
+			elif len (terms) == 2 and _ast_is_neg (terms [0]) and not _ast_is_neg (terms [1]):
+				terms = terms [::-1]
 
 		return AST ('+', tuple (terms))
 
