@@ -6807,21 +6807,21 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	set_sym_user_funcs (vars)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+# 	set_sym_user_funcs (vars)
 
-	# ast = AST ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
-	ast = AST ('-func', 'S', (('#', '1'),))
-	# res = ast2tex (ast)
-	res = ast2nat (ast)
-	# res = ast2py (ast)
-	# res = ast2spt (ast)
-	# res = spt2ast (res)
+# 	# ast = AST ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
+# 	ast = AST ('-func', 'S', (('#', '1'),))
+# 	# res = ast2tex (ast)
+# 	res = ast2nat (ast)
+# 	# res = ast2py (ast)
+# 	# res = ast2spt (ast)
+# 	# res = spt2ast (res)
 
-	# res = ast2nat (res)
+# 	# res = ast2nat (res)
 
-	print (repr (res))
+# 	print (repr (res))
 # Builds expression tree from text, nodes are nested AST tuples.
 
 import ast as py_ast
