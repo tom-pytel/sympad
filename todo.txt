@@ -1,9 +1,3 @@
-> f (x) = x**2 when f is assigned and non-lambda
-
-> allow N**2 y?
-> _spt2ast_Mul - do not absorb fraction into non-fraction?
-> subs clarity parentheses for tex display - attr, etc?
-
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
@@ -15,7 +9,6 @@
 > improve error reporting with position of error returned from reduction functions if possible lalr1.Syntax (text, pos)
 > syntax error of diffp of multivar ufunc in sparser?
 
-> general parentheses inconsistency between tex/nat and py - sin ((x))?
 
 
 > doc: ufuncs
@@ -48,10 +41,12 @@
 > upgrade error marking in sparser to better show where erroneous expressions start (error stack?)
 > helpful error message in web client if parsing raises
 
+> subs clarity parentheses for tex display - attr, etc?
+> _spt2ast_Mul - do not absorb fraction into non-fraction option
+
+> allow N**2 y?
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
-> do not write out parentheses for integration where not needed - \int {d / dx (x**2)} dx -> \int d / dx (x**2) dx?
 > clean up sym lambda keyword safety wrapping
-> subs of lambda variables for other variables? what does that mean?
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)?
 
@@ -74,6 +69,8 @@
 > allow log_base without the \?
 > sum_{start <= x < stop} -> \sum_{x = start}^{stop - 1}?
 > Lambda sxlat could be better
+> do not write out parentheses for integration where not needed - \int {d / dx (x**2)} dx -> \int d / dx (x**2) dx?
+> subs of lambda variables for other variables? what would that that mean?
 
 > xlat py f = Lambda (x, x**2) -> f (x) = x**2?
 

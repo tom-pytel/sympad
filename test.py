@@ -590,6 +590,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('f() = 2'), ('=', ('-ufunc', 'f', ()), ('#', '2')))
 		self.assertEqual (p ('d / dx (a) b'), ('*', (('-diff', ('(', ('@', 'a')), 'd', (('x', 1),)), ('@', 'b'))))
 		self.assertEqual (p ('\\frac{d}{dx} (a) b'), ('*', (('-diff', ('(', ('@', 'a')), 'd', (('x', 1),)), ('@', 'b'))))
+		self.assertEqual (p ('sin (())'), ('-func', 'sin', (('(', (',', ())),)))
+		self.assertEqual (p ('sin (((a))'), ('-func', 'sin', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (p ('a.b (())'), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
+		self.assertEqual (p ('a.b (((a))'), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -1120,6 +1124,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('f() = 2')), 'f\\left( \\right) = 2')
 		self.assertEqual (ast2tex (p ('d / dx (a) b')), '\\frac{d}{dx}\\left(a \\right) \\cdot b')
 		self.assertEqual (ast2tex (p ('\\frac{d}{dx} (a) b')), '\\frac{d}{dx}\\left(a \\right) \\cdot b')
+		self.assertEqual (ast2tex (p ('sin (())')), '\\sin\\left(\\left( \\right) \\right)')
+		self.assertEqual (ast2tex (p ('sin (((a))')), '\\sin\\left(\\left(\\left(a \\right) \\right) \\right)')
+		self.assertEqual (ast2tex (p ('a.b (())')), 'a.\\operatorname{b}\\left(\\left( \\right) \\right)')
+		self.assertEqual (ast2tex (p ('a.b (((a))')), 'a.\\operatorname{b}\\left(\\left(\\left(a \\right) \\right) \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -1425,7 +1433,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\[[[1, 2]], [[3]]]')), '\\[[[1, 2]], [[3]]]')
 		self.assertEqual (ast2nat (p ('{1/x}.limit (x, 0, "-")')), "(1/x).limit(x, 0,  '-')")
 		self.assertEqual (ast2nat (p ('{x^2y**2z}.diff (x, 2, y, z)')), '(x**2 y**2 z).diff(x, 2, y, z)')
-		self.assertEqual (ast2nat (p ('{x y}.integrate ((x, 0, 1))')), '(x y).integrate(x, 0, 1)')
+		self.assertEqual (ast2nat (p ('{x y}.integrate ((x, 0, 1))')), '(x y).integrate((x, 0, 1))')
 		self.assertEqual (ast2nat (p ('\\sqrt (a:b)')), 'sqrt(a:b)')
 		self.assertEqual (ast2nat (p ('\\sqrt[3] (a:b)')), '\\sqrt[3]{(a:b)}')
 		self.assertEqual (ast2nat (p ('? ()')), '?()')
@@ -1650,6 +1658,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('f() = 2')), 'f() = 2')
 		self.assertEqual (ast2nat (p ('d / dx (a) b')), 'd / dx (a) * b')
 		self.assertEqual (ast2nat (p ('\\frac{d}{dx} (a) b')), 'd / dx (a) * b')
+		self.assertEqual (ast2nat (p ('sin (())')), 'sin(())')
+		self.assertEqual (ast2nat (p ('sin (((a))')), 'sin(((a)))')
+		self.assertEqual (ast2nat (p ('a.b (())')), 'a.b(())')
+		self.assertEqual (ast2nat (p ('a.b (((a))')), 'a.b(((a)))')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -2180,6 +2192,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('f() = 2')), 'f = Lambda((), 2)')
 		self.assertEqual (ast2py (p ('d / dx (a) b')), 'Derivative(a, x)*b')
 		self.assertEqual (ast2py (p ('\\frac{d}{dx} (a) b')), 'Derivative(a, x)*b')
+		self.assertEqual (ast2py (p ('sin (())')), 'sin(())')
+		self.assertEqual (ast2py (p ('sin (((a))')), 'sin(((a)))')
+		self.assertEqual (ast2py (p ('a.b (())')), 'a.b(())')
+		self.assertEqual (ast2py (p ('a.b (((a))')), 'a.b(((a)))')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -2710,6 +2726,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('f() = 2')), ('=', ('-ufunc', 'f', ()), ('#', '2')))
 		self.assertEqual (ast2tex2ast (p ('d / dx (a) b')), ('*', (('-diff', ('(', ('@', 'a')), 'd', (('x', 1),)), ('@', 'b')), {1}))
 		self.assertEqual (ast2tex2ast (p ('\\frac{d}{dx} (a) b')), ('*', (('-diff', ('(', ('@', 'a')), 'd', (('x', 1),)), ('@', 'b')), {1}))
+		self.assertEqual (ast2tex2ast (p ('sin (())')), ('-func', 'sin', (('(', (',', ())),)))
+		self.assertEqual (ast2tex2ast (p ('sin (((a))')), ('-func', 'sin', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (ast2tex2ast (p ('a.b (())')), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
+		self.assertEqual (ast2tex2ast (p ('a.b (((a))')), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -3015,7 +3035,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\[[[1, 2]], [[3]]]')), ('-mat', ((('[', (('#', '1'), ('#', '2'))),), (('[', (('#', '3'),)),))))
 		self.assertEqual (ast2nat2ast (p ('{1/x}.limit (x, 0, "-")')), ('.', ('(', ('/', ('#', '1'), ('@', 'x'))), 'limit', (('@', 'x'), ('#', '0'), ('"', '-'))))
 		self.assertEqual (ast2nat2ast (p ('{x^2y**2z}.diff (x, 2, y, z)')), ('.', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), 'diff', (('@', 'x'), ('#', '2'), ('@', 'y'), ('@', 'z'))))
-		self.assertEqual (ast2nat2ast (p ('{x y}.integrate ((x, 0, 1))')), ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'integrate', (('@', 'x'), ('#', '0'), ('#', '1'))))
+		self.assertEqual (ast2nat2ast (p ('{x y}.integrate ((x, 0, 1))')), ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'integrate', (('(', (',', (('@', 'x'), ('#', '0'), ('#', '1')))),)))
 		self.assertEqual (ast2nat2ast (p ('\\sqrt (a:b)')), ('-sqrt', ('-slice', ('@', 'a'), ('@', 'b'), None)))
 		self.assertEqual (ast2nat2ast (p ('\\sqrt[3] (a:b)')), ('-sqrt', ('(', ('-slice', ('@', 'a'), ('@', 'b'), None)), ('#', '3')))
 		self.assertEqual (ast2nat2ast (p ('? ()')), ('-ufunc', '', ()))
@@ -3240,6 +3260,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('f() = 2')), ('=', ('-ufunc', 'f', ()), ('#', '2')))
 		self.assertEqual (ast2nat2ast (p ('d / dx (a) b')), ('*', (('-diff', ('(', ('@', 'a')), 'd', (('x', 1),)), ('@', 'b')), {1}))
 		self.assertEqual (ast2nat2ast (p ('\\frac{d}{dx} (a) b')), ('*', (('-diff', ('(', ('@', 'a')), 'd', (('x', 1),)), ('@', 'b')), {1}))
+		self.assertEqual (ast2nat2ast (p ('sin (())')), ('-func', 'sin', (('(', (',', ())),)))
+		self.assertEqual (ast2nat2ast (p ('sin (((a))')), ('-func', 'sin', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (ast2nat2ast (p ('a.b (())')), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
+		self.assertEqual (ast2nat2ast (p ('a.b (((a))')), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -3770,6 +3794,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('f() = 2')), ('=', ('@', 'f'), ('-func', 'Lambda', (('(', (',', ())), ('#', '2')))))
 		self.assertEqual (ast2py2ast (p ('d / dx (a) b')), ('*', (('-func', 'Derivative', (('@', 'a'), ('@', 'x'))), ('@', 'b')), {1}))
 		self.assertEqual (ast2py2ast (p ('\\frac{d}{dx} (a) b')), ('*', (('-func', 'Derivative', (('@', 'a'), ('@', 'x'))), ('@', 'b')), {1}))
+		self.assertEqual (ast2py2ast (p ('sin (())')), ('-func', 'sin', (('(', (',', ())),)))
+		self.assertEqual (ast2py2ast (p ('sin (((a))')), ('-func', 'sin', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (ast2py2ast (p ('a.b (())')), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
+		self.assertEqual (ast2py2ast (p ('a.b (((a))')), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -4300,6 +4328,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('f() = 2')), ('=', ('-ufunc', 'f', ()), ('#', '2')))
 		self.assertEqual (ast2spt2ast (p ('d / dx (a) b')), ('*', (('@', 'b'), ('-diff', ('@', 'a'), 'd', (('x', 1),)))))
 		self.assertEqual (ast2spt2ast (p ('\\frac{d}{dx} (a) b')), ('*', (('@', 'b'), ('-diff', ('@', 'a'), 'd', (('x', 1),)))))
+		self.assertRaises (AttributeError, ast2spt2ast, p ('sin (())'))
+		self.assertEqual (ast2spt2ast (p ('sin (((a))')), ('-func', 'sin', (('@', 'a'),)))
+		self.assertEqual (ast2spt2ast (p ('a.b (())')), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
+		self.assertEqual (ast2spt2ast (p ('a.b (((a))')), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
 	# END UPDATE BLOCK
 
 _EXPRESSIONS = r"""
@@ -4831,6 +4863,10 @@ d**2 / dx dy (u (x, y)) (0, 0)
 f() = 2
 d / dx (a) b
 \frac{d}{dx} (a) b
+sin (())
+sin (((a))
+a.b (())
+a.b (((a))
 """
 # _EXPRESSIONS = r"""
 

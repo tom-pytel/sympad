@@ -330,7 +330,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		a = ast.attr.replace ('_', '\\_')
 
 		if ast.is_attr_func:
-			a = f'\\operatorname{{{a}}}{self._ast2tex_paren (AST.tuple2ast (ast.args))}'
+			a = f'\\operatorname{{{a}}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
 		return f'{self._ast2tex_wrap (ast.obj, {"!", "^", "-diffp"}, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}.{a}'
 
@@ -660,7 +660,7 @@ class ast2nat: # abstract syntax tree -> native text
 		if ast.is_attr_var:
 			return f'{obj}.{ast.attr}'
 		else:
-			return f'{obj}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}'
+			return f'{obj}.{ast.attr}({self._ast2nat (AST.tuple2ast (ast.args))})'
 
 	def _ast2nat_minus (self, ast):
 		s = self._ast2nat_wrap (ast.minus, ast.minus.op in {"*", "-diff", "-piece", "||", "^^", "&&", "-or", "-and"}, {"=", "<>", "+", "-lamb", "-slice", "-not"})

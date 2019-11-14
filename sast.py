@@ -60,8 +60,7 @@ class AST (tuple):
 	_OP2CLS = {}
 	_CLS2OP = {}
 
-	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
-	_rec_int        = re.compile (r'^-?\d+$')
+	_rec_identifier = re.compile (r'^[a-zA-Z]\w*$')
 
 	def __new__ (cls, *args, **kw):
 		op       = AST._CLS2OP.get (cls)
@@ -440,17 +439,8 @@ class AST (tuple):
 		return vars
 
 	@staticmethod
-	def is_int_text (text):
-		return AST._rec_int.match (text)
-
-	@staticmethod
-	def tuple2ast (args, paren = False):
-		if len (args) == 1:
-			return args [0]._strip_paren (keeptuple = True)
-		elif paren:
-			return AST ('(', (',', args))
-		else:
-			return AST (',', args)
+	def tuple2ast (args):
+		return args [0] if len (args) == 1 else AST (',', args)
 
 	@staticmethod
 	def args2kwargs (args, func = None, ass2eq = False):
