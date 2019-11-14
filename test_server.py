@@ -137,6 +137,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (2)'), {'math': ('16', '16', '16')})
 		self.assertEqual (get ('y = 6'), {'math': ('y = 6', 'y = 6', 'y = 6')})
 		self.assertEqual (get ('f (2)'), {'math': ('36', '36', '36')})
+		self.assertEqual (get ('f = 2'), {'math': ('f = 2', 'f = 2', 'f = 2')})
+		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('g (x, y) = sqrt (f(x) + f(y))'), {'math': ('g(x, y) = sqrt(x**2 + y**2)', 'g = Lambda((x, y), sqrt(x**2 + y**2))', 'g\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
@@ -480,6 +482,8 @@ f (x) = @y**2
 f (2)
 y = 6
 f (2)
+f = 2
+f (x) = x**2
 
 delall
 f (x) = x**2

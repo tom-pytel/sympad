@@ -67,12 +67,20 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 
 #...............................................................................................
 def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
-	def is_valid_ufunc (ast):
-		return ast.is_func and ast.func in _SP_USER_FUNCS and all (a.is_var_nonconst for a in ast.args)
+	def can_be_ufunc (ast):
+		return (
+			(ast.is_func and ast.func in _SP_USER_FUNCS and all (a.is_var_nonconst for a in ast.args)) or
+			(ast.is_mul and ast.mul.len == 2 and ast.mul [1].is_paren and ast.mul [0].is_var_nonconst and not ast.mul [0].is_diff_or_part and ast.mul [1].paren.as_ufunc_argskw))
+
+	def as_ufunc (ast):
+		if ast.is_func:
+			return AST ('-ufunc', ast.func, ast.args)
+		else: # is_mul
+			return AST ('-ufunc', ast.mul [0].var, *ast.mul [1].paren.as_ufunc_argskw)
 
 	if ast.is_ass: # if assigning to function call then is assignment to function instead, rewrite
-		if is_valid_ufunc (ast.lhs):
-			ast = AST ('=', ('-ufunc', ast.lhs.func, ast.lhs.args), ast.rhs)
+		if can_be_ufunc (ast.lhs):
+			ast = AST ('=', as_ufunc (ast.lhs), ast.rhs)
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parsing as ('x', 'y = y', 'x')) so rewrite
 		vars = []
@@ -81,12 +89,12 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 		for c in itr:
 			if c.op in {'@', '-ufunc'}:
 				vars.append (c)
-			elif is_valid_ufunc (c):
-				vars.append (AST ('-ufunc', c.func, c.args))
+			elif can_be_ufunc (c):
+				vars.append (as_ufunc (c))
 
 			elif c.is_ass:
 				t = (c.rhs,) + tuple (itr)
-				v = c.lhs if c.lhs.op in {'@', '-ufunc'} else AST ('-ufunc', c.lhs.func, c.lhs.args) if is_valid_ufunc (c.lhs) else c.lhs if allow_lexprs else None
+				v = c.lhs if c.lhs.op in {'@', '-ufunc'} else as_ufunc (c.lhs) if can_be_ufunc (c.lhs) else c.lhs if allow_lexprs else None
 
 				if v:
 					ast = AST ('=', (',', tuple (vars) + (v,)) if len (vars) else v, t [0] if len (t) == 1 else AST (',', t))
@@ -261,7 +269,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			if lhs.base and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}): # this only happens on f**p x, not f (x)**p or f x**p
 				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
 
-		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}):
+		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}): # this only happens on f**p x, not f (x)**p or f x**p
 			ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src = AST ('*', (AST.VarNull, ast))), lhs.exp))
 
 		if arg == AST.Null:
