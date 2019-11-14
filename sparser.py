@@ -761,7 +761,7 @@ class Parser (lalr1.LALR1):
 	_UNOT     = '\u00ac' # not
 
 	_LTR      = fr'[a-zA-Z]'
-	_LTRU     = fr'[a-zA-Z_]'
+	_LTRU     = fr'(?:[a-zA-Z_]|\\_)'
 
 	_VARTEX   = '(?:' + '|'.join (sorted ((x.replace ('\\', '\\\\').replace ('+', '\\+').replace ('*', '\\*').replace ('^', '\\^') for x in AST.Var.TEX2PY), reverse = True)) + ')'
 	_VARTEX1  = fr'(?:(\d)|({_LTR})|(\\partial|\\infty))'
@@ -813,7 +813,7 @@ class Parser (lalr1.LALR1):
 		('BINOM1',       fr'\\binom\s*{_VARTEX1}'),
 		('BINOM',        fr'\\binom(?!{_LTRU})'),
 
-		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LTRU})|{"|".join (AST.Cmp.UNI2PY)}'),
+		('CMP',          fr'==|!=|<=|<|>=|>|(?:in|not\s+in)(?!{_LTRU})|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LTRU})|{"|".join (AST.Cmp.UNI2PY)}'),
 		('IF',            r'if(?!\w|\\_)'),
 		('ELSE',          r'else(?!\w|\\_)'),
 		('OR',           fr'or(?!\w|\\_)|\\vee(?!{_LTRU})|{_UOR}'),

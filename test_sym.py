@@ -443,6 +443,8 @@ a[(:)]
 \.x|_{(1,2)=y}
 \.x|_{(((1,2),))=y}
 \.x|_{(((1,2)),)=y}
+inverse_mell in_transform(())
+1 e100a**2
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

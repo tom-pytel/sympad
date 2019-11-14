@@ -10,7 +10,6 @@
 > subs autocomplete
 > improve error reporting with position of error returned from reduction functions if possible lalr1.Syntax (text, pos)
 > syntax error of diffp of multivar ufunc in sparser?
-> server sxlat ast debug print when sxlat performed by ast2tex/nat/py
 
 
 > doc: reference SymPy documentation
@@ -174,36 +173,3 @@ Errors:
 -------
 
 
-text: inverse_mell in_transform(())
-ast:  ('*', (('@', 'inverse_mell'), ('@', 'in_transform'), ('(', ('(', (',', ())))))
-ast:  ('<>', ('@', 'inverse_mell'), (('in', ('*', (('@', '_'), ('@', 'transform'), ('(', ('(', (',', ())))), {2})),))
-tex1: inverse\_mell\ in\_transform \cdot \left(\left( \right) \right)
-tex2: inverse\_mell \in \_\ transform \cdot \left(\left( \right) \right)
-
-
-text: \fraclambdax,y,z:\{1 e100^y1,\sqrt"str"}{{{}}}
-ast:  (',', (('*', (('/', ('@', 'l'), ('@', 'a')), ('@', 'mbdax'))), ('@', 'y'), ('-slice', ('@', 'z'), ('*', (('-set', (('*', (('#', '1'), ('^', ('@', 'e100'), ('@', 'y')), ('#', '1'))), ('-sqrt', ('"', 'str')))), ('-dict', ()))), None)))
-ast:  (',', (('*', (('/', ('@', 'l'), ('@', 'a')), ('@', 'mbdax')), {1}), ('@', 'y'), ('-slice', ('@', 'z'), ('*', (('-set', (('*', (('^', ('#', '1e+100'), ('@', 'y')), ('#', '1')), {1}), ('-sqrt', ('"', 'str')))), ('-dict', ()))), None)))
-nat1: l/a * mbdax, y, z:{1e100**y * 1, sqrt( 'str')} {}
-nat2: l/a * mbdax, y, z:{1e+100**y * 1, sqrt( 'str')} {}
-
-
-text: partial^{4}/partialx^{1}partialx^{3}\phi^a^None.NlAamJ.h4Q()^^1 e100**\tilde\infty!^^\{\emptyset,dx}\log_True\partialx
-ast:  ('^^', (('-diff', ('^', ('^', ('@', 'phi'), ('@', 'a')), ('-func', 'N', (('.', ('.', ('@', 'one'), 'NlAamJ'), 'h4Q', ()),))), 'partial', (('x', 1), ('x', 3))), ('*', (('#', '1'), ('^', ('@', 'e100'), ('!', ('@', 'zoo'))))), ('*', (('-set', (('-set', ()), ('@', 'dx'))), ('-log', ('@', 'rue'), ('@', 'T')), ('@', 'partialx')))))
-ast:  ('^^', (('-diff', ('(', ('^', ('(', ('^', ('@', 'phi'), ('@', 'a'))), ('-func', 'N', (('.', ('.', ('@', 'one'), 'NlAamJ'), 'h4Q', ()),)))), 'partial', (('x', 1), ('x', 3))), ('^', ('#', '1e+100'), ('!', ('@', 'zoo'))), ('*', (('-set', (('-set', ()), ('@', 'dx'))), ('-log', ('@', 'rue'), ('@', 'T')), ('@', 'partialx')))))
-nat1: partial**4 / partialx partialx**3 ((phi**a)**N(one.NlAamJ.h4Q())) ^^ 1e100**zoo! ^^ {\{}, dx} \log_T(rue) partialx
-nat2: partial**4 / partialx partialx**3 ((phi**a)**N(one.NlAamJ.h4Q())) ^^ 1e+100**zoo! ^^ {\{}, dx} \log_T(rue) partialx
-
-
-text: d^{2}/dy^{2}\['str'>=-1.0,1.0ifx0elsepartialif\partialelse-295338834364395.7,]=[[[d^{5}/dx^{2}dy^{3}0,\partialx+xyzd,1 e100**xyzd]]]
-ast:  ('=', ('-diff', ('-mat', ((('<>', ('"', 'str'), (('>=', ('#', '-1.0')),)),), (('+', (('*', (('#', '1.0'), ('@', 'ifx0elsepartialif'), ('@', 'partialelse'))), ('-', ('#', '295338834364395.7')))),))), 'd', (('y', 2),)), ('[', (('[', (('[', (('-diff', ('#', '0'), 'd', (('x', 2), ('y', 3))), ('+', (('@', 'partialx'), ('@', 'xyzd'))), ('*', (('#', '1'), ('^', ('@', 'e100'), ('@', 'xyzd')))))),)),)))
-ast:  ('=', ('-diff', ('(', ('-mat', ((('<>', ('"', 'str'), (('>=', ('#', '-1.0')),)),), (('+', (('*', (('#', '1.0'), ('@', 'ifx0elsepartialif'), ('@', 'partialelse'))), ('-', ('#', '295338834364395.7')))),)))), 'd', (('y', 2),)), ('[', (('[', (('[', (('-diff', ('(', ('#', '0')), 'd', (('x', 2), ('y', 3))), ('+', (('@', 'partialx'), ('@', 'xyzd'))), ('^', ('#', '1e+100'), ('@', 'xyzd')))),)),)))
-nat1: d**2 / dy**2 (\[ 'str' >= -1.0, 1.0 ifx0elsepartialif partialelse - 295338834364395.7]) = [[[d**5 / dx**2 dy**3 (0), partialx + xyzd, 1e100**xyzd]]]
-nat2: d**2 / dy**2 (\[ 'str' >= -1.0, 1.0 ifx0elsepartialif partialelse - 295338834364395.7]) = [[[d**5 / dx**2 dy**3 (0), partialx + xyzd, 1e+100**xyzd]]]
-
-
-text: not\{[[]],1 e100apartial**\left|1.\right|}
-ast:  ('-not', ('-set', (('[', (('[', ()),)), ('*', (('#', '1'), ('^', ('@', 'e100apartial'), ('|', ('#', '1.'))))))))
-ast:  ('-not', ('-set', (('[', (('[', ()),)), ('*', (('#', '1e+100'), ('^', ('@', 'apartial'), ('|', ('#', '1.'))))))))
-nat1: not {[[]], 1e100apartial**{|1.|}}
-nat2: not {[[]], 1e+100apartial**{|1.|}}

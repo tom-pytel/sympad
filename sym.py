@@ -723,7 +723,9 @@ class ast2nat: # abstract syntax tree -> native text
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
 					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist) or
 					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
-					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS)):
+					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
+					s [:1] in {'e', 'E'} and t [-1] [-1].isdigit ()
+					):
 				t.append (f' * {s}')
 				has = True
 
