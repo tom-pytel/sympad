@@ -1114,10 +1114,13 @@ class ast2py: # abstract syntax tree -> Python code text
 		return sdiff
 
 	def _ast2py_subs (self, ast):
+		def tupletuple (a):
+			return self._ast2py (AST ('(', (',', (a,))) if a.strip_paren.is_comma else a)
+
 		if ast.subs.len > 1:
 			subs = f'({", ".join (self._ast2py (s) for s, d in ast.subs)}), ({", ".join (self._ast2py (d) for s, d in ast.subs)})'
 		else:
-			subs = f'{self._ast2py (ast.subs [0] [0])}, {self._ast2py (ast.subs [0] [1])}'
+			subs = f'{tupletuple (ast.subs [0] [0])}, {tupletuple (ast.subs [0] [1])}'
 
 		return f'Subs({self._ast2py (ast.expr)}, {subs})'
 
@@ -1820,11 +1823,11 @@ class sym: # for single script
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	# set_sym_user_funcs (vars)
+	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	set_sym_user_funcs (vars)
 
-	ast = AST ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
-	ast = AST ('-func', 'sin', (('(', ('@', 'x')),))
+	# ast = AST ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
+	ast = AST ('-subs', ('@', 'x'), ((('(', (',', (('#', '1'), ('#', '2')))), ('@', 'y')),))
 	# res = ast2tex (ast)
 	# res = ast2nat (ast)
 	res = ast2py (ast)

@@ -437,6 +437,12 @@ a.b(((c)))
 a[((()))]
 a[(:)]
 \[a]**b[c][d].e
+\.x|_{x=(:)}
+\.x|_{x=(sin x)}
+\.x|_{(x)=sin x}
+\.x|_{(1,2)=y}
+\.x|_{(((1,2),))=y}
+\.x|_{(((1,2)),)=y}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

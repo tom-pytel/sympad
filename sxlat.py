@@ -313,12 +313,12 @@ def _xlat_f2a_Subs (expr = None, src = None, dst = None):
 		if src is None:
 			return ((AST.VarNull, AST.VarNull),)
 
-		src = src.strip_paren.comma if src.strip_paren.is_comma else (src.strip_paren,)
+		src = src.strip_paren.comma if src.strip_paren.is_comma else (src,) # (src.strip_paren,)
 
 		if dst is None:
 			return tuple (it.zip_longest (src, (), fillvalue = AST.VarNull))
 
-		dst = dst.strip_paren.comma if dst.strip_paren.is_comma else (dst.strip_paren,)
+		dst = dst.strip_paren.comma if dst.strip_paren.is_comma else (dst,) # (dst.stip_paren,)
 
 		if len (dst) > len (src):
 			return None

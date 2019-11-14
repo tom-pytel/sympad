@@ -1333,7 +1333,8 @@ class sparser: # for single script
 # 	# set_sp_user_funcs ({'N'})
 # 	# set_sp_user_vars ({'f': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-# 	a = p.parse (r"Subs(x, x, (sin(x)))")
+# 	# a = p.parse (r"Subs(x, x, (sin(x)))")
+# 	a = p.parse (r"f (x) = x**2")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)
