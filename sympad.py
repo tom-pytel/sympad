@@ -244,7 +244,10 @@ i {
 .CopySpan {
 	display: inline-block;
 }
-""".encode ("utf8"),
+
+#ValidationError {
+	color: #f99;
+}""".encode ("utf8"),
 
 	'script.js': # script.js
 
@@ -264,6 +267,7 @@ PreventFocusOut  = true;
 LogIdx           = 0;
 UniqueID         = 1;
 
+LastValidation   = null;
 Validations      = [undefined];
 Evaluations      = [undefined];
 ErrorIdx         = null;
@@ -487,6 +491,8 @@ function ajaxValidate (resp) {
 	if (Validations [resp.idx] !== undefined && Validations [resp.idx].subidx >= resp.subidx) {
 		return; // ignore out of order responses (which should never happen with single threaded server)
 	}
+
+	LastValidation = resp;
 
 	if (resp.tex !== null) {
 		Validations [resp.idx] = resp;
@@ -726,6 +732,12 @@ function inputKeypress (e) {
 			inputted (s);
 
 			return false;
+
+		} else if (LastValidation !== null && LastValidation.error) { // last validation had error, display
+			let eLogInput = document.getElementById (`LogInput${LastValidation.idx}`);
+
+			$('#ValidationError').remove ();
+			$(eLogInput).append (`<span id="ValidationError">&lt;-- ${LastValidation.error}</span>`)
 		}
 
 	} else if (e.which == 32) {
@@ -1576,7 +1588,9 @@ User created lambda functions are supported and are specified the same way as Py
 In order to make use of them though you must assign them to a variable like "<b>f = lambda x: x**2</b>", or with the alternative shorthand "<b>f (x) = x**2</b>", now when you call "<b>f(3)</b>" you will get "<b>9</b>" as the result.
 When a lambda function is defined any non-lambda argument variables are mapped but no functions are called or expressions doit()-ed, this means that if a lambda references an assigned global variable the variable will be replaced with its value within the lambda definition.
 If you do not want to use the value of a global variable in a lambda definition but rather have the value bound upon execution of the lambda then use the no-remap pseudo-function as such "<b>f = lambda: @(x)</b>", this will leave the lambda definition referencing an "<b>x</b>" variable which will be bound upon execution.
-This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed, upon evaluation though whatever is passed in for "<b>x</b>" argument will be integrated with respect to "<b>dx</b>" which is fixed and will not change irrespective of if a variable is passed in for "<b>x</b>".
+This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed.
+Upon evaluation whatever is passed in for the "<b>x</b>" be integrated will attempt to replace the "<b>dx</b>" with its value, and if it resolves to a pure variable like "<b>y</b>" and not an expression then the "<b>dx</b>" will be changed to a "<b>dy</b>", otherwise the integration is done with respect to the original "<b>dx</b>".
+This does not apply if you use the lowercase SymPy functions like "<b>integrate()</b>" or "<b>.limit()</b>" which are always evaluated even in the definition of a lambda function.
 Lambda functions may reference other lambda functions as long as those are defined at the time of creation.
 </p><p>
 Lambdas may be passed to SymPy and other Python functions and they will be passed as SymPy "<b>Lambda</b>" objects.
@@ -3022,10 +3036,12 @@ class State (tuple): # easier on the eyes
 		return tuple.__new__ (cls, args)
 
 	def __init__ (self, *args): # idx = state index, sym = symbol (TOKEN or 'expression'), red = reduction (if present)
-		if len (self) == 2:
+		if len (self) == 4:
+			self.idx, self.sym, self.pos, self.red = self
+
+		else: # must be 2
 			self.idx, self.sym = self
-		else: # must be 3
-			self.idx, self.sym, self.red = self
+			self.pos           = self.sym.pos
 
 class LALR1:
 	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])_?(\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
@@ -3144,9 +3160,10 @@ class LALR1:
 		tokens = self.tokenize (src)
 		tokidx = 0
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
-		stack  = [State (0, None, None)] # [(stidx, symbol, reduction) or (stidx, token), ...]
+		stack  = [State (0, None, 0, None)] # [(stidx, symbol, pos, reduction) or (stidx, token), ...]
 		stidx  = 0
-		rederr = None # reduction function raised exception (SyntaxError or Incomplete)
+		rederr = None # reduction function raised exception (SyntaxError or Incomplete usually)
+		pos    = 0
 
 		while 1:
 			if not rederr:
@@ -3154,8 +3171,8 @@ class LALR1:
 				act, conf = terms [stidx].get (tok, (None, None))
 
 			if rederr or act is None:
-				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr = \
-						tokens, tokidx, cstack, stack, stidx, tok, rederr
+				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr, self.pos = \
+						tokens, tokidx, cstack, stack, stidx, tok, rederr, pos
 
 				rederr = None
 
@@ -3201,6 +3218,7 @@ class LALR1:
 				rule  = rules [-act]
 				rnlen = -len (rule [1])
 				prod  = rule [0]
+				pos   = stack [rnlen].pos
 
 				try:
 					red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
@@ -3219,7 +3237,7 @@ class LALR1:
 
 				stidx = nterms [stack [-1].idx] [prod]
 
-				stack.append (State (stidx, prod, red))
+				stack.append (State (stidx, prod, pos, red))
 
 class lalr1: # for single script
 	Incomplete = Incomplete
@@ -3253,7 +3271,7 @@ class lalr1: # for single script
 # ('-func', 'name', (a1, a2, ...))                    - sympy or regular Python function call to 'name()', will be called with expressions a1, a2, ...
 # ('-lim', expr, var, to[, 'dir'])                    - limit of expr when var approaches to from both directions, otherwise only from specified '+' or '-' dir
 # ('-sum', expr, var, from, to)                       - summation of expr over variable var from from to to
-# ('-diff', expr, 'd', (('v1', p1), ...))             - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power)
+# ('-diff', expr, 'd', (('v1', p1), ...))             - differentiation of expr with respect to dv(s), d is 'd' or 'partial', dvs are ('var', power) - power is int
 # ('-diffp', expr, count)                             - differentiation with respect to unspecified variable count times
 # ('-intg', expr, dv[, from, to])                     - indefinite or definite integral of expr (or 1 if expr is None) with respect to differential dv (('@', 'dx'), ('@', 'dy'), etc ...)
 # ('-mat', ((e11, e12, ...), (e21, e22, ...), ...))   - matrix
@@ -3288,8 +3306,7 @@ class AST (tuple):
 	_OP2CLS = {}
 	_CLS2OP = {}
 
-	_rec_identifier = re.compile (r'^[a-zA-Z_]\w*$')
-	_rec_int        = re.compile (r'^-?\d+$')
+	_rec_identifier = re.compile (r'^[a-zA-Z]\w*$')
 
 	def __new__ (cls, *args, **kw):
 		op       = AST._CLS2OP.get (cls)
@@ -3416,6 +3433,7 @@ class AST (tuple):
 
 	_strip_attr     = lambda self, count = None: self._strip (count, ('.',))
 	_strip_attrm    = lambda self, count = None: self._strip (count, ('.', '-'))
+	_strip_attrdp   = lambda self, count = None: self._strip (count, ('.', '-diffp'))
 	_strip_attrpdpi = lambda self, count = None: self._strip (count, ('.', '^', '-diffp', '-idx'))
 	_strip_curly    = lambda self, count = None: self._strip (count, ('{',))
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
@@ -3518,7 +3536,7 @@ class AST (tuple):
 				tail = tail [1]
 
 			elif tail.is_diff:
-				if (tail.src or not tail.diff.is_var) and not (tail.src and tail.src.is_div and (tail.src.numer.is_mul or tail.src.numer.is_diff_or_part)):
+				if (tail.src or not tail.diff.is_var) and not (tail.src and tail.src.is_div and (tail.src.numer.is_mul or tail.src.numer.is_diff_or_part)): # checking .src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, tail.d, tail.dvs))
 					tail = tail.diff
 
@@ -3530,15 +3548,15 @@ class AST (tuple):
 				tail = tail.cmp [-1] [1]
 
 			elif tail.op in {'-sqrt', '-log'}:
-				if tail.src_arg:
+				if tail.src: # checking .src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:]))
-					tail = tail.src_arg
+					tail = tail.src.mul [1]
 
 				else:
 					break
 
 			elif tail.is_func:
-				if tail.src and tail.src.is_mul and tail.src.mul.len == 2 and tail.src.mul [0].is_var and tail.src.mul [0].var == tail.func:
+				if tail.src and tail.src.mul [0].is_var and tail.src.mul [0].var == tail.func: # checking .src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('-func', tail.func, (ast,)))
 					tail = tail.src.mul [1]
 
@@ -3590,32 +3608,32 @@ class AST (tuple):
 
 		return _as_identifier (self)
 
+	def _is_const (self):
+		if self.is_num:
+			return True
+		elif self.is_var:
+			return self.is_var_const
+		elif self.op in {'{', '(', '-', '!'}:
+			return self [1].is_const
+		elif self.op in {'+', '*', '*exp'}:
+			return all (a.is_const for a in self [1])
+		elif self.is_div:
+			return self.numer.is_const and self.denom.is_const
+		elif self.is_pow:
+			return self.base.is_const and self.exp.is_const
+		elif self.is_log:
+			return self.log.is_const if self.base is None else (self.log.is_const and self.base.is_const)
+		elif self.is_sqrt:
+			return self.rad.is_const if self.idx is None else (self.rad.is_const and self.idx.is_const)
+		elif self.is_func:
+			return all (a.is_const for a in self.args)
+
+		return False
+
 	def _as_ufunc_argskw (self):
-		def is_simple (ast):
-			if ast.is_num:
-				return True
-			elif ast.is_var:
-				return ast.is_var_const
-			elif ast.op in {'{', '(', '-', '!'}:
-				return is_simple (ast [1])
-			elif ast.op in {'+', '*', '*exp'}:
-				return all (is_simple (a) for a in ast [1])
-			elif ast.is_div:
-				return is_simple (ast.numer) and is_simple (ast.denom)
-			elif ast.is_pow:
-				return is_simple (ast.base) and is_simple (ast.exp)
-			elif ast.is_log:
-				return is_simple (ast.log) if ast.base is None else (is_simple (ast.log) and is_simple (ast.base))
-			elif ast.is_sqrt:
-				return is_simple (ast.rad) if ast.idx is None else (is_simple (ast.rad) and is_simple (ast.idx))
-			elif ast.is_func:
-				return all (is_simple (a) for a in ast.args)
+		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,) if self.op is not None else self)
 
-			return False
-
-		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,))
-
-		if any (not a.is_var and not is_simple (a) for a in args):
+		if any (not a.is_var and not a.is_const for a in args):
 			return None
 
 		return tuple (args), tuple (sorted (kw.items ()))
@@ -3667,12 +3685,8 @@ class AST (tuple):
 		return vars
 
 	@staticmethod
-	def is_int_text (text):
-		return AST._rec_int.match (text)
-
-	@staticmethod
-	def tuple2ast (args, paren = False):
-		return args [0] if len (args) == 1 else AST ('(', (',', args)) if paren else AST (',', args)
+	def tuple2ast (args):
+		return args [0] if len (args) == 1 else AST (',', args)
 
 	@staticmethod
 	def args2kwargs (args, func = None, ass2eq = False):
@@ -3726,7 +3740,7 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
-	def apply_vars (ast, vars, recurse = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
+	def apply_vars (ast, vars, recurse = True, exc = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
 		def push (vars, newvars): # create new frame and add new variables
 			frame       = vars.copy ()
 			frame ['<'] = vars
@@ -3764,17 +3778,17 @@ class AST (tuple):
 			var = vars.get (ast.var)
 
 			if var: # user var
-				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse)
+				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse, exc)
 
 			return ast
 
 		elif ast.is_subs:
-			return AST ('-subs', AST.apply_vars (ast.expr, vars, recurse), tuple ((src, AST.apply_vars (dst, vars, recurse)) for src, dst in ast.subs))
+			return AST ('-subs', AST.apply_vars (ast.expr, vars, recurse, exc), tuple ((src, AST.apply_vars (dst, vars, recurse, exc)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})
 
-			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse), ast [2], *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse, exc), ast [2], *(AST.apply_vars (a, vars, recurse, exc) for a in ast [3:]))
 
 		elif ast.is_diff:
 			dvs = []
@@ -3785,12 +3799,10 @@ class AST (tuple):
 				if a:
 					if a.is_var_nonconst:
 						v = a.var
-					# else:
-					# 	raise ValueError (f"cannot remap differential 'd{v}' to non-variable in derivative")
 
 				dvs.append ((v, p))
 
-			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse), ast.d, tuple (dvs))
+			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse, exc), ast.d, tuple (dvs))
 
 		elif ast.is_intg:
 			dv = ast.dv
@@ -3807,9 +3819,8 @@ class AST (tuple):
 						dv = AST ('@', f'd{a.var}')
 					else:
 						dv = ast.dv
-						# raise ValueError (f'cannot remap differential {ast.dv.var!r} to non-variable in integral')
 
-			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse), dv, *(AST.apply_vars (a, vars, recurse) for a in ast [3:]))
+			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse, exc), dv, *(AST.apply_vars (a, vars, recurse, exc) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
 			vars = push (vars, {v: False for v in ast.vars})
@@ -3822,19 +3833,21 @@ class AST (tuple):
 				lamb = vars.get (ast.func)
 
 				if lamb and lamb.is_lamb: # 'execute' user lambda
-					if ast.args.len != lamb.vars.len:
+					if ast.args.len == lamb.vars.len:
+						args = dict (zip (lamb.vars, ast.args))
+
+						return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False, exc), vars, recurse, exc) # remap lambda vars to func args then global remap
+
+					elif exc:
 						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
-					args = dict (zip (lamb.vars, ast.args))
+					else:
+						return AST ('-func', ast.func,
+								tuple (('(', AST.apply_vars (a, vars, recurse, exc))
+								if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
+								else AST.apply_vars (a, vars, recurse, exc) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
-					return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False), vars) # remap lambda vars to func args then global remap
-
-				return AST ('-func', ast.func,
-						tuple (('(', AST.apply_vars (a, vars, recurse))
-						if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
-						else AST.apply_vars (a, vars, recurse) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
-
-		return AST (*(AST.apply_vars (a, vars, recurse) for a in ast))
+		return AST (*(AST.apply_vars (a, vars, recurse, exc) for a in ast))
 
 	@staticmethod
 	def register_AST (cls):
@@ -3866,8 +3879,6 @@ class AST_Ass (AST):
 	def _init (self, lhs, rhs):
 		self.lhs, self.rhs = lhs, rhs # should be py form
 
-	# _ass_lhs_vars = lambda self: (self.lhs,) if self.lhs.op in {'@', '-ufunc'} else self.lhs.comma if (self.lhs.is_comma and all (a.op in {'@', '-ufunc'} for a in self.lhs.comma)) else None
-
 	@staticmethod
 	def ufunc2lamb (ufunc, lamb):
 		return AST ('-lamb', lamb, tuple (v.var or 'NONVARIABLE' for v in ufunc.vars))
@@ -3890,8 +3901,6 @@ class AST_Ass (AST):
 
 		if self.lhs.is_var:
 			return verify (self, self.lhs)
-		elif self.lhs.is_ufunc:
-			return verify (AST ('=', ('@', self.lhs.ufunc or 'ANONYMOUS'), self.ufunc2lamb (self.lhs, self.rhs)), self.lhs)
 
 		elif self.lhs.is_comma:
 			rhs = self.rhs.strip_paren
@@ -3914,6 +3923,9 @@ class AST_Ass (AST):
 				rhs = (rhs.op, tuple (r for _, r in lrs) + rhs [1] [both:])
 
 				return verify (AST ('=', (',', tuple (l for l, _ in lrs) + self.lhs.comma [both:]), ('(', rhs) if self.rhs.is_paren else rhs), self.lhs.comma, True)
+
+		elif self.lhs.is_ufunc_named:
+			return verify (AST ('=', ('@', self.lhs.ufunc), self.ufunc2lamb (self.lhs, self.rhs)), self.lhs)
 
 		return None
 
@@ -3977,9 +3989,6 @@ class AST_Var (AST):
 
 	def _init (self, var):
 		self.var = var
-
-		# if AST._rec_identifier.match (var):
-		# 	self.__dict__ [f'is_var__{var}'] = True
 
 	_grp                  = lambda self: [g or '' for g in AST_Var._rec_groups.match (self.var).groups ()]
 	_is_var_null          = lambda self: not self.var
@@ -4163,9 +4172,6 @@ class AST_Func (AST):
 	def _init (self, func, args):
 		self.func, self.args = func, args
 
-		# if AST._rec_identifier.match (func):
-		# 	self.__dict__ [f'is_func__{func}'] = True
-
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
 	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
@@ -4298,10 +4304,13 @@ class AST_UFunc (AST):
 
 		return self
 
-	_is_ufunc_pure   = lambda self: all (v.is_var_nonconst for v in self.vars)
-	_is_ufunc_impure = lambda self: any (not v.is_var_nonconst for v in self.vars)
+	_is_ufunc_named     = lambda self: self.ufunc
+	_is_ufunc_unapplied = lambda self: not self.vars
+	_is_ufunc_applied   = lambda self: self.vars
+	_is_ufunc_pure      = lambda self: self.vars and all (v.is_var_nonconst for v in self.vars)
+	_is_ufunc_impure    = lambda self: self.vars and any (not v.is_var_nonconst for v in self.vars)
 
-	def apply_argskw (self, argskw):
+	def can_apply_argskw (self, argskw):
 		if argskw:
 			args, kw = argskw
 
@@ -4312,10 +4321,15 @@ class AST_UFunc (AST):
 				if self.vars.len == len (args):
 					for v, a in zip (self.vars, args):
 						if not v.is_var_nonconst or (a.is_var_nonconst and a.var != v.var):
-							return None
+							return False
 
-					if args != self.vars:
-						return AST ('-ufunc', self.ufunc, args, self.kw)
+					return args != self.vars
+
+		return False
+
+	def apply_argskw (self, argskw):
+		if self.can_apply_argskw (argskw):
+			return AST ('-ufunc', self.ufunc, argskw [0], self.kw)
 
 		return None
 
@@ -4324,6 +4338,8 @@ class AST_Subs (AST):
 
 	def _init (self, expr, subs):
 		self.expr, self.subs = expr, subs
+
+	_is_subs_diff_ufunc = lambda self: self.expr.is_diff and self.expr.diff._strip_paren (1).is_ufunc
 
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
@@ -4353,10 +4369,10 @@ AST.MatEmpty   = AST ('-mat', ())
 AST.SetEmpty   = AST ('-set', ())
 AST.DictEmpty  = AST ('-dict', ())
 
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	ast = AST ('-lamb', ('+', (('-func', '@', (('-func', '@', (('@', 'x'),)),)), ('@', 'y'))), ('x',))
-	res = AST.apply_vars (ast, {'x': AST.One, 'y': AST ('#', '2')})
-	print (res)
+# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# 	ast = AST ('-lamb', ('+', (('-func', '@', (('-func', '@', (('@', 'x'),)),)), ('@', 'y'))), ('x',))
+# 	res = AST.apply_vars (ast, {'x': AST.One, 'y': AST ('#', '2')})
+# 	print (res)
 # AST translations for funtions to display or convert to internal AST or SymPy S() escaping.
 
 import itertools as it
@@ -4671,12 +4687,12 @@ def _xlat_f2a_Subs (expr = None, src = None, dst = None):
 		if src is None:
 			return ((AST.VarNull, AST.VarNull),)
 
-		src = src.strip_paren.comma if src.strip_paren.is_comma else (src.strip_paren,)
+		src = src.strip_paren.comma if src.strip_paren.is_comma else (src,) # (src.strip_paren,)
 
 		if dst is None:
 			return tuple (it.zip_longest (src, (), fillvalue = AST.VarNull))
 
-		dst = dst.strip_paren.comma if dst.strip_paren.is_comma else (dst.strip_paren,)
+		dst = dst.strip_paren.comma if dst.strip_paren.is_comma else (dst,) # (dst.stip_paren,)
 
 		if len (dst) > len (src):
 			return None
@@ -4748,7 +4764,6 @@ _XLAT_FUNC2AST_ALL = {
 
 _XLAT_FUNC2AST_TEXNATPY = {**_XLAT_FUNC2AST_ALL,
 	'slice'                : _xlat_f2a_slice,
-	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
 
 	'Eq'                   : lambda a, b: AST ('<>', a, (('==', b),)),
 	'Ne'                   : lambda a, b: AST ('<>', a, (('!=', b),)),
@@ -4762,7 +4777,9 @@ _XLAT_FUNC2AST_TEXNATPY = {**_XLAT_FUNC2AST_ALL,
 	'Not'                  : lambda not_: AST ('-not', not_),
 }
 
-_XLAT_FUNC2AST_TEXNAT = {
+_XLAT_FUNC2AST_TEXNAT = {**_XLAT_FUNC2AST_TEXNATPY,
+	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
+
 	'abs'                  : lambda *args: AST ('|', args [0] if len (args) == 1 else AST (',', args)),
 	'Abs'                  : lambda *args: AST ('|', args [0] if len (args) == 1 else AST (',', args)),
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
@@ -4786,7 +4803,7 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'Union'                : _xlat_f2a_Union,
 }
 
-XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT,
+XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNAT,
 	'Add'                  : lambda *args, **kw: AST ('+', args),
 	'Mul'                  : lambda *args, **kw: AST ('*', args),
 
@@ -4808,7 +4825,7 @@ XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT,
 	'zeros'                : True,
 }
 
-XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT, **_XLAT_FUNC2AST_REIM,
+XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_TEXNAT, **_XLAT_FUNC2AST_REIM,
 	'Add'                  : lambda *args, **kw: None if kw else AST ('+', args),
 	'Mul'                  : lambda *args, **kw: None if kw else AST ('*', args),
 
@@ -4980,14 +4997,15 @@ class sxlat: # for single script
 # Here be dragons! MUST REFACTOR AT SOME POINT FOR THE LOVE OF ALL THAT IS GOOD AND PURE!
 
 from ast import literal_eval
+from collections import OrderedDict
 from functools import reduce
 import re
 import sympy as sp
 from sympy.core.function import AppliedUndef as sp_AppliedUndef
 
 
-_SYM_USER_FUNCS = set () # set user funcs {name, ...}
-_SYM_USER_VARS  = {} # user vars {name: ast, ...}
+_SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
+_SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
 _POST_SIMPLIFY  = True # post-evaluation simplification
 _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
@@ -5022,25 +5040,20 @@ def _raise (exc):
 	raise exc
 
 def _sympify (spt, sympify = sp.sympify, fallback = None): # try to sympify argument with optional fallback conversion function
-	ret = _None
-
-	if fallback is True: # True for return original value
-		ret = spt
-
-	else: # func for conversion function
-		try:
-			ret = fallback (spt)
-		except:
-			pass
-
 	try:
-		ret = sympify (spt)
+		return sympify (spt)
 
 	except:
-		if ret is _None:
+		if fallback is True: # True for return original value
+			return spt
+		elif fallback is None:
 			raise
 
-	return ret
+		else:
+			try:
+				return fallback (spt)
+			except Exception as e:
+				raise e from None
 
 def _free_symbols (spt): # extend sympy .free_symbols into standard python containers
 	if isinstance (spt, (None.__class__, bool, int, float, complex, str)):
@@ -5106,7 +5119,7 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers
 
 	try:
 		if isinstance (spt, (bool, int, float, complex)):
-			return sympify (spt).subs (subs)
+			return sp.sympify (spt).subs (subs)
 		else:
 			return spt.subs (subs)
 
@@ -5121,9 +5134,9 @@ def _dsolve (*args, **kw):
 	if ast.is_brack:
 		ast = AST ('[', tuple (AST ('=', a.lhs, a.cmp [0] [1]) if a.cmp.len == 1 and a.cmp [0] [0] == '==' else a for a in ast.brack))
 
-	elif ast.is_cmp:
-		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
-			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
+	# elif ast.is_cmp:
+	# 	if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
+	# 		ast = AST ('=', ast.lhs, ast.cmp [0] [1])
 
 	return ExprNoEval (ast) # never automatically simplify dsolve
 
@@ -5189,10 +5202,32 @@ def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
 
 	return spt
 
+def _ast_subs2ufunc (ast):
+	ufunc = ast.expr
+
+	if ufunc.op in {'-diff', '-diffp'}:
+		ufunc = ufunc [1]
+
+	ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
+
+	if not ufunc.is_ufunc_applied:
+		return [AST ('=', s, d) for s, d in ast.subs], None
+
+	subs = []
+	vars = OrderedDict ((v, v) for v in ufunc.vars)
+
+	for s, d in ast.subs:
+		if s.is_var_nonconst and d.is_const and vars.get (s) == s:
+			vars [s] = d
+		else:
+			subs.append (AST ('=', s, d))
+
+	return subs, vars
+
 #...............................................................................................
 class ast2tex: # abstract syntax tree -> LaTeX text
 	def __init__ (self): self.parent = self.ast = None # pylint medication
-	def __new__ (cls, ast, xlat = True):
+	def __new__ (cls, ast, retxlat = False):
 		def func_call (func, args):
 			return spt2ast (_ast_func_call (getattr (sp, func), args))
 
@@ -5200,10 +5235,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX, func_call = func_call)
+		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX, func_call = func_call)
+		tex  = self._ast2tex (astx)
 
-		return self._ast2tex (ast)
+		return tex if not retxlat else (tex, (astx if astx != ast else None))
 
 	def _ast2tex (self, ast):
 		self.parents.append (self.ast)
@@ -5288,7 +5323,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		a = ast.attr.replace ('_', '\\_')
 
 		if ast.is_attr_func:
-			a = f'\\operatorname{{{a}}}{self._ast2tex_paren (AST.tuple2ast (ast.args))}'
+			a = f'\\operatorname{{{a}}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
 		return f'{self._ast2tex_wrap (ast.obj, {"!", "^", "-diffp"}, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}.{a}'
 
@@ -5312,7 +5347,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 			terms.extend ([op, self._ast2tex_wrap (s,
 				n.is_piece or (not_first and _ast_is_neg_nominus (n)) or (not_last and s [-1:] != ')' and (n.strip_mmls.is_intg or (n.is_mul and n.mul [-1].strip_mmls.is_intg))),
-				(n.is_piece and not_last) or n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'})])
+				(n.is_piece and not_last) or n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'})]) # , '-subs'})])
 
 		return ''.join (terms [1:]).replace (' + -', ' - ')
 
@@ -5321,11 +5356,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		p   = None
 		has = False
 
-		for i, n in enumerate (ast.mul):
+		for n in ast.mul: # i, n in enumerate (ast.mul):
 			s = self._ast2tex_wrap (n, (p and _ast_is_neg (n)),
 					n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.is_piece and n is not ast.mul [-1]))
 
-			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
+			if ((p and n.op in {'/', '-diff'} and p.op in {'#', '/'} and n.op != p.op) or
+					(n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'})):
 				s = f'{{{s}}}'
 
 			if p and (
@@ -5334,14 +5370,15 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					s [:6] == '\\left[' or
 					(s [:6] == '\\left(' and (
 						p.tail_mul.is_attr_var or
-						p.tail_mul.op in {'@', '-ufunc'} or
-						i in ast.exp)) or
+						p.tail_mul.op in {'@', '-diffp', '-ufunc', '-subs'})) or
+						# i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
-					(n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
+					# (n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
+					(n.is_div and p.is_div) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma))):
@@ -5373,7 +5410,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or false_diff)}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}'
 
 	def _ast2tex_pow (self, ast, trighpow = True):
-		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-lamb', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
+		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-log', '-func', '-mat', '-lamb', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
 		p = self._ast2tex_curly (ast.exp)
 
 		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
@@ -5391,11 +5428,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_func (self, ast):
 		if ast.is_trigh_func:
-			n = (f'\\operatorname{{{ast.func [1:]}}}^{{-1}}' \
-					if ast.func in {'asech', 'acsch'} else \
-					f'\\{ast.func [1:]}^{{-1}}') \
-					if ast.func [0] == 'a' else \
-					(f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}')
+			if ast.func [0] != 'a':
+				n = f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}'
+			elif ast.func in {'asech', 'acsch'}:
+				n = f'\\operatorname{{{ast.func [1:]}}}^{{-1}}'
+			else:
+				n = f'\\{ast.func [1:]}^{{-1}}'
 
 			return f'{n}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
@@ -5466,26 +5504,41 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	def _ast2tex_ufunc (self, ast):
-		if not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or \
-				(ast.ufunc in _SYM_USER_FUNCS and \
-				not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
-				not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
-				):
-			pre = '?'
-		else:
-			pre = ''
+		ufunctex = ast.ufunctex # ufunc name override from subs to print possible function of derivative format
 
-		return f'{pre}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
+		if ufunctex is None:
+			if (not ast.ufunc or
+					AST ('@', ast.ufunc).is_diff_or_part or
+					(ast.ufunc in _SYM_USER_FUNCS and
+						not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
+						not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+					not ast.vars.as_ufunc_argskw):
+				pre = '?' # '\\: ?'
+			else:
+				pre = ''
+
+			ufunctex = f'{pre}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}'
+
+		return f'{ufunctex}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
 
 	def _ast2tex_subs (self, ast):
-		subs = [AST ('=', s, d) for s, d in ast.subs]
+		subs, vars = _ast_subs2ufunc (ast)
 
-		if ast.subs.len == 1:
+		if len (subs) == ast.subs.len:
+			expr = self._ast2tex (ast.expr)
+
+		else:
+			expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex (ast.expr)))
+
+			if not subs:
+				return expr
+
+		if len (subs) == 1:
 			subs = self._ast2tex (subs [0])
 		else:
 			subs = '\\substack{' + ' \\\\ '.join (self._ast2tex (s) for s in subs) + '}'
 
-		return f'\\left. {self._ast2tex (ast.expr)} \\right|_{{{subs}}}'
+		return f'\\left. {expr} \\right|_{{{subs}}}'
 
 	_ast2tex_funcs = {
 		';'     : lambda self, ast: ';\\: '.join (self._ast2tex (a) for a in ast.scolon),
@@ -5516,7 +5569,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'-piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "-slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "-slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"-slice"})}' for p in ast.piece) + ' \\end{cases}',
 		'-lamb' : lambda self, ast: f'\\left({self._ast2tex (AST ("@", ast.vars [0]) if ast.vars.len == 1 else AST ("(", (",", tuple (("@", v) for v in ast.vars))))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
-		'-idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, {"^", "-slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "||", "^^", "&&", "-or", "-and", "-not"})}\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]',
+		'-idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, ast.obj.op in {"^", "-slice"} or ast.obj.is_subs_diff_ufunc, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "||", "^^", "&&", "-or", "-and", "-not"})}' + ('[' if ast.idx.len and ast.idx [0].is_var_null else f'\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]'),
 		'-slice': lambda self, ast: self._ast2tex_wrap ('{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and a.op in {'=', ',', '-slice'}) for a in _ast_slice_bounds (ast, '')), 0, not ast.start and self.parent.is_comma and ast is self.parent.comma [0] and self.parents [-2].is_ass and self.parent is self.parents [-2].rhs),
 		'-set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex_wrap (c, 0, c.is_slice) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'-dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex_wrap (k, 0, k.is_slice)}{{:}} {self._ast2tex_wrap (v, 0, v.is_slice)}" for k, v in ast.dict)} \\right\\}}',
@@ -5535,15 +5588,15 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 #...............................................................................................
 class ast2nat: # abstract syntax tree -> native text
 	def __init__ (self): self.parent = self.ast = None # pylint droppings
-	def __new__ (cls, ast, xlat = True):
+	def __new__ (cls, ast, retxlat = False):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_NAT)
+		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_NAT)
+		nat  = self._ast2nat (astx)
 
-		return self._ast2nat (ast)
+		return nat if not retxlat else (nat, (astx if astx != ast else None))
 
 	def _ast2nat (self, ast):
 		self.parents.append (self.ast)
@@ -5588,7 +5641,6 @@ class ast2nat: # abstract syntax tree -> native text
 		return (s, has) if ret_has else s
 
 	def _ast2nat_ass_hs (self, hs, lhs = True):
-		# return self._ast2tex_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and (hs.is_piece or (hs.is_comma and (self.parent and not self.parent.is_scolon)))))
 		return self._ast2nat_wrap (hs, 0, hs.is_ass or hs.is_slice or (lhs and (hs.op in {'-piece', '-lamb'}) or (hs.is_comma and (self.parent and not self.parent.is_scolon))) or \
 				(not lhs and hs.is_lamb and self.parent.op in {'-set', '-dict'}))
 
@@ -5601,7 +5653,7 @@ class ast2nat: # abstract syntax tree -> native text
 		if ast.is_attr_var:
 			return f'{obj}.{ast.attr}'
 		else:
-			return f'{obj}.{ast.attr}{self._ast2nat_paren (AST.tuple2ast (ast.args))}'
+			return f'{obj}.{ast.attr}({self._ast2nat (AST.tuple2ast (ast.args))})'
 
 	def _ast2nat_minus (self, ast):
 		s = self._ast2nat_wrap (ast.minus, ast.minus.op in {"*", "-diff", "-piece", "||", "^^", "&&", "-or", "-and"}, {"=", "<>", "+", "-lamb", "-slice", "-not"})
@@ -5635,7 +5687,7 @@ class ast2nat: # abstract syntax tree -> native text
 		p   = None
 		has = False
 
-		for i, n in enumerate (ast.mul):
+		for n in ast.mul: # i, n in enumerate (ast.mul):
 			s = self._ast2nat_wrap (n,
 				n.op in {'<>', '+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or
 				(p and (
@@ -5651,19 +5703,22 @@ class ast2nat: # abstract syntax tree -> native text
 					s [:1].isdigit () or
 					(s [:1] == '(' and (
 						p.tail_mul.is_attr_var or
-						p.tail_mul.op in ('@', '-ufunc') or
-						i in ast.exp)) or
+						p.tail_mul.op in ('@', '-diffp', '-ufunc', '-subs'))) or
+						# i in ast.exp)) or
 					t [-1] [-1:] == '.' or
 					n.is_num or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or
+					n.strip_attrdp.is_subs_diff_ufunc or
 					p.strip_minus.op in {'/', '-lim', '-sum', '-diff', '-intg'} or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
 					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist) or
 					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
-					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS)):
+					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
+					s [:1] in {'e', 'E'} and t [-1] [-1].isdigit ()
+					):
 				t.append (f' * {s}')
 				has = True
 
@@ -5781,26 +5836,40 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'''{{{", ".join (f'{k}: {v}' for k, v in items)}}}'''
 
 	def _ast2nat_ufunc (self, ast):
-		if not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or \
-				(ast.ufunc in _SYM_USER_FUNCS and \
-				not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and \
-				not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'}) \
-				):
-			pre = '?'
-		else:
-			pre = ''
+		ufuncnat = ast.ufuncnat # ufunc name override from subs to print possible function of derivative format
 
-		return f'{pre}{ast.ufunc}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})'
+		if ufuncnat is None:
+			if (not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or
+					(ast.ufunc in _SYM_USER_FUNCS and
+						not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
+						not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+					not ast.vars.as_ufunc_argskw):
+				pre = '?'
+			else:
+				pre = ''
+
+			ufuncnat = f'{pre}{ast.ufunc}'
+
+		return f'{ufuncnat}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})'
 
 	def _ast2nat_subs (self, ast):
-		subs = [AST ('=', s, d) for s, d in ast.subs]
+		subs, vars = _ast_subs2ufunc (ast)
 
-		if ast.subs.len == 1:
+		if len (subs) == ast.subs.len:
+			expr = self._ast2nat (ast.expr)
+
+		else:
+			expr = self._ast2nat (AST ('-ufunc', None, tuple (vars.values ()), ufuncnat = self._ast2nat (ast.expr)))
+
+			if not subs:
+				return expr
+
+		if len (subs) == 1:
 			subs = self._ast2nat (subs [0])
 		else:
 			subs = self._ast2nat (AST (',', tuple (subs)))
 
-		return f'\\. {self._ast2nat (ast.expr)} |_{{{subs}}}'
+		return f'\\. {expr} |_{{{subs}}}'
 
 	_ast2nat_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2nat (a) for a in ast.scolon),
@@ -5832,7 +5901,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "-piece", "-lamb"}, {",", "-slice"})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "-piece", "-lamb"}, {",", "-slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "-piece", "-lamb"}, {",", "-slice"})}' for p in ast.piece),
 		'-lamb' : lambda self, ast: f'lambda{" " + ", ".join (ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.is_lamb, ast.lamb.op in {"=", "<>", "-slice"})}',
-		'-idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, {"^", "-slice"}, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "-lim", "-sum", "-diff", "-intg", "-piece", "-lamb", "||", "^^", "&&", "-or", "-and", "-not"})}[{self._ast2nat (AST.tuple2ast (ast.idx))}]',
+		'-idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, ast.obj.op in {"^", "-slice"} or ast.obj.is_subs_diff_ufunc, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "-lim", "-sum", "-diff", "-intg", "-piece", "-lamb", "||", "^^", "&&", "-or", "-and", "-not"})}' + ('[' if ast.idx.len and ast.idx [0].is_var_null else f'[{self._ast2nat (AST.tuple2ast (ast.idx))}]'),
 		'-slice': _ast2nat_slice,
 		'-set'  : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (c, 0, c.is_slice) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'-dict' : _ast2nat_dict,
@@ -5851,19 +5920,17 @@ class ast2nat: # abstract syntax tree -> native text
 #...............................................................................................
 class ast2py: # abstract syntax tree -> Python code text
 	def __init__ (self): self.parent = self.ast = None # pylint droppings
-	def __new__ (cls, ast, xlat = True, ass2eq = True):
+	def __new__ (cls, ast, retxlat = False, ass2eq = True):
 		self         = super ().__new__ (cls)
 		self.ass2eq  = ass2eq
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
+		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
+		astS = sxlat.xlat_pyS (astx) if _PYS else astx # 1/2 -> S(1)/2
+		py   = self._ast2py (astS)
 
-		if _PYS:
-			ast = sxlat.xlat_pyS (ast)
-
-		return self._ast2py (ast)
+		return py if not retxlat else (py, (astx if astx != ast else None))
 
 	def _ast2py (self, ast):
 		self.parents.append (self.ast)
@@ -5896,29 +5963,6 @@ class ast2py: # abstract syntax tree -> Python code text
 		return self._ast2py (ast)
 
 	def _ast2py_ass (self, ast):
-		# def ufunc2lamb (ufunc, lamb):
-		# 	return ('-lamb', lamb, tuple (v.var for v in ufunc.vars))
-
-		# istop = ast.ass_lhs_vars and self.parent.op in {None, ';'}
-
-		# if istop:
-		# 	if ast.lhs.is_ufunc:
-		# 		if ast.lhs.is_ufunc_pure:
-		# 			ast = AST ('=', ('@', ast.lhs.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (ast.lhs, ast.rhs))
-
-		# 	elif ast.lhs.is_comma:
-		# 		rhs = ast.rhs._strip_paren (1)
-
-		# 		if rhs.op in {',', '[', '-set'} and ast.lhs.comma.len == len (rhs [1]):
-		# 			lrs = [(('@', l.ufunc or 'ANONYMOUS_UNDEFINED_FUNCTION'), ufunc2lamb (l, r)) if l.is_ufunc_pure else (l, r) for l, r in zip (ast.lhs.comma, rhs [1])]
-		# 			rhs = (rhs.op, tuple (r for l, r in lrs))
-		# 			ast = AST ('=', (',', tuple (l for l, r in lrs)), ('(', rhs) if ast.rhs.is_paren else rhs)
-
-		# if istop or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
-		# 	return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
-
-		# return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
-
 		istopass = self.parent.op in {None, ';'}
 
 		if istopass:
@@ -5966,24 +6010,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		return ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - ')
 
 	def _ast2py_mul (self, ast):
-		t = []
-		p = None
-
-		for i, n in enumerate (ast.mul):
-			s = self._ast2py_paren (n, n.is_cmp_in or n.is_add or (i and (n.is_div or n.is_log_with_base)))
-
-			if p and (
-					not n.is_paren or
-					p.tail_mul.op in {'@', '-ufunc'} or
-					not (p.strip_paren.op in {'-func', '-lamb'} or p.strip_paren.is_attr_func) or
-					i in ast.exp):
-				t.append (f'*{s}')
-			else:
-				t.append (s)
-
-			p = n
-
-		return ''.join (t)
+		return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
 
 	def _ast2py_div (self, ast):
 		nn = _ast_is_neg (ast.numer)
@@ -6044,6 +6071,18 @@ class ast2py: # abstract syntax tree -> Python code text
 		else:
 			return f"""Matrix([{', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat)}])"""
 
+	def _ast2py_idx (self, ast):
+		obj = self._ast2py_paren (ast.obj, ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.is_sqrt_with_base or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"})
+
+		if ast.idx.len and ast.idx [0].is_var_null:
+			idx = '['
+		elif ast.idx.len == 1 and ast.idx [0].strip_paren.is_slice:
+			idx = f'[{self._ast2py (ast.idx [0])}]'
+		else:
+			idx = f'[{self._ast2py (AST.tuple2ast (ast.idx))}]'
+
+		return f'{obj}{idx}'
+
 	def _ast2py_slice (self, ast):
 		if self.parent.is_idx and any (i is ast for i in self.parent.idx) or \
 				self.parent.is_comma and len (self.parents) > 1 and self.parents [-2].is_idx and ast in self.parents [-2].idx:
@@ -6068,9 +6107,15 @@ class ast2py: # abstract syntax tree -> Python code text
 		return sdiff
 
 	def _ast2py_subs (self, ast):
-		args = ast.subs [0] if ast.subs.len == 1 else (('[', tuple (('(', (',', s)) for s in ast.subs)),)
+		def tupletuple (a):
+			return self._ast2py (AST ('(', (',', (a,))) if a.strip_paren.is_comma else a)
 
-		return self._ast2py_attr (AST ('.', ast.expr, 'subs', args))
+		if ast.subs.len > 1:
+			subs = f'({", ".join (self._ast2py (s) for s, d in ast.subs)}), ({", ".join (self._ast2py (d) for s, d in ast.subs)})'
+		else:
+			subs = f'{tupletuple (ast.subs [0] [0])}, {tupletuple (ast.subs [0] [1])}'
+
+		return f'Subs({self._ast2py (ast.expr)}, {subs})'
 
 	_ast2py_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2py (a) for a in ast.scolon),
@@ -6101,7 +6146,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-mat'  : _ast2py_mat,
 		'-piece': lambda self, ast: 'Piecewise(' + ', '.join (f'({self._ast2py (p [0])}, {True if p [1] is True else self._ast2py (p [1])})' for p in ast.piece) + ')',
 		'-lamb' : lambda self, ast: f"""Lambda({ast.vars [0] if ast.vars.len == 1 else f'({", ".join (ast.vars)})'}, {self._ast2py (ast.lamb)})""",
-		'-idx'  : lambda self, ast: f'{self._ast2py_paren (ast.obj) if ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.is_sqrt_with_base or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"} else self._ast2py (ast.obj)}[{self._ast2py (AST.tuple2ast (ast.idx))}]',
+		'-idx'  : _ast2py_idx,
 		'-slice': _ast2py_slice,
 		'-set'  : lambda self, ast: f'FiniteSet({", ".join (self._ast2py (c) for c in ast.set)})',
 		'-dict' : lambda self, ast: f'{{{", ".join (f"{self._ast2py_paren (k, k.has_tail_lambda_solo)}: {self._ast2py (v)}" for k, v in ast.dict)}}}',
@@ -6149,23 +6194,21 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
 	def __init__ (self): self.parent = self.ast = None # pylint kibble
-	def __new__ (cls, ast, xlat = True):
+	def __new__ (cls, ast, retxlat = False):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
-
-		spt = self._ast2spt (ast)
+		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
+		spt  = self._ast2spt (astx)
 
 		if _DOIT:
-			spt = _doit (spt) # spt.doit (deep = True)
+			spt = _doit (spt)
 
 		if _POST_SIMPLIFY:
 			spt = _simplify (spt)
 
-		return spt
+		return spt if not retxlat else (spt, (astx if astx != ast else None))
 
 	def _ast2spt (self, ast):
 		self.parents.append (self.ast)
@@ -6292,29 +6335,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			if ast.mul [i].is_paren and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
 				o = out [-1]
 
-				if not isinstance (m, tuple):
-					m = (m,)
-
 				if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?
-					out [-1] = o (*m)
-					continue
-
-				dv = False
-
-				while isinstance (o, sp.Derivative): # strip derivatives
-					dv = True
-					o  = o.args [0]
-
-				if isinstance (o, sp_AppliedUndef): # undefined function initial value(s)?
-					if any (not isinstance (a, sp.Symbol) for a in o.args):
-						raise TypeError (f'?{o} object is not callable')
-					elif len (m) != len (o.args):
-						raise TypeError (f'?{o} object takes {len (o.args)} positional argument(s)')
-
-					if dv:
-						out [-1] = sp.Subs (out [-1], o.args, m)
-					else:
-						out [-1] = o.__class__ (*m)
+					out [-1] = o (*m) if isinstance (m, tuple) else o (m)
 
 					continue
 
@@ -6411,6 +6433,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return sdiff
 
+	def _ast2spt_subs (self, ast):
+		if ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc:
+			return ExprNoEval (ast) # do not execute because loses information about variables
+		else:
+			return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
+
 	_ast2spt_funcs = {
 		';'     : lambda self, ast: _raise (RuntimeError ('semicolon expression should never get here')),
 		'='     : _ast2spt_ass,
@@ -6452,7 +6480,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: self._ast2spt (a) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
-		'-subs' : lambda self, ast: _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs]),
+		'-subs' : _ast2spt_subs,
 
 		'text'  : lambda self, ast: ast.spt,
 	}
@@ -6536,7 +6564,7 @@ class spt2ast:
 		terms = []
 		hasO  = False
 
-		for arg in spt.args:
+		for arg in spt.args: # spt._sorted_args: #
 			ast  = self._spt2ast (arg)
 			hasO = hasO or isinstance (arg, sp.Order)
 
@@ -6547,8 +6575,11 @@ class spt2ast:
 
 			terms.append (ast)
 
-		if not hasO and spt.args [0].is_number and (not terms [1].is_minus or spt.args [0] < 0):
-			terms = terms [1:] + [terms [0]]
+		if not hasO: # try to order so negative is not first, but not extensively where it might change standard equation forms returned from SymPy
+			if spt.args [0].is_number and (not _ast_is_neg (terms [1]) or spt.args [0] < 0):
+				terms = terms [1:] + [terms [0]]
+			elif len (terms) == 2 and _ast_is_neg (terms [0]) and not _ast_is_neg (terms [1]):
+				terms = terms [::-1]
 
 		return AST ('+', tuple (terms))
 
@@ -6777,15 +6808,18 @@ class sym: # for single script
 	spt2ast            = spt2ast
 
 if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	# set_sym_user_funcs (vars)
+	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	set_sym_user_funcs (vars)
 
-	# ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', 'x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', 'x'))),)))),)), ('x',))
-	ast = AST ('-lamb', ('@', 'y'), ('y',))
-	# res = ast2nat (ast)
+	# ast = AST ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
+	ast = AST ('-func', 'S', (('#', '1'),))
+	# res = ast2tex (ast)
+	res = ast2nat (ast)
 	# res = ast2py (ast)
-	res = ast2spt (ast)
+	# res = ast2spt (ast)
 	# res = spt2ast (res)
+
+	# res = ast2nat (res)
 
 	print (repr (res))
 # Builds expression tree from text, nodes are nested AST tuples.
@@ -6797,8 +6831,8 @@ import re
 import sys
 
 
-_SP_USER_FUNCS = set () # set user funcs {name, ...}
-_SP_USER_VARS  = {} # user vars {name: ast, ...}
+_SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
+_SP_USER_VARS  = {} # flattened user vars {name: ast, ...}
 
 def _raise (exc):
 	raise exc
@@ -6854,12 +6888,20 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 
 #...............................................................................................
 def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
-	def is_valid_ufunc (ast):
-		return ast.is_func and ast.func in _SP_USER_FUNCS and all (a.is_var_nonconst for a in ast.args)
+	def can_be_ufunc (ast):
+		return (
+			(ast.is_func and ast.func in _SP_USER_FUNCS and all (a.is_var_nonconst for a in ast.args)) or
+			(ast.is_mul and ast.mul.len == 2 and ast.mul [1].is_paren and ast.mul [0].is_var_nonconst and not ast.mul [0].is_diff_or_part and ast.mul [1].paren.as_ufunc_argskw))
+
+	def as_ufunc (ast):
+		if ast.is_func:
+			return AST ('-ufunc', ast.func, ast.args)
+		else: # is_mul
+			return AST ('-ufunc', ast.mul [0].var, *ast.mul [1].paren.as_ufunc_argskw)
 
 	if ast.is_ass: # if assigning to function call then is assignment to function instead, rewrite
-		if is_valid_ufunc (ast.lhs):
-			ast = AST ('=', ('-ufunc', ast.lhs.func, ast.lhs.args), ast.rhs)
+		if can_be_ufunc (ast.lhs):
+			ast = AST ('=', as_ufunc (ast.lhs), ast.rhs)
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parsing as ('x', 'y = y', 'x')) so rewrite
 		vars = []
@@ -6868,12 +6910,12 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 		for c in itr:
 			if c.op in {'@', '-ufunc'}:
 				vars.append (c)
-			elif is_valid_ufunc (c):
-				vars.append (AST ('-ufunc', c.func, c.args))
+			elif can_be_ufunc (c):
+				vars.append (as_ufunc (c))
 
 			elif c.is_ass:
 				t = (c.rhs,) + tuple (itr)
-				v = c.lhs if c.lhs.op in {'@', '-ufunc'} else AST ('-ufunc', c.lhs.func, c.lhs.args) if is_valid_ufunc (c.lhs) else c.lhs if allow_lexprs else None
+				v = c.lhs if c.lhs.op in {'@', '-ufunc'} else as_ufunc (c.lhs) if can_be_ufunc (c.lhs) else c.lhs if allow_lexprs else None
 
 				if v:
 					ast = AST ('=', (',', tuple (vars) + (v,)) if len (vars) else v, t [0] if len (t) == 1 else AST (',', t))
@@ -6920,17 +6962,12 @@ def _expr_colon (lhs, rhs):
 	return wrap (AST ('-lamb', rhs, () if first_var is None else (first_var.var,)))
 
 def _expr_mapsto (args, lamb):
-	if args.is_var:
+	if args.is_var_nonconst:
 		return AST ('-lamb', lamb, (args.var,))
+	elif args.is_comma and all (v.is_var_nonconst for v in args.comma):
+		return AST ('-lamb', lamb, tuple (v.var for v in args.comma))
 
-	elif args.is_comma:
-		for var in args.comma:
-			if not var.is_var:
-				break
-		else:
-			return AST ('-lamb', lamb, tuple (c.var for c in args.comma))
-
-	raise SyntaxError ('invalid lambda function')
+	raise SyntaxError ('mapsto parameters can only be variables')
 
 def _expr_piece (expr, expr_if, expr_else):
 	if expr_else.is_piece:
@@ -6957,18 +6994,20 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 	return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not handled by grammar
-	def process_func (ast, arg, tail, wrapa, make):
+	# print (f'lhs:   {lhs} - {lhs.src}\nrhs:   {rhs} - {rhs.src}\ntail:  {tail} - {tail.src}\narg:   {arg} - {arg.src}\nwrapt: {wrapt (AST.VarNull)}\nwrapa: {wrapa (AST.VarNull)}\nast:  {ast}')
+	def process_func (ast, arg, tail, make):
+		# print (f'arg:  {arg}\ntail: {tail}\narg2: {arg2}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}')
+		# print (f'arg:  {arg}\ntail: {tail}\narg2: {arg2}\nast2: {ast2}\nwrap: {wrap (AST.One)}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}')
 		if tail.op not in {'{', '('}:
 			arg2 = _expr_mul_imp (tail, arg)
 
-			if arg2.is_pow and (
-					(arg2.base.is_func and arg2.base.src and arg2.base.src.is_mul and arg2.base.src.mul.len == 2) or
-					(arg2.base.op in {'-sqrt', '-log'} and arg2.base.src_arg)):
-				return make (wrapa (arg2)), AST.Null
+			if arg2.is_pow:
+				if arg2.base.op in {'-sqrt', '-log', '-func'} and arg2.base.src:
+					return make (wrapa (arg2)), AST.Null
 
 			ast2, wrap = arg2.tail_mul_wrap
 
-			if (ast2.is_attr_func or ast2.op in {'-func', '-idx'}) and (not arg2.is_pow or not arg2.base.op in {'{', '('}):
+			if (ast2.is_attr_func or ast2.op in {'-log', '-sqrt', '-func', '-idx'}) and (not arg2.is_pow or not arg2.base.op in {'{', '('}):
 				return make (wrap (wrapa (ast2))), AST.Null
 
 		return ast, arg
@@ -6997,32 +7036,62 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
-		elif arg.is_paren and tail.is_var_nonconst and not tail.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc77', 'f', (vars)[, kws]) ... implicit undefined function
-			ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
+		elif arg.is_paren and tail.is_var_nonconst and not tail.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
+			ufunc = _SP_USER_VARS.get (tail.var, AST.Null)
 
-	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,))
+			if ufunc.op is None:
+				ast = wrapa (AST ('-ufunc', tail.var, *arg.paren.as_ufunc_argskw))
+
+			elif ufunc.is_ufunc:
+				if ufunc.is_ufunc_unapplied:
+					ast2 = wrapa (ufunc.apply_argskw (arg.paren.as_ufunc_argskw))
+
+					if ast2:
+						ast = ast2
+
+				elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
+					ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+
+	elif tail.is_ufunc: # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
 		if arg.is_paren:
-			ast2 = tail.apply_argskw (arg.paren.as_ufunc_argskw)
+			if tail.is_from_Function:
+				ast = wrapa (AST ('-ufunc', tail.ufunc, (arg.paren.comma if arg.paren.is_comma else (arg.paren,)), tail.kw))
 
-			if ast2:
-				ast = wrapa (ast2)
+			else:
+				ast2 = tail.apply_argskw (arg.paren.as_ufunc_argskw)
+
+				if ast2:
+					ast = wrapa (ast2)
+
+	elif tail.is_diff: # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
+		diff  = tail.diff._strip_paren (1)
+		ufunc = _SP_USER_VARS.get (diff.var, diff)
+
+		if arg.is_paren and ufunc.is_ufunc_applied and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
+			diff = AST ('-diff', diff, tail.d, tail.dvs)
+			ast  = wrapa (AST ('-subs', diff, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+
+	elif tail.is_diffp: # f (x)' * (0) -> \. f (x) |_{x = 0}
+		diffp = _SP_USER_VARS.get (tail.diffp.var, tail.diffp)
+
+		if arg.is_paren and diffp.is_ufunc_applied and diffp.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
+			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
-		if tail.src and tail.src.is_mul and tail.src.mul.len == 2:
-			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, (ast,), src = AST ('*', (('@', tail.func), ast))))
+		if tail.src and (not (arg.op in {'-log', '-sqrt', '-func'} and arg.src) or tail.src.mul [1].tail_mul.op in {'-log', '-sqrt', '-func'} or tail.src.mul [1].tail_mul.var in _SP_USER_FUNCS):
+			ast, arg = process_func (ast, arg, tail.src.mul [1], lambda ast, tail = tail: AST ('-func', tail.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', tail.func), ast))))
 
 	elif tail.op in {'-sqrt', '-log'}: # ln N 2 -> ln (N (2)) instead of ln (N) * 2, log, sqrt
-		if tail.src_arg:
-			ast, arg = process_func (ast, arg, tail.src_arg, wrapa, lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src_arg = ast))
+		if tail.src:
+			ast, arg = process_func (ast, arg, tail.src.mul [1], lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src = AST ('*', (AST.VarNull, ast))))
 
 	elif lhs.is_pow: # f**2 N x -> f**2 (N (x))
 		if lhs.base.is_func:
-			if lhs.base.src and lhs.base.src.is_mul and lhs.base.src.mul.len == 2 and lhs.base.src.mul [1].op not in {'{', '(', '^'}: # this only happens on f**p x, not f (x)**p or f x**p
-				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
+			if lhs.base and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}): # this only happens on f**p x, not f (x)**p or f x**p
+				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
 
-		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src_arg.op not in {'{', '(', '^'}:
-			if lhs.base.src_arg:
-				ast, arg = process_func (ast, rhs, lhs.base.src_arg, wrapa, lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src_arg = ast), lhs.exp))
+		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}): # this only happens on f**p x, not f (x)**p or f x**p
+			ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src = AST ('*', (AST.VarNull, ast))), lhs.exp))
 
 		if arg == AST.Null:
 			return ast
@@ -7097,47 +7166,62 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 				elif not ast.denom.is_curly:
 					if e:
-						return AST ('-diff', e, d, tuple (ds), src = ast), ns [i + 1:]
+						return AST ('-diff', e, d, tuple (ds), src = AST ('/', ast.numer, ('*', ns [:i + 1]) if i else ns [0])), ns [i + 1:]
 					elif i == len (ns) - 2:
 						return AST ('-diff', ns [-1], d, tuple (ds), src = ast), None
-					else:
+					elif not ns [i + 1].is_paren:
 						return AST ('-diff', AST ('*', ns [i + 1:]), d, tuple (ds), src = ast), None
+					else:
+						return AST ('-diff', ns [i + 1], d, tuple (ds), src = AST ('/', ast.numer, ('*', ns [:i + 2]) if i < len (ns) - 3 else ns [i + 2])), ns [i + 2:]
 
 		return None, None # raise SyntaxError?
 
 	# start here
-	if ast.is_div: # this part handles d/dx
+	if ast.is_div: # this part handles d/dx y and dy/dx
 		diff, tail = _interpret_divide (ast)
 
 		if diff and diff.diff:
-			if tail:
-				return AST ('*', (diff, *tail))
-			else:
+			if not tail:
 				return diff
+			elif len (tail) == 1:
+				return _expr_mul_imp (diff, tail [0])
+			else:
+				return AST.flatcat ('*', _expr_mul_imp (diff, tail [0]), AST ('*', tail [1:])) # only reanalyzes first element of tail for diff of ufunc ics
 
 	elif ast.is_mul: # this part needed to handle \frac{d}{dx}
 		mul = []
 		end = ast.mul.len
 
-		for i in range (end - 1, -1, -1):
+		for i in range (end - 2, -1, -1):
 			if ast.mul [i].is_div:
 				diff, tail = _interpret_divide (ast.mul [i])
 
 				if diff:
 					if diff.diff:
 						if i < end - 1:
-							mul [0 : 0] = ast.mul [i + 1 : end]
+							mul [0:0] = ast.mul [i + 1 : end]
 
 						if tail:
-							mul [0 : 0] = tail
+							mul [0:0] = tail
 
 						mul.insert (0, diff)
 
-					elif i < end - 1:
-						mul.insert (0, AST ('-diff', ast.mul [i + 1] if i == end - 2 else AST ('*', ast.mul [i + 1 : end]), diff.d, diff.dvs, src = AST ('*', ast.mul [i : end])))
+					if i == end - 2:
+						mul.insert (0, AST ('-diff', ast.mul [i + 1], diff.d, diff.dvs, src = AST ('*', ast.mul [i : end])))
+					elif not ast.mul [i + 1].is_paren:
+						mul.insert (0, AST ('-diff', AST ('*', ast.mul [i + 1 : end]), diff.d, diff.dvs, src = AST ('*', ast.mul [i : end])))
 
 					else:
-						continue
+						diff = AST ('-diff', ast.mul [i + 1], diff.d, diff.dvs, src = AST ('*', ast.mul [i : i + 2]))
+						expr = _expr_mul_imp (diff, ast.mul [i + 2]) # only reanalyzes first element of tail for diff of ufunc ics
+
+						if expr.is_mul:
+							mul [0:0] = ast.mul [i + 2 : end]
+							mul.insert (0, diff)
+
+						else:
+							mul [0:0] = ast.mul [i + 3 : end]
+							mul.insert (0, expr)
 
 					end = i
 
@@ -7166,11 +7250,12 @@ def _ast_strip_tail_differential (ast):
 					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
 	elif ast.is_diff:
-		ast2, neg = ast.src._strip_minus (retneg = True)
-		ast2, dv  = _ast_strip_tail_differential (ast2)
+		if ast.src:
+			ast2, neg = ast.src._strip_minus (retneg = True)
+			ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv and ast2:
-			return neg (_expr_diff (ast2)), dv
+			if dv and ast2:
+				return neg (_expr_diff (ast2)), dv
 
 	elif ast.is_func:
 		if ast.src and ast.func in _SP_USER_FUNCS: # _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
@@ -7244,10 +7329,10 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 		ast2.src = AST ('*', (('@', args [1]), args [iparm]))
 
 		if ast2.args.len != 1 and ast2.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
-			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseaudo-function takes a single argument')
+			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseudo-function takes a single argument')
 
 	elif args [0] in {'-sqrt', '-log'}:
-		ast2.src_arg = args [iparm]
+		ast2.src = AST ('*', (AST.VarNull, args [iparm])) # VarNull is placeholder
 
 	return wrapf (ast2)
 
@@ -7295,8 +7380,8 @@ def _expr_subs (expr, subs):
 	else:
 		raise SyntaxError ('expecting assignment')
 
-	if expr.is_subs: # collapse multiple subs into one
-		return AST ('-subs', expr.expr, expr.subs + subs)
+	if expr.strip_curly.is_subs: # collapse multiple subs into one
+		return AST ('-subs', expr.strip_curly.expr, expr.strip_curly.subs + subs)
 
 	return AST ('-subs', expr, subs)
 
@@ -7358,7 +7443,7 @@ def _expr_ufunc (args, py = False, name = ''):
 	if AST ('@', name).is_var_const:
 		raise SyntaxError ('cannot use constant as undefined function name')
 
-	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())))
+	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())), is_from_Function = py)
 
 def _expr_num (NUM):
 	num = NUM.grp [1] or (NUM.grp [0] if NUM.text [0] != '.' else f'0{NUM.grp [0]}')
@@ -7395,95 +7480,96 @@ class Parser (lalr1.LALR1):
 		self.set_tokens (self.TOKENS)
 
 	_PARSER_TABLES = \
-			b'eJztffuv3DaW5j+zQPsCKkDiU/JvieP0GBM7mTx6p2EEgeN2D4JN4sBOsrNozP++PA/ykCqpVFLdR9UtwvIVi28ekt/HxyH15PVfvnn25RdfvvpL85f/9e7Xf4RX/PnF88+/Da+vPvn6+asvguHzrz95xq+O3yq8P33x6suX8d1Fg+IIPvsS4vjmi0+++Tcy' \
-			b'vsK/nz7/6w/PPvnm+TdsfvlJtP1UjH8T41dkxHg+DQn/O2QoGdD62Xdff/F3+JUM333+3atnX/09msDjt1/D3+8+jYHI+PzlV9/+/ZvnkMLLF6++g0y9+g7K9LdPwP+LV9/+FYrz4iUGxr//8TX4/gLl9CW4cgqfYohnX758+UmUHVh8/eKv//ZtzNvXMe9f' \
-			b'F3mHX8//I/z55OVX4e9nn36BbmD76jOWEJg+FePfxMgSev7FN88h4a9fvIT3Zy/+9uIzMDzjivgW8/fVF1jIUORY3v/85vkz9PDZi88/B4m9eoGN4Bnm5ZNXn4EcwOHLrznBWH2QT4r1WSjtt/ENLeHlJ1998+2XEP5bFPzz/3wG9YJW/5tED6+O6iTE8uzf' \
-			b'g/HjHz9+/PPNh49/ZuaPwfz2zYd3v//w/sMP//jx54+/v/mQOQdjeL1Bb+/++7fg5ac/f4nmj3/89u5D/PHru//64c2H/xK3H4Pxlze///D2/c9s+vD+/4qJEv747uPHt8n0WzLFaN78KMbff0+J/fPN29+j+TeMlaz/+PWtZPSf//xNcpMy/fNPyfjTr7+n' \
-			b'/P7yx88//PTLb1kx84hSISWeUN5o/P3dh2T955sPeZTBEH/+kefuzT/+EY1v//jw8/+LP/774zsp2Y8f3rz9P+/Sz495Tv58l+L649ef3v+aEn2T/L+V4qBQU87fS5R/ZPL9NWXpx59+fZ9K9F6kHvKTpP72/S+/vEmBf/vp3dt36UdoT1mGfvv4+/uUSKra' \
-			b'lLX3P0vuMdLix8cs5A8///nm52TxkUJ+37x+srN94/qbhgwDGIyDP74x/Q3/DL/Q1Ic/rglOO3dTWNAvH8OFAH20AiP62lEctnmiGz00O90YFQw3yRbtxGKHmVGe/oTc7RS5RSs17FnZwgqMwdRZ+uNMs+soq+EXGIMJAvYNlJFy7MEAwUNmMCOG/nh1wz9D' \
-			b'3jCK4BDy1Dn4fxNthvxX17IB7CBOA2VXLZfdmJtoy3bJYqcwQBfkC8FD9hxnHMRA0Q70x+lg092wFRihLlHioQz2JvsZzZm9otcOk8OiNqaNzgYM4a3Z/oZ+7AxbUm4dFqqLhbLJlu32LLRYqNJip1D2OiSsMeWQF/xjSTKQNYMF1Jb+2JB3SymEXzuN5bBQ' \
-			b'xiE52ORgNP3xlKKBsmBhOtU8gSYBVUVJgY3Lf3l+gxWE7UKxIXGOKv40Y6tYtaW92/858uH3f074UKVVv/+zCLQzKsuatHrOxMjCjy3yjhJcn2jFWYAW6wtr+bnTVKmhLevQUKDK28aHECG9UAGamuWUM0BSeI7wFWq79LXT2PUBn4bGd7FFQ4fF3hNqhboi' \
-			b'IIEJoYe8RwbHZC82Dm1sKzaebDqx6clGRZudQoGrgf5YlzKZrHxuBUYogaM/QX43N2IEk6K2HYsKksAGaTU3eqpsC22bgCLUSKcF+kJ6HQonCFKTD01/HDR4EhQGwC4IiNZFA2aug6bQmNjhGXuCJVnx75bjBHBpIDf9vn20CRbYxhT92cXuHowGXTr8D+Kk' \
-			b'IGAAgWn648CCcUajESQQYvMWM80/PYFqkG3XJf5pAu5Aewr1wECEHhSR0aRrQGGUX6jBAFXoTG0Z+kGsmCHKP1g+cdIx8ecg2QrUgt40ZEknU7SjsoDBRYOPBiKq0Mah0B23QvhpsHuMreRnCI2mjv446K8Mwh0aIYG2YV9Bjt2Q8xN4xzanLP1xberw4deO' \
-			b'cmg7+iPDhfCDiMa29AdGCtx7bItGqPUhOt7wz/ArOpDf0KK9J8EPsV6wH6EBwrsUHoYEDsO7NjrAWIRtaFRiHZUY4C1EFwZGrwM0hKruQncJMoF2jiAeGCggYcDO0CMDtgWkCRU9NEE+obP3tulDkNaH/30I2oX/KvzX4XfwExp6yExI06HIu9aG/6F5hSZk' \
-			b'sZ2FcOEJIUPJulCnnYIxBPgMTTGkGpprMJim903fN31IuG2GrhmCj5CvLmSsC7nsQjY7iAUyhdCowTEkFkpnEPVpkBbkCVkzgIFQVA3/QwZCoToolW4G0wzBDcKH9LuQgS7koAtZ6IIIhr4ZQhRt+BXkE2os9PLQnAfXDL7xfeOHpg9C6ZpeNb1u+uAvFLQL' \
-			b'JQ0NIXTHMHIJQ7IABA6GN2EUGsafoTMAXPvQWTXge+jA3jWhsjvIZ8ioxaFgEBDIB+ooRAjj2GC8gX4dyhCq7wnUG1iEuguv109CBuEniAdeLfky7BoKA9YggBsciILrayBA/N3Dq9b5mdX5k4EqrxuopluutZ4qE2oB6rinSsUawnfPwbqOm4zit2YPliPC' \
-			b'Cgw2PTelntoORx+T69BUEeLMW8vrJxZrs5BlJkWS3pTcSF5JTnvyKWUyJwoWQmiQTlEDdO2Z5IdBEFoatmzPLRva1s0DZUp5ypSyD5gHlkcEDKVqR7+Ejk7AXuvpvOvpCeYLx2Z9ra/zry8AQF0r6vwr6klHxA2MjoyVxIYCS+JhsURp5MVPxaViPWBxpAVN' \
-			b'tJoHHzuBiGnWgFiGc0YkH1geC8k3QQC1Rzx8j9A85NaGRnQmTt7UUBHt/OsvzOlxiNCFmLsQdWehYCFzFooeQofi1lo6g1oaai2dfy0Nba2lC6ilrtbSudfSk4HHFZ2Ja8l9XBU2da50CTWIhabtgIHHhrT8/0S3sW55GZC3B3gIGTcJ2NX4Wt0XUN0m7hlR' \
-			b'rQ1Up4PhyhxwmFknvUuTXtoo5dyRDe+u0V4pVHRyfdJpRkdNXWzgHTTNe7aaN+Di7Ix3YwfukG2ctDHYWgpm44zbkvuAearVlLYvBt5C8bRv6WlwDtuksCleV3vWS7RnSuipPffUbnvNG83cTmnLCpZLCWRgCAfuNu77Eeg48u6osXvaa2tDCi1IAooICD9c' \
-			b'l4iDdEhojvDE2yoWEgt1YkeY6AkCvZuTTuzmVyYlTx3TU8f0vjYeEgsPXWnsmgmCdksJgWzc9rfU1HC3+3vULeQBMmiQV2W48x/lorabIjU3VRXXzrB+NB280K7WzxnWD+h9KtYsDO9aEQ+4o2BrDznLigFpK9aeDe9aJWdQJS12FhZg1fm4Q50P5IU6DD73' \
-			b'HtEjj4Pifq2uC6guY2s9XUI9dW2tp/OvJzyYhNMYi3R1BsQ5cZAKzp9wNjtE6zpwuTv5QxYe7DANLXlA4jRvoBWqnm01vVvFbYG3BudP4H3PJ/xgNQUD16Zyi7WlO6oHWjimnSrP21y8C0v7EUndBTtxlf1t9BSEa1B5pa5geffc8jY56jCg0HknHBXCsEPQ' \
-			b'SRrQw4QYhpZeXJdQOdhPat1srhuIkYRJg9UqxE0TaBRildfR8jJVXqvkZau81sjLOBqMwQAc1eCof1axHRbbYKqYjlBD4yE+bXbGIT2pDKpMiRB1B2m+is3PWrgtq4pzLE5HQvI0mCt1OfzAsp5UVUaloJszK08Xb+jpaUbY0/yw5zkdHzymwRbcmIGBLPl1' \
-			b'PBhzNK9lRZ+rag+vQYEQF7mHqoB+/otyr0HRs+oUPPDydZvrBV4ZXKAqpGglA7j6axYHrSmeVa6edATmoAtN/OavmN+8rYD5oPtIjoflbrjmVthec+Fd7YIP2gU9L+F7dc2t0NdW+MAKBTh3gZMiig6IKL5yV9NhA3jBlPMGL4yGV4+/SF1Us7qovonailpu' \
-			b'm8R1IfQaBK9p+6vef3DuLSIUVNOGvKYrcamO6W2HWMHwAqzg/X/yRCF7ttVU+VrT73hBs+7YHpsatrt6pdY5VD0oAOASXNX+Po/q6EzsfT2f2xsijuqoRqBYfQBXViuInk/V+dqLzqEqQHFGk+KMJsUZHRVndH41DMhHRy0QfWDDhdhsfMtIZ6at7YQ17M1q' \
-			b'2ptlR02OlCzZWs6ORaWsunE2PX+wrt4TMj2xwuZdVZnWyw63VBXvXmravdS0e6lJQ5Xxge76h41K7KiOrFHT73u8/IPGzy1rw3p+09a5o17uKZAjjPKEUZ7gwVO63st0y9S58kPOlYOADU9nTdTmpBmToRmToRmT4UmR4WmQwXkOonrkGJ5HiZYnu9ukCWDm' \
-			b'OajvKH1KoccE6kjjodsH6TSY/cs4XD1bcxHV56gD0yTrKhdkkWQsa3RZhjobZ5wEdZagjnzRK2TV3vDHBCws8EF7sLXFn32L76m2e0Uvqr0mYZmtmpCLHcbRmM1RjwhJuvhdIVd7wqX0hCcdTbMRwRwOtUzSYHS1FyxON3ts7oAgDoezdLQv3Z3oqGt4JgvP' \
-			b'kva0iEmanjCVh/vK4KoyW7vEg3eJkIonbvBUs7H2eu4fvATteG7i+c1L1Z1lnfAeQ9QetNSDdBXTEXQbhGJiu1Pc3gA9Klo8MFqoZiCYGLhWSCWgbeCjy43CryfBNi98QWnImhsJoIfqUx1EynUxoLgND5R49JRJjooQWgFlKK/Y/XJBoRQXZyQSajOhRlGU' \
-			b'sf0PmaA9tU2sXUebbKi9YJmzghtc/wuX3MINt3CrK1zpCve5wt2lcHEpXNYJtwHD1bdw0TDcMgxXDEOVQIuFs/DwoRX4jAfsFcBGAVQ83F0+QNMOwglzUQVH6Vv4xH1osnAzFLTekF/VgvyCP7gdAk7hwwVeoNgBQoWqArFCMwfZgnBhMRKaJixWhsal4Gi4' \
-			b'hv4d3OHgWGhLCvYWQzkV0DMsS0GHAwwAfaVQHgU6nKC+E+SpYCWsh8WOXailHj9L7hv87jh8Qd3At8/hY+N9Ax+cV/AVc9Xsevjoegtfrg/Z30Ev3cFHy+G779AtdwqiwA+zw7fk4WvoCmIO5d9p+JJ7+BF63g4qZgd9btfhF80h9lAG/MY4ftddgzukP8CH' \
-			b'49EdwkPl7qAb7Qbw2cIv/E59S998D31oF8q2w+JAPoIwdh4/yh7ChCaHn6WHdCGUho+Mw0fR4avpkE6rqJQD5h7zAcUPBg8fP4evpkNcLWROwefMgwt8Ud6DRag7/Pa5gkigEAFedpBVKGEPb4gaAGwHqIbfQ0eJoxSCd/gcPMgJRQNZgnDBsgcxhN8DpgJZ' \
-			b'gwoCcNp1aAj/gxnlF+ILbXE3oJg8fOu+gW+q70Lf2nmsCaxIqED4/Hxo+7vQJnah7e88fIMdigoig6DB3veUDYDlHfQw/Gg9phx8O3iD4HqMLyTVo2SgncB//T3ACoBJhZLrgZKKIxVH7gBHFODIHH64KQjxMpLjgaCRJRxGlHJkB8Ox28YVGHGqbCN3Bcyg' \
-			b'nuUC1FwqxID2UwEzuoQaGK8C3MCR0oOQ40HOfgFc/Dy8eHCEaiDDGGa8AI2fghp/T2DjKX/aN/JvJeD4oyDn8pHGj7EGspThjUfE8UuY0/zLPQXq8k+BvHr44f4HFKsXgIhmo0OEI5x05dPVMSjh7HS0ukxLzrICPQdTOHckPaNj8IqniqqYJE5OOgW+yjmz' \
-			b'4BiPmGjDrYA0lImliTh8eiX/HMbejHi0mIDwFxchIgz2TVI5z9XQeZ1+bxESdDyCBDpYLkC4hHqxy7AJE+ZF6AzusHRQQGjwA9/4OQlKNcEp3JgC33dYC6tw9VqCVn8kvLYCsXC2rIBZl0EtLAYFO7jFNcEu9F+oMLuAvB0ueQD64osBGMyhKPgiGIYGYwmI' \
-			b'oxEXcnqCY0yOEJmc05PgGcPs4TPiDAE0ri/ByhRC3HqwxswMtE61B9i0/Cb/9wBcMgztPRWg7YvSoJAoKRROBu7jFKb+JwLgMkZbIgJ0hIE5E0KWOMm5SwlHjmAvQBUpHYusEY3L5NEdwR+xzjMWYasTuaSQDmiJbSAWrEXillxcc/wSPbjMb840WComm1yo' \
-			b'iXeIcVx4hS5LxAPo8HSHPbd9GiT0P3gb4AEiskcPii+UfyL57K9+H08+doaAjiGfSjwPRDyOiMctEA8Iy80P+6F3OOYbNipD7xatEt244hG6cZN0I4sPEmQL1ziiGjfBNHnUeyyTXLQfZ13cHCUQ2WVggpnxjnlhXmGpYndxMsMoWKUoesuSinzCGegzP75L' \
-			b'vpe5xB3BJRxZziVkdSqXSLE2EokTIpG4ZnmEZWUl1ZxFXMYiKbK1HGJvYVXlRAJ5eOpYSxt1vnKBtOGJNpZWiroDS0Ud7jUTZ7AR2otnzvDCGb54hDMml5A6WUOi6NezhSe2mFhIKvKxxxbJRftxpsXNUQLFXOSA92INCi2IJEheGU/kgZAnokyZKjj1PvPm' \
-			b'xdcyVfgjqIIjy6mC5XgiVUjJNlKFrGdlcc1SBcvKSqo5VfiMKlJka6nCVaqoVHEVVDEQVQxLVDEcoAoKjw2BjdBeBqaKQahiKB6himGSKgahimEbVQxEFcMEVeT52KOK5KL9ONPi5iiBgipm/GJGCqoYhCrGU4o8EFJF9MNUwan3mTcvvpapYjiCKjiynCrI' \
-			b'6lSqkJJtpIpBqELimqUKlpWVVHOqGDKqSJGtpQpfqaJSxTVQBXRYjVt9h6kCO/YMVUAhW6KKaISytkQVmAJRBbmmJ1EFet2jCrBlqqDoV1MFpuHxNaaKIh9jqhAX7ceZFjdHr5wq5vxiRnKqQAuiCpKXUEURqMMGyH6IKmLqfebNi69FqiBfh6kiRpZRBVud' \
-			b'SBVZybZRBYRiqsjimqOKKCsrqWZUgeVhqpDI1lJFv243/TERhq+ccZWcoYgz1BJnKPTj+DXFHOSEzMFGLDEzhxLmUMUjzKEmmUMJc6htzKGIOdQEc+T52GOO5KL9ONNFQEdpFORxwHtJHkrIQ43IIw+E5BHFyuTBqfeZNy++lslDHUEeHFlOHmR1KnlIyTaS' \
-			b'hxLykLhmyYNlZSXVnDxURh4psrXkMVTyqORxXeRhiDzMEnkY9EPn/6bJg3wgebAxvlu0SuRRPkIeZpI8jJCH2UYepBILrz3yyPOxRx7JRftxpouAjtIoyOOA95I8jJCHGZFHHgjJI4qVyYNT7zNvXnwtk4c5gjw4spw8yOpU8pCSbSQPI+Qhcc2SB8vKSqo5' \
-			b'eZiMPFJka8mjayt7VPa4LvYgpV21pLQLGbfEHnaGPcgHsgcbSced2EO0dck1PcIek9q6SrR11TYlXUzD42uPPfJ87LFHctF+nOkioKM0CvY44L1kDyvsYUfskQdC9ohiZfbg1PvMmxdfy+xxhBJujCxnD7I6lT2kZBvZQzRws7hm2YNllaWas0emfiuRrWaP' \
-			b'7ryOgVzsAZDKIxfII6RMpZaUqSDDpE+FL+YRpBFyiWxCv5BN2AjlZsUqJYpV5JoeYZNJxSolilVqm2KVIsUqNaFYVeRjj02Si/bjTBcBXRtNBaEcCFESiqhXqZF6VREICSVKlgmFM9Bn3rz4WiaUI9SrYmQ5obA0TyQUKdlGQhH1qiyuWUJhWVlJNSeUTL1K' \
-			b'IltNKEsHnCuhVEJ5rISi6ZYIeB0kFGjaHRIKvphQwByKgi8iFPYHjSIalaE3XQsVCYVc05MIRU/eKwG2TCgU/WpCwTQoq2NCKfIxJhRx0X6c6SKga6MpJ5RDIQpCQQsiFJKaEEoRCLpokiwRSsxAn3nz4muRUMjXYUKJkWWEwlYnEkoW9zZCgaBMKFlcc4QS' \
-			b'ZWUl1YxQsDxMKBLZakLBg+p46ITYgalBIymM6MAC+AtKz0A0gnMCz55BkcEugRkBGIFIBI+eb3Jw0PGhw+vmDJ7v6Z72yruVd6+Ud2lBUC8tCEJzpgVBnS0Ighl41wrvkr9OpyDIu7wsqGVZkFzTI7w7uSyoZVlw49l9TcuCemJZsMjHHu8mF+3HmS4Cujaa' \
-			b'Ct49EKLkXVkZ1KOVwSIQ8m6ULPMuZ6DPvHnxtcy7R6wMxshy3iWrU3lXSraRd2VlMItrlndZVlmqOe9mK4MS2WreXTpTWQmlEsqjJZSBCGVYIhTyA4QyZIQyEKEMQijkDwmFjUAoAxPKIIQyFI8QyjBJKIMQyrCNUAYilGGCUPJ87BFKctF+nGloauLu2mgq' \
-			b'GGWYfUaMMgijDCNGyQMho0Q/zCicgT7z5sXXMqMMRzAKR5YzClmdyihSso2MMgijSFyzjMKyspJqzihDxigpstWMsnT0sjJKZZTHyiiGjtiYpSM20H7plA2+mFEQXjy9iFHYHzSKaFSG3i1aRUYh1/QkRjGTx22MHLcx247bGDpuYyaO2xT5GDOKuGg/znQR' \
-			b'0CVTTiiHQhSEYuTQjRkduikCQRdNkiVCiRnoM29efC0Sijni0E2MLCMUtjqRULKSbSMUI4dusrjmCCXKykqqGaGY7NCNRLaaUJYOaFZCqYTyaAmF9prM0l4TNF7aazLZXpOhvSYje03sDwmFjUAovNdkZK+JXNMjhDK512Rkr8ls22sytNdkJvaainzsEUpy' \
-			b'0X6c6SKga6OpIJQDIUpCkb0mM9prKgIhoUTJMqFwBvrMmxdfy4RyxF5TqpmMUMjqVELJirONUGSvKYtrllBYVlZSzQkl22uSyFYTyspjnJVQKqE8HkKhA51m6UAntFw60GmyA51gBkJRQijkAQmFjUAofKzTyLFOck2PEMrksU4jxzrNtmOdho51moljnUU+' \
-			b'9ggluWg/znQR0LXRVBDKgRAlocjJTjM62VkEQkKJkmVC4Qz0mTcvvpYJ5YiTnTGynFDI6lRCkZJtJBQ52ZnFNUsoLCsrqeaEkp3slMhWE8rKo52VUCqhPB5CoV15s7QrDw2WduVNtitvaFfeyK48+0NCYaMy9G7RKhGKLR4hlMldeSO78mbbrryhXXkzsStf' \
-			b'5GOPUJKL9uNMFwFdG00FoRwIURKK7Mqb0a58EQgJJUqWCYUz0GfevPhaJpQjduVjZDmhkNWphCIl20gosiufxTVLKCyrLNWcULJdeYlsLaGog6c97dVwSj9NK1tuz6/UcnnUAp+Fgl3IfoFagqCgPfe0Rd9nW/Q9bdH3skVP/nCLno2wRd8Tu2CCvEXfF49s' \
-			b'0fdT7AK2cYu+38QumAZlde+qSzNkGdnbo08u3K1nHoBN10a/kWEG/FrhoXCjjfpeNur7kmSKQLhRHwXMG/VcRbk3L76WN+r7ZZKJkeUb9WR16ka9lGzjRn0vG/US1+xGPcvKSqr5Rn2fbdRLCdeSzMFDoZVkKslcBclY2rK3S1v2QUjQVmnX3ma79pZ27a3s' \
-			b'2rM/aBfRqAy9W7SKJEOu6UkkYyd37a3s2tttu/aWdu3txK59kY8xx4iL9uNM5w8gpkt+E8dgMofClRxjZe/ejvbui0DQX5N8iWNiDfWZNy++FjnGHrF3HyPLOIatTuSYrGTbOMbK3n0W1xzHRFlZSTXjGJvt3Utkqznmks+Jdsgxuq6PPTp+aVdyjJ/gGb9l' \
-			b'QkNco5e4Bto7EY3OiEYT0WghGvaHsxk2wmyGiUYL0ZBremQ2M0k0WohGbyMaTUSjiWgwBWgktFzCisd5fvYmNclF+3Hmi4AumQq94wMhyumMUI0eUU0RCKczUcI8neEM9Jk3L76WpzNHUE2MLJ/OkNWp0xkp2cbpTItdIk1pJL7ZawmcSTLD0kN30WPa0Rnt' \
-			b'SKSraefMPntcN2SunHDudUJjaEJjFkgGPoZqaDZjstmModmMkdkM+cPZDBsVv1u0SrOZ8pHZjJmczRiZzZhtsxlDsxkzMZvJ87E3m0ku2o8zXQR0bTTl5HIoRDmPMTKPMaN5TB4I5zFRsjyP4Qz0mTcvvpbnMeaIeQxHls9jyOrUeYyUbOM8xsg8RuKancew' \
-			b'rKykms9jTDaPSZGtJpR67r4SytUSCu3w26Udfvi0Nu3w22yH39IOv5UdfvaHhMJGZejdolUiFFs8QiiTO/xWdvjtth1+Szv8dmKHv8jHHqEkF+3HmS4CujaaCkI5EKIkFNnht6Md/iIQEkqULBMKZ6DPvHnxtUwoR+zwx8hyQiGrUwlFSraRUGSHP4trllBY' \
-			b'VlmqOaFkO/wS2WpCqefuK6FcK6E4WgZzS8tg0BJpGcxly2COlsGcLIOxP2gU0RjK7XgZzMkyGLmmJxGKm1wGc7IM5rYtgzlaBnMT+y1FPsaEIi7ajzNdBBRTTiiHQhSE4mT5y42Wv4pA0EWTZIlQYgb6zJsXX4uE4o5Y/oqRZYTCVicSSlaybYTiZKcli2uO' \
-			b'UKKsrKSaEYrLlrwkstWEUo/dXw+h9JdBKnq476ueB7rqeVggFkV+IJ1BiAXMUJxBrnomf3jVMxuh7AMRC6ZGxEKu6ZGrnocpYgHbeNXzsIlYMA3K6t5Vz3k+9q56Ti7ajzNdBHRtNBVXPR8IUV71PCRiIakJsRSB8Krn6IeIJWagz7x58bV81fMwTywKLx7g' \
-			b'6545wvy6Z7I69bpnKd3G654H3HJMVz5LfLN7KywzKylnBINlYoKRyFYTTD2Gfz0EcwHkcr8zFjqG75aO4UMzpGP4LjuG7+gYvpNj+OwPZyxshBkLH8N3cgyfXNMjM5bJY/hOjuG7bcfwHR3DdxPH8It87M1Ykov240wXAbmvjo7hHwpRzljkGL4bHcMvAuGM' \
-			b'JUqWZyycgT7z5sXX8ozliGP4MbJ8xkJWp85YsuJsm7HIMfwsrtkZC8vKSqr5jCU7hi+RrSaUegy/EsrVEooiQlFLhKLQT3xFQlFEKEoIhTwgobARCEUxoSghFFU8QihqklCUEIraRiiKCEVNEEqejz1CSS7ajzNdBHRtNBWEciBESShKCEWNCCUPhIQSJcuE' \
-			b'whnoM29efC0TijqCUDiynFDI6lRCkZJtJBQlhCJxzRIKy8pKqjmhqIxQUmSrCWXpGH4fqUQ/IhKJDHJb7HEMc1TWuDXWCE1BeVCG7NbuymvalddLu/Ia6WPyw5iWnHEnno2wE6+JNTAF3onXxSM78XrEGtDOwDJuxOtNpLGLql164jQktkT5v78bn3Kp/Tjj' \
-			b'4gZb8Xq0Dz/jFwtcrG4BwEIDVKMjkJAfCoA5w2GdzaYg7A6UEbMPP70Yj9iJ18usESsz34knq0nWoHIcs7QFnixX68ateI20we0kSWp2L55ry7JJeSh18DJiECxb3JVPtTZiEDM8xVENU0howE9xhbLVT5E4Q0d+Sl/tTJyiV353uU5S6iTlnOlm3SSFNInd' \
-			b'kiYxtD7SJHaZJrEjTWInmsTsDycpbFT8btEqTVLKRyYpk5rETjSJ3TZNYkd04yY0iYt87E1Skov240wXAV0bTcUk5UCIcpIimsRupElcBMJJSpQsT1I4A33mzYuv5UnKEZrEMbJ8kkJWp05SpGQbJymiSZzFNTtJYVlZSTWfpGSaxBLZ2kmKPrNPMdtHyCl0' \
-			b'0qxyy1lzCykVuyWlYmiCpFTsMqViR0rFTpSK2R9yCxuVoXeLVolbbPEIt0wqFTtRKk4prKcX0it2E3rFRVb26CW5aD/OdxHQtdFU0MuBECW9iF6xY71i9hZJJg+KJBNFzCTD2egzb158LZPMEdrFMbKcZMjqVJKRkm0kGdEuzuKaJRmWVZZqTjKZdrF4WU0y' \
-			b'S8fuz3Ul7MFXvyJlRLpQGUVEeoi0cEGUcP50QJpbbklzyw3zq1mOwiMFsBEogLW1nGhrkWt6hAImtbWcaGu5bdpajrS13IS21j7mp1xpP86ouDmKtED7Gb9urJvlRDcr4TuLq823y0kJy5H6lTtK98od0L1KOM5p5ThOVqfiuEhnPYQPAuEUx0F9q5iOlYaW' \
-			b'Y3imbyWZOgbDEbuXzq5X7K7YfVbY7Uk5yi8pR/luHrvhsh1WiIrGUFbPClFeFKLINT0Ju/2kQpQXhSi/TSHKk0KUn1CI2sNuyZX244yKm6NIc+ye8+vH6k++28PuKK4cuz3pOXnScPJHqTf5I9SbYmQZdrPVididSWc1dnvRbOI4DmJ3TMdKQ8uw22eqTZKp' \
-			b'o7F76Zh4xe6K3eeF3bSL7Jd2kf2BXWRPzojdbATs5l1kL7vIXhePYPd4F5mwW7aR/bZtZEzD42sZu1OutB9nVNwcRVpg94xfP9419nofu1lcBXbT/rCnfWF/1J6wP2JPOKaVYzdZnYrdIp312K0FuymOw9jN6VhpaDl2Z3vAkqmjsXvpRPa5YnfVHnp4nL+I' \
-			b'JXfod4D1bgnr3QGsd+iMWM9GwHrHWO8E613xCNa7Sax3gvVuG9Y7wnq3j/VFPvZwP7loP860uDlKoMD9Gb+YkQL3neB+vnNbhAAKIGkyC3C6fZ71LvleZgR3BCNwZDkjkNWpjCDF2raiDsZICxLXLCuwrKykmrOCy1ghRbZ6RX3peHVlh8oOl80OntjBL7GD' \
-			b'P8AOHp2RHdgI7OCZHbywgy8eYQc/yQ5e2MFvYwdP7OAn2CHPxx47JBftx5kWN0cJFOxwwHvJDn6GHfIQyA4+YwdOt8+z3iXfy+zgj2AHjixnB5bgiewgxdrIDnI2Ootrlh1YVlZSzdnBZ+yQIlvNDktnoys7VHa4bHboiR36JXboD7ADPsQObAR26JkdemGH' \
-			b'vniEHfpJduiFHfpt7NATO/QT7JDnY48dkov240yLm6MECnaY8YsZKdihn2GHPASyQ5+xA6dbZL1LvpfZoT+CHTiynB3I6lR2kGJtZIde2EHimmUHlpWVVHN26DN2kBKuZYelg86VHSo7XDY7kPaOX9Le8Qe0dzyFR3ZgI7ADa+940d4h1/QIO0xq73jR3vHb' \
-			b'tHc8ae/4Ce2dIh977JBctB9nWtwcJVCww4xfP9bk8cMMO+QhkB2GjB043T7Pepd8L7PDETo+MbKcHcjqVHaQYm1kB1H0yeKaZQeWlZVUc3bI9HwkstXsgKeWTWMXPsX36EkilDRAwu19fO8uCaNdQRr2sogDzrfe76V90N9gr5fUiHZ6aY4xQAzzRILx8TGz' \
-			b'ZIbS80RDyURD9cUj1/ZNTjSUTDTUtolGPNesJmYaRUb27u2DpCHPtE8xyreEg4qguQa1uZ5YBTOoZoOp8bRDzUw7ihB4d1827YhZKMrRJd85seA1fFPkoiamHnCN5JhgYqT55X1kderlfT0ecFbb5x+QDyv7F5ytw9f3seRsKldxfV82CRHJZjSDNvBXd/DX' \
-			b'oU1v8a9D18A6io41qx44J4jt9SHG2eeaAfnFMLMwleQ8QiRyHIPMah4hWSApZLOGAuBH+kKFntDAgH0EUC+O7HNgPgWQzXoQjuB7CHQBbAuQjQAbQRV61dGAOguliKEInoicETYTTk6AZETIU+BxWVsnAuFufPV1iWNjfZtS0wagarenHDmLTYuj3gKOTgUi' \
-			b'QKEN6BNh5zDg7PbOHSWEicACKNEdRonJQen9AEUcWIb6vXa4gGHMJGSsgYt1AzAcUl0eZmQDKKjRih3jkQtIbRo/1mOHWjvC8PeOHeOJKICIvlsg8XDAH9xDGPgw6jkDy62MQ1YCyyyoxAnduQMLZjT/zyDT9fcDNEgHsNAEs0R9xEbOOQDPNOgokMU64Gn+' \
-			b'FVro01ASnOToDZOcdgmC2ttGoYg8NkOe9vKHMSDerYizt+Q0Wm6y0Di6bMkJqs9lSGQEjWAKDnd8ISrBwgFMomFS7fJlqFD37S2iFSJVXHdagVbmIRArIZQXhIJqfVTDIQWRn4BMUDXzQyJD6567jj/zQ3UPTdZnmAVtMOFWXAvlZR2QMoitQ6HgV0xtUlOF' \
-			b'Hz2Oqsxp6zZwB97kLsDdQFrc9oWVe3sY0nB1/gJgDSGtWzlDc8fN0GCB9V4GUzMDKZPDE7bgcxhQjWdpUJVQbQvwhFm/KIgCeIL2sXrWZo6ctam9E1OTMzd762vDdzZmekTjpdXLPv7+l31udcnnIcc62ThnrI994eOcTcs+9vaWfVzz+gw2lWZ1Em5/g+mh' \
-			b'p1nDQy3sCGTgLvNlbiyRRkjP2h72XjeazgQxYLb9kBtNzb+Gp4F0cMXGnwV6LCMGZChUHWgIXDR6rEYOUCy9lf2ma9uXJnUvPE91GysrZ4IdG3CDhTALIOuHHP2lgEYwQ77geucHA4+x0uF9A0h4m9sAkriKW6zeXh+ohFR7VB3dwUjmYcHFnQW+7CA0xD7c' \
-			b'AsyoPi7Jjhdih+2gAzrZ94o7/m4x56iTMmNF5/teLbHnP3jp8g8rnSPYwA8IcvdQc8w3jkqwwa8IPdT6ib4tvMmGNUHG24c17T0jTIYuqnvgKdEDoEtFltN0dktUgeo7jxnSA4LKHQBKdwKgdA8IKOMzXhVQKqCsBJShAsodAIo6AVDUAwKKroBSAeUUQIFq' \
-			b'q4By+4CiL2Ql96q2fM4UMc4YLG4TGRSW/lI2d24FCZp/hY7xFCAR9oRDfVRQuAhQOEGD5AKBAeO7RVzA+B7rpu8tKosgNMBdMFY9BSxFjLAVIypGPCxGYJ8+s8HD9aKEc08DaCM2nIdGasWGR4INDAsXP7G4A2ygK9no/xljAw4coEHDSAIauX0KiBYaeXhb' \
-			b'xIxL0UOtmHEhmKEqZsxhhkr/LxszLkUNtWLGxMnbEC5IUcF1heeDH9jIz20tEzN1DvBBEHC3sxH0uIgeCu+ND9bLOGKGpzvqbd1TAOLQ+p8iDoZmGizw3hJ7gm5pRZI6+kjoMZwjepzJ4AOTvXP0GG5j7HEMZrhTtEUrZlw5ZmDPfoy7p7eBGViES1v/NP4p' \
-			b'EkFo52AgjDhFAbRixFViBFk+ag2LFRiB0ng0eyQG1jKgbw04nsDdEneKTmfFiKvCCOyqV6KGdQRIYKYe306qhs8YQYcIsxCtESOqmmbFiMMYgX3kyjQ1r1fZQsNAoiVsqNqaFRvg62nQDs9HWfMssIH65nVBg4LlB/iqn4cN0xZ3Sl3V1rxWjIC2fAa6mmcL' \
-			b'EVc5fOjwsAcNH6qy5tVCQ1ehoULDAWi4FJ1MyFm86u/eYWLqu8IPdcVfPTi6EjSgCnchZP9w8AHyPA8QgdBzULL6ZLk7D+XME68lb/c/bH7uY40tHyFPX4HqD4858CtQVwIi9LX68v9mHSwIO/6y9yUNSTZ+mDuCCZb/4NgEdIGPGp/07dMA7zg8OQ+lzYow' \
-			b'FWG2IozZ+78dYcyVI4xZRJhuLcL481DxrAhzmwhzPehi9/5vRxd75ehib2NtJUOWrnkNiEJwQlhCQEIo4hA/HCAHwAZhRg4YiBax68funrqooa6J3XKqSyrpft1EN4ldo4cr/vshb/qx1acGnxo7tFNq44ZaNjbq1KCnGrM05NQEU6tLbQTixrbRzTQJ/KAa' \
-			b'Vz5W+l79pCoJ1QFz01C7tyB9AuEEv4PUA0BoURduZX2009BV1MuOutPdVgwUBbEiVZDKKwlad1FRqSMfXVnYq6Y61F6l6VuptO5QvT2yuvOC9dP1F2H63uoQdFWCEDqPQsA1S48OsEE9hDFOsMe8G/LvcmsYwODaUkDm1/hVameCgwrlDP+/vwnmJ7sArCDh' \
-			b'DvztQj8P4yX0FMQxoJ0GOxhgAO/j18c7/EivhY9mhhoP4g4UEqoaaho+i42fxo6JBZfQIAKvg5jpC+Iu+9xuiC2MlmDzHUZRoWnByAJGifjtbBgnWsyEOSkTYVy59A9TsZCKP5QOf99zWEjQwkDT7v2Tr3jqsRum76bTt5AF+CRHi7dcq6nstHs5wo9epNV2' \
-			b'uNAVPsfpRzkN4+fsH4xFHF9BK/8LH97kv8AHDEChCQLAwAWuACLwD4vk77lIIRkH30QBIm5O/4df8BlaLEq/sSj9XGlGH/abLJ3WB0oYol38B/OS0oZmCZ5nA7krzAEyn1jqYbrUerbgAchhSjaU07B9aXSlQNoWVTJhwI3qmYrOccOIE4bMdGkL3WGFF2Yn' \
-			b'AXa82uhZmIATHQvVzAsWrkjAqZMdCbllQbck7MBvJHD6FjoJHjI68QyTtuI29385pkOh52Mc2YyMh/M4zsr+C/5jEwk259YzcIfzoR4SSreh44QBUBj/3Gn3cefShVSz+onjzg1BDz6KV6ru9qFmoc4RT9VMgzD33Sh0cw4PrKeNrXC4ersPNQh9fuBpmod7' \
-			b'SCgmCQU+DTfcbV8Z/KV2F5h7wzPQsnZ/p4+66wSOfKiFzMzVju823R30HJi5nvDAvsFpUZBs3Lj3wLrB/fShtrvAfgTrYtmDhYB1Kn3nDyyZ3UMySw81m5m5+nxTOW4Ucjs9yzX7D6wITjoc88DG3PpgJKm+drBVHQzWm6/3oTazeiHlHnsX7MI//ENL0G3t' \
-			b'W+v6lmuu+KE2s3qt5fj58+30L9/c+gOKJOuDkbxU7WOr+hjslF7vQ21mZp3iNvpYd1vzL9Agu4MHdLXWByOx7a1k1K52uKu55oofajMzaxu31dWgLdxOd/PNHT2gBbk+GEmvrn6s7HF9c8UPtZnVSx9u6x7MsR1vryr3Ot/QrHpAl3ZVANBAXvABmDXhQDKt' \
-			b'iyTr+iFo4V3vQ21m9SLJ5n6YN4db65NwXuGOn/xMwKYYSKnv1FWWbWoKm/snjFjsufRT15zygArGiVEcflQHJRzuNhF8qCl1FefXtR/fXPFDbWaTFsxtqr2cBPkHa7dvVj2gu742TP7E82DrAnlFLzxZx0e5gpEqR9cOva5DD80VP9RmzKPt0HDW9PIeqpXV' \
-			b'C0mXUyuuucCHamXmmMf91YruV9SM3lI7vrn/BwD8VB/4UC2tXhJKzPeAFTVFYYuV1TdrHzhMtyHY3aVEVTZzQufxVRncdnDZD1XY9sNFl1Zhqrnwh45hzpz0ue7TYHDryKaH7hWR/5sjKmLcjzv7Wfg5Nq69hxrDlhNOj78x2OYKHmoAZ3mW6aEbANw49Pgf' \
-			b'agCrdYKuogF0zRU81AA2Lfs8+gagmit4qAFsWmF69A1AN1fwUANwzWtt8cQ9Q4JPFtxEerAACaMlyJJ9htlf3j5CPaAPqFU4jw1npuFwEg02guAnfYc6Lf+T727PN9QthggtY/RfsY6rVfn1OdhSyD7wXN5csYXlLSu1Krj+BK/TwVsD5bZAup1P8818LruR' \
-			b'D+65IUFZU6bSt3gZoTKUnT5LChquo8bpiIqthdPTcKeSxnOIeMEfuTgIbdGWhTO6Dgj6Ll+A04PLgLa0sB/y/zo0cLBhzIfveEebkPHvb/4/h5idnA=='
+			b'eJztffmv3DaW7j/zgL4XUAEiKZKSf0scp8eYxMlk6TcNIwgct3sQvGywk7x5aMz//s7GTSWVSqW7VN0iLF+xxEWHh+T3cTmkbl7/5evnX3z2xau/NH/5X+9++Qfcws/PXnz6Ddy+/OirF68+A8enX330XG5K7hruH7989cXn4a6CQ0sCn3yBaXz92Udf/xs7' \
+			b'X9Hfj1/89fvnH3394mtxf/5RePpxcv4tOb9kJ6XzMbz431Gg6KDHz7/96rO/46/o+PbTb189//LvwYUBv/kK/377cYjEzheff/nN379+gW/4/OWrb1GoV99inv72EYZ/+eqbv2J2Xn5Okenvf3yFoT8jPX2BvvKGjynG8y8+//yjoDt88NXLv/7bN0G2r4Ls' \
+			b'XxWy468X/wF/Pvr8S/j7ycefkR8+ffWJaAhdHyfn35JTNPTis69f4Iu/evk53j95+beXn6DjuRTENyTfl59RJiHLIb//+fWL5xTgk5effooae/WSKsFzkuWjV5+gHtDji6/khaH4UE5O9Tnk9ptwx5rw+Udffv3NFxj/G1L8i/98juVCj/43qx5vissEUnn+' \
+			b'7+D88McPH/588/7Dn5n7A7jfvnn/7vfvf33//T9++OnD72/eZ97ghNsbCvbuv3+DID/++XNw//Luv75/8/6/ws8Pf/z27n368QM4f37z+/dvf/1JXO9//b/JxS/+8O7Dh7fR9Vt0hWTe/JCcv/8eU//nm7e/B/dvlCo//uOXt0nQf/7ztyRNFPqnH6Pzx19+' \
+			b'j8L//MdP3//4829ZNvOEYo7/yDMfnL+/ex8f//nmfZ4kOMLPP3Lp3vzjH8H59o/3P/2/8OO/P7xLOfvh/Zu3/+dd/Pkhl+TPdzGtP3758ddf4kvfxPBvU3ZIqVHyX1OSf2T6/SWK9MOPv/wac/Rr0jrIE7X+9teff34TI//247u37+IPqE+ZQL99+P3X+JJY' \
+			b'tFG0X39K0lOixY8PWczvf/rzzU/xwQeO+V3z+mZn+8b1tw07BnR0Dv/4putv5Sf8IlcPf1wDXjt3WzzgXz7Egwh9eIROCrXjNGxzYxozNDvTdBoct/EpPUsPdiSM9vwHpNtp9guP9LD3yBaP0AkuZfmP65qdYlHhFzrBhRH7BvPIEnt0YHQQhgTp+I/Xt/IT' \
+			b'ZKMkwANkUg7/34YnQ/5LteLAZ5hmh3nXreS9627DU3kWH+w0RVCgX4wO4jkRHNXAyQ78xxl4om7lETqxLEnjkAd7m/0M7uy55tuOXkdZbbo2eHfogLuR57f8Y9fJQ5bWUaZUyJSNT+XZ3gOTHujywU6T7g282NCbQRb6Y1kzKFpHGTSW/1iQ3fIb4NfOUD4s' \
+			b'5nGIHjZ6dIb/eH5jh3mhzCjd3GCVwKLiV+ETl//ycsdHGFdBtvHlIln4acaPQtGWz93+z1FMv/9zIoQuH/X7P4tIu05noqVaL0KMHvjxg7yhgO+N0SIC1kFfPt5/lH7uDJczVG8DdQdrQdt4UBGIAPEM19Qpb0QpuI4IBRWgDLUzhAYIWUPjVajk2IapQUFB' \
+			b'cetEcOgg9pA3UvCMz9MTR09sm554fqLSk56f6PBkp6kM9MB/rItCxkc+f4ROzIHjP6C/29vkRJfm6h6yipqgOmo7aQecB4tIwtgBJaJMQkN4nyLlgCINhzD8x2EbYEVRBGqVCHIqOEg4hbWj6QIGCBzBQ34kv1tJE/GmwQrS7z8PT+ABVTvNf6A+3cpvaLYU' \
+			b'hv6jOjkKOlBhhv84fCDQY8iJGoDUvCWh5adnnAXdKhUpqQEowvoE5SDYRAE089OkLwAz6Q9KENCLvLku26wODkH/8PDGpbZKP4ckFgAUBTMokomu8Izzgg4XHD44mLugjmOmldRC/NlR8xg/Sj8hNrkU/3HYXgWXFTnxBW0joUCPasgpC4NTndOW/7g2Nnj4' \
+			b'tWMJreI/qQcBP5h7bMt/sPMgrce25MRSH4LnrfyEX8GDw0KN9p4VP4RyoXZEDozvYnzsJTiK79rggd0TecIdFes4x4h4kBz0lV4DNEBTUdCiQSdYzwnXgZQAHAFOoUUCtgHSQEEPDegHGnvvmh6itD38h2dQhxTUdIWdA4XJKeyywDsdqVy1Dv5DNqAKWapn' \
+			b'EBcuiA3lqeCxgueqBXfbQVk00NaxyXZN3zc9vLVtBtUMuhkgBAilQEgFIiroTikQSIFEmqARMqYgZwq7a0QE3G8DfaJ4HWIg1GoF+VGQIQU5UpDPoWsG2wzoAYnDyxW8XcHrFWRfQf4HCNdC0i38BO1AkUFlBtwZfDP0jYdraHrQimp63fSm6UFyCAo5Vdh7' \
+			b'A21o7NBATw3AwGGvBzqn0C2FBoGQ7aHBGsR4aMTeNR4LA3PmEDIR83WDekLFQoLYvQXnLbZtCAlFeINlhw+g/OD2+gb1Az9BVLq1HKoTX8zULREj3QbyfY28SL8pqVruZ1juNwMXoBq4tFspuZ5LEksDy7nngqRSonuIprRUGyP3TgI4SYgKEZ70Up341lkJ' \
+			b'FkNRRapIcf415vWNpcIv9JlpkjU4pTvWWdTVno5KvcypQ/QAldJproSuPRN5BAyxtlHt9lK7NTWKxxFKexZK20eUQcCkF/1oUxv7pTT2CsyXUlY3JBv11fpaZpdRZgiGXS2syyisG8UkigxPDBZVR0qLKhLVBI3kKohZlqw9bpaymrRfex69P4Vq5tEEhuDx' \
+			b'JJERTp/5pm9AAbVlnEfLMNIVNzL8o3kB6voOFd0uowxhzE9lpSBZBZIoiznDOX7UDeSrqyV1LiU1tLWkLqSkVC2pCykpXUvqEkrqZjDSCe/C3HNYbiC11N7GRZSi6sJYSsvKU8dLBjemDeUr06iytCBdSyuF3fGkIgeqRX4BRd6FRSMuuYELdAgFOpB3HRgf' \
+			b'MzDmhVWRjp/IypzhTjyu0wbfG2UEKTtuaoPMx/Nw+oZeRHdZlZNlXKo8dJfnnSCv5ec2DMutlCQJVYsqX/oYZM3Dc/F4Xmbtuf+Oa+uQG4WLojhQRhyok0WnKbqXxbeeq3rPVbrvZP1aajCvRCHpMLdYnqe4sWEpkaM5rtCOY3levmshbFuW1lWpGLTDuOBY' \
+			b'd95WtbBauG07btuewdG7Oe2EZn9lWvJMNp7bp/e18rBahHuVrM9HRfDiK7c4GywJrFjRiFmODkMh6Jfq22prdxkdYTKm02xFp6td3JmWkeEtH8bVMjrTMkLzUi3Gi3CvhfHIy0e1pZxv4aDGtRjqwr0Wy5kUS0uNRpRYzUnud9ZMUX+rdpEvoWWAXjTvF6hF' \
+			b'diFF1tlaVpdSVhUKL6WsaG8UDXMsDXPOgEgn9nLh9pdWRmM0KqudmfstAxTh0fbz8NQIvpzHFDyb1cvTju+tkfogq4jzGwG/k42GOOtCkWp1ueMSMwIhPNnMq1telsZkTZfXMKIlDUWo+r+rFkPQjRa23CSsLMhbmf2nFXVSvJU1edrDQ3YyvKw0ELqiPSHd' \
+			b'tCTEU1+1fDaWD6bICu14QF4VebJpCs0vVZ2t0VlXdbZaZ7bqbK3OGNvQZFKzxR3Xu6q6ZdUNtqrqSIs37uooXpwL3X62UNSZzSKZKvK4lijDWjzgq2p0QqOyzOlZgaWJiB9qf2XTXEYr1XXSyFzx8UdnJfMN2YyyFWOfW1FdWckp3lt6VlLdqLB7oef11p6n' \
+			b'SHqerQmC8xgDz4uhSJYHdU4mTBwHvs5SdTy3VPcNzyrrzOanX6N9dDW/efRSILy4WtggK+LMoN85wVJ/xVjqbW2Yj90wcXcA18Thmmtie82Zd7UZPnoz9LIC5vU110Rfa+Kj10TFU9e4qUfzXh4tBy8b3hOCNxzq3NLR4XiDEjPhuF0jVrzmNhiQmnTWKE23' \
+			b'UVBQvuEVx3qqxSXUCs3l1Um5t1LOiu52CIWMN1CuEfMLDsQxe3nacQUw4itHcaEJAD+n6kZ1rx6gdi7Fj/YXNAVUjfPPp0hQCyY7YAYnpQRTTbDi0GK9QbN7FVDPq/j62prOpTjQfsmw/ZJh+yUT7JdMfvgP6sgEQxxzYGGG2W18hozqph/bicc38obOB0/D' \
+			b'nvxaplNrWBxraa2hrlHODS2sq2fAzA67qC7VNdqT9TfMQwEt0bLdcbA/FrOCnsdKPSNF39GIiRbfKDH+WgMutlEDd9zuKfJ3dOYL98NlaY4xwnMgx/J4hjTPCXp+nfdpqNbVsfajj7VbLAUaDnfBAJdHWx2PtjoebXUyoOpkCNXRGIkYIHT2ZEiWDHOFIWy0' \
+			b'zujm+arX/H5+Q08vqD2Tc6gjvB7f7Z+94lTdInUpRei4IfMA7Sond4lwrBjcWYE8G0arDHmWIc8y5FmBPHsrn6GwOFEIyeH3GGutv4Ba33OJ94ZvXIJNxDRbDVaPajiOx6SOWwa80oWvVLnaIi6pRdwoGYWi6hx1v2y0xnO1NRxnEEvVHtHEUTeXd2vG4zMd' \
+			b'NxEv5OFF2577yNQXVnhcHZ5Uhx8KxI/z1abx+E2j5++y91xkfRdLsJd2IqMcL+OWXu4y9a1csGulGLUlHdOSuqqqIynYWh6mK1kUV3zWQUWOc0AO0wwMGYOUDJsetA1+5rvR9D0uXErGb3INWZVjJfRYhDhHZ0J5DKTyTjpQ0qvKtMdZsEGgvHD384WZ0pKd' \
+			b'fa1w1SGNaqoVVIOiwr2UiqZCjJYR2ItAIETMw6Og8cBjPOQXT/jF433xKFs8xxbPbsXDofEkZDzvF8+exoOn8dRpLBKstXjcAX6uBz8Eg+sPuPiAhY/bpKCUNU4wgmwaT0uA+qih1DUeCoY1uEXdQTg8rAUPWcAz3HB/LRqQ4Ckb2DxQuVjVUbEaP+uOJQjP' \
+			b'oXJq3PVvsDghDuRX48Y/XBTDdUvcdGWxiUA8bHRY8rjxAI250W4UTYVwbxHuY8C95wMeM7+DkoLM7fDj4PS1eyi8HbSRncFP3MMzuIFAOxB0B5nfYZvdocp32Fp3UIA7KMcdFsRO438HPzCIwUSheuywTe5A5h0+gRa4w8LZYdvbYcPDz8zvsKzoy/YKoxvy' \
+			b'h8cD/cLkDcYzGMXgsxbjtPgTxYVC3llMHN4LtWXXU9KQImhl5zEmJmsxg5g5CIkSYEJQXeij9yyn4WwOKAf6YE3aQRvd9fg6lBOq0s5hsBbzDQlAHdp5FBAKcGcx/yi7wtxg1jBZSKNHmRXFIxdEsPgSDE+6h+CQEGaScov61xgP3496gN8DJYyxMAOIUjtK' \
+			b'EX/Aa/A3KnFAPZCeIEGLygEPj9E0lgqmCnVi5zFai7mBOFA5dtAQdtAQdh6Do9pQffDc9ywKYvQOwXmH6VDhgduRpiFKT4lDoj0GQzX3+L/7DvEFUaViynVhSgWUCij3BSgaAWUOSNwUlvjUv5PuYZcmewRayv6ebe8eYLArSp1Q6TCuxRuzgDmXjDVqhDd2' \
+			b'hDkt4w5uAjqIPR517RdQxs/jjG88Yw07xnjjE+L4Kcx5MNTxLKDxTfp3CvL4Jex5GpDjx6CDYmXA4wl6/BL4NP9yz5DI/DOksh5/uP9B2+4FROLB6hBwicZj+Wh2jE40eB1NSPMsdZq0nsMrGlmyWdMxwCWjSF2MH+eGpIJje6NqATSfRrqqxDbSiZWxOg9r' \
+			b'0+LseNA8HmGHEXuap4inY0VszK3hbcLJfM4SzUNwNgG/CETYiYN5t4yh+KGnRRwFf5xdKPAUwuDHojbhaifY6gRf+/UYi589CDgLNeU4rNUZ3rYjzO0T7uIJ8T3W3yHDYGzLWHB2AYYhAGIdvItugsbo1nJjTMaKYxmVg5Pme3rGZnodwzN7xytiNcXZA2vC' \
+			b'HEZrmoqi2Rp7GnKTNFja7QR680RX+r+H5kli47MctH2RHdISv4q0kyH9+A1T/yMbSD4GeepF6JZSpaMo5A05UWTCsOKZNOQxckd8lyUaCc5lNuFQhwklFHxGK6GMt5FLWS5EMuoUpqFcMtnkapojnBDAZWFz6sHkAvvkio1ExBTk4AZtmJkIoeLZjpqyfgZa' \
+			b'+h86GPIAM9mju8sXSkiBjQIT5TPmx7KRPcBIgY0qE50pEzlmIrfARKg0Nz8owFbihIDEqS3fW3oU+ccVV+IfN8k/LvGPSy85gXwcc4+boJ487T3aiT7Gj2VPfo5fEOiGcFbPBidZhGhErSoUAWeZhiA6eGUMU6gh8IvI0Gd+SC4SaplbjhishMRybpGMbOSW' \
+			b'JPIGYnGJWJJ6ZnlF9GVTTc1ZxWWsEhNbyyn2DuZfNhLK41PJWhqpA5oLphHPNLI0r6QOTCwpWrNmDhEncogXDvGJQ3xxJQ6ZnHBSacaJkz+BPTyzh59gj1yQPfaIPsaPpU5+jl9QDFYOBC9mrOgBP+9b0VmIXlJHnkSkDhGgz/xoTYZDLVOHP4I6JLGcOiQj' \
+			b'G6kjibyBOtIEWKaeWeoQfdlUQXPq8Bl1xMTWUoer1FGp46qoY2DqGJaoYzhAHRyfKoM4kToGoY4hUcdQXIk6hknqGBJ1DCdSx8DUMUxQRy7IHnVEH+PHUic/NjQtqWMmLAlSUAevd5BkregsRC+pI08iUocI0Gd+SB0Sapk6hiOoQxLLqUPk3kgdSeQN1DEk' \
+			b'6kjqmaUO0ZdNFTSnjiGjjpjYWurwlToqdVwTdRBW05rhYepAnznqwAy2TB3BiY2jZeqgNzB1sG+8InVQ0D3qQLdQBye/njroJSTgHnUUgoypI/kYP5Y6+Tm+5dQxF5YEyamDHnAe+6CzEL2gjiKJQB1BgD7zw5PqJNQidXCow9QREsuoI2RkG3VkIp9OHRhd' \
+			b'qCNTzxx1BH3ZVEEz6qBCEOpIia2ljn7d8vxTIhBfOeSqOUQzh+glDtEUxsltiknYi5hEnNhKtDCJTkyiiysxyaSRJj4NTKJPZBLNTKInmCQXZI9Joo/xY6mLiI7fUZDJgeAlmWgmE81kooVMgjIzMsmTiGQiAvSZn1cx1DKZ6CPIJBRNRiaSkY1kkkTeQCY6' \
+			b'kUlSzyyZiL5sqqM5meiMTGJia8lkqGRSyeQ6yaRjMumWyISuHe9DnCYTDkFkIk5sJZ2QSbK31eWVyKSbJJMukUl3IpmwAS4Zf47JJBdkj0yij/FjqYuIjt9RkMmB4CWZdEwmHZNJJ2QSlJmRSZ5EJBMRoM/8kEwk1DKZdEeQiSSWk4lkZCOZJJE3kEmXyCSp' \
+			b'Z5ZMRF821dGcTDLz4JTYWjJRbWWTyibXySZsJayXrISxwltmEzvDJhyC2ESc4d7So8gmtrgSm0yaB+tkHqxPtAqml5CA+2ySC7LHJtHH+LHURUTH7yjY5EDwkk0ss4llNrHCJkGZGZvkSUQ2EQH6zA/ZREIts8kRRr8hsZxNJCMb2SSJvIFNksVvpp5ZNhF9' \
+			b'pZAFm2Tmvimx1WyizmsfysXuQKm8csG8wsZaeslYCwVney26Ca9oppacXfgXsYs4sb2I4ZZOhlvsG6/ELpOGWzoZbukTDbc0G27pCcOtQpA9dok+xo+lLiK6NrgKgjkQoyQYNt/SbL6lxXwr6jMjmDyJSDAiQ5/5IcFIqGWCOcJ8KySWE4xkZCPBJJE3EEwy' \
+			b'38rUM0swoi+bqmlOMJn5VkpsNcEsbb2uBFMJ5qkTjOHDLPB2kGCwiisiGLoJwaBby40JRsJhxQhOPqprJ8dZBYJh33hFguH91mOCwadCMJz8eoKhl5CAewRTCDImmORj/FjqIqJrgysnmEMxCoKhB5zTvhXNhegFwRRJBIIJMvSZn0+hFgmGQx0mmJBYRjAh' \
+			b'I9sIJhP5dILB6EIwmaxzBBP0ZVM1zQiGCkEIJiW2mmBoJz1temG2EKowRBIjerBIBgm1ZyCbwDqC5yAAKcAXgY3BjMFEQISAwjEg9AM2fNOcwfUdn0Vfebjy8JXzME8gmqUJRKzWPIFosglEdGu5CQ9zOGViFOJhmUY0aRqRfeOVeHhyGtGkacRTDxcwPI1o' \
+			b'JqYRC0H2eDj6GD+Wuojo2uAqePhAjJKHeSbR8EyikZnEqM+Mh/MkIg+LDH3m51UMtczDR8wkhsRyHpaMbOThJPIGHk4ziZl6ZnlY9JVCFjyczSSmxFbz8NIez0owlWCePMEMTDDDEsFwGCSYISOYgQlmSATD4YhgxIkEMwjBDIlghuJKBDNMEsyQCGY4kWAG' \
+			b'JphhgmByQfYIJvoYP5Ya61vyd21wFQwzzF4jhhmYYQZmmEEYJig0Y5g8icgwIkMuEDKMhFpmmOEIhpHEcoYRuTcyTBJ5A8MMiWGSemYZRvRlUz3NGWbIGCYmtpphlraCVoapDPPUGabjLT7d0hYfrMe8y4duwjDo1nJjhpFwWDGCE9pLJ9t9urTdh33jFRmm' \
+			b'm9zu06XtPt2J23063u7TTWz3KQQZM0zyMX4sdRHRRVdOMIdiFATT8aafjjf9dLLpJ+ozEUyRRCCYIEOf+QHBhFCLBNMdseknJJYRTMjINoLJRD6dYLq06SdTzxzBBH3ZVE0zgumyTT8psdUEs7RhtBJMJZgnTzC8VtUtrVVhJea1qi5bq+p4rapLa1USjghG' \
+			b'nEgwslbVpbUq9o1XIpjJtaourVV1J65VdbxW1U2sVRWC7BFM9DF+LHUR0bXBVRDMgRglwfBaVcdrVZ2sVUV9ZgSTJxEJRmToMz+fQi0TzBFrVSGxnGAkIxsJJom8gWDSWlWmnlmCEX3ZVE1zgsnWqlJiqwlm5bbSSjCVYJ4ewfAG025pgynWYN5g2mUbTNGt' \
+			b'5SYEwwGIYMSJBCPbTLu0zZR945UIZnKbaZe2mXYnbjPteJtpN7HNtBBkj2Cij/FjqYuIrg2ugmAOxCgJhneadrzTtJOdplGfGcHkSUSCERn6zM+rGGqZYI7YaRpLJyMYychGgkkibyCYtNM0U88swYi+bKqmOcFkO01TYqsJZuVW00owlWCeHsHwKn+3tMqP' \
+			b'FZdX+btslb/jVf4urfJLOCIYcWq5t/QoEowtrkQwk6v8XVrl705c5e94lb+bWOUvBNkjmOhj/FjqIqJrg6sgmAMxSoLhVf6OV/k7WeWP+swIJk8iEozI0Gd+SDASaplgjljlD4nlBCMZ2UgwSeQNBJNW+TP1zBKM6CuFLAgmW+VPia0lGH1w96m9Go7pp2mm' \
+			b'r1RzVVSDjR1XM/sFqgGFYb3uecm/z5b8e17y79OSP4ejJX9xasv3lh7FJf++uNKSfz/FNvg0LPn3p7ENvYTftXd0pzWZJHtr/tFH2vfMhTlwbQgbvx4gC//z8UYL/z0v/Pe88N8z6US1Zgv/eRJx4V+KKffDhX8Jtbzw3y+TTkgsX/iXjGxc+E8ib1j479PC' \
+			b'f1LP7MK/6Mum2pov/PfZwn9MbDXpHNykWkmnks5VkY5lEwC7ZAIAysI6y1YANrMCsGwFYJMVgITDuhGc2vK9pUeBdNg3XpF07KQVgE1WAPZEKwDLVgB2wgqgEGTMOcnH+LHU+TXwATsSNnIOnd1yKF7JOZZtASzbAlixBYhaTZxTJBE4J5RSn/kB54RQi5xj' \
+			b'j7AFCIllnBMyso1zMpFP5xybbAEy9cxxTtCXTZU14xyb2QKkxFZzziXvW1XEOabOpz1ZvtHrOAd0tsc7bjhlwMPcY5a4B+s9E4/JiMcw8ZhEPBKORjvixNGOEI9JxMO+8UqjnUniMYl4zInEY5h4DBOPQijFmkKpBkPnXKC9QU/0MX4sfRHRRVdh53wgRjnc' \
+			b'YeoxTD1GqCfqNRvu5EnE4Y7I0Gd+ONyRUMvDnSOoJySWD3ckIxuHO0nkDcOdlppGHPIkFc0em5Dpjeqq5nijoU9GQynR1TR0Zt+Jrgs6lYAefsDDp4japVNELV002slOEUW3lpuMdjgcjXbEiaMdOUvUprNEbXml0c7kWaI2nSVqTzxL1PJZonbiLNFCkL3R' \
+			b'TvQxfix1EdG1wZWTzaEY5TiHjxO1fJyoleNEoz6zcU6eRBzniAx95ofjHAm1PM454jjRkFg+zpGMbBznJJE3jHPScaKZembHOaIvm6ppPs7JjhNNia0mmHouQCWYqycYthiwSxYD+ElythiwmcWAZYsBmywGJBwRjDi13Ft6FAnGFlcimEmLAZssBuyJFgOW' \
+			b'LQbshMVAIcgewUQf48dSFxFdG1wFwRyIURIMWwxYthiwYjEQ9ZkRTJ5EJBiRoc/8kGAk1DLBHGExEBLLCUYyspFgksgbCCZZDGTqmSUY0VcKWRBMZjGQEltNMPVcgEow104wjqfN3NK0GdZInjZz2bSZ42kzl6bNJBxWjOCE9uJk2sylaTP2jVckGDc5bebS' \
+			b'tJk7cdrM8bSZm1ivKQQZE0zyMX4sdRExuXKCORSjIBjH02WOp8ucTJdFfSaCKZIIBBNk6DM/IJgQapFg3BHTZSGxjGBCRrYRTCby6QSTTZVl6pkjmKAvm6ppRjAumyJLia0mmHoswFURDH319lJIRj30UdYDH2U9LBCN5jD4riERDbq13OQoaw5HR1mLE9vN' \
+			b'wERDb2OiYd94paOshymiwafhKOvhNKKhl5CA+0dZ54LsHWUdfYwfS11EdG1wFUdZH4hRHmU9ENGQfK1oLkQviKZIIh5lLTL0mR8eZS2hlo+yHuaJRtPOIjnOWhLMyCZkZhvZZGKfTjaYAmYgHGmd1DS7NiN6s6m65kdaD4lwUmKrCaceE3BVhHMxZPOgIxrF' \
+			b'Ixq1NKJRFAarpMpGNIpHNCqNaDgcjWjEiSMaJSMalUY0qrjSiEZNjmhUGtGoE0c0ikc0amJEkwuyN6KJPsaPpS4iSqNVoxHNgRjliEbxiEbxiEbJiCboMxvR5EnEEY3I0Gd+PoVaHtGoI0Y0klg+opGMbBzRJJE3jGhUGtFkGZ8b0Yi+bKqm+YhGZSOamNhq' \
+			b'gqnHBFSCuXqC0UwweolgNIUJt0AwmglGJ4LhAEQw4kSC0UIwOhGMLq5EMHqSYHQiGH0iwWgmGD1BMLkgewQTfYwfS11EdG1wFQRzIEZJMJoJRjPBaCGYoM+MYPIkIsGIDH3m51UMtUww+giCCaWTEYxkZCPBJJE3EIxOBJPUM0swoi+bqmlOMDojmJjYaoJZ' \
+			b'OiagD9TylL4eGhjlLtkkMEllkYdjEfwIF34UzKxd5Te8ym+WVvkN0cnkh0Ox5hpmkeDElX3DLEJvkJV9U1xpZd+MWATrGz4MC/vmNBLZBdMxM7U70xb/91f3o5i4um+mL1raN6N1/ZmwlONiNkyJ5ZhpBEBZrII/8AFHVvmqvjxGCgk5wJ9eRecRK/tmmUVC' \
+			b'geYr+5KVKRbhfBwzFYYBrMvyftrSviEakfoSlTS7ti+FFlSqsVZgzkaMQhUmrPLHwhsxSjc8o96OUApU5Gc0q9l2z4hMARCeIUVCw37GXzeNXGNWfq+6DmbqYOYiaGjVYIYtmN2SBbOjiwYzmQWzYwtmlyyYJRwNZsSJgxmxYHbJgtmVVxrMTFowu2TB7E60' \
+			b'YHZMQ27CgrkQZG8wE32MH0tdRHRtcBWDmQMxysEM85BjC2YnFsxRn9lgJk8iDmZEhj7zw8GMhFoezBxhwRwSywczkpGNg5kk8obBTLJgztQzO5gRfdlUTfPBTGbBnBJbO5gxZ/YJa/v0OQZyjRvhKtecJdewMbNbMmbGqsjGzC4zZnZszOySMbOEI64Rp5Z7' \
+			b'S48i19jiSlwzaczskjFzfMMJdMP2zG7CnrmQZY9uoo/xY8GLiK4NroJuDsQo6YbtmR3bMzuxZ44ZjokH0skTiqQjkvSZH5KOhFomnSOsmkNiOelIdjaSThJ5A+kkq+ZMPbOkI/pKIQvSyayaU5DVpLN0PMC5zqCdxaxZPkwJtBEoI9BFoIlLo4izpwe2EHNL' \
+			b'FmJumJ8FcxyfKEGcSAliFeaSVRj7xitRwqRVmEtWYe5EqzDHVmFuwipsnwOiWMaPJU1+jhMt0H8mrBvbgDm2AXNsA1YOL0RvAePZ2MuxmZc7ysbLHbDxirgur8lxXeTaiOsxIcb11ZCezLoknYN2XaEwbKpwOaZndl1JsGMwnbB8aY99xfKK5WeJ5Z6NsPyS' \
+			b'EZZX81iOhwWJ4VVwQiX3Ynjlk+EV+8YrYrmfNLzyyfDKn2h45dnwyk8YXu1heRLL+LGkyc9xojmWz4X1YzMrz2ZWXu1jedCbYLlneyrPllT+KDMqf4QZVUgsw/Ig6DYsTzk+Dct9sqCSdA5ieSgMmypchuU+M6FKgh2N5Uvb2SuWVyw/Tyzn1Wm/tDrtD6xO' \
+			b'45FvsjodnIjlsjrt0+o0+8YrYfl4dZqxPC1P+xOXp+klJOARWB7FMn4safJznGiB5TNh/Xg1mh5wvvawXPQWsJzXnT2vN/uj1pr9EWvN4TU5lougG7E8ZuFELDcJyzmdw1guhWFThcuxPFtbToIdjeVLO8fPFcurldIZ4f4lTNlj+0NYckvY7w5gvyNvwn5x' \
+			b'asv3lmMG7HfFlbDfTWK/S9jvTsR+x9jv9rG/EGSPB6KP8WOpk5/jFxQ8MBOWBCl4wDEPOOEBLVrI+SCPHFlBXt1nfkgPEmqZIdwRDCHBcoaQLGxkiCTy6TPy6Aw0kdQzyxKiL5uqZs4SLmOJmNjqGfmlbeCVLSpbPA228MwWfokt/AG28ORNbCFOZAsvbOET' \
+			b'W/jiSmzhJ9nCJ7bwJ7KFZ7bwE2yRC7LHFtHH+LHUyc/xCwq2OBC8ZAvPbOEztvAjtsgjR7aQV/eZH7KFhFpmC38EW0hiOVtIFjayRRJ5A1v4xBZJPbNsIfqyqWrmbOEztoiJrWaLpT3clS0qWzwNtuiZLfoltugPsAVdzBbiRLbohS36xBZ9cSW26CfZok9s' \
+			b'0Z/IFj2zRT/BFrkge2wRfYwfS538HL+gYIuZsCRIwRY9s0WfsUU/Yos8cmQLeXUhvYqhltmiP4ItJLGcLSQLG9kiibyBLfrEFkk9s2wh+rKpauZs0WdsERNbzRZLG7IrW1S2eBpswdZBfsk6yB+wDvIcn9hCnMgWYh3kk3UQ+8YrscWkdZBP1kH+ROsgz9ZB' \
+			b'fsI6qBBkjy2ij/FjqZOf4xcUbDET1o8thTxbCvkhY4thxBZ55MgW8uo+80O2kFDLbHGEDVFILGcLkXgjWySRN7BFMiTK1DPLFqIvm6pmzhaZHVFKbDVb0O7qrrELnyx88qQBOYUqdrcfKbxPAlErSMRdIJG0D30YIbY7XDtmM6WdWRqDgNb0gWEIpSfb3qJb' \
+			b'cxw6jjANRHRfXOk4wsmBiE4DEX3iQCTsv9YTI5FCkr3zCPHdKDSvc4wET/GwNHgswhVvYJYhPNWz0fR4WKJ5WKKzYYkeDUuKyPFAQpGiyIqKoXKiQcVNH0o4MTTBIzLHhBMSzQ8llKxsPJSwp43Yetv4BGWxaYwioh0+llC0Z2PeimMJs0FK0m5GO/QE/xqF' \
+			b'fx096S39deSr6AeSkO6Rg6AMXh9ioH3uGYhvOmEaoZacV5hUjmOUWcsmIg8iiWxUUQD+MGGLJIBOQN4dB9qLvf4cpLeAsz3NvigA8UEA7kaAK2AbARZB5mhwnYVVwlMCUkLRAKERMycAM6DlJqhctgQKoLgbH/ddYhoC2p4hT0QuxKzdnhXmLEgtdocLXNqK' \
+			b'SAhHJ1rqBPw5jDy7vQ1QEWoCwiBcqMNwMdlbfRjECD1OqF8VN+C/m8GONbixrldG/awLBI+sV4XFWkFkqi+TfZFsBCTrQUSv7XP4BweR8VAV0cTcL6KAlhUUjgKBFH5J9twR5k56JisRZhZdwnDv7BGGJM3/C9oowoX7RxwiBlC0xjEehroUBJpGH0077lch' \
+			b'UPMvqKbPIDc0/jEnjH/aJSxq7xqOAgTZDILaJ9ax0SdAz3hmajwrBf44URFmpiD/GmcmIiS5DJZaOvqMZ6lwfI3jbRyH9/lsFfzXdwhbBFndetjqHgW6IlT1CaqwbJ9wB0mjtlZDFL50vpPUdTRHulNyQDhXAMt1MYKXZtxiAAvzpjL1g8JhASn6VBId72ej' \
+			b'cRP+GKif1W2b28Hz/CZXDu4H28LSMc722yOwzVwYviG22SMHb/1xgzecJ3yQ7tVM16rLcYpb2jl0scYDOCxPLLtjcIpycZlYhTilSTlHDejckQM6rF1HDOrsnU8k31sv6qn2oI6dGhoefmroTqeFHrX3k/V8xmtmT6rns2JqaHaOef3UkGten8FS1Kxlw90v' \
+			b'S50TfpiHnvxJ2MGV4jKXo9igZBCjEfegy1NnCR2aZH/o5anmX8MzoCCa1fFnASPL0IECgcaxkj4dGDkWQtDU6E5Wqa5uWZvNx8j05S5mX84SRI4GEFFEf3edkP5S0APcKBceW/1oKDI2ZHwMJMFzuu8AUcKUbznVe4Xoglkkm9Qd1pnHRRl3NkCzQ0Vi6u0d' \
+			b'4I0mw8z0HfsmztoOp6MPGn0/KAD5+wWfo7bljK2oH2NGxZ9/d0bZc0cdTJk+rHTvmGO7td0b3DzwqHMsdwY8WUcH0ju9o9M+MNRkMKPVI4+WHglmKsRstAYu4QXL8DwGT4+MLveALGoDsqhHRJbxtrKKLBVZ1iMLll9FlvtBFr0BWfQjIoupyFKR5Q6QRVVk' \
+			b'uSdkMRcy7Xt1C0VnCh3njBp3CRGa3Je0JHQnkND8C1rIM8RHXFKGMqnocDHosMES5RIRgrjwrgGCEn2ia8Z3aHTi8dP2eDyNdc8QUwksbAWLChZnABbcVM6rO3HdcOEAJSwZqdnzsHWtIPGEQEIQ4fLHHPcAEnxuHP8/c5DAMwLxjLEWxx9Y47FrgbXew90S' \
+			b'eFyKhWsFjwsCD13BYxY8dPx/+eBxKQauFTxmwAPiQf405O+MgIRa/dlNfFIa54AjIkhz1ECFA58EIxR1EUY0wSs8XgaUbnhGHAEl/gxRGZrBMwJFqOPPEO+gzsKdzpO0G6xXK7ScA7ScEZwMZwknw7nAybAGTk7ulVCE7b2SNSDittilVhCpIEJnxj/Nxdi7' \
+			b'ABHSziVOnnY4hMEK2+IYR9EJbm6LqWkFi6sFC6piT9xyYwVYkDqe1EpLRx0M3FhEDkVgscV6tILF1YEFNaxrsfM6Ai0o6tNcmDX41SZsBS3cyeTLVYPQChbLYEE17tpsQq/biMNgj6LtCCSqXWgFCQEJarZnZBZ6FiDBYl4fRmj1jEgDGgs6HIFFtQu9ZrDA' \
+			b'en0OVqFnixVX26FQ2KFQ3KGoZqFXjRGqYkTFiCWMuBTrT5QsnFL44HgRzsl8bNwIpxPWbaxr0QPLcYeN4fFwBG7ufNAEFTiHKas3vLvHMwM99kvyx3U82uyb75fUAek3dELahY6IerqAQsnuHcKOVh+j/yfbeNELSCH6gvsqakuHhXRwsNOCFshHdVz69hlA' \
+			b'PvVbHs86tCJORZwNiOOmEMft/T8dcVxFHHzBAuKYtYjjH8+UtCLOfSPOk0UbP4U2fu//6WjjK9pg4tsnZTKkUc1rRBiGF8YWBhZGFUd44hBJEEYYQ3IAIfQIOBDafmyvVtqpmmmfJmuLer+9hDbS4ycN6Pi22AZC9Y81P9Z6rMNc2S1XcardsWZP1+pQoWM1' \
+			b'jDUv1hNUJdWPuWpBX3iTCkAFv1c+sUigOHAsC6V7B9pnRI5YPKRyQDwtysKvLI+JMkEMK8qFWut9FwxmhfAiFpDOC4kQIS+o2JiPLixuVRMNaq/QzJ0UmjpUbv3TKrs+4f10+QWofrAyRPsXUIQmwlU02UnfsfC41g1doB6ek+wdh3f5Y+zN0FwU6PE1f7Lb' \
+			b'fYcuUL2DZMB9swNgbTE0httBO4fOU4eBoEfT0jODz3DLMxYGfZ5d0ceLLX5DFHo6kEXQODAJljb1JlSTXgY+UAFatFTo5BPrLvsMMaQGL8J1fKxG8B78SDj1F418UNyTEN0mIaCfufSP3mLxLf7Qe+Rzp8PCCy32Ou3ev/RR027sR+930++3KAJ+faSl47v1' \
+			b'lDjtnkT0fY84TQ+pQudH4yGnhaTQn87+YY/NyZG66X8Rwtv8F4bA7e+0Za7lw2gRPvAfZck/cJbgNT1+/gWJuNn+j79YpCkr/YlZ6edyM/qy4WTujD2QQ0h28R8OUsonPEwYZFjQ5T62CEu5HqZzbWYzDmngEG0ox2T72lClQtqWbD2xR4wIiF1DOvgNXold' \
+			b'UD5bRtOZW9jjpVlI+jxkUCT+7kWh4A8cwYq188rFmktjKVcqGjmJlK1F4a0o3dF34ln5KOzENUw+TX5z/5dTOhR7OeXs18h5WM6xOPs3/E9VBZ6cWwuhJdLHulgp6oQGBPmG+nyvzcidU1PSzeor9EFPiHrw0nee4szFtUOfK7waWehxj103THMmF0634Y2+' \
+			b'xXZ/F9cLc35Q2jWPd7FSuqgU/DbecL9NBpVyua0Gv+2H18Cz3/29Xua+X3D8xRVlZiB3fOtR99CAcDFkw4UrDNuSYN24cSOCetQ9TFNq1YU2J5w4yy7KCC7amHu/cE7tAV5zxMW1Z2Y8P19jjuua3E0Dc83+hetOkx7HXLiStz4aa6qv7Wx1O8N56au+uOqs' \
+			b'nnN5wEaGC/iPf/FsdVub2Pom5prrvrjqrJ6VOX6IfTfNzDd3fqEdyvporC9dm9rqpobrq1d9cdWZmcq4i6am7mpshqZo93Chxdf6aKy2vcmO2uKWW5xrrvviqjMz/XFXLQ6rxN20Ot/c04UmleujsfbqBMkJDa9vrvviqrN6dsSdunaDpX9sGxyX6H47HJpV' \
+			b'F9rnropAls3QmhZCsR343sW6rfMp65slGvZd9cVVZ/V8ysnNMq8Vd9pEcWfEPV/51oNTE2GLwa3zMqfZPtxFa8VTGBHgHrfVumbLhbYdG5M48tK4rATju/t8CdcoVcF/fTXyzXVfXHVOsrC5S5OazTxwsJD7ZtWFxu9r4+RX2Iu2Oh6aPPe0jQxvvIsMnFxG' \
+			b'pjbv9c17aK774qrTPenmjRtfL/Liwlk9EXVZheOay7y4cGZ2mzxc4QRIPbqAulMKyTcPfyGq300g2f9kVs8sRVZ85PKaoLflMuubtRduzzsh2mnXkS/jkpvZNvQ0Sw7PZLj4i8vt9I1Pl1huurn8i3eKzmxCevwdFY+9ywZPSjnp4nNQ0v+TE5pKdO/XyHls' \
+			b'WjN+XCdO2YN1HXXCNtdxcT04291Wj10P8Mykq7i4Hqw2SbqaeqCa67i4Hpw0eXQV9UA313FxPThpnuoq6oFpruPieuCa18bSsQECED4+kJrS4wNUMj3E83gkKgwX82qi+AweXM7AvXsad3zjLiqezoEaNBkaiq/8z6HVXmgsXooBFWH0X3fc2bE6PwsIT8/h' \
+			b'LFjDz8sTEzGEtnQSEA04NVc0qmRYuTxXoJAGAGeeQKqoNounKS5UNEzVYqrYxPgsRT63sEvnFcazCvHgHzmOx+L2b6rCtH0StS36cygn7fnSItHoiCNcauJ5ThAHfuMBStpzqULrATfqRUvB4zfRwxN493e3/x/cVPv2'
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -7496,7 +7582,7 @@ class Parser (lalr1.LALR1):
 	_UNOT     = '\u00ac' # not
 
 	_LTR      = fr'[a-zA-Z]'
-	_LTRU     = fr'[a-zA-Z_]'
+	_LTRU     = fr'(?:[a-zA-Z_]|\\_)'
 
 	_VARTEX   = '(?:' + '|'.join (sorted ((x.replace ('\\', '\\\\').replace ('+', '\\+').replace ('*', '\\*').replace ('^', '\\^') for x in AST.Var.TEX2PY), reverse = True)) + ')'
 	_VARTEX1  = fr'(?:(\d)|({_LTR})|(\\partial|\\infty))'
@@ -7548,7 +7634,7 @@ class Parser (lalr1.LALR1):
 		('BINOM1',       fr'\\binom\s*{_VARTEX1}'),
 		('BINOM',        fr'\\binom(?!{_LTRU})'),
 
-		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LTRU})|{"|".join (AST.Cmp.UNI2PY)}'),
+		('CMP',          fr'==|!=|<=|<|>=|>|(?:in|not\s+in)(?!{_LTRU})|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)(?!{_LTRU})|{"|".join (AST.Cmp.UNI2PY)}'),
 		('IF',            r'if(?!\w|\\_)'),
 		('ELSE',          r'else(?!\w|\\_)'),
 		('OR',           fr'or(?!\w|\\_)|\\vee(?!{_LTRU})|{_UOR}'),
@@ -7710,8 +7796,9 @@ class Parser (lalr1.LALR1):
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
 	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
-	def expr_intg_2        (self, INTG, expr_add):                                     return _expr_intg (expr_add)
-	def expr_intg_3        (self, expr_lim):                                           return expr_lim
+	def expr_intg_2        (self, INTG, expr_super, expr_add):                         return _expr_intg (expr_add, (AST.Zero, expr_super))
+	def expr_intg_3        (self, INTG, expr_add):                                     return _expr_intg (expr_add)
+	def expr_intg_4        (self, expr_lim):                                           return expr_lim
 
 	def expr_lim_1         (self, LIM, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('-lim', expr_neg, expr_var, expr)
 	def expr_lim_2         (self, LIM, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('-lim', expr_neg, expr_var, expr, '+')
@@ -7924,20 +8011,20 @@ class Parser (lalr1.LALR1):
 
 	def _parse_autocomplete_expr_intg (self):
 		s               = self.stack [-1]
-		self.stack [-1] = lalr1.State (s.idx, s.sym, AST ('*', (s.red, AST.VarNull)))
+		self.stack [-1] = lalr1.State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
 		expr_vars       = set ()
 
 		if self.autocompleting:
-			stack = [s [2]]
+			reds = [s.red]
 
-			while stack:
-				ast = stack.pop ()
+			while reds:
+				ast = reds.pop ()
 
 				if ast.is_var:
 					if not (ast.is_differential or ast.is_part_any):
 						expr_vars.add (ast.var)
 				else:
-					stack.extend (filter (lambda a: isinstance (a, tuple), ast))
+					reds.extend (filter (lambda a: isinstance (a, tuple), ast))
 
 		expr_vars = expr_vars - {'_'} - {ast.var for ast in AST.CONSTS}
 
@@ -7955,7 +8042,7 @@ class Parser (lalr1.LALR1):
 		self.autocomplete, self.autocompleting, self.erridx, self.has_error = state
 
 	def parse_result (self, red, erridx, autocomplete):
-		res             = (red is None, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete))
+		res             = (red is None, not self.rederr, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete, self.rederr))
 		self.parse_idx += 1
 
 		if self.parse_best is None or res < self.parse_best:
@@ -7973,18 +8060,15 @@ class Parser (lalr1.LALR1):
 				sys.stdout.write ('\x08' + '\\|/-' [self.parse_idx & 3])
 				sys.stdout.flush ()
 
+		return False # for convenience
+
 	def parse_error (self): # add tokens to continue parsing for autocomplete if syntax allows
 		self.has_error = True
 
 		if isinstance (self.rederr, lalr1.Incomplete):
-			self.parse_result (self.rederr.red, self.tok.pos, [])
-
-			return False
-
+			return self.parse_result (self.rederr.red, self.tok.pos, [])
 		if self.tok != '$end':
-			self.parse_result (None, self.tok.pos, [])
-
-			return False
+			return self.parse_result (None, self.pos, [])
 
 		if self.tokidx and self.tokens [self.tokidx - 1] == 'LEFT':
 			for irule, pos in self.strules [self.stidx]:
@@ -8013,7 +8097,7 @@ class Parser (lalr1.LALR1):
 			if rule [0] == 'expr_intg':
 				return self._parse_autocomplete_expr_intg ()
 
-			return False
+			return self.parse_result (None, self.pos, []) if self.rederr else False
 
 		return self._insert_symbol (rule [1] [pos])
 
@@ -8046,7 +8130,7 @@ class Parser (lalr1.LALR1):
 
 		lalr1.LALR1.parse (self, text)
 
-		res = self.parse_best [-1] if self.parse_best is not None else (None, 0, [])
+		res = self.parse_best [-1] if self.parse_best is not None else (None, 0, [], None)
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			if self.parse_idx >= 33:
@@ -8075,13 +8159,10 @@ class sparser: # for single script
 # 	p = Parser ()
 
 # 	# set_sp_user_funcs ({'N'})
-# 	# set_sp_user_vars ({'N': AST ('-lamb', AST.One, ())})
+# 	# set_sp_user_vars ({'f': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-# 	# a = p.parse (r"\. x+y |_{x, y = 1, 2}")
-# 	# a = p.parse (r"\. x+y |_{x = 1, y = 2}")
-# 	# a = p.parse (r"\. x+y |_{x = 1}")
-# 	# a = p.parse (r"\.x+y|_{\substack{x=1\\y=2}}")
-# 	a = p.parse (r"\[?g(x)and(\sqrt[2]-1.0,'str'or-.1or.1,-.1!),\left.-{-.1:1e+100}\right|_{-.1.kZSI2A,\pi&&\partialx&&\partialx=lambdax:1/\fracTrueFalse},]")
+# 	# a = p.parse (r"Subs(x, x, (sin(x)))")
+# 	a = p.parse (r"f (x) = x**2")
 # 	print (a)
 
 # 	# a = sym.ast2spt (a)
@@ -8882,7 +8963,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.18'
+_VERSION         = '1.0.19'
 
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
@@ -8948,7 +9029,6 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS         = {'_': AST.Zero} # This also!
-	_UFUNCS2VARS  = {} # Yup...
 
 #...............................................................................................
 def _admin_vars (*args):
@@ -9105,34 +9185,21 @@ def _sorted_vars ():
 	return _present_vars (sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])))
 
 def _vars_updated ():
-	_UFUNCS2VARS.clear ()
-
-	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS))
+	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS)) # hidden functions for stuff like N and gamma
 	user_funcs = one_funcs.copy ()
 
 	for var, ast in _VARS.items ():
-		# if var != '_':
-			if ast.is_ufunc:
-				_UFUNCS2VARS [ast] = AST ('@', var)
-			elif ast.is_lamb:
-				user_funcs.add (var)
+		if ast.is_lamb:
+			user_funcs.add (var)
 
-	sparser.set_sp_user_funcs (user_funcs)
-	sparser.set_sp_user_vars (_VARS)
+	vars = {v: AST.apply_vars (a, _VARS, exc = False) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
+
 	sym.set_sym_user_funcs (user_funcs)
-	sym.set_sym_user_vars (_VARS)
+	sym.set_sym_user_vars (vars)
+	sparser.set_sp_user_funcs (user_funcs)
+	sparser.set_sp_user_vars (vars)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
-	# vars = ast.ass_lhs_vars
-
-	# if vars:
-	# 	if any (v.is_var_const for v in vars):
-	# 		raise RealityRedefinitionError ('The only thing that is constant is change - Heraclitus, except for constants...')
-
-	# 	ast = ast.rhs
-
-	# return AST.apply_vars (ast, _VARS), vars
-
 	if not ast.ass_validate:
 		vars = None
 	elif ast.ass_validate.error:
@@ -9146,7 +9213,6 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
-		# vars = dict ((v.var, a) if v.is_var else (v.ufunc, AST ('-lamb', a, tuple (vv.var for vv in v.vars))) for v, a in vars.items ())
 		vars = dict ((v.var, a) for v, a in vars.items ())
 
 		try: # check for circular references
@@ -9157,7 +9223,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		_VARS.update (vars)
 
 	if not vars: # no assignment
-		# ast         = AST.remap (ast, _UFUNCS2VARS) # map undefined functions back to their variables if any
 		_VARS ['_'] = ast
 
 		_vars_updated ()
@@ -9167,7 +9232,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 	if len (vars) == 1: # simple assignment
 		set_vars ({vars [0]: ast})
 
-		# asts = [AST ('=', vars [0], ast)]
 		vars = ((vars [0].var, ast),)
 
 	else: # tuple assignment
@@ -9186,7 +9250,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 				except StopIteration:
 					break
 
-				if vars [i].is_ufunc:
+				if vars [i].is_ufunc_named:
 					asts.append (AST.Ass.ufunc2lamb (vars [i], ast))
 
 					vars [i] = AST ('@', vars [i].ufunc)
@@ -9199,9 +9263,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		elif len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
-		# set_vars (dict (zip (vars, asts)))
-
-		# asts = [AST ('=', vars [i], asts [i]) for i in range (len (vars))]
 		set_vars (dict (zip (vars, asts)))
 
 		vars = tuple (zip ((v.var for v in vars), asts))
@@ -9222,20 +9283,36 @@ class Handler (SimpleHTTPRequestHandler):
 			} for ast in asts]}
 
 	def validate (self, request):
-		ast, erridx, autocomplete = _PARSER.parse (request ['text'])
-		tex = nat = py            = None
+		ast, erridx, autocomplete, error = _PARSER.parse (request ['text'])
+		tex = nat = py                   = None
 
 		if ast is not None:
-			tex = sym.ast2tex (ast)
-			nat = sym.ast2nat (ast)
-			py  = sym.ast2py (ast)
+			tex, xlattex = sym.ast2tex (ast, retxlat = True)
+			nat, xlatnat = sym.ast2nat (ast, retxlat = True)
+			py, xlatpy  = sym.ast2py (ast, retxlat = True)
 
 			if os.environ.get ('SYMPAD_DEBUG'):
-				print ('ast:', ast, file = sys.stderr)
-				print ('tex:', tex, file = sys.stderr)
-				print ('nat:', nat, file = sys.stderr)
-				print ('py: ', py, file = sys.stderr)
+				print ('ast: ', ast, file = sys.stderr)
+
+				if xlattex:
+					print ('astt:', repr (xlattex), file = sys.stderr)
+
+				if xlatnat:
+					print ('astn:', repr (xlatnat), file = sys.stderr)
+
+				if xlatpy:
+					print ('astp:', repr (xlatpy), file = sys.stderr)
+
+				print ('tex: ', tex, file = sys.stderr)
+				print ('nat: ', nat, file = sys.stderr)
+				print ('py:  ', py, file = sys.stderr)
 				print (file = sys.stderr)
+
+		if isinstance (error, Exception):
+			if isinstance (error, lalr1.Incomplete):
+				error = 'incomplete'
+			else:
+				error = (f'{error.__class__.__name__}: ' if not isinstance (error, SyntaxError) else '') + error.args [0].replace ('\n', ' ').strip ()
 
 		return {
 			'tex'         : tex,
@@ -9243,6 +9320,7 @@ class Handler (SimpleHTTPRequestHandler):
 			'py'          : py,
 			'erridx'      : erridx,
 			'autocomplete': autocomplete,
+			'error'       : error,
 		}
 
 	def evaluate (self, request):
@@ -9266,13 +9344,20 @@ class Handler (SimpleHTTPRequestHandler):
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
 
-				spt = sym.ast2spt (ast) # , _VARS)
-				ast = sym.spt2ast (spt)
+				spt, xlat = sym.ast2spt (ast, retxlat = True) # , _VARS)
+				ast       = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
 					import sympy as sp
 
-					print ('spt:        ', repr (spt), file = sys.stderr)
+					if xlat:
+						print ('asts:       ', repr (xlat), file = sys.stderr)
+
+					try:
+						print ('spt:        ', repr (spt), file = sys.stderr)
+					except:
+						pass
+
 					print ('spt type:   ', type (spt), file = sys.stderr)
 
 					try:
@@ -9303,7 +9388,7 @@ class Handler (SimpleHTTPRequestHandler):
 		try:
 			_HISTORY.append (request ['text'])
 
-			ast, _, _ = _PARSER.parse (request ['text'])
+			ast, _, _, _ = _PARSER.parse (request ['text'])
 
 			if ast:
 				for ast in (ast.scolon if ast.is_scolon else (ast,)):
@@ -9316,10 +9401,15 @@ class Handler (SimpleHTTPRequestHandler):
 					responses.append (response)
 
 		except Exception:
-			if sys.stdout is not _SYS_STDOUT and sys.stdout.tell ():
+			if sys.stdout is not _SYS_STDOUT and sys.stdout.tell (): # flush any printed messages before exception
 				responses.append ({'msg': sys.stdout.getvalue ().strip ().split ('\n')})
 
-			responses.append ({'err': ''.join (traceback.format_exception (*sys.exc_info ())).strip ().split ('\n')})
+			etype, exc, tb = sys.exc_info ()
+
+			if exc.args and isinstance (exc.args [0], str):
+				exc = etype (exc.args [0].replace ('\n', ' ').strip (), *exc.args [1:]).with_traceback (tb) # reformat text to remove newlines
+
+			responses.append ({'err': ''.join (traceback.format_exception (etype, exc, tb)).strip ().split ('\n')})
 
 		finally:
 			sys.stdout = _SYS_STDOUT
