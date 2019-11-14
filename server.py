@@ -354,15 +354,25 @@ class Handler (SimpleHTTPRequestHandler):
 		tex = nat = py                   = None
 
 		if ast is not None:
-			tex = sym.ast2tex (ast)
-			nat = sym.ast2nat (ast)
-			py  = sym.ast2py (ast)
+			tex, xlattex = sym.ast2tex (ast, retxlat = True)
+			nat, xlatnat = sym.ast2nat (ast, retxlat = True)
+			py, xlatpy  = sym.ast2py (ast, retxlat = True)
 
 			if os.environ.get ('SYMPAD_DEBUG'):
-				print ('ast:', ast, file = sys.stderr)
-				print ('tex:', tex, file = sys.stderr)
-				print ('nat:', nat, file = sys.stderr)
-				print ('py: ', py, file = sys.stderr)
+				print ('ast: ', ast, file = sys.stderr)
+
+				if xlattex:
+					print ('astt:', repr (xlattex), file = sys.stderr)
+
+				if xlatnat:
+					print ('astn:', repr (xlatnat), file = sys.stderr)
+
+				if xlatpy:
+					print ('astp:', repr (xlatpy), file = sys.stderr)
+
+				print ('tex: ', tex, file = sys.stderr)
+				print ('nat: ', nat, file = sys.stderr)
+				print ('py:  ', py, file = sys.stderr)
 				print (file = sys.stderr)
 
 		if isinstance (error, Exception):
@@ -401,13 +411,20 @@ class Handler (SimpleHTTPRequestHandler):
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
 
-				spt = sym.ast2spt (ast) # , _VARS)
-				ast = sym.spt2ast (spt)
+				spt, xlat = sym.ast2spt (ast, retxlat = True) # , _VARS)
+				ast       = sym.spt2ast (spt)
 
 				if os.environ.get ('SYMPAD_DEBUG'):
 					import sympy as sp
 
-					print ('spt:        ', repr (spt), file = sys.stderr)
+					if xlat:
+						print ('asts:       ', repr (xlat), file = sys.stderr)
+
+					try:
+						print ('spt:        ', repr (spt), file = sys.stderr)
+					except:
+						pass
+
 					print ('spt type:   ', type (spt), file = sys.stderr)
 
 					try:

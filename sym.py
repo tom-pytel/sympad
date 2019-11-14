@@ -234,7 +234,7 @@ def _ast_subs2ufunc (ast):
 #...............................................................................................
 class ast2tex: # abstract syntax tree -> LaTeX text
 	def __init__ (self): self.parent = self.ast = None # pylint medication
-	def __new__ (cls, ast, xlat = True):
+	def __new__ (cls, ast, retxlat = False):
 		def func_call (func, args):
 			return spt2ast (_ast_func_call (getattr (sp, func), args))
 
@@ -242,10 +242,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX, func_call = func_call)
+		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_TEX, func_call = func_call)
+		tex  = self._ast2tex (astx)
 
-		return self._ast2tex (ast)
+		return tex if not retxlat else (tex, (astx if astx != ast else None))
 
 	def _ast2tex (self, ast):
 		self.parents.append (self.ast)
@@ -595,15 +595,15 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 #...............................................................................................
 class ast2nat: # abstract syntax tree -> native text
 	def __init__ (self): self.parent = self.ast = None # pylint droppings
-	def __new__ (cls, ast, xlat = True):
+	def __new__ (cls, ast, retxlat = False):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_NAT)
+		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_NAT)
+		nat  = self._ast2nat (astx)
 
-		return self._ast2nat (ast)
+		return nat if not retxlat else (nat, (astx if astx != ast else None))
 
 	def _ast2nat (self, ast):
 		self.parents.append (self.ast)
@@ -925,19 +925,17 @@ class ast2nat: # abstract syntax tree -> native text
 #...............................................................................................
 class ast2py: # abstract syntax tree -> Python code text
 	def __init__ (self): self.parent = self.ast = None # pylint droppings
-	def __new__ (cls, ast, xlat = True, ass2eq = True):
+	def __new__ (cls, ast, retxlat = False, ass2eq = True):
 		self         = super ().__new__ (cls)
 		self.ass2eq  = ass2eq
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
+		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_PY)
+		astS = sxlat.xlat_pyS (astx) if _PYS else astx # 1/2 -> S(1)/2
+		py   = self._ast2py (astS)
 
-		if _PYS:
-			ast = sxlat.xlat_pyS (ast)
-
-		return self._ast2py (ast)
+		return py if not retxlat else (py, (astx if astx != ast else None))
 
 	def _ast2py (self, ast):
 		self.parents.append (self.ast)
@@ -1201,23 +1199,21 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		ast2spt._SYMPY_FLOAT_PRECISION = prec if prec > 15 else None
 
 	def __init__ (self): self.parent = self.ast = None # pylint kibble
-	def __new__ (cls, ast, xlat = True):
+	def __new__ (cls, ast, retxlat = False):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		if xlat:
-			ast = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
-
-		spt = self._ast2spt (ast)
+		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
+		spt  = self._ast2spt (astx)
 
 		if _DOIT:
-			spt = _doit (spt) # spt.doit (deep = True)
+			spt = _doit (spt)
 
 		if _POST_SIMPLIFY:
 			spt = _simplify (spt)
 
-		return spt
+		return spt if not retxlat else (spt, (astx if astx != ast else None))
 
 	def _ast2spt (self, ast):
 		self.parents.append (self.ast)
@@ -1822,10 +1818,10 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	set_sym_user_funcs (vars)
 
 	# ast = AST ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
-	ast = AST ('-subs', ('@', 'x'), ((('(', (',', (('#', '1'), ('#', '2')))), ('@', 'y')),))
+	ast = AST ('-func', 'S', (('#', '1'),))
 	# res = ast2tex (ast)
-	# res = ast2nat (ast)
-	res = ast2py (ast)
+	res = ast2nat (ast)
+	# res = ast2py (ast)
 	# res = ast2spt (ast)
 	# res = spt2ast (res)
 

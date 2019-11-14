@@ -390,7 +390,6 @@ _XLAT_FUNC2AST_ALL = {
 
 _XLAT_FUNC2AST_TEXNATPY = {**_XLAT_FUNC2AST_ALL,
 	'slice'                : _xlat_f2a_slice,
-	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
 
 	'Eq'                   : lambda a, b: AST ('<>', a, (('==', b),)),
 	'Ne'                   : lambda a, b: AST ('<>', a, (('!=', b),)),
@@ -404,7 +403,9 @@ _XLAT_FUNC2AST_TEXNATPY = {**_XLAT_FUNC2AST_ALL,
 	'Not'                  : lambda not_: AST ('-not', not_),
 }
 
-_XLAT_FUNC2AST_TEXNAT = {
+_XLAT_FUNC2AST_TEXNAT = {**_XLAT_FUNC2AST_TEXNATPY,
+	'S'                    : lambda ast, **kw: ast if ast.is_num and not kw else None,
+
 	'abs'                  : lambda *args: AST ('|', args [0] if len (args) == 1 else AST (',', args)),
 	'Abs'                  : lambda *args: AST ('|', args [0] if len (args) == 1 else AST (',', args)),
 	'exp'                  : lambda ast: AST ('^', AST.E, ast),
@@ -428,7 +429,7 @@ _XLAT_FUNC2AST_TEXNAT = {
 	'Union'                : _xlat_f2a_Union,
 }
 
-XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT,
+XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNAT,
 	'Add'                  : lambda *args, **kw: AST ('+', args),
 	'Mul'                  : lambda *args, **kw: AST ('*', args),
 
@@ -450,7 +451,7 @@ XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT,
 	'zeros'                : True,
 }
 
-XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_TEXNAT, **_XLAT_FUNC2AST_REIM,
+XLAT_FUNC2AST_NAT = {**_XLAT_FUNC2AST_TEXNAT, **_XLAT_FUNC2AST_REIM,
 	'Add'                  : lambda *args, **kw: None if kw else AST ('+', args),
 	'Mul'                  : lambda *args, **kw: None if kw else AST ('*', args),
 
