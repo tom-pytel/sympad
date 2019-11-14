@@ -174,10 +174,21 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 
 def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not handled by grammar
 	# print (f'lhs:   {lhs} - {lhs.src}\nrhs:   {rhs} - {rhs.src}\ntail:  {tail} - {tail.src}\narg:   {arg} - {arg.src}\nwrapt: {wrapt (AST.VarNull)}\nwrapa: {wrapa (AST.VarNull)}\nast:  {ast}')
-	def process_func (ast, arg, tail, make):
-		# print (f'arg:  {arg}\ntail: {tail}\narg2: {arg2}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}')
-		# print (f'arg:  {arg}\ntail: {tail}\narg2: {arg2}\nast2: {ast2}\nwrap: {wrap (AST.One)}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}')
+	def process_func (ast, arg, tail, wrapa, make):
+		# print (f'arg:  {arg}\ntail: {tail}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}')
+		# print (f'arg:  {arg}\ntail: {tail}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}\narg2: {arg2}')
+		# print (f'arg:  {arg}\ntail: {tail}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}\narg2: {arg2}\nast2: {ast2}\nwrap: {wrap (AST.One)}')
 		if tail.op not in {'{', '('}:
+			if arg.is_brack:
+				tail2, wrapt = tail.tail_mul_wrap
+
+				if tail2.src and tail2.src.mul [1].op not in {'{', '('}: # horse before the cart because no other .src are used yet
+					if tail2.is_func:
+						return make (wrapt (AST ('-func', tail2.func, (wrapa (AST ('-idx', tail2.args [0], arg.brack)),)))), AST.Null
+					# elif tail.op in {'-sqrt', '-log'}:
+					# 	return make (AST (tail.op, wrapa (AST ('-idx', tail.args [0], arg.brack)), *tail [2:])), AST.Null
+
+
 			arg2 = _expr_mul_imp (tail, arg)
 
 			if arg2.is_pow:
@@ -258,19 +269,20 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
 		if tail.src and (not (arg.op in {'-log', '-sqrt', '-func'} and arg.src) or tail.src.mul [1].tail_mul.op in {'-log', '-sqrt', '-func'} or tail.src.mul [1].tail_mul.var in _SP_USER_FUNCS):
-			ast, arg = process_func (ast, arg, tail.src.mul [1], lambda ast, tail = tail: AST ('-func', tail.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', tail.func), ast))))
+			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', tail.func), ast))))
 
 	elif tail.op in {'-sqrt', '-log'}: # ln N 2 -> ln (N (2)) instead of ln (N) * 2, log, sqrt
 		if tail.src:
-			ast, arg = process_func (ast, arg, tail.src.mul [1], lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src = AST ('*', (AST.VarNull, ast))))
+			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src = AST ('*', (AST.VarNull, ast))))
 
 	elif lhs.is_pow: # f**2 N x -> f**2 (N (x))
-		if lhs.base.is_func:
-			if lhs.base and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}): # this only happens on f**p x, not f (x)**p or f x**p
-				ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp))
+		if lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}): # this only happens on f**p x, not f (x)**p or f x**p, also horse before the cart
+			if lhs.base.is_func:
+				make = lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp)
+			elif lhs.base.op in {'-sqrt', '-log'}:
+				make = lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src = AST ('*', (AST.VarNull, ast))), lhs.exp)
 
-		elif lhs.base.op in {'-sqrt', '-log'} and lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}): # this only happens on f**p x, not f (x)**p or f x**p
-			ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src = AST ('*', (AST.VarNull, ast))), lhs.exp))
+			ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, make)
 
 		if arg == AST.Null:
 			return ast
@@ -1334,16 +1346,25 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	p = Parser ()
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	p = Parser ()
 
-# 	# set_sp_user_funcs ({'N'})
-# 	# set_sp_user_vars ({'f': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
+	# set_sp_user_funcs ({'N'})
+	# set_sp_user_vars ({'f': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-# 	# a = p.parse (r"Subs(x, x, (sin(x)))")
-# 	a = p.parse (r"f (x) = x**2")
-# 	print (a)
 
-# 	# a = sym.ast2spt (a)
-# 	# print (a)
+	# a = p.parse (r"sin sin x [2].w")
+	# a = p.parse (r"sin sin (x) [2].w")
+
+	# a = p.parse (r"sin -sin x [2].w")
+	a = p.parse (r"sin sin -x [2].w")
+	# a = p.parse (r"N N sin -a [2]")
+
+	# a = p.parse (r"ln ln x [2].w")
+	# a = p.parse (r"sin sin x [2].w ()")
+
+	print (a)
+
+	# a = sym.ast2spt (a)
+	# print (a)

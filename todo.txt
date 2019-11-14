@@ -1,25 +1,30 @@
-> overhaul server env option command line setting
+> N sin x[2].y
+
+> $f(x) when f is a lambda
+> bring __builtins__ to top level without need for $
+
+> subs single variable argument which may be an object like a dict
+> 'not' as func prefix arg like minus
+> (a or b) or (a and b) - result parenthesizing for clarity
+
+> again redo spt2ast_Add?
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
-
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
 
 > ((1, 2) + (1, 2)).subs((1, 2), (3, 4))
 
 > subs autocomplete
-> improve error reporting with position of error returned from reduction functions if possible lalr1.Syntax (text, pos)
 > syntax error of diffp of multivar ufunc in sparser?
 
 
+> doc: ast2spt calls even though they look like multiplies
 > doc: reference SymPy documentation
 > doc: ufuncs
 > doc: parentheses create implicit undefined functions
-> doc: parentheses as multiplies and not function calls
 > doc: integration \int^a x dx - without base
 > doc: new functionality of @ and %
-> doc: parsing and writeout dependant on variable state
-> doc: new binding of lambda functions
 > doc: lambda function execution and binding
 > doc: lowercase functions limit, integrate, etc... always execute
 > doc: ODEs
@@ -30,13 +35,17 @@
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
-> @ and % without parentheses consistency?
-> overhaul = and == to try to minimize where == is needed for display
+> improve error reporting with position of error returned from reduction functions if possible lalr1.Syntax (text, pos)
 
-> parse from python ln x / ln base -> \log_{base} x? only for number bases?
-
+> test_sym check for VarNulls and reject expression if detected
 > add slice() to test_sym
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)? - remove or reject null vars after
+
+> overhaul = and == to try to minimize where == is needed for display
+> @ and % without parentheses consistency?
+> overhaul server env option command line setting
+
+> parse from python ln x / ln base -> \log_{base} x? only for number bases?
 
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 > subs clarity parentheses for tex display - attr, etc?
@@ -173,3 +182,10 @@ Errors:
 -------
 
 
+text: pow simp(())
+ast:  ('*', (('-func', 'pow', (('@', 'simp'),)), ('(', ('(', (',', ())))))
+ast:  ('*', (('^', ('@', 'simp'), ('-dict', ())), ('(', ('(', (',', ())))), {1})
+tex1: simp^{{}} \cdot \left(\left( \right) \right)
+tex2: simp^{\left\{ \right\}} \left(\left( \right) \right)
+
+pow x

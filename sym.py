@@ -135,17 +135,19 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers
 
 	return spt
 
-def _dsolve (*args, **kw):
-	ast = spt2ast (sp.dsolve (*args, **kw))
+# def _dsolve (*args, **kw):
+# 	ast = spt2ast (sp.dsolve (*args, **kw))
 
-	if ast.is_brack:
-		ast = AST ('[', tuple (AST ('=', a.lhs, a.cmp [0] [1]) if a.cmp.len == 1 and a.cmp [0] [0] == '==' else a for a in ast.brack))
+# 	if ast.is_brack:
+# 		ast = AST ('[', tuple (AST ('=', a.lhs, a.cmp [0] [1]) if a.cmp.len == 1 and a.cmp [0] [0] == '==' else a for a in ast.brack))
 
-	# elif ast.is_cmp:
-	# 	if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
-	# 		ast = AST ('=', ast.lhs, ast.cmp [0] [1])
+# 	elif ast.is_cmp:
+# 		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
+# 			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
 
-	return ExprNoEval (ast) # never automatically simplify dsolve
+# 	return ExprNoEval (ast) # never automatically simplify dsolve
+
+# 	return ast
 
 def _Mul (*args):
 	itr = iter (args)
@@ -449,15 +451,20 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		if tex is not None:
 			return tex
 
+		ispseudo = ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}
+
+		if ispseudo:
+			func = ast.func.replace (AST.Func.NOEVAL, '\\%')
+		else:
+			func = ast.func.replace ('_', '\\_')
+			func = f'\\operatorname{{{AST.Var.PY2TEX.get (func, func)}}}'
+
 		if ast.func in AST.Func.TEX:
 			return f'\\{ast.func}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
-		elif ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'}:
-			return ast.func.replace (AST.Func.NOEVAL, '\\%') + self._ast2tex (AST.tuple2ast (ast.args))
-
+		elif ispseudo and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'}:
+			return f'{func}{self._ast2tex (AST.tuple2ast (ast.args))}'
 		else:
-			texname = ast.func.replace ('_', '\\_').replace (AST.Func.NOEVAL, '\\%')
-
-			return f'\\operatorname{{{AST.Var.PY2TEX.get (texname, texname)}}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+			return f'{func}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
 
 	def _ast2tex_lim (self, ast):
 		s = self._ast2tex_wrap (ast.to, False, ast.to.is_slice) if ast.dir is None else (self._ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -1174,11 +1181,11 @@ class ast2py: # abstract syntax tree -> Python code text
 _builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
 _builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
 	'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
-	'bytearray', 'bytes', 'complex', '-dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'object', 'range',
+	'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'range',
 	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
 
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
-_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify, 'dsolve': _dsolve}
+_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify}#, 'dsolve': _dsolve}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	_SYMPY_FLOAT_PRECISION = None
@@ -1583,7 +1590,7 @@ class spt2ast:
 			terms.append (ast)
 
 		if not hasO: # try to order so negative is not first, but not extensively where it might change standard equation forms returned from SymPy
-			if spt.args [0].is_number and (not _ast_is_neg (terms [1]) or spt.args [0] < 0):
+			if spt.args [0].is_number and (not _ast_is_neg (terms [1]) or _ast_is_neg (terms [0])): # spt.args [0] < 0):
 				terms = terms [1:] + [terms [0]]
 			elif len (terms) == 2 and _ast_is_neg (terms [0]) and not _ast_is_neg (terms [1]):
 				terms = terms [::-1]
@@ -1819,14 +1826,13 @@ class sym: # for single script
 # 	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 # 	set_sym_user_funcs (vars)
 
-# 	# ast = AST ('-func', 'Subs', (('@', 'x'), ('@', 'x'), ('(', ('-func', 'sin', (('@', 'x'),)))))
-# 	ast = AST ('-func', 'S', (('#', '1'),))
+# 	ast = AST ('-idx', ('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))), (('-slice', False, False, None), ('-slice', ('#', '1'), False, None)))
 # 	# res = ast2tex (ast)
-# 	res = ast2nat (ast)
+# 	# res = ast2nat (ast)
 # 	# res = ast2py (ast)
-# 	# res = ast2spt (ast)
-# 	# res = spt2ast (res)
 
-# 	# res = ast2nat (res)
+# 	res = ast2spt (ast)
+# 	res = spt2ast (res)
+# 	res = ast2nat (res)
 
 # 	print (repr (res))

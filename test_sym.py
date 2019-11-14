@@ -844,7 +844,7 @@ def test (argv = None):
 				if not isinstance (ast, AST):
 					return ast
 
-				if ast.is_func:
+				if ast.is_func: # the slice function is evil
 					if ast.func == 'slice' and ast.args.len == 2 and ast.args [0] == AST.None_: # :x gets written as slice(x) but may come from slice(None, x)
 						ast = AST ('-slice', AST.None_, ast.args [1], None)
 
@@ -852,7 +852,7 @@ def test (argv = None):
 					if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
 						return AST ('@', 'CENSORED')
 
-				elif ast.is_intg:
+				elif ast.is_intg: # same
 					if ast.dv.as_var.var in _RESERVED_WORDS:
 						return AST ('@', 'CENSORED')
 

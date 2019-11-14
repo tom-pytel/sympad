@@ -594,6 +594,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('sin (((a))'), ('-func', 'sin', (('(', ('(', ('@', 'a'))),)))
 		self.assertEqual (p ('a.b (())'), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
 		self.assertEqual (p ('a.b (((a))'), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (p ('@x'), ('-func', '@', (('@', 'x'),)))
+		self.assertEqual (p ('@(x + y)'), ('-func', '@', (('+', (('@', 'x'), ('@', 'y'))),)))
+		self.assertEqual (p ('%x'), ('-func', '%', (('@', 'x'),)))
+		self.assertEqual (p ('%(x + y)'), ('-func', '%', (('+', (('@', 'x'), ('@', 'y'))),)))
+		self.assertEqual (p ('%%x'), ('-func', '%', (('-func', '%', (('@', 'x'),)),)))
+		self.assertEqual (p ('%%(x + y)'), ('-func', '%', (('-func', '%', (('+', (('@', 'x'), ('@', 'y'))),)),)))
+		self.assertEqual (p ('\\[[1, 2, 3], [4, 5, 6]] [:, 1:]'), ('-idx', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), (('-slice', False, False, None), ('-slice', ('#', '1'), False, None))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -1128,6 +1135,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('sin (((a))')), '\\sin\\left(\\left(\\left(a \\right) \\right) \\right)')
 		self.assertEqual (ast2tex (p ('a.b (())')), 'a.\\operatorname{b}\\left(\\left( \\right) \\right)')
 		self.assertEqual (ast2tex (p ('a.b (((a))')), 'a.\\operatorname{b}\\left(\\left(\\left(a \\right) \\right) \\right)')
+		self.assertEqual (ast2tex (p ('@x')), '@x')
+		self.assertEqual (ast2tex (p ('@(x + y)')), '@\\left(x + y \\right)')
+		self.assertEqual (ast2tex (p ('%x')), '\\%x')
+		self.assertEqual (ast2tex (p ('%(x + y)')), '\\%\\left(x + y \\right)')
+		self.assertEqual (ast2tex (p ('%%x')), '\\%\\%x')
+		self.assertEqual (ast2tex (p ('%%(x + y)')), '\\%\\%\\left(x + y \\right)')
+		self.assertEqual (ast2tex (p ('\\[[1, 2, 3], [4, 5, 6]] [:, 1:]')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}\\left[{:}, 1{:} \\right]')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -1662,6 +1676,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('sin (((a))')), 'sin(((a)))')
 		self.assertEqual (ast2nat (p ('a.b (())')), 'a.b(())')
 		self.assertEqual (ast2nat (p ('a.b (((a))')), 'a.b(((a)))')
+		self.assertEqual (ast2nat (p ('@x')), '@x')
+		self.assertEqual (ast2nat (p ('@(x + y)')), '@(x + y)')
+		self.assertEqual (ast2nat (p ('%x')), '%x')
+		self.assertEqual (ast2nat (p ('%(x + y)')), '%(x + y)')
+		self.assertEqual (ast2nat (p ('%%x')), '%%x')
+		self.assertEqual (ast2nat (p ('%%(x + y)')), '%%(x + y)')
+		self.assertEqual (ast2nat (p ('\\[[1, 2, 3], [4, 5, 6]] [:, 1:]')), '\\[[1, 2, 3], [4, 5, 6]][:, 1:]')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -2196,6 +2217,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('sin (((a))')), 'sin(((a)))')
 		self.assertEqual (ast2py (p ('a.b (())')), 'a.b(())')
 		self.assertEqual (ast2py (p ('a.b (((a))')), 'a.b(((a)))')
+		self.assertEqual (ast2py (p ('@x')), 'x')
+		self.assertEqual (ast2py (p ('@(x + y)')), 'x + y')
+		self.assertEqual (ast2py (p ('%x')), 'x')
+		self.assertEqual (ast2py (p ('%(x + y)')), 'x + y')
+		self.assertEqual (ast2py (p ('%%x')), 'x')
+		self.assertEqual (ast2py (p ('%%(x + y)')), 'x + y')
+		self.assertEqual (ast2py (p ('\\[[1, 2, 3], [4, 5, 6]] [:, 1:]')), 'Matrix([[1, 2, 3], [4, 5, 6]])[:, 1:]')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -2730,6 +2758,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('sin (((a))')), ('-func', 'sin', (('(', ('(', ('@', 'a'))),)))
 		self.assertEqual (ast2tex2ast (p ('a.b (())')), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
 		self.assertEqual (ast2tex2ast (p ('a.b (((a))')), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (ast2tex2ast (p ('@x')), ('-func', '@', (('@', 'x'),)))
+		self.assertEqual (ast2tex2ast (p ('@(x + y)')), ('-func', '@', (('+', (('@', 'x'), ('@', 'y'))),)))
+		self.assertEqual (ast2tex2ast (p ('%x')), ('-func', '%', (('@', 'x'),)))
+		self.assertEqual (ast2tex2ast (p ('%(x + y)')), ('-func', '%', (('+', (('@', 'x'), ('@', 'y'))),)))
+		self.assertEqual (ast2tex2ast (p ('%%x')), ('-func', '%', (('-func', '%', (('@', 'x'),)),)))
+		self.assertEqual (ast2tex2ast (p ('%%(x + y)')), ('-func', '%', (('-func', '%', (('+', (('@', 'x'), ('@', 'y'))),)),)))
+		self.assertEqual (ast2tex2ast (p ('\\[[1, 2, 3], [4, 5, 6]] [:, 1:]')), ('-idx', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), (('-slice', False, False, None), ('-slice', ('#', '1'), False, None))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -3264,6 +3299,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('sin (((a))')), ('-func', 'sin', (('(', ('(', ('@', 'a'))),)))
 		self.assertEqual (ast2nat2ast (p ('a.b (())')), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
 		self.assertEqual (ast2nat2ast (p ('a.b (((a))')), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (ast2nat2ast (p ('@x')), ('-func', '@', (('@', 'x'),)))
+		self.assertEqual (ast2nat2ast (p ('@(x + y)')), ('-func', '@', (('+', (('@', 'x'), ('@', 'y'))),)))
+		self.assertEqual (ast2nat2ast (p ('%x')), ('-func', '%', (('@', 'x'),)))
+		self.assertEqual (ast2nat2ast (p ('%(x + y)')), ('-func', '%', (('+', (('@', 'x'), ('@', 'y'))),)))
+		self.assertEqual (ast2nat2ast (p ('%%x')), ('-func', '%', (('-func', '%', (('@', 'x'),)),)))
+		self.assertEqual (ast2nat2ast (p ('%%(x + y)')), ('-func', '%', (('-func', '%', (('+', (('@', 'x'), ('@', 'y'))),)),)))
+		self.assertEqual (ast2nat2ast (p ('\\[[1, 2, 3], [4, 5, 6]] [:, 1:]')), ('-idx', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), (('-slice', False, False, None), ('-slice', ('#', '1'), False, None))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -3798,6 +3840,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('sin (((a))')), ('-func', 'sin', (('(', ('(', ('@', 'a'))),)))
 		self.assertEqual (ast2py2ast (p ('a.b (())')), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
 		self.assertEqual (ast2py2ast (p ('a.b (((a))')), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (ast2py2ast (p ('@x')), ('@', 'x'))
+		self.assertEqual (ast2py2ast (p ('@(x + y)')), ('+', (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2py2ast (p ('%x')), ('@', 'x'))
+		self.assertEqual (ast2py2ast (p ('%(x + y)')), ('+', (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2py2ast (p ('%%x')), ('@', 'x'))
+		self.assertEqual (ast2py2ast (p ('%%(x + y)')), ('+', (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2py2ast (p ('\\[[1, 2, 3], [4, 5, 6]] [:, 1:]')), ('-idx', ('-func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))),)), (('-slice', False, False, None), ('-slice', ('#', '1'), False, None))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -4332,6 +4381,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('sin (((a))')), ('-func', 'sin', (('@', 'a'),)))
 		self.assertEqual (ast2spt2ast (p ('a.b (())')), ('.', ('@', 'a'), 'b', (('(', (',', ())),)))
 		self.assertEqual (ast2spt2ast (p ('a.b (((a))')), ('.', ('@', 'a'), 'b', (('(', ('(', ('@', 'a'))),)))
+		self.assertEqual (ast2spt2ast (p ('@x')), ('@', 'x'))
+		self.assertEqual (ast2spt2ast (p ('@(x + y)')), ('+', (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('%x')), ('@', 'x'))
+		self.assertEqual (ast2spt2ast (p ('%(x + y)')), ('+', (('@', 'x'), ('@', 'y'))))
+		self.assertEqual (ast2spt2ast (p ('%%x')), ('-func', '%', (('@', 'x'),)))
+		self.assertEqual (ast2spt2ast (p ('%%(x + y)')), ('-func', '%', (('+', (('@', 'x'), ('@', 'y'))),)))
+		self.assertEqual (ast2spt2ast (p ('\\[[1, 2, 3], [4, 5, 6]] [:, 1:]')), ('-mat', ((('#', '2'), ('#', '3')), (('#', '5'), ('#', '6')))))
 	# END UPDATE BLOCK
 
 _EXPRESSIONS = r"""
@@ -4867,6 +4923,18 @@ sin (())
 sin (((a))
 a.b (())
 a.b (((a))
+@x
+@(x + y)
+%x
+%(x + y)
+%%x
+%%(x + y)
+\[[1, 2, 3], [4, 5, 6]] [:, 1:]
+
+sin sin x [2].w
+sin -sin x [2].w
+sin sin (x) [2].w
+sin -sin (x) [2].w
 """
 # _EXPRESSIONS = r"""
 
