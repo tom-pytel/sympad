@@ -297,10 +297,10 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 	return AST.flatcat ('*', lhs, rhs)
 
-def _expr_idx (obj, idx):
-	tail, wrap = _ast_tail_mul_wrap (obj)
+# def _expr_idx (obj, idx):
+# 	tail, wrap = _ast_tail_mul_wrap (obj)
 
-	return wrap (AST ('-idx', tail, idx.comma if idx.is_comma else (idx,)))
+# 	return wrap (AST ('-idx', tail, idx.comma if idx.is_comma else (idx,)))
 
 def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/', 'd', 'dx'), expr) -> ('-diff', expr, 'd', ('x', 1))
 	def _interpret_divide (ast):
@@ -641,33 +641,29 @@ def _expr_ufunc (args, py = False, name = ''):
 	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())), is_from_Function = py)
 
 def _expr_varfunc (var, rhs): # user_func *imp* (...) -> user_func (...)
-	ast        = None
 	arg, wrapa = _ast_func_reorder (rhs)
 
 	if var.var in _SP_USER_FUNCS: # or arg.strip_paren.is_comma:
 		if arg.is_paren:
-			ast = wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg))))
+			return wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg))))
 		elif var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
-			ast = wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
+			return wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
 
 	elif arg.is_paren and var.is_var_nonconst and not var.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
 
 		if ufunc.op is None:
-			ast = wrapa (AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw))
+			return wrapa (AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw))
 
 		elif ufunc.is_ufunc:
 			if ufunc.is_ufunc_unapplied:
-				ast2 = wrapa (ufunc.apply_argskw (arg.paren.as_ufunc_argskw))
+				ast = ufunc.apply_argskw (arg.paren.as_ufunc_argskw)
 
-				if ast2:
-					ast = ast2
+				if ast:
+					return wrapa (ast)
 
 			elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-				ast = wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
-
-	if ast:
-		return ast
+				return wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	raise SyntaxError ('invalid function')
 
@@ -799,7 +795,7 @@ class Parser (lalr1.LALR1):
 			b'GM4dnbqwcFnar51FJP+kd1wnqs1Fj+O4r8ULjuXZ64DNRQdWHXh06OknjYaCVXbV/m07tdrHQmBWdXH86tfu1x50lXXerq52YR/t3+pUK3v0freqi5Obxf1aqq6ysofV1S7so+HsPjqkN9UhvkJNuvcF1eQ0kWjhwbHNI+wHh5MkPJCFnXhU951rdWK3eigL' \
 			b'O7EOw9rhcLc6eOEBMOn/MefaOOnG2iS4x+kK+7iA1A5GOwqIXz2mhQvFcWPRHn6hwEmQHtHChaJ2n9pRKOzqMS1cKFwtFNsLRbd6TAsXitorbEeh6FePaeFCcdTYuMdQKNzqMS1cKIbVWxtomhveAJ7QDXwr2re4Ac1NG9GY3L+ihyfbvMCAU2jqFZwcE92O' \
 			b'c3/htFFyXjsfG+crGf3n2N1GbHQ0HQHFYPLf9MzCfjQVHhYVORvPhefHUzRQDIeFgeM7ngSTimGQYseNvrjd8DR8OJ3f29FZYtHts+MMH9vjZJE8lSZOIQAxPQ6DxCkqcSIYna4SbEpTVbY49SRfJWCKLBZqGuDZ4KSVvGcYT+CHBZlz6RrcE2gruw4u/BaK' \
-			b'Om4Z+LyQ0LgFvPjNzf8HtjLKLw==' 
+			b'Om4Z+LyQ0LgFvPjNzf8HtjLKLw=='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1068,7 +1064,7 @@ class Parser (lalr1.LALR1):
 	def expr_attr_2        (self, expr_diffp, ATTR):                                   return AST ('.', expr_diffp, (ATTR.grp [0] or ATTR.grp [1]).replace ('\\', ''))
 	def expr_attr_3        (self, expr_idx):                                           return expr_idx
 
-	def expr_idx_1         (self, expr_diffp, expr_bcommas):                           return _expr_idx (expr_diffp, expr_bcommas)
+	def expr_idx_1         (self, expr_diffp, expr_bcommas):                           return AST ('-idx', expr_diffp, expr_bcommas.comma if expr_bcommas.is_comma else (expr_bcommas,)) # _expr_idx (expr_diffp, expr_bcommas)
 	def expr_idx_2         (self, expr_abs):                                           return expr_abs
 
 	def expr_abs_1         (self, LEFT, BAR1, expr_commas, RIGHT, BAR2):               return AST ('|', expr_commas) if not expr_commas.is_comma_empty else _raise (SyntaxError ('absolute value expecting an expression'))
