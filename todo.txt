@@ -1,5 +1,3 @@
-> remove varass
-
 > $f(x) when f is a lambda
 > bring __builtins__ to top level without need for $
 

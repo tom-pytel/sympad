@@ -4941,6 +4941,11 @@ N N sin -a [2]
 sin sin -x [2].w
 sin -sin x [2].w
 sin(a)**b[2]
+sin**-a[b][c].d (x)
+sin**-a[b][c] (x)
+\int**-a[b][c] x
+\int**-a[b][c].d (x)
+\int**-a[b][c].d (x) y
 """
 # _EXPRESSIONS = r"""
 

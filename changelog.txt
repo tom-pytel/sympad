@@ -1,6 +1,7 @@
 v1.0.20:
 --------
-* Finally documented lots of changes./
+* Finally documented lots of changes.
+* Cleaned up the grammar a little.
 
 v1.0.19:
 --------
