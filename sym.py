@@ -30,7 +30,7 @@ AST.register_AST (AST_Text)
 class EqAss (sp.Eq): # assignment instead of equality comparison
 	pass
 
-class ExprNoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
+class NoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
 	is_number    = False
 	free_symbols = set ()
 
@@ -145,7 +145,7 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers
 # 		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
 # 			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
 
-# 	return ExprNoEval (ast) # never automatically simplify dsolve
+# 	return NoEval (ast) # never automatically simplify dsolve
 
 # 	return ast
 
@@ -195,21 +195,13 @@ def _ast_followed_by_slice (ast, seq):
 
 	return False
 
-def _ast_func_call (func, args, _ast2spt = None, is_escaped = False):
+def _ast_func_call (func, args, _ast2spt = None):
 	if _ast2spt is None:
 		_ast2spt = ast2spt
 
 	pyargs, pykw = AST.args2kwargs (args, _ast2spt)
 
-	spt          = func (*pyargs, **pykw)
-
-	if type (spt) is func: # try to pass func name escaped status through SymPy object
-		try:
-			spt.SYMPAD_ESCAPED = is_escaped
-		except (AttributeError, TypeError): # couldn't assign to Python object (probably because is built-in type or otherwise has no __dict__)
-			pass
-
-	return spt
+	return func (*pyargs, **pykw)
 
 def _ast_subs2ufunc (ast):
 	ufunc = ast.expr
@@ -1052,7 +1044,7 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
 
-		return f'{ast.unescaped}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
+		return f'{ast.func}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
 	def _ast2py_lim (self, ast):
 		return \
@@ -1179,12 +1171,7 @@ class ast2py: # abstract syntax tree -> Python code text
 #...............................................................................................
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
-_builtins_names        = ['abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
-	'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
-	'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'range',
-	'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip']
-
-_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in _builtins_names)))
+_ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in AST.Func.BUILTINS)))
 _ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify}#, 'dsolve': _dsolve}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
@@ -1316,13 +1303,13 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		except AttributeError as e: # unresolved attributes of expressions with free vars remaining should not raise
 			try:
-				if not isinstance (spt, ExprNoEval) and not spt.free_symbols:
+				if not isinstance (spt, NoEval) and not spt.free_symbols:
 					raise e
 
 			except:
 				raise e from None
 
-		return ExprNoEval (AST ('.', spt2ast (spt), *ast [2:]))
+		return NoEval (AST ('.', spt2ast (spt), *ast [2:]))
 
 	def _ast2spt_add (self, ast): # specifically try to subtract negated objects (because of sets)
 		itr = iter (ast.add)
@@ -1366,17 +1353,17 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			if self.parent.is_lamb and ast is self.parent.lamb: # if at top-level in lambda body then lambda handles differnt meaning of this pseudo-func
 				return self._ast2spt (ast.args [0])
 			else:
-				return ExprNoEval (ast.args [0])
+				return NoEval (ast.args [0])
 
-		func = _ast2spt_pyfuncs.get (ast.unescaped)
+		func = _ast2spt_pyfuncs.get (ast.func)
 
 		if func is not None:
-			return _ast_func_call (func, ast.args, self._ast2spt, is_escaped = ast.is_escaped)
+			return _ast_func_call (func, ast.args, self._ast2spt)
 
-		if ast.unescaped in _SYM_USER_FUNCS: # user lambda, within other lambda if it got here
-			return ExprNoEval (ast)
+		if ast.func in _SYM_USER_FUNCS: # user lambda, within other lambda if it got here
+			return NoEval (ast)
 
-		raise NameError (f'function {ast.unescaped!r} is not defined')
+		raise NameError (f'function {ast.func!r} is not defined')
 
 	def _ast2spt_diff (self, ast):
 		args = sum (((self._ast2spt (AST ('@', v)),) if p == 1 else (self._ast2spt (AST ('@', v)), sp.Integer (p)) for v, p in ast.dvs), ())
@@ -1433,10 +1420,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		try:
 			return spt [idx]
 		except TypeError: # invalid indexing of expressions with free vars remaining should not raise
-			if not isinstance (spt, ExprNoEval) and not getattr (spt, 'free_symbols', None) and not hasattr (spt, '__getitem__'):
+			if not isinstance (spt, NoEval) and not getattr (spt, 'free_symbols', None) and not hasattr (spt, '__getitem__'):
 				raise
 
-		return ExprNoEval (AST ('-idx', spt2ast (spt), ast.idx))
+		return NoEval (AST ('-idx', spt2ast (spt), ast.idx))
 
 	def _ast2spt_sdiff (self, ast):
 		sdiff = self._ast2spt (ast.sdiff [0])
@@ -1449,7 +1436,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 	def _ast2spt_subs (self, ast):
 		if ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc:
-			return ExprNoEval (ast) # do not execute because loses information about variables
+			return NoEval (ast) # do not execute because loses information about variables
 		else:
 			return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
 
@@ -1676,9 +1663,6 @@ class spt2ast:
 		if name is None:
 			name = spt.__class__.__name__
 
-		if getattr (spt, 'SYMPAD_ESCAPED', None):
-			name = f'{AST.Func.ESCAPE}{name}'
-
 		if args is None:
 			args = spt.args
 
@@ -1700,7 +1684,7 @@ class spt2ast:
 	_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 	_spt2ast_funcs = {
-		ExprNoEval: lambda self, spt: spt.ast,
+		NoEval: lambda self, spt: spt.ast,
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,

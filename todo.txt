@@ -1,6 +1,3 @@
-> $f(x) when f is a lambda
-> bring __builtins__ to top level without need for $
-
 > subs single variable argument which may be an object like a dict
 > (a or b) or (a and b) - result parenthesizing for clarity
 
@@ -14,6 +11,7 @@
 > subs autocomplete
 
 
+> doc: removed $ function escape character
 > doc: ast2spt calls even though they look like multiplies
 > doc: reference SymPy documentation
 > doc: ufuncs

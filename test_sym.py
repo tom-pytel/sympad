@@ -54,8 +54,8 @@ _STATIC_TERMS = [
 	'\\infty '
 	'zoo',
 	'\\tilde\\infty ',
-	"'str'",
-	'"str"',
+	"'s'",
+	'"s"',
 	'None',
 	'True',
 	'False',
@@ -76,16 +76,16 @@ Limit ({d} > {-1.0}, x, {{1.0}*{partial}*{dx}})
 {{d}^{1}} / {{{dx}  {oo}}}
 {{{d}*{1}}} / {partial^{5} / partialy^{1} partialy^{2} partialz^{2} {oo}}
 {{{0}!} \cdot {partial^{1} / partialx^{1} {dx}} \cdot {{d}**{d}}}
-{{partial^{4} / partialy^{3} partialy^{1} {a}} \cdot {{'str'}^{d}}}
+{{partial^{4} / partialy^{3} partialy^{1} {a}} \cdot {{'s'}^{d}}}
 {\int {-1} dx} / {\int {1} dx}
 {\int_{dx}^{a} {-1} dx}!
 \int {partial^{3} / partialy^{3} {a}} dx
 {{\int {partial} dx}  {partial^{4} / partialy^{1} partialz^{1} partialz^{2} {a}}}
 \int_{[{-1.0}]}^{\int {partialx} dx} {{{oo}+{-1}}} dx
-\int_{partial^{6} / partialy^{2} partialx^{2} partialz^{2} {partialx}}^{partial^{4} / partialz^{1} partialz^{2} partialx^{1} {0}} {{a} != {'str'}} dx
-{{{oo}**{'str'}}+{\int {oo} dx}+{partial^{7} / partialz^{3} partialx^{2} partialx^{2} {0}}}
+\int_{partial^{6} / partialy^{2} partialx^{2} partialz^{2} {partialx}}^{partial^{4} / partialz^{1} partialz^{2} partialx^{1} {0}} {{a} != {'s'}} dx
+{{{oo}**{'s'}}+{\int {oo} dx}+{partial^{7} / partialz^{3} partialx^{2} partialx^{2} {0}}}
 [{{{-1} \cdot {oo}}},{{{dx},{1.0},{oo}}},{partial^{8} / partialx^{3} partialx^{2} partialz^{3} {oo}}]
-{{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'str'}}}
+{{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'s'}}}
 {{lambda: {-1}} \cdot {\frac{partialx}{oo}} \cdot {{1.0} if {1} else {a} if {0}}}
 {{{a} / {-1}} {\lim_{x \to partial} {-1}} * [lambda x, y, z: {partialx}]}
 \int_{\sqrt[{a}]{1.0}}^{[]} {lambda x: {partialx}} dx
@@ -93,24 +93,24 @@ lambda x: {{dx} = {dx}}
 \int {{{{a} / {dx}}  {partial^{2} / partialz^{2} {partialx}}}} dx
 \int \frac{d}{dx} x dx
 \int d / dx x dx
-\int_{{partial^{4} / partialx^{1} partialy^{3} {partial}}**{\sqrt[{oo}]{0}}}^{{{{-1} == {0}}*{({partial},{'str'},{a})}*{{1} / {1}}}} {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
+\int_{{partial^{4} / partialx^{1} partialy^{3} {partial}}**{\sqrt[{oo}]{0}}}^{{{{-1} == {0}}*{({partial},{'s'},{a})}*{{1} / {1}}}} {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
 \int {-{partial^{6} / partialy^{3} partialx^{3} {0}}} dx
 \lim_{x \to \frac{lambda x, y, z: {-{0}}}{partial^{5} / partialz^{2} partialz^{1} partialx^{2} {Limit (a, x, 1)}}} {\arctan()}
 -{{{{{{partialx},{partial},{oo},},{{dx},{-1.0},{a},},}}**{StrictGreaterThan({1.0})}} > {partial^{4} / partialz^{1} partialx^{2} partialy^{1} {{1.0}^{1}}}}
 -{{{{{\sum_{x = 0}^{-1.0} {oo}} \cdot {({0})}}},}}
 \int {{{{d}+{partialx}+{1}}} if {lambda x, y, z: {a}} else {{1} / {partialx}}} dx
-{|{\log_{partial^{1} / partialy^{1} {{{0}*{'str'}}}}{[{{-1.0} / {'str'}}]}}|}
+{|{\log_{partial^{1} / partialy^{1} {{{0}*{'s'}}}}{[{{-1.0} / {'s'}}]}}|}
 {\lim_{x \to -1.0} {dx}} > {{oo} if {-1.0} else {d} if {d} else {1}}
 \frac{{-1.0} > {oo}}{\ln{-1.0}}
 {{|{d}|}{{({1.0},{1})},{[{oo}]},},}
 1/2 * {a+b} [lambda: {d}]
-{{{'str'} < {1.0}} \cdot {({a})} \cdot {{1} if {a}}}
--{1.0 if partial else d if 1 else oo if 1.0 else 'str'}
+{{{'s'} < {1.0}} \cdot {({a})} \cdot {{1} if {a}}}
+-{1.0 if partial else d if 1 else oo if 1.0 else 's'}
 {partial^{5} / partialy^{2} partialy^{2} partialy^{1} {partial}}^{{-1.0} > {d}}
-{lambda x: {a}} if {{{'str'}*{a}*{1}}}
+{lambda x: {a}} if {{{'s'}*{a}*{1}}}
 \int_{{-1.0} <= {1}}^{-{1}} {{-1.0} <= {1.0}} dx
 {{({a1.0})}+{{a}!}+{{d} if {1} else {dx}}}
-\int_{{{a}+{a}+{0}}}^{{'str'} / {a}} {\int {1} dx} dx
+\int_{{{a}+{a}+{0}}}^{{'s'} / {a}} {\int {1} dx} dx
 lambda x: {lambda x, y: {oo}}
 \sqrt[3]{({oo},{a})}
 Limit (\sum_{x = oo}^{partial} {-1.0}, x, \sec({-1.0},{-1},{partialx}))
@@ -118,21 +118,21 @@ Limit (\sum_{x = oo}^{partial} {-1.0}, x, \sec({-1.0},{-1},{partialx}))
 \sum_{x = {{1}*{d}*{oo}}}^{\exp({a},{1})} {\log_{1.0}{a}}
 lambda x: {{a} = {dx}}
 {{{d}^{oo}}*{{a}^{d}}}
-{{oo} if {oo}} = {is_mersenne_prime({'str'})}
+{{oo} if {oo}} = {is_mersenne_prime({'s'})}
 \lim_{x \to 0} {sqrt(dx) + [lambda x, y: -1.0]}
 {{\frac{\int_{a}^{1} {dx} dx}{{{oo} \cdot {d} \cdot {dx}}}}}
 \int d/dx dx
-(((-1)**partial)**({a_prime, oo, 'str'}))**-{-{0}}
-Limit ({{{0}^{'str'}}  {\left|{a}\right|}  {({a},{a})}}, x, lambda x: {{1}!})
-\left(\left(\text{'str'} \right)! \le \left(\left(x, y \right) \mapsto -1.0 \right) \right) == \int_{\left[-1.0, \partial, -1 \right]}^{\log_{-1.0}\left(-1 \right)} \begin{cases} 1 & \text{for}\: \infty \\ 1.0 & \text{for}\: 1.0 \end{cases} \ dx
+(((-1)**partial)**({a_prime, oo, 's'}))**-{-{0}}
+Limit ({{{0}^{'s'}}  {\left|{a}\right|}  {({a},{a})}}, x, lambda x: {{1}!})
+\left(\left(\text{'s'} \right)! \le \left(\left(x, y \right) \mapsto -1.0 \right) \right) == \int_{\left[-1.0, \partial, -1 \right]}^{\log_{-1.0}\left(-1 \right)} \begin{cases} 1 & \text{for}\: \infty \\ 1.0 & \text{for}\: 1.0 \end{cases} \ dx
 x^{-{{1} / {1.0}}}
 cofactors( 1 , {lambda x: 1 = lambda: 2} )
-({{{-{cse()}},{{{{partial} != {-1}}*{{{-1.0}  {1.0}}}}},{lambda: {{-1.0} == {dx}}},},{{\lim_{x \to \log_{0}{d}} {[{-1.0}]}},{partial^{7} / partialx^{3} partialy^{1} partialx^{3} {{partialx} if {a} else {-1.0} if {a} else {d} if {1.0} else {partialx}}},{{lambda x, y, z: {oo}} = {\tanh()}},},{{partial^{3} / partialz^{3} {{oo} / {'str'}}},{({{{\left|{dx}\right|},{{a} if {d}},},{{-{oo}},{({{-1.0},{oo},{-1.0},})},},})},{partial^{5} / partialx^{1} partialy^{1} partialz^{3} {{-1}!}},},})
-{\left|{a}\right|} if {\int {'str'} dx} else {({-1},{-1},{a})} if {\left|{1.0}\right|}
+({{{-{cse()}},{{{{partial} != {-1}}*{{{-1.0}  {1.0}}}}},{lambda: {{-1.0} == {dx}}},},{{\lim_{x \to \log_{0}{d}} {[{-1.0}]}},{partial^{7} / partialx^{3} partialy^{1} partialx^{3} {{partialx} if {a} else {-1.0} if {a} else {d} if {1.0} else {partialx}}},{{lambda x, y, z: {oo}} = {\tanh()}},},{{partial^{3} / partialz^{3} {{oo} / {'s'}}},{({{{\left|{dx}\right|},{{a} if {d}},},{{-{oo}},{({{-1.0},{oo},{-1.0},})},},})},{partial^{5} / partialx^{1} partialy^{1} partialz^{3} {{-1}!}},},})
+{\left|{a}\right|} if {\int {'s'} dx} else {({-1},{-1},{a})} if {\left|{1.0}\right|}
 {lambda x: {{1.0} if {oo} else {1.0} if {oo}}} = {{{{partial} \cdot {partialx}}}**{{a}!}}
 {Sum (\int {1} dx, (x, 0, 1))} dx
 {{\sum_{x = \left|{0}\right|}^{\tan({-1.0})} {\int_{partialx}^{oo} {d} dx}}+{{{\lim_{x \to 1} {d}} \cdot {{{a}+{-1}+{dx}}}}}+{{{{a} = {a}}+{({dx0d})}+{{{dx}*{dx}*{a}}}}}}
-log(partialx*'str'*partialx) / log(Derivative(a, z, 3, y, 2))
+log(partialx*'s'*partialx) / log(Derivative(a, z, 3, y, 2))
 dpartial
 a, lambda: b = 1
 \exp({a},{-1},{1})
@@ -164,11 +164,11 @@ x {y**z} [w]
 {1:2:3}.x
 None**-1.0**\[[\emptyset,],[0,],[\partial x,],] / {not \[None,\emptyset,]}
 \int_{\lim_{x \to 1} oo^{not 1e100}}^\{{partialx+dx},{\partialx*.1},partialx!} \log_{\left|partialx\right|}{1 \cdot False} dx
-{{\[[{{\emptyset} = {.1}},{\[[{\emptyset},],[{"str"},],]},],]} if {-{{\partial x}!}} else {{{{False}!} and {{{\partial x}||{oo}||{"str"}}}}}}
+{{\[[{{\emptyset} = {.1}},{\[[{\emptyset},],[{"s"},],]},],]} if {-{{\partial x}!}} else {{{{False}!} and {{{\partial x}||{oo}||{"s"}}}}}}
 {\int {{{{{1e-100}  {1}  {partialx}}}*{{True}^{\tilde\infty }}}} dx}
-{{{{-{"str"}} : {lambda x, y: {\partialx}}} \cdot {{not {{'str'} : {1.} : {.1}}}}}}
+{{{{-{"s"}} : {lambda x, y: {\partialx}}} \cdot {{not {{'s'} : {1.} : {.1}}}}}}
 {-{-1}}^{{1} : {\partial x} : {0}}
-{{{\sum_{x = {{a} : {"str"} : {True}}}^{({\partial x})} {[]}}||{{{1.0} : {False} : {\emptyset}} [{{-1} == {\partialx}}]}||{{{{oo} if {None} else {\partialx}}^^{{.1} [{oo}]}}}}}
+{{{\sum_{x = {{a} : {"s"} : {True}}}^{({\partial x})} {[]}}||{{{1.0} : {False} : {\emptyset}} [{{-1} == {\partialx}}]}||{{{{oo} if {None} else {\partialx}}^^{{.1} [{oo}]}}}}}
 {lambda x, y, z: {lambda x, y: {{{-1.0}&&{False}&&{d}}}}}
 \int {{\partialx} : {d} : {1.0}} dx
 {\lim_{x \to {{1} : {1e+100} : {.1}}} {({\partial x},{\partialx})}}
@@ -176,7 +176,7 @@ x + {-1 2}
 x + {-1 * 2}
 x - {{1 2} 3}
 x - {{1 * 2} * 3}
-{sqrt{{{{not {1.}}}+{\int_{a}^{-1.0} {str} dx}+{{{-1} \cdot {1e100} \cdot {\infty zoo}}}}}}
+{sqrt{{{{not {1.}}}+{\int_{a}^{-1.0} {s} dx}+{{{-1} \cdot {1e100} \cdot {\infty zoo}}}}}}
 x - a b!
 \int x * \frac{y}{z} \ dx
 1+{{-1 * 2}+1}
@@ -223,7 +223,7 @@ a.b ()'
 {x/y}'
 1'['ac']
 |x|'
-| 'str'|'
+| 's'|'
 {x**y}'
 {{-1}'}
 {a [b]}''
@@ -247,12 +247,12 @@ x + -1'
 1 * -1'
 x * [y]'
 x * [y].a
-x!' + ('str')
-|x|' + ('str')
+x!' + ('s')
+|x|' + ('s')
 {x^y'}'
 sin{x}!
 sin{x}'
-\sqrt{-\partial x  d^{5} / dx^{2} dy^{3} "str"  \{0}}'
+\sqrt{-\partial x  d^{5} / dx^{2} dy^{3} "s"  \{0}}'
 \int a b - 1 dx
 \int {a b - 1} dx
 a * [b]!'
@@ -280,7 +280,7 @@ x^{-{a && b}}
 x^{-{a ^^ b}}
 {x if 2 else z} b^c
 x^{a = b}
-{{\sqrt[{?(x, y, reals = False, commutative = False)}]{{.1} = {\emptyset}}} \cdot {{{partialx}||{oo}}  {{dy}||{'str'}}} \cdot {{Derivative ({dx}, x, 1)} \cdot {{dy}^^{1.}^^{dx}} \cdot {Limit ({dy}, x, {None})}}}
+{{\sqrt[{?(x, y, reals = False, commutative = False)}]{{.1} = {\emptyset}}} \cdot {{{partialx}||{oo}}  {{dy}||{'s'}}} \cdot {{Derivative ({dx}, x, 1)} \cdot {{dy}^^{1.}^^{dx}} \cdot {Limit ({dy}, x, {None})}}}
 {\frac{\sqrt{[{.1},{\partial },{1e100}]}}{{{\partialy} / {b}}  {{\partialx}+{\partialx}}  {{-1}**{True}}}}
 {\frac{{not {1e-100}}  {{a}**{False}}}{{{partial}||{True}||{1.0}}&&{{b} / {a}}&&{{\partial x}!}}}
 1 / {a in b}
@@ -290,7 +290,7 @@ partial / partialx \partial x
 -{{1 [2]} c}
 {{{?h(x, y, z)},{{{partialx}'''}^^{{1e100} or {1}}^^{{}}},{log{lambda x, y: {1.0}}}}}
 sin (x) {a b / c}
-{{{{-1.0}**{a}}^{{\partialy} [{c}, {partial}]}}*{{\sqrt{\tilde\infty }}*{\log_{'str'}{1.}}*{-{dz}}}}
+{{{{-1.0}**{a}}^{{\partialy} [{c}, {partial}]}}*{{\sqrt{\tilde\infty }}*{\log_{'s'}{1.}}*{-{dz}}}}
 Derivative ({partial}, x, 1)
 Derivative ({\partial}, x, 1)
 Derivative ({\partial x}, x, 1)
@@ -300,19 +300,19 @@ None {x = y}
 a * \log_{2}{a} [x]
 {a = b} * c^d
 {lambda x: 1}**{-{x in b}}
-{\[[{{{oo} : {\tilde\infty }}  not in  {Limit ({c}, x, {a})}},{\[{{\tilde\infty }||{\infty zoo}},]},],[{acoth()},{{{1} if {False} else {2} if {\partialy} else {0} if {-1.0}} \cdot {{xyzd}&&{1.0}&&{b}} \cdot {not {-1}}},],[{{{\partialx} if {"str"} else {0} if {\partialx} else {partial} if {1e100}}*{{xyzd}*{partial}}*{\int {False} dx}},{\int_{{2} [{\partialx}]}^{{"str"} and {1.} and {oo}} {[]} dx},],]}
+{\[[{{{oo} : {\tilde\infty }}  not in  {Limit ({c}, x, {a})}},{\[{{\tilde\infty }||{\infty zoo}},]},],[{acoth()},{{{1} if {False} else {2} if {\partialy} else {0} if {-1.0}} \cdot {{xyzd}&&{1.0}&&{b}} \cdot {not {-1}}},],[{{{\partialx} if {"s"} else {0} if {\partialx} else {partial} if {1e100}}*{{xyzd}*{partial}}*{\int {False} dx}},{\int_{{2} [{\partialx}]}^{{"s"} and {1.} and {oo}} {[]} dx},],]}
 {\int_{Derivative ({\[{0},{\emptyset},]}, z, 2, z, 2)}^{not {lambda: {-1.0}}} {{{dx} or {1}}**{{2}  not in  {None}}} dx}
 {\{{{{1.}  in  {a}}  {{{1e-100}}}  {{a} = {-1.0}}},{{besselk({a},{\partialy},{1e-100})}''},{{Limit ({dx}, x, {False})}  {\frac{1e-100}{.1}}}}}
 {\int_{{{-1.0}''}||{\int_{None}^{.1} {dz} dx}||{{\tilde\infty }+{None}}}^{{\lim_{x \to {oo}} {\partial }}**{{1.0}**{1e+100}}} {{-{-1}}^{{1.} == {\partialx} == {\emptyset} < {dx}}} dx}
-{{?(x, y)} = {{\[{1e-100},]}||{{\tilde\infty }^{'str'}}}}
+{{?(x, y)} = {{\[{1e-100},]}||{{\tilde\infty }^{'s'}}}}
 {{{{-1}^^{c}} [{{1e+100}+{1e+100}}, {{True}**{0}}]}**{-{not {1e-100}}}}
 {{\gcd({\sum_{x = {-1.0}}^{\partial x} {\emptyset}})}**{-{{False}+{2}}}}
-{{{d^{6} / dx^{3} dy^{3} {'str'}}+{{False}  {dz}}}**{-{{\partial x} = {\partial }}}}
+{{{d^{6} / dx^{3} dy^{3} {'s'}}+{{False}  {dz}}}**{-{{\partial x} = {\partial }}}}
 {\sqrt[{-{\log_{partialx}{1e+100}}}]{{{.1} if {1e+100}}*{{b} \cdot {b}}}}
 sqrt[log_2{x}]2
-{{{?f()}**{{"str"} = {1e+100}}} = {{-1.0 : {Derivative ({1e100}, z, 1, x, 1, x, 2)},oo : {{}},1e-100 : {{1e100}^{\tilde\infty }}}}}
-{{LeviCivita({?h(x, y, reals = False, commutative = False)},{{{partial},{\partial }}})}**{{Limit ({\emptyset}, x, {b})}+{{1.0}!}+{{"str"}'}}}
-{partialx : {\partial x : \emptyset,-1 : 1e-100},\partial  : (oo,False)} : \lim_{x \to partialx = \emptyset} lambda x, y, z: "str" : \{}
+{{{?f()}**{{"s"} = {1e+100}}} = {{-1.0 : {Derivative ({1e100}, z, 1, x, 1, x, 2)},oo : {{}},1e-100 : {{1e100}^{\tilde\infty }}}}}
+{{LeviCivita({?h(x, y, reals = False, commutative = False)},{{{partial},{\partial }}})}**{{Limit ({\emptyset}, x, {b})}+{{1.0}!}+{{"s"}'}}}
+{partialx : {\partial x : \emptyset,-1 : 1e-100},\partial  : (oo,False)} : \lim_{x \to partialx = \emptyset} lambda x, y, z: "s" : \{}
 {{-{{b} [{\tilde\infty }, {dx}]}}**{-{lambda x, y, z: {\partialy}}}}
 {{\min({{None}*{0}},{{True : {1e100},0 : {None},\partial  : {2}}})}^{-{{b} : {.1} : {partialx}}}}
 a in {-{b in c}}
@@ -382,7 +382,7 @@ a * \log_2 b
 {not \lambda: x}
 N lambda: x
 \int 2**gamma dx
-\ln\partialx[.1,z20,\Omega]/"str"!||z20>=oo>2.924745719942591e-14||2.B1Cxzr().sUCb()/{None:lambdax,y,z:(10900247533345.432:dy:),\tilde\infty:False+x0&&\int"str"dx,1:\{}/\partial**b}
+\ln\partialx[.1,z20,\Omega]/"s"!||z20>=oo>2.924745719942591e-14||2.B1Cxzr().sUCb()/{None:lambdax,y,z:(10900247533345.432:dy:),\tilde\infty:False+x0&&\int"s"dx,1:\{}/\partial**b}
 sqrt\[Lambda[dx,0,b][:\lambda:1e-100,\alpha1,\{}],]
 None:1:,c:a
 -a.b{1:None,w:b,a:c}!
@@ -395,7 +395,7 @@ a**\sqrt[b]-1e+1[c]
 sin(b)tan(a)**1[c].d
 {b,c}**2[d].a()
 sin(a)^h(x)*sin()
-\{}**'str'[b].c[d]
+\{}**'s'[b].c[d]
 sin(a)^2 sin(c)
 1 a**f(x)
 a**?f(x)

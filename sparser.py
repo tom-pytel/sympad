@@ -703,7 +703,7 @@ class Parser (lalr1.LALR1):
 			b'rJtTYXw/7YzpqXpwVdZhc/iFm3RWRdi94n6tI2NDvV0oN1fBLYvqmHmcM1mZPI9OP2yOu7ha5sjYey/c1HdPSdcvVql10z+X2PtxN+mlXiyjYyaZWrcvNMBu2kUX69O6ian76PPHrJEe1ffd5uEvVNbTBKKLZXbMPFjDgEIT/KZddPGe4DsZHl2otQSeH3El' \
 			b'FwvxTrNzlypEu7mWi4XYNpgdIHS/OfriPT357y5p7SS6m8XYc0WGC0FZUZph1AGKEjZP7GLduNtuuyeiG/3miV2sG836a79u4FliT+ti3fBNN/brht08sYt1o9m2HaAbbvPELtaNvunGft3wmyd2sW40k70DdCNsntjFxwN2mzeWzk6UzetOxQearYhAQm8s' \
 			b'tTg9VHhAKXvA8LfUG5ALhcCTgFDyIC08AlWsYpydDw3yHf9xaLcTGmVNMfBEovGfdvxi7cqTIy1qjJQ00PPJGSYcAtLtqWakjYG1kbTPkcahRikyAuAXNAdAO0olaXCpuVFrB9Q+TJ0Oq80H1fLhsH5yIGw8DBaeB2mHAUuGem1obzZqNIvFd6PjMDEnEalX' \
-			b'eE/he56WhI4A7oG2p8l5jCY/gTb66ub/Aypyl70='
+			b'eE/he56WhI4A7oG2p8l5jCY/gTb66ub/Aypyl70=' 
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -733,7 +733,7 @@ class Parser (lalr1.LALR1):
 	TOKENS    = OrderedDict ([ # order matters due to Python regex non-greedy or
 		('UFUNC',        fr'\?'),
 		('UFUNCPY',       r'Function(?!\w|\\_)'),
-		('FUNC',         fr'(@|\%|\\\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(\$?(?:{_LTR}|\\_)(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|\\\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|\\operatorname\s*{{\s*(\$?(?:{_LTR}|\\_)(?:\w|\\_)*)\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'(?:\\lim)_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
@@ -822,7 +822,7 @@ class Parser (lalr1.LALR1):
 	_VAR_QUICK     = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
 
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens (differences from normal)
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|(\${_LTRU}\w*)|\\operatorname\s*{{\s*(@|\\\%|\\_|{_LTR}(?:\w|\\_)*)\s*}}'), # AST.Func.ESCAPE, AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*(@|\\\%|\\_|{_LTR}(?:\w|\\_)*)\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'\\lim_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),

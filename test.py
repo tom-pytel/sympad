@@ -238,9 +238,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('a * [2]'), ('*', (('@', 'a'), ('[', (('#', '2'),))), {1}))
 		self.assertEqual (p ('a * {-1}[x]'), ('*', (('@', 'a'), ('-idx', ('#', '-1'), (('@', 'x'),))), {1}))
 		self.assertEqual (p ('a * [x][y][z]'), ('*', (('@', 'a'), ('-idx', ('-idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),))), {1}))
-		self.assertEqual (p ('$N (1/2)'), ('-func', '$N', (('/', ('#', '1'), ('#', '2')),)))
-		self.assertEqual (p ("$S ('1/2')"), ('-func', '$S', (('"', '1/2'),)))
-		self.assertEqual (p ("$N ($S ('1/2'))"), ('-func', '$N', (('-func', '$S', (('"', '1/2'),)),)))
+		# self.assertEqual (p ('$N (1/2)'), ('-func', '$N', (('/', ('#', '1'), ('#', '2')),)))
+		# self.assertEqual (p ("$S ('1/2')"), ('-func', '$S', (('"', '1/2'),)))
+		# self.assertEqual (p ("$N ($S ('1/2'))"), ('-func', '$N', (('-func', '$S', (('"', '1/2'),)),)))
 		self.assertEqual (p ('o [i].t'), ('.', ('-idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (p ('o [i]**2'), ('^', ('-idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
 		self.assertEqual (p ('o [i]!'), ('!', ('-idx', ('@', 'o'), (('@', 'i'),))))
@@ -251,7 +251,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('y - 1*x'), ('+', (('@', 'y'), ('-', ('*', (('#', '1'), ('@', 'x')), {1})))))
 		self.assertEqual (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')"), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')"), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', ('@', 'domain'), ('"', 'CC')))))
-		self.assertEqual (p ('$oct(10)'), ('-func', '$oct', (('#', '10'),)))
+		# self.assertEqual (p ('$oct(10)'), ('-func', '$oct', (('#', '10'),)))
 		self.assertEqual (p ('(1,) + (2,)'), ('+', (('(', (',', (('#', '1'),))), ('(', (',', (('#', '2'),))))))
 		self.assertEqual (p ('[1] + [2]'), ('+', (('[', (('#', '1'),)), ('[', (('#', '2'),)))))
 		self.assertEqual (p ("'a' + 'b'"), ('+', (('"', 'a'), ('"', 'b'))))
@@ -617,6 +617,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\int**-a[b][c] x'), ('-intg', ('@', 'x'), ('@', ''), ('#', '0'), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (p ('\\int**-a[b][c].d (x)'), ('-intg', ('(', ('@', 'x')), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (p ('\\int**-a[b][c].d (x) y'), ('-intg', ('@', 'y'), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (p ('\\int**a.b[2] x dx'), ('-intg', ('@', 'x'), ('@', 'dx'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -795,9 +796,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('a * [2]')), 'a \\cdot \\left[2 \\right]')
 		self.assertEqual (ast2tex (p ('a * {-1}[x]')), 'a \\cdot \\left(-1 \\right)\\left[x \\right]')
 		self.assertEqual (ast2tex (p ('a * [x][y][z]')), 'a \\cdot \\left[x \\right]\\left[y \\right]\\left[z \\right]')
-		self.assertEqual (ast2tex (p ('$N (1/2)')), '\\operatorname{$N}\\left(\\frac{1}{2} \\right)')
-		self.assertEqual (ast2tex (p ("$S ('1/2')")), "\\operatorname{$S}\\left(\\text{'1/2'} \\right)")
-		self.assertEqual (ast2tex (p ("$N ($S ('1/2'))")), "\\operatorname{$N}\\left(\\operatorname{$S}\\left(\\text{'1/2'} \\right) \\right)")
+		# self.assertEqual (ast2tex (p ('$N (1/2)')), '\\operatorname{$N}\\left(\\frac{1}{2} \\right)')
+		# self.assertEqual (ast2tex (p ("$S ('1/2')")), "\\operatorname{$S}\\left(\\text{'1/2'} \\right)")
+		# self.assertEqual (ast2tex (p ("$N ($S ('1/2'))")), "\\operatorname{$N}\\left(\\operatorname{$S}\\left(\\text{'1/2'} \\right) \\right)")
 		self.assertEqual (ast2tex (p ('o [i].t')), 'o\\left[i \\right].t')
 		self.assertEqual (ast2tex (p ('o [i]**2')), 'o\\left[i \\right]^2')
 		self.assertEqual (ast2tex (p ('o [i]!')), 'o\\left[i \\right]!')
@@ -808,7 +809,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('y - 1*x')), 'y - 1 x')
 		self.assertEqual (ast2tex (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "\\operatorname{Poly}\\left(x^2 + 2 x + 1, x, domain = \\text{'ZZ'} \\right)")
 		self.assertEqual (ast2tex (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "\\operatorname{Poly}\\left(x^2 + y^2 + 2 x y, x, y, domain = \\text{'CC'} \\right)")
-		self.assertEqual (ast2tex (p ('$oct(10)')), '\\operatorname{$oct}\\left(10 \\right)')
+		# self.assertEqual (ast2tex (p ('$oct(10)')), '\\operatorname{$oct}\\left(10 \\right)')
 		self.assertEqual (ast2tex (p ('(1,) + (2,)')), '\\left(1, \\right) + \\left(2, \\right)')
 		self.assertEqual (ast2tex (p ('[1] + [2]')), '\\left[1 \\right] + \\left[2 \\right]')
 		self.assertEqual (ast2tex (p ("'a' + 'b'")), "\\text{'a'} + \\text{'b'}")
@@ -1174,6 +1175,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\int**-a[b][c] x')), '\\int_0^{-a\\left[b \\right]\\left[c \\right]} x \\ {}')
 		self.assertEqual (ast2tex (p ('\\int**-a[b][c].d (x)')), '\\int_0^{-a\\left[b \\right]\\left[c \\right].d} \\left(x \\right) \\ {}')
 		self.assertEqual (ast2tex (p ('\\int**-a[b][c].d (x) y')), '\\int_0^{-a\\left[b \\right]\\left[c \\right].\\operatorname{d}\\left(x \\right)} y \\ {}')
+		self.assertEqual (ast2tex (p ('\\int**a.b[2] x dx')), '\\int_0^{a.b\\left[2 \\right]} x \\ dx')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -1352,9 +1354,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('a * [2]')), 'a * [2]')
 		self.assertEqual (ast2nat (p ('a * {-1}[x]')), 'a * (-1)[x]')
 		self.assertEqual (ast2nat (p ('a * [x][y][z]')), 'a * [x][y][z]')
-		self.assertEqual (ast2nat (p ('$N (1/2)')), '$N(1/2)')
-		self.assertEqual (ast2nat (p ("$S ('1/2')")), "$S( '1/2')")
-		self.assertEqual (ast2nat (p ("$N ($S ('1/2'))")), "$N($S( '1/2'))")
+		# self.assertEqual (ast2nat (p ('$N (1/2)')), '$N(1/2)')
+		# self.assertEqual (ast2nat (p ("$S ('1/2')")), "$S( '1/2')")
+		# self.assertEqual (ast2nat (p ("$N ($S ('1/2'))")), "$N($S( '1/2'))")
 		self.assertEqual (ast2nat (p ('o [i].t')), 'o[i].t')
 		self.assertEqual (ast2nat (p ('o [i]**2')), 'o[i]**2')
 		self.assertEqual (ast2nat (p ('o [i]!')), 'o[i]!')
@@ -1365,7 +1367,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('y - 1*x')), 'y - 1 x')
 		self.assertEqual (ast2nat (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "Poly(x**2 + 2 x + 1, x, domain =  'ZZ')")
 		self.assertEqual (ast2nat (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "Poly(x**2 + y**2 + 2 x y, x, y, domain =  'CC')")
-		self.assertEqual (ast2nat (p ('$oct(10)')), '$oct(10)')
+		# self.assertEqual (ast2nat (p ('$oct(10)')), '$oct(10)')
 		self.assertEqual (ast2nat (p ('(1,) + (2,)')), '(1,) + (2,)')
 		self.assertEqual (ast2nat (p ('[1] + [2]')), '[1] + [2]')
 		self.assertEqual (ast2nat (p ("'a' + 'b'")), " 'a' +  'b'")
@@ -1731,6 +1733,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\int**-a[b][c] x')), '\\int_0^{-a[b][c]} x ')
 		self.assertEqual (ast2nat (p ('\\int**-a[b][c].d (x)')), '\\int_0^{-a[b][c].d} (x) ')
 		self.assertEqual (ast2nat (p ('\\int**-a[b][c].d (x) y')), '\\int_0^{-a[b][c].d(x)} y ')
+		self.assertEqual (ast2nat (p ('\\int**a.b[2] x dx')), '\\int_0^{a.b[2]} x dx')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -1909,9 +1912,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('a * [2]')), 'a*[2]')
 		self.assertEqual (ast2py (p ('a * {-1}[x]')), 'a*(-1)[x]')
 		self.assertEqual (ast2py (p ('a * [x][y][z]')), 'a*[x][y][z]')
-		self.assertEqual (ast2py (p ('$N (1/2)')), 'N(1/2)')
-		self.assertEqual (ast2py (p ("$S ('1/2')")), "S('1/2')")
-		self.assertEqual (ast2py (p ("$N ($S ('1/2'))")), "N(S('1/2'))")
+		# self.assertEqual (ast2py (p ('$N (1/2)')), 'N(1/2)')
+		# self.assertEqual (ast2py (p ("$S ('1/2')")), "S('1/2')")
+		# self.assertEqual (ast2py (p ("$N ($S ('1/2'))")), "N(S('1/2'))")
 		self.assertEqual (ast2py (p ('o [i].t')), 'o[i].t')
 		self.assertEqual (ast2py (p ('o [i]**2')), 'o[i]**2')
 		self.assertEqual (ast2py (p ('o [i]!')), 'factorial(o[i])')
@@ -1922,7 +1925,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('y - 1*x')), 'y - 1*x')
 		self.assertEqual (ast2py (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), "Poly(x**2 + 2*x + 1, x, domain = 'ZZ')")
 		self.assertEqual (ast2py (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), "Poly(x**2 + y**2 + 2*x*y, x, y, domain = 'CC')")
-		self.assertEqual (ast2py (p ('$oct(10)')), 'oct(10)')
+		# self.assertEqual (ast2py (p ('$oct(10)')), 'oct(10)')
 		self.assertEqual (ast2py (p ('(1,) + (2,)')), '(1,) + (2,)')
 		self.assertEqual (ast2py (p ('[1] + [2]')), '[1] + [2]')
 		self.assertEqual (ast2py (p ("'a' + 'b'")), "'a' + 'b'")
@@ -2288,6 +2291,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\int**-a[b][c] x')), 'Integral(x, (, 0, -a[b][c]))')
 		self.assertEqual (ast2py (p ('\\int**-a[b][c].d (x)')), 'Integral((x), (, 0, -a[b][c].d))')
 		self.assertEqual (ast2py (p ('\\int**-a[b][c].d (x) y')), 'Integral(y, (, 0, -a[b][c].d(x)))')
+		self.assertEqual (ast2py (p ('\\int**a.b[2] x dx')), 'Integral(x, (x, 0, a.b[2]))')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -2466,9 +2470,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),))), {1}))
 		self.assertEqual (ast2tex2ast (p ('a * {-1}[x]')), ('*', (('@', 'a'), ('-idx', ('(', ('#', '-1')), (('@', 'x'),))), {1}))
 		self.assertEqual (ast2tex2ast (p ('a * [x][y][z]')), ('*', (('@', 'a'), ('-idx', ('-idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),))), {1}))
-		self.assertEqual (ast2tex2ast (p ('$N (1/2)')), ('-func', '$N', (('/', ('#', '1'), ('#', '2')),)))
-		self.assertEqual (ast2tex2ast (p ("$S ('1/2')")), ('-func', '$S', (('"', '1/2'),)))
-		self.assertEqual (ast2tex2ast (p ("$N ($S ('1/2'))")), ('-func', '$N', (('-func', '$S', (('"', '1/2'),)),)))
+		# self.assertEqual (ast2tex2ast (p ('$N (1/2)')), ('-func', '$N', (('/', ('#', '1'), ('#', '2')),)))
+		# self.assertEqual (ast2tex2ast (p ("$S ('1/2')")), ('-func', '$S', (('"', '1/2'),)))
+		# self.assertEqual (ast2tex2ast (p ("$N ($S ('1/2'))")), ('-func', '$N', (('-func', '$S', (('"', '1/2'),)),)))
 		self.assertEqual (ast2tex2ast (p ('o [i].t')), ('.', ('-idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (ast2tex2ast (p ('o [i]**2')), ('^', ('-idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
 		self.assertEqual (ast2tex2ast (p ('o [i]!')), ('!', ('-idx', ('@', 'o'), (('@', 'i'),))))
@@ -2479,7 +2483,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('-', ('*', (('#', '1'), ('@', 'x')))))))
 		self.assertEqual (ast2tex2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (ast2tex2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', ('@', 'domain'), ('"', 'CC')))))
-		self.assertEqual (ast2tex2ast (p ('$oct(10)')), ('-func', '$oct', (('#', '10'),)))
+		# self.assertEqual (ast2tex2ast (p ('$oct(10)')), ('-func', '$oct', (('#', '10'),)))
 		self.assertEqual (ast2tex2ast (p ('(1,) + (2,)')), ('+', (('(', (',', (('#', '1'),))), ('(', (',', (('#', '2'),))))))
 		self.assertEqual (ast2tex2ast (p ('[1] + [2]')), ('+', (('[', (('#', '1'),)), ('[', (('#', '2'),)))))
 		self.assertEqual (ast2tex2ast (p ("'a' + 'b'")), ('+', (('"', 'a'), ('"', 'b'))))
@@ -2845,6 +2849,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\int**-a[b][c] x')), ('-intg', ('*', (('@', 'x'), ('-dict', ()))), ('@', ''), ('#', '0'), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (ast2tex2ast (p ('\\int**-a[b][c].d (x)')), ('-intg', ('*', (('(', ('@', 'x')), ('-dict', ()))), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2tex2ast (p ('\\int**-a[b][c].d (x) y')), ('-intg', ('*', (('@', 'y'), ('-dict', ()))), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (ast2tex2ast (p ('\\int**a.b[2] x dx')), ('-intg', ('@', 'x'), ('@', 'dx'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -3023,9 +3028,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),))), {1}))
 		self.assertEqual (ast2nat2ast (p ('a * {-1}[x]')), ('*', (('@', 'a'), ('-idx', ('(', ('#', '-1')), (('@', 'x'),))), {1}))
 		self.assertEqual (ast2nat2ast (p ('a * [x][y][z]')), ('*', (('@', 'a'), ('-idx', ('-idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),))), {1}))
-		self.assertEqual (ast2nat2ast (p ('$N (1/2)')), ('-func', '$N', (('/', ('#', '1'), ('#', '2')),)))
-		self.assertEqual (ast2nat2ast (p ("$S ('1/2')")), ('-func', '$S', (('"', '1/2'),)))
-		self.assertEqual (ast2nat2ast (p ("$N ($S ('1/2'))")), ('-func', '$N', (('-func', '$S', (('"', '1/2'),)),)))
+		# self.assertEqual (ast2nat2ast (p ('$N (1/2)')), ('-func', '$N', (('/', ('#', '1'), ('#', '2')),)))
+		# self.assertEqual (ast2nat2ast (p ("$S ('1/2')")), ('-func', '$S', (('"', '1/2'),)))
+		# self.assertEqual (ast2nat2ast (p ("$N ($S ('1/2'))")), ('-func', '$N', (('-func', '$S', (('"', '1/2'),)),)))
 		self.assertEqual (ast2nat2ast (p ('o [i].t')), ('.', ('-idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (ast2nat2ast (p ('o [i]**2')), ('^', ('-idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
 		self.assertEqual (ast2nat2ast (p ('o [i]!')), ('!', ('-idx', ('@', 'o'), (('@', 'i'),))))
@@ -3036,7 +3041,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('-', ('*', (('#', '1'), ('@', 'x')))))))
 		self.assertEqual (ast2nat2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('@', 'x'), ('=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (ast2nat2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('@', 'x'), ('@', 'y'), ('=', ('@', 'domain'), ('"', 'CC')))))
-		self.assertEqual (ast2nat2ast (p ('$oct(10)')), ('-func', '$oct', (('#', '10'),)))
+		# self.assertEqual (ast2nat2ast (p ('$oct(10)')), ('-func', '$oct', (('#', '10'),)))
 		self.assertEqual (ast2nat2ast (p ('(1,) + (2,)')), ('+', (('(', (',', (('#', '1'),))), ('(', (',', (('#', '2'),))))))
 		self.assertEqual (ast2nat2ast (p ('[1] + [2]')), ('+', (('[', (('#', '1'),)), ('[', (('#', '2'),)))))
 		self.assertEqual (ast2nat2ast (p ("'a' + 'b'")), ('+', (('"', 'a'), ('"', 'b'))))
@@ -3402,6 +3407,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\int**-a[b][c] x')), ('-intg', ('@', 'x'), ('@', ''), ('#', '0'), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (ast2nat2ast (p ('\\int**-a[b][c].d (x)')), ('-intg', ('(', ('@', 'x')), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2nat2ast (p ('\\int**-a[b][c].d (x) y')), ('-intg', ('@', 'y'), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (ast2nat2ast (p ('\\int**a.b[2] x dx')), ('-intg', ('@', 'x'), ('@', 'dx'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -3580,9 +3586,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('a * [2]')), ('*', (('@', 'a'), ('[', (('#', '2'),))), {1}))
 		self.assertEqual (ast2py2ast (p ('a * {-1}[x]')), ('*', (('@', 'a'), ('-idx', ('(', ('#', '-1')), (('@', 'x'),))), {1}))
 		self.assertEqual (ast2py2ast (p ('a * [x][y][z]')), ('*', (('@', 'a'), ('-idx', ('-idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),))), {1}))
-		self.assertEqual (ast2py2ast (p ('$N (1/2)')), ('-func', 'N', (('/', ('#', '1'), ('#', '2')),)))
-		self.assertEqual (ast2py2ast (p ("$S ('1/2')")), ('-func', 'S', (('"', '1/2'),)))
-		self.assertEqual (ast2py2ast (p ("$N ($S ('1/2'))")), ('-func', 'N', (('-func', 'S', (('"', '1/2'),)),)))
+		# self.assertEqual (ast2py2ast (p ('$N (1/2)')), ('-func', 'N', (('/', ('#', '1'), ('#', '2')),)))
+		# self.assertEqual (ast2py2ast (p ("$S ('1/2')")), ('-func', 'S', (('"', '1/2'),)))
+		# self.assertEqual (ast2py2ast (p ("$N ($S ('1/2'))")), ('-func', 'N', (('-func', 'S', (('"', '1/2'),)),)))
 		self.assertEqual (ast2py2ast (p ('o [i].t')), ('.', ('-idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (ast2py2ast (p ('o [i]**2')), ('^', ('-idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
 		self.assertEqual (ast2py2ast (p ('o [i]!')), ('-func', 'factorial', (('-idx', ('@', 'o'), (('@', 'i'),)),)))
@@ -3593,7 +3599,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('-', ('*', (('#', '1'), ('@', 'x')), {1})))))
 		self.assertEqual (ast2py2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x')), {1}), ('#', '1'))), ('@', 'x'), ('=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (ast2py2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y')), {1, 2}))), ('@', 'x'), ('@', 'y'), ('=', ('@', 'domain'), ('"', 'CC')))))
-		self.assertEqual (ast2py2ast (p ('$oct(10)')), ('-ufunc', 'oct', (('#', '10'),)))
+		# self.assertEqual (ast2py2ast (p ('$oct(10)')), ('-func', 'oct', (('#', '10'),)))
 		self.assertEqual (ast2py2ast (p ('(1,) + (2,)')), ('+', (('(', (',', (('#', '1'),))), ('(', (',', (('#', '2'),))))))
 		self.assertEqual (ast2py2ast (p ('[1] + [2]')), ('+', (('[', (('#', '1'),)), ('[', (('#', '2'),)))))
 		self.assertEqual (ast2py2ast (p ("'a' + 'b'")), ('+', (('"', 'a'), ('"', 'b'))))
@@ -3959,6 +3965,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\int**-a[b][c] x')), None)
 		self.assertEqual (ast2py2ast (p ('\\int**-a[b][c].d (x)')), None)
 		self.assertEqual (ast2py2ast (p ('\\int**-a[b][c].d (x) y')), None)
+		self.assertEqual (ast2py2ast (p ('\\int**a.b[2] x dx')), ('-func', 'Integral', (('@', 'x'), ('(', (',', (('@', 'x'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -4137,9 +4144,9 @@ class Test (unittest.TestCase):
 		self.assertRaises (TypeError, ast2spt2ast, p ('a * [2]'))
 		self.assertRaises (TypeError, ast2spt2ast, p ('a * {-1}[x]'))
 		self.assertEqual (ast2spt2ast (p ('a * [x][y][z]')), ('*', (('@', 'a'), ('-idx', ('-idx', ('[', (('@', 'x'),)), (('@', 'y'),)), (('@', 'z'),)))))
-		self.assertEqual (ast2spt2ast (p ('$N (1/2)')), ('#', '0.5'))
-		self.assertEqual (ast2spt2ast (p ("$S ('1/2')")), ('/', ('#', '1'), ('#', '2')))
-		self.assertEqual (ast2spt2ast (p ("$N ($S ('1/2'))")), ('#', '0.5'))
+		# self.assertEqual (ast2spt2ast (p ('$N (1/2)')), ('#', '0.5'))
+		# self.assertEqual (ast2spt2ast (p ("$S ('1/2')")), ('/', ('#', '1'), ('#', '2')))
+		# self.assertEqual (ast2spt2ast (p ("$N ($S ('1/2'))")), ('#', '0.5'))
 		self.assertEqual (ast2spt2ast (p ('o [i].t')), ('.', ('-idx', ('@', 'o'), (('@', 'i'),)), 't'))
 		self.assertEqual (ast2spt2ast (p ('o [i]**2')), ('^', ('-idx', ('@', 'o'), (('@', 'i'),)), ('#', '2')))
 		self.assertEqual (ast2spt2ast (p ('o [i]!')), ('!', ('-idx', ('@', 'o'), (('@', 'i'),))))
@@ -4150,7 +4157,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('y - 1*x')), ('+', (('@', 'y'), ('-', ('@', 'x')))))
 		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + 2 x + 1, x, domain = 'ZZ')")), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'))), ('#', '1'))), ('=', ('@', 'domain'), ('"', 'ZZ')))))
 		self.assertEqual (ast2spt2ast (p ("Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')")), ('-func', 'Poly', (('+', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('*', (('#', '2'), ('@', 'x'), ('@', 'y'))))), ('=', ('@', 'domain'), ('"', 'CC')))))
-		self.assertEqual (ast2spt2ast (p ('$oct(10)')), ('"', '0o12'))
+		# self.assertEqual (ast2spt2ast (p ('$oct(10)')), ('"', '0o12'))
 		self.assertEqual (ast2spt2ast (p ('(1,) + (2,)')), ('(', (',', (('#', '1'), ('#', '2')))))
 		self.assertEqual (ast2spt2ast (p ('[1] + [2]')), ('[', (('#', '1'), ('#', '2'))))
 		self.assertEqual (ast2spt2ast (p ("'a' + 'b'")), ('"', 'ab'))
@@ -4516,6 +4523,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\int**-a[b][c] x')), ('-intg', ('@', 'x'), ('@', 'd'), ('#', '0'), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (ast2spt2ast (p ('\\int**-a[b][c].d (x)')), ('-intg', ('@', 'x'), ('@', 'd'), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2spt2ast (p ('\\int**-a[b][c].d (x) y')), ('-intg', ('@', 'y'), ('@', 'd'), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (ast2spt2ast (p ('\\int**a.b[2] x dx')), ('-intg', ('@', 'x'), ('@', 'dx'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))
 	# END UPDATE BLOCK
 
 _EXPRESSIONS = r"""
@@ -4695,9 +4703,11 @@ a [2,3]
 a * [2]
 a * {-1}[x]
 a * [x][y][z]
-$N (1/2)
-$S ('1/2')
-$N ($S ('1/2'))
+N (1/2)
+S ('1/2')
+N (S ('1/2'))
+S.Half
+N S.Half
 o [i].t
 o [i]**2
 o [i]!
@@ -4708,7 +4718,7 @@ binomial (x, y)
 y - 1*x
 Poly(x**2 + 2 x + 1, x, domain = 'ZZ')
 Poly(x**2 + y**2 + 2 x y, x, y, domain = 'CC')
-$oct(10)
+oct(10)
 (1,) + (2,)
 [1] + [2]
 'a' + 'b'
@@ -5106,7 +5116,7 @@ if __name__ == '__main__':
 			lines.extend (['', expr])
 
 			try:
-				lines.append (func (p (expr)).replace ('\n', ''))
+				lines.append (repr (func (p (expr))).replace ('\n', ''))
 			except Exception as e:
 				lines.append (f'{e.__class__.__name__}: {e.args [0]}')
 

@@ -890,16 +890,18 @@ class AST_Func (AST):
 	_SYMPY_OBJECTS  = dict ((name, obj) for name, obj in filter (lambda no: no [0] [0] != '_', sp.__dict__.items ()))
 	_SYMPY_FUNCS    = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and callable (no [1]), _SYMPY_OBJECTS.items ()))
 
-	ESCAPE          = '$'
 	NOREMAP         = '@'
 	NOEVAL          = '%'
 
 	ADMIN           = {'vars', 'del', 'delall', 'env', 'envreset'}
 	PLOT            = {'plotf', 'plotv', 'plotw'}
 	PSEUDO          = {NOREMAP, NOEVAL}
-	BUILTINS        = {'max', 'min', 'abs', 'pow', 'set', 'sum', 'slice'}
 	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
 	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
+	BUILTINS        = {'abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
+                     'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
+                     'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'range',
+                     'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip'}
 
 	PY_TRIGHINV     = {f'a{f}' for f in TRIGH}
 	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
@@ -918,8 +920,6 @@ class AST_Func (AST):
 	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
 	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
 	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
-	_is_escaped           = lambda self: self.func [:1] == self.ESCAPE
-	_unescaped            = lambda self: self.func.lstrip (self.ESCAPE)
 
 class AST_Lim (AST):
 	op, is_lim = '-lim', True
