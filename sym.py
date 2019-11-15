@@ -419,10 +419,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'\\frac{{{self._ast2tex_wrap (ast.numer, 0, ast.numer.is_slice or false_diff)}}}{{{self._ast2tex_wrap (ast.denom, 0, {"-slice"})}}}'
 
 	def _ast2tex_pow (self, ast, trighpow = True):
-		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-log', '-func', '-mat', '-lamb', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
+		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-log', '-func', '-mat', '-lamb', '-idx', '-set', '-dict', '-ufunc'} or ast.base.is_num_pos))
 		p = self._ast2tex_curly (ast.exp)
 
-		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
+		if ast.base.is_trigh_func_noninv and ast.exp.is_num and trighpow: # and ast.exp.is_single_unit
 			i = len (ast.base.func) + (15 if ast.base.func in {'sech', 'csch'} else 1)
 
 			return f'{b [:i]}^{p}{b [i:]}'
@@ -767,13 +767,13 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'{n}{" / " if s else "/"}{d}'
 
 	def _ast2nat_pow (self, ast, trighpow = True):
-		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-idx', '-set', '-dict'} or ast.base.is_num_pos))
+		b = self._ast2nat_wrap (ast.base, 0, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-func', '-mat', '-idx', '-set', '-dict', '-ufunc'} or ast.base.is_num_pos))
 		p = self._ast2nat_wrap (ast.exp,
 				ast.exp.op in {'<>', '=', '+', '-lamb', '-slice', '-not'} or
 				ast.exp.strip_minus.op in {'*', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '||', '^^', '&&', '-or', '-and'},
 				{","})
 
-		if ast.base.is_trigh_func_noninv and ast.exp.is_single_unit and trighpow:
+		if ast.base.is_trigh_func_noninv and ast.exp.is_num and trighpow: # and ast.exp.is_single_unit
 			i = len (ast.base.func)
 
 			return f'{b [:i]}**{p}{b [i:]}'
