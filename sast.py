@@ -1126,3 +1126,4 @@ AST.DictEmpty  = AST ('-dict', ())
 # 	ast = AST ('-lamb', ('+', (('-func', '@', (('-func', '@', (('@', 'x'),)),)), ('@', 'y'))), ('x',))
 # 	res = AST.apply_vars (ast, {'x': AST.One, 'y': AST ('#', '2')})
 # 	print (res)
+

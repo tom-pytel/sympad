@@ -1,7 +1,5 @@
-> var assumptions using $ character
-> give anonymous ufuncs and syms name of var on assignment to var?
-
-> Boolean .could_extract_minus_sign() for calculations
+> add -sym to test_sym
+> give anonymous ufuncs and syms name of var on assignment to var
 
 
 > subs single variable argument which may be an object like a dict
@@ -19,6 +17,7 @@
 > subs autocomplete
 
 
+> doc: symbols and assumptions
 > doc: removed $ function escape character
 > doc: ast2spt calls even though they look like multiplies
 > doc: reference SymPy documentation
@@ -34,6 +33,8 @@
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
+
+> Boolean .could_extract_minus_sign() for calculations
 
 > relocate error hint text in web client to input area
 > improve error reporting with position of error returned from reduction functions if possible lalr1.Syntax (text, pos)

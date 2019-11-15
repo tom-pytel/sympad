@@ -235,7 +235,7 @@ They may be arbitrarily long - "<b>a if condition1 else b if condition2 else ...
 Apart from the top level SymPy functions which are available for calling but not as objects to be passed around or for assigning, there are two other types of function objects which can be manipulated in SymPad.
 There are lambda functions which can be assigned expressions and executed in SymPad like normal SymPy functions, and even passed into Python code to be executed like normal Python lambdas.
 There are also undefined mathematical function objects to be used mostly in differential equations.
-These last two types are assigned and can be passed around in SymPy just like any other type, unlike top-level SymPy module functions which can only be called.
+These last two types can be assigned and passed around in SymPy just like any other type, unlike top-level SymPy module functions which can only be called.
 The details of their operations are discussed in the <a href="#Functions">Functions</a> section below.
 </p>
 
@@ -265,12 +265,12 @@ The following default sets are available at the top level: "<b>Complexes</b>", "
 <p>
 Variable names can be a mix of Python and LaTeX format, they can be multi-character but cannot start or end with an underscore "<b>_</b>", or start with a number, though they may contain those.
 Standard identifiers are accepted as well as single Greek letters optionally preceded by a slash such as "<b>\alpha</b>" ($\alpha$), "<b>epsilon</b>" ($\epsilon$) or "<b>\Psi</b>" ($\Psi$).
-The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters, those Greek letters are accepted in Unicode as well.
+The Greek letters recognized and rendered in ... Greek ... are only those normally present within LaTeX which can not be visually confused with Latin letters, which Greek letters are accepted in Unicode as well.
 Variables names with a trailing number are displayed with that number as a subscript, and parsing of a variable from LaTeX format with a numerical subscript like "<b>x_{2}</b>" results in a variable name of "<b>x2</b>", currently these subscripts can only be non-negative integers.
 </p><p>
 The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
-"<b>pi</b>" and "<b>oo</b>" are also available for $\pi$ and $\infty$.
-Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present.
+"<b>pi</b>", "<b>oo</b>" and "<b>zoo</b>" are also available for $\pi$, $\infty$ and $\widetilde\infty$, as well as the sets of "<b>Reals</b>", "<b>Complexes</b>", "<b>Naturals</b>", "<b>Naturals0</b>", "<b>Integers</b>".
+Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present, as well as "<b>nan</b>".
 By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
 This is objectively prettier, but can be changed via the "<b>env (EI)</b>" and "<b>env (noEI)</b>" function.
 The SymPy constant usage can also be activated via the command line switch "<b>--EI</b>".
