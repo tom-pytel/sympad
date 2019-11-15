@@ -1,4 +1,4 @@
-> ufunc in base of pow does not need parens?
+> relocate error hint text in web client to input area
 
 > $f(x) when f is a lambda
 > bring __builtins__ to top level without need for $
@@ -95,7 +95,6 @@
 > var assumptions (using @ character? - @(x, real = True, infinite = False))
 
 > evil extra spacing before single-quote strings!
-> x'**2, x'.a, x'! - how to do in grammar?
 > # comment end of line?
 
 > importing modules to allow custom code execution

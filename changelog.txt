@@ -1,7 +1,7 @@
 v1.0.20:
 --------
+* Looong overdue - restructured grammar to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)).
 * Finally documented lots of changes.
-* Cleaned up grammar a little and fixed problems with indexing.
 
 v1.0.19:
 --------
