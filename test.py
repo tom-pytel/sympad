@@ -4874,27 +4874,6 @@ a.b * c.d
 a.b c.d
 lambda x, y, z: ln lambda x:
 lambda x, y, z: ln lambda x: 1
-N N N 2
-sin sin sin 2
--N sin -N 2
-sin -N sin 2
-N N sin -a [2]
-N N sin -a.b [2]
-N N sin -a.b () [2]
-N N sin -a.b () [2] [3]
-sin -N () [2] [3].c [4].d () [5]
-sqrt -N () [2] [3].c [4].d () [5]
-sqrt[3] -N () [2] [3].c [4].d () [5]
-log -N () [2] [3].c [4].d () [5]
-\log_2 -N () [2] [3].c [4].d () [5]
-N sin**2 ln**2 N x
-sin ln N x
-sin(a)**[a][b].c
-N sin N sin x
-cos**-1 0 \log_2 8
-N sin sqrt[3] \log_2 8
-sin(x)**-a[b][c].d
-N - N N 2
 
 f (x) (0)
 f (x, y) (0, 0)
@@ -4931,10 +4910,37 @@ a.b (((a))
 %%(x + y)
 \[[1, 2, 3], [4, 5, 6]] [:, 1:]
 
+N - N N 2
+N N N 2
+sin sin sin 2
+-N sin -N 2
+sin -N sin 2
+N N sin -a [2]
+N N sin -a.b [2]
+N N sin -a.b () [2]
+N N sin -a.b () [2] [3]
+sin -N () [2] [3].c [4].d () [5]
+sqrt -N () [2] [3].c [4].d () [5]
+sqrt[3] -N () [2] [3].c [4].d () [5]
+log -N () [2] [3].c [4].d () [5]
+\log_2 -N () [2] [3].c [4].d () [5]
+N sin**2 ln**2 N x
+sin ln N x
+sin(a)**[a][b].c
+N sin N sin x
+cos**-1 0 \log_2 8
+N sin sqrt[3] \log_2 8
+sin(x)**-a[b][c].d
 sin sin x [2].w
 sin -sin x [2].w
 sin sin (x) [2].w
 sin -sin (x) [2].w
+sin sin x [2].w ()
+ln ln x [2].w
+N N sin -a [2]
+sin sin -x [2].w
+sin -sin x [2].w
+sin(a)**b[2]
 """
 # _EXPRESSIONS = r"""
 

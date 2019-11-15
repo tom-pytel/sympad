@@ -1,4 +1,4 @@
-> N sin x[2].y
+> remove varass
 
 > $f(x) when f is a lambda
 > bring __builtins__ to top level without need for $
@@ -189,3 +189,9 @@ tex1: simp^{{}} \cdot \left(\left( \right) \right)
 tex2: simp^{\left\{ \right\}} \left(\left( \right) \right)
 
 pow x
+
+
+text: Seq Mul()
+ast:  ('*', (('@', 'Seq'), ('-func', 'Mul', ())))
+
+a Mul ()

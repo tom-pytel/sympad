@@ -173,56 +173,68 @@ def _expr_neg (expr): # conditionally push negation into certain operations to m
 	return expr.neg (stack = True)
 
 def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not handled by grammar
-	# print (f'lhs:   {lhs} - {lhs.src}\nrhs:   {rhs} - {rhs.src}\ntail:  {tail} - {tail.src}\narg:   {arg} - {arg.src}\nwrapt: {wrapt (AST.VarNull)}\nwrapa: {wrapa (AST.VarNull)}\nast:  {ast}')
-	def process_func (ast, arg, tail, wrapa, make):
-		# print (f'arg:  {arg}\ntail: {tail}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}')
-		# print (f'arg:  {arg}\ntail: {tail}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}\narg2: {arg2}')
-		# print (f'arg:  {arg}\ntail: {tail}\nmake: {make (AST.One)}\nwrpa: {wrapa (AST.One)}\narg2: {arg2}\nast2: {ast2}\nwrap: {wrap (AST.One)}')
-		if tail.op not in {'{', '('}:
-			if arg.is_brack:
-				tail2, wrapt = tail.tail_mul_wrap
+	def tail_mul_wrap (ast):
+		tail, wrap = ast, lambda ast: ast
 
-				if tail2.src and tail2.src.mul [1].op not in {'{', '('}: # horse before the cart because no other .src are used yet
-					if tail2.is_func:
-						return make (wrapt (AST ('-func', tail2.func, (wrapa (AST ('-idx', tail2.args [0], arg.brack)),)))), AST.Null
-					# elif tail.op in {'-sqrt', '-log'}:
-					# 	return make (AST (tail.op, wrapa (AST ('-idx', tail.args [0], arg.brack)), *tail [2:])), AST.Null
+		while 1:
+			if tail.is_mul:
+				tail, wrap = tail.mul [-1], lambda ast, tail = tail, wrap = wrap: wrap (AST ('*', tail.mul [:-1] + (ast,)))
 
+			elif tail.is_pow:
+				if tail.base.src and tail.base.src.is_mul and tail.base.src.mul.len == 2 and tail.base.src.mul [1].op not in {'{', '('} and \
+						 not (tail.base.src.mul [1].is_pow and tail.base.src.mul [1].base.op in {'{', '('}):
 
-			arg2 = _expr_mul_imp (tail, arg)
+					if tail.base.is_func:
+						tail, wrap = tail.base.src.mul [1], lambda ast, tail = tail, wrap = wrap: wrap (AST ('^', AST ('-func', tail.base.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', tail.base.func), ast))), tail.exp))
+						continue
 
-			if arg2.is_pow:
-				if arg2.base.op in {'-sqrt', '-log', '-func'} and arg2.base.src:
-					return make (wrapa (arg2)), AST.Null
+					elif tail.base.op in {'-sqrt', '-log'}:
+						tail, wrap = tail.base.src.mul [1], lambda ast, tail = tail, wrap = wrap: wrap (AST ('^', AST (tail.base.op, ast, *tail.base [2:], src = AST ('*', (AST.VarNull, ast))), tail.exp))
+						continue
 
-			ast2, wrap = arg2.tail_mul_wrap
+				tail, wrap = tail.exp, lambda ast, tail = tail, wrap = wrap: wrap (AST ('^', tail.base, ast))
 
-			if (ast2.is_attr_func or ast2.op in {'-log', '-sqrt', '-func', '-idx'}) and (not arg2.is_pow or not arg2.base.op in {'{', '('}):
-				return make (wrap (wrapa (ast2))), AST.Null
+			elif tail.is_minus:
+				tail, neg = tail._strip_minus (retneg = True)
+				wrap      = lambda ast, tail = tail, wrap = wrap, neg = neg: wrap (neg (ast))
 
-		return ast, arg
+			elif tail.src:
+				if tail.src.is_mul and tail.src.mul.len == 2 and tail.src.mul [1].op not in {'{', '('}:
+					if tail.is_func:
+						tail, wrap = tail.src.mul [1], lambda ast, tail = tail, wrap = wrap: wrap (AST ('-func', tail.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', tail.func), ast))))
+						continue
 
-	# start here
+					elif tail.op in {'-sqrt', '-log'}:
+						tail, wrap = tail.src.mul [1], lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:], src = AST ('*', (AST.VarNull, ast))))
+						continue
+
+				break
+
+			else:
+				break
+
+		return tail, wrap
+
+	# start here # print (f'lhs:   {lhs} - {lhs.src}\nrhs:   {rhs} - {rhs.src}\ntail:  {tail} - {tail.src}\narg:   {arg} - {arg.src}\nwrapt: {wrapt (AST.VarNull)}\nwrapa: {wrapa (AST.VarNull)}\nast:  {ast}')
 	ast         = None
 	arg, wrapa  = _ast_func_reorder (rhs)
-	tail, wrapt = lhs.tail_mul_wrap # lhs, lambda ast: ast
+	tail, wrapt = tail_mul_wrap (lhs) # lhs, lambda ast: ast
 
 	if tail.is_attr: # {x.y} *imp* () -> x.y(), x.{y.z} -> {x.y}.z
-		if tail.is_attr_var:
-			if arg.is_paren:
-				ast = wrapa (AST ('.', tail.obj, tail.attr, _ast_func_tuple_args (arg)))
+		if arg.is_paren and tail.is_attr_var:
+			ast = wrapa (AST ('.', tail.obj, tail.attr, _ast_func_tuple_args (arg)))
 
-	elif tail.is_pow: # {x^y.z} *imp* () -> x^{y.z()}
-		if tail.exp.is_attr_var:
-			if arg.is_paren:
-				ast = AST ('^', tail.base, wrapa (AST ('.', tail.exp.obj, tail.exp.attr, _ast_func_tuple_args (arg))))
-			elif rhs.is_attr:
-				ast = AST ('^', tail.base, ('.', _expr_mul_imp (tail.exp, rhs.obj), rhs.attr))
+	# elif tail.is_pow: # {x^y.z} *imp* () -> x^{y.z()}
+	# 	if tail.exp.is_attr_var:
+	# 		if arg.is_paren:
+	# 			ast = AST ('^', tail.base, wrapa (AST ('.', tail.exp.obj, tail.exp.attr, _ast_func_tuple_args (arg))))
+	# 		elif rhs.is_attr:
+	# 			ast = AST ('^', tail.base, ('.', _expr_mul_imp (tail.exp, rhs.obj), rhs.attr))
 
 	elif tail.is_var: # user_func *imp* (...) -> user_func (...)
 		if tail.var in _SP_USER_FUNCS: # or arg.strip_paren.is_comma:
 			if arg.is_paren:
-				ast = wrapa (AST ('-func', tail.var, _ast_func_tuple_args (arg)))
+				ast = wrapa (AST ('-func', tail.var, _ast_func_tuple_args (arg), src = AST ('*', (tail, arg))))
 			elif tail.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 				ast = wrapa (AST ('-func', tail.var, (arg,), src = AST ('*', (tail, arg))))
 
@@ -266,26 +278,6 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 
 		if arg.is_paren and diffp.is_ufunc_applied and diffp.can_apply_argskw (arg.paren.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
 			ast = wrapa (AST ('-subs', tail, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
-
-	elif tail.is_func: # sin N 2 -> sin (N (2)) instead of sin (N) * 2
-		if tail.src and (not (arg.op in {'-log', '-sqrt', '-func'} and arg.src) or tail.src.mul [1].tail_mul.op in {'-log', '-sqrt', '-func'} or tail.src.mul [1].tail_mul.var in _SP_USER_FUNCS):
-			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST ('-func', tail.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', tail.func), ast))))
-
-	elif tail.op in {'-sqrt', '-log'}: # ln N 2 -> ln (N (2)) instead of ln (N) * 2, log, sqrt
-		if tail.src:
-			ast, arg = process_func (ast, arg, tail.src.mul [1], wrapa, lambda ast, tail = tail: AST (tail.op, ast, *tail [2:], src = AST ('*', (AST.VarNull, ast))))
-
-	elif lhs.is_pow: # f**2 N x -> f**2 (N (x))
-		if lhs.base.src and lhs.base.src.mul [1].op not in {'{', '('} and not (lhs.base.src.mul [1].is_pow and lhs.base.src.mul [1].base.op in {'{', '('}): # this only happens on f**p x, not f (x)**p or f x**p, also horse before the cart
-			if lhs.base.is_func:
-				make = lambda ast, lhs = lhs: AST ('^', AST ('-func', lhs.base.func, () if ast.is_comma_empty else (ast,), src = AST ('*', (('@', lhs.base.func), ast))), lhs.exp)
-			elif lhs.base.op in {'-sqrt', '-log'}:
-				make = lambda ast, lhs = lhs: AST ('^', AST (lhs.base.op, ast, *lhs.base [2:], src = AST ('*', (AST.VarNull, ast))), lhs.exp)
-
-			ast, arg = process_func (ast, rhs, lhs.base.src.mul [1], wrapa, make)
-
-		if arg == AST.Null:
-			return ast
 
 	if arg.is_brack: # x *imp* [y] -> x [y]
 		if not arg.brack:
@@ -1353,16 +1345,9 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	# set_sp_user_funcs ({'N'})
 	# set_sp_user_vars ({'f': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-
-	# a = p.parse (r"sin sin x [2].w")
-	# a = p.parse (r"sin sin (x) [2].w")
-
-	# a = p.parse (r"sin -sin x [2].w")
-	a = p.parse (r"sin sin -x [2].w")
-	# a = p.parse (r"N N sin -a [2]")
-
-	# a = p.parse (r"ln ln x [2].w")
-	# a = p.parse (r"sin sin x [2].w ()")
+	# a = p.parse (r"sin**-a[b][c].d(x)")
+	# a = p.parse (r"sin**-a[b][c] (x)")
+	a = p.parse (r"\int**-a[b][c] (x)")
 
 	print (a)
 

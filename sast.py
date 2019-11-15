@@ -218,30 +218,19 @@ class AST (tuple):
 		return self
 
 	def _tail_mul (self):
-		return self.tail_mul_wrap [0]
-
-	def _tail_mul_wrap (self):
-		tail, wrap = self, lambda ast: ast
-		wrap.ast   = AST.Null
+		tail = self
 
 		while 1:
-			astw = tail
-
 			if tail.is_mul:
-				tail, wrap = tail.mul [-1], lambda ast, tail = tail, wrap = wrap: wrap (AST ('*', tail.mul [:-1] + (ast,)))
+				tail = tail.mul [-1]
 			elif tail.is_pow:
-				tail, wrap = tail.exp, lambda ast, tail = tail, wrap = wrap: wrap (AST ('^', tail.base, ast))
-
+				tail = tail.exp
 			elif tail.is_minus:
-				tail, neg = tail._strip_minus (retneg = True)
-				wrap      = lambda ast, tail = tail, wrap = wrap, neg = neg: wrap (neg (ast))
-
+				tail = tail.minus
 			else:
 				break
 
-			wrap.ast = astw
-
-		return tail, wrap
+		return tail
 
 	def _has_tail_lambda_solo (self):
 		return self.tail_lambda_solo != (None, None)
@@ -290,7 +279,7 @@ class AST (tuple):
 				tail = tail [1]
 
 			elif tail.is_diff:
-				if (tail.src or not tail.diff.is_var) and not (tail.src and tail.src.is_div and (tail.src.numer.is_mul or tail.src.numer.is_diff_or_part)): # checking .src from sparser if present
+				if (tail.src or not tail.diff.is_var) and not (tail.src and tail.src.is_div and (tail.src.numer.is_mul or tail.src.numer.is_diff_or_part)): # check src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, tail.d, tail.dvs))
 					tail = tail.diff
 
@@ -302,7 +291,7 @@ class AST (tuple):
 				tail = tail.cmp [-1] [1]
 
 			elif tail.op in {'-sqrt', '-log'}:
-				if tail.src: # checking .src from sparser if present
+				if tail.src: # check src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST (tail.op, ast, *tail [2:]))
 					tail = tail.src.mul [1]
 
@@ -310,7 +299,7 @@ class AST (tuple):
 					break
 
 			elif tail.is_func:
-				if tail.src and tail.src.mul [0].is_var and tail.src.mul [0].var == tail.func: # checking .src from sparser if present
+				if tail.src and tail.src.mul [0].is_var and tail.src.mul [0].var == tail.func: # check src from sparser if present
 					wrap = lambda ast, tail = tail, wrap = wrap: wrap (AST ('-func', tail.func, (ast,)))
 					tail = tail.src.mul [1]
 
