@@ -1,4 +1,4 @@
-> relocate error hint text in web client to input area
+> d/dx (f(x))(0) -> f(x)'(0)
 
 > $f(x) when f is a lambda
 > bring __builtins__ to top level without need for $
@@ -34,6 +34,7 @@
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
+> relocate error hint text in web client to input area
 > improve error reporting with position of error returned from reduction functions if possible lalr1.Syntax (text, pos)
 
 > test_sym check for VarNulls and reject expression if detected
