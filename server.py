@@ -287,6 +287,8 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		except RecursionError:
 			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
 
+		vars = {v: AST (a.op, v, *a [2:]) if a.op in {'-ufunc', '-sym'} and not a [1] else a for v, a in vars.items ()}
+
 		_VARS.update (vars)
 
 	if not vars: # no assignment

@@ -732,6 +732,15 @@ def expr_subs ():
 		return f'\\left. {expr ()} \\right|_{{{s}}}'
 	# else: Subs ()
 
+def expr_sym ():
+	name = _randidentifier ()
+	kw   = (() if random () < 0.5 else ('real = True',)) + (() if random () < 0.5 else ('commutative = True',))
+
+	if random () < 0.25:
+		return f"Symbol({name!r}, {', '.join (kw)})"
+	else:
+		return f"${name}({', '.join (kw)})"
+
 #...............................................................................................
 DEPTH  = 0 # pylint snack
 EXPRS  = [va [1] for va in filter (lambda va: va [0] [:5] == 'expr_', globals ().items ())]

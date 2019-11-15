@@ -1,7 +1,3 @@
-> add -sym to test_sym
-> give anonymous ufuncs and syms name of var on assignment to var
-
-
 > subs single variable argument which may be an object like a dict
 > (a or b) or (a and b) - result parenthesizing for clarity
 
@@ -17,6 +13,7 @@
 > subs autocomplete
 
 
+> doc: give anonymous ufuncs and syms name of var on assignment to var
 > doc: symbols and assumptions
 > doc: removed $ function escape character
 > doc: ast2spt calls even though they look like multiplies
