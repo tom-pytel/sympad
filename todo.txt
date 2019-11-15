@@ -7,7 +7,6 @@
 > 'not' as func prefix arg like minus
 > (a or b) or (a and b) - result parenthesizing for clarity
 
-> again redo spt2ast_Add?
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
@@ -45,14 +44,17 @@
 > @ and % without parentheses consistency?
 > overhaul server env option command line setting
 
-> parse from python ln x / ln base -> \log_{base} x? only for number bases?
-
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 > subs clarity parentheses for tex display - attr, etc?
-> _spt2ast_Mul - do not absorb fraction into non-fraction option
+
+> again redo spt2ast_Add?
+> _spt2ast_Mul - option to not absorb fraction into non-fraction
 
 > allow N**2 y?
 > clean up sym lambda keyword safety wrapping
+> clean up safety parens from grammar tail element overhaul
+
+> parse from python ln x / ln base -> \log_{base} x? only for number bases?
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)?
 
