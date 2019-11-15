@@ -164,6 +164,9 @@ def _Mul (*args):
 def _Pow (base, exp): # fix inconsistent sympy Pow (..., evaluate = True)
 	return base**exp
 
+def _bool_or_None (v):
+	return None if v is None else bool (v)
+
 def _fltoint (num):
 	return int (num) if isinstance (num, int) or num.is_integer () else num
 
@@ -1480,7 +1483,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-or'   : lambda self, ast: sp.Or (*(_sympify (self._ast2spt (a), sp.Or, bool) for a in ast.or_)),
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
-		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: self._ast2spt (a) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
+		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
 		'-subs' : _ast2spt_subs,
 
 		'text'  : lambda self, ast: ast.spt,

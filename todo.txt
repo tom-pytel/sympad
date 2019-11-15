@@ -10,6 +10,8 @@
 
 > subs autocomplete
 
+> var assumptions using $ character
+
 
 > doc: removed $ function escape character
 > doc: ast2spt calls even though they look like multiplies
@@ -91,8 +93,6 @@
 > allow leading underscore for vars and funcs and leading \_ for tex?
 > clean up sparser TOKENS and centralize repeated patterns
 
-> var assumptions (using @ character? - @(x, real = True, infinite = False))
-
 > evil extra spacing before single-quote strings!
 > # comment end of line?
 
@@ -102,8 +102,6 @@
 > better plotting limits specification
 
 > test_python module
-
-> lighter font color assumptions and info for math returns
 
 > vector calculus
 > nabla - gradient, laplacian
