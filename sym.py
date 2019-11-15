@@ -20,7 +20,7 @@ _DOIT           = True # expression doit()
 class _None: pass # unique non-None None marker
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
-	op, is_text = 'text', True
+	op, is_text = '-text', True
 
 	def _init (self, tex = None, nat = None, py = None, spt = None):
 		self.tex, self.nat, self.py, self.spt = tex, nat, py, spt
@@ -590,8 +590,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
 		'-ufunc': _ast2tex_ufunc,
 		'-subs' : _ast2tex_subs,
+		'-sym'  : lambda self, ast: f'\\${self._ast2tex (AST ("@", ast.sym)) if ast.sym else ""}\\left({", ".join (tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
 
-		'text'  : lambda self, ast: ast.tex,
+		'-text' : lambda self, ast: ast.tex,
 	}
 
 #...............................................................................................
@@ -922,8 +923,9 @@ class ast2nat: # abstract syntax tree -> native text
 		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
 		'-ufunc': _ast2nat_ufunc,
 		'-subs' : _ast2nat_subs,
+		'-sym'  : lambda self, ast: f'${ast.sym}({", ".join (tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
 
-		'text'  : lambda self, ast: ast.nat,
+		'-text' : lambda self, ast: ast.nat,
 	}
 
 #...............................................................................................
@@ -1167,8 +1169,9 @@ class ast2py: # abstract syntax tree -> Python code text
 		'-not'  : lambda self, ast: f'Not({self._ast2py_paren (ast.not_, ast.not_.is_ass or ast.not_.is_comma)})',
 		'-ufunc': lambda self, ast: f'Function({", ".join ((f"{ast.ufunc!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})' + (f'({", ".join (self._ast2py (v) for v in ast.vars)})' if ast.vars else ''),
 		'-subs' : _ast2py_subs,
+		'-sym'  : lambda self, ast: f'Symbol({", ".join ((f"{ast.sym!r}",) + tuple (f"{k} = {self._ast2py_paren (a, a.is_comma)}" for k, a in ast.kw))})',
 
-		'text'  : lambda self, ast: ast.py,
+		'-text' : lambda self, ast: ast.py,
 	}
 
 #...............................................................................................
@@ -1485,8 +1488,9 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
 		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
 		'-subs' : _ast2spt_subs,
+		'-sym'  : lambda self, ast: sp.Symbol (ast.sym, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}),
 
-		'text'  : lambda self, ast: ast.spt,
+		'-text' : lambda self, ast: ast.spt,
 	}
 
 #...............................................................................................
@@ -1515,7 +1519,7 @@ class spt2ast:
 			if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
 				tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
 
-			return AST ('text', tex, str (spt), str (spt), spt)
+			return AST ('-text', tex, str (spt), str (spt), spt)
 
 		self.parents.append (self.spt)
 
@@ -1717,7 +1721,7 @@ class spt2ast:
 		sp.numbers.ComplexInfinity: lambda self, spt: AST.CInfty,
 		sp.numbers.NaN: lambda self, spt: AST.NaN,
 
-		sp.Symbol: lambda self, spt: AST ('@', spt.name),
+		sp.Symbol: lambda self, spt: AST ('@', spt.name) if spt == sp.Symbol (spt.name) else AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ()))),
 
 		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
@@ -1808,18 +1812,21 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-# 	set_sym_user_funcs (vars)
+_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
+if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	set_sym_user_funcs (vars)
 
-# 	ast = AST ('-idx', ('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))), (('-slice', False, False, None), ('-slice', ('#', '1'), False, None)))
-# 	# res = ast2tex (ast)
-# 	# res = ast2nat (ast)
-# 	# res = ast2py (ast)
+	ast = AST ('-idx', ('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))), (('-slice', False, False, None), ('-slice', ('#', '1'), False, None)))
+	# res = ast2tex (ast)
+	# res = ast2nat (ast)
+	# res = ast2py (ast)
 
-# 	res = ast2spt (ast)
-# 	res = spt2ast (res)
-# 	res = ast2nat (res)
+	# res = ast2spt (ast)
+	# res = spt2ast (res)
+	# res = ast2nat (res)
 
-# 	print (repr (res))
+	res = sp.Symbol ('res', real = True)
+
+
+	print (repr (res))

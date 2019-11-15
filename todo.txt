@@ -1,16 +1,22 @@
+> var assumptions using $ character
+> give anonymous ufuncs and syms name of var on assignment to var?
+
+> Boolean .could_extract_minus_sign() for calculations
+
+
 > subs single variable argument which may be an object like a dict
 > (a or b) or (a and b) - result parenthesizing for clarity
 
 > d/dx (f(x))(0) -> f(x)'(0)
+
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
+
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
 > ((1, 2) + (1, 2)).subs((1, 2), (3, 4))
 
 > subs autocomplete
-
-> var assumptions using $ character
 
 
 > doc: removed $ function escape character
@@ -26,7 +32,6 @@
 > doc: PDEs
 
 
-> d/dx f (x) (0) -> (d/dx f (x)) (0) instead of d/dx (f (x) (0))?
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 

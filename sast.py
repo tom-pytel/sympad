@@ -1084,11 +1084,20 @@ class AST_Subs (AST):
 
 	_is_subs_diff_ufunc = lambda self: self.expr.is_diff and self.expr.diff._strip_paren (1).is_ufunc
 
+class AST_Sym (AST):
+	op, is_sym = '-sym', True
+
+	def __new__ (cls, sym, kw = ()):
+		self              = tuple.__new__ (cls, ('-sym', sym, kw) if kw else ('-sym', sym))
+		self.sym, self.kw = sym, kw
+
+		return self
+
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
 	AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_MulExp, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func,
 	AST_Lim, AST_Sum, AST_Diff, AST_DiffP, AST_Intg, AST_Mat, AST_Piece, AST_Lamb, AST_Idx, AST_Slice, AST_Set, AST_Dict,
-	AST_Union, AST_SDiff, AST_XSect, AST_Or, AST_And, AST_Not, AST_UFunc, AST_Subs]
+	AST_Union, AST_SDiff, AST_XSect, AST_Or, AST_And, AST_Not, AST_UFunc, AST_Subs, AST_Sym]
 
 for _cls in _AST_CLASSES:
 	AST.register_AST (_cls)
