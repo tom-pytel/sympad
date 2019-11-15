@@ -1,7 +1,8 @@
 v1.0.20:
 --------
-* Looong overdue - restructured grammar to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)).
 * Finally documented lots of changes.
+* Looong overdue - restructured grammar to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)).
+* Added parsing not as possible unary prefix to unparenthesized function arguments.
 
 v1.0.19:
 --------

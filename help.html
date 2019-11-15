@@ -182,7 +182,7 @@ There is another step which can be carried out automatic on the resulting object
 This simplification step is off by default since it can mess up certain equations which are specifically returned in a certain format, but can be turned on in SymPad via the environment mechanism.
 After this the resulting SymPy object is converted back to the internal representation and any translations for symbolic display are carried out again.
 </p><p>
-SymPad does some internal acrobatics to allow certain SymPy operations to work with native Python objects with which they normally do not.
+SymPad does some internal gymnastics to allow certain SymPy operations to work with native Python objects with which they normally do not.
 This is mostly addition or multiplication of tuples or lists, indexing with unknown symbols, extending simplification and substitution and doit into Python containers and the like, housekeeping stuff.
 Arithmetic with "<b>Boolean</b>" types is hacked in as well as automatic matrix simplification (enabled or disabled in the environment) since those tend to blow up pretty quickly in SymPy.
 Many SymPy functions are translated normally for display or quick shorthand for copying but SymPad attempts to preserve as much of any original Python code as possible from the expression to pass on to creating the evaluation SymPy objects.
