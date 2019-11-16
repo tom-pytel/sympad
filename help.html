@@ -295,9 +295,11 @@ Symbols are objects which represent a variable and if you use variables in an ex
 The default symbols which are created for normal variables like "<b>x</b>" however do not contain any extra information which may be useful for certain calculations.
 This extra information comes in the form of SymPy assumptions which allow you to specify whether a variable is real or positive or commutative or hermitian etc...
 To create a symbol with this extra information use the "<b>$</b>" symbol pseudo-function, the format is "<b>$name (assumption = True | False | None)</b>", so for example a variable "<b>x</b>" known to be real would be created as "<b>$x (real = True)</b>".
+The name part of a "<b>$name (...)</b>" symbol is optional and you can use anonymous symbols without any problems.
 The SymPy assumption model works on fuzzy boolean logic where "<b>True</b>" means that the assumption is true, "<b>False</b>" means that it is false and "<b>None</b>" means that it is unknown whether the assumption is true or false.
 It is the true and false values for the assumptions which can simplify calculations or even make them possible whereas they would not be so if the information was not provided.
 </p><p>
+To get an idea for how the assumptions operate try entering "<b>$(negative = True) &lt; 0</b>" and see what you get, this is "<b>True</b>" because all negative numbers are smaller than "<b>0</b>".
 The only assumption that is made for default symbols which are created is "<b>commutative = True</b>", but of course you can create a symbol where this is false, though it can not be unknown.
 It is not convenient to have to type all this every time you reference a symbol in an expression so of course these symbols may be assigned to variables, even variables of the same name (where normally this is disallowed).
 In fact for the sake of sanity it is suggested that you assign "<b>$</b>" symbols the same name as the variable you assign them to, though this is not enforced and you can even reassign them from one variable to another.

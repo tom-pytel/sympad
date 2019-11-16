@@ -125,10 +125,11 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers
 		return dict ((_subs (k, subs), _subs (v, subs)) for k, v in spt.items ())
 
 	try:
-		if isinstance (spt, (bool, int, float, complex)):
-			return sp.sympify (spt).subs (subs)
-		else:
-			return spt.subs (subs)
+		# if isinstance (spt, (bool, int, float, complex)):
+		# 	return sp.sympify (spt).subs (subs)
+		# else:
+		# 	return spt.subs (subs)
+		return sp.Subs (spt, tuple (s for s, _ in subs), tuple (d for _, d in subs))
 
 	except:
 		pass
@@ -1441,13 +1442,14 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	def _ast2spt_subs (self, ast):
-		if ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc:
-			return NoEval (ast) # do not execute because loses information about variables
-		else:
-			return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
+		spt = _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
 
-		# return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
-		# raise RuntimeError ('FIXME!')
+		if ast.expr.is_ufunc: # execute substitution on ufunc, otherwise will not be accepted as ics to dsolve and the like
+			spt = spt.doit ()
+		elif ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc: # disable doit for these because loses information about variables
+			spt.doit = lambda self = spt, *args, **kw: self
+
+		return spt
 
 	_ast2spt_funcs = {
 		';'     : lambda self, ast: _raise (RuntimeError ('semicolon expression should never get here')),
@@ -1724,7 +1726,7 @@ class spt2ast:
 		sp.numbers.ComplexInfinity: lambda self, spt: AST.CInfty,
 		sp.numbers.NaN: lambda self, spt: AST.NaN,
 
-		sp.Symbol: lambda self, spt: AST ('@', spt.name) if spt == sp.Symbol (spt.name) else AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ()))),
+		sp.Symbol: lambda self, spt: AST ('@', spt.name) if spt.name and spt == sp.Symbol (spt.name) else AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ()))),
 
 		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
@@ -1820,16 +1822,14 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 	set_sym_user_funcs (vars)
 
-	ast = AST ('-idx', ('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))), (('-slice', False, False, None), ('-slice', ('#', '1'), False, None)))
+	ast = AST ('-subs', ('-diff', ('-ufunc', 'f', (('@', 'x'), ('@', 'y'))), 'd', (('x', 1),)), ((('@', 'x'), ('#', '0')), (('@', 'y'), ('#', '0'))))
 	# res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	# res = ast2spt (ast)
+	res = ast2spt (ast)
 	# res = spt2ast (res)
 	# res = ast2nat (res)
-
-	res = sp.Symbol ('res', real = True)
 
 
 	print (repr (res))

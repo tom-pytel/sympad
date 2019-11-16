@@ -1,7 +1,3 @@
-> BROKEN! dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7}) - due to not evaluating in _ast2spt_subs
-
-> cannot assign to anonymous function in sparser?
-
 > subs single variable argument which may be an object like a dict
 > (a or b) or (a and b) - result parenthesizing for clarity
 
@@ -13,6 +9,8 @@
 > ((1, 2) + (1, 2)).subs((1, 2), (3, 4))
 
 > subs autocomplete
+
+> cannot assign to anonymous function in sparser?
 
 
 > doc: give anonymous ufuncs name of var on assignment to var
