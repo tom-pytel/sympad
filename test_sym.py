@@ -449,12 +449,14 @@ inverse_mell in_transform(())
 
 _LETTERS         = string.ascii_letters
 _LETTERS_NUMBERS = _LETTERS + '_' + string.digits
+_RESERVED_WORDS  = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | sast.AST_Func.PY
 
 def _randidentifier ():
-	s = f'{choice (_LETTERS)}{"".join (choice (_LETTERS_NUMBERS) for _ in range (randint (0, 6)))}{choice (_LETTERS)}'
+	while 1:
+		s = f'{choice (_LETTERS)}{"".join (choice (_LETTERS_NUMBERS) for _ in range (randint (0, 6)))}{choice (_LETTERS)}'
 
-	if s [:2] == 'd_' or s [:8] == 'partial_':
-		s = 'a' + s
+		if not (s in _RESERVED_WORDS or s [:2] == 'd_' or s [:8] == 'partial_' or (s [:1] == 'd' and s [1:] in _RESERVED_WORDS) or (s [:7] == 'partial' and s [7:] in _RESERVED_WORDS)):
+			break
 
 	return s
 
@@ -563,19 +565,19 @@ def expr_sqrt ():
 			if random () >= 0.5 else \
 			f'\\sqrt[{expr ()}]{expr ()} '
 
-_FORBIDDEN_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma', 'digamma', 'idiff'}
+_FORBIDDEN_SXLAT_FUNCS = set (sxlat.XLAT_FUNC2AST_TEX) | set (sxlat.XLAT_FUNC2AST_NAT) | set (sxlat.XLAT_FUNC2AST_PY) | set (sxlat._XLAT_FUNC2TEX) | {'Gamma', 'digamma', 'idiff'}
 
 def expr_func ():
 	while 1:
 		py = choice (list (AST.Func.PY))
 
-		if py not in _FORBIDDEN_FUNCS:
+		if py not in _FORBIDDEN_SXLAT_FUNCS:
 			break
 
 	while 1:
 		tex = choice (list (AST.Func.TEX))
 
-		if tex not in _FORBIDDEN_FUNCS:
+		if tex not in _FORBIDDEN_SXLAT_FUNCS:
 			break
 
 	return \
@@ -784,8 +786,6 @@ def parse (text):
 
 	return ret [0]
 
-_RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | sast.AST_Func.PY
-
 def test (argv = None):
 	global DEPTH, CURLYS
 
@@ -857,13 +857,13 @@ def test (argv = None):
 					if ast.func == 'slice' and ast.args.len == 2 and ast.args [0] == AST.None_: # :x gets written as slice(x) but may come from slice(None, x)
 						ast = AST ('-slice', AST.None_, ast.args [1], None)
 
-				elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
-					if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
-						return AST ('@', 'CENSORED')
+				# elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
+				# 	if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
+				# 		return AST ('@', 'CENSORED')
 
-				elif ast.is_intg: # same
-					if ast.dv.as_var.var in _RESERVED_WORDS:
-						return AST ('@', 'CENSORED')
+				# elif ast.is_intg: # same
+				# 	if ast.dv.as_var.var in _RESERVED_WORDS:
+				# 		return AST ('@', 'CENSORED')
 
 				elif ast.is_slice: # the slice object is evil
 					if ast.step == AST.None_:
@@ -872,6 +872,10 @@ def test (argv = None):
 				elif ast.is_ufunc: # remove spaces inserted into ufunc name
 					if ' ' in ast.ufunc:
 						ast = AST ('-ufunc', ast.ufunc.replace (' ', ''), ast.vars, ast.kw)
+
+				elif ast.is_sym: # remove spaces inserted into ufunc name
+					if ' ' in ast.sym:
+						ast = AST ('-sym', ast.sym.replace (' ', ''), ast.kw)
 
 				return AST (*tuple (fixstuff (a) for a in ast))
 

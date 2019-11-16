@@ -151,6 +151,8 @@ class LALR1:
 		rederr = None # reduction function raised exception (SyntaxError or Incomplete usually)
 		pos    = 0
 
+		self.reds = {} # debug
+
 		while 1:
 			if not rederr:
 				tok       = tokens [tokidx]
@@ -207,6 +209,10 @@ class LALR1:
 				pos   = stack [rnlen].pos
 
 				try:
+					# self.reds [stack [rnlen]] = self.reds.get (rfuncs [stack [rnlen]], 0) + 1
+					self.reds [rule] = self.reds.get (rule, 0) + 1
+
+
 					red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
 
 				except SyntaxError as e:

@@ -5085,6 +5085,7 @@ sin**-a[b][c] (x)
 \int**-a[b][c].d (x)
 \int**-a[b][c].d (x) y
 \int**a.b[2] x dx
+dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(0: 0, y(x)'(0): -7})
 """
 # _EXPRESSIONS = r"""
 

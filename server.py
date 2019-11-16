@@ -291,6 +291,8 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 		_VARS.update (vars)
 
+		return vars.items ()
+
 	if not vars: # no assignment
 		_VARS ['_'] = ast
 
@@ -299,9 +301,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		return [ast]
 
 	if len (vars) == 1: # simple assignment
-		set_vars ({vars [0]: ast})
-
-		vars = ((vars [0].var, ast),)
+		vars = set_vars ({vars [0]: ast})
 
 	else: # tuple assignment
 		ast = ast.strip_paren
@@ -332,9 +332,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		elif len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
-		set_vars (dict (zip (vars, asts)))
-
-		vars = tuple (zip ((v.var for v in vars), asts))
+		vars = set_vars (dict (zip (vars, asts)))
 
 	_vars_updated ()
 

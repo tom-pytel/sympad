@@ -46,8 +46,8 @@ User input is intended to be quick, easy and intuitive and is displayed in symbo
 Sympad will accept Python expressions, LaTeX formatting, Unicode math symbols and a native shorthand intended for fast entry, or a mix of all of these.
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p><p>
-You don't need to know SymPy to use SymPad, you can just check out the examples here to see how to do something, but if you do then it will definitely help since in theory most SymPy functionality is supported but not necessarily documented here (notably missing functionality is variable assumptions which are not supported yet).
-For more information on SymPy functions which are accessible through SymPad see <a href="https://docs.sympy.org/latest/index.html">SymPy Documentation</a>.
+You don't need to know SymPy to use SymPad, you can just check out the examples here to see how to do something, but if you are familiar with it then it will definitely help since in theory most SymPy functionality is supported but not necessarily documented here.
+For more information on SymPy functions which are accessible through SymPad see the <a href="https://docs.sympy.org/latest/index.html">SymPy Documentation</a>.
 If you want to jump in and see what SymPad can do then just go directly to <a href="#Quick Start">Quick Start</a>.
 </p>
 
@@ -69,6 +69,7 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 &emsp;<a href="#Function Types">Functions</a><br>
 &emsp;<a href="#Strings, Lists, Tuples and Dictionaries">Strings, Lists, Tuples and Dictionaries</a><br>
 &emsp;<a href="#Variables">Variables</a><br>
+&emsp;<a href="#Symbols and Assumptions">Symbols and Assumptions</a><br>
 
 <h4><a href="#Operations">Operations</a></h4>
 &emsp;<a href="#Addition and Multiplication">Addition and Multiplication</a><br>
@@ -89,7 +90,8 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 &emsp;<a href="#Indexing">Indexing</a><br>
 &emsp;<a href="#Member Access">Member Access</a><br>
 &emsp;<a href="#Variable Assignment">Variable Assignment</a><br>
-&emsp;<a href="#Simplification">Simplification</a><br>
+&emsp;<a href="#Automatic Simplification">Automatic Simplification</a><br>
+&emsp;<a href="#More...">More...</a><br>
 
 <h4><a href="#Functions">Functions</a></h4>
 &emsp;<a href="#SymPy Functions">SymPy Functions</a><br>
@@ -114,6 +116,7 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 
 <h4><a href="#Appendix">Appendix</a></h4>
 &emsp;<a href="#Quick Input Mode">Quick Input Mode</a><br>
+&emsp;<a href="#Assumptions">Assumptions</a><br>
 &emsp;<a href="#Special Characters">Special Characters</a><br>
 &emsp;<a href="#Admin Functions">Admin Functions</a><br>
 &emsp;<a href="#Environment Settings for env()">Environment Settings for env()</a><br>
@@ -210,7 +213,7 @@ Imaginary numbers are entered using the imaginary unit "<b>i</b>" or "<b>I</b>" 
 
 <p>
 Your standard True and False with SymPy Boolean results being coerced to these.
-SymPad modifies the SymPy Boolean classes to allow basic arithmetic so you can use the results of comparisons in expressions and they are automatically cast just like in Python to 1 and 0.
+SymPad modifies the SymPy Boolean classes to allow basic arithmetic so you can use the results of comparisons in expressions and they are automatically cast to 1 and 0 just like in Python.
 </p>
 
 <h4 id="Vectors and Matrices">Vectors and Matrices</h4>
@@ -269,7 +272,7 @@ The Greek letters recognized and rendered in ... Greek ... are only those normal
 Variables names with a trailing number are displayed with that number as a subscript, and parsing of a variable from LaTeX format with a numerical subscript like "<b>x_{2}</b>" results in a variable name of "<b>x2</b>", currently these subscripts can only be non-negative integers.
 </p><p>
 The variable names "<b>i</b>", "<b>e</b>" and "<b>\pi</b>" represent their respective mathematical constants $i$, $e$ and $\pi$.
-"<b>pi</b>", "<b>oo</b>" and "<b>zoo</b>" are also available for $\pi$, $\infty$ and $\widetilde\infty$, as well as the sets of "<b>Reals</b>", "<b>Complexes</b>", "<b>Naturals</b>", "<b>Naturals0</b>", "<b>Integers</b>".
+"<b>pi</b>", "<b>oo</b>" and "<b>zoo</b>" are also available for $\pi$, $\infty$ and $\widetilde\infty$.
 Python's "<b>None</b>", "<b>True</b>" and "<b>False</b>" are also present, as well as "<b>nan</b>".
 By default, the lowercase "<b>e</b>" and "<b>i</b>" letters are used to represent Euler's number and the imaginary unit instead of the default SymPy uppercase "<b>E</b>" and "<b>I</b>".
 This is objectively prettier, but can be changed via the "<b>env (EI)</b>" and "<b>env (noEI)</b>" function.
@@ -283,6 +286,25 @@ Variables may be assigned values, references to other variables or even entire e
 When variable assignments exist then any instance of that variable used almost anywhere will be replaced with the value of the variable, this can lead to errors if you forgot a variable is assigned and try to use it as a free variable.
 For example, when "<b>x</b>" is not assigned to anything then "<b>series (e**x, x, 0, 5)</b>" will give the correct answer, but set "<b>x = 1</b>" and all of a sudden you have a different result, set it to 2 and you have an error.
 For more on this see <a href="#Variable Assignment">Variable Assignment</a>.
+</p>
+
+<h4 id="Symbols and Assumptions">Symbols and Assumptions</h4>
+
+<p>
+Symbols are objects which represent a variable and if you use variables in an expression then you are implicitly using SymPy "<b>Symbol</b>" objects.
+The default symbols which are created for normal variables like "<b>x</b>" however do not contain any extra information which may be useful for certain calculations.
+This extra information comes in the form of SymPy assumptions which allow you to specify whether a variable is real or positive or commutative or hermitian etc...
+To create a symbol with this extra information use the "<b>$</b>" symbol pseudo-function, the format is "<b>$name (assumption = True | False | None)</b>", so for example a variable "<b>x</b>" known to be real would be created as "<b>$x (real = True)</b>".
+The SymPy assumption model works on fuzzy boolean logic where "<b>True</b>" means that the assumption is true, "<b>False</b>" means that it is false and "<b>None</b>" means that it is unknown whether the assumption is true or false.
+It is the true and false values for the assumptions which can simplify calculations or even make them possible whereas they would not be so if the information was not provided.
+</p><p>
+The only assumption that is made for default symbols which are created is "<b>commutative = True</b>", but of course you can create a symbol where this is false, though it can not be unknown.
+It is not convenient to have to type all this every time you reference a symbol in an expression so of course these symbols may be assigned to variables, even variables of the same name (where normally this is disallowed).
+In fact for the sake of sanity it is suggested that you assign "<b>$</b>" symbols the same name as the variable you assign them to, though this is not enforced and you can even reassign them from one variable to another.
+Thus if you do "<b>x = $x (real = True)</b>" then from that point on any time you use the "<b>x</b>" variable in an expression it will be assumed to be real until you delete the variable.
+As a convenience any time you assign an anonymous symbol "<b>$(something = True)</b>" to a variable then the symbol will take on the name of the variable you are assigning it to.
+</p><p>
+For a list of assumptions you can assign to symbols see <a href="#Assumptions">Assumptions</a>.
 </p>
 
 <h2 id="Operations">Operations</h2>
@@ -363,15 +385,16 @@ The second derivative is "<b>d^2/dx^2 (z)</b>" or "<b>\frac{d^2}{dx^2} (z)</b>" 
 Mixed derivatives are entered as "<b>d^2 / dx dy (z)</b>" or "<b>\partial^2 / \partial x\partial y (z)</b>" = $\frac{\partial^2}{\partial x\partial y} (z)$.
 Derivatives may also be entered using any of the standard SymPy syntaxes like "<b>Derivative (expression, var1, var2, power2, ...)</b>".
 Derivatives can also be specified using prime notation if the given expression has exactly one free variable to derivate, line "<b> sin (x)' </b>" or "<b> (x**3)'' </b>".
-Standard $\frac{dy}{dx}$ and $\frac{d^2y}{dx^2}$ forms are also accepted as "<b>dy/dx</b>" and "<b>d**2y/dx**2</b>" and if the variable "<b>y</b>" contains an expression or lambda function then that will be differentiated.
+Standard $\frac{dy}{dx}$ and $\frac{d^2y}{dx^2}$ forms are also accepted as "<b>dy/dx</b>" and "<b>d**2y/dx**2</b>" and if the variable "<b>y</b>" contains an expression, lambda or undefined function then that will be differentiated.
 </p>
 
 <h4 id="Integration">Integration</h4>
 
 <p>
-The anti-derivative of expression "<b>z</b>" with respect to x is written as "<b>\int z dx</b>" = $\int z\ dx$. The definite integral from "<b>a</b>" to
-"<b>b</b>" is "<b>\int_a^b z dx</b>" = $\int_a^b z\ dx$. "<b>\int dx/x</b>" = $\int \frac1x\ dx$. Iterated and improper integrals also work. Integrals
-may also be entered using the standard SymPy syntax "<b>Integral (expression, (variable, from, to), ...)</b>".
+The anti-derivative of expression "<b>z</b>" with respect to "<b>x</b>" is written as "<b>\int z dx</b>" = $\int z\ dx$.
+The definite integral from "<b>a</b>" to "<b>b</b>" is "<b>\int_a^b z dx</b>" = $\int_a^b z\ dx$. "<b>\int dx/x</b>" = $\int \frac1x\ dx$.
+The definite integral can also be specified without the base value as "<b>\int^b z dx</b>" in which case it will go from "<b>0</b>" to "<b>b</b>".
+Iterated and improper integrals also work. Integrals may also be entered using the standard SymPy syntax "<b>Integral (expression, (variable, from, to), ...)</b>".
 </p>
 
 <h4 id="Logic Operations">Logic Operations</h4>
@@ -474,7 +497,10 @@ One more thing to be aware of is that differentials in derivatives and integrals
 For example the derivative "<b>d/dx (y**2)</b>" will be treated as "<b>d/dy (y**2)</b>" if you have a global variable set "<b>x = y</b>", likewise "<b>\int y dx</b>" will be remapped to "<b>\int y dy</b>" in that case.
 This also happens in lambda functions so that you can specify differentials to use (as non-d variables), see the <a href="#Lambda Functions Examples">Lambda&nbsp;Functions</a> examples section for more on this.
 </p><p>
-One caveat to be aware of - since SymPad supports implicit multiplication without an explicit "*" operator and parentheses are used for grouping as well as function calls and definitions of undefined functions the underlying grammar is ambiguous and dependent on the current state of assigned variables.
+If you assign an unnamed undefined function or symbol to a variable then that undefined function or symbol will take on with the name of the variable it is being assigned to, this is done for convenience and sanity.
+
+</p><p>
+One caveat to be aware of - since SymPad supports implicit multiplication without an explicit "*" operator and parentheses are used for grouping as well as function calls and definitions of undefined functions the underlying grammar is ambiguous and dependent on the current state of ssigned variables.
 Parsing as well as writing out of expressions will vary according to what variables are mapped to so for example if the variable "<b>f</b>" is unassigned then "<b>f (x)</b>" is parsed as an undefined function "<b>f</b>" of one variable "<b>x</b>".
 If the variable "<b>f</b>" is assigned to a user lambda function like "<b>lambda x: x**2</b> then "<b>f (x)</b>" is parsed as a lambda call and evaluates to "<b>x**2</b>".
 If however "<b>f</b>" is assigned to something like "<b>2</b>" then "<b>f (x)</b>" is parsed as "<b>f * x</b>" and the result is "<b>2x</b>".
@@ -482,18 +508,24 @@ This dependence on variable state is taken into consideration when an expression
 So for example for the three cases given the respective Python representations emitted would be "<b>Function('f')(x)</b>", "<b>f(x)</b>" (since the variable is assumed to contain the "<b>Lambda</b>" object it is just called) and "<b>f * (x)</b>" (again the variable is assumed to be set in Python to "<b>2</b>").
 </p>
 
-<h4 id="Simplification">Simplification</h4>
+<h4 id="Automatic Simplification">Automatic Simplification</h4>
 
 <p>
 Apart from the explicit simplification you can always do via the "<b>simplify()</b>" function, SymPad can try to automatically simplify the result of any calculation before returning it.
-This can be useful due to the fact that many times SymPy prefers to return results quicker and leaves the option to simplify to the user - in this case SymPad, whereas SymPad is the kind of application which should always present the simplest possible representation of a result.
-This behavior can be turned on by calling "<b>env('simplify')</b>" and turned back off via "<b>env(nosimplify)</b>", note the string quotes since "<b>simplify</b>" is a reserved SymPy function name.
+This can be useful due to the fact that many times SymPy prefers to return results quicker and leaves the option to simplify to the user, whereas SymPad is the kind of application which should always present the simplest possible representation of a result, though this may not always be desirable since certain SymPy functions return equations in a certain standard form which may be ruined by a simplification.
+For that reason this behavior can be turned on or off as desired by calling "<b>env('simplify')</b>" to turn it on and "<b>env(nosimplify)</b>" to turn it off, note the string quotes since "<b>simplify</b>" is a reserved SymPy function name.
 </p><p>
 A separate type of simplification is done for matrix operations since native SymPy matrix operations tend to blow up fairly quickly.
 This simplification is on by default and simplifies matrices any time they are multiplied which helps control intermediate results in complex matrix operations and gives an already simplified answer once the operation completes.
 This tends to slow down normal matrix operations a little but prevents the kind of lockup that can occur if a complex operation leaves a matrix in a state which is impossible for the normal "<b>simplify()</b>" function to correct.
 This simplification can be turned off and on via "<b>env(nomatsimp)</b>" and "<b>env(matsimp)</b>".
 </p>
+
+<h4 id="More...">More...</h4>
+
+<p>
+The operations listed above are just the ones SymPad parses and represents in a standard mathematical format but SymPy contains many more functions which carry out many different operations on expressions and equations. I have not explored all of them and can not guarantee that SymPad will work flawlessly in each case as SymPy itself has many internal inconsistencies with how it deals with its own objects. The best way to see if something you need is available and works is to go through the SymPy documentation and try the functions directly in SymPad - <a href="https://docs.sympy.org/latest/index.html">SymPy Documentation</a>. Also you can check the <a href="#More Examples">More Examples</a> section for things that I have tried in SymPad.
+</p
 
 <h2 id="Functions">Functions</h2>
 
@@ -510,7 +542,7 @@ The first two classes of functions may take a single unparenthesized argument or
 
 <p style="color: red">
 Almost all SymPy functions and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
-Though those functions and others beginning with an underscore as well as many "<b>__builtins__</b>" can still be accessed with the "<b>$</b>" function override escape character, for example "<b>$print ("Hello World...")</b>".
+Many functions from the "<b>__builtins__</b>" module are made available as well as a convenience, for example "<b>print ("Hello World...")</b>".
 Only the "safe" "<b>__builtin__</b>" functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
 The reason for excluding single letter functions is that due to the way the grammar works all natively recognized function names are permanently excluded from being used as variable names and since very often single letters are used for this purpose this would be problematic.
 A workaround is in place and described further down.
@@ -975,11 +1007,37 @@ For convenience certain multi-character variables are accepted in quick mode - G
 Differentials will also work so "<b>dx</b>", "<b>dtheta</b>", "<b>d\theta</b>" and the partial variations like "<b>partialx</b>" and "<b>\partial x</b>" will all be considered as a single variable.
 </p>
 
+
+<h4 id="Assumptions">Assumptions</h4>
+
+<p>This is a list of the assumptions that can be applied to symbols and undefined functions.</p>
+
+<table>
+<tr><td><b>commutative</b></td><td>&emsp;- Object commutes with any other object with respect to multiplication operation.</td></tr>
+<tr><td><b>complex</b></td><td>&emsp;- Object can have only values from the set of complex numbers.</td></tr>
+<tr><td><b>imaginary</b></td><td>&emsp;- Object is a number that can be written as a real number multiplied by the imaginary unit "<b>i</b>" (excluding "<b>0</b>").</td></tr>
+<tr><td><b>real</b></td><td>&emsp;- Object can have only values from the set of real numbers.</td></tr>
+<tr><td><b>integer</b></td><td>&emsp;- Object can have only values from the set of integers.</td></tr>
+<tr><td><b>odd, even</b></td><td>&emsp;- Object can have only values from the set of odd (even).</td></tr>
+<tr><td><b>prime</b></td><td>&emsp;- Object is a natural number greater than "<b>1</b>" that has no positive divisors other than "<b>1</b>" and itself.</td></tr>
+<tr><td><b>composite</b></td><td>&emsp;- Object is a positive integer that has at least one positive divisor other than "<b>1</b>" or the number itself.</td></tr>
+<tr><td><b>zero</b></td><td>&emsp;- Object has the value of "<b>0</b>".</td></tr>
+<tr><td><b>nonzero</b></td><td>&emsp;- Object is a real number that is not zero.</td></tr>
+<tr><td><b>rational</b></td><td>&emsp;- Object can have only values from the set of rationals.</td></tr>
+<tr><td><b>algebraic</b></td><td>&emsp;- Object can have only values from the set of algebraic numbers.</td></tr>
+<tr><td><b>transcendental</b></td><td>&emsp;- Object can have only values from the set of transcendental numbers.</td></tr>
+<tr><td><b>irrational</b></td><td>&emsp;- Object value cannot be represented exactly by Rational.</td></tr>
+<tr><td><b>finite, infinite</b></td><td>&emsp;- Object absolute value is bounded (arbitrarily large).</td></tr>
+<tr><td><b>negative, nonnegative</b></td><td>&emsp;- Object can have only negative (nonnegative) values.</td></tr>
+<tr><td><b>positive, nonpositive</b></td><td>&emsp;- Object can have only positive (only nonpositive) values.</td></tr>
+<tr><td><b>hermitian, antihermitian</b></td><td>&emsp;- Object belongs to the field of hermitian (antihermitian) operators.</td></tr>
+</table>
+
 <h4 id="Special Characters">Special Characters</h4>
 
 <p><b>_</b> - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.
 Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</p>
-<p><b>$</b> - "<b>$name</b>" - Dollar is a function name escape character which can be used to call functions which are not normally available at the top level of SymPad.</p>
+<p style="color: red"><b>$</b> - </p>
 <p><b>@</b> - "<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value.
 This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</p>
 <p><b>?</b> - "<b>?name(vars)</b>" - Used for specifying an undefined function to be used for solving differential equations.
@@ -1018,8 +1076,6 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <p><b>gamma</b> - Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</p>
 <p><b>Gamma</b> - Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</p>
 <p><b>zeta</b> - Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</p>
-
-</b></p>
 
 <h4 id="Command Line Arguments">Command Line Arguments</h4>
 

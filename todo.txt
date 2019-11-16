@@ -1,7 +1,10 @@
+> BROKEN!       dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})
+> LOOONG PARSE! dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0: 0, y(x)'(0): -7})
+
+> cannot assign to anonymous function in sparser?
+
 > subs single variable argument which may be an object like a dict
 > (a or b) or (a and b) - result parenthesizing for clarity
-
-> d/dx (f(x))(0) -> f(x)'(0)
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
@@ -13,22 +16,20 @@
 > subs autocomplete
 
 
-> doc: give anonymous ufuncs and syms name of var on assignment to var
-> doc: symbols and assumptions
+> doc: give anonymous ufuncs name of var on assignment to var
 > doc: removed $ function escape character
 > doc: ast2spt calls even though they look like multiplies
-> doc: reference SymPy documentation
 > doc: ufuncs
 > doc: parentheses create implicit undefined functions
-> doc: integration \int^a x dx - without base
 > doc: new functionality of @ and %
-> doc: lambda function execution and binding
 > doc: lowercase functions limit, integrate, etc... always execute
+> doc: lambda function execution and binding
 > doc: ODEs
 > doc: PDEs
 
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
+> d/dx (f(x))(0) -> f(x)'(0)?
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
 > Boolean .could_extract_minus_sign() for calculations
@@ -196,3 +197,8 @@ ast:  ('*', (('@', 'Seq'), ('-func', 'Mul', ())))
 a Mul ()
 
 
+text: ?(),w_{1}=\psi*\sum_{x=1e+100}^partia lxNone/$ZDv()*oo\cdot"s"\cdot.1orTrue,c,dy\cdot{{{1e-100notin1.0,\sum_{x=1}^5530110.904839005c}}}
+ast:  ('=', (',', (('-ufunc', '', ()), ('@', 'w1'))), (',', (('*', (('@', 'psi'), ('-sum', ('/', ('*', (('@', 'artia'), ('@', 'lxNone'))), ('-sym', 'ZDv')), ('@', 'x'), ('#', '1e+100'), ('@', 'p')), ('@', 'oo'), ('"', 's'), ('#', '0.1'), ('@', 'orTrue')), {1, 2, 3, 4}), ('@', 'c'), ('*', (('@', 'dy'), ('-set', (('*', (('#', '1e-100'), ('@', 'notin1'), ('#', '0.0'))), ('-sum', ('*', (('#', '530110.904839005'), ('@', 'c'))), ('@', 'x'), ('#', '1'), ('#', '5'))))), {1}))))
+py1:  , w1 = Lambda((), psi*Sum((artia*lxNone) / Symbol('ZDv'), (x, 1e+100, p))*oo*'s'*0.1*orTrue), c, dy*FiniteSet(1e-100*notin1*0.0, Sum(530110.904839005*c, (x, 1, 5)))
+
+?(), b = 1, 2

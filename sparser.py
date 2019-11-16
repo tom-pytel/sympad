@@ -1336,9 +1336,14 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
 	# set_sp_user_vars ({'f': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
 
-	a = p.parse (r"d/dx (f(x)) (0)")
-
+	a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0: 0, y(x)'(0): -7})")
 	print (a)
+
+	r = sorted (((v, k) for k, v in p.reds.items ()), reverse = True)
+
+	for v, k in r:
+		print (f'{v} - {k}')
+
 
 	# a = sym.ast2spt (a)
 	# print (a)
