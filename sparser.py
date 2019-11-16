@@ -6,7 +6,7 @@ import os
 import re
 import sys
 
-import lalr1         # AUTO_REMOVE_IN_SINGLE_SCRIPT
+from lalr1 import Incomplete, PopConfs, Goto, Token, State, LALR1 # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -398,13 +398,14 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 	raise SyntaxError ('integration expecting a differential')
 
-def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
+def _expr_diffp_ics (self, lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 	if lhs.is_diffp:
 		diffp = _SP_USER_VARS.get (lhs.diffp.var, lhs.diffp)
 
 		if diffp.is_ufunc_applied and diffp.can_apply_argskw (commas.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
-			return AST ('-subs', lhs, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, (commas.comma if commas.is_comma else (commas,))))))
+			return PopConfs (AST ('-subs', lhs, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, (commas.comma if commas.is_comma else (commas,)))))))
 
+	# return Goto (self.expr_mul_imp_1)
 	raise SyntaxError ('cannot apply initial conditions to derivative of undefined function')
 
 def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
@@ -424,7 +425,7 @@ def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit pare
 	return wrapf (ast2)
 
 def _expr_func_func (FUNC, args, expr_super = None):
-	func = _FUNC_name (FUNC) if isinstance (FUNC, lalr1.Token) else FUNC
+	func = _FUNC_name (FUNC) if isinstance (FUNC, Token) else FUNC
 
 	if expr_super is None:
 		return _expr_func (2, '-func', func, args)
@@ -433,17 +434,18 @@ def _expr_func_func (FUNC, args, expr_super = None):
 	else:
 		return _expr_func_func (f'a{func}', args)
 
-def _expr_ufunc_ics (lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
+def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
 	if lhs.is_ufunc:
 		if lhs.is_from_Function:
-			return AST ('-ufunc', lhs.ufunc, (commas.comma if commas.is_comma else (commas,)), lhs.kw)
+			return PopConfs (AST ('-ufunc', lhs.ufunc, (commas.comma if commas.is_comma else (commas,)), lhs.kw))
 
 		else:
 			ast = lhs.apply_argskw (commas.as_ufunc_argskw)
 
 			if ast:
-				return ast
+				return PopConfs (ast)
 
+	# return Goto (self.expr_mul_imp_1)
 	raise SyntaxError ('cannot apply initial conditions to undefined function')
 
 def _expr_ufunc (args, py = False, name = ''):
@@ -461,31 +463,32 @@ def _expr_ufunc (args, py = False, name = ''):
 
 	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())), is_from_Function = py)
 
-def _expr_varfunc (var, rhs): # user_func *imp* (...) -> user_func (...)
+def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 	arg, wrapa = _ast_func_reorder (rhs)
 
 	if var.var in _SP_USER_FUNCS: # or arg.strip_paren.is_comma:
 		if arg.is_paren:
-			return wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg))))
+			return PopConfs (wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg)))))
 		elif var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
-			return wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
+			return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
 
 	elif arg.is_paren and var.is_var_nonconst and not var.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
 
 		if ufunc.op is None:
-			return wrapa (AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw))
+			return PopConfs (wrapa (AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw)))
 
 		elif ufunc.is_ufunc:
 			if ufunc.is_ufunc_unapplied:
 				ast = ufunc.apply_argskw (arg.paren.as_ufunc_argskw)
 
 				if ast:
-					return wrapa (ast)
+					return PopConfs (wrapa (ast))
 
 			elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-				return wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+				return PopConfs (wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))))))
 
+	# return Goto (self.expr_mul_imp_1)
 	raise SyntaxError ('invalid undefined function')
 
 def _expr_sym (args, py = False, name = ''):
@@ -568,7 +571,7 @@ def _expr_vec (ast):
 				return AST.MatEmpty
 
 		elif e [-1].brack.len < e [0].brack.len:
-			raise lalr1.Incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
+			raise Incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
 
 	return AST ('-mat', tuple ((c,) for c in e))
 
@@ -613,11 +616,11 @@ def _expr_num (NUM):
 		return AST ('#', f'{num}{g2 [0].lower ()}+{g2 [1:]}')
 
 #...............................................................................................
-class Parser (lalr1.LALR1):
+class Parser (LALR1):
 	def __init__ (self):
 		self.TOKENS_LONG.update ([(v, self.TOKENS [v]) for v in self.TOKENS_QUICK])
 
-		lalr1.LALR1.__init__ (self)
+		LALR1.__init__ (self)
 
 	def set_quick (self, state = True):
 		self.TOKENS.update (self.TOKENS_QUICK if state else self.TOKENS_LONG)
@@ -724,7 +727,7 @@ class Parser (lalr1.LALR1):
 			b'Bo/vr17qxmraM5Z0Pj4JZ9Hm8Q3mXRsXqdl59ZoN3xR+uNTHNq5VW4agHqrx75of3WUE3OHxN6yy9xOJNlbbnhGvagz6lSEc6kYbv2i8xwGpVql+leoOdaONq9SdhgSfHjF7nzVxQZQr2ViPz9SVCpe0uZKN9XjmI4HnMkQPEXZv/DZZ/rtLWieJnt6iH7jh' \
 			b'hjNRua7c6XW+51NX8EXy57Vx9aieY+uqR3t4ZhtXD1erx6rq4Q7PbOPqUf3i1lUPf3hmG1ePUKvHquoRDs9s4+pR3f3WVY/u8Mw2XsKwvkm5qnrgmnfPa+Pq0R5eG1oyVF6ttCqdYPxAjYATKHE6CfKTyTJQ3+uy6oBeaDkkXCII6ht+LhtfGpZ5dVDIaGzQ' \
 			b'd/+PY7uT2KhrugJrVP9POXbWsb2VUbHGsM+X5aVRfX9VHYqBKwV3iuIbXkuZamOQmmepRuF5qDGcFpjbfiqxBhc1N9VabG4trW+DnucgFVmJmVY+phWPXV7tOK10DOcl567B9YzQH4KXB0Dps1pc21/XFcvBsnMKjxs6yzYAsv9akbx1I+mafAa0+fXN/wdi' \
-			b'zudF' 
+			b'zudF'
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -963,7 +966,7 @@ class Parser (lalr1.LALR1):
 	def expr_sum_1         (self, SUM, CURLYL, expr_var, EQ, expr_commas, CURLYR, expr_super, expr_neg):       return AST ('-sum', expr_neg, expr_var, expr_commas, expr_super)
 	def expr_sum_2         (self, expr_diffp_ics):                                                             return expr_diffp_ics
 
-	def expr_diffp_ics_1   (self, expr_diffp, expr_pcommas):                           return _expr_diffp_ics (expr_diffp, expr_pcommas)
+	def expr_diffp_ics_1   (self, expr_diffp, expr_pcommas):                           return _expr_diffp_ics (self, expr_diffp, expr_pcommas)
 	def expr_diffp_ics_2   (self, expr_diffp):                                         return expr_diffp
 
 	def expr_diffp_1       (self, expr_diffp, PRIME):                                  return AST ('-diffp', expr_diffp.diffp, expr_diffp.count + 1) if expr_diffp.is_diffp else AST ('-diffp', expr_diffp, 1)
@@ -1013,7 +1016,7 @@ class Parser (lalr1.LALR1):
 	def expr_bcommas_1     (self, LEFT, BRACKL, expr_commas, RIGHT, BRACKR):           return expr_commas
 	def expr_bcommas_2     (self, BRACKL, expr_commas, BRACKR):                        return expr_commas
 
-	def expr_ufunc_ics_1   (self, expr_ufunc, expr_pcommas):                           return _expr_ufunc_ics (expr_ufunc, expr_pcommas)
+	def expr_ufunc_ics_1   (self, expr_ufunc, expr_pcommas):                           return _expr_ufunc_ics (self, expr_ufunc, expr_pcommas)
 	def expr_ufunc_ics_2   (self, expr_ufunc):                                         return expr_ufunc
 
 	def expr_ufunc_1       (self, UFUNCPY, expr_pcommas):                              return _expr_ufunc (expr_pcommas, py = True)
@@ -1021,7 +1024,7 @@ class Parser (lalr1.LALR1):
 	def expr_ufunc_3       (self, UFUNC, expr_pcommas):                                return _expr_ufunc (expr_pcommas)
 	def expr_ufunc_4       (self, expr_varfunc):                                       return expr_varfunc
 
-	def expr_varfunc_1     (self, expr_var, expr_intg):                                return _expr_varfunc (expr_var, expr_intg)
+	def expr_varfunc_1     (self, expr_var, expr_intg):                                return _expr_varfunc (self, expr_var, expr_intg)
 	def expr_varfunc_2     (self, expr_sym):                                           return expr_sym
 
 	def expr_sym_1         (self, SYMPY, expr_pcommas):                                return _expr_sym (expr_pcommas, py = True)
@@ -1142,7 +1145,7 @@ class Parser (lalr1.LALR1):
 
 		for sym in ((sym,) if isinstance (sym, str) else sym):
 			if sym in self.TOKENS:
-				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.tok.pos))
+				self.tokens.insert (tokidx, Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.tok.pos))
 
 				if self.autocompleting:
 					if sym not in self._AUTOCOMPLETE_CONTINUE:
@@ -1153,7 +1156,7 @@ class Parser (lalr1.LALR1):
 						self.autocomplete.append (self._AUTOCOMPLETE_CONTINUE [sym])
 
 			else:
-				self.tokens.insert (tokidx, lalr1.Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, ('', '', '', '', '')))
+				self.tokens.insert (tokidx, Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, 'VAR'), '', self.tok.pos, ('', '', '', '', '')))
 				self._mark_error ()
 
 			tokidx += 1
@@ -1183,7 +1186,7 @@ class Parser (lalr1.LALR1):
 
 	def _parse_autocomplete_expr_intg (self):
 		s               = self.stack [-1]
-		self.stack [-1] = lalr1.State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
+		self.stack [-1] = State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
 		expr_vars       = set ()
 
 		if self.autocompleting:
@@ -1237,7 +1240,7 @@ class Parser (lalr1.LALR1):
 	def parse_error (self): # add tokens to continue parsing for autocomplete if syntax allows
 		self.has_error = True
 
-		if isinstance (self.rederr, lalr1.Incomplete):
+		if isinstance (self.rederr, Incomplete):
 			return self.parse_result (self.rederr.red, self.tok.pos, [])
 		if self.tok != '$end':
 			return self.parse_result (None, self.pos, [])
@@ -1277,11 +1280,11 @@ class Parser (lalr1.LALR1):
 		self.parse_result (red, self.erridx, self.autocomplete)
 
 		if not self.has_error: # if no error or autocompletion has occurred to this point then remove all trivial conflicts because parse is good
-			for i in range (len (self.cstack) - 1, -1, -1):
-				if len (self.rules [-self.cstack [i] [0]] [1]) == 1:
-					del self.cstack [i]
-			# if all (len (self.rules [-c [0]] [1]) == 1 for c in self.cstack): # alternative
-			# 	del self.cstack [:]
+			if all (len (self.rules [-c [0]] [1]) == 1 for c in self.cstack): # alternative
+				del self.cstack [:]
+			# for i in range (len (self.cstack) - 1, -1, -1):
+			# 	if len (self.rules [-self.cstack [i] [0]] [1]) == 1:
+			# 		del self.cstack [i]
 
 		return True # continue parsing if conflict branches remain to find best resolution
 
@@ -1302,7 +1305,7 @@ class Parser (lalr1.LALR1):
 		if os.environ.get ('SYMPAD_DEBUG'):
 			print (file = sys.stderr)
 
-		lalr1.LALR1.parse (self, text)
+		LALR1.parse (self, text)
 
 		res = self.parse_best [-1] if self.parse_best is not None else (None, 0, [], None)
 

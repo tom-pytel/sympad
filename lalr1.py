@@ -5,10 +5,23 @@ import types
 
 #...............................................................................................
 class Incomplete (Exception):
+	__slots__ = ['red']
+
 	def __init__ (self, red):
 		self.red = red
 
+class PopConfs:
+	__slots__ = ['red']
+
+	def __init__ (self, red):
+		self.red = red
+
+class Goto (PopConfs):
+	pass
+
 class Token (str):
+	__slots__ = ['text', 'pos', 'grp']
+
 	def __new__ (cls, str_, text = None, pos = None, grps = None):
 		self      = str.__new__ (cls, str_)
 		self.text = text or ''
@@ -21,7 +34,7 @@ class State (tuple): # easier on the eyes
 	def __new__ (cls, *args):
 		return tuple.__new__ (cls, args)
 
-	def __init__ (self, *args): # idx = state index, sym = symbol (TOKEN or 'expression'), red = reduction (if present)
+	def __init__ (self, *args): # idx = state index, sym = symbol (TOKEN or 'expression')[, pos = position in text, red = reduction]
 		if len (self) == 4:
 			self.idx, self.sym, self.pos, self.red = self
 
@@ -145,6 +158,7 @@ class LALR1:
 
 		tokens = self.tokenize (src)
 		tokidx = 0
+		goto   = {func: -act for act, func in enumerate (rfuncs)}
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
 		stack  = [State (0, None, 0, None)] # [(stidx, symbol, pos, reduction) or (stidx, token), ...]
 		stidx  = 0
@@ -158,7 +172,11 @@ class LALR1:
 				tok       = tokens [tokidx]
 				act, conf = terms [stidx].get (tok, (None, None))
 
+				# print (f'TOKEN:  {tok} - {tok.text!r}') # DEBUG!
+
 			if rederr or act is None:
+				# print (f'ERROR:  {rederr or act is None}') # DEBUG!
+
 				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr, self.pos = \
 						tokens, tokidx, cstack, stack, stidx, tok, rederr, pos
 
@@ -188,33 +206,60 @@ class LALR1:
 						f'invalid token {tok.text!r}' if tok == '$err' else \
 						f'invalid syntax {src [tok.pos : tok.pos + 16]!r}')
 
-				act, tokens, tokidx, stack, stidx, estate = cstack.pop ()
-				tok                                       = tokens [tokidx]
+				act, _, tokens, tokidx, stack, stidx, estate = cstack.pop ()
+				tok                                          = tokens [tokidx]
 
 				self.parse_setextrastate (estate)
 
 			elif conf is not None:
-				cstack.append ((conf, tokens [:], tokidx, stack [:], stidx, self.parse_getextrastate ()))
+				# print (f'CONF:   {rules [-conf]}, {tok.pos}') # DEBUG!
+
+				cstack.append ((conf, tok.pos, tokens [:], tokidx, stack [:], stidx, self.parse_getextrastate ()))
 
 			if act > 0:
+				# # print (f'RULE:   {rules [act]}') # DEBUG!
+
 				tokidx += 1
 				stidx   = act
 
 				stack.append (State (stidx, tok))
 
 			else:
-				rule  = rules [-act]
-				rnlen = -len (rule [1])
-				prod  = rule [0]
-				pos   = stack [rnlen].pos
-
 				try:
-					# self.reds [rule] = self.reds.get (rule, 0) + 1 # DEBUG!
+					while 1:
+						rule  = rules [-act]
+						rnlen = -len (rule [1])
+						prod  = rule [0]
+						pos   = stack [rnlen].pos
 
-					red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
+						# print (f'REDUCE: {rule}, {pos}')
+						# self.reds [rule] = self.reds.get (rule, 0) + 1 # DEBUG!
+
+						red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
+
+						# print (f'RESULT: {red}')
+
+						if isinstance (red, PopConfs):
+							for i in range (len (cstack) - 1, -1, -1):
+								if cstack [i] [1] <= pos:
+									i += 1
+
+									break
+
+							del cstack [i:]
+
+							if isinstance (red, Goto):
+								act = goto [red.red]
+
+								continue
+
+							else:
+								red = red.red
+
+						break
 
 				except SyntaxError as e:
-					rederr = e or True
+					rederr = e # or True
 
 					continue
 
@@ -231,6 +276,8 @@ class LALR1:
 
 class lalr1: # for single script
 	Incomplete = Incomplete
+	PopConfs   = PopConfs
+	Goto       = Goto
 	Token      = Token
 	State      = State
 	LALR1      = LALR1

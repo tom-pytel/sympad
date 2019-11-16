@@ -1,5 +1,5 @@
-> BROKEN!       dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})
-> LOOONG PARSE! dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0: 0, y(x)'(0): -7})
+> BROKEN!       dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7}) - due to not evaluating in _ast2spt_subs
+> LOOONG PARSE! dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0: 0, y(x)'(0): -7}) -
 
 > cannot assign to anonymous function in sparser?
 
