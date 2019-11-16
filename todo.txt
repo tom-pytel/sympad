@@ -1,8 +1,8 @@
 > subs single variable argument which may be an object like a dict
-> (a or b) or (a and b) - result parenthesizing for clarity
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
+> keep track of what undefined functions are created during processing?
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
@@ -10,7 +10,13 @@
 
 > subs autocomplete
 
-> cannot assign to anonymous function in sparser?
+> cannot assign to anonymous function in sparser? - set real ufunc name with '?' prefix for explicit and set is_ufunc_explicit flag
+
+
+> (a or b) or (a and b) - result parenthesizing for clarity
+> subs clarity parentheses for tex display - attr, etc?
+> 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
+> @ and % without parentheses consistency?
 
 
 > doc: give anonymous ufuncs name of var on assignment to var
@@ -26,7 +32,6 @@
 
 
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
-> d/dx (f(x))(0) -> f(x)'(0)?
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
 > Boolean .could_extract_minus_sign() for calculations
@@ -41,11 +46,8 @@
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)? - remove or reject null vars after
 
 > overhaul = and == to try to minimize where == is needed for display
-> @ and % without parentheses consistency?
 > overhaul server env option command line setting
 
-> 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
-> subs clarity parentheses for tex display - attr, etc?
 
 > again redo spt2ast_Add?
 > _spt2ast_Mul - option to not absorb fraction into non-fraction

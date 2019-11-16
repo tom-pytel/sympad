@@ -5026,6 +5026,8 @@ f (x)' (0)
 \. f(x) f(y) |_{f(x), f(y) = y, z}
 \. f(x) f(y) |_{f(x) = y, f(y) = z}
 \. f(x) f(y) |_{\substack{f(x) = y \\ f(y) = z}}
+f (x)' (0)
+d / dx (f (x)) (0)
 d / dx (u (x, y)) (x, y)
 d / dx (u (x, y)) (0, y)
 d / dx (u (x, y)) (0, 0)
@@ -5085,7 +5087,11 @@ sin**-a[b][c] (x)
 \int**-a[b][c].d (x)
 \int**-a[b][c].d (x) y
 \int**a.b[2] x dx
+
 dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(0: 0, y(x)'(0): -7})
+\. [f(x)', g(y)'] |_{x = 0, y = 1}
+\. [d / dx (f(x, y)), d / dx (g(y, x))] |_{x = 0, y = 1}
+\. d**2 / dx dy (f(x, z)) |_{x = 1, y = 2, z = 3}
 """
 # _EXPRESSIONS = r"""
 
