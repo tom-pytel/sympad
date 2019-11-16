@@ -30,17 +30,27 @@ class Token (str):
 
 		return self
 
-class State (tuple): # easier on the eyes
-	def __new__ (cls, *args):
-		return tuple.__new__ (cls, args)
+# class State (tuple): # easier on the eyes
+# 	def __new__ (cls, *args):
+# 		return tuple.__new__ (cls, args)
 
-	def __init__ (self, *args): # idx = state index, sym = symbol (TOKEN or 'expression')[, pos = position in text, red = reduction]
-		if len (self) == 4:
-			self.idx, self.sym, self.pos, self.red = self
+# 	def __init__ (self, *args): # idx = state index, sym = symbol (TOKEN or 'expression')[, pos = position in text, red = reduction]
+# 		if len (self) == 4:
+# 			self.idx, self.sym, self.pos, self.red = self
 
-		else: # must be 2
-			self.idx, self.sym = self
-			self.pos           = self.sym.pos
+# 		else: # must be 2
+# 			self.idx, self.sym = self
+# 			self.pos           = self.sym.pos
+
+class State:
+	__slots__ = ['idx', 'sym', 'pos', 'red']
+
+	def __init__ (self, idx, sym, pos = None, red = None): # idx = state index, sym = symbol (TOKEN or 'expression')[, pos = position in text, red = reduction]
+		self.idx, self.sym, self.red = idx, sym, red
+		self.pos                     = sym.pos if pos is None else pos
+
+	def __repr__ (self):
+		return f'({self.idx}, {self.sym}, {self.pos}{"" if self.red is None else f", {self.red}"})'
 
 class LALR1:
 	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])_?(\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
@@ -158,7 +168,7 @@ class LALR1:
 
 		tokens = self.tokenize (src)
 		tokidx = 0
-		goto   = {func: -act for act, func in enumerate (rfuncs)}
+		goto   = {func.__func__.__name__ if func is not None else None: -act for act, func in enumerate (rfuncs)}
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
 		stack  = [State (0, None, 0, None)] # [(stidx, symbol, pos, reduction) or (stidx, token), ...]
 		stidx  = 0
@@ -182,7 +192,7 @@ class LALR1:
 
 				rederr = None
 
-				if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1] [1] == rules [0] [1]:
+				if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1].sym == rules [0] [1]:
 					if not has_parse_success:
 						return stack [1].red
 
@@ -235,7 +245,7 @@ class LALR1:
 						# print (f'REDUCE: {rule}, {pos}')
 						# self.reds [rule] = self.reds.get (rule, 0) + 1 # DEBUG!
 
-						red = rfuncs [-act] (*((t [-1] for t in stack [rnlen:]) if rnlen else ()))
+						red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
 						# print (f'RESULT: {red}')
 
