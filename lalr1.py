@@ -16,8 +16,8 @@ class PopConfs:
 	def __init__ (self, red):
 		self.red = red
 
-class Goto (PopConfs):
-	pass
+Reduce     = PopConfs (None)
+Reduce.red = Reduce
 
 class Token (str):
 	__slots__ = ['text', 'pos', 'grp']
@@ -29,18 +29,6 @@ class Token (str):
 		self.grp  = () if not grps else grps
 
 		return self
-
-# class State (tuple): # easier on the eyes
-# 	def __new__ (cls, *args):
-# 		return tuple.__new__ (cls, args)
-
-# 	def __init__ (self, *args): # idx = state index, sym = symbol (TOKEN or 'expression')[, pos = position in text, red = reduction]
-# 		if len (self) == 4:
-# 			self.idx, self.sym, self.pos, self.red = self
-
-# 		else: # must be 2
-# 			self.idx, self.sym = self
-# 			self.pos           = self.sym.pos
 
 class State:
 	__slots__ = ['idx', 'sym', 'pos', 'red']
@@ -168,14 +156,11 @@ class LALR1:
 
 		tokens = self.tokenize (src)
 		tokidx = 0
-		goto   = {func.__func__.__name__ if func is not None else None: -act for act, func in enumerate (rfuncs)}
 		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
 		stack  = [State (0, None, 0, None)] # [(stidx, symbol, pos, reduction) or (stidx, token), ...]
 		stidx  = 0
 		rederr = None # reduction function raised exception (SyntaxError or Incomplete usually)
 		pos    = 0
-
-		# self.reds = {} # DEBUG!
 
 		while 1:
 			if not rederr:
@@ -187,24 +172,28 @@ class LALR1:
 			if rederr or act is None:
 				# print (f'ERROR:  {rederr or act is None}') # DEBUG!
 
-				self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr, self.pos = \
-						tokens, tokidx, cstack, stack, stidx, tok, rederr, pos
+				if rederr is Reduce:
+					rederr = None
 
-				rederr = None
+				else:
+					self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr, self.pos = \
+							tokens, tokidx, cstack, stack, stidx, tok, rederr, pos
 
-				if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1].sym == rules [0] [1]:
-					if not has_parse_success:
-						return stack [1].red
+					rederr = None
 
-					if not self.parse_success (stack [1].red) or not cstack:
-						return None
+					if tok == '$end' and stidx == 1 and len (stack) == 2 and stack [1].sym == rules [0] [1]:
+						if not has_parse_success:
+							return stack [1].red
 
-				elif self.parse_error ():
-					tokidx, stidx = self.tokidx, self.stidx
+						if not self.parse_success (stack [1].red) or not cstack:
+							return None
 
-					continue
+					elif self.parse_error ():
+						tokidx, stidx = self.tokidx, self.stidx
 
-				elif not cstack:
+						continue
+
+				if not cstack:
 					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
@@ -235,38 +224,35 @@ class LALR1:
 				stack.append (State (stidx, tok))
 
 			else:
+				rule  = rules [-act]
+				rnlen = -len (rule [1])
+				prod  = rule [0]
+				pos   = stack [rnlen].pos
+
 				try:
-					while 1:
-						rule  = rules [-act]
-						rnlen = -len (rule [1])
-						prod  = rule [0]
-						pos   = stack [rnlen].pos
+					# print (f'REDUCE: {rule}, {pos}')
 
-						# print (f'REDUCE: {rule}, {pos}')
-						# self.reds [rule] = self.reds.get (rule, 0) + 1 # DEBUG!
+					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
-						red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
+					# print (f'RESULT: {red}')
 
-						# print (f'RESULT: {red}')
+					if isinstance (red, PopConfs):
+						red   = red.red
+						start = stack [-1].pos if red is Reduce else pos
+						i     = 0
 
-						if isinstance (red, PopConfs):
-							for i in range (len (cstack) - 1, -1, -1):
-								if cstack [i] [1] <= pos:
-									i += 1
+						for i in range (len (cstack) - 1, -1, -1):
+							if cstack [i] [1] <= start:
+								i += 1
 
-									break
+								break
 
-							del cstack [i:]
+						del cstack [i:]
 
-							if isinstance (red, Goto):
-								act = goto [red.red]
+						if red is Reduce:
+							rederr = red
 
-								continue
-
-							else:
-								red = red.red
-
-						break
+							continue
 
 				except SyntaxError as e:
 					rederr = e # or True
@@ -287,7 +273,6 @@ class LALR1:
 class lalr1: # for single script
 	Incomplete = Incomplete
 	PopConfs   = PopConfs
-	Goto       = Goto
 	Token      = Token
 	State      = State
 	LALR1      = LALR1
