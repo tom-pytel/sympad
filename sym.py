@@ -974,15 +974,15 @@ class ast2py: # abstract syntax tree -> Python code text
 		return self._ast2py (ast)
 
 	def _ast2py_ass (self, ast):
-		istopass = self.parent.op in {None, ';'}
+		is_top_ass = self.parent.op in {None, ';'}
 
-		if istopass:
+		if is_top_ass:
 			if ast.ass_validate:
 				ast = ast.ass_validate
 			else:
-				istopass = False
+				is_top_ass = False
 
-		if istopass or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
+		if is_top_ass or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
 			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
 
 		return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'

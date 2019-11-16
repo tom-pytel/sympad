@@ -167,11 +167,7 @@ class LALR1:
 				tok       = tokens [tokidx]
 				act, conf = terms [stidx].get (tok, (None, None))
 
-				# print (f'TOKEN:  {tok} - {tok.text!r}') # DEBUG!
-
 			if rederr or act is None:
-				# print (f'ERROR:  {rederr or act is None}') # DEBUG!
-
 				if rederr is Reduce:
 					rederr = None
 
@@ -211,13 +207,9 @@ class LALR1:
 				self.parse_setextrastate (estate)
 
 			elif conf is not None:
-				# print (f'CONF:   {rules [-conf]}, {tok.pos}') # DEBUG!
-
 				cstack.append ((conf, tok.pos, tokens [:], tokidx, stack [:], stidx, self.parse_getextrastate ()))
 
 			if act > 0:
-				# # print (f'RULE:   {rules [act]}') # DEBUG!
-
 				tokidx += 1
 				stidx   = act
 
@@ -230,11 +222,7 @@ class LALR1:
 				pos   = stack [rnlen].pos
 
 				try:
-					# print (f'REDUCE: {rule}, {pos}')
-
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
-
-					# print (f'RESULT: {red}')
 
 					if isinstance (red, PopConfs):
 						red   = red.red

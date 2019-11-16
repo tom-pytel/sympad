@@ -6,7 +6,7 @@ import os
 import re
 import sys
 
-from lalr1 import Reduce, Incomplete, PopConfs, Token, State, LALR1 # AUTO_REMOVE_IN_SINGLE_SCRIPT
+from lalr1 import Incomplete, PopConfs, Reduce, Token, State, LALR1 # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
@@ -487,37 +487,6 @@ def _expr_varfunc (var, rhs): # user_func *imp* (...) -> user_func (...)
 				return wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
 
 	return Reduce # raise SyntaxError ('invalid undefined function')
-
-# def _expr_varfunc_paren (var, commas): # user_func *imp* (...) -> user_func (...)
-# 	if var.var in _SP_USER_FUNCS: # or arg.strip_paren.is_comma:
-# 		return AST ('-func', var.var, _ast_func_tuple_args (commas), src = AST ('*', (var, ('(', commas))))
-
-# 	elif var.is_var_nonconst and not var.is_diff_or_part and commas.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
-# 		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
-
-# 		if ufunc.op is None:
-# 			return AST ('-ufunc', var.var, *commas.as_ufunc_argskw)
-
-# 		elif ufunc.is_ufunc:
-# 			if ufunc.is_ufunc_unapplied:
-# 				ast = ufunc.apply_argskw (commas.as_ufunc_argskw)
-
-# 				if ast:
-# 					return ast
-
-# 			elif ufunc.can_apply_argskw (commas.as_ufunc_argskw):
-# 				return AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, commas.comma if commas.is_comma else (commas,)))))
-
-# 	# return Goto ('expr_mul_imp_1')
-# 	raise SyntaxError ('invalid undefined function')
-
-# def _expr_varfunc (var, rhs): # user_func *imp* (...) -> user_func (...)
-# 	if var.var in _SP_USER_FUNCS: # or arg.strip_paren.is_comma:
-# 		if var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
-# 			return AST ('-func', var.var, (rhs,), src = AST ('*', (var, rhs)))
-
-# 	# return Goto ('expr_mul_imp_1')
-# 	raise SyntaxError ('invalid undefined function')
 
 def _expr_sym (args, py = False, name = ''):
 	args, kw = AST.args2kwargs (args.comma if args.is_comma else (args,))
@@ -1052,7 +1021,6 @@ class Parser (LALR1):
 	def expr_ufunc_3       (self, UFUNC, expr_pcommas):                                return _expr_ufunc (expr_pcommas)
 	def expr_ufunc_4       (self, expr_varfunc):                                       return expr_varfunc
 
-	# def expr_varfunc_1     (self, expr_var, expr_pcommas):                             return _expr_varfunc_paren (expr_var, expr_pcommas)
 	def expr_varfunc_2     (self, expr_var, expr_intg):                                return PopConfs (_expr_varfunc (expr_var, expr_intg))
 	def expr_varfunc_3     (self, expr_sym):                                           return expr_sym
 
