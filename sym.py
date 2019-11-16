@@ -1441,13 +1441,13 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	def _ast2spt_subs (self, ast):
-		raise RuntimeError ('FIXME!')
-		# if ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc:
-		# 	return NoEval (ast) # do not execute because loses information about variables
-		# else:
-		# 	return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
+		if ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc:
+			return NoEval (ast) # do not execute because loses information about variables
+		else:
+			return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
 
 		# return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
+		# raise RuntimeError ('FIXME!')
 
 	_ast2spt_funcs = {
 		';'     : lambda self, ast: _raise (RuntimeError ('semicolon expression should never get here')),

@@ -724,7 +724,7 @@ class Parser (lalr1.LALR1):
 			b'Bo/vr17qxmraM5Z0Pj4JZ9Hm8Q3mXRsXqdl59ZoN3xR+uNTHNq5VW4agHqrx75of3WUE3OHxN6yy9xOJNlbbnhGvagz6lSEc6kYbv2i8xwGpVql+leoOdaONq9SdhgSfHjF7nzVxQZQr2ViPz9SVCpe0uZKN9XjmI4HnMkQPEXZv/DZZ/rtLWieJnt6iH7jh' \
 			b'hjNRua7c6XW+51NX8EXy57Vx9aieY+uqR3t4ZhtXD1erx6rq4Q7PbOPqUf3i1lUPf3hmG1ePUKvHquoRDs9s4+pR3f3WVY/u8Mw2XsKwvkm5qnrgmnfPa+Pq0R5eG1oyVF6ttCqdYPxAjYATKHE6CfKTyTJQ3+uy6oBeaDkkXCII6ht+LhtfGpZ5dVDIaGzQ' \
 			b'd/+PY7uT2KhrugJrVP9POXbWsb2VUbHGsM+X5aVRfX9VHYqBKwV3iuIbXkuZamOQmmepRuF5qDGcFpjbfiqxBhc1N9VabG4trW+DnucgFVmJmVY+phWPXV7tOK10DOcl567B9YzQH4KXB0Dps1pc21/XFcvBsnMKjxs6yzYAsv9akbx1I+mafAa0+fXN/wdi' \
-			b'zudF'
+			b'zudF' 
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1277,7 +1277,7 @@ class Parser (lalr1.LALR1):
 		self.parse_result (red, self.erridx, self.autocomplete)
 
 		if not self.has_error: # if no error or autocompletion has occurred to this point then remove all trivial conflicts because parse is good
-			for i in range (len (self.cstack) - 1, -1, -1): # this may be dangerous because name of reduction is not preserved
+			for i in range (len (self.cstack) - 1, -1, -1):
 				if len (self.rules [-self.cstack [i] [0]] [1]) == 1:
 					del self.cstack [i]
 			# if all (len (self.rules [-c [0]] [1]) == 1 for c in self.cstack): # alternative
@@ -1339,10 +1339,9 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 	a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0: 0, y(x)'(0): -7})")
 	print (a)
 
-	r = sorted (((v, k) for k, v in p.reds.items ()), reverse = True)
 
-	for v, k in r:
-		print (f'{v} - {k}')
+	# for v, k in sorted (((v, k) for k, v in p.reds.items ()), reverse = True):
+	# 	print (f'{v} - {k}')
 
 
 	# a = sym.ast2spt (a)
