@@ -1,9 +1,6 @@
 > _x -> _ * x
 > f{(x)}'{(0)}?
 
-> {\operatorname{x0}^{2}{\left(t \right)}}
-> x0(t) -> \operatorname{x_{0}} \left(t \right)
-
 > x0(t) -> x(t)(0), x0(t)' -> x(t)'(0)
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
@@ -193,3 +190,5 @@ text: \sum_{x=(::)'}^\sum_{x=-0.01902796538634282and-.1and .1}^25822.12298235377
 \left[ x{\left(t \right)} = C_{1} \operatorname{x_{0}}{\left(t \right)} + C_{2} \operatorname{x_{0}}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x_{0}}^{2}{\left(t \right)}}\, dt, \  y{\left(t \right)} = C_{1} \operatorname{y_{0}}{\left(t \right)} + C_{2} \left(\operatorname{y_{0}}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x_{0}}^{2}{\left(t \right)}}\, dt + \frac{\left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x_{0}}{\left(t \right)}}\right)\right]
 \left[ x{\left(t \right)} = C_{1} \operatorname{x0}{\left(t \right)} + C_{2} \operatorname{x0}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}^{2}{\left(t \right)}}\, dt, \  y{\left(t \right)} = C_{1} \operatorname{y_{0}}{\left(t \right)} + C_{2} \left(\operatorname{y_{0}}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}^{2}{\left(t \right)}}\, dt + \frac{\left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}{\left(t \right)}}\right)\right]
 \left[ x{\left(t \right)} = C_{1} \operatorname{x0}{\left(t \right)} + C_{2} \operatorname{x0}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}^{2}{\left(t \right)}}\, dt, \  y{\left(t \right)} = C_{1} \operatorname{y0}{\left(t \right)} + C_{2} \left(\operatorname{y0}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}^{2}{\left(t \right)}}\, dt + \frac{\left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}{\left(t \right)}}\right)\right]
+
+

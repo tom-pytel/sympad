@@ -864,13 +864,13 @@ def test (argv = None):
 					# elif ast.func in _FORBIDDEN_SXLAT_FUNCS: # random spaces can create forbidden functions
 					# 	ast = AST ('-func', 'print', *ast [2:])
 
-				# elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
-				# 	if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
-				# 		return AST ('@', 'CENSORED')
+				elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
+					if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
+						return AST ('@', 'CENSORED')
 
-				# elif ast.is_intg: # same
-				# 	if ast.dv.as_var.var in _RESERVED_WORDS:
-				# 		return AST ('@', 'CENSORED')
+				elif ast.is_intg: # same
+					if ast.dv.as_var.var in _RESERVED_WORDS:
+						return AST ('@', 'CENSORED')
 
 				elif ast.is_slice: # the slice object is evil
 					if ast.step == AST.None_:
