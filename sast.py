@@ -627,20 +627,22 @@ class AST_Ass (AST):
 		return AST ('-lamb', lamb, tuple (v.var or 'NONVARIABLE' for v in ufunc.vars))
 
 	def _ass_validate (self):
-		def verify (dst, src, multi = False):
-			for src in (src if multi else (src,)):
-				if src.is_var_const:
-					dst.error = 'The only thing that is constant is change - Heraclitus; Except for constants, they never change - Math...'
-				elif src.is_ufunc_impure:
-					dst.error = 'cannot assign to a function containing non-variable parameters'
-				elif src.ufunc == '':
-					dst.error = 'cannot assign to an anonymous function'
+		def verify (ast, lhs, multi = False):
+			for lhs in (lhs if multi else (lhs,)):
+				if lhs.is_var_const:
+					ast.error = 'The only thing that is constant is change - Heraclitus; Except for constants, they never change - Math...'
+				# elif lhs.is_ufunc_explicit:
+				# 	ast.error = 'cannot define an undefined function, by definition'
+				elif lhs.is_ufunc_impure:
+					ast.error = 'cannot assign to a function containing non-variable parameters'
+				# elif lhs.is_ufunc_anonymous:
+				# 	ast.error = 'cannot assign to an anonymous function'
 				else:
 					continue
 
 				break
 
-			return dst
+			return ast # convenience
 
 		if self.lhs.is_var:
 			return verify (self, self.lhs)
@@ -658,7 +660,7 @@ class AST_Ass (AST):
 				for l, r in zip (self.lhs.comma, rhs [1]):
 					if l.is_var:
 						lrs.append ((l, r))
-					elif l.is_ufunc:
+					elif l.is_ufunc_implicit:
 						lrs.append ((('@', l.ufunc), self.ufunc2lamb (l, r)))
 					else:
 						return None
@@ -667,7 +669,7 @@ class AST_Ass (AST):
 
 				return verify (AST ('=', (',', tuple (l for l, _ in lrs) + self.lhs.comma [both:]), ('(', rhs) if self.rhs.is_paren else rhs), self.lhs.comma, True)
 
-		elif self.lhs.is_ufunc_named:
+		elif self.lhs.is_ufunc_implicit:
 			return verify (AST ('=', ('@', self.lhs.ufunc), self.ufunc2lamb (self.lhs, self.rhs)), self.lhs)
 
 		return None
@@ -1044,13 +1046,17 @@ class AST_UFunc (AST):
 
 	def __new__ (cls, ufunc, vars, kw = ()):
 		self                           = tuple.__new__ (cls, ('-ufunc', ufunc, vars, kw) if kw else ('-ufunc', ufunc, vars))
-		self.ufunc, self.vars, self.kw = ufunc, vars, kw
+		self.ufunc, self.vars, self.kw = ufunc.lstrip ('?'), vars, kw
+		self.ufunc_full                = ufunc
 
 		return self
 
+	_is_ufunc_explicit  = lambda self: self.ufunc_full.startswith ('?')
+	_is_ufunc_implicit  = lambda self: not self.ufunc_full.startswith ('?')
 	_is_ufunc_named     = lambda self: self.ufunc
-	_is_ufunc_unapplied = lambda self: not self.vars
+	_is_ufunc_anonymous = lambda self: not self.ufunc
 	_is_ufunc_applied   = lambda self: self.vars
+	_is_ufunc_unapplied = lambda self: not self.vars
 	_is_ufunc_pure      = lambda self: self.vars and all (v.is_var_nonconst for v in self.vars)
 	_is_ufunc_impure    = lambda self: self.vars and any (not v.is_var_nonconst for v in self.vars)
 
@@ -1060,7 +1066,7 @@ class AST_UFunc (AST):
 
 			if args and not kw:
 				if not self.vars.len:
-					return AST ('-ufunc', self.ufunc, args, self.kw)
+					return AST ('-ufunc', self.ufunc_full, args, self.kw)
 
 				if self.vars.len == len (args):
 					for v, a in zip (self.vars, args):
@@ -1073,7 +1079,7 @@ class AST_UFunc (AST):
 
 	def apply_argskw (self, argskw):
 		if self.can_apply_argskw (argskw):
-			return AST ('-ufunc', self.ufunc, argskw [0], self.kw)
+			return AST ('-ufunc', self.ufunc_full, argskw [0], self.kw)
 
 		return None
 
@@ -1122,9 +1128,8 @@ AST.MatEmpty   = AST ('-mat', ())
 AST.SetEmpty   = AST ('-set', ())
 AST.DictEmpty  = AST ('-dict', ())
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('-lamb', ('+', (('-func', '@', (('-func', '@', (('@', 'x'),)),)), ('@', 'y'))), ('x',))
-# 	res = AST.apply_vars (ast, {'x': AST.One, 'y': AST ('#', '2')})
-# 	print (res)
-
+# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
+if __name__ == '__main__': # DEBUG!
+	ast = AST ('-lamb', ('+', (('-func', '@', (('-func', '@', (('@', 'x'),)),)), ('@', 'y'))), ('x',))
+	res = AST.apply_vars (ast, {'x': AST.One, 'y': AST ('#', '2')})
+	print (res)

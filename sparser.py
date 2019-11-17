@@ -80,9 +80,15 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 		else: # is_mul
 			return AST ('-ufunc', ast.mul [0].var, *ast.mul [1].paren.as_ufunc_argskw)
 
+	def lhs_ufunc_py_explicitize (ast):
+		return AST ('-ufunc', f'?{ast.ufunc}', *ast [2:]) if ast.is_ufunc_py else ast
+
+	# start here
 	if ast.is_ass: # if assigning to function call then is assignment to function instead, rewrite
 		if can_be_ufunc (ast.lhs):
 			ast = AST ('=', as_ufunc (ast.lhs), ast.rhs)
+		elif ast.lhs.is_ufunc_py:
+			ast = AST ('=', lhs_ufunc_py_explicitize (ast.lhs), ast.rhs)
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parsing as ('x', 'y = y', 'x')) so rewrite
 		vars = []
@@ -90,13 +96,13 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 
 		for c in itr:
 			if c.op in {'@', '-ufunc'}:
-				vars.append (c)
+				vars.append (lhs_ufunc_py_explicitize (c))
 			elif can_be_ufunc (c):
 				vars.append (as_ufunc (c))
 
 			elif c.is_ass:
 				t = (c.rhs,) + tuple (itr)
-				v = c.lhs if c.lhs.op in {'@', '-ufunc'} else as_ufunc (c.lhs) if can_be_ufunc (c.lhs) else c.lhs if allow_lexprs else None
+				v = lhs_ufunc_py_explicitize (c.lhs) if c.lhs.op in {'@', '-ufunc'} else as_ufunc (c.lhs) if can_be_ufunc (c.lhs) else c.lhs if allow_lexprs else None
 
 				if v:
 					ast = AST ('=', (',', tuple (vars) + (v,)) if len (vars) else v, t [0] if len (t) == 1 else AST (',', t))
@@ -435,8 +441,8 @@ def _expr_func_func (FUNC, args, expr_super = None):
 
 def _expr_ufunc_ics (lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
 	if lhs.is_ufunc:
-		if lhs.is_from_Function:
-			return AST ('-ufunc', lhs.ufunc, (commas.comma if commas.is_comma else (commas,)), lhs.kw)
+		if lhs.is_ufunc_py:
+			return AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw, is_ufunc_py = lhs.is_ufunc_py)
 
 		else:
 			ast = lhs.apply_argskw (commas.as_ufunc_argskw)
@@ -459,7 +465,7 @@ def _expr_ufunc (args, py = False, name = ''):
 	if AST ('@', name).is_var_const:
 		raise SyntaxError ('cannot use constant as undefined function name')
 
-	return AST ('-ufunc', name, tuple (args), tuple (sorted (kw.items ())), is_from_Function = py)
+	return AST ('-ufunc', name if py else f'?{name}', tuple (args), tuple (sorted (kw.items ())), is_ufunc_py = py)
 
 def _expr_varfunc (var, rhs): # user_func *imp* (...) -> user_func (...)
 	arg, wrapa = _ast_func_reorder (rhs)
@@ -1326,8 +1332,8 @@ class sparser: # for single script
 	set_sp_user_vars  = set_sp_user_vars
 	Parser            = Parser
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
+if __name__ == '__main__': # DEBUG!
 	p = Parser ()
 
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
@@ -1335,7 +1341,8 @@ if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
 
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
-	a = p.parse (r"\sum_")
+	# a = p.parse (r"\sum_")
+	a = p.parse (r"Function ('f') = 2")
 	print (a)
 
 

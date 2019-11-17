@@ -1,7 +1,6 @@
-> cannot assign to anonymous function in sparser? - set real ufunc name with '?' prefix for explicit and set is_ufunc_explicit flag
-
-> \sum_{x=::'}^\sum_{x=-0.01902796538634282and-.1and .1}^25822.12298235377[\Theta]\{"s",1.,partial}^\log_'s'**c\partial+16551221795222.463dz*Falsenotin[[\partialy,None,dx]]||{-dy:1/b}
 > f -f x
+
+> overhaul = and == to try to minimize where == is needed for display
 
 > help.html second part of solving equations broken due to:
 > subs single variable argument which may be an object like a dict
@@ -49,7 +48,6 @@
 > add slice() to test_sym
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)? - remove or reject null vars after
 
-> overhaul = and == to try to minimize where == is needed for display
 > overhaul server env option command line setting
 
 
@@ -185,41 +183,9 @@ Errors:
 -------
 
 
-text: pow simp(())
-ast:  ('*', (('-func', 'pow', (('@', 'simp'),)), ('(', ('(', (',', ())))))
-ast:  ('*', (('^', ('@', 'simp'), ('-dict', ())), ('(', ('(', (',', ())))), {1})
-tex1: simp^{{}} \cdot \left(\left( \right) \right)
-tex2: simp^{\left\{ \right\}} \left(\left( \right) \right)
-
-pow x
+Weird one...
+text: \sum_{x=(::)'}^\sum_{x=-0.01902796538634282and-.1and .1}^25822.12298235377[\Theta]\{"s",1.,partial}^\log_'s'**c\partial+16551221795222.463dz*Falsenotin[[\partialy,None,dx]]||{-dy:1/b}
 
 
-text: Seq Mul()
-ast:  ('*', (('@', 'Seq'), ('-func', 'Mul', ())))
-
-a Mul ()
 
 
-text: ?(),w_{1}=\psi*\sum_{x=1e+100}^partia lxNone/$ZDv()*oo\cdot"s"\cdot.1orTrue,c,dy\cdot{{{1e-100notin1.0,\sum_{x=1}^5530110.904839005c}}}
-ast:  ('=', (',', (('-ufunc', '', ()), ('@', 'w1'))), (',', (('*', (('@', 'psi'), ('-sum', ('/', ('*', (('@', 'artia'), ('@', 'lxNone'))), ('-sym', 'ZDv')), ('@', 'x'), ('#', '1e+100'), ('@', 'p')), ('@', 'oo'), ('"', 's'), ('#', '0.1'), ('@', 'orTrue')), {1, 2, 3, 4}), ('@', 'c'), ('*', (('@', 'dy'), ('-set', (('*', (('#', '1e-100'), ('@', 'notin1'), ('#', '0.0'))), ('-sum', ('*', (('#', '530110.904839005'), ('@', 'c'))), ('@', 'x'), ('#', '1'), ('#', '5'))))), {1}))))
-py1:  , w1 = Lambda((), psi*Sum((artia*lxNone) / Symbol('ZDv'), (x, 1e+100, p))*oo*'s'*0.1*orTrue), c, dy*FiniteSet(1e-100*notin1*0.0, Sum(530110.904839005*c, (x, 1, 5)))
-
-?(), b = 1, 2
-
-
-text: limit _seq((()))
-ast:  ('*', (('-func', 'limit', (('@', '_'),)), ('@', 'seq'), ('(', ('(', ('(', (',', ()))))))
-tex1: \lim_{{} \to {}^+} \_ \cdot seq \cdot \left(\left(\left( \right) \right) \right)
-
-
-text: Or der((()))
-ast:  ('*', (('-func', 'Or', (('@', 'der'),)), ('(', ('(', ('(', (',', ()))))))
-ast:  ('*', (('@', 'der'), ('(', ('(', ('(', (',', ()))))))
-nat1: {der} ((()))
-nat2: der * ((()))
-
-
-Exception!
-text: \sum_{x=::'}^\sum_{x=-0.01902796538634282and-.1and .1}^25822.12298235377[\Theta]\{"s",1.,partial}^\log_'s'**c\partial+16551221795222.463dz*Falsenotin[[\partialy,None,dx]]||{-dy:1/b}
-
-\sum_

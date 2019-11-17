@@ -300,7 +300,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (x)'), {'math': ('f(x)', "Function('f')(x)", 'f\\left(x \\right)')})
 		self.assertEqual (get ('f (x) (0)'), {'math': ('f(0)', "Function('f')(0)", 'f\\left(0 \\right)')})
 		self.assertEqual (get ('f (0)'), {'math': ('f(0)', "Function('f')(0)", 'f\\left(0 \\right)')})
-		self.assertEqual (get ('f = ?g ()'), {'math': ('f = g()', "f = Function('g')", 'f = g\\left( \\right)')})
+		self.assertEqual (get ('f = ?g ()'), {'math': ('f = ?g()', "f = Function('g')", 'f = ?g\\left( \\right)')})
+		self.assertEqual (get ('f (x)'), {'math': ('?g(x)', "Function('g')(x)", '?g\\left(x \\right)')})
+		self.assertEqual (get ('f (x) (0)'), {'math': ('?g(0)', "Function('g')(0)", '?g\\left(0 \\right)')})
+		self.assertEqual (get ('f (0)'), {'math': ('?g(0)', "Function('g')(0)", '?g\\left(0 \\right)')})
+		self.assertEqual (get ('f = g ()'), {'math': ('f = g()', "f = Function('g')", 'f = g\\left( \\right)')})
 		self.assertEqual (get ('f (x)'), {'math': ('g(x)', "Function('g')(x)", 'g\\left(x \\right)')})
 		self.assertEqual (get ('f (x) (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
 		self.assertEqual (get ('f (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
@@ -310,7 +314,11 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (x)'), {'math': ('x g(x)', "x*Function('g')(x)", 'x g\\left(x \\right)')})
 		self.assertEqual (get ('f (x) (0)'), {'math': ('0', '0', '0')})
 		self.assertEqual (get ('f (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
-		self.assertEqual (get ('f = ?g (x)'), {'math': ('f = g(x)', "f = Function('g')(x)", 'f = g\\left(x \\right)')})
+		self.assertEqual (get ('f = ?g (x)'), {'math': ('f = ?g(x)', "f = Function('g')(x)", 'f = ?g\\left(x \\right)')})
+		self.assertEqual (get ('f (x)'), {'math': ('x ?g(x)', "x*Function('g')(x)", 'x ?g\\left(x \\right)')})
+		self.assertEqual (get ('f (x) (0)'), {'math': ('0', '0', '0')})
+		self.assertEqual (get ('f (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
+		self.assertEqual (get ('f = g (x)'), {'math': ('f = g(x)', "f = Function('g')(x)", 'f = g\\left(x \\right)')})
 		self.assertEqual (get ('f (x)'), {'math': ('x g(x)', "x*Function('g')(x)", 'x g\\left(x \\right)')})
 		self.assertEqual (get ('f (x) (0)'), {'math': ('0', '0', '0')})
 		self.assertEqual (get ('f (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
@@ -325,6 +333,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('d/dx (u) (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), x), (x, t), (1, 0))", '\\frac{d}{dx}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
 		self.assertEqual (get ('d**2 / dx dt u (1, 0)'), {'math': ('0', '0', '0')})
 		self.assertEqual (get ('d**2 / dx dt (u) (1, 0)'), {'math': ('d**2 / dt dx (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), t, x), (x, t), (1, 0))", '\\frac{\\partial^2}{\\partial t \\partial x}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('f () = x**2'), {'math': ('f() = x**2', 'f = Lambda((), x**2)', 'f\\left( \\right) = x^2')})
+		self.assertEqual (get ('g (2) = x**2'), {'err': 'server.RealityRedefinitionError: cannot assign to a function containing non-variable parameters'})
+		self.assertEqual (get ('h (x) = x**2'), {'math': ('h(x) = x**2', 'h = Lambda(x, x**2)', 'h\\left(x \\right) = x^2')})
+		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('?f () = x**2'), {'math': ('?f() = x**2', "Eq(Function('f'), x**2)", '?f\\left( \\right) = x^2')})
+		self.assertEqual (get ('?g (2) = x**2'), {'math': ('?g(2) = x**2', "Eq(Function('g')(2), x**2)", '?g\\left(2 \\right) = x^2')})
+		self.assertEqual (get ('?h (x) = x**2'), {'math': ('?h(x) = x**2', "Eq(Function('h')(x), x**2)", '?h\\left(x \\right) = x^2')})
 
 	def test_intro_examples (self):
 		reset ()
@@ -651,6 +666,10 @@ f = ?g ()
 f (x)
 f (x) (0)
 f (0)
+f = g ()
+f (x)
+f (x) (0)
+f (0)
 f' (x)
 d/dx (f) (x)
 
@@ -659,6 +678,10 @@ f (x)
 f (x) (0)
 f (0)
 f = ?g (x)
+f (x)
+f (x) (0)
+f (0)
+f = g (x)
 f (x)
 f (x) (0)
 f (0)
@@ -674,6 +697,14 @@ d/dx u (1, 0)
 d/dx (u) (1, 0)
 d**2 / dx dt u (1, 0)
 d**2 / dx dt (u) (1, 0)
+
+f () = x**2
+g (2) = x**2
+h (x) = x**2
+delall
+?f () = x**2
+?g (2) = x**2
+?h (x) = x**2
 
 """), ('intro_examples', """
 

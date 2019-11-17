@@ -287,7 +287,7 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		except RecursionError:
 			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
 
-		vars = {v: AST (a.op, v, *a [2:]) if a.op in {'-ufunc', '-sym'} and not a [1] else a for v, a in vars.items ()}
+		vars = {v: AST (a.op, v, *a [2:]) if ((a.is_ufunc and not a.ufunc) or (a.is_sym and not a.sym)) else a for v, a in vars.items ()}
 
 		_VARS.update (vars)
 
@@ -642,15 +642,16 @@ def parent ():
 		sys.exit (0)
 
 #...............................................................................................
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	Handler.__init__ = lambda self: None
+# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
+if __name__ == '__main__' and __ARGV and __ARGV [0] == 'server-debug': # DEBUG!
+	Handler.__init__ = lambda self: None
 
-# 	h = Handler ()
+	h = Handler ()
 
-# 	print (h.evaluate ({'text': 'f = lambda: @y'}))
+	print (h.evaluate ({'text': '?f () = x**2'}))
 
-# 	sys.exit (0)
+	sys.exit (0)
+# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END
 
 if __name__ == '__main__':
 	if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:

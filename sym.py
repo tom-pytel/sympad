@@ -186,6 +186,10 @@ def _ast_is_neg (ast):
 def _ast_is_neg_nominus (ast):
 	return ast.is_num_neg or (ast.is_mul and _ast_is_neg (ast.mul [0]))
 
+def _ast_is_top_ass_lhs (self, ast):
+	return (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) or \
+		(self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})
+
 def _ast_slice_bounds (ast, None_ = AST.VarNull, allow1 = False):
 	if allow1 and not ast.start and not ast.step:
 		return (ast.stop or None_,)
@@ -520,11 +524,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	def _ast2tex_ufunc (self, ast):
-		if (not ast.ufunc or
+		if (ast.is_ufunc_explicit or not ast.ufunc or
 				AST ('@', ast.ufunc).is_diff_or_part or
-				(ast.ufunc in _SYM_USER_FUNCS and
-					not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
-					not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+				(ast.ufunc in _SYM_USER_FUNCS and not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?' # '\\: ?'
 		else:
@@ -851,10 +853,9 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'''{{{", ".join (f'{k}: {v}' for k, v in items)}}}'''
 
 	def _ast2nat_ufunc (self, ast):
-		if (not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or
-				(ast.ufunc in _SYM_USER_FUNCS and
-					not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
-					not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+		if (ast.is_ufunc_explicit or not ast.ufunc or
+				AST ('@', ast.ufunc).is_diff_or_part or
+				(ast.ufunc in _SYM_USER_FUNCS and not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?'
 		else:
@@ -1444,6 +1445,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 		return sdiff
 
+	def _ast2spt_ufunc (self, ast):
+		spt             = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
+		spt.is_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through spt
+
+		return spt
+
 	def _ast2spt_subs (self, ast):
 		# spt = _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
 
@@ -1504,7 +1511,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		'-or'   : lambda self, ast: sp.Or (*(_sympify (self._ast2spt (a), sp.Or, bool) for a in ast.or_)),
 		'-and'  : lambda self, ast: sp.And (*(_sympify (self._ast2spt (a), sp.And, bool) for a in ast.and_)),
 		'-not'  : lambda self, ast: _sympify (self._ast2spt (ast.not_), sp.Not, lambda x: not x),
-		'-ufunc': lambda self, ast: sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars)),
+		'-ufunc': _ast2spt_ufunc,
 		'-subs' : _ast2spt_subs,
 		'-sym'  : lambda self, ast: sp.Symbol (ast.sym, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}),
 
@@ -1517,7 +1524,7 @@ class spt2ast:
 	def __new__ (cls, spt):
 		self         = super ().__new__ (cls)
 		self.parents = [None]
-		self.parent  = self.spt = AST.Null
+		self.parent  = self.spt = None
 
 		return self._spt2ast (spt)
 
@@ -1700,7 +1707,14 @@ class spt2ast:
 		if spt.__class__.__name__ == 'slice': # special cased converted slice object with start, stop and step present, this is REALLY unnecessary...
 			return AST ('-slice', *tuple (self._spt2ast (s) for s in spt.args))
 
-		return AST ('-ufunc', spt.name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		if getattr (spt, 'is_explicit', False) or \
+				(isinstance (self.parent, EqAss) and self.parents [-2] is None and spt is self.parent.args [0]) or \
+				(isinstance (self.parent, sp.Tuple) and isinstance (self.parents [-2], EqAss) and self.parents [-3] is None and spt in self.parent):
+			name = f'?{spt.name}'
+		else:
+			name = spt.name
+
+		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__
@@ -1830,18 +1844,18 @@ class sym: # for single script
 	ast2spt            = ast2spt
 	spt2ast            = spt2ast
 
-_RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
+# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
+if __name__ == '__main__': # DEBUG!
 	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 	set_sym_user_funcs (vars)
 
-	ast = AST ('-subs', ('-diff', ('(', ('-ufunc', 'f', (('@', 'x'), ('@', 'z')))), 'd', (('x', 1), ('y', 1))), ((('@', 'x'), ('#', '1')), (('@', 'y'), ('#', '2')), (('@', 'z'), ('#', '3'))))
+	ast = AST ('<>', ('-ufunc', 'f', (('@', 'x'),)), (('==', ('#', '1')),))
 	# res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
 	res = ast2spt (ast)
-	# res = spt2ast (res)
+	res = spt2ast (res)
 	# res = ast2nat (res)
 
 

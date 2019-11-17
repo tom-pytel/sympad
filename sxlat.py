@@ -615,8 +615,8 @@ class sxlat: # for single script
 	xlat_pyS          = xlat_pyS
 	_xlat_f2a_And     = _xlat_f2a_And
 
-# _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
-# if __name__ == '__main__' and not _RUNNING_AS_SINGLE_SCRIPT: # DEBUG!
-# 	ast = AST ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2')))
-# 	res = xlat_funcs2asts (ast, XLAT_FUNC2AST_TEX)
-# 	print (res)
+# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
+if __name__ == '__main__': # DEBUG!
+	ast = AST ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'subs', (('@', 'x'), ('#', '2')))
+	res = xlat_funcs2asts (ast, XLAT_FUNC2AST_TEX)
+	print (res)

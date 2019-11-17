@@ -68,6 +68,18 @@ if __name__ == '__main__':
 	fdout.write ('}\n\n')
 
 	for fnm in _PY_FILES:
+		writing = True
+
 		for line in open (fnm):
-			if not line.rstrip ().endswith ('# AUTO_REMOVE_IN_SINGLE_SCRIPT'):
-				fdout.write (line)
+			liner = line.rstrip ()
+
+			if writing:
+				if not liner.endswith ('# AUTO_REMOVE_IN_SINGLE_SCRIPT'):
+					if liner.lstrip () == '# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START':
+						writing = False
+					else:
+						fdout.write (line)
+
+			else:
+				if liner.lstrip () == '# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END':
+					writing = True

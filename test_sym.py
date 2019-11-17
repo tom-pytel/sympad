@@ -445,6 +445,7 @@ a[(:)]
 \.x|_{(((1,2)),)=y}
 inverse_mell in_transform(())
 1 e100a**2
+?(),w_{1}=\psi*\sum_{x=1e+100}^partia lxNone/$ZDv()*oo\cdot"s"\cdot.1orTrue,c,dy\cdot{{{1e-100notin1.0,\sum_{x=1}^5530110.904839005c}}}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -853,9 +854,15 @@ def test (argv = None):
 				if not isinstance (ast, AST):
 					return ast
 
+				if ast.is_var:
+					if ast.var_name in _RESERVED_WORDS or ast.var_name.startswith ('_'):
+						ast = AST ('@', 'CENSORED')
+
 				if ast.is_func: # the slice function is evil
 					if ast.func == 'slice' and ast.args.len == 2 and ast.args [0] == AST.None_: # :x gets written as slice(x) but may come from slice(None, x)
 						ast = AST ('-slice', AST.None_, ast.args [1], None)
+					# elif ast.func in _FORBIDDEN_SXLAT_FUNCS: # random spaces can create forbidden functions
+					# 	ast = AST ('-func', 'print', *ast [2:])
 
 				# elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
 				# 	if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
@@ -871,7 +878,7 @@ def test (argv = None):
 
 				elif ast.is_ufunc: # remove spaces inserted into ufunc name
 					if ' ' in ast.ufunc:
-						ast = AST ('-ufunc', ast.ufunc.replace (' ', ''), ast.vars, ast.kw)
+						ast = AST ('-ufunc', ast.ufunc_full.replace (' ', ''), ast.vars, ast.kw)
 
 				elif ast.is_sym: # remove spaces inserted into ufunc name
 					if ' ' in ast.sym:
@@ -994,6 +1001,10 @@ def test (argv = None):
 
 						if ast2 is not None:
 							ast = ast2
+
+					elif ast.is_ufunc:
+						if ast.is_ufunc_explicit:
+							ast = AST ('-ufunc', ast.ufunc, *ast [2:])
 
 					return AST (*tuple (sanitize (a) for a in ast))
 
