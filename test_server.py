@@ -340,6 +340,21 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('?f () = x**2'), {'math': ('?f() = x**2', "Eq(Function('f'), x**2)", '?f\\left( \\right) = x^2')})
 		self.assertEqual (get ('?g (2) = x**2'), {'math': ('?g(2) = x**2', "Eq(Function('g')(2), x**2)", '?g\\left(2 \\right) = x^2')})
 		self.assertEqual (get ('?h (x) = x**2'), {'math': ('?h(x) = x**2', "Eq(Function('h')(x), x**2)", '?h\\left(x \\right) = x^2')})
+		self.assertEqual (get ('f (x) = x**3'), {'math': ('f(x) = x**3', 'f = Lambda(x, x**3)', 'f\\left(x \\right) = x^3')})
+		self.assertEqual (get ("f'(3)"), {'math': ('27', '27', '27')})
+		self.assertEqual (get ("f''(3)"), {'math': ('18', '18', '18')})
+		self.assertEqual (get ('df / dx (3)'), {'math': ('27', '27', '27')})
+		self.assertEqual (get ('d**2 f / dx**2 (3)'), {'math': ('18', '18', '18')})
+		self.assertEqual (get ('d / dx (f) (3)'), {'math': ('27', '27', '27')})
+		self.assertEqual (get ('d**2 / dx**2 (f) (3)'), {'math': ('18', '18', '18')})
+		self.assertEqual (get ('f (x, y) = x**2 y**3'), {'math': ('f(x, y) = x**2 y**3', 'f = Lambda((x, y), x**2*y**3)', 'f\\left(x, y \\right) = x^2 y^3')})
+		self.assertEqual (get ("f'(3, 2)"), {'err': 'ValueError: Since there is more than one variable in the expression, the variable(s) of differentiation must be supplied to differentiate x**2*y**3'})
+		self.assertEqual (get ('df / dx (3, 2)'), {'math': ('48', '48', '48')})
+		self.assertEqual (get ('df / dy (3, 2)'), {'math': ('108', '108', '108')})
+		self.assertEqual (get ('d**2 f / dx dy (3, 2)'), {'math': ('72', '72', '72')})
+		self.assertEqual (get ('d / dx (f) (3, 2)'), {'math': ('48', '48', '48')})
+		self.assertEqual (get ('d / dy (f) (3, 2)'), {'math': ('108', '108', '108')})
+		self.assertEqual (get ('d**2 / dx dy (f) (3, 2)'), {'math': ('72', '72', '72')})
 
 	def test_intro_examples (self):
 		reset ()
@@ -705,6 +720,22 @@ delall
 ?f () = x**2
 ?g (2) = x**2
 ?h (x) = x**2
+
+f (x) = x**3
+f'(3)
+f''(3)
+df / dx (3)
+d**2 f / dx**2 (3)
+d / dx (f) (3)
+d**2 / dx**2 (f) (3)
+f (x, y) = x**2 y**3
+f'(3, 2)
+df / dx (3, 2)
+df / dy (3, 2)
+d**2 f / dx dy (3, 2)
+d / dx (f) (3, 2)
+d / dy (f) (3, 2)
+d**2 / dx dy (f) (3, 2)
 
 """), ('intro_examples', """
 

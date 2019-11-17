@@ -1,7 +1,6 @@
-> subs derivatives of lambdas to execute - lambda(x)(0) = \. d/dx (lambda(x)) |_{x = 0}
-
 > scan grammar and add PopConfs where appropriate
 > ufuncs do not stay explicit in vars tab, make explicit when copying?
+> test_sym call derivative of lambda cases
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
