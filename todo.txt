@@ -1,5 +1,8 @@
+> _x -> _ * x
+> f{(x)}'{(0)}?
+
 > {\operatorname{x0}^{2}{\left(t \right)}}
-> \operatorname{x_{0}}
+> x0(t) -> \operatorname{x_{0}} \left(t \right)
 
 > x0(t) -> x(t)(0), x0(t)' -> x(t)'(0)
 

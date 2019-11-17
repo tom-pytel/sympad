@@ -447,6 +447,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		else:
 			return f'\\log_{self._ast2tex_curly (ast.base)}\\left({self._ast2tex (ast.log)} \\right)'
 
+	_rec_tailnum = re.compile (r'^(.+)(?<!\d)(\d*)$')
+
 	def _ast2tex_func (self, ast):
 		if ast.is_trigh_func:
 			if ast.func [0] != 'a':
@@ -456,7 +458,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			else:
 				n = f'\\{ast.func [1:]}^{{-1}}'
 
-			return f'{n}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+			return f'{n}{{\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)}}'
 
 		tex = sxlat.xlat_func2tex (ast, self._ast2tex)
 
@@ -467,16 +469,25 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 		if ispseudo:
 			func = ast.func.replace (AST.Func.NOEVAL, '\\%')
+
 		else:
 			func = ast.func.replace ('_', '\\_')
 			func = f'\\operatorname{{{AST.Var.PY2TEX.get (func, func)}}}'
 
+			# if func in AST.Func.PY:
+			# 	func = f'\\operatorname{{{AST.Var.PY2TEX.get (func, func)}}}'
+
+			# else:
+			# 	func, sub = self._rec_tailnum.match ()
+			# 	func
+			# 	return f'{func}{{\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)}}'
+
 		if ast.func in AST.Func.TEX:
-			return f'\\{ast.func}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+			return f'\\{ast.func}{{\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)}}'
 		elif ispseudo and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'}:
 			return f'{func}{self._ast2tex (AST.tuple2ast (ast.args))}'
 		else:
-			return f'{func}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+			return f'{func}{{\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)}}'
 
 	def _ast2tex_lim (self, ast):
 		s = self._ast2tex_wrap (ast.to, False, ast.to.is_slice) if ast.dir is None else (self._ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -485,8 +496,6 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_sum (self, ast):
 		return f'\\sum_{{{self._ast2tex (ast.svar)} = {self._ast2tex (ast.from_)}}}^{self._ast2tex_curly (ast.to)} {self._ast2tex_paren_mul_exp (ast.sum)}' \
-
-	_rec_diff_var_single_start = re.compile (r'^d(?=[^_])')
 
 	def _ast2tex_diff (self, ast):
 		if ast.diff.is_var and not ast.diff.is_diff_or_part:

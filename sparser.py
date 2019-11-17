@@ -30,7 +30,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
 def _ast_func_tuple_args (ast):
-	ast = ast._strip (1)
+	ast = ast.strip_curly._strip_paren (1) # ast = ast._strip (1)
 
 	return ast.comma if ast.is_comma else (ast,)
 
@@ -418,10 +418,11 @@ def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 
 	return Reduce # raise SyntaxError ('cannot apply initial conditions to derivative of undefined function')
 
-def _expr_func (iparm, *args, strip = 1): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
+def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	ast, wrapf = _ast_func_reorder (args [iparm])
 	isfunc     = args [0] == '-func'
-	ast2       = AST (*(args [:iparm] + ((_ast_func_tuple_args (ast) if isfunc else ast._strip (strip)),) + args [iparm + 1:]))
+	fargs      = _ast_func_tuple_args (ast) if isfunc else ast._strip (1) if args [0] != '-sqrt' else ast.curly if ast.is_curly else ast._strip_paren (1)
+	ast2       = AST (*(args [:iparm] + (fargs,) + args [iparm + 1:]))
 
 	if isfunc:
 		ast2.src = AST ('*', (('@', args [1]), args [iparm]))
@@ -474,28 +475,29 @@ def _expr_ufunc (args, py = False, name = ''):
 
 def _expr_varfunc (var, rhs): # user_func *imp* (...) -> user_func (...)
 	arg, wrapa = _ast_func_reorder (rhs)
+	argsc      = arg.strip_curly
 
 	if var.var in _SP_USER_FUNCS: # or arg.strip_paren.is_comma:
-		if arg.is_paren:
+		if argsc.is_paren:
 			return wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg))))
 		elif var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 			return wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
 
-	elif arg.is_paren and var.is_var_nonconst and not var.is_diff_or_part and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
+	elif argsc.strip_curly.is_paren and var.is_var_nonconst and not var.is_diff_or_part and argsc.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
 
 		if ufunc.op is None:
-			return wrapa (AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw))
+			return wrapa (AST ('-ufunc', var.var, *argsc.paren.as_ufunc_argskw))
 
 		elif ufunc.is_ufunc:
 			if ufunc.is_ufunc_unapplied:
-				ast = ufunc.apply_argskw (arg.paren.as_ufunc_argskw)
+				ast = ufunc.apply_argskw (argsc.paren.as_ufunc_argskw)
 
 				if ast:
 					return wrapa (ast)
 
-			elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-				return wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,))))))
+			elif ufunc.can_apply_argskw (argsc.paren.as_ufunc_argskw):
+				return wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, argsc.paren.comma if argsc.paren.is_comma else (argsc.paren,))))))
 
 	return Reduce # raise SyntaxError ('invalid undefined function')
 
@@ -1347,7 +1349,7 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
 	# a = p.parse (r"{\operatorname{x}^{2}{\left(t \right)}}")
-	a = p.parse (r"sin {(x)}")
+	a = p.parse (r"f {(x)}")
 	print (a)
 
 
