@@ -725,7 +725,8 @@ class AST_Var (AST):
 		'Integers' : ('\\mathbb{Z}',),
 	}
 
-	PY2TEX      = {**dict ((g, f'\\{g}') for g in GREEK), **dict ((p, ts [0]) for p, ts in PY2TEXMULTI.items ())}
+	GREEK2TEX   = dict ((g, f'\\{g}') for g in GREEK)
+	PY2TEX      = {**GREEK2TEX, **dict ((p, ts [0]) for p, ts in PY2TEXMULTI.items ())}
 	TEX2PY      = {**dict ((f'\\{g}', g) for g in GREEK), **dict ((t, p) for p, ts in PY2TEXMULTI.items () for t in ts)}
 	UNI2PY      = {**dict (zip (GREEKUNI, GREEK)), '\u2202': 'partial', '\u221e': 'oo'}
 	ANY2PY      = {**UNI2PY, **TEX2PY}
