@@ -561,6 +561,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\. f(x) f(y) |_{f(x), f(y) = y, z}'), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
 		self.assertEqual (p ('\\. f(x) f(y) |_{f(x) = y, f(y) = z}'), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
 		self.assertEqual (p ('\\. f(x) f(y) |_{\\substack{f(x) = y \\\\ f(y) = z}}'), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
+		self.assertEqual (p ('\\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}'), ('-subs', ('(', ('+', (('(', (',', (('#', '1'), ('#', '2')))), ('(', (',', (('#', '1'), ('#', '2'))))))), ((('(', (',', (('#', '1'), ('#', '2'), ('#', '1'), ('#', '2')))), ('(', (',', (('#', '3'), ('#', '4'))))),)))
+
 		self.assertEqual (p ("f (x)' (0)"), ('-subs', ('-diffp', ('-ufunc', 'f', (('@', 'x'),)), 1), ((('@', 'x'), ('#', '0')),)))
 		self.assertEqual (p ('d / dx (f (x)) (0)'), ('-subs', ('-diff', ('-ufunc', 'f', (('@', 'x'),)), 'd', (('x', 1),)), ((('@', 'x'), ('#', '0')),)))
 		self.assertEqual (p ('d / dx (u (x, y)) (x, y)'), ('*', (('-diff', ('(', ('-ufunc', 'u', (('@', 'x'), ('@', 'y')))), 'd', (('x', 1),)), ('(', (',', (('@', 'x'), ('@', 'y')))))))
@@ -1128,6 +1130,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\. f(x) f(y) |_{f(x), f(y) = y, z}')), '\\left. f\\left(x \\right) f\\left(y \\right) \\right|_{\\substack{f\\left(x \\right) = y \\\\ f\\left(y \\right) = z}}')
 		self.assertEqual (ast2tex (p ('\\. f(x) f(y) |_{f(x) = y, f(y) = z}')), '\\left. f\\left(x \\right) f\\left(y \\right) \\right|_{\\substack{f\\left(x \\right) = y \\\\ f\\left(y \\right) = z}}')
 		self.assertEqual (ast2tex (p ('\\. f(x) f(y) |_{\\substack{f(x) = y \\\\ f(y) = z}}')), '\\left. f\\left(x \\right) f\\left(y \\right) \\right|_{\\substack{f\\left(x \\right) = y \\\\ f\\left(y \\right) = z}}')
+		self.assertEqual (ast2tex (p ('\\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}')), '\\left. \\left(\\left(1, 2 \\right) + \\left(1, 2 \\right) \\right) \\right|_{\\left(1, 2, 1, 2 \\right) = \\left(3, 4 \\right)}')
+
 		self.assertEqual (ast2tex (p ("f (x)' (0)")), "f\\left(x \\right)'\\left(0 \\right)")
 		self.assertEqual (ast2tex (p ('d / dx (f (x)) (0)')), '\\frac{d}{dx}\\left(f\\left(x \\right) \\right)\\left(0 \\right)')
 		self.assertEqual (ast2tex (p ('d / dx (u (x, y)) (x, y)')), '\\frac{d}{dx}\\left(u\\left(x, y \\right) \\right) \\cdot \\left(x, y \\right)')
@@ -1695,6 +1699,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\. f(x) f(y) |_{f(x), f(y) = y, z}')), '\\. f(x) f(y) |_{f(x) = y, f(y) = z}')
 		self.assertEqual (ast2nat (p ('\\. f(x) f(y) |_{f(x) = y, f(y) = z}')), '\\. f(x) f(y) |_{f(x) = y, f(y) = z}')
 		self.assertEqual (ast2nat (p ('\\. f(x) f(y) |_{\\substack{f(x) = y \\\\ f(y) = z}}')), '\\. f(x) f(y) |_{f(x) = y, f(y) = z}')
+		self.assertEqual (ast2nat (p ('\\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}')), '\\. ((1, 2) + (1, 2)) |_{(1, 2, 1, 2) = (3, 4)}')
+
 		self.assertEqual (ast2nat (p ("f (x)' (0)")), "f(x)'(0)")
 		self.assertEqual (ast2nat (p ('d / dx (f (x)) (0)')), 'd / dx (f(x))(0)')
 		self.assertEqual (ast2nat (p ('d / dx (u (x, y)) (x, y)')), 'd / dx (u(x, y)) * (x, y)')
@@ -2262,6 +2268,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\. f(x) f(y) |_{f(x), f(y) = y, z}')), "Subs(Function('f')(x)*Function('f')(y), (Function('f')(x), Function('f')(y)), (y, z))")
 		self.assertEqual (ast2py (p ('\\. f(x) f(y) |_{f(x) = y, f(y) = z}')), "Subs(Function('f')(x)*Function('f')(y), (Function('f')(x), Function('f')(y)), (y, z))")
 		self.assertEqual (ast2py (p ('\\. f(x) f(y) |_{\\substack{f(x) = y \\\\ f(y) = z}}')), "Subs(Function('f')(x)*Function('f')(y), (Function('f')(x), Function('f')(y)), (y, z))")
+		self.assertEqual (ast2py (p ('\\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}')), 'Subs(((1, 2) + (1, 2)), ((1, 2, 1, 2),), ((3, 4),))')
+
 		self.assertEqual (ast2py (p ("f (x)' (0)")), "Subs(diff(Function('f')(x)), x, 0)")
 		self.assertEqual (ast2py (p ('d / dx (f (x)) (0)')), "Subs(Derivative(Function('f')(x), x), x, 0)")
 		self.assertEqual (ast2py (p ('d / dx (u (x, y)) (x, y)')), "Derivative(Function('u')(x, y), x)*(x, y)")
@@ -2829,6 +2837,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\. f(x) f(y) |_{f(x), f(y) = y, z}')), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
 		self.assertEqual (ast2tex2ast (p ('\\. f(x) f(y) |_{f(x) = y, f(y) = z}')), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
 		self.assertEqual (ast2tex2ast (p ('\\. f(x) f(y) |_{\\substack{f(x) = y \\\\ f(y) = z}}')), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
+		self.assertEqual (ast2tex2ast (p ('\\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}')), ('-subs', ('(', ('+', (('(', (',', (('#', '1'), ('#', '2')))), ('(', (',', (('#', '1'), ('#', '2'))))))), ((('(', (',', (('#', '1'), ('#', '2'), ('#', '1'), ('#', '2')))), ('(', (',', (('#', '3'), ('#', '4'))))),)))
+
 		self.assertEqual (ast2tex2ast (p ("f (x)' (0)")), ('-subs', ('-diffp', ('-ufunc', 'f', (('@', 'x'),)), 1), ((('@', 'x'), ('#', '0')),)))
 		self.assertEqual (ast2tex2ast (p ('d / dx (f (x)) (0)')), ('-subs', ('-diff', ('-ufunc', 'f', (('@', 'x'),)), 'd', (('x', 1),)), ((('@', 'x'), ('#', '0')),)))
 		self.assertEqual (ast2tex2ast (p ('d / dx (u (x, y)) (x, y)')), ('*', (('-diff', ('(', ('-ufunc', 'u', (('@', 'x'), ('@', 'y')))), 'd', (('x', 1),)), ('(', (',', (('@', 'x'), ('@', 'y'))))), {1}))
@@ -3396,6 +3406,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\. f(x) f(y) |_{f(x), f(y) = y, z}')), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
 		self.assertEqual (ast2nat2ast (p ('\\. f(x) f(y) |_{f(x) = y, f(y) = z}')), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
 		self.assertEqual (ast2nat2ast (p ('\\. f(x) f(y) |_{\\substack{f(x) = y \\\\ f(y) = z}}')), ('-subs', ('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),)))), ((('-ufunc', 'f', (('@', 'x'),)), ('@', 'y')), (('-ufunc', 'f', (('@', 'y'),)), ('@', 'z')))))
+		self.assertEqual (ast2nat2ast (p ('\\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}')), ('-subs', ('(', ('+', (('(', (',', (('#', '1'), ('#', '2')))), ('(', (',', (('#', '1'), ('#', '2'))))))), ((('(', (',', (('#', '1'), ('#', '2'), ('#', '1'), ('#', '2')))), ('(', (',', (('#', '3'), ('#', '4'))))),)))
+
 		self.assertEqual (ast2nat2ast (p ("f (x)' (0)")), ('-subs', ('-diffp', ('-ufunc', 'f', (('@', 'x'),)), 1), ((('@', 'x'), ('#', '0')),)))
 		self.assertEqual (ast2nat2ast (p ('d / dx (f (x)) (0)')), ('-subs', ('-diff', ('-ufunc', 'f', (('@', 'x'),)), 'd', (('x', 1),)), ((('@', 'x'), ('#', '0')),)))
 		self.assertEqual (ast2nat2ast (p ('d / dx (u (x, y)) (x, y)')), ('*', (('-diff', ('(', ('-ufunc', 'u', (('@', 'x'), ('@', 'y')))), 'd', (('x', 1),)), ('(', (',', (('@', 'x'), ('@', 'y'))))), {1}))
@@ -3963,6 +3975,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\. f(x) f(y) |_{f(x), f(y) = y, z}')), ('-func', 'Subs', (('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),))), {1}), ('(', (',', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),))))), ('(', (',', (('@', 'y'), ('@', 'z')))))))
 		self.assertEqual (ast2py2ast (p ('\\. f(x) f(y) |_{f(x) = y, f(y) = z}')), ('-func', 'Subs', (('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),))), {1}), ('(', (',', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),))))), ('(', (',', (('@', 'y'), ('@', 'z')))))))
 		self.assertEqual (ast2py2ast (p ('\\. f(x) f(y) |_{\\substack{f(x) = y \\\\ f(y) = z}}')), ('-func', 'Subs', (('*', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),))), {1}), ('(', (',', (('-ufunc', 'f', (('@', 'x'),)), ('-ufunc', 'f', (('@', 'y'),))))), ('(', (',', (('@', 'y'), ('@', 'z')))))))
+		self.assertEqual (ast2py2ast (p ('\\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}')), ('-func', 'Subs', (('(', ('+', (('(', (',', (('#', '1'), ('#', '2')))), ('(', (',', (('#', '1'), ('#', '2'))))))), ('(', (',', (('(', (',', (('#', '1'), ('#', '2'), ('#', '1'), ('#', '2')))),))), ('(', (',', (('(', (',', (('#', '3'), ('#', '4')))),))))))
+
 		self.assertEqual (ast2py2ast (p ("f (x)' (0)")), ('-func', 'Subs', (('-func', 'diff', (('-ufunc', 'f', (('@', 'x'),)),)), ('@', 'x'), ('#', '0'))))
 		self.assertEqual (ast2py2ast (p ('d / dx (f (x)) (0)')), ('-func', 'Subs', (('-func', 'Derivative', (('-ufunc', 'f', (('@', 'x'),)), ('@', 'x'))), ('@', 'x'), ('#', '0'))))
 		self.assertEqual (ast2py2ast (p ('d / dx (u (x, y)) (x, y)')), ('*', (('-func', 'Derivative', (('-ufunc', 'u', (('@', 'x'), ('@', 'y'))), ('@', 'x'))), ('(', (',', (('@', 'x'), ('@', 'y'))))), {1}))
@@ -4530,6 +4544,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\. f(x) f(y) |_{f(x), f(y) = y, z}')), ('*', (('@', 'y'), ('@', 'z'))))
 		self.assertEqual (ast2spt2ast (p ('\\. f(x) f(y) |_{f(x) = y, f(y) = z}')), ('*', (('@', 'y'), ('@', 'z'))))
 		self.assertEqual (ast2spt2ast (p ('\\. f(x) f(y) |_{\\substack{f(x) = y \\\\ f(y) = z}}')), ('*', (('@', 'y'), ('@', 'z'))))
+		self.assertEqual (ast2spt2ast (p ('\\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}')), ('(', (',', (('#', '3'), ('#', '4')))))
+
 		self.assertEqual (ast2spt2ast (p ("f (x)' (0)")), ('-subs', ('-diffp', ('-ufunc', 'f', (('@', 'x'),)), 1), ((('@', 'x'), ('#', '0')),)))
 		self.assertEqual (ast2spt2ast (p ('d / dx (f (x)) (0)')), ('-subs', ('-diffp', ('-ufunc', 'f', (('@', 'x'),)), 1), ((('@', 'x'), ('#', '0')),)))
 		self.assertEqual (ast2spt2ast (p ('d / dx (u (x, y)) (x, y)')), ('*', (('-diff', ('-ufunc', 'u', (('@', 'x'), ('@', 'y'))), 'd', (('x', 1),)), ('(', (',', (('@', 'x'), ('@', 'y')))))))
@@ -5098,6 +5114,8 @@ f (x)' (0)
 \. f(x) f(y) |_{f(x), f(y) = y, z}
 \. f(x) f(y) |_{f(x) = y, f(y) = z}
 \. f(x) f(y) |_{\substack{f(x) = y \\ f(y) = z}}
+\. ((1, 2) + (1, 2)) |_{(1,2,1,2) = (3,4)}
+
 f (x)' (0)
 d / dx (f (x)) (0)
 d / dx (u (x, y)) (x, y)

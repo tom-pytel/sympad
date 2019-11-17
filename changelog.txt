@@ -3,6 +3,7 @@ v1.0.20:
 * LOOONG OVERDUE! Restructured grammar to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)).
 * Added symbols with assumptions.
 * Added parsing not as possible unary prefix to unparenthesized function arguments.
+* Added missing parsing of LaTeX subscripts in \operatorname.
 * Finally documented lots of changes.
 * Made supported builtin functions accessible directly by name without need of $ escape character.
 

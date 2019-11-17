@@ -1,17 +1,19 @@
-> overhaul = and == to try to minimize where == is needed for display
+> {\operatorname{x0}^{2}{\left(t \right)}}
+> \operatorname{x_{0}}
+
+> x0(t) -> x(t)(0), x0(t)' -> x(t)'(0)
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
 > keep track of what undefined functions are created during processing?
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
+> overhaul server env option command line setting
 
-> ((1, 2) + (1, 2)).subs((1, 2), (3, 4))
+> overhaul = and == to try to minimize where == is needed for display
 
 > subs autocomplete
 > subs clarity parentheses for tex display like d/dx (f), attr, etc...?
-
-> N -N x
 
 
 > (a or b) or (a and b) - result parenthesizing for clarity
@@ -31,6 +33,9 @@
 > doc: PDEs
 
 
+> allow funcs as vars?
+> N -N x
+
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 > diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
@@ -45,7 +50,6 @@
 > add slice() to test_sym
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)? - remove or reject null vars after
 
-> overhaul server env option command line setting
 
 
 > again redo spt2ast_Add?
@@ -183,3 +187,6 @@ Errors:
 Weird one...
 text: \sum_{x=(::)'}^\sum_{x=-0.01902796538634282and-.1and .1}^25822.12298235377[\Theta]\{"s",1.,partial}^\log_'s'**c\partial+16551221795222.463dz*Falsenotin[[\partialy,None,dx]]||{-dy:1/b}
 
+\left[ x{\left(t \right)} = C_{1} \operatorname{x_{0}}{\left(t \right)} + C_{2} \operatorname{x_{0}}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x_{0}}^{2}{\left(t \right)}}\, dt, \  y{\left(t \right)} = C_{1} \operatorname{y_{0}}{\left(t \right)} + C_{2} \left(\operatorname{y_{0}}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x_{0}}^{2}{\left(t \right)}}\, dt + \frac{\left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x_{0}}{\left(t \right)}}\right)\right]
+\left[ x{\left(t \right)} = C_{1} \operatorname{x0}{\left(t \right)} + C_{2} \operatorname{x0}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}^{2}{\left(t \right)}}\, dt, \  y{\left(t \right)} = C_{1} \operatorname{y_{0}}{\left(t \right)} + C_{2} \left(\operatorname{y_{0}}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}^{2}{\left(t \right)}}\, dt + \frac{\left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}{\left(t \right)}}\right)\right]
+\left[ x{\left(t \right)} = C_{1} \operatorname{x0}{\left(t \right)} + C_{2} \operatorname{x0}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}^{2}{\left(t \right)}}\, dt, \  y{\left(t \right)} = C_{1} \operatorname{y0}{\left(t \right)} + C_{2} \left(\operatorname{y0}{\left(t \right)} \int \frac{t^{2} \left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}^{2}{\left(t \right)}}\, dt + \frac{\left(e^{\int 5 t\, dt}\right) e^{\int \left(9 t^{2} + 5 t\right)\, dt}}{\operatorname{x0}{\left(t \right)}}\right)\right]

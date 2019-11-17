@@ -17,8 +17,13 @@ def _raise (exc):
 	raise exc
 
 def _FUNC_name (FUNC):
-	return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1]) if FUNC.grp [1] else \
-			(FUNC.grp [0] or FUNC.grp [2] or FUNC.grp [3] or FUNC.text).replace ('\\', '')
+	if FUNC.grp [1]:
+		return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1])
+
+	else:
+		func = (FUNC.grp [0] or FUNC.grp [2] or FUNC.text).replace ('\\', '')
+
+		return f'{func}{FUNC.grp [3]}' if FUNC.grp [3] else func
 
 def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 	return AST ('#', tok.grp [i]) if tok.grp [i] else \
@@ -730,7 +735,7 @@ class Parser (LALR1):
 			b'Bo/vr17qxmraM5Z0Pj4JZ9Hm8Q3mXRsXqdl59ZoN3xR+uNTHNq5VW4agHqrx75of3WUE3OHxN6yy9xOJNlbbnhGvagz6lSEc6kYbv2i8xwGpVql+leoOdaONq9SdhgSfHjF7nzVxQZQr2ViPz9SVCpe0uZKN9XjmI4HnMkQPEXZv/DZZ/rtLWieJnt6iH7jh' \
 			b'hjNRua7c6XW+51NX8EXy57Vx9aieY+uqR3t4ZhtXD1erx6rq4Q7PbOPqUf3i1lUPf3hmG1ePUKvHquoRDs9s4+pR3f3WVY/u8Mw2XsKwvkm5qnrgmnfPa+Pq0R5eG1oyVF6ttCqdYPxAjYATKHE6CfKTyTJQ3+uy6oBeaDkkXCII6ht+LhtfGpZ5dVDIaGzQ' \
 			b'd/+PY7uT2KhrugJrVP9POXbWsb2VUbHGsM+X5aVRfX9VHYqBKwV3iuIbXkuZamOQmmepRuF5qDGcFpjbfiqxBhc1N9VabG4trW+DnucgFVmJmVY+phWPXV7tOK10DOcl567B9YzQH4KXB0Dps1pc21/XFcvBsnMKjxs6yzYAsv9akbx1I+mafAa0+fXN/wdi' \
-			b'zudF' 
+			b'zudF'
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -762,7 +767,7 @@ class Parser (LALR1):
 		('UFUNCPY',       r'Function(?!\w|\\_)'),
 		('SYM',          fr'\$|\\\$'),
 		('SYMPY',         r'Symbol(?!\w|\\_)'),
-		('FUNC',         fr'(@|\%|\\\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|\\operatorname\s*{{\s*(\$?(?:{_LTR}|\\_)(?:\w|\\_)*)\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|\\\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'(?:\\lim)_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
@@ -851,7 +856,7 @@ class Parser (LALR1):
 	_VAR_QUICK     = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
 
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens (differences from normal)
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*(@|\\\%|\\_|{_LTR}(?:\w|\\_)*)\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'\\lim_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
@@ -1341,8 +1346,8 @@ if __name__ == '__main__': # DEBUG!
 
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
-	# a = p.parse (r"\sum_")
-	a = p.parse (r"N - N x")
+	# a = p.parse (r"{\operatorname{x}^{2}{\left(t \right)}}")
+	a = p.parse (r"sin {(x)}")
 	print (a)
 
 
