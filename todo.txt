@@ -1,3 +1,9 @@
+> cannot assign to anonymous function in sparser? - set real ufunc name with '?' prefix for explicit and set is_ufunc_explicit flag
+
+> \sum_{x=::'}^\sum_{x=-0.01902796538634282and-.1and .1}^25822.12298235377[\Theta]\{"s",1.,partial}^\log_'s'**c\partial+16551221795222.463dz*Falsenotin[[\partialy,None,dx]]||{-dy:1/b}
+> f -f x
+
+> help.html second part of solving equations broken due to:
 > subs single variable argument which may be an object like a dict
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
@@ -9,8 +15,6 @@
 > ((1, 2) + (1, 2)).subs((1, 2), (3, 4))
 
 > subs autocomplete
-
-> cannot assign to anonymous function in sparser? - set real ufunc name with '?' prefix for explicit and set is_ufunc_explicit flag
 
 
 > (a or b) or (a and b) - result parenthesizing for clarity
@@ -203,3 +207,19 @@ py1:  , w1 = Lambda((), psi*Sum((artia*lxNone) / Symbol('ZDv'), (x, 1e+100, p))*
 ?(), b = 1, 2
 
 
+text: limit _seq((()))
+ast:  ('*', (('-func', 'limit', (('@', '_'),)), ('@', 'seq'), ('(', ('(', ('(', (',', ()))))))
+tex1: \lim_{{} \to {}^+} \_ \cdot seq \cdot \left(\left(\left( \right) \right) \right)
+
+
+text: Or der((()))
+ast:  ('*', (('-func', 'Or', (('@', 'der'),)), ('(', ('(', ('(', (',', ()))))))
+ast:  ('*', (('@', 'der'), ('(', ('(', ('(', (',', ()))))))
+nat1: {der} ((()))
+nat2: der * ((()))
+
+
+Exception!
+text: \sum_{x=::'}^\sum_{x=-0.01902796538634282and-.1and .1}^25822.12298235377[\Theta]\{"s",1.,partial}^\log_'s'**c\partial+16551221795222.463dz*Falsenotin[[\partialy,None,dx]]||{-dy:1/b}
+
+\sum_
