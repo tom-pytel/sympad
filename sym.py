@@ -520,22 +520,20 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
 	def _ast2tex_ufunc (self, ast):
-		ufunctex = ast.ufunctex # ufunc name override from subs to print possible function of derivative format
+		if (not ast.ufunc or
+				AST ('@', ast.ufunc).is_diff_or_part or
+				(ast.ufunc in _SYM_USER_FUNCS and
+					not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
+					not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+				not ast.vars.as_ufunc_argskw):
+			pre = '?' # '\\: ?'
+		else:
+			pre = ''
 
-		if ufunctex is None:
-			if (not ast.ufunc or
-					AST ('@', ast.ufunc).is_diff_or_part or
-					(ast.ufunc in _SYM_USER_FUNCS and
-						not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
-						not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
-					not ast.vars.as_ufunc_argskw):
-				pre = '?' # '\\: ?'
-			else:
-				pre = ''
+		name = self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""
+		args = ", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))
 
-			ufunctex = f'{pre}{self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""}'
-
-		return f'{ufunctex}\\left({", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'
+		return f'{pre}{name}\\left({args} \\right)'
 
 	def _ast2tex_subs (self, ast):
 		subs, vars = _ast_subs2ufunc (ast)
@@ -544,7 +542,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			expr = self._ast2tex (ast.expr)
 
 		else:
-			expr = self._ast2tex (AST ('-ufunc', None, tuple (vars.values ()), ufunctex = self._ast2tex (ast.expr)))
+			expr = f'{self._ast2tex (ast.expr)}\\left({", ".join (self._ast2tex (v) for v in vars.values ())} \\right)'
 
 			if not subs:
 				return expr
@@ -853,21 +851,18 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'''{{{", ".join (f'{k}: {v}' for k, v in items)}}}'''
 
 	def _ast2nat_ufunc (self, ast):
-		ufuncnat = ast.ufuncnat # ufunc name override from subs to print possible function of derivative format
+		if (not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or
+				(ast.ufunc in _SYM_USER_FUNCS and
+					not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
+					not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
+				not ast.vars.as_ufunc_argskw):
+			pre = '?'
+		else:
+			pre = ''
 
-		if ufuncnat is None:
-			if (not ast.ufunc or AST ('@', ast.ufunc).is_diff_or_part or
-					(ast.ufunc in _SYM_USER_FUNCS and
-						not (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) and
-						not (self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})) or
-					not ast.vars.as_ufunc_argskw):
-				pre = '?'
-			else:
-				pre = ''
+		args = ", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))
 
-			ufuncnat = f'{pre}{ast.ufunc}'
-
-		return f'{ufuncnat}({", ".join (tuple (self._ast2nat (v) for v in ast.vars) + tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})'
+		return f'{pre}{ast.ufunc}({args})'
 
 	def _ast2nat_subs (self, ast):
 		subs, vars = _ast_subs2ufunc (ast)
@@ -876,7 +871,7 @@ class ast2nat: # abstract syntax tree -> native text
 			expr = self._ast2nat (ast.expr)
 
 		else:
-			expr = self._ast2nat (AST ('-ufunc', None, tuple (vars.values ()), ufuncnat = self._ast2nat (ast.expr)))
+			expr = f'{self._ast2nat (ast.expr)}({", ".join (self._ast2nat (v) for v in vars.values ())})'
 
 			if not subs:
 				return expr
