@@ -349,7 +349,7 @@ def _xlat_f2a_subs (expr, src = AST.VarNull, dst = None):
 		if src.is_dict:
 			return src.dict
 		elif src.op not in {',', '[', '-set'}:
-			return ((src, AST.VarNull),)
+			return None # ((src, AST.VarNull),)
 
 		else:
 			subs = []

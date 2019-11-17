@@ -114,15 +114,21 @@ def _doit (spt): # extend sympy .doit() into standard python containers
 
 	return spt
 
-def _subs (spt, subs): # extend sympy .subs() into standard python containers
-	if isinstance (spt, (None.__class__, str)):
+def _subs (spt, subs): # extend sympy .subs() into standard python containers, subs = [(s1, d1), (s2, d2), ...]
+	if not subs:
 		return spt
-	elif isinstance (spt, (tuple, list, set, frozenset)):
-		return spt.__class__ (_subs (a, subs) for a in spt)
-	elif isinstance (spt, slice):
-		return slice (_subs (spt.start, subs), _subs (spt.stop, subs), _subs (spt.step, subs))
-	elif isinstance (spt, dict):
-		return dict ((_subs (k, subs), _subs (v, subs)) for k, v in spt.items ())
+
+	if isinstance (spt, (tuple, list, set, frozenset, slice, dict)):
+		for i, (s, d) in enumerate (subs):
+			if s == spt:
+				return _subs (d, subs [:i] + subs [i + 1:])
+
+		if isinstance (spt, slice):
+			return slice (_subs (spt.start, subs), _subs (spt.stop, subs), _subs (spt.step, subs))
+		elif isinstance (spt, dict):
+			return dict ((_subs (k, subs), _subs (v, subs)) for k, v in spt.items ())
+		else: # isinstance (spt, (tuple, list, set, frozenset)):
+			return spt.__class__ (_subs (a, subs) for a in spt)
 
 	elif isinstance (spt, sp.Derivative) and isinstance (spt.args [0], sp_AppliedUndef): # do not subs derivative of appliedundef (d/dx (f (x, y))) to preserve info about variables
 		vars     = set (spt.args [0].args)
@@ -1849,7 +1855,7 @@ if __name__ == '__main__': # DEBUG!
 	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 	set_sym_user_funcs (vars)
 
-	ast = AST ('<>', ('-ufunc', 'f', (('@', 'x'),)), (('==', ('#', '1')),))
+	ast = AST ('-subs', ('(', ('+', (('(', (',', (('#', '1'), ('#', '2')))), ('(', (',', (('#', '1'), ('#', '2'))))))), ((('(', (',', (('#', '1'), ('#', '2'), ('#', '1'), ('#', '2')))), ('(', (',', (('#', '3'), ('#', '4'))))),))
 	# res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)

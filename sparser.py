@@ -730,7 +730,7 @@ class Parser (LALR1):
 			b'Bo/vr17qxmraM5Z0Pj4JZ9Hm8Q3mXRsXqdl59ZoN3xR+uNTHNq5VW4agHqrx75of3WUE3OHxN6yy9xOJNlbbnhGvagz6lSEc6kYbv2i8xwGpVql+leoOdaONq9SdhgSfHjF7nzVxQZQr2ViPz9SVCpe0uZKN9XjmI4HnMkQPEXZv/DZZ/rtLWieJnt6iH7jh' \
 			b'hjNRua7c6XW+51NX8EXy57Vx9aieY+uqR3t4ZhtXD1erx6rq4Q7PbOPqUf3i1lUPf3hmG1ePUKvHquoRDs9s4+pR3f3WVY/u8Mw2XsKwvkm5qnrgmnfPa+Pq0R5eG1oyVF6ttCqdYPxAjYATKHE6CfKTyTJQ3+uy6oBeaDkkXCII6ht+LhtfGpZ5dVDIaGzQ' \
 			b'd/+PY7uT2KhrugJrVP9POXbWsb2VUbHGsM+X5aVRfX9VHYqBKwV3iuIbXkuZamOQmmepRuF5qDGcFpjbfiqxBhc1N9VabG4trW+DnucgFVmJmVY+phWPXV7tOK10DOcl567B9YzQH4KXB0Dps1pc21/XFcvBsnMKjxs6yzYAsv9akbx1I+mafAa0+fXN/wdi' \
-			b'zudF'
+			b'zudF' 
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1342,7 +1342,7 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
 	# a = p.parse (r"\sum_")
-	a = p.parse (r"Function ('f') = 2")
+	a = p.parse (r"N - N x")
 	print (a)
 
 

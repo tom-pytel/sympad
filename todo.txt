@@ -1,9 +1,4 @@
-> f -f x
-
 > overhaul = and == to try to minimize where == is needed for display
-
-> help.html second part of solving equations broken due to:
-> subs single variable argument which may be an object like a dict
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
@@ -14,10 +9,12 @@
 > ((1, 2) + (1, 2)).subs((1, 2), (3, 4))
 
 > subs autocomplete
+> subs clarity parentheses for tex display like d/dx (f), attr, etc...?
+
+> N -N x
 
 
 > (a or b) or (a and b) - result parenthesizing for clarity
-> subs clarity parentheses for tex display - attr, etc?
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 > @ and % without parentheses consistency?
 
@@ -185,7 +182,4 @@ Errors:
 
 Weird one...
 text: \sum_{x=(::)'}^\sum_{x=-0.01902796538634282and-.1and .1}^25822.12298235377[\Theta]\{"s",1.,partial}^\log_'s'**c\partial+16551221795222.463dz*Falsenotin[[\partialy,None,dx]]||{-dy:1/b}
-
-
-
 
