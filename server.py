@@ -32,6 +32,7 @@ _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
 _SYMPAD_CHILD    = ('--child', '') in __OPTS
 _SYMPAD_FIRSTRUN = ('--firstrun', '') in __OPTS
+_SYMPAD_DEBUG    = os.environ.get ('SYMPAD_DEBUG')
 
 _DEFAULT_ADDRESS = ('localhost', 9000)
 _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -358,7 +359,7 @@ class Handler (SimpleHTTPRequestHandler):
 			nat, xlatnat = sym.ast2nat (ast, retxlat = True)
 			py, xlatpy  = sym.ast2py (ast, retxlat = True)
 
-			if os.environ.get ('SYMPAD_DEBUG'):
+			if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
 				print ('ast: ', ast, file = sys.stderr)
 
 				if xlattex:
@@ -411,32 +412,42 @@ class Handler (SimpleHTTPRequestHandler):
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
 
-				spt, xlat = sym.ast2spt (ast, retxlat = True) # , _VARS)
-				ast       = sym.spt2ast (spt)
+				if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+					print ('ast:       ', ast, file = sys.stderr)
 
-				if os.environ.get ('SYMPAD_DEBUG'):
-					import sympy as sp
+				try:
+					spt, xlat = sym.ast2spt (ast, retxlat = True) # , _VARS)
 
-					if xlat:
-						print ('asts:       ', repr (xlat), file = sys.stderr)
+					if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+						if xlat:
+							print ('xlat:      ', xlat, file = sys.stderr)
 
+					sptast = sym.spt2ast (spt)
+
+				except:
+					if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+						print (file = sys.stderr)
+
+					raise
+
+				if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
 					try:
-						print ('spt:        ', repr (spt), file = sys.stderr)
+						print ('spt:       ', repr (spt), file = sys.stderr)
 					except:
 						pass
 
-					print ('spt type:   ', type (spt), file = sys.stderr)
+					print ('spt type:  ', type (spt), file = sys.stderr)
 
 					try:
-						print ('spt args:   ', repr (spt.args), file = sys.stderr)
+						print ('spt args:  ', repr (spt.args), file = sys.stderr)
 					except:
 						pass
 
-					print ('sympy latex:', sp.latex (spt), file = sys.stderr)
-					print ('ast:        ', ast, file = sys.stderr)
+					print ('spt ast:   ', sptast, file = sys.stderr)
+					print ('spt latex: ', sp.latex (spt), file = sys.stderr)
 					print (file = sys.stderr)
 
-				asts = _execute_ass (ast, vars)
+				asts = _execute_ass (sptast, vars)
 
 			response = {}
 
@@ -635,7 +646,7 @@ def parent ():
 			ret       = subprocess.run (base + opts + first_run + __ARGV)
 			first_run = []
 
-			if ret.returncode != 0 and not os.environ.get ('SYMPAD_DEBUG'):
+			if ret.returncode != 0 and not _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
 				sys.exit (0)
 
 	except KeyboardInterrupt:
@@ -655,7 +666,7 @@ if __name__ == '__main__' and __ARGV and __ARGV [0] == 'server-debug': # DEBUG!
 
 if __name__ == '__main__':
 	if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:
-		os.environ ['SYMPAD_DEBUG'] = '1'
+		_SYMPAD_DEBUG = os.environ ['SYMPAD_DEBUG'] = '1'
 
 	if _SYMPAD_CHILD:
 		child ()

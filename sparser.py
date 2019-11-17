@@ -255,13 +255,17 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		return None, None # raise SyntaxError?
 
 	def try_apply_ics (ast, arg): # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
-		diff  = ast.diff._strip_paren (1)
-		ufunc = _SP_USER_VARS.get (diff.var, diff)
+		if arg.is_paren:
+			diff = ast.diff._strip_paren (1)
+			func = _SP_USER_VARS.get (diff.var, diff)
+			args = arg.paren.comma if arg.paren.is_comma else (arg.paren,)
 
-		if arg.is_paren and ufunc.is_ufunc_applied and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-			diff = AST ('-diff', diff, ast.d, ast.dvs)
+			if func.is_lamb:
+				if len (args) == func.vars.len:
+					return AST ('-subs', AST ('-diff', diff, ast.d, ast.dvs), tuple (filter (lambda va: va [1] != va [0], zip ((AST ('@', v) for v in func.vars), args))))
 
-			return AST ('-subs', diff, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))))
+			if func.is_ufunc_applied and func.can_apply_argskw (arg.paren.as_ufunc_argskw):
+				return AST ('-subs', AST ('-diff', diff, ast.d, ast.dvs), tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args))))
 
 		return AST ('*', (ast, arg))
 
@@ -411,10 +415,15 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 	if lhs.is_diffp:
-		diffp = _SP_USER_VARS.get (lhs.diffp.var, lhs.diffp)
+		func = _SP_USER_VARS.get (lhs.diffp.var, lhs.diffp)
+		args = commas.comma if commas.is_comma else (commas,)
 
-		if diffp.is_ufunc_applied and diffp.can_apply_argskw (commas.as_ufunc_argskw): # more general than necessary since diffp only valid for ufuncs of one variable
-			return AST ('-subs', lhs, tuple (filter (lambda va: va [1] != va [0], zip (diffp.vars, (commas.comma if commas.is_comma else (commas,))))))
+		if func.is_lamb:
+			if len (args) == func.vars.len:
+				return AST ('-subs', lhs, tuple (filter (lambda va: va [1] != va [0], zip ((AST ('@', v) for v in func.vars), args))))
+
+		elif func.is_ufunc_applied and func.can_apply_argskw (commas.as_ufunc_argskw): # more general than necessary since func only valid for ufuncs of one variable
+			return AST ('-subs', lhs, tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args))))
 
 	return Reduce # raise SyntaxError ('cannot apply initial conditions to derivative of undefined function')
 

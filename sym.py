@@ -137,7 +137,6 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers, s
 
 	else:
 		try:
-			# return sp.Subs (spt, tuple (s for s, _ in subs), tuple (d for _, d in subs))
 			if isinstance (spt, (bool, int, float, complex)):
 				return sp.sympify (spt).subs (subs)
 			else:
@@ -397,7 +396,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
-					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
+					(p.tail_mul.is_var and (p.tail_mul.var == '_' or p.tail_mul.var in _SYM_USER_FUNCS)) or
 					# (n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
 					(n.is_div and p.is_div) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
@@ -534,6 +533,14 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		else:
 			return f'\\int_{self._ast2tex_curly (ast.from_)}^{self._ast2tex_curly (ast.to)}{intg}\\ {self._ast2tex (ast.dv)}'
 
+	def _ast2tex_idx (self, ast):
+		obj = self._ast2tex_wrap (ast.obj,
+			ast.obj.op in {"^", "-slice"} or ast.obj.is_subs_diff_ufunc or (ast.obj.is_var and ast.obj.var in _SYM_USER_FUNCS),
+			ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "||", "^^", "&&", "-or", "-and", "-not"})
+		idx = '[' if ast.idx.len and ast.idx [0].is_var_null else f'\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]'
+
+		return f'{obj}{idx}'
+
 	def _ast2tex_ufunc (self, ast):
 		if (ast.is_ufunc_explicit or not ast.ufunc or
 				AST ('@', ast.ufunc).is_diff_or_part or
@@ -596,7 +603,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'-piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "-slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "-slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"-slice"})}' for p in ast.piece) + ' \\end{cases}',
 		'-lamb' : lambda self, ast: f'\\left({self._ast2tex (AST ("@", ast.vars [0]) if ast.vars.len == 1 else AST ("(", (",", tuple (("@", v) for v in ast.vars))))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
-		'-idx'  : lambda self, ast: f'{self._ast2tex_wrap (ast.obj, ast.obj.op in {"^", "-slice"} or ast.obj.is_subs_diff_ufunc, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "||", "^^", "&&", "-or", "-and", "-not"})}' + ('[' if ast.idx.len and ast.idx [0].is_var_null else f'\\left[{self._ast2tex (AST.tuple2ast (ast.idx))} \\right]'),
+		'-idx'  : _ast2tex_idx,
 		'-slice': lambda self, ast: self._ast2tex_wrap ('{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and a.op in {'=', ',', '-slice'}) for a in _ast_slice_bounds (ast, '')), 0, not ast.start and self.parent.is_comma and ast is self.parent.comma [0] and self.parents [-2].is_ass and self.parent is self.parents [-2].rhs),
 		'-set'  : lambda self, ast: f'\\left\\{{{", ".join (self._ast2tex_wrap (c, 0, c.is_slice) for c in ast.set)} \\right\\}}' if ast.set else '\\emptyset',
 		'-dict' : lambda self, ast: f'\\left\\{{{", ".join (f"{self._ast2tex_wrap (k, 0, k.is_slice)}{{:}} {self._ast2tex_wrap (v, 0, v.is_slice)}" for k, v in ast.dict)} \\right\\}}',
@@ -843,6 +850,14 @@ class ast2nat: # abstract syntax tree -> native text
 		else:
 			return f"""\\[{', '.join (f'[{", ".join (self._ast2nat (e) for e in row)}]' for row in ast.mat)}]"""
 
+	def _ast2nat_idx (self, ast):
+		obj = self._ast2nat_wrap (ast.obj,
+			ast.obj.op in {"^", "-slice"} or ast.obj.is_subs_diff_ufunc or (ast.obj.is_var and ast.obj.var in _SYM_USER_FUNCS),
+			ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "-lim", "-sum", "-diff", "-intg", "-piece", "-lamb", "||", "^^", "&&", "-or", "-and", "-not"})
+		idx = '[' if ast.idx.len and ast.idx [0].is_var_null else f'[{self._ast2nat (AST.tuple2ast (ast.idx))}]'
+
+		return f'{obj}{idx}'
+
 	def _ast2nat_slice (self, ast):
 		b = _ast_slice_bounds (ast)
 		s = ':'.join (self._ast2nat_wrap (a, a is not b [-1] and not a.is_diff and a.has_tail_lambda_solo, a.op in {'=', ',', '-lamb', '-slice'}) for a in b)
@@ -925,7 +940,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "-piece", "-lamb"}, {",", "-slice"})}' if p [1] is True else \
 				f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "-piece", "-lamb"}, {",", "-slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "-piece", "-lamb"}, {",", "-slice"})}' for p in ast.piece),
 		'-lamb' : lambda self, ast: f'lambda{" " + ", ".join (ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.is_lamb, ast.lamb.op in {"=", "<>", "-slice"})}',
-		'-idx'  : lambda self, ast: f'{self._ast2nat_wrap (ast.obj, ast.obj.op in {"^", "-slice"} or ast.obj.is_subs_diff_ufunc, ast.obj.is_num_neg or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "-", "-lim", "-sum", "-diff", "-intg", "-piece", "-lamb", "||", "^^", "&&", "-or", "-and", "-not"})}' + ('[' if ast.idx.len and ast.idx [0].is_var_null else f'[{self._ast2nat (AST.tuple2ast (ast.idx))}]'),
+		'-idx'  : _ast2nat_idx,
 		'-slice': _ast2nat_slice,
 		'-set'  : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (c, 0, c.is_slice) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'-dict' : _ast2nat_dict,
@@ -1091,13 +1106,14 @@ class ast2py: # abstract syntax tree -> Python code text
 	def _ast2py_mat (self, ast):
 		if not ast.rows:
 			return 'Matrix()'
-		elif ast.is_mat_column and not any (r [0].is_brack for r in ast.mat): # (ast.rows > 1 or not ast.mat [0] [0].is_brack):
+		elif ast.is_mat_column and not any (r [0].is_brack for r in ast.mat):
 			return f"Matrix([{', '.join (self._ast2py (row [0]) for row in ast.mat)}])"
 		else:
 			return f"""Matrix([{', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat)}])"""
 
 	def _ast2py_idx (self, ast):
-		obj = self._ast2py_paren (ast.obj, ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.is_sqrt_with_base or ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"})
+		obj = self._ast2py_paren (ast.obj, ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.is_sqrt_with_base or (ast.obj.is_var and ast.obj.var in _SYM_USER_FUNCS) or
+			ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"})
 
 		if ast.idx.len and ast.idx [0].is_var_null:
 			idx = '['
@@ -1419,11 +1435,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if not (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or # treat body of lambda as expression for calculation?
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
-			return self._ast2spt (ast.lamb)
+			return self._ast2spt (AST.apply_vars (ast, _SYM_USER_VARS).lamb)
 
 		spt = self._ast2spt (ast.lamb)
 
-		if ast.vars.len == 1 and spt.is_Symbol and not spt.is_Dummy and spt.name == ast.vars [0]:
+		if ast.vars.len == 1 and isinstance (spt, sp.Symbol) and not isinstance (spt, sp.Dummy) and spt.name == ast.vars [0]:
 			spt      = sp.Lambda (sp.Symbol (ast.vars [0]), ast.vars [0]) # having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
 			spt.doit = lambda self, *args, **kw: self
 
@@ -1463,24 +1479,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return spt
 
 	def _ast2spt_subs (self, ast):
-		# spt = _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
-
-		# if ast.expr.is_ufunc: # execute substitution on ufunc, otherwise will not be accepted as ics to dsolve and the like
-		# 	spt = spt.doit ()
-		# elif ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc: # disable doit for these because loses information about variables
-		# 	spt.doit = lambda self = spt, *args, **kw: self
-
-		# return spt
-
-		subs = [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs]
-
-		# if ast.expr.op in {'-diff', '-diffp'} and ast.expr [1].is_ufunc:
-		# 	spt      = sp.Subs (self._ast2spt (ast.expr), *zip (*subs))
-		# 	spt.doit = lambda self = spt, *args, **kw: self # disable doit for these because loses information about variables
-
-		# 	return spt
-
-		return _subs (self._ast2spt (ast.expr), subs)
+		return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
 
 	_ast2spt_funcs = {
 		';'     : lambda self, ast: _raise (RuntimeError ('semicolon expression should never get here')),
