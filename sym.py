@@ -222,27 +222,33 @@ def _ast_func_call (func, args, _ast2spt = None):
 
 	return func (*pyargs, **pykw)
 
-def _ast_subs2ufunc (ast):
-	ufunc = ast.expr
+def _ast_subs2func (ast): # ast is '-subs'
+	func = ast.expr
 
-	if ufunc.op in {'-diff', '-diffp'}:
-		ufunc = ufunc [1]
+	if func.op in {'-diff', '-diffp'}:
+		func = func [1]
 
-	ufunc = _SYM_USER_VARS.get (ufunc.var, ufunc)
+	func = _SYM_USER_VARS.get (func.var, func)
 
-	if not ufunc.is_ufunc_applied:
-		return [AST ('=', s, d) for s, d in ast.subs], None
+	if func.is_lamb:
+		vars = ast.subs [:func.vars.len]
 
-	subs = []
-	vars = OrderedDict ((v, v) for v in ufunc.vars)
+		if tuple (s.var for s, _ in vars) == func.vars:
+			return [AST ('=', s, d) for s, d in ast.subs [func.vars.len:]], tuple (d for _, d in vars)
 
-	for s, d in ast.subs:
-		if s.is_var_nonconst and d.is_const and vars.get (s) == s:
-			vars [s] = d
-		else:
-			subs.append (AST ('=', s, d))
+	elif func.is_ufunc_applied:
+		subs = []
+		vars = OrderedDict ((v, v) for v in func.vars)
 
-	return subs, vars
+		for s, d in ast.subs:
+			if s.is_var_nonconst and d.is_const and vars.get (s) == s:
+				vars [s] = d
+			else:
+				subs.append (AST ('=', s, d))
+
+		return subs, vars.values ()
+
+	return [AST ('=', s, d) for s, d in ast.subs], None
 
 #...............................................................................................
 class ast2tex: # abstract syntax tree -> LaTeX text
@@ -556,13 +562,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{pre}{name}\\left({args} \\right)'
 
 	def _ast2tex_subs (self, ast):
-		subs, vars = _ast_subs2ufunc (ast)
+		subs, vars = _ast_subs2func (ast)
 
 		if len (subs) == ast.subs.len:
 			expr = self._ast2tex (ast.expr)
 
 		else:
-			expr = f'{self._ast2tex (ast.expr)}\\left({", ".join (self._ast2tex (v) for v in vars.values ())} \\right)'
+			expr = f'{self._ast2tex (ast.expr)}\\left({", ".join (self._ast2tex (v) for v in vars)} \\right)'
 
 			if not subs:
 				return expr
@@ -892,13 +898,13 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'{pre}{ast.ufunc}({args})'
 
 	def _ast2nat_subs (self, ast):
-		subs, vars = _ast_subs2ufunc (ast)
+		subs, vars = _ast_subs2func (ast)
 
 		if len (subs) == ast.subs.len:
 			expr = self._ast2nat (ast.expr)
 
 		else:
-			expr = f'{self._ast2nat (ast.expr)}({", ".join (self._ast2nat (v) for v in vars.values ())})'
+			expr = f'{self._ast2nat (ast.expr)}({", ".join (self._ast2nat (v) for v in vars)})'
 
 			if not subs:
 				return expr
@@ -1857,15 +1863,16 @@ class sym: # for single script
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
 	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	set_sym_user_funcs (vars)
+	set_sym_user_funcs (set (vars))
+	set_sym_user_vars (vars)
 
-	ast = AST ('-subs', ('(', ('+', (('(', (',', (('#', '1'), ('#', '2')))), ('(', (',', (('#', '1'), ('#', '2'))))))), ((('(', (',', (('#', '1'), ('#', '2'), ('#', '1'), ('#', '2')))), ('(', (',', (('#', '3'), ('#', '4'))))),))
-	# res = ast2tex (ast)
+	ast = AST ('-subs', ('-diffp', ('@', 'f'), 1), ((('@', 'x'), ('#', '0')),))
+	res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	res = ast2spt (ast)
-	res = spt2ast (res)
+	# res = ast2spt (ast)
+	# res = spt2ast (res)
 	# res = ast2nat (res)
 
 
