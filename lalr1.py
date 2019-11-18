@@ -30,6 +30,7 @@ class State:
 class Conflict (tuple):
 	def __new__ (cls, conf, pos, tokidx, stidx, tokens, stack, estate):
 		self      = tuple.__new__ (cls, (conf, pos, tokidx, stidx, tokens, stack, estate))
+		self.conf = conf
 		self.pos  = pos
 		self.keep = False
 
@@ -156,6 +157,9 @@ class LALR1:
 
 		return tokens
 
+	def stack_has_sym (self, sym):
+		return any (state.sym == sym for state in self.stack)
+
 	#...............................................................................................
 	def parse_getextrastate (self):
 		return None
@@ -177,14 +181,14 @@ class LALR1:
 
 		tokens = self.tokenize (src)
 		tokidx = 0
-		cstack = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
-		stack  = [State (0, None, 0, None)] # [(stidx, symbol, pos, reduction) or (stidx, token), ...]
+		confs  = [] # [(action, tokidx, stack, stidx, extra state), ...] # conflict backtrack stack
+		stack  = self.stack = [State (0, None, 0, None)] # [(stidx, symbol, pos, reduction) or (stidx, token), ...]
 		stidx  = 0
 		rederr = None # reduction function raised exception (SyntaxError or Incomplete usually)
 		pos    = 0
 
 
-		self.confs = {} # DEBUG
+		self.reds = {} # DEBUG
 
 
 		while 1:
@@ -197,8 +201,8 @@ class LALR1:
 					rederr = None
 
 				else:
-					self.tokens, self.tokidx, self.cstack, self.stack, self.stidx, self.tok, self.rederr, self.pos = \
-							tokens, tokidx, cstack, stack, stidx, tok, rederr, pos
+					self.tokens, self.tokidx, self.confs, self.stidx, self.tok, self.rederr, self.pos = \
+							tokens, tokidx, confs, stidx, tok, rederr, pos
 
 					rederr = None
 
@@ -206,7 +210,7 @@ class LALR1:
 						if not has_parse_success:
 							return stack [1].red
 
-						if not self.parse_success (stack [1].red) or not cstack:
+						if not self.parse_success (stack [1].red) or not confs:
 							return None
 
 					elif self.parse_error ():
@@ -214,7 +218,7 @@ class LALR1:
 
 						continue
 
-				if not cstack:
+				if not confs:
 					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
@@ -226,18 +230,19 @@ class LALR1:
 						f'invalid token {tok.text!r}' if tok == '$err' else \
 						f'invalid syntax {src [tok.pos : tok.pos + 16]!r}')
 
-				act, _, tokidx, stidx, tokens, stack, estate = cstack.pop ()
+				act, _, tokidx, stidx, tokens, stack, estate = confs.pop ()
+				self.stack                                   = stack
 				tok                                          = tokens [tokidx]
 
 				self.parse_setextrastate (estate)
 
-			elif conf is not None:
-				cstack.append (Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], self.parse_getextrastate ()))
+			if conf is not None:
+				confs.append (Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], self.parse_getextrastate ()))
 
 
 				if conf < 0: # DEBUG
-					rule              = rules [-conf]
-					self.confs [rule] = self.confs.get (rule, 0) + 1
+					k             = (act, rules [-conf])
+					self.reds [k] = self.reds.get (k, 0) + 1
 
 
 			if act > 0:
@@ -255,23 +260,23 @@ class LALR1:
 				try:
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
-					if isinstance (red, KeepConf):
-						red              = red.red
-						cstack [-1].keep = True
+					if isinstance (red, KeepConf): # mark this conflict to not be removed by PopConf
+						red             = red.red
+						confs [-1].keep = True
 
-					elif isinstance (red, PopConfs):
+					elif isinstance (red, PopConfs): # pop all conflicts generated from parsing this rule because parse is guaranteed good
 						red   = red.red
 						start = stack [-1].pos if red is Reduce else pos
 						i     = 0
 
-						for i in range (len (cstack) - 1, -1, -1):
-							if cstack [i].pos <= start:
+						for i in range (len (confs) - 1, -1, -1):
+							if confs [i].pos <= start:
 								break
 
-							if not cstack [i].keep:
-								del cstack [i]
+							if not confs [i].keep: # dont remove conflicts which are marked for keeping or conflicts which are shifts
+								del confs [i]
 
-						if red is Reduce:
+						if red is Reduce: # if reduction only requested then don't reduce rule and fall back to previous conflict reduction
 							rederr = red
 
 							continue
@@ -300,3 +305,5 @@ class lalr1: # for single script
 	PopConfs   = PopConfs
 	Reduce     = Reduce
 	LALR1      = LALR1
+
+# print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))

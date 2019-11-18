@@ -1,12 +1,8 @@
-> scan grammar and add PopConfs where appropriate
-
-> _expr_diff a d/dx b
-> _expr_intg - take first differential in mul list if more than one and return rest ast mul
-> \int a dx d / dx b
-
-> analyze which reductions are stored as conflicts most
-
+> _expr_intg - take first differential in mul list if more than one and return rest ast mul - \int a dx d / dx b
 > redo _ast_strip_tail_differential
+
+> redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)"
+
 > integration autocomplete commented out, fix it
 > ast2tex/nat intg to wrap exprs with potential differentials?
 
@@ -31,6 +27,9 @@
 
 > subs autocomplete
 > subs clarity parentheses for tex display like d/dx (f), attr, etc...?
+
+> scan grammar and add PopConfs where appropriate
+> analyze which reductions are stored as conflicts most
 
 
 > (a or b) or (a and b) - result parenthesizing for clarity
@@ -229,3 +228,9 @@ ast:  (',', (('*', (('-dict', ((('#', '0.1'), ('-set', ())),)), ('@', 'and1'), (
 ast:  (',', (('*', (('-dict', ((('#', '0.1'), ('-set', ())),)), ('@', 'and1'), ('#', '0.0')), {2}), ('@', 'None'), ('-or', (('+', (('*', (('#', '1e-100'), ('@', 'andbor'))), ('-', ('#', '1')))), ('<>', ('/', ('^', ('.', ('.', ('.', ('-set', ()), 'VWNd', ()), 'bu'), 'Pql'), ('@', 'd')), ('*', (('@', 'dx'), ('(', ('-ufunc', 'u', (('@', 'x'),))), ('(', ('#', '0'))))), (('<=', ('-mat', ((('-sym', 'WX', (('real', ('@', 'True')),)), ('+', (('*', (('@', 'partialxif'), ('@', 'partialyelse'))), ('-', ('*', (('#', '1.5466888838691082e-05'), ('@', 'ifzoo64'), ('@', 'elseFalse')), {2}))))),))),))))))
 nat1: {0.1: \{}} and1 * 0.0, None, 1e-100 andbor - 1 or \{}.VWNd().bu.Pql**d / dx (u(x))(0) <= \[[$WX(real = True), partialxif partialyelse - 1.5466888838691082e-05 ifzoo64 * elseFalse]]
 nat2: {0.1: \{}} and1 * 0.0, None, 1e-100 andbor - 1 or \{}.VWNd().bu.Pql**d / {dx * (u(x)) (0)} <= \[[$WX(real = True), partialxif partialyelse - 1.5466888838691082e-05 ifzoo64 * elseFalse]]
+
+
+text: {NONE[\tau]::}orc[x0]and-1.0&&1&&5772.338064886046or\.\int_b^01e+100dsHC59B|_{\substack{None!=False==9.259620238397651e-22<-1.763622732185734e-10=\fracdy-1.0}}*\[[-1.0,],[-1.0792755350331902e-18,],[None,],]!&&\sqrt[\[[x0,],[\partialx,],]]postfixes(('s',a))&&lambda:\[[-0.0007829769915008965,],[True,],]*\left.\tilde\infty*1e100*Theta\right|_{xyzd-4.198139752863837e-19dz=\sqrt1}^^Function('u',)(x,y)(0,1)^^[[]]
+ast:  ('-or', (('-and', (('*', (('-slice', ('-idx', ('@', 'NONE'), (('@', 'tau'),)), False, False), ('-idx', ('@', 'orc'), (('@', 'x0'),)))), ('&&', (('#', '-1.0'), ('#', '1'), ('#', '5772.338064886046'))))), ('&&', (('*', (('-subs', ('-intg', ('#', '1e+100'), ('@', 'dsHC59B'), ('@', 'b'), ('#', '0')), ((('<>', ('@', 'None'), (('!=', ('@', 'False')), ('==', ('#', '9.259620238397651e-22')), ('<', ('#', '-1.763622732185734e-10')))), ('+', (('/', ('@', 'd'), ('@', 'y')), ('-', ('#', '1.0'))))),)), ('!', ('-mat', ((('#', '-1.0'),), (('#', '-1.0792755350331902e-18'),), (('@', 'None'),))))), {1}), ('-sqrt', ('-func', 'postfixes', (('(', (',', (('"', 's'), ('@', 'a')))),)), ('-mat', ((('@', 'x0'),), (('@', 'partialx'),)))), ('-lamb', ('^^', (('*', (('-mat', ((('#', '-0.0007829769915008965'),), (('@', 'True'),))), ('-subs', ('*', (('@', 'zoo'), ('#', '1e+100'), ('@', 'Theta')), {1, 2}), ((('+', (('@', 'xyzd'), ('-', ('*', (('#', '4.198139752863837e-19'), ('@', 'dz')))))), ('-sqrt', ('#', '1'))),))), {1}), ('*', (('-ufunc', 'u', (('@', 'x'), ('@', 'y'))), ('(', (',', (('#', '0'), ('#', '1')))))), ('[', (('[', ()),)))), ())))))
+nat1: {NONE[tau]::} orc[x0] and -1.0 && 1 && 5772.338064886046 or \. \int_b^0 1e+100 dsHC59B |_{None != False == 9.259620238397651e-22 < -1.763622732185734e-10 = (d) / y - 1.0} \[-1.0, -1.0792755350331902e-18, None]! && \sqrt[\[x0, partialx]]{postfixes(( 's', a))} && (lambda: \[-0.0007829769915008965, True] \. zoo * 1e+100 Theta |_{xyzd - 4.198139752863837e-19 dz = sqrt(1)} ^^ u(x, y) * (0, 1) ^^ [[]])
+
