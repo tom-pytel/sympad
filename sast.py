@@ -108,6 +108,11 @@ class AST (tuple):
 
 		return val
 
+	def set (self, **kw):
+		self.__dict__.update (kw)
+
+		return self
+
 	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted variable?
 		if self.op == '/':
 			return True
