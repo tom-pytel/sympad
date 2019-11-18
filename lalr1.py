@@ -32,8 +32,14 @@ class Conflict (tuple):
 		self      = tuple.__new__ (cls, (conf, pos, tokidx, stidx, tokens, stack, estate))
 		self.conf = conf
 		self.pos  = pos
+		self.keep = False
 
 		return self
+
+	def __repr__ (self):
+		r = tuple.__repr__ (self)
+
+		return f'{r [:-1]}, keep)' if self.keep else r
 
 class Incomplete (Exception): # parse is head of good statement but incomplete
 	__slots__ = ['red']
@@ -258,18 +264,18 @@ class LALR1:
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
 					if isinstance (red, Reduce): # successful rule but request to follow conflicted reduction first putting results of rule on conf stack to be picked up later
-						stidx     = nterms [stack [rnlen - 1].idx] [prod]
-						stack     = stack [:rnlen] + [State (stidx, prod, pos, red.red)]
-						tok       = tokens [tokidx]
-						act, conf = terms [stidx].get (tok, (None, None))
-						estate    = self.parse_getextrastate ()
+						stidx           = nterms [stack [rnlen - 1].idx] [prod]
+						stack           = stack [:rnlen] + [State (stidx, prod, pos, red.red)]
+						tok             = tokens [tokidx]
+						act, conf       = terms [stidx].get (tok, (None, None))
+						estate          = self.parse_getextrastate ()
+						rederr          = Reduce
+						confs [-1].keep = True
 
 						if conf is not None:
 							confs.insert (-1, Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], estate))
 
 						confs.insert (-1, Conflict (act, tok.pos, tokidx, stidx, tokens [:], stack [:], estate))
-
-						rederr = Reduce
 
 						continue
 
@@ -282,7 +288,9 @@ class LALR1:
 							if confs [i].pos <= start:
 								break
 
-							del confs [i]
+							if not confs [i].keep: # dont remove conflicts which are marked for keeping or conflicts which are shifts
+								del confs [i]
+							# del confs [i]
 
 						if red is Reduce: # if reduction only requested then don't store rule result and fall back to previous conflicted reduction
 							rederr = red
