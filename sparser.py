@@ -979,13 +979,21 @@ class Parser (LALR1):
 	def expr_divm_1        (self, MINUS, expr_divm):                                   return _expr_neg (expr_divm)
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
 
-	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg))
+	# def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            red = AST.flatcat ('*', expr_mul_imp, expr_intg); return red if expr_mul_imp.tail_mul.is_differential or expr_intg.is_differential else PopConfs (red)
+	# def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return AST.flatcat ('*', expr_mul_imp, expr_intg)
+	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            red = AST.flatcat ('*', expr_mul_imp, expr_intg); return red if expr_intg.is_differential else PopConfs (red)
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
-	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
-	def expr_intg_2        (self, INTG, expr_super, expr_add):                         return _expr_intg (expr_add, (AST.Zero, expr_super))
-	def expr_intg_3        (self, INTG, expr_add):                                     return _expr_intg (expr_add)
-	def expr_intg_4        (self, expr_lim):                                           return expr_lim
+	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add, expr_var):     return AST ('-intg', expr_add, expr_var, expr_sub, expr_super) if expr_var.is_differential else _raise (SyntaxError ('integral expecting differential'))
+	def expr_intg_2        (self, INTG, expr_super, expr_add, expr_var):               return AST ('-intg', expr_add, expr_var, AST.Zero, expr_super) if expr_var.is_differential else _raise (SyntaxError ('integral expecting differential'))
+	def expr_intg_3        (self, INTG, expr_add, expr_var):                           return AST ('-intg', expr_add, expr_var) if expr_var.is_differential else _raise (SyntaxError ('integral expecting differential'))
+	# def expr_intg_4        (self, INTG, expr_sub, expr_super, expr_var):               return AST ('-intg', None, expr_var, expr_sub, expr_super) if expr_var.is_differential else _raise (SyntaxError ('integral expecting differential'))
+	# def expr_intg_5        (self, INTG, expr_super, expr_var):                         return AST ('-intg', None, expr_var, AST.Zero, expr_super) if expr_var.is_differential else _raise (SyntaxError ('integral expecting differential'))
+	# def expr_intg_6        (self, INTG, expr_var):                                     return AST ('-intg', None, expr_var) if expr_var.is_differential else _raise (SyntaxError ('integral expecting differential'))
+	def expr_intg_7        (self, expr_lim):                                           return expr_lim
+
+	# def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg))
+	# def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
 	def expr_lim_1         (self, LIM, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('-lim', expr_neg, expr_var, expr)
 	def expr_lim_2         (self, LIM, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('-lim', expr_neg, expr_var, expr, '+')
