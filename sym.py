@@ -403,7 +403,6 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					n.op in {'#', '-mat'} or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.tail_mul.is_var and (p.tail_mul.var == '_' or p.tail_mul.var in _SYM_USER_FUNCS)) or
-					# (n.op in {'/', '-diff'} and p.op in {'#', '/'}) or
 					(n.is_div and p.is_div) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
@@ -417,7 +416,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(p.is_attr_var and s [:6] != '\\left(') or # comment this out if separating all variables with spaces
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
-					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or # space separate ALL individual variables
+					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or comment this IN if separating all variables with spaces
 					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or (n.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
 				t.append (f'\\ {s}')
 

@@ -413,6 +413,16 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 	raise SyntaxError ('integration expecting a differential')
 
+# def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
+# 	pre, dv, wrap = ast.head_differential
+
+# 	if dv:
+# 		return wrap (AST ('-intg', pre, dv, *from_to))
+# 	# elif ast.is_minus and (ast.minus.is_differential or ast.minus.is_var_null): # special case \int -dx
+# 	# 	return AST ('-intg', AST.NegOne, ast.minus, *from_to)
+
+# 	raise SyntaxError ('integration expecting a differential')
+
 def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 	if lhs.is_diffp:
 		func = _SP_USER_VARS.get (lhs.diffp.var, lhs.diffp)
@@ -969,7 +979,7 @@ class Parser (LALR1):
 	def expr_divm_1        (self, MINUS, expr_divm):                                   return _expr_neg (expr_divm)
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
 
-	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return AST.flatcat ('*', expr_mul_imp, expr_intg)
+	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg))
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
 	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
@@ -1288,8 +1298,8 @@ class Parser (LALR1):
 			return self._parse_autocomplete_expr_commas (rule, pos)
 
 		if pos >= len (rule [1]): # end of rule
-			if rule [0] == 'expr_intg':
-				return self._parse_autocomplete_expr_intg ()
+			# if rule [0] == 'expr_intg':
+			# 	return self._parse_autocomplete_expr_intg ()
 
 			return self.parse_result (None, self.pos, []) if self.rederr else False
 
@@ -1357,8 +1367,8 @@ if __name__ == '__main__': # DEBUG!
 
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
-	# a = p.parse (r"{\operatorname{x}^{2}{\left(t \right)}}")
-	a = p.parse (r"f {(x)}")
+	# a = p.parse (r"a \int dx * b")
+	a = p.parse (r"\int a dx b")
 	print (a)
 
 

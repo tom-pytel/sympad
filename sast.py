@@ -334,6 +334,66 @@ class AST (tuple):
 
 		return None, None # var, wrap
 
+	# def _head_differential (self): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
+	# 	if self.is_differential or self.is_var_null: # AST.VarNull is for autocomplete
+	# 		return None, self, lambda a: a
+
+	# 	elif self.is_minus:
+	# 		pre, dv, wrap = self.minus.head_differential
+
+	# 		if dv and pre:
+	# 			return AST ('-', pre), dv, wrap
+
+	# 	elif self.is_fact:
+	# 		pre, dv, wrap = self.fact.head_differential
+
+	# 		if dv:
+	# 			return pre, dv, lambda a: AST ('!', wrap (a))
+
+	# 	elif self.op in {'+', '*exp'}:
+	# 		term          = self [1]
+	# 		pre, dv, wrap = term [0].head_differential
+
+	# 		if dv:
+	# 			return pre, dv, lambda a: AST (self.op, (wrap (a), *term [1:]))
+
+	# 		for i in range (1, term.len):
+	# 			pre, dv, wrap = term [i].head_differential
+
+	# 			if dv and pre:
+	# 				pre = AST (self.op, (*term [:i], pre))
+
+	# 				if i != term.len - 1:
+	# 					return pre, dv, lambda a: AST (self.op, (wrap (a), *term [i + 1:]))
+	# 				else:
+	# 					return pre, dv, wrap
+
+	# 	elif self.is_mul:
+	# 		term = self [1]
+
+	# 		for i in range (term.len):
+	# 			pre, dv, wrap = term [i].head_differential
+
+	# 			if dv:
+	# 				if not i:
+	# 					return pre, dv, lambda a: AST ('*', (wrap (a), *term [1:]))
+
+	# 				else:
+	# 					pre = AST ('*', (*term [:i], pre)) if pre else AST ('*', term [:i]) if i > 1 else term [0]
+
+	# 					if i != term.len - 1:
+	# 						return pre, dv, lambda a: AST ('*', (wrap (a), *term [i + 1:]))
+	# 					else:
+	# 						return pre, dv, wrap
+
+	# 	elif self.is_div:
+	# 		pre, dv, wrap = self.numer.head_differential
+
+	# 		if dv:
+	# 			return pre, dv, lambda a: AST ('/', wrap (a), self.denom)
+
+	# 	return None, None, None
+
 	def _as_identifier (self):
 		def _as_identifier (ast, recursed = False):
 			if ast.op in {'#', '@', '"'}:

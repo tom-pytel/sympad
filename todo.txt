@@ -1,6 +1,14 @@
+> a / c \int dx * d/dx a ... a \int dx * b
+> redo _ast_strip_tail_differential
+> integration autocomplete commented out, fix it
+> ast2tex/nat intg to wrap exprs with potential differentials
+
+> added PopConfs to expr_mul_imp_1
+
+
 > scan grammar and add PopConfs where appropriate
 > ufuncs do not stay explicit in vars tab, make explicit when copying?
-> test_sym call derivative of lambda cases
+> test_sym cases - call derivative of lambda
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
@@ -206,3 +214,10 @@ ast:  (';', (('@', 'None'), ('@', 'partialy'), ('#', '1'), ('=', ('+', (('@', 'c
 ast:  (';', (('@', 'None'), ('@', 'partialy'), ('#', '1'), ('-func', 'Eq', (('+', (('@', 'c'), ('-func', 'FiniteSet', (('@', 'w1'), ('#', '2'), ('#', '-1.9684473181396085e-11'))), ('@', 'partialx'))), ('-func', 'Piecewise', (('(', (',', (('-func', 'And', (('-func', 'Intersection', (('/', ('"', 's'), ('(', ('*', (('@', 'logSymbol'), ('(', (',', (('"', 'ZTVA6uA'), ('-func', 'Eq', (('@', 'commutative'), ('@', 'True'))))))), {1}))), ('+', (('#', '1.'), ('@', 'True'), ('#', '0.3348386517677881'))))), ('-func', 'Intersection', (('*', (('-func', 'Integral', (('#', '1.013516808732536e-10'), ('@', 'CENSORED'))), ('-dict', ())), {1}), ('-func', 'factorial', (('#', '1.'),)))))), ('-func', 'Piecewise', (('(', (',', (('*', (('(', ('(', ('(', (',', ())))), ('-func', 'diff', (('@', 'elseb'),))), {1}), ('-func', 'Union', (('#', '-1.5213873779399967e+20'), ('-func', 'Intersection', (('@', 'False'), ('-func', 'Subs', (('-func', 'Union', (('-func', 'Complement', (('-func', 'Union', (('-func', 'Complement', (('@', 'partialx'), ('@', 'oo'))), ('-func', 'Complement', (('@', 'oo'), ('@', 'partialx'))))), ('#', '-0.1'))), ('-func', 'Complement', (('#', '-0.1'), ('-func', 'Union', (('-func', 'Complement', (('@', 'partialx'), ('@', 'oo'))), ('-func', 'Complement', (('@', 'oo'), ('@', 'partialx'))))))))), ('-func', 'Limit', (('@', 'y1'), ('@', 'x'), ('@', 'partialy'), ('=', ('@', 'dir'), ('"', '+-')))), ('*', (('#', '4.082967471110063'), ('#', '4.062995463469585e-21')), {1})))))))))),))))),))))))
 py1:  None; partialy; 1; Eq(c + FiniteSet(w1, 2, -1.9684473181396085e-11) + partialx, Piecewise((And(Intersection('s' / (logSymbol*('ZTVA6uA', Eq(commutative, True))), 1. + True + 0.3348386517677881), Intersection(Integral(1.013516808732536e-10, dand)*{}, factorial(1.))), Piecewise((((()))*diff(elseb), Union(-1.5213873779399967e+20, Intersection(False, Subs(Union(Complement(Union(Complement(partialx, oo), Complement(oo, partialx)), -0.1), Complement(-0.1, Union(Complement(partialx, oo), Complement(oo, partialx)))), Limit(y1, x, partialy, dir = '+-'), 4.082967471110063*4.062995463469585e-21))))))))
 py2:  None; partialy; 1; Eq(c + FiniteSet(w1, 2, -1.9684473181396085e-11) + partialx, Piecewise((And(Intersection('s' / (logSymbol*('ZTVA6uA', Eq(commutative, True))), 1. + True + 0.3348386517677881), Intersection(Integral(1.013516808732536e-10, CENSORED)*{}, factorial(1.))), Piecewise((((()))*diff(elseb), Union(-1.5213873779399967e+20, Intersection(False, Subs(Union(Complement(Union(Complement(partialx, oo), Complement(oo, partialx)), -0.1), Complement(-0.1, Union(Complement(partialx, oo), Complement(oo, partialx)))), Limit(y1, x, partialy, dir = '+-'), 4.082967471110063*4.062995463469585e-21))))))))
+
+
+text: {.1:\emptyset}and1.0,None,1e-100andbor-1or\emptyset.VWNd().bu.Pql**{{{d/dx(u()(x))(0)}}}<=\[[$WX(real=True),\partialxif\partialyelse-1.5466888838691082e-05ifzoo_{64}elseFalse, ],]
+ast:  (',', (('*', (('-dict', ((('#', '0.1'), ('-set', ())),)), ('@', 'and1'), ('#', '0.0'))), ('@', 'None'), ('-or', (('+', (('*', (('#', '1e-100'), ('@', 'andbor'))), ('-', ('#', '1')))), ('<>', ('^', ('.', ('.', ('.', ('-set', ()), 'VWNd', ()), 'bu'), 'Pql'), ('-subs', ('-diff', ('-ufunc', 'u', (('@', 'x'),)), 'd', (('x', 1),)), ((('@', 'x'), ('#', '0')),))), (('<=', ('-mat', ((('-sym', 'WX', (('real', ('@', 'True')),)), ('+', (('*', (('@', 'partialxif'), ('@', 'partialyelse'))), ('-', ('*', (('#', '1.5466888838691082e-05'), ('@', 'ifzoo64'), ('@', 'elseFalse'))))))),))),))))))
+ast:  (',', (('*', (('-dict', ((('#', '0.1'), ('-set', ())),)), ('@', 'and1'), ('#', '0.0')), {2}), ('@', 'None'), ('-or', (('+', (('*', (('#', '1e-100'), ('@', 'andbor'))), ('-', ('#', '1')))), ('<>', ('/', ('^', ('.', ('.', ('.', ('-set', ()), 'VWNd', ()), 'bu'), 'Pql'), ('@', 'd')), ('*', (('@', 'dx'), ('(', ('-ufunc', 'u', (('@', 'x'),))), ('(', ('#', '0'))))), (('<=', ('-mat', ((('-sym', 'WX', (('real', ('@', 'True')),)), ('+', (('*', (('@', 'partialxif'), ('@', 'partialyelse'))), ('-', ('*', (('#', '1.5466888838691082e-05'), ('@', 'ifzoo64'), ('@', 'elseFalse')), {2}))))),))),))))))
+nat1: {0.1: \{}} and1 * 0.0, None, 1e-100 andbor - 1 or \{}.VWNd().bu.Pql**d / dx (u(x))(0) <= \[[$WX(real = True), partialxif partialyelse - 1.5466888838691082e-05 ifzoo64 * elseFalse]]
+nat2: {0.1: \{}} and1 * 0.0, None, 1e-100 andbor - 1 or \{}.VWNd().bu.Pql**d / {dx * (u(x)) (0)} <= \[[$WX(real = True), partialxif partialyelse - 1.5466888838691082e-05 ifzoo64 * elseFalse]]
