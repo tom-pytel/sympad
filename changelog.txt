@@ -1,6 +1,6 @@
 v1.0.20:
 --------
-* LOOONG OVERDUE! Restructured grammar to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)).
+* LOOONG OVERDUE! Reworked grammar and parser to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)) and integration among other things.
 * Added symbols with assumptions.
 * Added ability to 'call' derivatives of lambda functions.
 * Added parsing of 'not' as possible unary prefix to unparenthesized function arguments.

@@ -141,7 +141,7 @@ doo
 Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 (dx**p*artial)*Limit(sqrt(-1), x, 0**d)[(Matrix([[partialx]])), lcm_list()]
 ln((a)**b)
-a * \int dx + {\int dx dx}
+# a * \int dx + {\int dx dx}
 1 if {a = x if z} else 0 if y
 a, lambda: b = 1
 a * [2]
@@ -324,7 +324,7 @@ Limit(x:1, a, b)
 {-\partialx} / \partialy
 Sum (x, (x, a, a : b))
 -{Derivative (x, x) {a in b}}
-\int dx dx / dx
+# \int dx dx / dx
 b = dx [?h(x, y)]^lambda x, y, z: True!
 dy / dx / 2
 Sum ({2 \cdot {1 x} \cdot {\int_y^x {dy} dx}}, (x, 0, 1)) * 1
@@ -411,7 +411,7 @@ x**?g(x)**x
 a**?f(x)^a'
 a**?f(x)^b^c
 a**?f(x)'
-a / c \int dx * d/dx a
+# a / c \int dx * d/dx a
 d/dx a \lambda:
 f(d/dx 1,x)
 f(ln(2))
@@ -846,7 +846,7 @@ def test (argv = None):
 	if infinite and not single:
 		expr_func = (lambda: topexpr ()) if spaces else (lambda: topexpr ().replace (' ', ''))
 	else:
-		expr_func = iter (single or _EXPRESSIONS).__next__
+		expr_func = iter (single or filter (lambda s: s [0] != '#', _EXPRESSIONS)).__next__
 
 	try:
 		while 1:

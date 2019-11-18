@@ -1,12 +1,19 @@
-> a / c \int dx * d/dx a ... a \int dx * b
+> scan grammar and add PopConfs where appropriate
+
+> _expr_diff a d/dx b
+> _expr_intg - take first differential in mul list if more than one and return rest ast mul
+> \int a dx d / dx b
+
+> analyze which reductions are stored as conflicts most
+
 > redo _ast_strip_tail_differential
 > integration autocomplete commented out, fix it
-> ast2tex/nat intg to wrap exprs with potential differentials
-
-> added PopConfs to expr_mul_imp_1
+> ast2tex/nat intg to wrap exprs with potential differentials?
 
 
-> scan grammar and add PopConfs where appropriate
+> x aa**2 missing space
+
+
 > ufuncs do not stay explicit in vars tab, make explicit when copying?
 > test_sym cases - call derivative of lambda
 
@@ -31,6 +38,7 @@
 > @ and % without parentheses consistency?
 
 
+> doc: new integration behavior
 > doc: can call derivative of lambda
 > doc: give anonymous ufuncs name of var on assignment to var
 > doc: removed $ function escape character

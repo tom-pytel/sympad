@@ -4,21 +4,6 @@ import re
 import types
 
 #...............................................................................................
-class Incomplete (Exception):
-	__slots__ = ['red']
-
-	def __init__ (self, red):
-		self.red = red
-
-class PopConfs:
-	__slots__ = ['red']
-
-	def __init__ (self, red):
-		self.red = red
-
-Reduce     = PopConfs (None)
-Reduce.red = Reduce
-
 class Token (str):
 	__slots__ = ['text', 'pos', 'grp']
 
@@ -34,11 +19,47 @@ class State:
 	__slots__ = ['idx', 'sym', 'pos', 'red']
 
 	def __init__ (self, idx, sym, pos = None, red = None): # idx = state index, sym = symbol (TOKEN or 'expression')[, pos = position in text, red = reduction]
-		self.idx, self.sym, self.red = idx, sym, red
-		self.pos                     = sym.pos if pos is None else pos
+		self.idx  = idx
+		self.sym  = sym
+		self.pos  = sym.pos if pos is None else pos
+		self.red  = red
 
 	def __repr__ (self):
 		return f'({self.idx}, {self.sym}, {self.pos}{"" if self.red is None else f", {self.red}"})'
+
+class Conflict (tuple):
+	def __new__ (cls, conf, pos, tokidx, stidx, tokens, stack, estate):
+		self      = tuple.__new__ (cls, (conf, pos, tokidx, stidx, tokens, stack, estate))
+		self.pos  = pos
+		self.keep = False
+
+		return self
+
+	def __repr__ (self):
+		r = tuple.__repr__ (self)
+
+		return f'{r [:-1]}, keep)' if self.keep else r
+
+class Incomplete (Exception):
+	__slots__ = ['red']
+
+	def __init__ (self, red):
+		self.red = red
+
+class KeepConf:
+	__slots__ = ['red']
+
+	def __init__ (self, red):
+		self.red = red
+
+class PopConfs:
+	__slots__ = ['red']
+
+	def __init__ (self, red):
+		self.red = red
+
+Reduce     = PopConfs (None)
+Reduce.red = Reduce
 
 class LALR1:
 	_rec_SYMBOL_NUMTAIL = re.compile (r'(.*[^_\d])_?(\d+)?') # symbol names in code have extra digits at end for uniqueness which are discarded
@@ -162,6 +183,10 @@ class LALR1:
 		rederr = None # reduction function raised exception (SyntaxError or Incomplete usually)
 		pos    = 0
 
+
+		self.confs = {} # DEBUG
+
+
 		while 1:
 			if not rederr:
 				tok       = tokens [tokidx]
@@ -201,13 +226,19 @@ class LALR1:
 						f'invalid token {tok.text!r}' if tok == '$err' else \
 						f'invalid syntax {src [tok.pos : tok.pos + 16]!r}')
 
-				act, _, tokens, tokidx, stack, stidx, estate = cstack.pop ()
+				act, _, tokidx, stidx, tokens, stack, estate = cstack.pop ()
 				tok                                          = tokens [tokidx]
 
 				self.parse_setextrastate (estate)
 
 			elif conf is not None:
-				cstack.append ((conf, tok.pos, tokens [:], tokidx, stack [:], stidx, self.parse_getextrastate ()))
+				cstack.append (Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], self.parse_getextrastate ()))
+
+
+				if conf < 0: # DEBUG
+					rule              = rules [-conf]
+					self.confs [rule] = self.confs.get (rule, 0) + 1
+
 
 			if act > 0:
 				tokidx += 1
@@ -224,18 +255,21 @@ class LALR1:
 				try:
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
-					if isinstance (red, PopConfs):
+					if isinstance (red, KeepConf):
+						red              = red.red
+						cstack [-1].keep = True
+
+					elif isinstance (red, PopConfs):
 						red   = red.red
 						start = stack [-1].pos if red is Reduce else pos
 						i     = 0
 
 						for i in range (len (cstack) - 1, -1, -1):
-							if cstack [i] [1] <= start:
-								i += 1
-
+							if cstack [i].pos <= start:
 								break
 
-						del cstack [i:]
+							if not cstack [i].keep:
+								del cstack [i]
 
 						if red is Reduce:
 							rederr = red
@@ -259,8 +293,10 @@ class LALR1:
 				stack.append (State (stidx, prod, pos, red))
 
 class lalr1: # for single script
-	Incomplete = Incomplete
-	PopConfs   = PopConfs
 	Token      = Token
 	State      = State
+	Incomplete = Incomplete
+	KeepConf   = KeepConf
+	PopConfs   = PopConfs
+	Reduce     = Reduce
 	LALR1      = LALR1
