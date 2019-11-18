@@ -32,26 +32,14 @@ class Conflict (tuple):
 		self      = tuple.__new__ (cls, (conf, pos, tokidx, stidx, tokens, stack, estate))
 		self.conf = conf
 		self.pos  = pos
-		# self.keep = False
 
 		return self
 
-	# def __repr__ (self):
-	# 	r = tuple.__repr__ (self)
-
-	# 	return f'{r [:-1]}, keep)' if self.keep else r
-
-class Incomplete (Exception):
+class Incomplete (Exception): # parse is head of good statement but incomplete
 	__slots__ = ['red']
 
 	def __init__ (self, red):
 		self.red = red
-
-# class KeepConf:
-# 	__slots__ = ['red']
-
-# 	def __init__ (self, red):
-# 		self.red = red
 
 class PopConfs:
 	__slots__ = ['red']
@@ -59,10 +47,9 @@ class PopConfs:
 	def __init__ (self, red):
 		self.red = red
 
-class Reduce (PopConfs): # returned instantiated will try conflicted reduction before rule, as uninstantiated class will discard rule and just use conflicted reduce
+class Reduce (PopConfs): # returned instantiated will try conflicted reduction before rule, returned as uninstantiated class will discard results of rule and just continue with last conflict
 	pass
 
-# Reduce     = PopConfs (None)
 Reduce.red = Reduce
 
 class LALR1:
@@ -192,7 +179,8 @@ class LALR1:
 		pos    = 0
 
 
-		self.reds = {} # DEBUG
+		if not hasattr (self, 'reds'): # DEBUG
+			self.reds = {} # DEBUG
 
 
 		while 1:
@@ -238,7 +226,7 @@ class LALR1:
 				act, _, tokidx, stidx, tokens, stack, estate = confs.pop ()
 				self.stack                                   = stack
 				tok                                          = tokens [tokidx]
-				conf                                         = None
+				# conf                                         = None # in theory this should be needed
 
 				self.parse_setextrastate (estate)
 
@@ -269,11 +257,7 @@ class LALR1:
 				try:
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
-					# if isinstance (red, KeepConf): # mark this conflict to not be removed by PopConf
-					# 	red             = red.red
-					# 	confs [-1].keep = True
-
-					if isinstance (red, Reduce):
+					if isinstance (red, Reduce): # successful rule but request to follow conflicted reduction first putting results of rule on conf stack to be picked up later
 						stidx     = nterms [stack [rnlen - 1].idx] [prod]
 						stack     = stack [:rnlen] + [State (stidx, prod, pos, red.red)]
 						tok       = tokens [tokidx]
@@ -298,11 +282,9 @@ class LALR1:
 							if confs [i].pos <= start:
 								break
 
-							# if not confs [i].keep: # dont remove conflicts which are marked for keeping or conflicts which are shifts
-							# 	del confs [i]
 							del confs [i]
 
-						if red is Reduce: # if reduction only requested then don't reduce rule and fall back to previous conflict reduction
+						if red is Reduce: # if reduction only requested then don't store rule result and fall back to previous conflicted reduction
 							rederr = red
 
 							continue
@@ -327,7 +309,6 @@ class lalr1: # for single script
 	Token      = Token
 	State      = State
 	Incomplete = Incomplete
-	# KeepConf   = KeepConf
 	PopConfs   = PopConfs
 	Reduce     = Reduce
 	LALR1      = LALR1
