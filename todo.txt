@@ -5,7 +5,7 @@
 
 > integration autocomplete commented out, fix it
 > ast2tex/nat intg to wrap exprs with potential differentials?
-
+> ast2tex/nat \int dx * dx dx
 
 > x aa**2 missing space
 

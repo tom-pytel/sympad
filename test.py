@@ -5181,6 +5181,8 @@ d**2 y / dx dy z
 \int dy / dx
 \int d/dx x**2 dx
 \int d/dx y(x) dx
+\int dx dx dx
+\int dx * dx dx
 dlambda / dx : x
 d**2 lambda / dx**2 : x
 ln1.or
