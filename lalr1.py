@@ -47,14 +47,24 @@ class Incomplete (Exception): # parse is head of good statement but incomplete
 	def __init__ (self, red):
 		self.red = red
 
+class KeepConf:
+	__slots__ = ['red']
+
+	def __init__ (self, red):
+		self.red = red
+
 class PopConfs:
 	__slots__ = ['red']
 
 	def __init__ (self, red):
 		self.red = red
 
-class Reduce (PopConfs): # returned instantiated will try conflicted reduction before rule, returned as uninstantiated class will discard results of rule and just continue with last conflict
-	pass
+class Reduce: # returned instantiated will try conflicted reduction before rule, returned as uninstantiated class will discard results of rule and just continue with last conflict
+	__slots__ = ['then', 'keep']
+
+	def __init__ (self, then, keep = False):
+		self.then = then
+		self.keep = keep
 
 Reduce.red = Reduce
 
@@ -261,18 +271,22 @@ class LALR1:
 				try:
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
+					if isinstance (red, KeepConf): # mark this conflict to not be removed by PopConf
+						red             = red.red
+						confs [-1].keep = True
+
 					if isinstance (red, Reduce): # successful rule but request to follow conflicted reduction first putting results of rule on conf stack to be picked up later
 						stidx     = nterms [stack [rnlen - 1].idx] [prod]
-						stack     = stack [:rnlen] + [State (stidx, prod, pos, red.red)]
+						stack     = stack [:rnlen] + [State (stidx, prod, pos, red.then)]
 						tok       = tokens [tokidx]
 						act, conf = terms [stidx].get (tok, (None, None))
 						estate    = self.parse_getextrastate ()
 						rederr    = Reduce
 
 						if conf is not None:
-							confs.insert (-1, Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], estate))
+							confs.insert (-1, Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], estate, keep = red.keep))
 
-						confs.insert (-1, Conflict (act, tok.pos, tokidx, stidx, tokens [:], stack [:], estate))
+						confs.insert (-1, Conflict (act, tok.pos, tokidx, stidx, tokens [:], stack [:], estate, keep = red.keep))
 
 						continue
 
@@ -285,7 +299,7 @@ class LALR1:
 							if confs [i].pos <= start:
 								break
 
-							if not confs [i].keep:
+							if not confs [i].keep: # dont remove conflicts which are marked for keeping
 								del confs [i]
 
 						if red is Reduce: # if reduction only requested then don't store rule result and fall back to previous conflicted reduction
