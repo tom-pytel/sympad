@@ -1,4 +1,5 @@
 > |\int a + b dx|
+> |\int x dx|_{x=3}
 
 > make dfunction (x) = x**2 work
 
