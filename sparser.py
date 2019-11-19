@@ -30,8 +30,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
 def _ast_func_tuple_args (ast):
-	ast = ast.strip_curly._strip_paren (1) # ast = ast._strip (1)
-	# ast = ast._strip_curly_of_paren_tex._strip_paren (1) # ast = ast._strip (1)
+	ast = ast.strip_curly.strip_paren1 # ast = ast._strip (1) # ast = ast._strip_curly_of_paren_tex.strip_paren1 # ast = ast._strip (1)
 
 	return ast.comma if ast.is_comma else (ast,)
 
@@ -257,7 +256,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 	def try_apply_ics (ast, arg): # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
 		if arg.is_paren:
-			diff = ast.diff._strip_paren (1)
+			diff = ast.diff.strip_paren1
 			func = _SP_USER_VARS.get (diff.var, diff)
 			args = arg.paren.comma if arg.paren.is_comma else (arg.paren,)
 
@@ -370,7 +369,7 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseudo-function takes a single argument')
 
 	else: # args [0] in {'-sqrt', '-log'}:
-		fargs    = ast.strip_curly._strip_paren (1) if args [0] == '-log' or (not ast.is_paren_tex or ast.paren.op in {',', '-slice'}) else ast.strip_curly
+		fargs    = ast.strip_curly.strip_paren1 if args [0] == '-log' or (not ast.is_paren_tex or ast.paren.op in {',', '-slice'}) else ast.strip_curly
 		ast2     = AST (*(args [:iparm] + (fargs,) + args [iparm + 1:]))
 		ast2.src = AST ('*', (AST.VarNull, args [iparm])) # VarNull is placeholder
 
@@ -1316,9 +1315,7 @@ if __name__ == '__main__': # DEBUG!
 
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
-	# a = p.parse (r"a.b{\left(x\right)}")
-	a = p.parse (r"a.b{(x)}")
-	# a = p.parse (r"a.b(x)")
+	a = p.parse (r"|\int a + b dx|")
 	print (a)
 
 

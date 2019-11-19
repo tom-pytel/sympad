@@ -1,12 +1,11 @@
 > |\int a + b dx|
 
-> paren/curly dynamics
 > make dfunction (x) = x**2 work
 
 > ast2tex/nat intg to wrap exprs with potential differentials?
 > ast2tex/nat \int dx * dx dx
 
-> x aa**2 missing space
+> x aa**2 missing space - x y z w**2 a.b a[0] a a.b a a.b() a f(3,4) b
 
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 

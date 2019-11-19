@@ -416,8 +416,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(p.is_attr_var and s [:6] != '\\left(') or # comment this out if separating all variables with spaces
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
-					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or comment this IN if separating all variables with spaces
-					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or (n.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
+					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or # comment this IN if separating all variables with spaces
+					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or
+					(n.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
 				t.append (f'\\ {s}')
 
 			else:
@@ -1182,7 +1183,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'/'     : _ast2py_div,
 		'^'     : _ast2py_pow,
 		'-log'  : _ast2py_log,
-		'-sqrt' : lambda self, ast: f'sqrt({self._ast2py (ast.rad)})' if ast.idx is None else self._ast2py (AST ('^', ast.rad._strip_paren (1), ('/', AST.One, ast.idx))),
+		'-sqrt' : lambda self, ast: f'sqrt({self._ast2py (ast.rad)})' if ast.idx is None else self._ast2py (AST ('^', ast.rad.strip_paren1, ('/', AST.One, ast.idx))),
 		'-func' : _ast2py_func,
 		'-lim'  : _ast2py_lim,
 		'-sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py_paren (ast.from_, ast.from_.is_comma)}, {self._ast2py (ast.to)}))',

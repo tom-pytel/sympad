@@ -4339,7 +4339,7 @@ class AST_Subs (AST):
 	def _init (self, expr, subs):
 		self.expr, self.subs = expr, subs
 
-	_is_subs_diff_ufunc = lambda self: self.expr.is_diff and self.expr.diff._strip_paren (1).is_ufunc
+	_is_subs_diff_ufunc = lambda self: self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc
 
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
@@ -6136,7 +6136,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		'/'     : _ast2py_div,
 		'^'     : _ast2py_pow,
 		'-log'  : _ast2py_log,
-		'-sqrt' : lambda self, ast: f'sqrt({self._ast2py (ast.rad)})' if ast.idx is None else self._ast2py (AST ('^', ast.rad._strip_paren (1), ('/', AST.One, ast.idx))),
+		'-sqrt' : lambda self, ast: f'sqrt({self._ast2py (ast.rad)})' if ast.idx is None else self._ast2py (AST ('^', ast.rad.strip_paren1, ('/', AST.One, ast.idx))),
 		'-func' : _ast2py_func,
 		'-lim'  : _ast2py_lim,
 		'-sum'  : lambda self, ast: f'Sum({self._ast2py (ast.sum)}, ({self._ast2py (ast.svar)}, {self._ast2py_paren (ast.from_, ast.from_.is_comma)}, {self._ast2py (ast.to)}))',
@@ -7064,7 +7064,7 @@ def _expr_mul_imp (lhs, rhs): # rewrite certain cases of adjacent terms not hand
 					ast = wrapa (ast2)
 
 	elif tail.is_diff: # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
-		diff  = tail.diff._strip_paren (1)
+		diff  = tail.diff.strip_paren1
 		ufunc = _SP_USER_VARS.get (diff.var, diff)
 
 		if arg.is_paren and ufunc.is_ufunc_applied and ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):

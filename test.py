@@ -5349,6 +5349,8 @@ sin**-a[b][c] (x)
 \int**-a[b][c].d (x) y
 \int**-a[b][c].d {(x)} y
 \int**a.b[2] x dx
+|\int a + b dx|
+
 f {(x)}
 f {\left(x\right)}
 a.b {(x)}

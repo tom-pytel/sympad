@@ -190,17 +190,18 @@ class AST (tuple):
 
 		return self
 
-	_strip_attr     = lambda self, count = None: self._strip (count, ('.',))
-	_strip_attrm    = lambda self, count = None: self._strip (count, ('.', '-'))
-	_strip_attrdp   = lambda self, count = None: self._strip (count, ('.', '-diffp'))
-	_strip_attrpdpi = lambda self, count = None: self._strip (count, ('.', '^', '-diffp', '-idx'))
-	_strip_curly    = lambda self, count = None: self._strip (count, ('{',))
+	_strip_attr     = lambda self, count = None: self._strip (count, {'.'})
+	_strip_attrm    = lambda self, count = None: self._strip (count, {'.', '-'})
+	_strip_attrdp   = lambda self, count = None: self._strip (count, {'.', '-diffp'})
+	_strip_attrpdpi = lambda self, count = None: self._strip (count, {'.', '^', '-diffp', '-idx'})
+	_strip_curly    = lambda self, count = None: self._strip (count, {'{'})
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
-	_strip_fdpi     = lambda self, count = None: self._strip (count, ('!', '-diffp', '-idx'))
-	_strip_pow      = lambda self, count = None: self._strip (count, ('^',))
-	# _strip_afpdpi          = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
+	_strip_paren1   = lambda self: self._strip (1, {'('})
+	_strip_fdpi     = lambda self, count = None: self._strip (count, {'!', '-diffp', '-idx'})
+	_strip_pow      = lambda self, count = None: self._strip (count, {'^'})
+	_strip_afpdpi   = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
 
-	_strip_curly_of_paren_tex = lambda self: self.strip_curly if self.strip_curly.is_paren_tex else self
+	# _strip_curly_of_paren_tex = lambda self: self.strip_curly if self.strip_curly.is_paren_tex else self
 
 	def _strip_minus (self, count = None, retneg = False, negnum = True):
 		count       = -1 if count is None else count
@@ -1097,7 +1098,7 @@ class AST_Subs (AST):
 	def _init (self, expr, subs):
 		self.expr, self.subs = expr, subs
 
-	_is_subs_diff_ufunc = lambda self: self.expr.is_diff and self.expr.diff._strip_paren (1).is_ufunc
+	_is_subs_diff_ufunc = lambda self: self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc
 
 class AST_Sym (AST):
 	op, is_sym = '-sym', True
