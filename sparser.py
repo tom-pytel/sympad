@@ -175,6 +175,14 @@ def _expr_cmp (lhs, CMP, rhs):
 	else:
 		return AST ('<>', lhs, ((cmp, rhs),))
 
+def _expr_add (lhs, rhs):
+	return AST.flatcat ('+', lhs, rhs)
+
+
+
+
+
+
 def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy missing negative numbers
 	if expr.op in {'!', '-diffp', '-idx'}:
 		if expr [1].is_num_pos:
@@ -325,18 +333,13 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 
 	return ast
 
-def _expr_mul_imp (self, lhs, rhs):
-	ast = AST.flatcat ('*', lhs, rhs)
+# def _expr_mul_imp (self, lhs, rhs):
+# 	ast = AST.flatcat ('*', lhs, rhs)
 
-	if self.stack_has_sym ('INTG'):
-		if lhs.is_differential or lhs.mul_has_differential:
-			return Reduce (ast)
-		elif rhs.is_differential:
-			return ast.set (mul_has_differential = True)
-	# elif rhs.is_abs and rhs.abs.is_mul and rhs.abs.mul [0].var == '_' and rhs.abs.mul [1].is_curly and self.stack_has_sym ('SLASHDOT'): # |_{...} - might be right hand side of subs
-	# 	return Reduce (ast) # ast
+# 	if self.stack_has_sym ('INTG') and lhs.is_differential or lhs.mul_has_differential:
+# 		return Reduce (ast)
 
-	return PopConfs (ast)
+# 	return PopConfs (ast)
 
 def _ast_strip_tail_differential (ast):
 	if ast.is_differential or ast.is_var_null: # null_var is for autocomplete
@@ -426,12 +429,6 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 	raise SyntaxError ('integration expecting a differential')
 
-# def _expr_intg (expr, var, from_to = ()): # find differential for integration if present in ast and return integral ast
-# 	if not var.is_differential:
-# 		raise SyntaxError ('integral expecting differential')
-
-# 	return AST ('-intg', expr, var, *from_to)
-
 def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 	if lhs.is_diffp:
 		func = _SP_USER_VARS.get (lhs.diffp.var, lhs.diffp)
@@ -510,10 +507,12 @@ def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 			return PopConfs (wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg)))))
 
 		elif var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
-			# ast = wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
+			# return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
+
+			ast = wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
 
 			# return Reduce (ast) if rhs.is_differential and self.stack_has_sym ('INTG') else PopConfs (ast)
-			return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
+			return Reduce (ast) if var.is_differential and self.stack_has_sym ('INTG') else PopConfs (ast)
 
 	elif argsc.strip_curly.is_paren and var.is_var_nonconst and not var.is_diff_or_part and argsc.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
@@ -981,9 +980,12 @@ class Parser (LALR1):
 	def expr_xsect_1       (self, expr_xsect, XSECT, expr_add):                        return AST.flatcat ('&&', expr_xsect, expr_add)
 	def expr_xsect_2       (self, expr_add):                                           return expr_add
 
-	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return PopConfs (AST.flatcat ('+', expr_add, expr_mul_exp))
-	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return PopConfs (AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)))
-	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return PopConfs (AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)))
+	# def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return PopConfs (AST.flatcat ('+', expr_add, expr_mul_exp))
+	# def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return PopConfs (AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)))
+	# def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return PopConfs (AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)))
+	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return _expr_add (expr_add, expr_mul_exp)
+	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return _expr_add (expr_add, AST ('-', expr_mul_exp))
+	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return _expr_add (expr_add, AST ('-', expr_mul_exp))
 	def expr_add_4         (self, expr_mul_exp):                                       return expr_mul_exp
 
 	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                       return AST.flatcat ('*exp', expr_mul_exp, expr_neg)
@@ -998,12 +1000,9 @@ class Parser (LALR1):
 	def expr_divm_1        (self, MINUS, expr_divm):                                   return _expr_neg (expr_divm)
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
 
-	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return _expr_mul_imp (self, expr_mul_imp, expr_intg)
+	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg)) # _expr_mul_imp (self, expr_mul_imp, expr_intg)
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
-	# def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add, expr_var):     return _expr_intg (expr_add, expr_var, (expr_sub, expr_super))
-	# def expr_intg_2        (self, INTG, expr_super, expr_add, expr_var):               return _expr_intg (expr_add, expr_var, (AST.Zero, expr_super))
-	# def expr_intg_3        (self, INTG, expr_add, expr_var):                           return _expr_intg (expr_add, expr_var)
 	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
 	def expr_intg_2        (self, INTG, expr_super, expr_add):                         return _expr_intg (expr_add, (AST.Zero, expr_super))
 	def expr_intg_3        (self, INTG, expr_add):                                     return _expr_intg (expr_add)
@@ -1244,51 +1243,30 @@ class Parser (LALR1):
 		return self._insert_symbol (self._AUTOCOMPLETE_COMMA_CLOSE [self.stack [idx].sym])
 
 	def _parse_autocomplete_expr_intg (self):
+		s               = self.stack [-1]
+		self.stack [-1] = State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
+		expr_vars       = set ()
+
 		if self.autocompleting:
-			vars = set ()
-			reds = [self.stack [-2].red]
+			reds = [s.red]
 
 			while reds:
 				ast = reds.pop ()
 
 				if ast.is_var:
 					if not (ast.is_differential or ast.is_part_any):
-						vars.add (ast.var)
+						expr_vars.add (ast.var)
 				else:
 					reds.extend (filter (lambda a: isinstance (a, tuple), ast))
 
-		vars = vars - {'_'} - {ast.var for ast in AST.CONSTS}
+		expr_vars = expr_vars - {'_'} - {ast.var for ast in AST.CONSTS}
 
-		if len (vars) == 1:
-			self.autocomplete.append (f' d{vars.pop ()}')
+		if len (expr_vars) == 1:
+			self.autocomplete.append (f' d{expr_vars.pop ()}')
 		else:
 			self._mark_error ()
 
 		return True
-		# s               = self.stack [-1]
-		# self.stack [-1] = State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
-		# expr_vars       = set ()
-
-		# if self.autocompleting:
-		# 	reds = [s.red]
-
-		# 	while reds:
-		# 		ast = reds.pop ()
-
-		# 		if ast.is_var:
-		# 			if not (ast.is_differential or ast.is_part_any):
-		# 				expr_vars.add (ast.var)
-		# 		else:
-		# 			reds.extend (filter (lambda a: isinstance (a, tuple), ast))
-
-		# expr_vars = expr_vars - {'_'} - {ast.var for ast in AST.CONSTS}
-
-		# if len (expr_vars) == 1:
-		# 	self.autocomplete.append (f' d{expr_vars.pop ()}')
-		# else:
-		# 	self._mark_error ()
-
-		# return True
 
 	def parse_getextrastate (self):
 		return (self.autocomplete [:], self.autocompleting, self.erridx, self.has_error)
@@ -1424,6 +1402,7 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"\int oo + 1 dx")
 	# a = p.parse (r"\int oo + 1 dx b")
 	a = p.parse (r"\int x dx b")
+	# a = p.parse (r"\int d/dx x**2 dx")
 	print (a)
 
 

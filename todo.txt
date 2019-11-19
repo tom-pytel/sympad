@@ -1,3 +1,5 @@
+> lambda - dx (x) in varfunc, when calling reduce make the generated shift a 'keep'
+
 > integration autocomplete commented out, fix it
 
 > ast2tex/nat intg to wrap exprs with potential differentials?

@@ -241,7 +241,7 @@ class LALR1:
 				act, _, tokidx, stidx, tokens, stack, estate = confs.pop ()
 				self.stack                                   = stack
 				tok                                          = tokens [tokidx]
-				# conf                                         = None # in theory this should be needed
+				conf                                         = None
 
 				self.parse_setextrastate (estate)
 
