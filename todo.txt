@@ -7,6 +7,8 @@
 
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 
+> make dfunction (x) = x**2 work
+
 
 > ufuncs do not stay explicit in vars tab, make explicit when copying?
 > test_sym cases - call derivative of lambda
@@ -33,6 +35,7 @@
 > (a or b) or (a and b) - result parenthesizing for clarity
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 > @ and % without parentheses consistency?
+> "__" subscript shortcut with rules like "**"?
 
 
 > doc: new integration behavior
