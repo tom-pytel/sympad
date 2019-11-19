@@ -226,7 +226,7 @@ class LALR1:
 				act, _, tokidx, stidx, tokens, stack, estate = confs.pop ()
 				self.stack                                   = stack
 				tok                                          = tokens [tokidx]
-				# conf                                         = None # in theory this should be needed
+				conf                                         = None
 
 				self.parse_setextrastate (estate)
 
@@ -263,13 +263,12 @@ class LALR1:
 						tok       = tokens [tokidx]
 						act, conf = terms [stidx].get (tok, (None, None))
 						estate    = self.parse_getextrastate ()
+						rederr    = Reduce
 
 						if conf is not None:
 							confs.insert (-1, Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], estate))
 
 						confs.insert (-1, Conflict (act, tok.pos, tokidx, stidx, tokens [:], stack [:], estate))
-
-						rederr = Reduce
 
 						continue
 

@@ -1115,13 +1115,11 @@ class Parser (LALR1):
 
 		for sym in ((sym,) if isinstance (sym, str) else sym):
 			if sym in self.TOKENS:
-				self.tokens.insert (tokidx, Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.tok.pos))
+				self.tokens.insert (tokidx, sym if isinstance (sym, Token) else Token (self._AUTOCOMPLETE_SUBSTITUTE.get (sym, sym), '', self.tok.pos))
 
 				if self.autocompleting:
 					if sym not in self._AUTOCOMPLETE_CONTINUE:
 						self.autocompleting = False
-					# elif self.autocomplete and self.autocomplete [-1] == ' \\right':
-					# 	self.autocomplete [-1] = self.autocomplete [-1] + self._AUTOCOMPLETE_CONTINUE [sym]
 					else:
 						self.autocomplete.append (self._AUTOCOMPLETE_CONTINUE [sym])
 
@@ -1152,31 +1150,30 @@ class Parser (LALR1):
 		return self._insert_symbol (self._AUTOCOMPLETE_COMMA_CLOSE [self.stack [idx].sym])
 
 	def _parse_autocomplete_expr_intg (self):
-		return False
-		# s               = self.stack [-1]
-		# self.stack [-1] = State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
-		# expr_vars       = set ()
+		s    = self.stack [-1]
+		vars = set ()
+		reds = [s.red]
 
-		# if self.autocompleting:
-		# 	reds = [s.red]
+		while reds:
+			ast = reds.pop ()
 
-		# 	while reds:
-		# 		ast = reds.pop ()
+			if not ast.is_var:
+				reds.extend (filter (lambda a: isinstance (a, tuple), ast))
+			else:
+				if not (ast.is_differential or ast.is_part_any):
+					vars.add (ast.var)
 
-		# 		if ast.is_var:
-		# 			if not (ast.is_differential or ast.is_part_any):
-		# 				expr_vars.add (ast.var)
-		# 		else:
-		# 			reds.extend (filter (lambda a: isinstance (a, tuple), ast))
+		vars = vars - {'_'} - {''} - {ast.var for ast in AST.CONSTS}
 
-		# expr_vars = expr_vars - {'_'} - {ast.var for ast in AST.CONSTS}
+		if len (vars) != 1:
+			return self._insert_symbol ('expr_var')
 
-		# if len (expr_vars) == 1:
-		# 	self.autocomplete.append (f' d{expr_vars.pop ()}')
-		# else:
-		# 	self._mark_error ()
+		var  = vars.pop ()
+		dvar = f'd{var}'
 
-		# return True
+		self.autocomplete.append (f' {dvar}')
+
+		return self._insert_symbol (Token ('VAR', dvar, self.pos, (None, 'd', var, None, None)))
 
 	def parse_getextrastate (self):
 		return (self.autocomplete [:], self.autocompleting, self.erridx, self.has_error)
@@ -1210,24 +1207,10 @@ class Parser (LALR1):
 		stack          = self.stack
 
 		if isinstance (self.rederr, Incomplete):
-			if stack [-1].sym == 'expr_intg' and not stack [-1].red.intg.is_var_null:
-				self.autocomplete.append (' dx')
-				return True
-
 			return self.parse_result (self.rederr.red, self.tok.pos, [])
 
-		elif self.tok != '$end':
+		if self.tok != '$end':
 			return self.parse_result (None, self.pos, [])
-
-		# if self.tokidx and self.tokens [self.tokidx - 1] == 'LEFT':
-		# 	for irule, pos in self.strules [self.stidx]:
-		# 		if self.rules [irule] [1] [pos] == 'PARENL':
-		# 			break
-		# 	else:
-		# 		raise RuntimeError ('could not find left parenthesis rule')
-
-		# else:
-		# 	irule, pos = self.strules [self.stidx] [0]
 
 		irule, pos = self.strules [self.stidx] [0]
 		rule       = self.rules [irule]
@@ -1242,6 +1225,9 @@ class Parser (LALR1):
 
 		if pos and rule [1] [pos - 1] == 'expr_commas' and rule [0] not in {'expr_sum', 'expr_abs', 'expr_func', 'expr_subs', 'subsvars'}: # {'expr_abs', 'expr_ufunc', 'varass'}:
 			return self._parse_autocomplete_expr_commas (rule, pos)
+
+		if rule [0] == 'expr_intg' and pos == len (rule [1]) - 1 and self.autocompleting:
+			return self._parse_autocomplete_expr_intg ()
 
 		if pos >= len (rule [1]): # end of rule
 			if rule [0] == 'expr_sub' and stack [-1 - len (rule [1])].sym == 'INTG':
@@ -1323,8 +1309,8 @@ if __name__ == '__main__': # DEBUG!
 
 	# a = p.parse (r"\sum_0")
 	# a = p.parse (r"\int_0^1 a")
+	# a = p.parse (r"\int x")
 	a = p.parse (r"\int x")
-	# a = p.parse (r"\int")
 	print (a)
 
 
