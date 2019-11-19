@@ -114,10 +114,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('sqrt x'), ('-sqrt', ('@', 'x')))
 		self.assertEqual (p ('sqrt {x}'), ('-sqrt', ('@', 'x')))
 		self.assertEqual (p ('sqrt (x)'), ('-sqrt', ('@', 'x')))
-		# self.assertEqual (p ('sqrt {(x)}'), ('-sqrt', ('(', ('@', 'x'))))
+		self.assertEqual (p ('sqrt {(x)}'), ('-sqrt', ('@', 'x')))
 		self.assertEqual (p ('sqrt[3] x'), ('-sqrt', ('@', 'x'), ('#', '3')))
 		self.assertEqual (p ('sqrt[3] {x}'), ('-sqrt', ('@', 'x'), ('#', '3')))
-		# self.assertEqual (p ('sqrt[3] {(x)}'), ('-sqrt', ('(', ('@', 'x')), ('#', '3')))
+		self.assertEqual (p ('sqrt[3] {(x)}'), ('-sqrt', ('@', 'x'), ('#', '3')))
 		self.assertEqual (p ('sqrt[3] (x)'), ('-sqrt', ('@', 'x'), ('#', '3')))
 		self.assertEqual (p ('sin x'), ('-func', 'sin', (('@', 'x'),)))
 		self.assertEqual (p ('sin^2 x'), ('^', ('-func', 'sin', (('@', 'x'),)), ('#', '2')))
@@ -645,6 +645,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\int**-a[b][c].d {(x)} y'), ('-intg', ('*', (('(', ('@', 'x')), ('@', 'y'))), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (p ('\\int**a.b[2] x dx'), ('-intg', ('@', 'x'), ('@', 'dx'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))
 		self.assertEqual (p ('f {(x)}'), ('*', (('@', 'f'), ('(', ('@', 'x')))))
+		self.assertEqual (p ('f {\\left(x\\right)}'), ('-ufunc', 'f', (('@', 'x'),)))
+		self.assertEqual (p ('a.b {(x)}'), ('*', (('.', ('@', 'a'), 'b'), ('(', ('@', 'x')))))
+		self.assertEqual (p ('a.b {\\left(x\\right)}'), ('.', ('@', 'a'), 'b', (('@', 'x'),)))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -699,10 +702,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('sqrt x')), '\\sqrt{x}')
 		self.assertEqual (ast2tex (p ('sqrt {x}')), '\\sqrt{x}')
 		self.assertEqual (ast2tex (p ('sqrt (x)')), '\\sqrt{x}')
-		# self.assertEqual (ast2tex (p ('sqrt {(x)}')), '\\sqrt{\\left(x \\right)}')
+		self.assertEqual (ast2tex (p ('sqrt {(x)}')), '\\sqrt{x}')
 		self.assertEqual (ast2tex (p ('sqrt[3] x')), '\\sqrt[3]{x}')
 		self.assertEqual (ast2tex (p ('sqrt[3] {x}')), '\\sqrt[3]{x}')
-		# self.assertEqual (ast2tex (p ('sqrt[3] {(x)}')), '\\sqrt[3]{\\left(x \\right)}')
+		self.assertEqual (ast2tex (p ('sqrt[3] {(x)}')), '\\sqrt[3]{x}')
 		self.assertEqual (ast2tex (p ('sqrt[3] (x)')), '\\sqrt[3]{x}')
 		self.assertEqual (ast2tex (p ('sin x')), '\\sin{\\left(x \\right)}')
 		self.assertEqual (ast2tex (p ('sin^2 x')), '\\sin^2{\\left(x \\right)}')
@@ -1203,19 +1206,19 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('sqrt[3] -N () [2] [3].c [4].d () [5]')), '\\sqrt[3]{-\\operatorname{N}{\\left( \\right)}\\left[2 \\right]\\left[3 \\right].c\\left[4 \\right].\\operatorname{d}\\left( \\right)\\left[5 \\right]}')
 		self.assertEqual (ast2tex (p ('log -N () [2] [3].c [4].d () [5]')), '\\ln{\\left(-\\operatorname{N}{\\left( \\right)}\\left[2 \\right]\\left[3 \\right].c\\left[4 \\right].\\operatorname{d}\\left( \\right)\\left[5 \\right] \\right)}')
 		self.assertEqual (ast2tex (p ('\\log_2 -N () [2] [3].c [4].d () [5]')), '\\log_2{\\left(-\\operatorname{N}{\\left( \\right)}\\left[2 \\right]\\left[3 \\right].c\\left[4 \\right].\\operatorname{d}\\left( \\right)\\left[5 \\right] \\right)}')
-		# self.assertEqual (ast2tex (p ('N sin**2 ln**2 N x')), '\\operatorname{N}{\\left(\\sin^2{\\left(\\ln\\left(\\operatorname{N}{\\left(x \\right)} \\right)^2 \\right)} \\right)}')
-		# self.assertEqual (ast2tex (p ('sin ln N x')), '\\sin{\\left(\\ln\\left(\\operatorname{N}{\\left(x \\right)} \\right) \\right)}')
+		self.assertEqual (ast2tex (p ('N sin**2 ln**2 N x')), '\\operatorname{N}{\\left(\\sin^2{\\left(\\ln{\\left(\\operatorname{N}{\\left(x \\right)} \\right)}^2 \\right)} \\right)}')
+		self.assertEqual (ast2tex (p ('sin ln N x')), '\\sin{\\left(\\ln{\\left(\\operatorname{N}{\\left(x \\right)} \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('sin(a)**[a][b].c')), '\\sin{\\left(a \\right)}^{\\left[a \\right]\\left[b \\right].c}')
 		self.assertEqual (ast2tex (p ('N sin N sin x')), '\\operatorname{N}{\\left(\\sin{\\left(\\operatorname{N}{\\left(\\sin{\\left(x \\right)} \\right)} \\right)} \\right)}')
-		# self.assertEqual (ast2tex (p ('cos**-1 0 \\log_2 8')), '\\cos^{-1}{\\left(0 \\right)} \\log_2\\left(8 \\right)')
-		# self.assertEqual (ast2tex (p ('N sin sqrt[3] \\log_2 8')), '\\operatorname{N}{\\left(\\sin{\\left(\\sqrt[3]{\\log_2\\left(8 \\right)} \\right)} \\right)}')
+		self.assertEqual (ast2tex (p ('cos**-1 0 \\log_2 8')), '\\cos^{-1}{\\left(0 \\right)} \\log_2{\\left(8 \\right)}')
+		self.assertEqual (ast2tex (p ('N sin sqrt[3] \\log_2 8')), '\\operatorname{N}{\\left(\\sin{\\left(\\sqrt[3]{\\log_2{\\left(8 \\right)}} \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('sin(x)**-a[b][c].d')), '\\sin{\\left(x \\right)}^{-a\\left[b \\right]\\left[c \\right].d}')
 		self.assertEqual (ast2tex (p ('sin sin x [2].w')), '\\sin{\\left(\\sin{\\left(x\\left[2 \\right].w \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('sin -sin x [2].w')), '\\sin{\\left(-\\sin{\\left(x\\left[2 \\right].w \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('sin sin (x) [2].w')), '\\sin{\\left(\\sin{\\left(x \\right)}\\left[2 \\right].w \\right)}')
 		self.assertEqual (ast2tex (p ('sin -sin (x) [2].w')), '\\sin{\\left(-\\sin{\\left(x \\right)}\\left[2 \\right].w \\right)}')
 		self.assertEqual (ast2tex (p ('sin sin x [2].w ()')), '\\sin{\\left(\\sin{\\left(x\\left[2 \\right].\\operatorname{w}\\left( \\right) \\right)} \\right)}')
-		# self.assertEqual (ast2tex (p ('ln ln x [2].w')), '\\ln\\left(\\ln\\left(x\\left[2 \\right].w \\right) \\right)')
+		self.assertEqual (ast2tex (p ('ln ln x [2].w')), '\\ln{\\left(\\ln{\\left(x\\left[2 \\right].w \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('N N sin -a [2]')), '\\operatorname{N}{\\left(\\operatorname{N}{\\left(\\sin{\\left(-a\\left[2 \\right] \\right)} \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('sin sin -x [2].w')), '\\sin{\\left(\\sin{\\left(-x\\left[2 \\right].w \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('sin -sin x [2].w')), '\\sin{\\left(-\\sin{\\left(x\\left[2 \\right].w \\right)} \\right)}')
@@ -1230,6 +1233,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\int**-a[b][c].d {(x)} y')), '\\int_0^{-a\\left[b \\right]\\left[c \\right].d} \\left(x \\right) y \\ {}')
 		self.assertEqual (ast2tex (p ('\\int**a.b[2] x dx')), '\\int_0^{a.b\\left[2 \\right]} x \\ dx')
 		self.assertEqual (ast2tex (p ('f {(x)}')), 'f \\cdot \\left(x \\right)')
+		self.assertEqual (ast2tex (p ('f {\\left(x\\right)}')), 'f\\left(x \\right)')
+		self.assertEqual (ast2tex (p ('a.b {(x)}')), 'a.b \\cdot \\left(x \\right)')
+		self.assertEqual (ast2tex (p ('a.b {\\left(x\\right)}')), 'a.\\operatorname{b}\\left(x \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -1284,10 +1290,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('sqrt x')), 'sqrt(x)')
 		self.assertEqual (ast2nat (p ('sqrt {x}')), 'sqrt(x)')
 		self.assertEqual (ast2nat (p ('sqrt (x)')), 'sqrt(x)')
-		# self.assertEqual (ast2nat (p ('sqrt {(x)}')), 'sqrt((x))')
+		self.assertEqual (ast2nat (p ('sqrt {(x)}')), 'sqrt(x)')
 		self.assertEqual (ast2nat (p ('sqrt[3] x')), '\\sqrt[3]{x}')
 		self.assertEqual (ast2nat (p ('sqrt[3] {x}')), '\\sqrt[3]{x}')
-		# self.assertEqual (ast2nat (p ('sqrt[3] {(x)}')), '\\sqrt[3]{(x)}')
+		self.assertEqual (ast2nat (p ('sqrt[3] {(x)}')), '\\sqrt[3]{x}')
 		self.assertEqual (ast2nat (p ('sqrt[3] (x)')), '\\sqrt[3]{x}')
 		self.assertEqual (ast2nat (p ('sin x')), 'sin(x)')
 		self.assertEqual (ast2nat (p ('sin^2 x')), 'sin**2(x)')
@@ -1815,6 +1821,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\int**-a[b][c].d {(x)} y')), '\\int_0^{-a[b][c].d} (x) y ')
 		self.assertEqual (ast2nat (p ('\\int**a.b[2] x dx')), '\\int_0^{a.b[2]} x dx')
 		self.assertEqual (ast2nat (p ('f {(x)}')), 'f * (x)')
+		self.assertEqual (ast2nat (p ('f {\\left(x\\right)}')), 'f(x)')
+		self.assertEqual (ast2nat (p ('a.b {(x)}')), 'a.b * (x)')
+		self.assertEqual (ast2nat (p ('a.b {\\left(x\\right)}')), 'a.b(x)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -1869,7 +1878,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('sqrt x')), 'sqrt(x)')
 		self.assertEqual (ast2py (p ('sqrt {x}')), 'sqrt(x)')
 		self.assertEqual (ast2py (p ('sqrt (x)')), 'sqrt(x)')
-		# self.assertEqual (ast2py (p ('sqrt {(x)}')), 'sqrt((x))')
+		self.assertEqual (ast2py (p ('sqrt {(x)}')), 'sqrt(x)')
 		self.assertEqual (ast2py (p ('sqrt[3] x')), 'x**(1/3)')
 		self.assertEqual (ast2py (p ('sqrt[3] {x}')), 'x**(1/3)')
 		self.assertEqual (ast2py (p ('sqrt[3] {(x)}')), 'x**(1/3)')
@@ -2400,6 +2409,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\int**-a[b][c].d {(x)} y')), 'Integral((x)*y, (, 0, -a[b][c].d))')
 		self.assertEqual (ast2py (p ('\\int**a.b[2] x dx')), 'Integral(x, (x, 0, a.b[2]))')
 		self.assertEqual (ast2py (p ('f {(x)}')), 'f*(x)')
+		self.assertEqual (ast2py (p ('f {\\left(x\\right)}')), "Function('f')(x)")
+		self.assertEqual (ast2py (p ('a.b {(x)}')), 'a.b*(x)')
+		self.assertEqual (ast2py (p ('a.b {\\left(x\\right)}')), 'a.b(x)')
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -2985,6 +2997,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\int**-a[b][c].d {(x)} y')), ('-intg', ('*', (('(', ('@', 'x')), ('@', 'y'), ('-dict', ()))), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2tex2ast (p ('\\int**a.b[2] x dx')), ('-intg', ('@', 'x'), ('@', 'dx'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))
 		self.assertEqual (ast2tex2ast (p ('f {(x)}')), ('*', (('@', 'f'), ('(', ('@', 'x'))), {1}))
+		self.assertEqual (ast2tex2ast (p ('f {\\left(x\\right)}')), ('-ufunc', 'f', (('@', 'x'),)))
+		self.assertEqual (ast2tex2ast (p ('a.b {(x)}')), ('*', (('.', ('@', 'a'), 'b'), ('(', ('@', 'x'))), {1}))
+		self.assertEqual (ast2tex2ast (p ('a.b {\\left(x\\right)}')), ('.', ('@', 'a'), 'b', (('@', 'x'),)))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -3039,10 +3054,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('sqrt x')), ('-sqrt', ('@', 'x')))
 		self.assertEqual (ast2nat2ast (p ('sqrt {x}')), ('-sqrt', ('@', 'x')))
 		self.assertEqual (ast2nat2ast (p ('sqrt (x)')), ('-sqrt', ('@', 'x')))
-		# self.assertEqual (ast2nat2ast (p ('sqrt {(x)}')), ('-sqrt', ('(', ('@', 'x'))))
+		self.assertEqual (ast2nat2ast (p ('sqrt {(x)}')), ('-sqrt', ('@', 'x')))
 		self.assertEqual (ast2nat2ast (p ('sqrt[3] x')), ('-sqrt', ('@', 'x'), ('#', '3')))
 		self.assertEqual (ast2nat2ast (p ('sqrt[3] {x}')), ('-sqrt', ('@', 'x'), ('#', '3')))
-		# self.assertEqual (ast2nat2ast (p ('sqrt[3] {(x)}')), ('-sqrt', ('(', ('@', 'x')), ('#', '3')))
+		self.assertEqual (ast2nat2ast (p ('sqrt[3] {(x)}')), ('-sqrt', ('@', 'x'), ('#', '3')))
 		self.assertEqual (ast2nat2ast (p ('sqrt[3] (x)')), ('-sqrt', ('@', 'x'), ('#', '3')))
 		self.assertEqual (ast2nat2ast (p ('sin x')), ('-func', 'sin', (('@', 'x'),)))
 		self.assertEqual (ast2nat2ast (p ('sin^2 x')), ('^', ('-func', 'sin', (('@', 'x'),)), ('#', '2')))
@@ -3304,7 +3319,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('{x^2y**2z}.diff (x, 2, y, z)')), ('.', ('(', ('*', (('^', ('@', 'x'), ('#', '2')), ('^', ('@', 'y'), ('#', '2')), ('@', 'z')))), 'diff', (('@', 'x'), ('#', '2'), ('@', 'y'), ('@', 'z'))))
 		self.assertEqual (ast2nat2ast (p ('{x y}.integrate ((x, 0, 1))')), ('.', ('(', ('*', (('@', 'x'), ('@', 'y')))), 'integrate', (('(', (',', (('@', 'x'), ('#', '0'), ('#', '1')))),)))
 		self.assertEqual (ast2nat2ast (p ('\\sqrt (a:b)')), ('-sqrt', ('-slice', ('@', 'a'), ('@', 'b'), None)))
-		# self.assertEqual (ast2nat2ast (p ('\\sqrt[3] (a:b)')), ('-sqrt', ('(', ('-slice', ('@', 'a'), ('@', 'b'), None)), ('#', '3')))
+		self.assertEqual (ast2nat2ast (p ('\\sqrt[3] (a:b)')), ('-sqrt', ('-slice', ('@', 'a'), ('@', 'b'), None), ('#', '3')))
 		self.assertEqual (ast2nat2ast (p ('? ()')), ('-ufunc', '?', ()))
 		self.assertEqual (ast2nat2ast (p ('? (x)')), ('-ufunc', '?', (('@', 'x'),)))
 		self.assertEqual (ast2nat2ast (p ('? (x) (2)')), ('-ufunc', '?', (('#', '2'),)))
@@ -3570,6 +3585,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\int**-a[b][c].d {(x)} y')), ('-intg', ('*', (('(', ('@', 'x')), ('@', 'y'))), ('@', ''), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2nat2ast (p ('\\int**a.b[2] x dx')), ('-intg', ('@', 'x'), ('@', 'dx'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))
 		self.assertEqual (ast2nat2ast (p ('f {(x)}')), ('*', (('@', 'f'), ('(', ('@', 'x'))), {1}))
+		self.assertEqual (ast2nat2ast (p ('f {\\left(x\\right)}')), ('-ufunc', 'f', (('@', 'x'),)))
+		self.assertEqual (ast2nat2ast (p ('a.b {(x)}')), ('*', (('.', ('@', 'a'), 'b'), ('(', ('@', 'x'))), {1}))
+		self.assertEqual (ast2nat2ast (p ('a.b {\\left(x\\right)}')), ('.', ('@', 'a'), 'b', (('@', 'x'),)))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -3624,7 +3642,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('sqrt x')), ('-sqrt', ('@', 'x')))
 		self.assertEqual (ast2py2ast (p ('sqrt {x}')), ('-sqrt', ('@', 'x')))
 		self.assertEqual (ast2py2ast (p ('sqrt (x)')), ('-sqrt', ('@', 'x')))
-		# self.assertEqual (ast2py2ast (p ('sqrt {(x)}')), ('-sqrt', ('(', ('@', 'x'))))
+		self.assertEqual (ast2py2ast (p ('sqrt {(x)}')), ('-sqrt', ('@', 'x')))
 		self.assertEqual (ast2py2ast (p ('sqrt[3] x')), ('^', ('@', 'x'), ('(', ('/', ('#', '1'), ('#', '3')))))
 		self.assertEqual (ast2py2ast (p ('sqrt[3] {x}')), ('^', ('@', 'x'), ('(', ('/', ('#', '1'), ('#', '3')))))
 		self.assertEqual (ast2py2ast (p ('sqrt[3] {(x)}')), ('^', ('@', 'x'), ('(', ('/', ('#', '1'), ('#', '3')))))
@@ -4155,6 +4173,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\int**-a[b][c].d {(x)} y')), None)
 		self.assertEqual (ast2py2ast (p ('\\int**a.b[2] x dx')), ('-func', 'Integral', (('@', 'x'), ('(', (',', (('@', 'x'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))))))
 		self.assertEqual (ast2py2ast (p ('f {(x)}')), ('*', (('@', 'f'), ('(', ('@', 'x'))), {1}))
+		self.assertEqual (ast2py2ast (p ('f {\\left(x\\right)}')), ('-ufunc', 'f', (('@', 'x'),)))
+		self.assertEqual (ast2py2ast (p ('a.b {(x)}')), ('*', (('.', ('@', 'a'), 'b'), ('(', ('@', 'x'))), {1}))
+		self.assertEqual (ast2py2ast (p ('a.b {\\left(x\\right)}')), ('.', ('@', 'a'), 'b', (('@', 'x'),)))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -4740,6 +4761,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\int**-a[b][c].d {(x)} y')), ('-intg', ('*', (('@', 'x'), ('@', 'y'))), ('@', 'd'), ('#', '0'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2spt2ast (p ('\\int**a.b[2] x dx')), ('-intg', ('@', 'x'), ('@', 'dx'), ('#', '0'), ('-idx', ('.', ('@', 'a'), 'b'), (('#', '2'),))))
 		self.assertEqual (ast2spt2ast (p ('f {(x)}')), ('*', (('@', 'f'), ('@', 'x'))))
+		self.assertEqual (ast2spt2ast (p ('f {\\left(x\\right)}')), ('-ufunc', 'f', (('@', 'x'),)))
+		self.assertEqual (ast2spt2ast (p ('a.b {(x)}')), ('*', (('@', 'x'), ('.', ('@', 'a'), 'b'))))
+		self.assertEqual (ast2spt2ast (p ('a.b {\\left(x\\right)}')), ('.', ('@', 'a'), 'b', (('@', 'x'),)))
 	# END UPDATE BLOCK
 
 _EXPRESSIONS = r"""
@@ -5326,6 +5350,9 @@ sin**-a[b][c] (x)
 \int**-a[b][c].d {(x)} y
 \int**a.b[2] x dx
 f {(x)}
+f {\left(x\right)}
+a.b {(x)}
+a.b {\left(x\right)}
 """
 # _EXPRESSIONS = r"""
 

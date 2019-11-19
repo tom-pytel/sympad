@@ -1,6 +1,6 @@
 v1.0.20:
 --------
-* LONG OVERDUE! Reworked grammar and parser to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)) and \int among other things.
+* LONG OVERDUE! Reworked grammar to remove redundant conflicts and to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)) and \int among other things.
 * Added symbols with assumptions.
 * Added ability to 'call' derivatives of lambda functions.
 * Added parsing of 'not' as possible unary prefix to unparenthesized function arguments.
