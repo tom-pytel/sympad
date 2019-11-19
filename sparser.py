@@ -72,6 +72,100 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 	else:
 		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast))
 
+def _ast_tail_differential (self, must_have_pre = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
+	lself = lambda a: a
+
+	if self.is_differential or self.is_var_null: # AST.VarNull is for autocomplete
+		return None, self, lself, lself
+
+	elif self.is_minus:
+		pre, dv, wrap, wrapp = self.minus.tail_differential
+
+		if dv:
+			return pre, dv.kw (dv_has_neg = dv.dv_has_neg or not pre), wrap, lambda a: AST ('-', wrapp (a))
+
+	elif self.is_fact:
+		pre, dv, wrap, wrapp = self.fact.tail_differential
+
+		if dv:
+			return pre, dv, lambda a: AST ('!', wrap (a)), wrapp
+
+	elif self.is_add:
+		pre, dv, wrap, wrapp = self.add [-1].tail_differential
+
+		if dv and pre:
+			return AST ('+', (*self.add [:-1], wrapp (pre))), dv, wrap, lself
+
+	elif self.op in {'*', '*exp'}:
+		for i, ast in enumerate (self.mul):
+			pre, dv, wrap, wrapp = ast.tail_differential
+
+			if dv:
+				if must_have_pre and (pre or not i):
+					must_have_pre = False
+
+					continue
+
+				if not i:
+					return pre, dv, lambda a: AST (self.op, (wrap (a), *self.mul [1:])), wrapp
+
+				if pre:
+					pre = AST (self.op, (*self.mul [:i], pre))
+				elif i > 1:
+					pre = AST (self.op, self.mul [:i])
+				else:
+					pre = self.mul [0]
+
+				if i < self.mul.len - 1:
+					return pre, dv, lambda a: AST (self.op, (wrap (a), *self.mul [i + 1:])), wrapp
+
+				else:
+					return pre, dv, wrap, wrapp
+
+	elif self.is_div:
+		pre, dv, wrap, wrapp = self.numer.tail_differential
+
+		if dv:
+			return pre, dv, lambda a: AST ('/', wrap (a), self.denom), wrapp
+
+		pre, dv, wrap, wrapp = self.denom.tail_differential_with_pre
+
+		if dv and pre:
+			return AST ('/', self.numer, wrapp (pre)), dv, wrap, lself
+
+	elif self.is_diff:
+		if self.src:
+			pre, dv, wrap, wrapp = self.src.tail_differential
+
+			if dv and pre:
+				pre = _expr_diff (wrapp (pre))
+
+				if pre.is_diff:
+					return pre, dv, wrap, lself
+
+	elif self.is_func:
+		if self.src:
+			pass
+
+		# if ast.src and ast.func in _SP_USER_FUNCS: # _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
+		# 	ast2, neg = ast.src._strip_minus (retneg = True)
+		# 	ast2, dv  = _ast_strip_tail_differential (ast2)
+
+		# 	if dv and ast2:
+		# 		return neg (ast2), dv
+
+
+
+
+
+
+
+	return None, None, None, None
+
+AST._tail_differential          = _ast_tail_differential # adding to AST class so it can be cached and accessed as member
+AST._tail_differential_with_pre = lambda self: self._tail_differential (must_have_pre = True)
+AST._has_tail_differential      = lambda self: self.tail_differential [1]
+
 #...............................................................................................
 def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 	def can_be_ufunc (ast):
@@ -175,13 +269,13 @@ def _expr_cmp (lhs, CMP, rhs):
 	else:
 		return AST ('<>', lhs, ((cmp, rhs),))
 
-def _expr_add (lhs, rhs):
-	return AST.flatcat ('+', lhs, rhs)
+def _expr_add (self, lhs, rhs):
+	ast = AST.flatcat ('+', lhs, rhs)
 
+	if self.stack_has_sym ('INTG') and lhs.has_tail_differential:
+		return Reduce (ast)#, keep = True)
 
-
-
-
+	return PopConfs (ast)
 
 def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy missing negative numbers
 	if expr.op in {'!', '-diffp', '-idx'}:
@@ -336,96 +430,95 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 # def _expr_mul_imp (self, lhs, rhs):
 # 	ast = AST.flatcat ('*', lhs, rhs)
 
-# 	if self.stack_has_sym ('INTG') and lhs.is_differential or lhs.mul_has_differential:
-# 		return Reduce (ast)
+# 	if self.stack_has_sym ('INTG') and rhs.is_differential: # or lhs.mul_has_differential:
+# 		return ast # KeepConf (ast)
 
 # 	return PopConfs (ast)
 
-def _ast_strip_tail_differential (ast):
-	if ast.is_differential or ast.is_var_null: # null_var is for autocomplete
-		return None, ast
+# def _ast_strip_tail_differential (ast):
+# 	if ast.is_differential or ast.is_var_null: # null_var is for autocomplete
+# 		return None, ast
 
-	if ast.is_intg:
-		if ast.intg is not None:
-			ast2, neg = ast.intg._strip_minus (retneg = True)
-			ast2, dv  = _ast_strip_tail_differential (ast2)
+# 	if ast.is_intg:
+# 		if ast.intg is not None:
+# 			ast2, neg = ast.intg._strip_minus (retneg = True)
+# 			ast2, dv  = _ast_strip_tail_differential (ast2)
 
-			if dv:
-				if ast2:
-					return (AST ('-intg', neg (ast2), dv, *ast [3:]), ast.dv)
-				elif neg.has_neg:
-					return (AST ('-intg', neg (AST.One), dv, *ast [3:]), ast.dv)
-				else:
-					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
+# 			if dv:
+# 				if ast2:
+# 					return (AST ('-intg', neg (ast2), dv, *ast [3:]), ast.dv)
+# 				elif neg.has_neg:
+# 					return (AST ('-intg', neg (AST.One), dv, *ast [3:]), ast.dv)
+# 				else:
+# 					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
-	elif ast.is_diff:
-		if ast.src:
-			ast2, neg = ast.src._strip_minus (retneg = True)
-			ast2, dv  = _ast_strip_tail_differential (ast2)
+# 	elif ast.is_diff:
+# 		if ast.src:
+# 			ast2, neg = ast.src._strip_minus (retneg = True)
+# 			ast2, dv  = _ast_strip_tail_differential (ast2)
 
-			if dv and ast2:
-				return neg (_expr_diff (ast2)), dv
+# 			if dv and ast2:
+# 				return neg (_expr_diff (ast2)), dv
 
-	elif ast.is_func:
-		if ast.src and ast.func in _SP_USER_FUNCS: # _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
-			ast2, neg = ast.src._strip_minus (retneg = True)
-			ast2, dv  = _ast_strip_tail_differential (ast2)
+# 	elif ast.is_func:
+# 		if ast.src and ast.func in _SP_USER_FUNCS: # _SP_USER_VARS.get (ast.func, AST.Null).is_lamb:
+# 			ast2, neg = ast.src._strip_minus (retneg = True)
+# 			ast2, dv  = _ast_strip_tail_differential (ast2)
 
-			if dv and ast2:
-				return neg (ast2), dv
+# 			if dv and ast2:
+# 				return neg (ast2), dv
 
-	elif ast.is_pow:
-		ast2, neg = ast.exp._strip_minus (retneg = True)
-		ast2, dv  = _ast_strip_tail_differential (ast2)
+# 	elif ast.is_pow:
+# 		ast2, neg = ast.exp._strip_minus (retneg = True)
+# 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv and ast2:
-			return AST ('^', ast.base, neg (ast2)), dv
+# 		if dv and ast2:
+# 			return AST ('^', ast.base, neg (ast2)), dv
 
-	elif ast.is_div:
-		ast2, neg = ast.denom._strip_minus (retneg = True)
-		ast2, dv  = _ast_strip_tail_differential (ast2)
+# 	elif ast.is_div:
+# 		ast2, neg = ast.denom._strip_minus (retneg = True)
+# 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv and ast2:
-			return _expr_diff (AST ('/', ast.numer, neg (ast2))), dv
+# 		if dv and ast2:
+# 			return _expr_diff (AST ('/', ast.numer, neg (ast2))), dv
 
-		ast2, neg = ast.numer._strip_minus (retneg = True)
-		ast2, dv  = _ast_strip_tail_differential (ast2)
+# 		ast2, neg = ast.numer._strip_minus (retneg = True)
+# 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv:
-			return _expr_diff (AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom)), dv
+# 		if dv:
+# 			return _expr_diff (AST ('/', neg (ast2) if ast2 else neg (AST.One), ast.denom)), dv
 
-	elif ast.is_mul or ast.is_mulexp:
-		ast2, neg = ast.mul [-1]._strip_minus (retneg = True)
-		ast2, dv  = _ast_strip_tail_differential (ast2)
+# 	elif ast.is_mul or ast.is_mulexp:
+# 		ast2, neg = ast.mul [-1]._strip_minus (retneg = True)
+# 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv:
-			if ast2:
-				return (AST (ast.op, ast.mul [:-1] + (neg (ast2),)), dv)
-			elif ast.mul.len > 2:
-				return (neg (AST (ast.op, ast.mul [:-1])), dv)
-			else:
-				return (neg (ast.mul [0]), dv)
+# 		if dv:
+# 			if ast2:
+# 				return (AST (ast.op, ast.mul [:-1] + (neg (ast2),)), dv)
+# 			elif ast.mul.len > 2:
+# 				return (neg (AST (ast.op, ast.mul [:-1])), dv)
+# 			else:
+# 				return (neg (ast.mul [0]), dv)
 
-	elif ast.is_add:
-		ast2, neg = ast.add [-1]._strip_minus (retneg = True, negnum = False)
-		ast2, dv  = _ast_strip_tail_differential (ast2)
+# 	elif ast.is_add:
+# 		ast2, neg = ast.add [-1]._strip_minus (retneg = True, negnum = False)
+# 		ast2, dv  = _ast_strip_tail_differential (ast2)
 
-		if dv and ast2:
-			return AST ('+', ast.add [:-1] + (neg (ast2),)), dv
+# 		if dv and ast2:
+# 			return AST ('+', ast.add [:-1] + (neg (ast2),)), dv
 
-	return ast, None
+# 	return ast, None
 
 def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
-	ast, neg = ast._strip_minus (retneg = True)
-	ast, dv  = _ast_strip_tail_differential (ast)
+	pre, dv, wrap, wrapp = ast.tail_differential
 
 	if dv:
-		if ast:
-			return AST ('-intg', neg (ast), dv, *from_to)
-		elif neg.has_neg:
-			return AST ('-intg', neg (AST.One), dv, *from_to)
+		if pre:
+			return wrap (AST ('-intg', wrapp (pre), dv, *from_to))
+		elif dv.dv_has_neg:
+			return wrap (AST ('-intg', wrapp (AST.One), dv, *from_to))
 		else:
-			return neg (AST ('-intg', None, dv, *from_to))
+			return wrap (AST ('-intg', None, dv, *from_to))
 
 	raise SyntaxError ('integration expecting a differential')
 
@@ -507,12 +600,12 @@ def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 			return PopConfs (wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg)))))
 
 		elif var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
-			# return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
+			return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
 
-			ast = wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
+			# ast = wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
 
-			# return Reduce (ast) if rhs.is_differential and self.stack_has_sym ('INTG') else PopConfs (ast)
-			return Reduce (ast) if var.is_differential and self.stack_has_sym ('INTG') else PopConfs (ast)
+			# # return Reduce (ast) if rhs.is_differential and self.stack_has_sym ('INTG') else PopConfs (ast)
+			# return Reduce (ast) if var.is_differential and self.stack_has_sym ('INTG') else PopConfs (ast)
 
 	elif argsc.strip_curly.is_paren and var.is_var_nonconst and not var.is_diff_or_part and argsc.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
@@ -983,9 +1076,9 @@ class Parser (LALR1):
 	# def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return PopConfs (AST.flatcat ('+', expr_add, expr_mul_exp))
 	# def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return PopConfs (AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)))
 	# def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return PopConfs (AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)))
-	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return _expr_add (expr_add, expr_mul_exp)
-	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return _expr_add (expr_add, AST ('-', expr_mul_exp))
-	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return _expr_add (expr_add, AST ('-', expr_mul_exp))
+	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return _expr_add (self, expr_add, expr_mul_exp)
+	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return _expr_add (self, expr_add, AST ('-', expr_mul_exp))
+	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return _expr_add (self, expr_add, AST ('-', expr_mul_exp))
 	def expr_add_4         (self, expr_mul_exp):                                       return expr_mul_exp
 
 	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                       return AST.flatcat ('*exp', expr_mul_exp, expr_neg)
@@ -1000,7 +1093,7 @@ class Parser (LALR1):
 	def expr_divm_1        (self, MINUS, expr_divm):                                   return _expr_neg (expr_divm)
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
 
-	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg)) # _expr_mul_imp (self, expr_mul_imp, expr_intg)
+	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg)) # _expr_mul_imp (self, expr_mul_imp, expr_intg) #
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
 	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
@@ -1399,17 +1492,19 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
 	# a = p.parse (r"""\begin{cases} \sum_{x = \lim_{x \to \left[ \right]} \left(\sqrt[1{e}{+100}]{False} + 1{e}{+100} + \infty \widetilde\infty \right)}^{\left\{\neg\ \partial x\left[1., \emptyset, \text{'str'} \right] \vee \lambda{:} \partial \vee 0.1 \vee dz \vee \frac{\left(d^2 \right)}{dx^1 dz^1} - \frac{1}{\sqrt[\infty]{\partial}} \right\}} \left(\frac{\frac{x}{y}\ zd}{dz\ c\ dz \cdot 1{e}{+100}}, -\left(\partial x + dz + 1.0 \right), {-2}{:}{-{1 \cdot 2 \cdot 1.0}}{:}\left\{\partial x, 1.0 \right\} \right) & \text{for}\: \left(\lim_{x \to -1.0} 0^o o \wedge \log_\partial\left(ypartialx \right) a! \wedge \sqrt[xyzd]{\infty}\ \widetilde\infty \cap \frac{\partial^3}{\partial x^1\partial z^2}\left(0.1 \right) \cap \frac{\partial^9}{\partial z^3\partial y^3\partial x^3}\left(a \right) \right) + \left(\lim_{x \to \begin{bmatrix} b & True & \text{'str'} \\ dx & 1.0 & 0.1 \end{bmatrix}} -1 \ne dx, \begin{cases} \infty \widetilde\infty \wedge \partial x \wedge None & \text{for}\: dz! \\ \lambda & \text{otherwise} \end{cases}{:}\partial y, \left\{\left\{dy{:} \partial y \right\}, \left(False{:}\partial x{:}\emptyset \right), \lim_{x \to \partial} \partial x \right\} \right) + \frac{\begin{bmatrix} \infty \end{bmatrix}}{\begin{bmatrix} \emptyset \\ \partial y \end{bmatrix}} \le \ln\left(\left\{None, \infty \widetilde\infty, dy \right\} \right) \\ \left(\operatorname{GeometryError}\left( \right) \wedge \ln\left(x \right) - 1.00 \right) \left\{dx{:} 0.1 \right\} \left\{1.0{:} \partial x \right\} \sum_{x = 1{e}{-100}}^p artial\ True \cdot \left\{\text{'str'}{:} \begin{bmatrix} xyzd \\ dy \end{bmatrix} \right\} \vee \left(\left\{\emptyset \right\} \cup \frac{True}{\partial y} \cup \left|\partial x \right| \right) \cap \left(\begin{bmatrix} True \\ \text{'str'} \end{bmatrix} \cup \widetilde\infty \cdot 1.\ True \cup -\partial x \right) \cap \operatorname{Sum}\left(\left(\left( \right) \mapsto 1{e}{+100} \right), \left(x, \infty \widetilde\infty\left[1{e}{-100} \right], c \vee \partial x \vee None \right) \right) \vee \left(\cot^{-1}\left(\emptyset \right), \int dx \ dx \right)! & \text{for}\: \left[\left|\left(-1 \right) \right|, \frac{\partial^4}{\partial x^2\partial z^2}\left(\log_{\emptyset}\left(-1.0 \right) \right) \right]\left[loglambda\ x, y, z{:}\begin{cases} \infty \widetilde\infty & \text{for}\: 1{e}{-100} \\ dy & \text{for}\: dy \end{cases}, \operatorname{Sum}\left(False, \left(x, False, 0 \right) \right) \cap \sqrt[False]{2} \cap \frac{1}{dx\ a!}, \gcd\left(\left(dy \vee \partial x \right)^{1.0^{\partial x}}, \operatorname{Sum}\left(b{:}None, \left(x, -1 + 1.0 + \text{'str'}, xyzd! \right) \right), \left|-1 \right| + 1.0 \cdot 1.0 \right) \right] \\ \left|\begin{cases} \left(dx\left[\partial, \emptyset \right] \wedge \left(False \vee \partial x \right) \right) \left(\neg\ -1^{dy} \right) \frac{d^2}{dx^2}\left(dx \right) & \text{for}\: 1{e}{+100} \\ dy & \text{for}\: 1{e}{-100} \end{cases} \right| & \text{otherwise} \end{cases}""")
 	# a = p.parse (r"""Eq(Union(dy2 - 2.0651337529406422e-09*notinxyzd, Union(Complement(diff(z20notin)*diff(s)*partialxb, diff(diff(diff(-1.0)))), Complement(diff(diff(diff(-1.0))), diff(z20notin)*diff(s)*partialxb))), Or(Union(Complement(Union(Complement(Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))), partial.chCa.dcGNDli().XG()), Complement(partial.chCa.dcGNDli().XG(), Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))))), diff(diff(dx))**1*e - 100), Complement(diff(diff(dx))**1*e - 100, Union(Complement(Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))), partial.chCa.dcGNDli().XG()), Complement(partial.chCa.dcGNDli().XG(), Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))))))), 0.1 - bcorx0orc)); slice(None); abs(Matrix([Integers])); Matrix([[[Eq(c, 2)]], [[{Lambda: oo}]], [[lambdax, slice(y, 2)]]])""")
-	# a = p.parse (r"\int oo + 1 dx")
-	# a = p.parse (r"\int oo + 1 dx b")
-	a = p.parse (r"\int x dx b")
-	# a = p.parse (r"\int d/dx x**2 dx")
-	print (a)
-
-
 	# for v, k in sorted (((v, k) for k, v in p.reds.items ()), reverse = True):
 	# 	print (f'{v} - {k}')
-
 	# print (f'total: {sum (p.reds.values ())}')
+
+	# a = p.parse (r"\int oo + 1 dx")
+	# a = p.parse (r"\int oo + 1 dx b")
+	# a = p.parse (r"\int d/dx x**2 dx")
+	# a = p.parse (r"\int x dx b")
+	# a = p.parse (r"\int 1 / dx dy")
+	# a = p.parse (r"\int dx / dx + 2")
+	# a = p.parse (r"\int dy / dx + 2 dz")
+	a = p.parse (r"\int a/dx * partial**2 / partialz**2 (partialx) dx")
+	print (a)
 
 
 	# a = sym.ast2spt (a)

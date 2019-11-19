@@ -108,7 +108,7 @@ class AST (tuple):
 
 		return val
 
-	def set (self, **kw):
+	def kw (self, **kw):
 		self.__dict__.update (kw)
 
 		return self
@@ -338,6 +338,89 @@ class AST (tuple):
 				break
 
 		return None, None # var, wrap
+
+	# def _has_tail_differential (self):
+	# 	return self.tail_differential [1]
+
+	# def _tail_differential_with_pre (self):
+	# 	return self._tail_differential (must_have_pre = True)
+
+	# def _tail_differential (self, must_have_pre = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
+	# 	lself = lambda a: a
+
+	# 	if self.is_differential or self.is_var_null: # AST.VarNull is for autocomplete
+	# 		return None, self, lself, lself
+
+	# 	elif self.is_minus:
+	# 		pre, dv, wrap, wrapp = self.minus.tail_differential
+
+	# 		if dv:
+	# 			return pre, dv.kw (dv_has_neg = dv.dv_has_neg or not pre), wrap, lambda a: AST ('-', wrapp (a))
+
+	# 	elif self.is_fact:
+	# 		pre, dv, wrap, wrapp = self.fact.tail_differential
+
+	# 		if dv:
+	# 			return pre, dv, lambda a: AST ('!', wrap (a)), wrapp
+
+	# 	elif self.is_add:
+	# 		pre, dv, wrap, wrapp = self.add [-1].tail_differential
+
+	# 		if dv and pre:
+	# 			return AST ('+', (*self.add [:-1], wrapp (pre))), dv, wrap, lself
+
+	# 	elif self.op in {'*', '*exp'}:
+	# 		for i, ast in enumerate (self.mul):
+	# 			pre, dv, wrap, wrapp = ast.tail_differential
+
+	# 			if dv:
+	# 				if must_have_pre and not i:
+	# 					must_have_pre = False
+
+	# 					continue
+
+	# 				if not i:
+	# 					return pre, dv, lambda a: AST (self.op, (wrap (a), *self.mul [1:])), wrapp
+
+	# 				if pre:
+	# 					pre = AST (self.op, (*self.mul [:i], pre))
+	# 				elif i > 1:
+	# 					pre = AST (self.op, self.mul [:i])
+	# 				else:
+	# 					pre = self.mul [0]
+
+	# 				if i < self.mul.len - 1:
+	# 					return pre, dv, lambda a: AST (self.op, (wrap (a), *self.mul [i + 1:])), wrapp
+
+	# 				else:
+	# 					return pre, dv, wrap, wrapp
+
+	# 	elif self.is_div:
+	# 		pre, dv, wrap, wrapp = self.numer.tail_differential
+
+	# 		if dv:
+	# 			return pre, dv, lambda a: AST ('/', wrap (a), self.denom), wrapp
+
+	# 		pre, dv, wrap, wrapp = self.denom.tail_differential_with_pre
+
+	# 		if dv: # and pre:
+	# 			return AST ('/', self.numer, wrapp (pre)), dv, wrap, lself
+
+	# 	# elif self.is_diff:
+	# 	# 	if self.src:
+	# 	# 		pre, dv, wrap, wrapp = self.src.tail_differential
+
+	# 	# 		if dv:
+	# 	# 			pass
+
+
+
+
+
+
+
+	# 	return None, None, None, None
+
 
 	def _as_identifier (self):
 		def _as_identifier (ast, recursed = False):
