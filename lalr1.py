@@ -28,11 +28,11 @@ class State:
 		return f'({self.idx}, {self.sym}, {self.pos}{"" if self.red is None else f", {self.red}"})'
 
 class Conflict (tuple):
-	def __new__ (cls, conf, pos, tokidx, stidx, tokens, stack, estate, keep = False):
+	def __new__ (cls, conf, pos, tokidx, stidx, tokens, stack, estate):#, keep = False):
 		self      = tuple.__new__ (cls, (conf, pos, tokidx, stidx, tokens, stack, estate))
 		self.conf = conf
 		self.pos  = pos
-		self.keep = keep # do not remove when popping conflicts
+		# self.keep = keep # do not remove when popping conflicts
 
 		return self
 
@@ -47,11 +47,11 @@ class Incomplete (Exception): # parse is head of good statement but incomplete
 	def __init__ (self, red):
 		self.red = red
 
-class KeepConf:
-	__slots__ = ['red']
+# class KeepConf:
+# 	__slots__ = ['red']
 
-	def __init__ (self, red):
-		self.red = red
+# 	def __init__ (self, red):
+# 		self.red = red
 
 class PopConfs:
 	__slots__ = ['red']
@@ -271,9 +271,9 @@ class LALR1:
 				try:
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
-					if isinstance (red, KeepConf): # mark this conflict to not be removed by PopConf
-						red             = red.red
-						confs [-1].keep = True
+					# if isinstance (red, KeepConf): # mark this conflict to not be removed by PopConf
+					# 	red             = red.red
+					# 	confs [-1].keep = True
 
 					if isinstance (red, Reduce): # successful rule but request to follow conflicted reduction first putting results of rule on conf stack to be picked up later
 						stidx     = nterms [stack [rnlen - 1].idx] [prod]
@@ -299,8 +299,9 @@ class LALR1:
 							if confs [i].pos <= start:
 								break
 
-							if not confs [i].keep: # dont remove conflicts which are marked for keeping
-								del confs [i]
+							# if not confs [i].keep: # dont remove conflicts which are marked for keeping
+							# 	del confs [i]
+							del confs [i]
 
 						if red is Reduce: # if reduction only requested then don't store rule result and fall back to previous conflicted reduction
 							rederr = red
