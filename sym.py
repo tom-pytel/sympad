@@ -447,9 +447,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_log (self, ast):
 		if ast.base is None:
-			return f'\\ln\\left({self._ast2tex (ast.log)} \\right)'
+			return f'\\ln{{\\left({self._ast2tex (ast.log)} \\right)}}'
 		else:
-			return f'\\log_{self._ast2tex_curly (ast.base)}\\left({self._ast2tex (ast.log)} \\right)'
+			return f'\\log_{self._ast2tex_curly (ast.base)}{{\\left({self._ast2tex (ast.log)} \\right)}}'
 
 	_rec_tailnum = re.compile (r'^(.+)(?<!\d)(\d*)$')
 
@@ -1865,7 +1865,7 @@ if __name__ == '__main__': # DEBUG!
 	set_sym_user_funcs (set (vars))
 	set_sym_user_vars (vars)
 
-	ast = AST ('-subs', ('-diffp', ('@', 'f'), 1), ((('@', 'x'), ('#', '0')),))
+	ast = AST ('-sqrt', ('(', ('@', 'x')))
 	res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)

@@ -1,3 +1,5 @@
+> |\int a + b dx|
+
 > paren/curly dynamics
 > make dfunction (x) = x**2 work
 
@@ -25,15 +27,17 @@
 > \operatorname ufuncs from sympy latex
 
 > subs autocomplete
-> subs clarity parentheses for tex display like d/dx (f), attr, etc...?
 
 > scan grammar and add PopConfs where appropriate
 > analyze which reductions are stored as conflicts most
 
 
+> subs clarity parentheses for tex display like d/dx (f), attr, etc...?
 > (a or b) or (a and b) - result parenthesizing for clarity
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 > @ and % without parentheses consistency?
+> \sum and \lim parens for clarity
+
 > "__" subscript shortcut with rules like "**"?
 
 
@@ -176,7 +180,7 @@ Slow Parse from grammar:
 ------------------------
 
 61.921875s:  Union(Complement(Union(Complement(Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100), diff(diff(FiniteSet(2, partialy)))), Complement(diff(diff(FiniteSet(2, partialy))), Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100))), -xyzd*FiniteSet()), Complement(-xyzd*FiniteSet(), Union(Complement(Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100), diff(diff(FiniteSet(2, partialy)))), Complement(diff(diff(FiniteSet(2, partialy))), Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100)))))
-
+4.5625s:     Union(Complement(Union(Complement(((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))), (FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20)), Complement((FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20), ((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))))), 0.006826903881753888), Complement(0.006826903881753888, Union(Complement(((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))), (FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20)), Complement((FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20), ((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))))))); Derivative(dy, y); Function('u', commutative = True, real = True); psi, y1
 
 Errors:
 -------
@@ -204,3 +208,17 @@ nat2: {0.1: \{}} and1 * 0.0, None, 1e-100 andbor - 1 or \{}.VWNd().bu.Pql**d / {
 text: (((chi,w_{1})))4.7277970511842446e-11\partialxpartial^{3}/partialx^{3}tau**\{Function('g',)(x,y)}/\lim_{x\to\left|\int_b^1e-100-4.113159833939573e-12dY\right|}\{xyzda,not\xi}
 ast:  ('/', ('/', ('*', (('(', ('(', ('(', (',', (('@', 'chi'), ('@', 'w1')))))), ('#', '4.7277970511842446e-11'), ('^', ('@', 'partialxpartial'), ('#', '3')))), ('*', (('^', ('@', 'partialx'), ('#', '3')), ('^', ('@', 'tau'), ('-set', (('-ufunc', 'g', (('@', 'x'), ('@', 'y'))),)))))), ('-lim', ('-set', (('@', 'xyzda'), ('-not', ('@', 'xi')))), ('@', 'x'), ('|', ('-intg', ('+', (('@', 'e'), ('-', ('#', '100')), ('-', ('#', '4.113159833939573e-12')))), ('@', 'dY'), ('@', 'b'), ('#', '1')))))
 nat1: {{(((chi, w1))) * 4.7277970511842446e-11partialxpartial**3} / partialx**3 tau**{g(x, y),}} / {\lim_{x \to {|\int_b^1 e - 100 - 4.113159833939573e-12 dY|}} {xyzda, not xi}}
+
+
+text: {\[partial^{2}/partialz^{2}1e100,partial^{3}/partialx^{1}partialx^{2}dx,-11476062246.74744&&\partialy&&dz,]:{arg((("s",-1.0,\partial))):\tilde\infty&&partial,lambdax,y:True:\sum_{x='s'}^\partialy\pi},\int"s"*dx*-1dJcZxT:partialxor43.3816205076625or-1^^-.1in-3.6469670803849415e-07notinain-1.7721194356522582e-15^^\lim_{x\to1}w_{1}}={}
+ast:  ('=', ('-dict', ((('-mat', ((('-diff', ('#', '1e+100'), 'partial', (('z', 2),)),), (('-diff', ('@', 'dx'), 'partial', (('x', 1), ('x', 2))),), (('&&', (('#', '-11476062246.74744'), ('@', 'partialy'), ('@', 'dz'))),))), ('-set', (('-slice', ('-func', 'arg', (('(', ('(', (',', (('"', 's'), ('#', '-1.0'), ('@', 'partial'))))),)), ('&&', (('@', 'zoo'), ('@', 'partial'))), None), ('@', 'lambdax'), ('-slice', ('@', 'y'), ('@', 'True'), ('-sum', ('*', (('@', 'y'), ('@', 'pi'))), ('@', 'x'), ('"', 's'), ('@', 'partial')))))), (('-intg', ('*', (('"', 's'), ('@', 'dx'), ('#', '-1')), {1, 2}), ('@', 'dJcZxT')), ('-or', (('*', (('@', 'partialxor43'), ('#', '0.3816205076625'))), ('<>', ('^^', (('#', '-1'), ('#', '-0.1'))), (('in', ('^^', (('+', (('*', (('#', '-3.6469670803849415e-07'), ('@', 'notinain'))), ('-', ('#', '1.7721194356522582e-15')))), ('-lim', ('@', 'w1'), ('@', 'x'), ('#', '1'))))),))))))), ('-dict', ()))
+ast:  ('=', ('-dict', ((('-mat', ((('-diff', ('(', ('#', '1e+100')), 'partial', (('z', 2),)),), (('-diff', ('(', ('@', 'dx')), 'partial', (('x', 1), ('x', 2))),), (('&&', (('#', '-11476062246.74744'), ('@', 'partialy'), ('@', 'dz'))),))), ('-set', (('(', ('-slice', ('-func', 'arg', (('(', ('(', (',', (('"', 's'), ('#', '-1.0'), ('@', 'partial'))))),)), ('&&', (('@', 'zoo'), ('@', 'partial'))), None)), ('@', 'lambdax'), ('(', ('-slice', ('@', 'y'), ('@', 'True'), ('-sum', ('*', (('@', 'y'), ('@', 'pi'))), ('@', 'x'), ('"', 's'), ('@', 'partial'))))))), (('*', (('-intg', ('"', 's'), ('@', 'dx')), ('#', '-1'), ('@', 'dJcZxT')), {1}), ('-or', (('*', (('@', 'partialxor43'), ('#', '0.3816205076625')), {1}), ('<>', ('^^', (('#', '-1'), ('#', '-0.1'))), (('in', ('^^', (('+', (('*', (('#', '-3.6469670803849415e-07'), ('@', 'notinain'))), ('-', ('#', '1.7721194356522582e-15')))), ('-lim', ('@', 'w1'), ('@', 'x'), ('#', '1'))))),))))))), ('-dict', ()))
+tex1: \left\{\begin{bmatrix} \frac{\partial^2}{\partial z^2}\left(1{e}{+100} \right) \\ \frac{\partial^3}{\partial x \partial x^2}\left(dx \right) \\ -11476062246.74744 \cap \partial y \cap dz \end{bmatrix}{:} \left\{\left(\arg{\left(\left(\left(\text{'s'}, -1.0, \partial \right) \right) \right)}{:}\widetilde\infty \cap \partial \right), lambdax, \left(y{:}True{:}\sum_{x = \text{'s'}}^\partial y \pi \right) \right\}, \int \text{'s'}\ dx \cdot {-1} \ dJcZxT{:} \partial xor_{43} \cdot 0.3816205076625 \vee -1 \ominus -0.1 \in -3.6469670803849415{e}{-07}\ notinain - 1.7721194356522582{e}{-15} \ominus \lim_{x \to 1} w_{1} \right\} = \left\{ \right\}
+tex2: \left\{\begin{bmatrix} \frac{\partial^2}{\partial z^2}\left(1{e}{+100} \right) \\ \frac{\partial^3}{\partial x \partial x^2}\left(dx \right) \\ -11476062246.74744 \cap \partial y \cap dz \end{bmatrix}{:} \left\{\left(\arg{\left(\left(\left(\text{'s'}, -1.0, \partial \right) \right) \right)}{:}\widetilde\infty \cap \partial \right), lambdax, \left(y{:}True{:}\sum_{x = \text{'s'}}^\partial y \pi \right) \right\}, {\int \text{'s'} \ dx} \cdot {-1}\ dJcZxT{:} \partial xor_{43} \cdot 0.3816205076625 \vee -1 \ominus -0.1 \in -3.6469670803849415{e}{-07}\ notinain - 1.7721194356522582{e}{-15} \ominus \lim_{x \to 1} w_{1} \right\} = \left\{ \right\}
+
+
+text: \sqrt[:](((-1,Delta))).YF_X().plAX_LX().gpI'
+ast:  ('-diffp', ('.', ('.', ('.', ('-sqrt', ('(', ('(', (',', (('#', '-1'), ('@', 'Delta'))))), ('-slice', False, False, None)), 'YF_X', ()), 'plAX_LX', ()), 'gpI'), 1)
+ast:  ('-diffp', ('.', ('.', ('.', ('-sqrt', ('(', (',', (('#', '-1'), ('@', 'Delta')))), ('-slice', False, False, None)), 'YF_X', ()), 'plAX_LX', ()), 'gpI'), 1)
+nat1: \sqrt[:]{((-1, Delta))}.YF_X().plAX_LX().gpI'
+nat2: \sqrt[:]{(-1, Delta)}.YF_X().plAX_LX().gpI'
