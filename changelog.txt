@@ -4,7 +4,9 @@ v1.0.20:
 * Added symbols with assumptions.
 * Added ability to 'call' derivatives of lambda functions.
 * Added parsing of 'not' as possible unary prefix to unparenthesized function arguments.
+* Added differentiation of parenthesis grouping vs. call via curly enclosed parentheses.
 * Added parsing of LaTeX subscripts in \operatorname.
+* Improved some autocompletions.
 * Finally documented lots of changes.
 * Made supported builtin functions accessible directly by name without need of $ escape character.
 

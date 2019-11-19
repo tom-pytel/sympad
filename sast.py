@@ -108,6 +108,11 @@ class AST (tuple):
 
 		return val
 
+	def setkw (self, **kw):
+		self.__dict__.update (kw)
+
+		return self # convenience
+
 	def _is_single_unit (self): # is single positive digit, fraction or single non-differential non-subscripted variable?
 		if self.op == '/':
 			return True
@@ -193,7 +198,9 @@ class AST (tuple):
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 	_strip_fdpi     = lambda self, count = None: self._strip (count, ('!', '-diffp', '-idx'))
 	_strip_pow      = lambda self, count = None: self._strip (count, ('^',))
-	# _strip_afpdpi   = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
+	# _strip_afpdpi          = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
+
+	_strip_curly_of_paren_tex = lambda self: self.strip_curly if self.strip_curly.is_paren_tex else self
 
 	def _strip_minus (self, count = None, retneg = False, negnum = True):
 		count       = -1 if count is None else count
