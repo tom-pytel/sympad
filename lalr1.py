@@ -62,9 +62,9 @@ class PopConfs:
 class Reduce: # returned instantiated will try conflicted reduction before rule, returned as uninstantiated class will discard results of rule and just continue with last conflict
 	__slots__ = ['then', 'keep']
 
-	def __init__ (self, then, keep = False):
+	def __init__ (self, then):#, keep = False):
 		self.then = then
-		self.keep = keep
+		# self.keep = keep
 
 Reduce.red = Reduce
 
@@ -196,8 +196,8 @@ class LALR1:
 		act    = True
 		pos    = 0
 
-		# if not hasattr (self, 'reds'): # DEBUG
-		# 	self.reds = {} # DEBUG
+		if not hasattr (self, 'reds'): # DEBUG
+			self.reds = {} # DEBUG
 
 		while 1:
 			if not rederr and act is not None:
@@ -252,9 +252,9 @@ class LALR1:
 			if conf is not None:
 				confs.append (Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], self.parse_getextrastate ()))#, keep = act < 0 and tok in self._PARSER_CONFLICT_REDUCE))
 
-				# if conf < 0: # DEBUG
-				# 	k             = (act, rules [-conf])
-				# 	self.reds [k] = self.reds.get (k, 0) + 1
+				if conf < 0: # DEBUG
+					k             = (act, rules [-conf])
+					self.reds [k] = self.reds.get (k, 0) + 1
 
 			if act > 0:
 				tokidx += 1
@@ -284,9 +284,9 @@ class LALR1:
 						rederr    = Reduce
 
 						if conf is not None:
-							confs.insert (-1, Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], estate, keep = red.keep))
+							confs.insert (-1, Conflict (conf, tok.pos, tokidx, stidx, tokens [:], stack [:], estate))#, keep = red.keep))
 
-						confs.insert (-1, Conflict (act, tok.pos, tokidx, stidx, tokens [:], stack [:], estate, keep = red.keep))
+						confs.insert (-1, Conflict (act, tok.pos, tokidx, stidx, tokens [:], stack [:], estate))#, keep = red.keep))
 
 						continue
 

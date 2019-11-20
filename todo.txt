@@ -1,10 +1,12 @@
-> FINISH _tail_differential for .is_func
-
-> remove keep from lalr1
-> lambda - dx (x) in varfunc, when calling reduce make the generated shift a 'keep'
-
 > integration autocomplete commented out, fix it
 > make dfunction (x) = x**2 work
+> lambda - dx (x) in varfunc, when calling reduce make the generated shift a 'keep'
+> d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
+
+> allow N**2 y?
+> N -N x -> N (-N (x))
+
+> diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
 > ast2tex/nat intg to wrap exprs with potential differentials?
 > ast2tex/nat \int dx * dx dx
@@ -17,20 +19,23 @@
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 
 
+> \operatorname ufuncs from sympy latex
+> ufuncs absorb identical variables f(x)(x) -> f(x)
+> option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 > ufuncs do not stay explicit in vars tab, make explicit when copying?
+
+> remove keep from lalr1
+
 > test_sym cases - call derivative of lambda
 
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
 > keep track of what undefined functions are created during processing?
 
-> option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 > overhaul server env option command line setting
 
 > overhaul = and == to try to minimize where == is needed for display
 
-> f{(x)}'{(0)}?
-> \operatorname ufuncs from sympy latex
 
 > subs autocomplete
 
@@ -43,6 +48,8 @@
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 > @ and % without parentheses consistency?
 > \sum and \lim parens for clarity
+> clean up safety parens from grammar tail element overhaul
+> clean up sym lambda keyword safety wrapping
 
 > "__" subscript shortcut with rules like "**"?
 
@@ -65,10 +72,7 @@
 > test_sym - test parsing sympy latex
 
 > allow funcs as vars for like symbols (..., cls = Functions)?
-> N -N x
 
-> d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
-> diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
 
 > Boolean .could_extract_minus_sign() for calculations
 
@@ -80,15 +84,11 @@
 > test_sym check for VarNulls and reject expression if detected
 > add slice() to test_sym
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)? - remove or reject null vars after
-
+> CENSORED variables problem with matches
 
 
 > again redo spt2ast_Add?
 > _spt2ast_Mul - option to not absorb fraction into non-fraction
-
-> allow N**2 y?
-> clean up sym lambda keyword safety wrapping
-> clean up safety parens from grammar tail element overhaul
 
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
 
@@ -104,8 +104,6 @@
 
 > \log loggamma=2 py representation? also sqrt? (use = instead of Eq due to function names as variables)
 > proper sqrt and log AST initialization via __new__, slice, maybe others
-> sin**[a][b].c v - allow more complex inline powers to functions?
-> N - N 1 -> N (-N (1))?
 
 > f (x) = x**2; f (x)
 
@@ -119,6 +117,7 @@
 > make test_sym friendlier to quick mode
 > verify all is_var -> is_var_nonconst where consts not allowed
 > worry about invalid varnames (reserved function names) or leave as convenience?
+> SymPy function aliases as vars? "D = Derivative"?
 
 > make semicolon separated plots work
 

@@ -47,7 +47,7 @@ Sympad will accept Python expressions, LaTeX formatting, Unicode math symbols an
 The input will be evaluated symbolically or numerically with the results being copy/pasteable in Python or LaTeX formats, so it acts as a translator as well.
 </p><p>
 You don't need to know SymPy to use SymPad, you can just check out the examples here to see how to do something, but if you are familiar with it then it will definitely help since in theory most SymPy functionality is supported but not necessarily documented here.
-For more information on SymPy functions which are accessible through SymPad see the <a href="https://docs.sympy.org/latest/index.html">SymPy Documentation</a>.
+For more information on SymPy functions which are accessible through SymPad see the <a href="https://docs.sympy.org/latest/index.html" target="_blank">SymPy Documentation</a>.
 If you want to jump in and see what SymPad can do then just go directly to <a href="#Quick Start">Quick Start</a>.
 </p>
 
@@ -137,7 +137,7 @@ d**3 / dx dy^2 x^3 y^3<i>&emsp; standard derivative shorthand</i><br>
 Integral (e^{-x^2}, (x, 0, \infty))<i>&emsp; SymPy integral object or function</i><br>
 \int^\pi \int^{2pi} \int^1 rho**2 sin\phi drho dtheta dphi<i>&emsp; or standard notation</i><br>
 \[[1, 2], [3, 4]]**-1<i>&emsp; quick matrix shorthand</i><br>
-Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<i>&emsp; created from a lambda that populates each element based on row and column</i><br>
+Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<i>&emsp; matrix created from a lambda that populates each element based on row and column</i><br>
 f (x, y) = sqrt (x**2 + y**2)<i>&emsp; assign functions intuitively</i><br>
 f (3, 4)<i>&emsp; and then call them</i><br>
 solve (x**2 + y = 4, x)<i>&emsp; solve equations</i><br>
@@ -526,8 +526,8 @@ This simplification can be turned off and on via "<b>env(nomatsimp)</b>" and "<b
 <h4 id="More...">More...</h4>
 
 <p>
-The operations listed above are just the ones SymPad parses and represents in a standard mathematical format but SymPy contains many more functions which carry out many different operations on expressions and equations. I have not explored all of them and can not guarantee that SymPad will work flawlessly in each case as SymPy itself has many internal inconsistencies with how it deals with its own objects. The best way to see if something you need is available and works is to go through the SymPy documentation and try the functions directly in SymPad - <a href="https://docs.sympy.org/latest/index.html">SymPy Documentation</a>. Also you can check the <a href="#More Examples">More Examples</a> section for things that I have tried in SymPad.
-</p
+The operations listed above are just the ones SymPad parses and represents in a standard mathematical format but SymPy contains many more functions which carry out many different operations on expressions and equations. I have not explored all of them and can not guarantee that SymPad will work flawlessly in each case as SymPy itself has many internal inconsistencies with how it deals with its own objects. The best way to see if something you need is available and works is to go through the SymPy documentation and try the functions directly in SymPad - <a href="https://docs.sympy.org/latest/index.html" target="_blank">SymPy Documentation</a>. Also you can check the <a href="#More Examples">More Examples</a> section for things that I have tried in SymPad.
+</p>
 
 <h2 id="Functions">Functions</h2>
 
