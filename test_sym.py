@@ -121,7 +121,7 @@ lambda x: {{a} = {dx}}
 {{oo} if {oo}} = {is_mersenne_prime({'s'})}
 \lim_{x \to 0} {sqrt(dx) + [lambda x, y: -1.0]}
 {{\frac{\int_{a}^{1} {dx} dx}{{{oo} \cdot {d} \cdot {dx}}}}}
-\int d/dx dx
+# \int d/dx dx
 (((-1)**partial)**({a_prime, oo, 's'}))**-{-{0}}
 Limit ({{{0}^{'s'}}  {\left|{a}\right|}  {({a},{a})}}, x, lambda x: {{1}!})
 \left(\left(\text{'s'} \right)! \le \left(\left(x, y \right) \mapsto -1.0 \right) \right) == \int_{\left[-1.0, \partial, -1 \right]}^{\log_{-1.0}\left(-1 \right)} \begin{cases} 1 & \text{for}\: \infty \\ 1.0 & \text{for}\: 1.0 \end{cases} \ dx
@@ -141,7 +141,7 @@ doo
 Sum(a*Integral(x, x), (x, 0, 1)) + 1*dx
 (dx**p*artial)*Limit(sqrt(-1), x, 0**d)[(Matrix([[partialx]])), lcm_list()]
 ln((a)**b)
-# a * \int dx + {\int dx dx}
+a * \int dx + {\int dx dx}
 1 if {a = x if z} else 0 if y
 a, lambda: b = 1
 a * [2]
@@ -324,7 +324,7 @@ Limit(x:1, a, b)
 {-\partialx} / \partialy
 Sum (x, (x, a, a : b))
 -{Derivative (x, x) {a in b}}
-# \int dx dx / dx
+\int dx dx / dx
 b = dx [?h(x, y)]^lambda x, y, z: True!
 dy / dx / 2
 Sum ({2 \cdot {1 x} \cdot {\int_y^x {dy} dx}}, (x, 0, 1)) * 1
@@ -381,7 +381,7 @@ a * \log_2 b
 {a and \lambda: x}
 {not \lambda: x}
 N lambda: x
-\int 2**gamma dx
+\int {2**gamma} dx
 \ln\partialx[.1,z20,\Omega]/"s"!||z20>=oo>2.924745719942591e-14||2.B1Cxzr().sUCb()/{None:lambdax,y,z:(10900247533345.432:dy:),\tilde\infty:False+x0&&\int"s"dx,1:\{}/\partial**b}
 sqrt\[Lambda[dx,0,b][:\lambda:1e-100,\alpha1,\{}],]
 None:1:,c:a
@@ -411,7 +411,7 @@ x**?g(x)**x
 a**?f(x)^a'
 a**?f(x)^b^c
 a**?f(x)'
-# a / c \int dx * d/dx a
+a / c \int dx * d/dx a
 d/dx a \lambda:
 f(d/dx 1,x)
 f(ln(2))
@@ -447,6 +447,10 @@ inverse_mell in_transform(())
 1 e100a**2
 ?(),w_{1}=\psi*\sum_{x=1e+100}^partia lxNone/$ZDv()*oo\cdot"s"\cdot.1orTrue,c,dy\cdot{{{1e-100notin1.0,\sum_{x=1}^5530110.904839005c}}}
 \. \int x dx |_{x=1}
+a**{d/dx(f(x))(0)}
+\int {\lim_{x \to 1} x} dy
+\int {\sum_{x = 1}^2 x} dy
+{d/dx (u(x))(0)}.a
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

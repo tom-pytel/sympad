@@ -197,27 +197,26 @@ class AST (tuple):
 	_strip_curly    = lambda self, count = None: self._strip (count, {'{'})
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 	_strip_paren1   = lambda self: self._strip (1, {'('})
+	_strip_minus    = lambda self: self._strip (None, {'-'})
 	_strip_fdpi     = lambda self, count = None: self._strip (count, {'!', '-diffp', '-idx'})
 	_strip_pow      = lambda self, count = None: self._strip (count, {'^'})
 	_strip_afpdpi   = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
 
 	# _strip_curly_of_paren_tex = lambda self: self.strip_curly if self.strip_curly.is_paren_tex else self
 
-	def _strip_minus (self, count = None, retneg = False, negnum = True):
-		count       = -1 if count is None else count
+	def _strip_minus_retneg (self):
 		neg         = lambda ast: ast
 		neg.has_neg = False
 		neg.is_neg  = False
 
-		while self.is_minus and count:
+		while self.is_minus:
 			self         = self.minus
-			count       -= 1
 			is_neg       = neg.is_neg
-			neg          = (lambda ast, neg = neg: neg (ast.neg (stack = True))) if negnum else (lambda ast, neg = neg: AST ('-', ast))
+			neg          = lambda ast, neg = neg: neg (ast.neg (stack = True))
 			neg.has_neg  = True
 			neg.is_neg   = not is_neg
 
-		return (self, neg) if retneg else self
+		return self, neg
 
 	def _strip_mmls (self): # mmls = minus, mul, lim, sum
 		while self.op in {'-', '*', '-lim', '-sum'}:
@@ -898,29 +897,29 @@ class AST_Sqrt (AST):
 class AST_Func (AST):
 	op, is_func = '-func', True
 
-	_SYMPY_OBJECTS  = dict ((name, obj) for name, obj in filter (lambda no: no [0] [0] != '_', sp.__dict__.items ()))
-	_SYMPY_FUNCS    = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and callable (no [1]), _SYMPY_OBJECTS.items ()))
+	_SYMPY_OBJECTS    = dict ((name, obj) for name, obj in filter (lambda no: no [0] [0] != '_', sp.__dict__.items ()))
+	_SYMPY_FUNCS      = set (no [0] for no in filter (lambda no: len (no [0]) > 1 and callable (no [1]), _SYMPY_OBJECTS.items ()))
 
-	NOREMAP         = '@'
-	NOEVAL          = '%'
+	NOREMAP           = '@'
+	NOEVAL            = '%'
 
-	ADMIN           = {'vars', 'del', 'delall', 'env', 'envreset'}
-	PLOT            = {'plotf', 'plotv', 'plotw'}
-	PSEUDO          = {NOREMAP, NOEVAL}
-	TEXNATIVE       = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
-	TRIGH           = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
-	BUILTINS        = {'abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
-                     'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
-                     'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'range',
-                     'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip'}
+	ADMIN             = {'vars', 'del', 'delall', 'env', 'envreset'}
+	PLOT              = {'plotf', 'plotv', 'plotw'}
+	PSEUDO            = {NOREMAP, NOEVAL}
+	TEXNATIVE         = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
+	TRIGH             = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
+	BUILTINS          = {'abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
+                       'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
+                       'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'range',
+                       'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip'}
 
-	PY_TRIGHINV     = {f'a{f}' for f in TRIGH}
-	TEX_TRIGHINV    = {f'arc{f}' for f in TRIGH}
-	TEX2PY_TRIGHINV = {f'arc{f}': f'a{f}' for f in TRIGH}
+	PY_TRIGHINV       = {f'a{f}' for f in TRIGH}
+	TEX_TRIGHINV      = {f'arc{f}' for f in TRIGH}
+	TEX2PY_TRIGHINV   = {f'arc{f}': f'a{f}' for f in TRIGH}
 
-	PYALL           = ADMIN | PLOT | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS
-	PY              = PYALL - {'sqrt', 'log', 'ln', 'beta', 'gamma', 'zeta', 'Lambda'}
-	TEX             = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
+	PYALL             = ADMIN | PLOT | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS
+	PY                = PYALL - {'sqrt', 'log', 'ln', 'beta', 'gamma', 'zeta', 'Lambda'}
+	TEX               = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
 
 	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
 	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')

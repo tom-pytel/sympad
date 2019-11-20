@@ -141,7 +141,7 @@ def _ast_tail_differential (self, must_have_pre = False): # find first instance 
 
 	elif self.is_func:
 		if self.src:
-			if self.src.mul [0].is_differential:
+			if self.src.mul [0].is_differential and self.func in _SP_USER_FUNCS:
 				return None, self.src.mul [0], lambda a: AST ('*', (a, self.src.mul [1])), lself
 
 			pre, dv, wrap, wrapp = self.src.mul [1].tail_differential
@@ -170,6 +170,20 @@ def _ast_tail_differential (self, must_have_pre = False): # find first instance 
 AST._tail_differential          = _ast_tail_differential # adding to AST class so it can be cached and accessed as member
 AST._tail_differential_with_pre = lambda self: self._tail_differential (must_have_pre = True)
 AST._has_tail_differential      = lambda self: self.tail_differential [1]
+
+# def _ast_strip_tail_differential (ast):
+# 	if ast.is_intg:
+# 		if ast.intg is not None:
+# 			ast2, neg = ast.intg._strip_minus (retneg = True)
+# 			ast2, dv  = _ast_strip_tail_differential (ast2)
+
+# 			if dv:
+# 				if ast2:
+# 					return (AST ('-intg', neg (ast2), dv, *ast [3:]), ast.dv)
+# 				elif neg.has_neg:
+# 					return (AST ('-intg', neg (AST.One), dv, *ast [3:]), ast.dv)
+# 				else:
+# 					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
 #...............................................................................................
 def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
@@ -431,28 +445,6 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			return mul if end == 0 else AST.flatcat ('*', ast.mul [0], mul) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), mul)
 
 	return ast
-
-# def _expr_mul_imp (self, lhs, rhs):
-# 	ast = AST.flatcat ('*', lhs, rhs)
-
-# 	if self.stack_has_sym ('INTG') and rhs.is_differential: # or lhs.mul_has_differential:
-# 		return ast # KeepConf (ast)
-
-# 	return PopConfs (ast)
-
-# def _ast_strip_tail_differential (ast):
-# 	if ast.is_intg:
-# 		if ast.intg is not None:
-# 			ast2, neg = ast.intg._strip_minus (retneg = True)
-# 			ast2, dv  = _ast_strip_tail_differential (ast2)
-
-# 			if dv:
-# 				if ast2:
-# 					return (AST ('-intg', neg (ast2), dv, *ast [3:]), ast.dv)
-# 				elif neg.has_neg:
-# 					return (AST ('-intg', neg (AST.One), dv, *ast [3:]), ast.dv)
-# 				else:
-# 					return (AST ('-intg', None, dv, *ast [3:]), ast.dv)
 
 def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	pre, dv, wrap, wrapp = ast.tail_differential
@@ -1021,9 +1013,6 @@ class Parser (LALR1):
 	def expr_xsect_1       (self, expr_xsect, XSECT, expr_add):                        return AST.flatcat ('&&', expr_xsect, expr_add)
 	def expr_xsect_2       (self, expr_add):                                           return expr_add
 
-	# def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return PopConfs (AST.flatcat ('+', expr_add, expr_mul_exp))
-	# def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return PopConfs (AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)))
-	# def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return PopConfs (AST.flatcat ('+', expr_add, AST ('-', expr_mul_exp)))
 	def expr_add_1         (self, expr_add, PLUS, expr_mul_exp):                       return _expr_add (self, expr_add, expr_mul_exp)
 	def expr_add_2         (self, expr_add, MINUS, expr_mul_exp):                      return _expr_add (self, expr_add, AST ('-', expr_mul_exp))
 	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return _expr_add (self, expr_add, AST ('-', expr_mul_exp))
@@ -1036,12 +1025,12 @@ class Parser (LALR1):
 	def expr_neg_1         (self, MINUS, expr_neg):                                    return _expr_neg (expr_neg)
 	def expr_neg_2         (self, expr_div):                                           return expr_div
 
-	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                        return _expr_diff (AST ('/', expr_div, expr_divm)) # d / dx *imp* y
+	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                        return PopConfs (_expr_diff (AST ('/', expr_div, expr_divm))) # d / dx *imp* y
 	def expr_div_2         (self, expr_mul_imp):                                       return _expr_diff (expr_mul_imp) # \frac{d}{dx} *imp* y
-	def expr_divm_1        (self, MINUS, expr_divm):                                   return _expr_neg (expr_divm)
+	def expr_divm_1        (self, MINUS, expr_divm):                                   return PopConfs (_expr_neg (expr_divm))
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
 
-	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg)) # _expr_mul_imp (self, expr_mul_imp, expr_intg) #
+	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg))
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
 	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
@@ -1288,53 +1277,18 @@ class Parser (LALR1):
 	def _parse_autocomplete_expr_intg (self):
 		s               = self.stack [-1]
 		self.stack [-1] = State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
-		vars            = set ()
 
 		if self.autocompleting:
-			reds = [s.red]
-
-			while reds:
-				ast = reds.pop ()
-
-				if ast.is_var:
-					if not (ast.is_differential or ast.is_part_any):
-						vars.add (ast.var)
-				else:
-					reds.extend (filter (lambda a: isinstance (a, tuple), ast))
-
-		vars = vars - {'_'} - {ast.var for ast in AST.CONSTS}
+			vars = set (filter (lambda a: not (a.is_differential or a.is_part_any or a.var == '_'), s.red.free_vars))
+		else:
+			vars = set ()
 
 		if len (vars) == 1:
-			self.autocomplete.append (f' d{vars.pop ()}')
+			self.autocomplete.append (f' d{vars.pop ().var}')
 		else:
 			self._mark_error ()
 
 		return True
-
-		# s    = self.stack [-1]
-		# vars = set ()
-		# reds = [s.red]
-
-		# while reds:
-		# 	ast = reds.pop ()
-
-		# 	if not ast.is_var:
-		# 		reds.extend (filter (lambda a: isinstance (a, tuple), ast))
-		# 	else:
-		# 		if not (ast.is_differential or ast.is_part_any):
-		# 			vars.add (ast.var)
-
-		# vars = vars - {'_'} - {''} - {ast.var for ast in AST.CONSTS}
-
-		# if len (vars) != 1:
-		# 	return self._insert_symbol ('expr_var')
-
-		# var  = vars.pop ()
-		# dvar = f'd{var}'
-
-		# self.autocomplete.append (f' {dvar}')
-
-		# return self._insert_symbol (Token ('VAR', dvar, self.pos, (None, 'd', var, None, None)))
 
 	def parse_getextrastate (self):
 		return (self.autocomplete [:], self.autocompleting, self.erridx, self.has_error)
@@ -1386,9 +1340,6 @@ class Parser (LALR1):
 
 		if pos and rule [1] [pos - 1] == 'expr_commas' and rule [0] not in {'expr_sum', 'expr_abs', 'expr_func', 'expr_subs', 'subsvars'}: # {'expr_abs', 'expr_ufunc', 'varass'}:
 			return self._parse_autocomplete_expr_commas (rule, pos)
-
-		# if rule [0] == 'expr_intg' and pos == len (rule [1]) - 1 and self.autocompleting:
-		# 	return self._parse_autocomplete_expr_intg ()
 
 		if pos >= len (rule [1]): # end of rule
 			if rule [0] == 'expr_sub' and stack [-1 - len (rule [1])].sym == 'INTG':
@@ -1461,13 +1412,13 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
 	# a = p.parse (r"""\begin{cases} \sum_{x = \lim_{x \to \left[ \right]} \left(\sqrt[1{e}{+100}]{False} + 1{e}{+100} + \infty \widetilde\infty \right)}^{\left\{\neg\ \partial x\left[1., \emptyset, \text{'str'} \right] \vee \lambda{:} \partial \vee 0.1 \vee dz \vee \frac{\left(d^2 \right)}{dx^1 dz^1} - \frac{1}{\sqrt[\infty]{\partial}} \right\}} \left(\frac{\frac{x}{y}\ zd}{dz\ c\ dz \cdot 1{e}{+100}}, -\left(\partial x + dz + 1.0 \right), {-2}{:}{-{1 \cdot 2 \cdot 1.0}}{:}\left\{\partial x, 1.0 \right\} \right) & \text{for}\: \left(\lim_{x \to -1.0} 0^o o \wedge \log_\partial\left(ypartialx \right) a! \wedge \sqrt[xyzd]{\infty}\ \widetilde\infty \cap \frac{\partial^3}{\partial x^1\partial z^2}\left(0.1 \right) \cap \frac{\partial^9}{\partial z^3\partial y^3\partial x^3}\left(a \right) \right) + \left(\lim_{x \to \begin{bmatrix} b & True & \text{'str'} \\ dx & 1.0 & 0.1 \end{bmatrix}} -1 \ne dx, \begin{cases} \infty \widetilde\infty \wedge \partial x \wedge None & \text{for}\: dz! \\ \lambda & \text{otherwise} \end{cases}{:}\partial y, \left\{\left\{dy{:} \partial y \right\}, \left(False{:}\partial x{:}\emptyset \right), \lim_{x \to \partial} \partial x \right\} \right) + \frac{\begin{bmatrix} \infty \end{bmatrix}}{\begin{bmatrix} \emptyset \\ \partial y \end{bmatrix}} \le \ln\left(\left\{None, \infty \widetilde\infty, dy \right\} \right) \\ \left(\operatorname{GeometryError}\left( \right) \wedge \ln\left(x \right) - 1.00 \right) \left\{dx{:} 0.1 \right\} \left\{1.0{:} \partial x \right\} \sum_{x = 1{e}{-100}}^p artial\ True \cdot \left\{\text{'str'}{:} \begin{bmatrix} xyzd \\ dy \end{bmatrix} \right\} \vee \left(\left\{\emptyset \right\} \cup \frac{True}{\partial y} \cup \left|\partial x \right| \right) \cap \left(\begin{bmatrix} True \\ \text{'str'} \end{bmatrix} \cup \widetilde\infty \cdot 1.\ True \cup -\partial x \right) \cap \operatorname{Sum}\left(\left(\left( \right) \mapsto 1{e}{+100} \right), \left(x, \infty \widetilde\infty\left[1{e}{-100} \right], c \vee \partial x \vee None \right) \right) \vee \left(\cot^{-1}\left(\emptyset \right), \int dx \ dx \right)! & \text{for}\: \left[\left|\left(-1 \right) \right|, \frac{\partial^4}{\partial x^2\partial z^2}\left(\log_{\emptyset}\left(-1.0 \right) \right) \right]\left[loglambda\ x, y, z{:}\begin{cases} \infty \widetilde\infty & \text{for}\: 1{e}{-100} \\ dy & \text{for}\: dy \end{cases}, \operatorname{Sum}\left(False, \left(x, False, 0 \right) \right) \cap \sqrt[False]{2} \cap \frac{1}{dx\ a!}, \gcd\left(\left(dy \vee \partial x \right)^{1.0^{\partial x}}, \operatorname{Sum}\left(b{:}None, \left(x, -1 + 1.0 + \text{'str'}, xyzd! \right) \right), \left|-1 \right| + 1.0 \cdot 1.0 \right) \right] \\ \left|\begin{cases} \left(dx\left[\partial, \emptyset \right] \wedge \left(False \vee \partial x \right) \right) \left(\neg\ -1^{dy} \right) \frac{d^2}{dx^2}\left(dx \right) & \text{for}\: 1{e}{+100} \\ dy & \text{for}\: 1{e}{-100} \end{cases} \right| & \text{otherwise} \end{cases}""")
 	# a = p.parse (r"""Eq(Union(dy2 - 2.0651337529406422e-09*notinxyzd, Union(Complement(diff(z20notin)*diff(s)*partialxb, diff(diff(diff(-1.0)))), Complement(diff(diff(diff(-1.0))), diff(z20notin)*diff(s)*partialxb))), Or(Union(Complement(Union(Complement(Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))), partial.chCa.dcGNDli().XG()), Complement(partial.chCa.dcGNDli().XG(), Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))))), diff(diff(dx))**1*e - 100), Complement(diff(diff(dx))**1*e - 100, Union(Complement(Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))), partial.chCa.dcGNDli().XG()), Complement(partial.chCa.dcGNDli().XG(), Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))))))), 0.1 - bcorx0orc)); slice(None); abs(Matrix([Integers])); Matrix([[[Eq(c, 2)]], [[{Lambda: oo}]], [[lambdax, slice(y, 2)]]])""")
-
 	# a = p.parse (r"""Union(Complement(Union(Complement(Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100), diff(diff(FiniteSet(2, partialy)))), Complement(diff(diff(FiniteSet(2, partialy))), Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100))), -xyzd*FiniteSet()), Complement(-xyzd*FiniteSet(), Union(Complement(Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100), diff(diff(FiniteSet(2, partialy)))), Complement(diff(diff(FiniteSet(2, partialy))), Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100)))))""")
 	# a = p.parse (r"""Union(Complement(Union(Complement(((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))), (FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20)), Complement((FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20), ((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))))), 0.006826903881753888), Complement(0.006826903881753888, Union(Complement(((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))), (FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20)), Complement((FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20), ((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))))))); Derivative(dy, y); Function('u', commutative = True, real = True); psi, y1""")
+	a = p.parse (r"""\left.-\emptyset**False/"s"'\right|_{\substack{\.lambdax,y,z:0*y1*dz|_{b^munotinlambda:y1notin\fracPix0notin[[False,-1.217383816320693e-12,a]]={{:w_{1}}:((a)),((oo,1e+100)):\sum_{x=False}^\pix0,{\partial:1.5165219116286896e-05}:\{w_{1},\xi,-.1}},\{((Complexes)),$nvQUW(real=True,commutative=True)}={},\frac\{y1,1310759352132.995}\left.\partialx\right|_{-1.0=2}=\partialx!andy1\cdot\partialxandnotw_{1}}={{{8.752331030243382e+16,oo}}}*:\left.1.0\right|_{True=False}>=sqrt_mod_iter(1e100)lnpartialx/Lambda_{63}oraor\xi}}""")
 
-	# for v, k in sorted (((v, k) for k, v in p.reds.items ()), reverse = True):
-	# 	print (f'{v} - {k}')
-	# print (f'total: {sum (p.reds.values ())}')
+	for v, k in sorted (((v, k) for k, v in p.reds.items ()), reverse = True):
+		print (f'{v} - {k}')
+	print (f'total: {sum (p.reds.values ())}')
 
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
@@ -1479,8 +1430,8 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"\int dx / dx + 2")
 	# a = p.parse (r"\int dy / dx + 2 dz")
 	# a = p.parse (r"\int a/dx * partial**2 / partialz**2 (partialx) dx")
-	a = p.parse (r"\int a")
-	print (a)
+	# a = p.parse (r"\int a")
+	# print (a)
 
 
 

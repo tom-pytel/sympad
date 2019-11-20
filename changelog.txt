@@ -1,14 +1,13 @@
 v1.0.20:
 --------
-* LONG OVERDUE! Reworked grammar to remove redundant conflicts and to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)) and \int among other things.
+* Major grammar rework to remove redundant conflicts for speedup and to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)) and \int among other things.
 * Added symbols with assumptions.
 * Added ability to 'call' derivatives of lambda functions.
 * Added parsing of 'not' as possible unary prefix to unparenthesized function arguments.
 * Added differentiation of parenthesis grouping vs. call via curly enclosed parentheses.
 * Added parsing of LaTeX subscripts in \operatorname.
-* Improved some autocompletions.
-* Finally documented lots of changes.
 * Made supported builtin functions accessible directly by name without need of $ escape character.
+* Finally documented lots of changes.
 
 v1.0.19:
 --------
