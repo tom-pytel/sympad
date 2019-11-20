@@ -455,6 +455,13 @@ x / {d / dx (f(x))(0)}
 \int {dy}+{-1} dx
 {{d/dx (f(real = True)(x))(0)}'} [a]
 {\int_{Derivative ({\[{0},{\emptyset},]}, z, 2, z, 2)}^{not {lambda: {-1.0}}} {{{dx} or {1}}**{{2}  not in  {None}}} dx}
+\int {dy**a}**c {dz} dx
+\frac{a\int x dx}b
+a**b[1]**(1/3)**c
+{?(x)'(0)}'
+\int {\frac{1}{a \lim_{x\to2} y}} dx
+\int {dz < 3} dx
+a**{-{d/dx (g(x))(0)}}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

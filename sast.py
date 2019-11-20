@@ -400,6 +400,10 @@ class AST (tuple):
 					if ast.is_var_nonconst and ast.var:
 						vars.add (ast)
 
+				elif ast.is_lamb:
+					_free_vars (ast.lamb, vars)
+					vars.difference_update (('@', v) for v in ast.vars)
+
 				elif ast.is_subs:
 					_free_vars (ast.expr, vars)
 
@@ -1103,7 +1107,8 @@ class AST_Subs (AST):
 	def _init (self, expr, subs):
 		self.expr, self.subs = expr, subs
 
-	_is_subs_diff_ufunc = lambda self: self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc
+	_is_subs_diff_ufunc     = lambda self: self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc
+	_is_subs_diff_any_ufunc = lambda self: self.expr.op in {'-diff', '-diffp'} and self.expr [1].strip_paren1.is_ufunc
 
 class AST_Sym (AST):
 	op, is_sym = '-sym', True

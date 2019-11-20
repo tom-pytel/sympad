@@ -1,20 +1,13 @@
-> lambda bound vars to not appear in free_vars
-> lambda - dx (x) in varfunc, when calling reduce make the generated shift a 'keep'
-
-> better potential derivative test than self.stack_has_sym ('DIVIDE')
-
 > \sum, \lim accept only body of paren if paren follows directly
 
 > allow N**2 y?
 > N -N x -> N (-N (x))
 
-> diff of multivar function displayed as partial (this depends on changing location of sxlat limit, sum, intg, .limit, etc... so that free_vars can work better)
-
-> ast2tex/nat intg to wrap exprs with potential differentials?
-> ast2tex/nat \int dx * dx dx
-
 > x aa**2 missing space
 > "d / 2" is "(d) / 2", fix it
+
+> "d / dx (2)" vs. "d**2 / dx (2)" when dx is a lambda, intricate - would need to analyze parser stack to see if valid diff, but if someone is naming their lambdas "dx" that is their problem
+> better potential derivative test than self.stack_has_sym ('DIVIDE')
 
 > CREATE SYMPY OBJECTS FOR PYTHON OBJECTS IN SYM?!?
 
@@ -26,8 +19,6 @@
 > ufuncs absorb identical variables f(x)(x) -> f(x)
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 > ufuncs do not stay explicit in vars tab, make explicit when copying?
-
-> remove keep from lalr1
 
 > test_sym cases - call derivative of lambda
 
@@ -42,10 +33,7 @@
 
 > subs autocomplete
 
-> scan grammar and add PopConfs where appropriate
-> analyze which reductions are stored as conflicts most
-
-
+> \int doesn't need curlys for star multiply
 > subs clarity parentheses for tex display like d/dx (f), attr, etc...?
 > (a or b) or (a and b) - result parenthesizing for clarity
 > 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
@@ -179,16 +167,8 @@
 > numpy support
 
 
-Slow parse:
------------
-
-This is slow due to abuse of regex!
-13.4375s: \left.-\emptyset**False/"s"'\right|_{\substack{\.lambdax,y,z:0*y1*dz|_{b^munotinlambda:y1notin\fracPix0notin[[False,-1.217383816320693e-12,a]]={{:w_{1}}:((a)),((oo,1e+100)):\sum_{x=False}^\pix0,{\partial:1.5165219116286896e-05}:\{w_{1},\xi,-.1}},\{((Complexes)),$nvQUW(real=True,commutative=True)}={},\frac\{y1,1310759352132.995}\left.\partialx\right|_{-1.0=2}=\partialx!andy1\cdot\partialxandnotw_{1}}={{{8.752331030243382e+16,oo}}}*:\left.1.0\right|_{True=False}>=sqrt_mod_iter(1e100)lnpartialx/Lambda_{63}oraor\xi}}
-
-
-Errors:
--------
-
+Diff stacks:
+------------
 
 print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
 (-105, 1, 1, 62, ['VAR', 'DIVIDE', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('@', 'd'))], ([], True, None, False))
@@ -214,3 +194,71 @@ print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
 (110, expr_pcommas, 17, ('#', '3'))
 ('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
 10
+
+print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
+(-134, 1, 1, 81, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (81, expr_diffp_ics, 0, ('@', 'd'))], ([], True, None, False))
+(-105, 5, 3, 62, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '3')))], ([], True, None, False))
+(-142, 10, 5, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '3'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dz'))], ([], True, None, False))
+(-142, 13, 6, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '3'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dz')), (27, expr_var, 10, ('@', 'dy'))], ([], True, None, False))
+(-153, 20, 10, 23, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '3'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dz')), (27, expr_var, 10, ('@', 'dy')), (23, expr_ufunc, 13, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
+(0, None, 0)
+(62, expr_div, 0, ('^', ('@', 'd'), ('#', '3')))
+(150, DIVIDE, 5)
+(27, expr_var, 7, ('@', 'dz'))
+(27, expr_var, 10, ('@', 'dy'))
+(23, expr_ufunc, 13, ('-ufunc', 'dx', (('@', 'f'),)))
+(110, expr_pcommas, 20, ('#', '3'))
+('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
+13
+
+print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
+(-134, 1, 1, 81, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (81, expr_diffp_ics, 0, ('@', 'd'))], ([], True, None, False))
+(-105, 5, 3, 62, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4')))], ([], True, None, False))
+(-142, 10, 5, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dw'))], ([], True, None, False))
+(-142, 13, 6, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dw')), (27, expr_var, 10, ('@', 'dz'))], ([], True, None, False))
+(-142, 16, 7, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dw')), (27, expr_var, 10, ('@', 'dz')), (27, expr_var, 13, ('@', 'dy'))], ([], True, None, False))
+(-153, 23, 11, 23, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dw')), (27, expr_var, 10, ('@', 'dz')), (27, expr_var, 13, ('@', 'dy')), (23, expr_ufunc, 16, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
+(0, None, 0)
+(62, expr_div, 0, ('^', ('@', 'd'), ('#', '4')))
+(150, DIVIDE, 5)
+(27, expr_var, 7, ('@', 'dw'))
+(27, expr_var, 10, ('@', 'dz'))
+(27, expr_var, 13, ('@', 'dy'))
+(23, expr_ufunc, 16, ('-ufunc', 'dx', (('@', 'f'),)))
+(110, expr_pcommas, 23, ('#', '3'))
+('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
+16
+
+print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
+(-134, 1, 1, 81, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (81, expr_diffp_ics, 0, ('@', 'd'))], ([], True, None, False))
+(-105, 5, 3, 62, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4')))], ([], True, None, False))
+(-59, 16, 8, 234, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (234, expr_mul_imp, 7, ('*', (('@', 'dw'), ('^', ('@', 'dz'), ('#', '2')))))], ([], True, None, False))
+(-142, 19, 9, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (234, expr_mul_imp, 7, ('*', (('@', 'dw'), ('^', ('@', 'dz'), ('#', '2'))))), (27, expr_var, 16, ('@', 'dy'))], ([], True, None, False))
+(-153, 26, 13, 23, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (234, expr_mul_imp, 7, ('*', (('@', 'dw'), ('^', ('@', 'dz'), ('#', '2'))))), (27, expr_var, 16, ('@', 'dy')), (23, expr_ufunc, 19, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
+(0, None, 0)
+(62, expr_div, 0, ('^', ('@', 'd'), ('#', '4')))
+(150, DIVIDE, 5)
+(234, expr_mul_imp, 7, ('*', (('@', 'dw'), ('^', ('@', 'dz'), ('#', '2')))))
+(27, expr_var, 16, ('@', 'dy'))
+(23, expr_ufunc, 19, ('-ufunc', 'dx', (('@', 'f'),)))
+(110, expr_pcommas, 26, ('#', '3'))
+('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
+19
+
+
+Slow parse:
+-----------
+
+This is slow due to abuse of regex!
+13.4375s: \left.-\emptyset**False/"s"'\right|_{\substack{\.lambdax,y,z:0*y1*dz|_{b^munotinlambda:y1notin\fracPix0notin[[False,-1.217383816320693e-12,a]]={{:w_{1}}:((a)),((oo,1e+100)):\sum_{x=False}^\pix0,{\partial:1.5165219116286896e-05}:\{w_{1},\xi,-.1}},\{((Complexes)),$nvQUW(real=True,commutative=True)}={},\frac\{y1,1310759352132.995}\left.\partialx\right|_{-1.0=2}=\partialx!andy1\cdot\partialxandnotw_{1}}={{{8.752331030243382e+16,oo}}}*:\left.1.0\right|_{True=False}>=sqrt_mod_iter(1e100)lnpartialx/Lambda_{63}oraor\xi}}
+
+
+Errors:
+-------
+
+
+text: {Or der(((c,-1174684901948884.2))):1./x0,lnpartial:(dy)}**\left|587969580853639.4&&1.\right|''
+ast:  ('^', ('-dict', ((('*', (('-func', 'Or', (('@', 'der'),)), ('(', ('(', ('(', (',', (('@', 'c'), ('#', '-1174684901948884.2')))))))), ('/', ('#', '1.'), ('@', 'x0'))), (('@', 'lnpartial'), ('(', ('@', 'dy'))))), ('-diffp', ('|', ('&&', (('#', '587969580853639.4'), ('#', '1.')))), 2))
+ast:  ('^', ('-dict', ((('*', (('@', 'der'), ('(', ('(', ('(', (',', (('@', 'c'), ('#', '-1174684901948884.2')))))))), ('/', ('#', '1.'), ('@', 'x0'))), (('@', 'lnpartial'), ('(', ('@', 'dy'))))), ('-diffp', ('|', ('&&', (('#', '587969580853639.4'), ('#', '1.')))), 2))
+nat1: {{der} (((c, -1174684901948884.2))): 1./x0, lnpartial: (dy)}**{|587969580853639.4 && 1.|}''
+nat2: {der * (((c, -1174684901948884.2))): 1./x0, lnpartial: (dy)}**{|587969580853639.4 && 1.|}''
