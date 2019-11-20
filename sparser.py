@@ -165,6 +165,12 @@ def _ast_tail_differential (self, must_have_pre = False): # find first instance 
 				if pre.is_diff:
 					return pre, dv, wrap, lself
 
+	elif self.op in {'-lim', '-sum'}:
+		pre, dv, wrap, wrapp = self [1].tail_differential_with_pre
+
+		if dv and pre:
+			return AST (self.op, wrapp (pre), *self [2:]), dv, wrap, lself
+
 	return None, None, None, None
 
 AST._tail_differential          = _ast_tail_differential # adding to AST class so it can be cached and accessed as member
@@ -445,6 +451,14 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			return mul if end == 0 else AST.flatcat ('*', ast.mul [0], mul) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), mul)
 
 	return ast
+
+# def _expr_mul_imp (lhs, rhs):
+# 	ast = AST.flatcat ('*', lhs, rhs)
+
+# 	if self.stack_has_sym ('INTG') and lhs.has_tail_differential:
+# 		return Reduce (ast)#, keep = True)
+
+# 	return PopConfs (ast)
 
 def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
 	pre, dv, wrap, wrapp = ast.tail_differential

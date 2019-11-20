@@ -451,6 +451,10 @@ a**{d/dx(f(x))(0)}
 \int {\lim_{x \to 1} x} dy
 \int {\sum_{x = 1}^2 x} dy
 {d/dx (u(x))(0)}.a
+x / {d / dx (f(x))(0)}
+\int {dy}+{-1} dx
+{{d/dx (f(real = True)(x))(0)}'} [a]
+{\int_{Derivative ({\[{0},{\emptyset},]}, z, 2, z, 2)}^{not {lambda: {-1.0}}} {{{dx} or {1}}**{{2}  not in  {None}}} dx}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

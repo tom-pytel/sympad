@@ -124,6 +124,10 @@ class AST (tuple):
 	def _len (self):
 		return len (self)
 
+	@staticmethod
+	def tuple2ast (args):
+		return args [0] if len (args) == 1 else AST (',', args)
+
 	def _no_curlys (self): # remove ALL curlys from entire tree, not just top level
 		if self.is_curly:
 			return self.curly.no_curlys
@@ -198,6 +202,7 @@ class AST (tuple):
 	_strip_paren    = lambda self, count = None, keeptuple = False: self._strip (count, ('(',), keeptuple = keeptuple)
 	_strip_paren1   = lambda self: self._strip (1, {'('})
 	_strip_minus    = lambda self: self._strip (None, {'-'})
+	_strip_diffp    = lambda self: self._strip (None, {'-diffp'})
 	_strip_fdpi     = lambda self, count = None: self._strip (count, {'!', '-diffp', '-idx'})
 	_strip_pow      = lambda self, count = None: self._strip (count, {'^'})
 	_strip_afpdpi   = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
@@ -223,6 +228,45 @@ class AST (tuple):
 			self = self.mul [-1] if self.is_mul else self [1]
 
 		return self
+
+	def _as_identifier (self):
+		def _as_identifier (ast, recursed = False):
+			if ast.op in {'#', '@', '"'}:
+				name = ast [1]
+			elif not ast.is_mul:
+				return None
+
+			else:
+				try:
+					name = ''.join (_as_identifier (m, True) for m in ast.mul)
+				except TypeError:
+					return None
+
+			return name if recursed or AST._rec_identifier.match (name) else None
+
+		return _as_identifier (self)
+
+	def _is_const (self):
+		if self.is_num:
+			return True
+		elif self.is_var:
+			return self.is_var_const
+		elif self.op in {'{', '(', '-', '!'}:
+			return self [1].is_const
+		elif self.op in {'+', '*', '*exp'}:
+			return all (a.is_const for a in self [1])
+		elif self.is_div:
+			return self.numer.is_const and self.denom.is_const
+		elif self.is_pow:
+			return self.base.is_const and self.exp.is_const
+		elif self.is_log:
+			return self.log.is_const if self.base is None else (self.log.is_const and self.base.is_const)
+		elif self.is_sqrt:
+			return self.rad.is_const if self.idx is None else (self.rad.is_const and self.idx.is_const)
+		elif self.is_func:
+			return all (a.is_const for a in self.args)
+
+		return False
 
 	def _tail_mul (self):
 		tail = self
@@ -341,45 +385,6 @@ class AST (tuple):
 
 		return None, None # var, wrap
 
-	def _as_identifier (self):
-		def _as_identifier (ast, recursed = False):
-			if ast.op in {'#', '@', '"'}:
-				name = ast [1]
-			elif not ast.is_mul:
-				return None
-
-			else:
-				try:
-					name = ''.join (_as_identifier (m, True) for m in ast.mul)
-				except TypeError:
-					return None
-
-			return name if recursed or AST._rec_identifier.match (name) else None
-
-		return _as_identifier (self)
-
-	def _is_const (self):
-		if self.is_num:
-			return True
-		elif self.is_var:
-			return self.is_var_const
-		elif self.op in {'{', '(', '-', '!'}:
-			return self [1].is_const
-		elif self.op in {'+', '*', '*exp'}:
-			return all (a.is_const for a in self [1])
-		elif self.is_div:
-			return self.numer.is_const and self.denom.is_const
-		elif self.is_pow:
-			return self.base.is_const and self.exp.is_const
-		elif self.is_log:
-			return self.log.is_const if self.base is None else (self.log.is_const and self.base.is_const)
-		elif self.is_sqrt:
-			return self.rad.is_const if self.idx is None else (self.rad.is_const and self.idx.is_const)
-		elif self.is_func:
-			return all (a.is_const for a in self.args)
-
-		return False
-
 	def _as_ufunc_argskw (self):
 		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,) if self.op is not None else self)
 
@@ -412,18 +417,23 @@ class AST (tuple):
 							_free_vars (dst, vars)
 
 				else:
-					for e in ast:
-						_free_vars (e, vars)
-
 					try:
-						if ast.is_lim:
-							vars.remove (ast.lvar)
-						elif ast.is_sum:
-							vars.remove (ast.svar)
+						if ast.is_intg:
+							_free_vars (ast.intg, vars)
 
-						elif ast.is_intg:
 							if ast.is_intg_definite:
 								vars.remove (ast.dv.as_var)
+							else:
+								vars.add (ast.dv.as_var)
+
+						else:
+							for e in ast:
+								_free_vars (e, vars)
+
+							if ast.is_lim:
+								vars.remove (ast.lvar)
+							elif ast.is_sum:
+								vars.remove (ast.svar)
 
 					except KeyError:
 						pass
@@ -433,10 +443,6 @@ class AST (tuple):
 		_free_vars (self, vars)
 
 		return vars
-
-	@staticmethod
-	def tuple2ast (args):
-		return args [0] if len (args) == 1 else AST (',', args)
 
 	@staticmethod
 	def args2kwargs (args, func = None, ass2eq = False):

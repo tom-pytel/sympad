@@ -2,6 +2,8 @@
 > lambda - dx (x) in varfunc, when calling reduce make the generated shift a 'keep'
 > d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
+> \sum, \lim accept only body of paren if paren follows directly
+
 > allow N**2 y?
 > N -N x -> N (-N (x))
 
@@ -16,6 +18,7 @@
 > CREATE SYMPY OBJECTS FOR PYTHON OBJECTS IN SYM?!?
 
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
+> change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails
 
 
 > \operatorname ufuncs from sympy latex

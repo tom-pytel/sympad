@@ -360,6 +360,7 @@ class Handler (SimpleHTTPRequestHandler):
 			py, xlatpy  = sym.ast2py (ast, retxlat = True)
 
 			if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+				print ('free:', list (v.var for v in ast.free_vars), file = sys.stderr)
 				print ('ast: ', ast, file = sys.stderr)
 
 				if xlattex:
