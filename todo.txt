@@ -1,6 +1,8 @@
 > lambda bound vars to not appear in free_vars
 > lambda - dx (x) in varfunc, when calling reduce make the generated shift a 'keep'
 
+> better potential derivative test than self.stack_has_sym ('DIVIDE')
+
 > \sum, \lim accept only body of paren if paren follows directly
 
 > allow N**2 y?

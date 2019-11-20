@@ -1460,7 +1460,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_lamb (self, ast):
 		i = self.parent.mul.index (ast) if self.parent.is_mul else None
 
-		if not (self.parent.op in {None, ',', '(', '[', '-func', '-lamb', '-set', '-dict'} or # treat body of lambda as expression for calculation?
+		if not (self.parent.op in {None, ',', '[', '-func', '-lamb', '-set', '-dict'} or # '(', # treat body of lambda as expression for calculation?
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
 			return self._ast2spt (AST.apply_vars (ast, _SYM_USER_VARS).lamb)
