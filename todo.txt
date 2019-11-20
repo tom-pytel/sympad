@@ -1,4 +1,7 @@
+> 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
+
 > \sum, \lim accept only body of paren if paren follows directly
+> \sum, \lim and \intg to take expr_piecewise for body
 
 > allow N**2 y?
 > N -N x -> N (-N (x))
@@ -36,7 +39,6 @@
 > \int doesn't need curlys for star multiply
 > subs clarity parentheses for tex display like d/dx (f), attr, etc...?
 > (a or b) or (a and b) - result parenthesizing for clarity
-> 1 + (lambda y: y) vs. 1 + lambda y: y - parenthesis issue for clarity
 > @ and % without parentheses consistency?
 > \sum and \lim parens for clarity
 > clean up safety parens from grammar tail element overhaul
@@ -262,3 +264,8 @@ ast:  ('^', ('-dict', ((('*', (('-func', 'Or', (('@', 'der'),)), ('(', ('(', ('(
 ast:  ('^', ('-dict', ((('*', (('@', 'der'), ('(', ('(', ('(', (',', (('@', 'c'), ('#', '-1174684901948884.2')))))))), ('/', ('#', '1.'), ('@', 'x0'))), (('@', 'lnpartial'), ('(', ('@', 'dy'))))), ('-diffp', ('|', ('&&', (('#', '587969580853639.4'), ('#', '1.')))), 2))
 nat1: {{der} (((c, -1174684901948884.2))): 1./x0, lnpartial: (dy)}**{|587969580853639.4 && 1.|}''
 nat2: {der * (((c, -1174684901948884.2))): 1./x0, lnpartial: (dy)}**{|587969580853639.4 && 1.|}''
+
+
+text: {{ not {Symbol('ve', commutative = True)} } >= {{[[]]} = {\sqrt{ { y1 }*{ dx }*{ 1e100 } } }} == { {\left|{ d^{2} / dy^{2} { True } }\right|} && {\int_{\[{ \epsilon },{ "s" },{ -1.0 },]}^{\[[{ chi_{24} },{ \partialx },{ 4897.512440454772 },],]} {\sum_{x = { a }}^{ 1e100 } { 17218885.540688917 } } dD } } > { {\int_{{ \Gamma_{39} }''}^{ { -.1 } \cdot { y1 } } { { -1.0 }.ubF().tOO() } dbY }! }}
+ast:  ('<>', ('-not', ('-sym', 've', (('commutative', ('@', 'True')),))), (('>=', ('=', ('[', (('[', ()),)), ('-sqrt', ('*', (('@', 'y1'), ('@', 'dx'), ('#', '1e+100')), {1, 2})))), ('==', ('&&', (('|', ('-diff', ('@', 'True'), 'd', (('y', 2),))), ('-intg', ('-sum', ('#', '17218885.540688917'), ('@', 'x'), ('@', 'a'), ('#', '1e+100')), ('@', 'dD'), ('-mat', ((('@', 'epsilon'),), (('"', 's'),), (('#', '-1.0'),))), ('-mat', ((('@', 'chi24'), ('@', 'partialx'), ('#', '4897.512440454772')),)))))), ('>', ('!', ('-intg', ('.', ('.', ('#', '-1.0'), 'ubF', ()), 'tOO', ()), ('@', 'dbY'), ('-diffp', ('@', 'Gamma39'), 2), ('*', (('#', '-0.1'), ('@', 'y1')), {1}))))))
+tex1: \left(\neg\ \$ve\left(commutative = True \right) \right) \ge \left(\left[\left[ \right] \right] = \sqrt{y_{1}\ dx \cdot 1{e}{+100}} \right) == \left|\frac{d^2 True}{dy^2} \right| \cap \int_{\begin{bmatrix} \epsilon \\ \text{'s'} \\ -1.0 \end{bmatrix}}^{\begin{bmatrix} \chi_{24} & \partial x & 4897.512440454772 \end{bmatrix}} {\sum_{x = a}^{1{e}{+100}} 17218885.540688917} \ dD > \left(\int_{\Gamma_{39}''}^{-0.1\ y_{1}} \left(-1.0 \right).\operatorname{ubF}\left( \right).\operatorname{tOO}\left( \right) \ dbY \right)!

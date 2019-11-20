@@ -613,7 +613,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'.'     : _ast2tex_attr,
 		'"'     : lambda self, ast: '\\text{' + repr (ast.str_).replace ('}', '\\}') + '}',
 		','     : lambda self, ast: f'{", ".join (self._ast2tex (c) for c in ast.comma)}{_trail_comma (ast.comma)}',
-		'('     : lambda self, ast: '(' if ast.paren.is_var_null else self._ast2tex_wrap (ast.paren, 0, not ast.paren.is_lamb),
+		'('     : lambda self, ast: '(' if ast.paren.is_var_null else self._ast2tex_wrap (ast.paren, 0, 1), # not ast.paren.is_lamb),
 		'['     : lambda self, ast: '[' if ast.brack.len == 1 and ast.brack [0].is_var_null else f'\\left[{", ".join (self._ast2tex (b) for b in ast.brack)} \\right]',
 		'|'     : lambda self, ast: '|' if ast.abs.is_var_null else f'\\left|{self._ast2tex (ast.abs)} \\right|',
 		'-'     : _ast2tex_minus,

@@ -261,9 +261,9 @@ def _expr_colon (lhs, rhs):
 
 def _expr_mapsto (args, lamb):
 	if args.is_var_nonconst:
-		return AST ('-lamb', lamb, (args.var,))
+		return AST ('-lamb', lamb, (args.var,), is_lamb_mapsto = True)
 	elif args.is_comma and all (v.is_var_nonconst for v in args.comma):
-		return AST ('-lamb', lamb, tuple (v.var for v in args.comma))
+		return AST ('-lamb', lamb, tuple (v.var for v in args.comma), is_lamb_mapsto = True)
 
 	raise SyntaxError ('mapsto parameters can only be variables')
 
@@ -846,8 +846,6 @@ class Parser (LALR1):
 		('LIM',          fr'(?:\\lim)_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
 		('INTG',         fr'\\int(?:\s*\\limits)?(?!{_LTR})|{_UINTG}'),
-		# ('CURLYL_L_PARENL', r'{\s*\\left\s*\('),
-		# ('R_PARENR_CURLYR', r'\\right\s*\)\s*}'),
 		('L_DOT',         r'\\left\s*\.'),
 		('L_PARENL',      r'\\left\s*\('),
 		('R_PARENR',      r'\\right\s*\)'),
@@ -1094,9 +1092,8 @@ class Parser (LALR1):
 	def expr_abs_2         (self, BAR1, expr_commas, BAR2):                            return AST ('|', expr_commas) if not expr_commas.is_comma_empty else _raise (SyntaxError ('absolute value expecting an expression'))
 	def expr_abs_3         (self, expr_paren):                                         return expr_paren
 
-	def expr_paren_1       (self, expr_pcommas):                                       return AST ('(', expr_pcommas, is_paren_tex = expr_pcommas.is_commas_tex)
+	def expr_paren_1       (self, expr_pcommas):                                       return AST ('(', expr_pcommas, is_paren_tex = expr_pcommas.is_commas_tex) if not expr_pcommas.is_lamb_mapsto else expr_pcommas.setkw (is_lamb_mapsto = False)
 	def expr_paren_2       (self, expr_bracket):                                       return expr_bracket
-	# def expr_pcommas_1     (self, CURLYL_L_PARENL, expr_commas, R_PARENR_CURLYR):      return expr_commas.setkw (is_commas_tex = True)
 	def expr_pcommas_1     (self, CURLYL, L_PARENL, expr_commas, R_PARENR, CURLYR):    return expr_commas.setkw (is_commas_tex = True)
 	def expr_pcommas_2     (self, L_PARENL, expr_commas, R_PARENR):                    return expr_commas
 	def expr_pcommas_3     (self, PARENL, expr_commas, PARENR):                        return expr_commas
@@ -1213,33 +1210,31 @@ class Parser (LALR1):
 	}
 
 	_AUTOCOMPLETE_CONTINUE = {
-		'COMMA'          : ',',
-		'PARENL'         : '(',
-		'PARENR'         : ')',
-		'CURLYR'         : '}',
-		'BRACKR'         : ']',
-		'BAR'            : '|',
-		'SLASHCURLYR'    : '\\}',
-		'L_PARENL'       : '\\left(',
-		'L_BAR'          : '\\left|',
-		'R_PARENR'       : ' \\right)',
-		'R_CURLYR'       : ' \\right}',
-		'R_BRACKR'       : ' \\right]',
-		'R_BAR'          : ' \\right|',
-		'R_SLASHCURLYR'  : ' \\right\\}',
-		# 'R_PARENR_CURLYR': ' \\right)}',
+		'COMMA'        : ',',
+		'PARENL'       : '(',
+		'PARENR'       : ')',
+		'CURLYR'       : '}',
+		'BRACKR'       : ']',
+		'BAR'          : '|',
+		'SLASHCURLYR'  : '\\}',
+		'L_PARENL'     : '\\left(',
+		'L_BAR'        : '\\left|',
+		'R_PARENR'     : ' \\right)',
+		'R_CURLYR'     : ' \\right}',
+		'R_BRACKR'     : ' \\right]',
+		'R_BAR'        : ' \\right|',
+		'R_SLASHCURLYR': ' \\right\\}',
 	}
 
 	_AUTOCOMPLETE_COMMA_CLOSE = {
-		'CURLYL'         : 'CURLYR',
-		'PARENL'         : 'PARENR',
-		'BRACKL'         : 'BRACKR',
-		'SLASHCURLYL'    : 'CURLYR',
-		'SLASHBRACKL'    : 'BRACKR',
-		'L_PARENL'       : 'R_PARENR',
-		'L_BRACKL'       : 'R_BRACKR',
-		'L_SLASHCURLYL'  : 'R_SLASHCURLYR',
-		# 'CURLYL_L_PARENL': 'R_PARENR_CURLYR',
+		'CURLYL'       : 'CURLYR',
+		'PARENL'       : 'PARENR',
+		'BRACKL'       : 'BRACKR',
+		'SLASHCURLYL'  : 'CURLYR',
+		'SLASHBRACKL'  : 'BRACKR',
+		'L_PARENL'     : 'R_PARENR',
+		'L_BRACKL'     : 'R_BRACKR',
+		'L_SLASHCURLYL': 'R_SLASHCURLYR',
 	}
 
 	def _insert_symbol (self, sym, tokinc = 0):
