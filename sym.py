@@ -565,7 +565,6 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_ufunc (self, ast):
 		if (ast.is_ufunc_explicit or not ast.ufunc or
-				AST ('@', ast.ufunc).is_diff_or_part or
 				(ast.ufunc in _SYM_USER_FUNCS and not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?' # '\\: ?'
@@ -911,7 +910,6 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_ufunc (self, ast):
 		if (ast.is_ufunc_explicit or not ast.ufunc or
-				AST ('@', ast.ufunc).is_diff_or_part or
 				(ast.ufunc in _SYM_USER_FUNCS and not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?'

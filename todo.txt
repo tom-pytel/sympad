@@ -1,6 +1,5 @@
-> make dfunction (x) = x**2 work
+> lambda bound vars to not appear in free_vars
 > lambda - dx (x) in varfunc, when calling reduce make the generated shift a 'keep'
-> d/dx (y) - problematic due to possible interpretation of dx (y) as undefined function (currenly ignoring implicit function names which are differentials)
 
 > \sum, \lim accept only body of paren if paren follows directly
 
@@ -189,3 +188,27 @@ Errors:
 -------
 
 
+print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
+(-105, 1, 1, 62, ['VAR', 'DIVIDE', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('@', 'd'))], ([], True, None, False))
+(-153, 9, 6, 23, ['VAR', 'DIVIDE', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('@', 'd')), (150, DIVIDE, 1), (23, expr_ufunc, 2, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
+(0, None, 0)
+(62, expr_div, 0, ('@', 'd'))
+(150, DIVIDE, 1)
+(23, expr_ufunc, 2, ('-ufunc', 'dx', (('@', 'f'),)))
+(110, expr_pcommas, 9, ('#', '3'))
+('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
+2
+
+print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
+(-134, 1, 1, 81, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (81, expr_diffp_ics, 0, ('@', 'd'))], ([], True, None, False))
+(-105, 5, 3, 62, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '2')))], ([], True, None, False))
+(-142, 10, 5, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '2'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dy'))], ([], True, None, False))
+(-153, 17, 9, 23, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '2'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dy')), (23, expr_ufunc, 10, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
+(0, None, 0)
+(62, expr_div, 0, ('^', ('@', 'd'), ('#', '2')))
+(150, DIVIDE, 5)
+(27, expr_var, 7, ('@', 'dy'))
+(23, expr_ufunc, 10, ('-ufunc', 'dx', (('@', 'f'),)))
+(110, expr_pcommas, 17, ('#', '3'))
+('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
+10

@@ -196,7 +196,7 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 	def can_be_ufunc (ast):
 		return (
 			(ast.is_func and ast.func in _SP_USER_FUNCS and all (a.is_var_nonconst for a in ast.args)) or
-			(ast.is_mul and ast.mul.len == 2 and ast.mul [1].is_paren and ast.mul [0].is_var_nonconst and not ast.mul [0].is_diff_or_part and ast.mul [1].paren.as_ufunc_argskw))
+			(ast.is_mul and ast.mul.len == 2 and ast.mul [1].is_paren and ast.mul [0].is_var_nonconst and ast.mul [1].paren.as_ufunc_argskw))
 
 	def as_ufunc (ast):
 		if ast.is_func:
@@ -346,8 +346,15 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 		ds    = []
 		cp    = p
 
-		for i in range (len (ns)):
-			n = ns [i]
+		for i, n in enumerate (ns):
+			if n.is_ufunc: # implicit ufunc created for last differential reverts back to differential followed by paren
+				if n.is_ufunc_explicit or cp != 1:
+					break
+
+				v   = AST ('(', AST.tuple2ast (n.vars))
+				n   = AST ('@', n.ufunc)
+				ns  = ns [:i] + (n, v) + ns [i + 1:]
+				ast = AST ('/', ast.numer, AST ('*', ns))
 
 			if ast_dv_check (n):
 				dec = 1
@@ -358,12 +365,12 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				ds.append ((n.base.var_name, dec))
 
 			else:
-				return None, None
+				break
 
 			cp -= dec
 
 			if cp < 0:
-				return None, None # raise SyntaxError?
+				break
 
 			if not cp:
 				if i == len (ns) - 1:
@@ -379,7 +386,9 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 					else:
 						return AST ('-diff', ns [i + 1], d, tuple (ds), src = AST ('/', ast.numer, ('*', ns [:i + 2]) if i < len (ns) - 3 else ns [i + 2])), ns [i + 2:]
 
-		return None, None # raise SyntaxError?
+				break
+
+		return None, None
 
 	def try_apply_ics (ast, arg): # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
 		if arg.is_paren:
@@ -485,7 +494,7 @@ def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 		elif func.is_ufunc_applied and func.can_apply_argskw (commas.as_ufunc_argskw): # more general than necessary since func only valid for ufuncs of one variable
 			return AST ('-subs', lhs, tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args))))
 
-	return Reduce # raise SyntaxError ('cannot apply initial conditions to derivative of undefined function')
+	return Reduce
 
 def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	ast, wrapf = _ast_func_reorder (args [iparm])
@@ -514,7 +523,7 @@ def _expr_func_func (FUNC, args, expr_super = None):
 	else:
 		return _expr_func_func (f'a{func}', args)
 
-def _expr_ufunc_ics (lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
+def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
 	if lhs.is_ufunc:
 		if lhs.is_ufunc_py:
 			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw, is_ufunc_py = lhs.is_ufunc_py))
@@ -523,9 +532,12 @@ def _expr_ufunc_ics (lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)),
 			ast = lhs.apply_argskw (commas.as_ufunc_argskw)
 
 			if ast:
-				return PopConfs (ast)
+				if not lhs.is_ufunc_explicit and AST ('@', lhs.ufunc).is_differential and self.stack_has_sym ('DIVIDE'): # could be derivative of form "d / dx (f)"
+					return Reduce (ast)
+				else:
+					return PopConfs (ast)
 
-	return Reduce # raise SyntaxError ('cannot apply initial conditions to undefined function')
+	return Reduce
 
 def _expr_ufunc (args, py = False, name = ''):
 	args, kw = AST.args2kwargs (args.comma if args.is_comma else (args,))
@@ -553,12 +565,7 @@ def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 		elif var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
 			return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
 
-			# ast = wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg))))
-
-			# # return Reduce (ast) if rhs.is_differential and self.stack_has_sym ('INTG') else PopConfs (ast)
-			# return Reduce (ast) if var.is_differential and self.stack_has_sym ('INTG') else PopConfs (ast)
-
-	elif argsc.is_paren and var.is_var_nonconst and not var.is_diff_or_part and argsc.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
+	elif argsc.is_paren and var.is_var_nonconst and argsc.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
 
 		if ufunc.op is None:
@@ -574,7 +581,7 @@ def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 			elif ufunc.can_apply_argskw (argsc.paren.as_ufunc_argskw):
 				return PopConfs (wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, argsc.paren.comma if argsc.paren.is_comma else (argsc.paren,)))))))
 
-	return Reduce # raise SyntaxError ('invalid undefined function')
+	return Reduce
 
 def _expr_sym (args, py = False, name = ''):
 	args, kw = AST.args2kwargs (args.comma if args.is_comma else (args,))
@@ -1112,7 +1119,7 @@ class Parser (LALR1):
 	def expr_bcommas_1     (self, L_BRACKL, expr_commas, R_BRACKR):                    return expr_commas
 	def expr_bcommas_2     (self, BRACKL, expr_commas, BRACKR):                        return expr_commas
 
-	def expr_ufunc_ics_1   (self, expr_ufunc, expr_pcommas):                           return _expr_ufunc_ics (expr_ufunc, expr_pcommas)
+	def expr_ufunc_ics_1   (self, expr_ufunc, expr_pcommas):                           return _expr_ufunc_ics (self, expr_ufunc, expr_pcommas)
 	def expr_ufunc_ics_2   (self, expr_ufunc):                                         return expr_ufunc
 
 	def expr_ufunc_1       (self, UFUNCPY, expr_pcommas):                              return _expr_ufunc (expr_pcommas, py = True)
@@ -1419,8 +1426,8 @@ class sparser: # for single script
 if __name__ == '__main__': # DEBUG!
 	p = Parser ()
 
-	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
-	# set_sp_user_vars ({'f': AST ('-ufunc', 'u', (('@', 'x'), ('@', 't')))})
+	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'} | {'f'})
+	set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
 
 
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
@@ -1428,26 +1435,18 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"""Eq(Union(dy2 - 2.0651337529406422e-09*notinxyzd, Union(Complement(diff(z20notin)*diff(s)*partialxb, diff(diff(diff(-1.0)))), Complement(diff(diff(diff(-1.0))), diff(z20notin)*diff(s)*partialxb))), Or(Union(Complement(Union(Complement(Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))), partial.chCa.dcGNDli().XG()), Complement(partial.chCa.dcGNDli().XG(), Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))))), diff(diff(dx))**1*e - 100), Complement(diff(diff(dx))**1*e - 100, Union(Complement(Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))), partial.chCa.dcGNDli().XG()), Complement(partial.chCa.dcGNDli().XG(), Union(Complement(Function('h')(x, y, z), Limit(-4.461590087263422e-22, x, partialy, dir = '+-')), Complement(Limit(-4.461590087263422e-22, x, partialy, dir = '+-'), Function('h')(x, y, z))))))), 0.1 - bcorx0orc)); slice(None); abs(Matrix([Integers])); Matrix([[[Eq(c, 2)]], [[{Lambda: oo}]], [[lambdax, slice(y, 2)]]])""")
 	# a = p.parse (r"""Union(Complement(Union(Complement(Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100), diff(diff(FiniteSet(2, partialy)))), Complement(diff(diff(FiniteSet(2, partialy))), Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100))), -xyzd*FiniteSet()), Complement(-xyzd*FiniteSet(), Union(Complement(Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100), diff(diff(FiniteSet(2, partialy)))), Complement(diff(diff(FiniteSet(2, partialy))), Matrix([Le(Union(Complement(Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)), a), Complement(a, Union(Complement(y1, 0.001213674880465044), Complement(0.001213674880465044, y1)))), ('s', 1.0, dx))])**(a[0.1, a])**partial**3 / (partialz**3*1e-100)))))""")
 	# a = p.parse (r"""Union(Complement(Union(Complement(((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))), (FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20)), Complement((FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20), ((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))))), 0.006826903881753888), Complement(0.006826903881753888, Union(Complement(((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))), (FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20)), Complement((FiniteSet(-13.574245287492392, partialx, dx)**d**5 / (dy**3*dz**2*Noneord**1)) / (dz**1*partialx**{}*orz20), ((FiniteSet(diff(partialx), -tau57, [[-28832738.092809968, 1., 's']]), Sum(xanddz*Matrix([-1, False]), (x, xyzdin1e + 100*notin*diff(partialyin)*diff(s), partial)))))))); Derivative(dy, y); Function('u', commutative = True, real = True); psi, y1""")
-	a = p.parse (r"""\left.-\emptyset**False/"s"'\right|_{\substack{\.lambdax,y,z:0*y1*dz|_{b^munotinlambda:y1notin\fracPix0notin[[False,-1.217383816320693e-12,a]]={{:w_{1}}:((a)),((oo,1e+100)):\sum_{x=False}^\pix0,{\partial:1.5165219116286896e-05}:\{w_{1},\xi,-.1}},\{((Complexes)),$nvQUW(real=True,commutative=True)}={},\frac\{y1,1310759352132.995}\left.\partialx\right|_{-1.0=2}=\partialx!andy1\cdot\partialxandnotw_{1}}={{{8.752331030243382e+16,oo}}}*:\left.1.0\right|_{True=False}>=sqrt_mod_iter(1e100)lnpartialx/Lambda_{63}oraor\xi}}""")
 
-	for v, k in sorted (((v, k) for k, v in p.reds.items ()), reverse = True):
-		print (f'{v} - {k}')
-	print (f'total: {sum (p.reds.values ())}')
+	# a = p.parse (r"""\left.-\emptyset**False/"s"'\right|_{\substack{\.lambdax,y,z:0*y1*dz|_{b^munotinlambda:y1notin\fracPix0notin[[False,-1.217383816320693e-12,a]]={{:w_{1}}:((a)),((oo,1e+100)):\sum_{x=False}^\pix0,{\partial:1.5165219116286896e-05}:\{w_{1},\xi,-.1}},\{((Complexes)),$nvQUW(real=True,commutative=True)}={},\frac\{y1,1310759352132.995}\left.\partialx\right|_{-1.0=2}=\partialx!andy1\cdot\partialxandnotw_{1}}={{{8.752331030243382e+16,oo}}}*:\left.1.0\right|_{True=False}>=sqrt_mod_iter(1e100)lnpartialx/Lambda_{63}oraor\xi}}""")
+
+	# for v, k in sorted (((v, k) for k, v in p.reds.items ()), reverse = True):
+	# 	print (f'{v} - {k}')
+	# print (f'total: {sum (p.reds.values ())}')
 
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
-	# a = p.parse (r"\int oo + 1 dx")
-	# a = p.parse (r"\int oo + 1 dx b")
-	# a = p.parse (r"\int d/dx x**2 dx")
-	# a = p.parse (r"\int x dx b")
-	# a = p.parse (r"\int 1 / dx dy")
-	# a = p.parse (r"\int dx / dx + 2")
-	# a = p.parse (r"\int dy / dx + 2 dz")
-	# a = p.parse (r"\int a/dx * partial**2 / partialz**2 (partialx) dx")
-	# a = p.parse (r"\int a")
-	# print (a)
-
-
+	# a = p.parse (r"\frac{d}{dx}(f)(3)")
+	# a = p.parse (r"d**2 / dy dx (f) (3)")
+	a = p.parse (r"d/dx (f) (3)")
 
 	# a = sym.ast2spt (a)
-	# print (a)
+	print (a)

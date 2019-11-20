@@ -36,10 +36,10 @@ class Conflict (tuple):
 
 		return self
 
-	def __repr__ (self):
-		r = tuple.__repr__ (self)
+	# def __repr__ (self):
+	# 	r = tuple.__repr__ (self)
 
-		return f'{r [:-1]}, keep)' if self.keep else r
+	# 	return f'{r [:-1]}, keep)' if self.keep else r
 
 class Incomplete (Exception): # parse is head of good statement but incomplete
 	__slots__ = ['red']
