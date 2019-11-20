@@ -1286,30 +1286,55 @@ class Parser (LALR1):
 		return self._insert_symbol (self._AUTOCOMPLETE_COMMA_CLOSE [self.stack [idx].sym])
 
 	def _parse_autocomplete_expr_intg (self):
-		s    = self.stack [-1]
-		vars = set ()
-		reds = [s.red]
+		s               = self.stack [-1]
+		self.stack [-1] = State (s.idx, s.sym, s.pos, AST ('*', (s.red, AST.VarNull)))
+		vars            = set ()
 
-		while reds:
-			ast = reds.pop ()
+		if self.autocompleting:
+			reds = [s.red]
 
-			if not ast.is_var:
-				reds.extend (filter (lambda a: isinstance (a, tuple), ast))
-			else:
-				if not (ast.is_differential or ast.is_part_any):
-					vars.add (ast.var)
+			while reds:
+				ast = reds.pop ()
 
-		vars = vars - {'_'} - {''} - {ast.var for ast in AST.CONSTS}
+				if ast.is_var:
+					if not (ast.is_differential or ast.is_part_any):
+						vars.add (ast.var)
+				else:
+					reds.extend (filter (lambda a: isinstance (a, tuple), ast))
 
-		if len (vars) != 1:
-			return self._insert_symbol ('expr_var')
+		vars = vars - {'_'} - {ast.var for ast in AST.CONSTS}
 
-		var  = vars.pop ()
-		dvar = f'd{var}'
+		if len (vars) == 1:
+			self.autocomplete.append (f' d{vars.pop ()}')
+		else:
+			self._mark_error ()
 
-		self.autocomplete.append (f' {dvar}')
+		return True
 
-		return self._insert_symbol (Token ('VAR', dvar, self.pos, (None, 'd', var, None, None)))
+		# s    = self.stack [-1]
+		# vars = set ()
+		# reds = [s.red]
+
+		# while reds:
+		# 	ast = reds.pop ()
+
+		# 	if not ast.is_var:
+		# 		reds.extend (filter (lambda a: isinstance (a, tuple), ast))
+		# 	else:
+		# 		if not (ast.is_differential or ast.is_part_any):
+		# 			vars.add (ast.var)
+
+		# vars = vars - {'_'} - {''} - {ast.var for ast in AST.CONSTS}
+
+		# if len (vars) != 1:
+		# 	return self._insert_symbol ('expr_var')
+
+		# var  = vars.pop ()
+		# dvar = f'd{var}'
+
+		# self.autocomplete.append (f' {dvar}')
+
+		# return self._insert_symbol (Token ('VAR', dvar, self.pos, (None, 'd', var, None, None)))
 
 	def parse_getextrastate (self):
 		return (self.autocomplete [:], self.autocompleting, self.erridx, self.has_error)
@@ -1368,6 +1393,9 @@ class Parser (LALR1):
 		if pos >= len (rule [1]): # end of rule
 			if rule [0] == 'expr_sub' and stack [-1 - len (rule [1])].sym == 'INTG':
 				return self._insert_symbol ('CARET1')
+
+			if rule [0] == 'expr_intg':
+				return self._parse_autocomplete_expr_intg ()
 
 			return self.parse_result (None, self.pos, []) if self.rederr else False
 
@@ -1441,7 +1469,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-
 	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
 
 	# a = p.parse (r"\int oo + 1 dx")
@@ -1452,7 +1479,7 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"\int dx / dx + 2")
 	# a = p.parse (r"\int dy / dx + 2 dz")
 	# a = p.parse (r"\int a/dx * partial**2 / partialz**2 (partialx) dx")
-	a = p.parse (r"\int N N dx")
+	a = p.parse (r"\int a")
 	print (a)
 
 
