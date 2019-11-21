@@ -523,7 +523,7 @@ def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', 
 				if not lhs.is_ufunc_explicit and AST ('@', lhs.ufunc).is_differential and self.stack_has_sym ('DIVIDE'): # could be derivative of form "d / dx (f)"
 					return Reduce (ast)
 				else:
-					return PopConfs (ast)
+					return PopConfs (ast.setkw (src_rhs = AST ('*', (lhs.src_rhs, ('(', commas)))))
 
 	return Reduce
 
@@ -1435,5 +1435,5 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d**2 / dy dx (f) (3)")
 	# a = p.parse (r"d/dx (f) (3)")
 
-	a = p.parse (r"\int 1 / a \lim_{x \to 2} y dx")
+	a = p.parse (r"partialx/\partialy(x,real=True)(0)")
 	print (a)

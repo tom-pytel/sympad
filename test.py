@@ -5434,6 +5434,7 @@ a \int x dx / c
 a \int x dx b / c
 a {\lim_{x\to0} \int x dx} / b
 a {\sum_{x=0}^1 \int x dx} / b
+tanh(x)**-1
 
 """
 # _EXPRESSIONS = r"""

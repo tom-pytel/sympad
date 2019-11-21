@@ -13,6 +13,7 @@ import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
+_SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as AST.Null
 _POST_SIMPLIFY  = True # post-evaluation simplification
 _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
@@ -449,7 +450,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-log', '-func', '-mat', '-lamb', '-idx', '-set', '-dict', '-ufunc'} or ast.base.is_num_pos))
 		p = self._ast2tex_curly (ast.exp)
 
-		if ast.base.is_trigh_func_noninv and ast.exp.is_num and trighpow: # and ast.exp.is_single_unit
+		if trighpow and ast.base.is_trigh_func_noninv and ast.exp.is_num and ast.exp.num != '-1': # and ast.exp.is_single_unit
 			i = len (ast.base.func) + (15 if ast.base.func in {'sech', 'csch'} else 1)
 
 			return f'{b [:i]}^{p}{b [i:]}'
@@ -574,7 +575,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 
 	def _ast2tex_ufunc (self, ast):
 		if (ast.is_ufunc_explicit or not ast.ufunc or
-				(ast.ufunc in _SYM_USER_FUNCS and not _ast_is_top_ass_lhs (self, ast)) or
+				(ast.ufunc in _SYM_USER_ALL and ast != _SYM_USER_ALL.get (ast.ufunc) and not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?' # '\\: ?'
 		else:
@@ -825,7 +826,7 @@ class ast2nat: # abstract syntax tree -> native text
 				ast.exp.strip_minus.is_subs_diff_ufunc,
 				{","})
 
-		if ast.base.is_trigh_func_noninv and ast.exp.is_num and trighpow: # and ast.exp.is_single_unit
+		if trighpow and ast.base.is_trigh_func_noninv and ast.exp.is_num and ast.exp.num != '-1': # and ast.exp.is_single_unit
 			i = len (ast.base.func)
 
 			return f'{b [:i]}**{p}{b [i:]}'
@@ -917,7 +918,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_ufunc (self, ast):
 		if (ast.is_ufunc_explicit or not ast.ufunc or
-				(ast.ufunc in _SYM_USER_FUNCS and not _ast_is_top_ass_lhs (self, ast)) or
+				(ast.ufunc in _SYM_USER_ALL and ast != _SYM_USER_ALL.get (ast.ufunc) and not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?'
 		else:
@@ -979,12 +980,12 @@ class ast2nat: # abstract syntax tree -> native text
 		'-slice': _ast2nat_slice,
 		'-set'  : lambda self, ast: f'{{{", ".join (self._ast2nat_wrap (c, 0, c.is_slice) for c in ast.set)}{_trail_comma (ast.set)}}}' if ast.set else '\\{}',
 		'-dict' : _ast2nat_dict,
-		'||'    : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', '-slice', '-piece', '-lamb', '-or', '-and', '-not'}) for a in ast.union),
-		'^^'    : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', '-slice', '-piece', '-lamb', '||', '-or', '-and', '-not'}) for a in ast.sdiff),
-		'&&'    : lambda self, ast: ' && '.join (self._ast2nat_wrap (a, 0, a.op in {'=', '<>', ',', '-slice', '-piece', '-lamb', '||', '^^', '-or', '-and', '-not'}) for a in ast.xsect),
-		'-or'   : lambda self, ast: ' or '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb'}) for a in ast.or_),
-		'-and'  : lambda self, ast: ' and '.join (self._ast2nat_wrap (a, 0, a.op in {'=', ',', '-slice', '-piece', '-lamb', '-or'}) for a in ast.and_),
-		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
+		'||'    : lambda self, ast: ' || '.join (self._ast2nat_wrap (a, 0, {'=', '<>', ',', '-slice', '-piece', '-lamb', '-or', '-and', '-not'}) for a in ast.union),
+		'^^'    : lambda self, ast: ' ^^ '.join (self._ast2nat_wrap (a, 0, {'=', '<>', ',', '-slice', '-piece', '-lamb', '||', '-or', '-and', '-not'}) for a in ast.sdiff),
+		'&&'    : lambda self, ast: ' && '.join (self._ast2nat_wrap (a, 0, {'=', '<>', ',', '-slice', '-piece', '-lamb', '||', '^^', '-or', '-and', '-not'}) for a in ast.xsect),
+		'-or'   : lambda self, ast: ' or '.join (self._ast2nat_wrap (a, 0, {'=', ',', '-slice', '-piece', '-lamb'}) for a in ast.or_),
+		'-and'  : lambda self, ast: ' and '.join (self._ast2nat_wrap (a, 0, {'=', ',', '-slice', '-piece', '-lamb', '-or'}) for a in ast.and_),
+		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
 		'-ufunc': _ast2nat_ufunc,
 		'-subs' : _ast2nat_subs,
 		'-sym'  : lambda self, ast: f'${ast.sym}({", ".join (tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
@@ -1511,10 +1512,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	def _ast2spt_ufunc (self, ast):
-		spt             = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
-		spt.is_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through spt
+		# spt             = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
+		# spt.is_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through spt
 
-		return spt
+		# return spt
+		return sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
 
 	def _ast2spt_subs (self, ast):
 		return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
@@ -1755,14 +1757,15 @@ class spt2ast:
 		if spt.__class__.__name__ == 'slice': # special cased converted slice object with start, stop and step present, this is REALLY unnecessary...
 			return AST ('-slice', *tuple (self._spt2ast (s) for s in spt.args))
 
-		if getattr (spt, 'is_explicit', False) or \
-				(isinstance (self.parent, EqAss) and self.parents [-2] is None and spt is self.parent.args [0]) or \
-				(isinstance (self.parent, sp.Tuple) and isinstance (self.parents [-2], EqAss) and self.parents [-3] is None and spt in self.parent):
-			name = f'?{spt.name}'
-		else:
-			name = spt.name
+		# if getattr (spt, 'is_explicit', False) or \
+		# 		(isinstance (self.parent, EqAss) and self.parents [-2] is None and spt is self.parent.args [0]) or \
+		# 		(isinstance (self.parent, sp.Tuple) and isinstance (self.parents [-2], EqAss) and self.parents [-3] is None and spt in self.parent):
+		# 	name = f'?{spt.name}'
+		# else:
+		# 	name = spt.name
 
-		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		# return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		return AST ('-ufunc', spt.name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__
@@ -1861,12 +1864,14 @@ class spt2ast:
 
 #...............................................................................................
 def set_sym_user_funcs (user_funcs):
-	global _SYM_USER_FUNCS
+	global _SYM_USER_FUNCS, _SYM_USER_ALL
 	_SYM_USER_FUNCS = user_funcs
+	_SYM_USER_ALL   = {**_SYM_USER_VARS, **{f: _SYM_USER_VARS.get (f, AST.VarNull) for f in _SYM_USER_FUNCS}}
 
 def set_sym_user_vars (user_vars):
-	global _SYM_USER_VARS
+	global _SYM_USER_VARS, _SYM_USER_ALL
 	_SYM_USER_VARS = user_vars
+	_SYM_USER_ALL   = {**_SYM_USER_VARS, **{f: _SYM_USER_VARS.get (f, AST.VarNull) for f in _SYM_USER_FUNCS}}
 
 def set_pyS (state):
 	global _PYS

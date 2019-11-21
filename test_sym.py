@@ -462,6 +462,7 @@ a**b[1]**(1/3)**c
 \int {\frac{1}{a \lim_{x\to2} y}} dx
 \int {dz < 3} dx
 a**{-{d/dx (g(x))(0)}}
+partialx/\partialy(x,real=True)(0)
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -871,7 +872,7 @@ def test (argv = None):
 					return ast
 
 				if ast.is_var:
-					if ast.var_name in _RESERVED_WORDS or ast.var_name.startswith ('_'):
+					if ast.var in _RESERVED_WORDS or ast.var_name.startswith ('_'):
 						ast = AST ('@', 'CENSORED')
 
 				if ast.is_func: # the slice function is evil
@@ -1086,5 +1087,5 @@ def test (argv = None):
 	return True
 
 if __name__ == '__main__':
-	# test (['-nt', '-e', 'x + {-1 * 2}'])
-	test ()
+	test (['-e', r'\int x ddif'])
+	# test ()
