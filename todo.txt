@@ -1,6 +1,9 @@
-> overhaul server env option command line setting
-> ufuncs absorb identical variables f(x)(x) -> f(x)
+> overhaul = and == to try to minimize where == is needed for display
+
+> ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
+
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
+> overhaul server env option command line setting
 
 > x aa**2 missing space
 > "d / 2" is "(d) / 2", fix it
@@ -24,7 +27,6 @@
 > keep track of what undefined functions are created during processing?
 
 
-> overhaul = and == to try to minimize where == is needed for display
 
 
 > subs autocomplete
@@ -252,74 +254,10 @@ Slow parse:
 
 17.671875s: \int\{}dG*"s"'=dx**dxif\partial^\partialy&&\mu=\partialy.HZm7Ur.Xaiyk.OO1M()else\[[[[1.or\emptysetor\partial,nth_power_roots_poly((w_{1})),\sqrt[\partialy]oo]]],(not\partialy),\lim_{x\to\log_\partialy0}\[[-4.469111038573928e-16,],],]if{1,x0&&c[5.6422000714431704e+16,dx,"s"]&&RealField((-1,y1)):\sqrt[(7.668680606727133e-14::)]\left|oo\right|,d^{1}/dy^{1}iotaand1.0and.1:{$bd(commutative=True),1.0/\partial}}else\frac$mjVIF(commutative=True)\cdot3.2935527643376255e-06:-1sqrtlambda;b;2
 28.453125s: {\.(:)|_{Sigma_{12}::'=-0>a,\left|\partial\right|&&chinotin-.1=lambdax,y,z:$qqq(real=True,commutative=True),Segment({})=\frac-88183020.84443538/-.1\s um_{x=0}^NONE\partialx}:\[\[[\emptyset,\emptyset,dz,],[\nu,\Lambda,dz,],]in\lim_{x\toz20}\partialyin-.1,]:\.4499484.467734945|_{\substack{1e+100=2067.693449705334\\y1=1e100}}\cdotxyzdif\partialelse-1.0ifcelse-5.542490885645353e-09if-1^\lim_{x\toz20^^1.}$B6uENQP()}
-
+163.28125s: lambda:   - xyzd   if u(x, y, z)   and  (  :  62313.47619053531  :  , dy ',  1.0  [ z20 ,  \partial x ]) && \left.   1e+100  or  1e+100   \right|_{\substack{  dx !  = \sqrt[ \phi_{29} ] -5.529339448748291e-09  }}  and \sum_{x = \[  dx .bO0xI.z4rtZp4N() ,\int  0  dT ,\left.  0  \right|_{\substack{ None  =  partial  \\  1e+100  =  6.352354272671388e-16 }},]}^ \left| \partialy \right| and   \partial   ||  \partial x       -1.0  &&  1.0  &&  -1.5418373774276718e-05   &&   \tilde\infty   \cdot  \partial x  \cdot  0   &&  \tilde\infty  ;  oo
+283.53125s: \[[ \arccot() or  \[[ \lambda ,],[ w_{1} ,],[ 0 ,],] \cdot $zRF(real = True) \cdot  d^{5} / dy^{3} dy^{2}  \emptyset    or    x0  if  1e100    else  None  if  1.0   \cdot   \Phi_{27}  /  \partialy   \cdot   False  \cdot  1.0  \cdot  0.01466869603275454    ,\int  \frac "s"  eta   /  lambda_{4} ;  .1 ;  b ;  1.   dCneFiF4u ,   oo  ||  -4.383422266575117e-14   in \log_ \omega  Pi   in \int  dz  dh  \cdot   dx  \cdot  \psi_{84}  \cdot  True  ' ,],[\[ \left| a \right|*\left| z20 \right| ,   w_{1} !  ||   a  or  1   ||   Theta  or  1.   ,],\.  \[ \partial x , 1. ,]* \emptyset ;  dy ;  xyzd ;  \tilde\infty  *  None  if  26320873337533.05    else  21134.155295076693    |_{\substack{   1.2227127498338437e+19  ^^  "s"  ^^  \partialy   / \.  \Xi  |_{ c  =  y1 ,  eta  =  \Gamma_{51} ,  sigma  =  -.1 }  = $QV(commutative = True) \\    None  and  \emptyset   and  partial^{4} / partialz^{2} partialx^{1} partialz^{1}  -0.0008452535981829209    =   difference_delta((())) and   None  &&  \xi  &&  beta   }},\sum_{x =  {{{ 1e100 , c , 2 }}}** partial  in  0  not in  False  not in  \Lambda  }^   -7.85992240533836e+20  [ None ,  b ]^  \infty zoo  and  \Psi_{93}     { 0 , "s" }^\sum_{x =  \partial x }^ oo   dx    ,],]
 
 Errors:
 -------
 
 
-text: {Or der(((c,-1174684901948884.2))):1./x0,lnpartial:(dy)}**\left|587969580853639.4&&1.\right|''
-ast:  ('^', ('-dict', ((('*', (('-func', 'Or', (('@', 'der'),)), ('(', ('(', ('(', (',', (('@', 'c'), ('#', '-1174684901948884.2')))))))), ('/', ('#', '1.'), ('@', 'x0'))), (('@', 'lnpartial'), ('(', ('@', 'dy'))))), ('-diffp', ('|', ('&&', (('#', '587969580853639.4'), ('#', '1.')))), 2))
-ast:  ('^', ('-dict', ((('*', (('@', 'der'), ('(', ('(', ('(', (',', (('@', 'c'), ('#', '-1174684901948884.2')))))))), ('/', ('#', '1.'), ('@', 'x0'))), (('@', 'lnpartial'), ('(', ('@', 'dy'))))), ('-diffp', ('|', ('&&', (('#', '587969580853639.4'), ('#', '1.')))), 2))
-nat1: {{der} (((c, -1174684901948884.2))): 1./x0, lnpartial: (dy)}**{|587969580853639.4 && 1.|}''
-nat2: {der * (((c, -1174684901948884.2))): 1./x0, lnpartial: (dy)}**{|587969580853639.4 && 1.|}''
-
-
-text: Symbol('Dmww',real=True,commutative=True)orMat Add(())
-ast:  ('*', (('-sym', 'Dmww', (('commutative', ('@', 'True')), ('real', ('@', 'True')))), ('@', 'orMat'), ('-func', 'Add', (('(', (',', ())),))))
-ast:  ('*', (('-sym', 'Dmww', (('commutative', ('@', 'True')), ('real', ('@', 'True')))), ('@', 'orMat'), ('(', (',', ()))))
-nat1: $Dmww(commutative = True, real = True) orMat {()}
-nat2: $Dmww(commutative = True, real = True) orMat * ()
-
-
-text: Mat Add(d^{6}/dy^{3}dz^{3}1.0||-2154146492585.7415)d/dxdxdz(?()(x,y,z))
-ast:  ('/', ('*', (('@', 'Mat'), ('-func', 'Add', (('||', (('-diff', ('#', '1.0'), 'd', (('y', 3), ('z', 3))), ('#', '-2154146492585.7415'))),)), ('@', 'd'))), ('*', (('@', 'dxdxdz'), ('(', ('-ufunc', '?', (('@', 'x'), ('@', 'y'), ('@', 'z')))))))
-ast:  ('/', ('*', (('@', 'Mat'), ('(', ('||', (('-diff', ('(', ('#', '1.0')), 'd', (('y', 3), ('z', 3))), ('#', '-2154146492585.7415')))), ('@', 'd'))), ('*', (('@', 'dxdxdz'), ('(', ('-ufunc', '?', (('@', 'x'), ('@', 'y'), ('@', 'z'))))), {1}))
-nat1: Mat {(d**6 / dy**3 dz**3 (1.0) || -2154146492585.7415)} d / {dxdxdz * (?(x, y, z))}
-nat2: {Mat * (d**6 / dy**3 dz**3 (1.0) || -2154146492585.7415) d} / {dxdxdz * (?(x, y, z))}
-
-
-text: []/-\int\partialxif\omega_{5}dzW7 vumUE
-ast:  ('/', ('[', ()), ('*', (('-', ('-intg', ('*', (('@', 'partialxif'), ('@', 'omega5'))), ('@', 'dzW7'))), ('@', 'vumUE'))))
-ast:  ('/', ('[', ()), ('-', ('*', (('-intg', ('*', (('@', 'partialxif'), ('@', 'omega5'))), ('@', 'dzW7')), ('@', 'vumUE')), {1})))
-tex1: \frac{\left[ \right]}{-\int \partial xif\ \omega_{5} \ dzW_{7} \cdot vumUE}
-tex2: \frac{\left[ \right]}{-{\int \partial xif\ \omega_{5} \ dzW_{7} \cdot vumUE}}
-
-
-text: not1;ooif0\cdot1elsed^{1}/dz^{1}dyif\int-3320904.9609189066dacIH4belsepartialand-1if1e100notin.1andsqrtu()()an d\int()dQJxeHaT
-ast:  (';', (('@', 'not1'), ('+', (('*', (('@', 'ooif0'), ('/', ('*', (('#', '1'), ('^', ('@', 'elsed'), ('#', '1')))), ('*', (('^', ('@', 'dz'), ('#', '1')), ('@', 'dyif'), ('-intg', ('#', '-3320904.9609189066'), ('@', 'dacIH4belsepartialand')))))), {1}), ('-', ('*', (('#', '1'), ('@', 'if1e100notin'), ('#', '0.1'), ('-ufunc', 'andsqrtu', ()), ('(', (',', ())), ('@', 'an'), ('@', 'd'), ('-intg', ('(', (',', ())), ('@', 'dQJxeHaT')))))))))
-nat1: not1; ooif0 * {1 * elsed**1} / dz**1 dyif \int -3320904.9609189066 dacIH4belsepartialand - 1 if1e100notin * 0.1 andsqrtu() * () an d \int () dQJxeHaT
-parse ()
-
-
-text: [-\int0.m48tLYv().ZpxdUt().PqtSBDzB()dJ23 e]
-ast:  ('[', (('*', (('-', ('-intg', ('*', (('#', '0.'), ('.', ('.', ('-ufunc', 'm48tLYv', ()), 'ZpxdUt', ()), 'PqtSBDzB', ()))), ('@', 'dJ23'))), ('@', 'e'))),))
-ast:  ('[', (('-', ('*', (('-intg', ('*', (('#', '0.'), ('.', ('.', ('-ufunc', 'm48tLYv', ()), 'ZpxdUt', ()), 'PqtSBDzB', ())), {1}), ('@', 'dJ23')), ('@', 'e')), {1})),))
-tex1: \left[-\int 0. \cdot m48tLYv\left( \right).\operatorname{ZpxdUt}\left( \right).\operatorname{PqtSBDzB}\left( \right) \ dJ_{23} \cdot e \right]
-tex2: \left[-{\int 0. \cdot m48tLYv\left( \right).\operatorname{ZpxdUt}\left( \right).\operatorname{PqtSBDzB}\left( \right) \ dJ_{23} \cdot e} \right]
-
-
-text: pow simp((()))
-ast:  ('*', (('-func', 'pow', (('@', 'simp'),)), ('(', ('(', ('(', (',', ()))))))
-ast:  ('*', (('^', ('@', 'simp'), ('-dict', ())), ('(', ('(', ('(', (',', ()))))), {1})
-tex1: simp^{{}} \cdot \left(\left(\left( \right) \right) \right)
-tex2: simp^{\left\{ \right\}} \left(\left(\left( \right) \right) \right)
-
-
-text: {-\int-3.2416198532530344e-21dKc67 3o:{ooanddzand\tilde\infty:d**3/dx(f(real=True)(x,y,z))(0,1,2):1e+100.GvK.mH()}}.H9k
-ast:  ('.', ('-dict', ((('*', (('-', ('-intg', ('#', '-3.2416198532530344e-21'), ('@', 'dKc67'))), ('#', '3'), ('@', 'o'))), ('-slice', ('*', (('@', 'ooanddzand'), ('@', 'zoo'))), ('/', ('^', ('@', 'd'), ('#', '3')), ('*', (('@', 'dx'), ('(', ('-ufunc', 'f', (('@', 'x'), ('@', 'y'), ('@', 'z')), (('real', ('@', 'True')),))), ('(', (',', (('#', '0'), ('#', '1'), ('#', '2'))))))), ('.', ('.', ('#', '1e+100'), 'GvK'), 'mH', ()))),)), 'H9k')
-ast:  ('.', ('-dict', ((('-', ('*', (('-intg', ('#', '-3.2416198532530344e-21'), ('@', 'dKc67')), ('#', '3'), ('@', 'o')), {1})), ('(', ('-slice', ('*', (('@', 'ooanddzand'), ('@', 'zoo'))), ('/', ('(', ('^', ('@', 'd'), ('#', '3'))), ('*', (('@', 'dx'), ('(', ('-ufunc', 'f', (('@', 'x'), ('@', 'y'), ('@', 'z')), (('real', ('@', 'True')),))), ('(', (',', (('#', '0'), ('#', '1'), ('#', '2'))))), {1})), ('.', ('.', ('(', ('#', '1e+100')), 'GvK'), 'mH', ())))),)), 'H9k')
-tex1: \left\{-\int -3.2416198532530344{e}{-21} \ dKc_{67} \cdot 3 o{:} \left(ooanddzand\ \widetilde\infty{:}\frac{\left(d^3 \right)}{dx \cdot \left(f\left(x, y, z, real = True \right) \right) \left(0, 1, 2 \right)}{:}\left(1{e}{+100} \right).GvK.\operatorname{mH}\left( \right) \right) \right\}.H9k
-tex2: \left\{-{\int -3.2416198532530344{e}{-21} \ dKc_{67} \cdot 3 o}{:} \left(ooanddzand\ \widetilde\infty{:}\frac{\left(d^3 \right)}{dx \cdot \left(f\left(x, y, z, real = True \right) \right) \left(0, 1, 2 \right)}{:}\left(1{e}{+100} \right).GvK.\operatorname{mH}\left( \right) \right) \right\}.H9k
-
-
-text: Root Sum(())
-ast:  ('*', (('@', 'Root'), ('-func', 'Sum', (('(', (',', ())),))))
-tex1: Root\ \sum_{{} = {}}^{{}} \left( \right)
-parse ()
-
-
-text: {.1:\emptyset,\partialy:-.1}&&\int1e-100dxandnotnot9.975553327396872e+16andFalsenotinpartialin-1.6914061883425358e-16!^ln\[2=z20,oo!,]
-ast:  ('&&', (('-dict', ((('#', '0.1'), ('-set', ())), (('@', 'partialy'), ('#', '-0.1')))), ('+', (('*', (('-intg', ('#', '1e-100'), ('@', 'dxandnotnot9')), ('#', '0.975553327396872e+16'), ('@', 'andFalsenotinpartialin'))), ('-', ('*', (('^', ('!', ('#', '1.6914061883425358e-16')), ('@', 'l')), ('@', 'n'), ('-mat', ((('=', ('#', '2'), ('@', 'z20')),), (('!', ('@', 'oo')),))))))))))
-tex1: \left\{0.1{:} \emptyset, \partial y{:} -0.1 \right\} \cap \int 1{e}{-100} \ dxandnotnot_{9} \cdot 0.975553327396872{e}{+16}\ andFalsenotinpartialin - \left(1.6914061883425358{e}{-16}! \right)^l n \cdot \begin{bmatrix} 2 = z_{20} \\ \infty! \end{bmatrix}
-parse ()

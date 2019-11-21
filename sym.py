@@ -1512,11 +1512,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	def _ast2spt_ufunc (self, ast):
-		# spt             = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
-		# spt.is_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through spt
+		spt = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
 
-		# return spt
-		return sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
+		if _ast_is_top_ass_lhs (self, ast): # pass explicit state of ufunc through spt if it is on left side of assign at top level
+			spt.is_ufunc_explicit = ast.is_ufunc_explicit
+
+		return spt
 
 	def _ast2spt_subs (self, ast):
 		return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
@@ -1764,8 +1765,9 @@ class spt2ast:
 		# else:
 		# 	name = spt.name
 
-		# return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
-		return AST ('-ufunc', spt.name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		name = f'?{spt.name}' if getattr (spt, 'is_ufunc_explicit', False) else spt.name
+
+		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__
@@ -1903,7 +1905,7 @@ if __name__ == '__main__': # DEBUG!
 	set_sym_user_funcs (set (vars))
 	set_sym_user_vars (vars)
 
-	ast = AST ('-diff', ('-ufunc', 'f', (('@', 'x'), ('@', 'y'))), 'd', (('x', 1),))
+	ast = AST ('=', ('-ufunc', 'f', (('@', 'x'),)), ('#', '1'))
 	res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)

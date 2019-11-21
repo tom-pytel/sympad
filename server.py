@@ -444,8 +444,11 @@ class Handler (SimpleHTTPRequestHandler):
 					except:
 						pass
 
-					print ('spt ast:   ', sptast, file = sys.stderr)
 					print ('spt latex: ', sp.latex (spt), file = sys.stderr)
+					print ('spt ast:   ', sptast, file = sys.stderr)
+					print ('spt tex:   ', sym.ast2tex (sptast), file = sys.stderr)
+					print ('spt nat:   ', sym.ast2nat (sptast), file = sys.stderr)
+					print ('spt py:    ', sym.ast2py (sptast), file = sys.stderr)
 					print (file = sys.stderr)
 
 				asts = _execute_ass (sptast, vars)

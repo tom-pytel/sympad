@@ -867,41 +867,37 @@ def test (argv = None):
 
 	try:
 		while 1:
-			def fixstuff (ast): # reformat certain representations which may get 'optimized' when written out to match original for comparison
+			def valid (ast): # validate ast rules have not been broken by garbling functions
 				if not isinstance (ast, AST):
-					return ast
+					return True
 
 				if ast.is_var:
 					if ast.var in _RESERVED_WORDS or ast.var_name.startswith ('_'):
-						ast = AST ('@', 'CENSORED')
+						return False
 
 				if ast.is_func: # the slice function is evil
 					if ast.func == 'slice' and ast.args.len == 2 and ast.args [0] == AST.None_: # :x gets written as slice(x) but may come from slice(None, x)
-						ast = AST ('-slice', AST.None_, ast.args [1], None)
-					# elif ast.func in _FORBIDDEN_SXLAT_FUNCS: # random spaces can create forbidden functions
-					# 	ast = AST ('-func', 'print', *ast [2:])
+						return False
+					elif ast.func in _FORBIDDEN_SXLAT_FUNCS: # random spaces can create forbidden functions
+						return False
 
 				elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
 					if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
-						return AST ('@', 'CENSORED')
+						return False
 
 				elif ast.is_intg: # same
 					if ast.dv.as_var.var in _RESERVED_WORDS:
-						return AST ('@', 'CENSORED')
+						return False
 
 				elif ast.is_slice: # the slice object is evil
-					if ast.step == AST.None_:
-						ast = AST ('-slice', ast.start, ast.stop, None)
+					if ast.start == AST.None_ or ast.stop == AST.None_ or ast.step == AST.None_:
+						return False
 
-				elif ast.is_ufunc: # remove spaces inserted into ufunc name
-					if ' ' in ast.ufunc:
-						ast = AST ('-ufunc', ast.ufunc_full.replace (' ', ''), ast.vars, ast.kw)
+				elif ast.op in {'-ufunc', '-sym'}:
+					if ' ' in ast [1]:
+						return False
 
-				elif ast.is_sym: # remove spaces inserted into ufunc name
-					if ' ' in ast.sym:
-						ast = AST ('-sym', ast.sym.replace (' ', ''), ast.kw)
-
-				return AST (*tuple (fixstuff (a) for a in ast))
+				return all (valid (a) for a in ast)
 
 			status = []
 			DEPTH  = depth
@@ -918,13 +914,16 @@ def test (argv = None):
 				text           = text [:d0] + text [s0 : s1] + text [d1:]
 
 			status.append (f'text: {text}')
-			ast = fixstuff (parse (text))
+			ast = parse (text) # fixstuff (parse (text))
 			status.extend (['', f'ast:  {ast}'])
 
 			if not ast:
 				if single or not infinite:
 					raise ValueError ("error parsing")
 
+				continue
+
+			if not valid (ast): # make sure garbling functions did not create an invalid ast
 				continue
 
 			if show:
@@ -941,7 +940,7 @@ def test (argv = None):
 
 					status.extend (['', 'parse ()'])
 
-					rast        = fixstuff (parse (text1))
+					rast        = parse (text1) # fixstuff (parse (text1))
 
 					if not rast:
 						raise ValueError ("error parsing")
@@ -1087,5 +1086,5 @@ def test (argv = None):
 	return True
 
 if __name__ == '__main__':
-	test (['-e', r'\int x ddif'])
-	# test ()
+	# test (['-e', r'a {b : c : None}'])
+	test ()
