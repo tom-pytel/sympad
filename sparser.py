@@ -202,13 +202,13 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 			return AST ('-ufunc', ast.mul [0].var, *ast.mul [1].paren.as_ufunc_argskw)
 
 	def lhs_ufunc_py_explicitize (ast):
-		return AST ('-ufunc', f'?{ast.ufunc}', *ast [2:]) if ast.is_ufunc_py or (ast.is_ufunc and ast.kw) else ast
+		return AST ('-ufunc', f'?{ast.ufunc}', *ast [2:]) if not allow_lexprs and (ast.is_ufunc_py or (ast.is_ufunc and ast.kw)) else ast
 
 	# start here
 	if ast.is_ass: # if assigning to function call then is assignment to function instead, rewrite
 		if can_be_ufunc (ast.lhs):
 			ast = AST ('=', as_ufunc (ast.lhs), ast.rhs)
-		elif ast.lhs.is_ufunc_py or (ast.lhs.is_ufunc and ast.lhs.kw):
+		else:
 			ast = AST ('=', lhs_ufunc_py_explicitize (ast.lhs), ast.rhs)
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parsing as ('x', 'y = y', 'x')) so rewrite
@@ -572,16 +572,6 @@ def _expr_ufunc (args, py = False, name = ''):
 		raise SyntaxError ('cannot use constant as undefined function name')
 
 	return AST ('-ufunc', name if py else f'?{name}', *argskw, is_ufunc_py = py)
-
-	# return AST ('-ufunc', name if py else f'?{name}', ()).apply_argskw (argskw).setkw (is_ufunc_py = py)
-
-	# ast = AST ('-ufunc', name if py else f'?{name}', ()).apply_argskw ((args, kw))
-
-	# return ast.setkw (is_ufunc_py = py)
-
-	# return AST ('-ufunc', name if py else f'?{name}', tuple (args), tuple (sorted (kw.items ())), is_ufunc_py = py)
-
-	# return AST ('-ufunc', name if py else f'?{name}', tuple (args), tuple (sorted (kw.items ())), is_ufunc_py = py)
 
 def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 	arg, wrapa = _ast_func_reorder (rhs)
@@ -1486,5 +1476,5 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d/dx (f) (3)")
 
 	# a = p.parse (r"Function('')(x, y, a*b)")
-	a = p.parse (r"?(x,y,a*b)")
+	a = p.parse (r"\. x |_{f(x, commutative = True) = 1}")
 	print (a)

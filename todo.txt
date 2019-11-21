@@ -9,7 +9,6 @@
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 > overhaul server env option command line setting
 
-> x aa**2 missing space
 > "d / 2" is "(d) / 2", fix it
 
 > \sum, \lim accept only body of paren if paren follows directly

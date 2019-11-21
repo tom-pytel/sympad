@@ -443,7 +443,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					n.is_diff_or_part_any or
 					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or # comment this IN if separating all variables with spaces
 					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or
-					(n.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
+					(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
 				t.append (f'\\ {s}')
 
 			else:
@@ -1932,13 +1932,13 @@ class sym: # for single script
 
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
-	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	set_sym_user_funcs (set (vars))
-	set_sym_user_vars (vars)
+	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	# set_sym_user_funcs (set (vars))
+	# set_sym_user_vars (vars)
 
-	ast = AST ('-func', 'Integral', (('^', ('(', ('-', ('#', '-1'))), ('-func', 'And', (('-func', 'Eq', (('#', '1.'), ('@', 'partialx'))), ('-func', 'Eq', (('@', 'partialx'), ('-func', 'FiniteSet', ()))), ('-func', 'Lt', (('-func', 'FiniteSet', ()), ('@', 'dx')))))), ('(', (',', (('@', 'x'), ('-func', 'Union', (('-func', 'diff', (('-func', 'diff', (('(', ('#', '-1.0')),)),)), ('-func', 'Integral', (('@', 'dz'), ('(', (',', (('@', 'x'), ('@', 'None'), ('#', '0.1')))))), ('+', (('@', 'zoo'), ('@', 'None'))))), ('^', ('(', ('-func', 'Limit', (('@', 'partial'), ('@', 'x'), ('@', 'oo'), ('=', ('@', 'dir'), ('"', '+-'))))), ('^', ('#', '1.0'), ('#', '1e+100'))))))))
-	res = ast2tex (ast)
-	# res = ast2nat (ast)
+	ast = AST ('-subs', ('@', 'x'), ((('-ufunc', 'f', (('@', 'x'),), (('commutative', ('@', 'True')),)), ('#', '1')),))
+	# res = ast2tex (ast)
+	res = ast2nat (ast)
 	# res = ast2py (ast)
 
 	# res = ast2spt (ast)

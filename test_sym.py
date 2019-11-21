@@ -468,6 +468,7 @@ partialx/\partialy(x,real=True)(0)
 {\sqrt{lambda: 1}}.a{\sqrt{lambda: 1}}.a
 1 / {{d/dx (g(x))(0)} a}
 Function('f', positive = True)(x, real = True)
+\left. x \right|_{{f(x, commutative = True)} = 1}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
