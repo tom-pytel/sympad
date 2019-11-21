@@ -4905,6 +4905,7 @@ sin {(x)}
 {sin x}^2
 sin**2 x
 sin**-1 x
+sin(x)**-1
 acos (x)
 \arccos (x)
 sin(x**2)
@@ -5434,7 +5435,8 @@ a \int x dx / c
 a \int x dx b / c
 a {\lim_{x\to0} \int x dx} / b
 a {\sum_{x=0}^1 \int x dx} / b
-tanh(x)**-1
+a / \int x dx * c
+a / b \int x dx * c
 
 """
 # _EXPRESSIONS = r"""

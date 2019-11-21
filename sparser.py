@@ -72,7 +72,7 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 	else:
 		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast))
 
-def _ast_tail_differential (self, must_have_pre = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
+def _ast_tail_differential (self, must_have_pre = False, from_add = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
 	lself = lambda a: a
 
 	if self.is_differential or self.is_var_null: # AST.VarNull is for autocomplete
@@ -82,7 +82,7 @@ def _ast_tail_differential (self, must_have_pre = False): # find first instance 
 		pre, dv, wrap, wrapp = self.minus.tail_differential
 
 		if dv:
-			return pre, dv.setkw (dv_has_neg = dv.dv_has_neg or not pre), wrap, lambda a: AST ('-', wrapp (a))
+			return pre, dv.setkw (dv_has_neg = dv.dv_has_neg or not pre), wrap, lambda a: AST ('-', wrapp (a)) if (not a.is_num_pos or from_add) else wrapp (AST ('#', f'-{a.num}'))
 
 	elif self.is_fact:
 		pre, dv, wrap, wrapp = self.fact.tail_differential
@@ -91,7 +91,7 @@ def _ast_tail_differential (self, must_have_pre = False): # find first instance 
 			return pre, dv, lambda a: AST ('!', wrap (a)), wrapp
 
 	elif self.is_add:
-		pre, dv, wrap, wrapp = self.add [-1].tail_differential
+		pre, dv, wrap, wrapp = self.add [-1].tail_differential_from_add
 
 		if dv and pre:
 			return AST ('+', (*self.add [:-1], wrapp (pre))), dv, wrap, lself
@@ -176,6 +176,7 @@ def _ast_tail_differential (self, must_have_pre = False): # find first instance 
 
 AST._tail_differential          = _ast_tail_differential # adding to AST class so it can be cached and accessed as member
 AST._tail_differential_with_pre = lambda self: self._tail_differential (must_have_pre = True)
+AST._tail_differential_from_add = lambda self: self._tail_differential (from_add = True)
 AST._has_tail_differential      = lambda self: self.tail_differential [1]
 
 #...............................................................................................
@@ -447,6 +448,17 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 			return mul if end == 0 else AST.flatcat ('*', ast.mul [0], mul) if end == 1 else AST.flatcat ('*', AST ('*', ast.mul [:end]), mul)
 
 	return ast
+
+def _expr_div (numer, denom):
+	if denom.is_mulexp: # correct for wonky \int ... dv parsing
+		return AST ('*exp', (('/', numer, denom.mul [0]), *denom.mul [1:]))
+
+	if denom.is_mul:
+		for i, ast in enumerate (denom.mul):
+			if ast.is_mulexp:
+				return AST ('*exp', (('/', numer, ('*', (*denom.mul [:i], ast.mul [0]))), *ast.mul [1:]))
+
+	return AST ('/', numer, denom)
 
 def _expr_mul_imp (lhs, rhs):
 	if rhs.is_div:
@@ -1031,7 +1043,7 @@ class Parser (LALR1):
 	def expr_neg_1         (self, MINUS, expr_neg):                                    return _expr_neg (expr_neg)
 	def expr_neg_2         (self, expr_div):                                           return expr_div
 
-	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                        return PopConfs (_expr_diff (AST ('/', expr_div, expr_divm))) # d / dx *imp* y
+	def expr_div_1         (self, expr_div, DIVIDE, expr_divm):                        return PopConfs (_expr_diff (_expr_div (expr_div, expr_divm))) # d / dx *imp* y
 	def expr_div_2         (self, expr_mul_imp):                                       return PopConfs (_expr_diff (expr_mul_imp)) # \frac{d}{dx} *imp* y
 	def expr_divm_1        (self, MINUS, expr_divm):                                   return PopConfs (_expr_neg (expr_divm))
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
@@ -1435,5 +1447,6 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d**2 / dy dx (f) (3)")
 	# a = p.parse (r"d/dx (f) (3)")
 
-	a = p.parse (r"partialx/\partialy(x,real=True)(0)")
+	# a = p.parse (r"a / b \int x dx * c")
+	a = p.parse (r"a / \int x dx * c")
 	print (a)

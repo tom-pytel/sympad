@@ -1,5 +1,7 @@
 > overhaul = and == to try to minimize where == is needed for display
 
+> a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
+
 > ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
@@ -261,3 +263,13 @@ Errors:
 -------
 
 
+text: { {[{u(x, commutative = True)}]}  {\frac{{{{}}}}{ {{{{}}}}  {\int_{ -1.634138685828814e-15 }^{ 1e-100 } { \Delta } dr } } }  {(real = True, commutative = True)} }
+ast:  ('*', (('[', (('-ufunc', 'u', (('@', 'x'),), (('commutative', ('@', 'True')),)),)), ('/', ('-dict', ()), ('*', (('-dict', ()), ('-intg', ('@', 'Delta'), ('@', 'dr'), ('#', '-1.634138685828814e-15'), ('#', '1e-100'))))), ('(', (',', (('=', ('@', 'real'), ('@', 'True')), ('=', ('@', 'commutative'), ('@', 'True')))))))
+ast:  ('*', (('[', (('-ufunc', 'u', (('@', 'x'),), (('commutative', ('@', 'True')),)),)), ('/', ('-dict', ()), ('*', (('-dict', ()), ('-intg', ('@', 'Delta'), ('@', 'dr'), ('#', '-1.634138685828814e-15'), ('#', '1e-100')), ('(', (',', (('=', ('@', 'real'), ('@', 'True')), ('=', ('@', 'commutative'), ('@', 'True')))))), {2}))), {1})
+nat1: [u(x, commutative = True)] * {} / {} \int_{-1.634138685828814e-15}^{1e-100} Delta dr * (real = True, commutative = True)
+nat2: [u(x, commutative = True)] * {} / {{} {\int_{-1.634138685828814e-15}^{1e-100} Delta dr} * (real = True, commutative = True)}
+test: [u(x, commutative = True)] * {} / {} \int_{-1.634138685828814e-15}^{1e-100} Delta dr * (real = True, commutative = True)
+
+{\frac{a}{b {\int x dx}}} c
+{a / {b \int x dx}} c
+{a / b \int x dx} c

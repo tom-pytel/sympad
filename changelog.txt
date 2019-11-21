@@ -7,6 +7,7 @@ v1.0.20:
 * Added differentiation of parenthesis grouping vs. call via curly enclosed parentheses.
 * Added parsing of LaTeX subscripts in \operatorname.
 * Made supported builtin functions accessible directly by name without need of $ escape character.
+* Lots of tweaks to undefined functions for display and use for assignment to lambdas.
 * Finally documented lots of changes.
 
 v1.0.19:

@@ -668,7 +668,7 @@ class AST_Ass (AST):
 			rhs = self.rhs.strip_paren
 
 			if rhs.op not in {',', '[', '-set'}:
-				return verify (self, self.lhs.comma, True)
+				return verify (self, self.lhs.comma, multi = True)
 
 			else:
 				both = min (self.lhs.comma.len, rhs [1].len)
@@ -684,7 +684,7 @@ class AST_Ass (AST):
 
 				rhs = (rhs.op, tuple (r for _, r in lrs) + rhs [1] [both:])
 
-				return verify (AST ('=', (',', tuple (l for l, _ in lrs) + self.lhs.comma [both:]), ('(', rhs) if self.rhs.is_paren else rhs), self.lhs.comma, True)
+				return verify (AST ('=', (',', tuple (l for l, _ in lrs) + self.lhs.comma [both:]), ('(', rhs) if self.rhs.is_paren else rhs), self.lhs.comma, multi = True)
 
 		elif self.lhs.is_ufunc_implicit:
 			return verify (AST ('=', ('@', self.lhs.ufunc), self.ufunc2lamb (self.lhs, self.rhs)), self.lhs)

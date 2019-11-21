@@ -463,6 +463,8 @@ a**b[1]**(1/3)**c
 \int {dz < 3} dx
 a**{-{d/dx (g(x))(0)}}
 partialx/\partialy(x,real=True)(0)
+{a \int -1 dx} / 2
+{a / b \int x dx} c
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -926,6 +928,9 @@ def test (argv = None):
 			if not valid (ast): # make sure garbling functions did not create an invalid ast
 				continue
 
+			if any (a.is_ass and a.ass_validate for a in (ast.scolon if ast.is_scolon else (ast,))): # reject assignments because all sorts of mangling goes on there, we just want expressions
+				continue
+
 			if show:
 				print (f'{text}\n')
 
@@ -959,8 +964,8 @@ def test (argv = None):
 					if not isinstance (ast, AST):
 						return ast
 
-					elif ast.is_ass:
-						return AST ('<>', sanitize (AST ('(', ast.lhs) if ast.lhs.is_comma else ast.lhs), (('==', sanitize (AST ('(', ast.rhs) if ast.rhs.is_comma else ast.rhs)),))
+					# elif ast.is_ass:
+					# 	return AST ('<>', sanitize (AST ('(', ast.lhs) if ast.lhs.is_comma else ast.lhs), (('==', sanitize (AST ('(', ast.rhs) if ast.rhs.is_comma else ast.rhs)),))
 
 					elif ast.is_minus:
 						if ast.minus.is_num_pos:
