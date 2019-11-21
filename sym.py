@@ -11,6 +11,8 @@ from sympy.core.function import AppliedUndef as sp_AppliedUndef
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+_SYM_MARK_PY_ASS_EQ = False # for testing to write extra information into python text representation of Eq() if is assignment
+
 _SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
 _SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as AST.Null
@@ -305,7 +307,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				self.parent.is_attr_var or
 				(self.parent.is_attr_func and (ast is self.parent.obj or not ast.lhs.as_identifier)) or
 				(self.parent.op in {'-lim', '-sum', '-intg'} and ast is self.parent [1]) or
-				(self.parent.is_func and not ast.lhs.as_identifier)):
+				(self.parent.is_func and not ast.lhs.as_identifier) or
+				(self.parent.is_piece and any (ast is p [0] for p in self.parent.piece))):
 			return f'{self._ast2tex_cmp_hs (ast.lhs)} = {self._ast2tex_cmp_hs (ast.cmp [0] [1])}'
 
 		return f'{self._ast2tex_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PY2TEX.get (r, r)} {self._ast2tex_cmp_hs (e)}" for r, e in ast.cmp)}'
@@ -732,7 +735,6 @@ class ast2nat: # abstract syntax tree -> native text
 				(self.parent.is_attr_func and (ast is self.parent.obj or not ast.lhs.as_identifier)) or
 				(self.parent.op in {'-lim', '-sum', '-intg'} and ast is self.parent [1]) or
 				(self.parent.is_func and not ast.lhs.as_identifier)):
-				# (self.parent.is_piece and any (ast is p [0] for p in self.parent.piece))):
 			return f'{self._ast2nat_cmp_hs (ast.lhs)} = {self._ast2nat_cmp_hs (ast.cmp [0] [1])}'
 
 		return f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}'
@@ -834,7 +836,7 @@ class ast2nat: # abstract syntax tree -> native text
 				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or false_diff) else \
 				self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '<>', '+', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'})
 
-		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if ((_ast_is_neg (ast.denom) and ast.denom.strip_minus.is_div) or ast.denom.is_subs_diff_ufunc) else \
+		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if ((_ast_is_neg (ast.denom) and ast.denom.strip_minus.is_div) or ast.denom.is_subs_diff_ufunc or (ast.denom.is_mul and ast.denom.mul [0].is_subs_diff_ufunc)) else \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'})
 
@@ -1075,7 +1077,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		if is_top_ass or self.parent.is_func: # present assignment with = instead of Eq for keyword argument or at top level?
 			return f'{self._ast2py_paren (ast.lhs) if ast.lhs.is_lamb else self._ast2py (ast.lhs)} = {self._ast2py (ast.rhs)}'
 
-		return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))})'
+		return f'Eq({self._ast2py_paren (ast.lhs, bool (ast.lhs.is_comma))}, {self._ast2py_paren (ast.rhs, bool (ast.rhs.is_comma))}{", 1" if _SYM_MARK_PY_ASS_EQ else ""})' # _SYM_MARK_PY_ASS_EQ for when testing only
 
 	_ast2py_cmpfuncs = {'==': 'Eq', '!=': 'Ne', '<': 'Lt', '<=': 'Le', '>': 'Gt', '>=': 'Ge'}
 
@@ -1930,9 +1932,9 @@ if __name__ == '__main__': # DEBUG!
 	set_sym_user_funcs (set (vars))
 	set_sym_user_vars (vars)
 
-	ast = AST (';', (('-lamb', ('<>', ('-idx', ('-mat', ((('@', 'Sigma'),), (('#', '-0.1'),))), (('+', (('@', 'not1e'), ('-idx', ('#', '100'), (('"', 's'),)))),)), (('==', ('+', (('*', (('^', ('@', 'dx'), ('#', '1')), ('@', 'e'))), ('#', '100')))),)), ()), ('||', (('*', (('^', ('-set', ()), ('@', 'z20')), ('@', 'partial')), {1}), ('@', 'a'), ('*', (('#', '-1'), ('-sym', 'psPL', (('real', ('@', 'True')),)), ('-mat', ((('#', '2'), ('@', 'Sigma'), ('@', 'xyzd')), (('#', '1e+100'), ('-set', ()), ('#', '1e+100'))))))))))
-	# res = ast2tex (ast)
-	res = ast2nat (ast)
+	ast = AST ('-func', 'Integral', (('^', ('(', ('-', ('#', '-1'))), ('-func', 'And', (('-func', 'Eq', (('#', '1.'), ('@', 'partialx'))), ('-func', 'Eq', (('@', 'partialx'), ('-func', 'FiniteSet', ()))), ('-func', 'Lt', (('-func', 'FiniteSet', ()), ('@', 'dx')))))), ('(', (',', (('@', 'x'), ('-func', 'Union', (('-func', 'diff', (('-func', 'diff', (('(', ('#', '-1.0')),)),)), ('-func', 'Integral', (('@', 'dz'), ('(', (',', (('@', 'x'), ('@', 'None'), ('#', '0.1')))))), ('+', (('@', 'zoo'), ('@', 'None'))))), ('^', ('(', ('-func', 'Limit', (('@', 'partial'), ('@', 'x'), ('@', 'oo'), ('=', ('@', 'dir'), ('"', '+-'))))), ('^', ('#', '1.0'), ('#', '1e+100'))))))))
+	res = ast2tex (ast)
+	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
 	# res = ast2spt (ast)

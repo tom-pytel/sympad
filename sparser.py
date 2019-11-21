@@ -51,7 +51,7 @@ def _ast_func_reorder (ast):
 	if wrap2:
 		ast3, wrap3 = _ast_func_reorder (ast2)
 
-		if ast3.is_curly or ast3.is_paren or ast3.is_brack:
+		if ast3.op in {'{', '(', '[', '-lamb'}: # ast3.is_curly or ast3.is_paren or ast3.is_brack:
 			return ast3, lambda a: wrap2 (wrap3 (a))
 
 	return ast, lambda a: a
@@ -1447,6 +1447,5 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d**2 / dy dx (f) (3)")
 	# a = p.parse (r"d/dx (f) (3)")
 
-	# a = p.parse (r"a / b \int x dx * c")
-	a = p.parse (r"a / \int x dx * c")
+	a = p.parse (r"\sqrt{\left(\left( \right) \mapsto 1 \right)}.a")
 	print (a)

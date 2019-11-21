@@ -4,7 +4,8 @@ import itertools as it
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_SX_XLAT_AND = True # ability to turn off And translation for testing
+_SX_XLAT_AND       = True # ability to turn off And translation for testing
+_SX_READ_PY_ASS_EQ = False # ability to parse py Eq() functions which were marked as assignment for testing
 
 _AST_StrPlus = AST ('"', '+')
 
@@ -66,7 +67,7 @@ def _xlat_f2a_And (*args, canon = False, force = False): # patch together out of
 
 	# start here
 	if not _SX_XLAT_AND and not force:
-		return None
+		return None # AST ('-func', 'And', args)
 
 	and_ = AST ('-and', tuple (args)) # simple and
 	andc = [args [0]] # build concatenated and from comparisons
@@ -391,7 +392,7 @@ _XLAT_FUNC2AST_ALL = {
 _XLAT_FUNC2AST_TEXNATPY = {**_XLAT_FUNC2AST_ALL,
 	'slice'                : _xlat_f2a_slice,
 
-	'Eq'                   : lambda a, b: AST ('<>', a, (('==', b),)),
+	'Eq'                   : lambda a, b, *args: AST ('<>', a, (('==', b),)) if not args else AST ('=', a, b, ass_is_not_kw = True) if _SX_READ_PY_ASS_EQ else None,
 	'Ne'                   : lambda a, b: AST ('<>', a, (('!=', b),)),
 	'Lt'                   : lambda a, b: AST ('<>', a, (('<',  b),)),
 	'Le'                   : lambda a, b: AST ('<>', a, (('<=', b),)),
@@ -599,12 +600,7 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 
 #...............................................................................................
-def set_xlat_And (state):
-	global _SX_XLAT_AND
-	_SX_XLAT_AND = state
-
 class sxlat: # for single script
-	set_xlat_And      = set_xlat_And
 	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
 	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
 	XLAT_FUNC2AST_PY  = XLAT_FUNC2AST_PY

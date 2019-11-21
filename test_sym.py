@@ -465,6 +465,8 @@ a**{-{d/dx (g(x))(0)}}
 partialx/\partialy(x,real=True)(0)
 {a \int -1 dx} / 2
 {a / b \int x dx} c
+{\sqrt{lambda: 1}}.a{\sqrt{lambda: 1}}.a
+1 / {{d/dx (g(x))(0)} a}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -813,7 +815,8 @@ def test (argv = None):
 
 	sym.set_sym_user_funcs (funcs)
 	sparser.set_sp_user_funcs (funcs)
-	sxlat.set_xlat_And (False)
+
+	# sxlat._SX_XLAT_AND = False # turn off py And translation because it mangles things
 
 	depth   = 3
 	single  = None
@@ -926,13 +929,21 @@ def test (argv = None):
 				continue
 
 			if not valid (ast): # make sure garbling functions did not create an invalid ast
+				if single:
+					raise ValueError ("invalid")
+
 				continue
 
-			if any (a.is_ass and a.ass_validate for a in (ast.scolon if ast.is_scolon else (ast,))): # reject assignments because all sorts of mangling goes on there, we just want expressions
+			if dopy and any (a.is_ass for a in (ast.scolon if ast.is_scolon else (ast,))): # reject assignments at top level if doing py because all sorts of mangling goes on there, we just want expressions in that case
+				if single:
+					raise ValueError ("disallowed assignment")
+
 				continue
 
 			if show:
 				print (f'{text}\n')
+
+			sxlat._SX_XLAT_AND = False # turn off py And translation because it mangles things
 
 			for rep in ('tex', 'nat', 'py'):
 				if locals () [f'do{rep}']:
@@ -1029,6 +1040,8 @@ def test (argv = None):
 
 					return AST (*tuple (sanitize (a) for a in ast))
 
+				sxlat._SX_XLAT_AND = True # turn on py And translation because it is needed here
+
 				# start here
 				ast = sanitize (ast)
 				status.extend (['', f'ast:  {ast}'])
@@ -1045,30 +1058,55 @@ def test (argv = None):
 						ast2 = parse (nat)
 
 					if dopy:
-						status.extend (['', f'ast:  {ast2}'])
-						py   = sym.ast2py (ast2)
-						status.extend (['', f'py:   {py}'])
-						ast2 = parse (py)
+						try:
+							sym._SYM_MARK_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
-					status.extend (['', f'ast:  {ast2}'])
-					tex2 = sym.ast2tex (ast2)
-					status.extend (['', f'tex2: {tex2}'])
-					ast2 = sanitize (parse (tex2)).flat
+							status.extend (['', f'ast:  {ast2}'])
+							py   = sym.ast2py (ast2)
+							status.extend (['', f'py:   {py}'])
+							ast2 = parse (py)
+
+						finally:
+							sym._SYM_MARK_PY_ASS_EQ = False # allow xlat of marked Eq functions which indicate assignment in python text
+
+					try:
+						if dopy:
+							sxlat._SX_READ_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
+
+						status.extend (['', f'ast:  {ast2}'])
+						tex2 = sym.ast2tex (ast2)
+						status.extend (['', f'tex2: {tex2}'])
+						ast2 = sanitize (parse (tex2)).flat
+
+					finally:
+						sxlat._SX_READ_PY_ASS_EQ = False # allow xlat of marked Eq functions which indicate assignment in python text
 
 				elif donat: # TODO: add more status updates for intermediate steps like above
 					nat1 = sym.ast2nat (ast)
 					status.extend (['', f'nat1: {nat1}'])
 					ast2 = ast = sanitize (parse (nat1)).flat
 
-					status.extend (['', f'ast:  {ast2}'])
-					py   = sym.ast2py (ast2)
-					status.extend (['', f'py:   {py}'])
-					ast2 = parse (py)
+					try:
+						sym._SYM_MARK_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
-					status.extend (['', f'ast:  {ast2}'])
-					nat2 = sym.ast2nat (ast2)
-					status.extend (['', f'nat2: {nat2}'])
-					ast2 = sanitize (parse (nat2)).flat
+						status.extend (['', f'ast:  {ast2}'])
+						py   = sym.ast2py (ast2)
+						status.extend (['', f'py:   {py}'])
+						ast2 = parse (py)
+
+					finally:
+						sym._SYM_MARK_PY_ASS_EQ = False # allow xlat of marked Eq functions which indicate assignment in python text
+
+					try:
+						sxlat._SX_READ_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
+
+						status.extend (['', f'ast:  {ast2}'])
+						nat2 = sym.ast2nat (ast2)
+						status.extend (['', f'nat2: {nat2}'])
+						ast2 = sanitize (parse (nat2)).flat
+
+					finally:
+						sxlat._SX_READ_PY_ASS_EQ = False # allow xlat of marked Eq functions which indicate assignment in python text
 
 				if ast2 != ast:
 					status.extend (['', f'ast:  {ast2}', '', f'org:  {ast}'])
@@ -1086,10 +1124,10 @@ def test (argv = None):
 		raise
 
 	finally:
-		sxlat.set_xlat_And (True)
+		sxlat._SX_XLAT_AND = True
 
 	return True
 
 if __name__ == '__main__':
-	# test (['-e', r'a {b : c : None}'])
+	# test (['-e', r"""{\int_{{{-1.0}''}||{\int_{None}^{.1} {dz} dx}||{{\tilde\infty }+{None}}}^{{\lim_{x \to {oo}} {\partial }}**{{1.0}**{1e+100}}} {{-{-1}}^{{1.} == {\partialx} == {\emptyset} < {dx}}} dx}""", '-c'])
 	test ()

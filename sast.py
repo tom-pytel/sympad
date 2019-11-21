@@ -456,7 +456,7 @@ class AST (tuple):
 		itr   = reversed (args)
 
 		for arg in itr:
-			if arg.is_ass:
+			if arg.is_ass and not arg.ass_is_not_kw: # ass_is_not_kw comes from sxlat of Eq during testing
 				ident = arg.lhs.as_identifier
 
 				if ident is not None:
