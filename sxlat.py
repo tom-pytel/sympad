@@ -392,7 +392,7 @@ _XLAT_FUNC2AST_ALL = {
 _XLAT_FUNC2AST_TEXNATPY = {**_XLAT_FUNC2AST_ALL,
 	'slice'                : _xlat_f2a_slice,
 
-	'Eq'                   : lambda a, b, *args: AST ('<>', a, (('==', b),)) if not args else AST ('=', a, b, ass_is_not_kw = True) if _SX_READ_PY_ASS_EQ else None,
+	'Eq'                   : lambda a, b, *args: AST ('<>', a, (('==', b),)) if not args else AST ('=', a, b, ass_is_not_kw = True) if _SX_READ_PY_ASS_EQ else None, # extra *args is for marking as assignment during testing
 	'Ne'                   : lambda a, b: AST ('<>', a, (('!=', b),)),
 	'Lt'                   : lambda a, b: AST ('<>', a, (('<',  b),)),
 	'Le'                   : lambda a, b: AST ('<>', a, (('<=', b),)),

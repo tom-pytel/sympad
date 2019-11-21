@@ -588,8 +588,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{obj}{idx}'
 
 	def _ast2tex_ufunc (self, ast):
+		user = _SYM_USER_ALL.get (ast.ufunc)
+
 		if (ast.is_ufunc_explicit or not ast.ufunc or
-				(ast.ufunc in _SYM_USER_ALL and ast != _SYM_USER_ALL.get (ast.ufunc) and not _ast_is_top_ass_lhs (self, ast)) or
+				(user and (not user.is_ufunc or (ast != user if user.vars else ast.kw != user.kw)) and not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?' # '\\: ?'
 		else:
@@ -943,8 +945,10 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'''{{{", ".join (f'{k}: {v}' for k, v in items)}}}'''
 
 	def _ast2nat_ufunc (self, ast):
+		user = _SYM_USER_ALL.get (ast.ufunc)
+
 		if (ast.is_ufunc_explicit or not ast.ufunc or
-				(ast.ufunc in _SYM_USER_ALL and ast != _SYM_USER_ALL.get (ast.ufunc) and not _ast_is_top_ass_lhs (self, ast)) or
+				(user and (not user.is_ufunc or (ast != user if user.vars else ast.kw != user.kw)) and not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?'
 		else:
@@ -1501,7 +1505,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if not (self.parent.op in {None, ',', '[', '-func', '-lamb', '-set', '-dict'} or # '(', # treat body of lambda as expression for calculation?
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
-			return self._ast2spt (AST.apply_vars (ast, _SYM_USER_VARS).lamb)
+			return self._ast2spt (AST.apply_vars (ast.lamb, _SYM_USER_VARS))
 
 		spt = self._ast2spt (ast.lamb)
 

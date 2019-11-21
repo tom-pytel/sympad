@@ -136,8 +136,11 @@ def _admin_del (*args):
 
 def _admin_delall (*args):
 	last_var    = _VARS ['_']
+
 	_VARS.clear ()
+
 	_VARS ['_'] = last_var
+
 	_vars_updated ()
 
 	return 'All variables deleted.'

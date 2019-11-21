@@ -467,17 +467,17 @@ partialx/\partialy(x,real=True)(0)
 {a / b \int x dx} c
 {\sqrt{lambda: 1}}.a{\sqrt{lambda: 1}}.a
 1 / {{d/dx (g(x))(0)} a}
+Function('f', positive = True)(x, real = True)
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
 _LETTERS_NUMBERS = _LETTERS + '_' + string.digits
-_RESERVED_WORDS  = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | sast.AST_Func.PY
 
 def _randidentifier ():
 	while 1:
 		s = f'{choice (_LETTERS)}{"".join (choice (_LETTERS_NUMBERS) for _ in range (randint (0, 6)))}{choice (_LETTERS)}'
 
-		if not (s in _RESERVED_WORDS or s [:2] == 'd_' or s [:8] == 'partial_' or (s [:1] == 'd' and s [1:] in _RESERVED_WORDS) or (s [:7] == 'partial' and s [7:] in _RESERVED_WORDS)):
+		if not (s in sparser.RESERVED_WORDS or s [:2] == 'd_' or s [:8] == 'partial_' or (s [:1] == 'd' and s [1:] in sparser.RESERVED_WORDS) or (s [:7] == 'partial' and s [7:] in sparser.RESERVED_WORDS)):
 			break
 
 	return s
@@ -630,8 +630,10 @@ def expr_diff ():
 
 		dv.append ((choice (['x', 'y', 'z']), n))
 
+	diff = expr () if random () < 0.5 else f'({expr ()})'
+
 	return \
-			f' {d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {expr ()} ' \
+			f' {d}^{{{p}}} / {" ".join (f"{d + v}^{{{dp}}}" for v, dp in dv)} {diff} ' \
 			# if random () >= 0.5 else \
 			# f'Derivative ({expr ()}, {", ".join (f"{v}, {dp}" for v, dp in dv)})'
 
@@ -877,7 +879,7 @@ def test (argv = None):
 					return True
 
 				if ast.is_var:
-					if ast.var in _RESERVED_WORDS or ast.var_name.startswith ('_'):
+					if ast.var in sparser.RESERVED_WORDS or ast.var_name.startswith ('_'):
 						return False
 
 				if ast.is_func: # the slice function is evil
@@ -887,11 +889,11 @@ def test (argv = None):
 						return False
 
 				elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
-					if any (v [0] in _RESERVED_WORDS for v in ast.dvs):
+					if any (v [0] in sparser.RESERVED_WORDS for v in ast.dvs):
 						return False
 
 				elif ast.is_intg: # same
-					if ast.dv.as_var.var in _RESERVED_WORDS:
+					if ast.dv.as_var.var in sparser.RESERVED_WORDS:
 						return False
 
 				elif ast.is_slice: # the slice object is evil

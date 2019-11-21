@@ -915,6 +915,25 @@ f (x) = x**2<i>&emsp; differnt syntax to specify the same thing</i><br>
 f (3)<br>
 f (x, y) = sqrt (x**2 + y**2)<i>&emsp; function of two variables</i><br>
 f (3, 4)<br>
+f**2<i>&emsp; lambda functions can be used as expression in many contexts</i><br>
+df / dx<i>&emsp; take derivative</i><br>
+\int f dx<i>&emsp; integrate</i><br>
+\sum_{x = 0}^2 f<i>&emsp; when used as an expression the lambda's variables are mapped</i><br>
+(f)<i>&emsp; this is how you get the expression within a lambda</i><br>
+x, y = 3, 4<br>
+(f)<i>&emsp; variables are mapped to their current values</i><br>
+del (x, y)<br>
+(f)<i>&emsp; and now the lambda body is back</i><br>
+f (x) = x**3<br>
+f'<i>&emsp; only has one variable so can derivate like this</i><br>
+f' (3)<i>&emsp; can also "call" the derivative of a lambda</i><br>
+d**2f / dx**2 (3)<i>&emsp; also like this</i><br>
+d**2 / dx**2 (f) (3)<i>&emsp; and this</i><br>
+f (x) = lambda y: sqrt (x**2 + y**2)<i>&emsp; lambda returning a lambda</i><br>
+f (3)<br>
+_ (4)<i>&emsp; call the lambda that was returned</i><br>
+f (3)<br>
+_ * (4)<i>&emsp; will be multiplied instead of called if using explicit multiply operator</i><br>
 <br>
 x, y, z = 3, 4, 5<i>&emsp; assign global variablesy</i><br>
 f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
