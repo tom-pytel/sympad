@@ -745,7 +745,7 @@ class AST_Var (AST):
 		'zoo'      : ('\\widetilde\\infty', '\\tilde\\infty', '\\overline\\infty', '\\bar\\infty'),
 		'Reals'    : ('\\mathbb{R}',),
 		'Complexes': ('\\mathbb{C}',),
-		'Naturals' : ('\\mathbb{N}', '\\mathbb{N}^*', '\\mathbb{N}^+', '\\mathbb{N}_1', '\\mathbb{N}_{>0}', '\\mathbb{Z}^+'),
+		'Naturals' : ('\\mathbb{N}', '\\mathbb{N}^*', '\\mathbb{N}^+', '\\mathbb{N}_1', '\\mathbb{N}_{>0}', '\\mathbb{N}_{\\gt0}', '\\mathbb{Z}^+'),
 		'Naturals0': ('\\mathbb{N}_0', '\\mathbb{Z}^{\\ge0}'), # , '\\mathbb{N}^0' - ambiguous
 		'Integers' : ('\\mathbb{Z}',),
 	}

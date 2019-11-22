@@ -859,13 +859,14 @@ class Parser (LALR1):
 	_UNOT     = '\u00ac' # not
 
 	_LTR      = fr'[a-zA-Z]'
+	_LTRD     = fr'[a-zA-Z0-9]'
 	_LTRU     = fr'(?:[a-zA-Z_]|\\_)'
 
 	_VARTEX   = '(?:' + '|'.join (sorted ((x.replace ('\\', '\\\\').replace ('+', '\\+').replace ('*', '\\*').replace ('^', '\\^') for x in AST.Var.TEX2PY), reverse = True)) + ')'
 	_VARTEX1  = fr'(?:(\d)|({_LTR})|(\\partial|\\infty))'
 	_VARPY    = fr'(?:{_LTR}(?:\w|\\_)*(?<!_))'
 	_VARUNI   = fr'(?:{"|".join (AST.Var.UNI2PY)})'
-	_VAR      = fr'(?:{_VARPY}|{_VARTEX}(?!{_LTR})|{_VARUNI})'
+	_VAR      = fr'(?:{_VARTEX}(?!{_LTR})|{_VARPY}|{_VARUNI})'
 
 	_STRS     = r"'(?:\\.|[^'])*'"
 	_STRD     = r'"(?:\\.|[^"])*"'
@@ -878,7 +879,7 @@ class Parser (LALR1):
 		('UFUNCPY',       r'Function(?!\w|\\_)'),
 		('SYM',          fr'\$|\\\$'),
 		('SYMPY',         r'Symbol(?!\w|\\_)'),
-		('FUNC',         fr'(@|\%|\\\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|\\\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})(?!{_LTRU})|\\operatorname\s*{{\s*({_LTR}(?:(?:\w|\\_)*{_LTRD})?)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'(?:\\lim)_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
@@ -969,8 +970,8 @@ class Parser (LALR1):
 
 	_PYGREEK_QUICK = '(?:' + '|'.join (sorted ((g for g in AST.Var.GREEK), reverse = True)) + ')'
 	_PYMULTI_QUICK = '(?:' + '|'.join (sorted ((g for g in AST.Var.PY2TEXMULTI), reverse = True)) + ')'
-	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}|{_LTR})'
-	_VAR_QUICK     = fr'(?:{_VARPY_QUICK}|{_VARTEX}|{_VARUNI})'
+	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}|{_LTR}\d*)'
+	_VAR_QUICK     = fr'(?:{_VARTEX}|{_VARPY_QUICK}|{_VARUNI})'
 
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens (differences from normal)
 		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
@@ -1450,9 +1451,11 @@ class sparser: # for single script
 if __name__ == '__main__': # DEBUG!
 	p = Parser ()
 
+	p.set_quick (True)
+
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
-	_SP_USER_FUNCS.update ({'_'})
-	set_sp_user_vars ({'_': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
+	# _SP_USER_FUNCS.update ({'_'})
+	# set_sp_user_vars ({'_': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
 
 
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
@@ -1475,6 +1478,6 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d**2 / dy dx (f) (3)")
 	# a = p.parse (r"d/dx (f) (3)")
 
-	# a = p.parse (r"Function('')(x, y, a*b)")
-	# a = p.parse (r"\. x |_{f(x, commutative = True) = 1}")
-	# print (a)
+	a = p.parse (r"\mathbb{N}_0")
+	print (a)
+

@@ -876,7 +876,7 @@ def test (argv = None):
 
 	try:
 		while 1:
-			def valid (ast): # validate ast rules have not been broken by garbling functions
+			def validate (ast): # validate ast rules have not been broken by garbling functions
 				if not isinstance (ast, AST):
 					return True
 
@@ -906,7 +906,7 @@ def test (argv = None):
 					if ' ' in ast [1]:
 						return False
 
-				return all (valid (a) for a in ast)
+				return all (validate (a) for a in ast)
 
 			status = []
 			DEPTH  = depth
@@ -932,7 +932,7 @@ def test (argv = None):
 
 				continue
 
-			if not valid (ast): # make sure garbling functions did not create an invalid ast
+			if not validate (ast): # make sure garbling functions did not create an invalid ast
 				if single:
 					raise ValueError ("invalid")
 

@@ -366,6 +366,11 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		if ast.is_var_null:
 			return '\\{' if self.parent.op in {None, ';'} else '{}'
 
+		texmulti = AST.Var.PY2TEXMULTI.get (ast.var)
+
+		if texmulti: # for stuff like "Naturals0"
+			return texmulti [0]
+
 		n, s = ast.text_and_tail_num
 		n    = n.replace ('_', '\\_')
 		t    = AST.Var.PY2TEX.get (n)
@@ -495,7 +500,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		else:
 			return f'\\log_{self._ast2tex_curly (ast.base)}{{\\left({self._ast2tex (ast.log)} \\right)}}'
 
-	_rec_tailnum = re.compile (r'^(.+)(?<!\d)(\d*)$')
+	_rec_tailnum = re.compile (r'^(.+)(?<![\d_])(\d*)$')
 
 	def _ast2tex_func (self, ast):
 		if ast.is_trigh_func:
@@ -523,7 +528,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				return f'{func}{self._ast2tex (AST.tuple2ast (ast.args))}'
 
 		elif ast.func not in AST.Func.PY:
-			func, sub = self._rec_tailnum.match (ast.func).groups ()
+			m         = self._rec_tailnum.match (ast.func)
+			func, sub = m.groups () if m else (ast.func, None)
 			func      = func.replace ('_', '\\_')
 			func      = f'\\operatorname{{{func}_{{{sub}}}}}' if sub else f'\\operatorname{{{func}}}'
 
@@ -1884,6 +1890,10 @@ class spt2ast:
 
 		sp.EmptySet: lambda self, spt: AST.SetEmpty,
 		sp.fancysets.Complexes: lambda self, spt: AST.Complexes,
+		sp.fancysets.Reals: lambda self, spt: AST.Reals,
+		sp.fancysets.Integers: lambda self, spt: AST.Integers,
+		sp.fancysets.Naturals: lambda self, spt: AST.Naturals,
+		sp.fancysets.Naturals0: lambda self, spt: AST.Naturals0,
 		sp.FiniteSet: lambda self, spt: AST ('-set', tuple (self._spt2ast (arg) for arg in spt.args)),
 		sp.Union: _spt2ast_Union,
 		sp.Intersection: lambda self, spt: self._spt2ast (spt.args [0]) if len (spt.args) == 1 else AST.flatcat ('&&', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
