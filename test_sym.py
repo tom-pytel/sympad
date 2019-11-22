@@ -332,10 +332,10 @@ Sum ({2 \cdot {1 x} \cdot {\int_y^x {dy} dx}}, (x, 0, 1)) * 1
 1 if True else 3 if True
 1 if True else 3
 1 if True
-|x, y|
-|lambda: 1|
-|lambda x: 1|
-|lambda x, y: 1|
+# |x, y|
+# |lambda: 1|
+# |lambda x: 1|
+# |lambda x, y: 1|
 x:None
 1 and {-{a * b} + 2}
 a in -(1)
@@ -469,6 +469,7 @@ partialx/\partialy(x,real=True)(0)
 1 / {{d/dx (g(x))(0)} a}
 Function('f', positive = True)(x, real = True)
 \left. x \right|_{{f(x, commutative = True)} = 1}
+#|x,|
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
