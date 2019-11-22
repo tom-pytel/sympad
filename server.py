@@ -24,9 +24,9 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _VERSION         = '1.0.20'
 
-__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 'firstrun',
-	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
-	'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
+_ENV_CLOPTS      = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'doit', 'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
+_ENV_CLOPTS_ALL  = _ENV_CLOPTS.union (f'no{opt}' for opt in _ENV_CLOPTS)
+__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnu', ['child', 'firstrun', 'help', 'version', 'debug', 'nobrowser', 'ugly', *_ENV_CLOPTS_ALL])
 
 _SERVER_DEBUG    = __name__ == '__main__' and __ARGV and __ARGV [0] == 'server-debug'
 
@@ -41,39 +41,27 @@ _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _STATIC_FILES    = {'/style.css': 'text/css', '/script.js': 'text/javascript', '/index.html': 'text/html',
 	'/help.html': 'text/html', '/bg.png': 'image/png', '/wait.webp': 'image/webp'}
 
-__name_indent    = ' ' * (7 + len (_SYMPAD_NAME))
-_HELP            = f'usage: {_SYMPAD_NAME} ' \
-		'[-h | --help] [-v | --version] \n' \
-		f'{__name_indent} [-d | --debug] [-n | --nobrowser] \n' \
-		f'{__name_indent} [-u | --ugly] [-E | --EI] \n' \
-		f'{__name_indent} [-q | --quick] [-y | --nopyS] \n' \
-		f'{__name_indent} [-s | --simplify] [-m | -nomatsimp] \n' \
-		f'{__name_indent} [-t | --nodoit] \n' \
-		f'{__name_indent} [-N | --noN] [-O | --noO] [-S | --noS] \n'\
-		f'{__name_indent} [-b | --nobeta] [-g | --nogamma] \n' \
-		f'{__name_indent} [-G | --noGamma] [-L | --noLambda] \n' \
-		f'{__name_indent} [-z | --nozeta] \n' \
-		f'{__name_indent} [host:port | host | :port]' '''
+_HELP            = f'usage: {_SYMPAD_NAME} [options] [host:port | host | :port]' '''
 
-  -h, --help       - Show help information
-  -v, --version    - Show version string
-  -d, --debug      - Dump debug info to server log
-  -n, --nobrowser  - Don't start system browser to SymPad page
-  -u, --ugly       - Start in draft display style (only on command line)
-  -E, --EI         - Start with SymPy constants 'E' and 'I' not 'e' and 'i'
-  -q, --quick      - Start in quick input mode
-  -y, --nopyS      - Start without Python S escaping
-  -s, --simplify   - Start with post-evaluation simplification
-  -m, --nomatsimp  - Start without matrix simplification
-  -t, --nodoit     - Start without automatic expression doit()
-  -N, --noN        - Start without N function
-  -S, --noS        - Start without S function
-  -O, --noO        - Start without O function
-  -b, --nobeta     - Start without beta function
-  -g, --nogamma    - Start without gamma function
-  -G, --noGamma    - Start without Gamma function
-  -L, --noLambda   - Start without Lambda function
-  -z, --nozeta     - Start without zeta function
+  -h, --help               - Show help information
+  -v, --version            - Show version string
+  -d, --debug              - Dump debug info to server log
+  -n, --nobrowser          - Don't start system browser to SymPad page
+  -u, --ugly               - Start in draft display style (only on command line)
+  --EI, --noEI             - Start with SymPy constants 'E' and 'I' or regular 'e' and 'i'
+  --quick, --noquick       - Start in/not quick input mode
+  --pyS, --nopyS           - Start with/out Python S escaping
+  --simplify, --nosimplify - Start with/out post-evaluation simplification
+  --matsimp, --nomatsimp   - Start with/out matrix simplification
+  --doit, --nodoit         - Start with/out automatic expression doit()
+  --N, --noN               - Start with/out N function
+  --S, --noS               - Start with/out S function
+  --O, --noO               - Start with/out O function
+  --beta, --nobeta         - Start with/out beta function
+  --gamma, --nogamma       - Start with/out gamma function
+  --Gamma, --noGamma       - Start with/out Gamma function
+  --Lambda, --noLambda     - Start with/out Lambda function
+  --zeta, --nozeta         - Start with/out zeta function
 '''
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
@@ -570,12 +558,18 @@ def start_server (logging = True):
 		_DISPLAYSTYLE [0] = 0
 
 	# make sure all env options are initialized according to command line options
-	for short, long in zip ('EqysmtNOSbgGLz', \
-			['EI', 'quick', 'nopyS', 'simplify', 'nomatsimp', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'noLambda', 'nozeta']):
-		if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
-			_admin_env (AST ('@', long))
-		else:
-			_admin_env (AST ('@', long [2:] if long [:2] == 'no' else f'no{long}'))
+	# for short, long in zip ('EqysmtNOSbgGLz', \
+	# 		['EI', 'quick', 'nopyS', 'simplify', 'nomatsimp', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'noLambda', 'nozeta']):
+	# 	if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
+	# 		_admin_env (AST ('@', long))
+	# 	else:
+	# 		_admin_env (AST ('@', long [2:] if long [:2] == 'no' else f'no{long}'))
+
+	for opt, arg in __OPTS:
+		opt = opt.lstrip ('-')
+
+		if opt in _ENV_CLOPTS_ALL:
+			_admin_env (AST ('@', opt))
 
 	_START_ENV.update (_ENV)
 

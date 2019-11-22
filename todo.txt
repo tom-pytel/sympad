@@ -1,5 +1,5 @@
-> overhaul server env option command line setting
 > add spt2ast_Mul option to get rationals in front of other multiplicands
+> help.html - convert <p> to tables in appendix
 
 > {()} is binding to lambda functions and variables assigned to lambda functions
 

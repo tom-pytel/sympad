@@ -601,7 +601,7 @@ class _Variables {
 
 			let inserted = false;
 			let isfunc   = n.includes ('(');
-			let e        = $(`<tr><td class="VarTableCell" onclick="copyVarToClipboard (this)">$${v.tex [0]}$</td><td class="VarTableCell" onclick="copyVarToClipboard (this)">$=$</td><td class="VarTableCell" onclick="copyVarToClipboard (this, false)">$${v.tex [1]}$</td></tr>`);
+			let e        = $(`<tr><td onclick="copyVarToClipboard (this)">$${v.tex [0]}$</td><td class="VarTCell" onclick="copyVarToClipboard (this)">$=$</td><td class="VarTCell" onclick="copyVarToClipboard (this, false)">$${v.tex [1]}$</td></tr>`);
 			e [0].name   = n;
 			e [0].val    = v.nat [1];
 			added        = true;

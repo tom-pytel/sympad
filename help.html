@@ -1092,46 +1092,48 @@ For example the quick input functionality "<b>quick</b>" may be turned on by spe
 
 <p>In quick input mode you should always use parentheses and in the case of the "<b>simplify</b>" option you need to use the quoted version "<b>env('simplify')</b>" due to that being a function name and how letters are parsed in quick mode.</p>
 
-<p><b>EI</b> - Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
-This allows the Python code copied from SymPad to work directly with SymPy where the uppercase constants are used.</p>
-<p><b>quick</b> - Quick single letter variable name input mode.</p>
-<p><b>pyS</b> - Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</p>
-<p><b>simplify</b> - Post-evaluation simplification, this can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</p>
-<p><b>matsimp</b> - Matrix simplification, this turns on a patch to SymPy which does a basic simplification step on intermediate matrix multiplication products which prevents matrix operations from blowing up.</p>
-<p><b>doit</b> - Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</p>
-<p><b>N</b> - Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</p>
-<p><b>O</b> - Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</p>
-<p><b>S</b> - Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</p>
-<p><b>gamma</b> - Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</p>
-<p><b>Gamma</b> - Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</p>
-<p><b>zeta</b> - Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</p>
+<table class="HelpTable">
+<tr><td><b>EI</b></td><td>&emsp;-</td><td>Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
+This allows the Python code copied from SymPad to work directly with SymPy where the uppercase constants are used.</td></tr>
+<tr><td><b>quick</b></td><td>&emsp;-</td><td>Quick single letter variable name input mode.</td></tr>
+<tr><td><b>pyS</b></td><td>&emsp;-</td><td>Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</td></tr>
+<tr><td><b>simplify</b></td><td>&emsp;-</td><td>Post-evaluation simplification, this can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</td></tr>
+<tr><td><b>matsimp</b></td><td>&emsp;-</td><td>Matrix simplification, this turns on a patch to SymPy which does a basic simplification step on intermediate matrix multiplication products which prevents matrix operations from blowing up.</td></tr>
+<tr><td><b>doit</b></td><td>&emsp;-</td><td>Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</td></tr>
+<tr><td><b>N</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</td></tr>
+<tr><td><b>O</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</td></tr>
+<tr><td><b>S</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</td></tr>
+<tr><td><b>gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</td></tr>
+<tr><td><b>Gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</td></tr>
+<tr><td><b>zeta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</td></tr>
+</table>
 
 <h4 id="Command Line Arguments">Command Line Arguments</h4>
 
 <p>
-<b>sympad.py</b> [-h | --help] [-v | --version] [-d | --debug] [-n | --nobrowser] [-u | --ugly] [-E | --EI] [-q | --quick] [-y | --nopyS] [-s | --simplify] [-m | -nomatsimp] [-t | --nodoit] [-N | --noN] [-O | --noO] [-S | --noS] [-g | --nogamma] [-G | --noGamma] [-z | --nozeta] [host:port | host | :port]
+<b>sympad.py</b> [options] [host:port | host | :port]
 </p>
 
-<table>
-<tr><td><b>-h, --help</b></td><td>&emsp;- Show help information.</td></tr>
-<tr><td><b>-v, --version</b></td><td>&emsp;- Show version string.</td></tr>
-<tr><td><b>-d, --debug</b></td><td>&emsp;- Dump debug info to server log.</td></tr>
-<tr><td><b>-n, --nobrowser</b></td><td>&emsp;- Don't start system browser to SymPad page.</td></tr>
-<tr><td><b>-u, --ugly</b></td><td>&emsp;- Start in draft display style (only on command line).</td></tr>
-<tr><td><b>-E, --EI</b></td><td>&emsp;- Start with SymPy constants 'E' and 'I' not 'e' and 'i'.</td></tr>
-<tr><td><b>-q, --quick</b></td><td>&emsp;- Start in quick input mode.</td></tr>
-<tr><td><b>-y, --nopyS</b></td><td>&emsp;- Start without Python S escaping.</td></tr>
-<tr><td><b>-s, --simplify</b></td><td>&emsp;- Start with post-evaluation simplification.</td></tr>
-<tr><td><b>-m, --nomatsimp</b></td><td>&emsp;- Start without matrix simplification.</td></tr>
-<tr><td><b>-t, --nodoit</b></td><td>&emsp;- Start without automatic expression doit().</td></tr>
-<tr><td><b>-N, --noN</b></td><td>&emsp;- Start without N function mapping.</td></tr>
-<tr><td><b>-S, --noS</b></td><td>&emsp;- Start without S function mapping.</td></tr>
-<tr><td><b>-O, --noO</b></td><td>&emsp;- Start without O function mapping.</td></tr>
-<tr><td><b>-g, --nobeta</b></td><td>&emsp;- Start without beta function mapping.</td></tr>
-<tr><td><b>-g, --nogamma</b></td><td>&emsp;- Start without gamma function mapping.</td></tr>
-<tr><td><b>-G, --noGamma</b></td><td>&emsp;- Start without Gamma function mapping.</td></tr>
-<tr><td><b>-G, --noLambda</b></td><td>&emsp;- Start without Lambda function mapping.</td></tr>
-<tr><td><b>-z, --nozeta</b></td><td>&emsp;- Start without zeta function mapping.</td></tr>
+<table class="HelpTable">
+<tr><td><b>-h, --help</b></td><td>&emsp;-</td><td>Show help information.</td></tr>
+<tr><td><b>-v, --version</b></td><td>&emsp;-</td><td>Show version string.</td></tr>
+<tr><td><b>-d, --debug</b></td><td>&emsp;-</td><td>Dump debug info to server log.</td></tr>
+<tr><td><b>-n, --nobrowser</b></td><td>&emsp;-</td><td>Don't start system browser to SymPad page.</td></tr>
+<tr><td><b>-u, --ugly</b></td><td>&emsp;-</td><td>Start in draft display style (only on command line).</td></tr>
+<tr><td><b>--EI, --noEI</b></td><td>&emsp;-</td><td>Start with SymPy constants 'E' and 'I' or regular 'e' and 'i'.</td></tr>
+<tr><td><b>--quick, --noquick</b></td><td>&emsp;-</td><td>Start in/not quick input mode.</td></tr>
+<tr><td><b>--pyS, --nopyS</b></td><td>&emsp;-</td><td>Start with/out Python S escaping.</td></tr>
+<tr><td><b>--simplify, --nosimplify</b></td><td>&emsp;-</td><td>Start with/out post-evaluation simplification.</td></tr>
+<tr><td><b>--matsimp, --nomatsimp</b></td><td>&emsp;-</td><td>Start with/out matrix simplification.</td></tr>
+<tr><td><b>--doit, --nodoit</b></td><td>&emsp;-</td><td>Start with/out automatic expression doit().</td></tr>
+<tr><td><b>--N, --noN</b></td><td>&emsp;-</td><td>Start with/out N function.</td></tr>
+<tr><td><b>--S, --noS</b></td><td>&emsp;-</td><td>Start with/out S function.</td></tr>
+<tr><td><b>--O, --noO</b></td><td>&emsp;-</td><td>Start with/out O function.</td></tr>
+<tr><td><b>--beta, --nobeta</b></td><td>&emsp;-</td><td>Start with/out beta function.</td></tr>
+<tr><td><b>--gamma, --nogamma</b></td><td>&emsp;-</td><td>Start with/out gamma function.</td></tr>
+<tr><td><b>--Gamma, --noGamma</b></td><td>&emsp;-</td><td>Start with/out Gamma function.</td></tr>
+<tr><td><b>--Lambda, --noLambda</b></td><td>&emsp;-</td><td>Start with/out Lambda function.</td></tr>
+<tr><td><b>--zeta, --nozeta</b></td><td>&emsp;-</td><td>Start with/out zeta function.</td></tr>
 </table>
 
 <h4 id="Notes">Notes</h4>

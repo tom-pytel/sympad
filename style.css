@@ -199,7 +199,7 @@ i {
 	border-spacing: 0;
 }
 
-.VarTableCell {
+table.VarTable td {
 	padding: 0.25em;
 }
 
@@ -209,4 +209,8 @@ i {
 
 #ValidationError {
 	color: #f99;
+}
+
+table.HelpTable td {
+	vertical-align: top;
 }
