@@ -861,7 +861,7 @@ class ast2nat: # abstract syntax tree -> native text
 				(self._ast2nat_wrap (ast.numer, 0, 1), True) if (ast.numer.is_slice or false_diff) else \
 				self._ast2nat_curly_mul_exp (ast.numer, True, {'=', '<>', '+', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'})
 
-		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if ((_ast_is_neg (ast.denom) and ast.denom.strip_minus.is_div) or ast.denom.is_subs_diff_ufunc or (ast.denom.is_mul and ast.denom.mul [0].is_subs_diff_ufunc)) else \
+		d, ds = (self._ast2nat_wrap (ast.denom, 1), True) if ((_ast_is_neg (ast.denom) and ast.denom.strip_minus.is_div) or ast.denom.strip_minus.is_subs_diff_ufunc or (ast.denom.is_mul and ast.denom.mul [0].is_subs_diff_ufunc)) else \
 				(self._ast2nat_wrap (ast.denom, 0, 1), True) if ast.denom.is_slice else \
 				self._ast2nat_curly_mul_exp (ast.denom, True, {'=', '<>', '+', '/', '-lim', '-sum', '-diff', '-intg', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not'})
 
@@ -949,7 +949,7 @@ class ast2nat: # abstract syntax tree -> native text
 
 	def _ast2nat_slice (self, ast):
 		b = _ast_slice_bounds (ast)
-		s = ':'.join (self._ast2nat_wrap (a, a is not b [-1] and not a.is_diff and a.has_tail_lambda_solo, a.op in {'=', ',', '-lamb', '-slice'}) for a in b)
+		s = ':'.join (self._ast2nat_wrap (a, a is not b [-1] and not a.op in {'/', '-diff'} and a.has_tail_lambda_solo, a.op in {'=', ',', '-lamb', '-slice'}) for a in b)
 
 		return self._ast2nat_wrap (s, 0, not ast.start and self.parent.is_comma and ast is self.parent.comma [0] and self.parents [-2].is_ass and self.parent is self.parents [-2].rhs)
 
@@ -1980,12 +1980,12 @@ if __name__ == '__main__': # DEBUG!
 	# set_sym_user_funcs (set (vars))
 	# set_sym_user_vars (vars)
 
-	ast = AST ('@', 'Naturals0')
+	ast = AST ('(', ('-slice', ('/', ('+', (('-or', (('@', 'zoo'), ('@', 'a'), ('@', 'c'))), ('-diff', ('@', 'b'), 'd', (('z', 2), ('z', 1), ('y', 2))))), ('-', ('-not', ('@', 'lambda')))), False, False))
 	# res = ast2tex (ast)
-	# res = ast2nat (ast)
+	res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	res = ast2spt (ast)
+	# res = ast2spt (ast)
 	# res = spt2ast (res)
 	# res = ast2nat (res)
 

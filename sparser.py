@@ -10,18 +10,19 @@ from lalr1 import Token, State, Incomplete, PopConfs, Reduce, LALR1 # , KeepConf
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-RESERVED_WORDS      = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | AST.Func.PY
+RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | AST.Func.PY
 
-_SP_USER_FUNCS      = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
-_SP_USER_VARS       = {} # flattened user vars {name: ast, ...}
+_SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
+_SP_USER_VARS  = {} # flattened user vars {name: ast, ...}
 
-_rec_valid_var_name = re.compile (fr'^(?:(?:[A-Za-z]\w*)|(?:[{"".join (AST.Var.GREEKUNI)}]))$')
+_rec_valid_var_name       = re.compile (fr'^(?:(?:[A-Za-z]\w*)|(?:[{"".join (AST.Var.GREEKUNI)}]))$')
+_rec_valid_var_name_quick = re.compile (fr'^(?:[A-Za-z{"".join (AST.Var.GREEKUNI)}]\d*)$')
 
 def _raise (exc):
 	raise exc
 
-def _is_valid_var_name (text):
-	m = _rec_valid_var_name.match (text)
+def _is_valid_var_name (self, text):
+	m = self.rec_valid_var_name.match (text)
 
 	return m and not text.endswith ('_')
 
@@ -476,6 +477,10 @@ def _expr_mul_imp (lhs, rhs):
 		elif rhs.numer.is_mul and rhs.numer.mul [0].is_intg:
 			return PopConfs (AST ('/', AST.flatcat ('*', lhs, rhs.numer), rhs.denom))
 
+	elif rhs.is_mulexp:
+		if rhs.mul [0].is_div and rhs.mul [0].numer.is_intg:
+			return PopConfs (AST ('*exp', (('/', ('*', (lhs, rhs.mul [0].numer)), rhs.mul [0].denom), *rhs.mul [1:])))
+
 	return PopConfs (AST.flatcat ('*', lhs, rhs))
 
 def _expr_intg (ast, from_to = ()): # find differential for integration if present in ast and return integral ast
@@ -549,7 +554,7 @@ def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', 
 
 	return Reduce
 
-def _expr_ufunc (args, py = False, name = ''):
+def _expr_ufunc (self, args, py = False, name = ''):
 	if py:
 		args, kw = AST.args2kwargs (args.comma if args.is_comma else (args,))
 
@@ -565,7 +570,7 @@ def _expr_ufunc (args, py = False, name = ''):
 		if not argskw:
 			raise SyntaxError ('invalid undefined function arguments')
 
-	if name and (name in RESERVED_WORDS or not _is_valid_var_name (name)):
+	if name and (name in RESERVED_WORDS or not _is_valid_var_name (self, name)):
 		raise SyntaxError (f'invalid undefined function name {name!r}')
 
 	if AST ('@', name).is_var_const:
@@ -575,33 +580,32 @@ def _expr_ufunc (args, py = False, name = ''):
 
 def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 	arg, wrapa = _ast_func_reorder (rhs)
-	argsc      = arg # .strip_curly_of_paren_tex
 
 	if var.var in _SP_USER_FUNCS:
-		if argsc.is_paren:
+		if arg.is_paren:
 			return PopConfs (wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg)))))
-		elif var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have two parenthesized args
+		elif not (arg.is_curly and arg.strip_curly.is_paren) and var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have parenthesized args (because they take two)
 			return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
 
-	elif var.var != '_' and argsc.is_paren and var.is_var_nonconst and argsc.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
+	elif var.var != '_' and arg.is_paren and var.is_var_nonconst and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
 
 		if ufunc.op is None:
-			return PopConfs (wrapa (AST ('-ufunc', var.var, *argsc.paren.as_ufunc_argskw, src_rhs = rhs)))
+			return PopConfs (wrapa (AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw, src_rhs = rhs)))
 
 		elif ufunc.is_ufunc:
 			if ufunc.is_ufunc_unapplied:
-				ast = ufunc.apply_argskw (argsc.paren.as_ufunc_argskw)
+				ast = ufunc.apply_argskw (arg.paren.as_ufunc_argskw)
 
 				if ast:
 					return PopConfs (wrapa (ast))
 
-			elif ufunc.can_apply_argskw (argsc.paren.as_ufunc_argskw):
-				return PopConfs (wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, argsc.paren.comma if argsc.paren.is_comma else (argsc.paren,)))))))
+			elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
+				return PopConfs (wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))))))
 
 	return Reduce
 
-def _expr_sym (args, py = False, name = ''):
+def _expr_sym (self, args, py = False, name = ''):
 	args, kw = AST.args2kwargs (args.comma if args.is_comma else (args,))
 
 	if py:
@@ -613,7 +617,7 @@ def _expr_sym (args, py = False, name = ''):
 	elif args:
 		raise SyntaxError ('$ does not take direct arguments, only keyword assumptions')
 
-	if name and (name in RESERVED_WORDS or not _is_valid_var_name (name)):
+	if name and (name in RESERVED_WORDS or not _is_valid_var_name (self, name)):
 		raise SyntaxError (f'invalid symbol name {name!r}')
 
 	if AST ('@', name).is_var_const:
@@ -734,13 +738,17 @@ def _expr_num (NUM):
 #...............................................................................................
 class Parser (LALR1):
 	def __init__ (self):
+		LALR1.__init__ (self)
+
 		self.TOKENS_LONG.update ([(v, self.TOKENS [v]) for v in self.TOKENS_QUICK])
 
-		LALR1.__init__ (self)
+		self.rec_valid_var_name = _rec_valid_var_name
 
 	def set_quick (self, state = True):
 		self.TOKENS.update (self.TOKENS_QUICK if state else self.TOKENS_LONG)
 		self.set_tokens (self.TOKENS)
+
+		self.rec_valid_var_name = _rec_valid_var_name_quick if state else _rec_valid_var_name
 
 	_PARSER_TABLES = \
 			b'eJztnXmv3DaW6L/MA9oGqgBJpEjp/ucsPROMs0yWnmkYQeAk7kHwsiFO8nowmO/+zkbqUEWVpCpd31oIy1cSRXE7h+cnUoeqZ6/+8sX7n7789JO/7P7yf978/D3swun7X33+8u8v4eDlN5+9+PzDT/AwHrz85r3PX7z/b3gYD77661efvP/Z38MR7D/59Ev4' \
@@ -970,11 +978,11 @@ class Parser (LALR1):
 
 	_PYGREEK_QUICK = '(?:' + '|'.join (sorted ((g for g in AST.Var.GREEK), reverse = True)) + ')'
 	_PYMULTI_QUICK = '(?:' + '|'.join (sorted ((g for g in AST.Var.PY2TEXMULTI), reverse = True)) + ')'
-	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}|{_LTR}\d*)'
-	_VAR_QUICK     = fr'(?:{_VARTEX}|{_VARPY_QUICK}|{_VARUNI})'
+	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}\d*|None|True|False|nan|{_LTR}\d*)'
+	_VAR_QUICK     = fr'(?:{_VARTEX}|{_PYMULTI_QUICK}\d*|{_VARPY_QUICK}|{_VARUNI})'
 
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens (differences from normal)
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:\w|\\_)*)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:(?:\w|\\_)*{_LTRD})?)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'\\lim_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
@@ -997,7 +1005,7 @@ class Parser (LALR1):
 		('LOG',           r'log(?!\w|\\_)|\\log'),
 		('LN',            r'ln(?!\w|\\_)|\\ln'),
 
-		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))(partial|{_VAR_QUICK})|(None|True|False|{_PYMULTI_QUICK}|{_VAR_QUICK}))()"),
+		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))(partial|{_VAR_QUICK})|({_VAR_QUICK}))(?:(?<!\d)_{{(\d+)}})?"),
 	])
 
 	TOKENS_LONG    = OrderedDict () # initialized in __init__()
@@ -1128,8 +1136,6 @@ class Parser (LALR1):
 
 	def expr_abs_1         (self, L_BAR, expr_commas, R_BAR):                          return AST ('|', expr_commas) if not expr_commas.is_comma else _raise (SyntaxError ('absolute value does not take a comma expression'))
 	def expr_abs_2         (self, BAR1, expr_commas, BAR2):                            return AST ('|', expr_commas) if not expr_commas.is_comma else _raise (SyntaxError ('absolute value does not take a comma expression'))
-	# def expr_abs_1         (self, L_BAR, expr, R_BAR):                                 return AST ('|', expr)
-	# def expr_abs_2         (self, BAR1, expr, BAR2):                                   return AST ('|', expr)
 	def expr_abs_3         (self, expr_paren):                                         return expr_paren
 
 	def expr_paren_1       (self, expr_pcommas):                                       return AST ('(', expr_pcommas, is_paren_tex = expr_pcommas.is_commas_tex) if not expr_pcommas.is_lamb_mapsto else expr_pcommas.setkw (is_lamb_mapsto = False)
@@ -1146,17 +1152,17 @@ class Parser (LALR1):
 	def expr_ufunc_ics_1   (self, expr_ufunc, expr_pcommas):                           return _expr_ufunc_ics (self, expr_ufunc, expr_pcommas)
 	def expr_ufunc_ics_2   (self, expr_ufunc):                                         return expr_ufunc
 
-	def expr_ufunc_1       (self, UFUNCPY, expr_pcommas):                              return _expr_ufunc (expr_pcommas, py = True)
-	def expr_ufunc_2       (self, UFUNC, expr_var, expr_pcommas):                      return _expr_ufunc (expr_pcommas, name = expr_var.var)
-	def expr_ufunc_3       (self, UFUNC, expr_pcommas):                                return _expr_ufunc (expr_pcommas)
+	def expr_ufunc_1       (self, UFUNCPY, expr_pcommas):                              return _expr_ufunc (self, expr_pcommas, py = True)
+	def expr_ufunc_2       (self, UFUNC, expr_var, expr_pcommas):                      return _expr_ufunc (self, expr_pcommas, name = expr_var.var)
+	def expr_ufunc_3       (self, UFUNC, expr_pcommas):                                return _expr_ufunc (self, expr_pcommas)
 	def expr_ufunc_4       (self, expr_varfunc):                                       return expr_varfunc
 
 	def expr_varfunc_2     (self, expr_var_or_sub, expr_intg):                         return _expr_varfunc (self, expr_var_or_sub, expr_intg)
 	def expr_varfunc_3     (self, expr_sym):                                           return expr_sym
 
-	def expr_sym_1         (self, SYMPY, expr_pcommas):                                return _expr_sym (expr_pcommas, py = True)
-	def expr_sym_2         (self, SYM, expr_var, expr_pcommas):                        return _expr_sym (expr_pcommas, name = expr_var.var)
-	def expr_sym_3         (self, SYM, expr_pcommas):                                  return _expr_sym (expr_pcommas)
+	def expr_sym_1         (self, SYMPY, expr_pcommas):                                return _expr_sym (self, expr_pcommas, py = True)
+	def expr_sym_2         (self, SYM, expr_var, expr_pcommas):                        return _expr_sym (self, expr_pcommas, name = expr_var.var)
+	def expr_sym_3         (self, SYM, expr_pcommas):                                  return _expr_sym (self, expr_pcommas)
 	def expr_sym_4         (self, expr_subs):                                          return expr_subs
 
 	def expr_subs_1        (self, L_DOT, expr_commas, R_BAR, SUB, CURLYL, subsvars, CURLYR):  return _expr_subs (expr_commas, subsvars)
@@ -1451,11 +1457,11 @@ class sparser: # for single script
 if __name__ == '__main__': # DEBUG!
 	p = Parser ()
 
-	p.set_quick (True)
+	# p.set_quick (True)
 
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
-	# _SP_USER_FUNCS.update ({'_'})
-	# set_sp_user_vars ({'_': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
+	_SP_USER_FUNCS.update ({'f'})
+	set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
 
 
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
@@ -1478,6 +1484,7 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d**2 / dy dx (f) (3)")
 	# a = p.parse (r"d/dx (f) (3)")
 
-	a = p.parse (r"\mathbb{N}_0")
+	a = p.parse (r"f{(x)}")
+	# a = p.parse (r"f{\left(x\right)}")
 	print (a)
 

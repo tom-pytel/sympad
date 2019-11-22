@@ -469,7 +469,9 @@ partialx/\partialy(x,real=True)(0)
 1 / {{d/dx (g(x))(0)} a}
 Function('f', positive = True)(x, real = True)
 \left. x \right|_{{f(x, commutative = True)} = 1}
-#|x,|
+{a \int x dx / c}*b
+{( {\frac{ { { \tilde\infty  } or { a } or { c } }+{ d^{5} / dz^{2} dz^{1} dy^{2} { b } } }{ -{ not { \lambda } } } } :  :  )}
+a / { -{d/dx (?f(x))(0)}}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

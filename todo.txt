@@ -1,22 +1,15 @@
 > help.html - convert <p> to tables in appendix
 
-> {()} is binding to lambda functions and variables assigned to lambda functions
-
 > (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
-
-> set full result of assignment to previous variable '_'
-
-> ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 > "d / 2" is "(d) / 2", fix it
 
-> change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
+> ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
 
-> SymmetricDifference()
 
 
 > test_sym cases - call derivative of lambda
@@ -24,16 +17,19 @@
 > "d / dx (2)" vs. "d**2 / dx (2)" when dx is a lambda, intricate - would need to analyze parser stack to see if valid diff, but if someone is naming their lambdas "dx" that is their problem
 > better potential derivative test than self.stack_has_sym ('DIVIDE')
 
+> subs autocomplete
+
+
 > \operatorname ufuncs from sympy latex
 
-> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
+> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > keep track of what undefined functions are created during processing?
 
+> set full result of assignment to previous variable '_'?
 
 
-
-> subs autocomplete
+> SymmetricDifference()
 
 > \int doesn't need curlys for star multiply
 > subs clarity parentheses for tex display like d/dx (f), attr, etc...?
@@ -45,7 +41,10 @@
 
 > "__" subscript shortcut with rules like "**"?
 
+> change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
+
+> doc: quick mode variables can have numerical tails as subscripts
 > doc: caveats with variable mapping and functions like Integral, Sum due to their unfree vars being remapped
 > doc: new == vs. = display behavior
 > doc: change to binding priority - sin**f(x) - sin**a.b(x) - sin**a.b{x}
@@ -269,7 +268,3 @@ Slow parse - These are slow due to abuse of regex!
 Errors:
 -------
 
-
-text: {\{{\. { { 1 }! } |_{{ -{ -1.0 } } = {Symbol('RQ', )}}}}}
-ast:  ('-set', (('-subs', ('!', ('#', '1')), ((('-', ('#', '-1.0')), ('-sym', 'RQ')),)),))
-tex1: \left\{\left. 1! \right|_{--1.0 = \$RQ\left( \right)} \right\}
