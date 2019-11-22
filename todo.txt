@@ -12,9 +12,9 @@
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
+> redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 > "d / 2" is "(d) / 2", fix it
 
-> redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
 
@@ -250,8 +250,8 @@ print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
 19
 
 
-Slow parse:
------------
+Slow parse - These are slow due to abuse of regex!
+--------------------------------------------------
 
 283.53125s: \[[ \arccot() or  \[[ \lambda ,],[ w_{1} ,],[ 0 ,],] \cdot $zRF(real = True) \cdot  d^{5} / dy^{3} dy^{2}  \emptyset    or    x0  if  1e100    else  None  if  1.0   \cdot   \Phi_{27}  /  \partialy   \cdot   False  \cdot  1.0  \cdot  0.01466869603275454    ,\int  \frac "s"  eta   /  lambda_{4} ;  .1 ;  b ;  1.   dCneFiF4u ,   oo  ||  -4.383422266575117e-14   in \log_ \omega  Pi   in \int  dz  dh  \cdot   dx  \cdot  \psi_{84}  \cdot  True  ' ,],[\[ \left| a \right|*\left| z20 \right| ,   w_{1} !  ||   a  or  1   ||   Theta  or  1.   ,],\.  \[ \partial x , 1. ,]* \emptyset ;  dy ;  xyzd ;  \tilde\infty  *  None  if  26320873337533.05    else  21134.155295076693    |_{\substack{   1.2227127498338437e+19  ^^  "s"  ^^  \partialy   / \.  \Xi  |_{ c  =  y1 ,  eta  =  \Gamma_{51} ,  sigma  =  -.1 }  = $QV(commutative = True) \\    None  and  \emptyset   and  partial^{4} / partialz^{2} partialx^{1} partialz^{1}  -0.0008452535981829209    =   difference_delta((())) and   None  &&  \xi  &&  beta   }},\sum_{x =  {{{ 1e100 , c , 2 }}}** partial  in  0  not in  False  not in  \Lambda  }^   -7.85992240533836e+20  [ None ,  b ]^  \infty zoo  and  \Psi_{93}     { 0 , "s" }^\sum_{x =  \partial x }^ oo   dx    ,],]
 163.28125s: lambda:   - xyzd   if u(x, y, z)   and  (  :  62313.47619053531  :  , dy ',  1.0  [ z20 ,  \partial x ]) && \left.   1e+100  or  1e+100   \right|_{\substack{  dx !  = \sqrt[ \phi_{29} ] -5.529339448748291e-09  }}  and \sum_{x = \[  dx .bO0xI.z4rtZp4N() ,\int  0  dT ,\left.  0  \right|_{\substack{ None  =  partial  \\  1e+100  =  6.352354272671388e-16 }},]}^ \left| \partialy \right| and   \partial   ||  \partial x       -1.0  &&  1.0  &&  -1.5418373774276718e-05   &&   \tilde\infty   \cdot  \partial x  \cdot  0   &&  \tilde\infty  ;  oo
@@ -263,14 +263,9 @@ Slow parse:
 10.125s:    {NONE:':1**3.480067056030083e-12\cdot36094604.0569791^2,\sum_{x=\sum_{x=\partialx}^dydz}^minpoly(((\emptyset)))\sqrt[-1.7454803239022647e-10]kappa:lambdax,y,z:b.teI5N().dH()},-1e+100^^\[\partialx,]^^$ouQVqO(real=True)+\.\left.\partialy\right|_{\tilde\infty=z20}|_{\substack{-2.335660686903354e-20;partial;2.9245005768789054e-13;1.8693689910922626e-21=\.z20|_{None=1e+100,1.458621 6274097632e-09=oo_{76},partial=0}\\w_{1}&&-3.357729778121166e-11&&x0=\upsilon,\partial\\-.1!=b+\partialy}}
 5.859375s:  \left.notb[-0.012450983090926753,partial,True]*\frac ()1e-100**\partialx*"s"'/partialx&&\iota\right|_{\int_partialx.xU5FHek()^1e+100>=dzd**3/dydxdx(h(x,y,real=True))dd&&\lim_{x\to1}1.0,?()(),\lim_{x\to-1.0}dz=-1.CvNb.IU().W5vX6rtI[\[[$tBZvdy(real=True,commutative=True),lambdax,y:\alpha,],[\partialx=2.745117662780435e-08,a&&w_{1},],[\lim_{x\topartial}xyzd,\tilde\infty,\partialx,],],\sum_{x=BlockDiagMatrix(1e100,c,\partialy)}^--11.0.dg.FcNr]=\{},{{1.0[1.,False,\inftyzoo]}}^[[[-7.141733656844623e-16,"s"]]]/\emptyset^^xyzd}
 2.765625s:  {lambda:{\tilde\infty:None,y1:\partialx}[partial^{2}/partialy^{2}\sqrt[\tilde\infty]\partial,Function('',)(x)(0),\sum_{x=0}^c1.*"s"'*\ln\partial] :\partialx\cdot1e100\cdot-.1/False,1.0if1.,-1,1e-100**1.0[-1],\lim_{x\to{{{oo}}}}\lim_{x\to0}\partialyand\left|\partialy\right|\cdot\tilde\infty^^"s"^^Lambda:d^{3}/dx^{1}dz^{2}\[\partialyifpartialxelse1e-100ifTrueelse-1,\partialyor1e-100,]}
-- These are slow due to abuse of regex!
+
 
 Errors:
 -------
 
 
-text: d^{3}/dz^{3}(\partialy/26.837972631310173partial^{4}/partialx^{2}part ialz^{2}22110173partial^{4}/partialx^{2}part ialz^{2}221588929897.21933)notin\left|:\partialx,\right|
-ast:  ('*', (('-diff', ('(', ('/', ('/', ('/', ('@', 'partialy'), ('*', (('#', '26.837972631310173'), ('^', ('@', 'partial'), ('#', '4'))))), ('*', (('^', ('@', 'partialx'), ('#', '2')), ('@', 'part'), ('^', ('@', 'ialz'), ('#', '2')), ('#', '22110173'), ('^', ('@', 'partial'), ('#', '4'))))), ('*', (('^', ('@', 'partialx'), ('#', '2')), ('@', 'part'), ('^', ('@', 'ialz'), ('#', '2')), ('#', '221588929897.21933'))))), 'd', (('z', 3),)), ('@', 'notin'), ('|', (',', (('-slice', False, ('@', 'partialx'), None),)))))
-ast:  ('*', (('-func', 'Derivative', (('/', ('(', ('/', ('(', ('/', ('@', 'partialy'), ('(', ('*', (('#', '26.837972631310173'), ('^', ('@', 'partial'), ('#', '4'))), {1})))), ('(', ('*', (('^', ('@', 'partialx'), ('#', '2')), ('@', 'part'), ('^', ('@', 'ialz'), ('#', '2')), ('#', '22110173'), ('^', ('@', 'partial'), ('#', '4'))), {1, 2, 3, 4})))), ('(', ('*', (('^', ('@', 'partialx'), ('#', '2')), ('@', 'part'), ('^', ('@', 'ialz'), ('#', '2')), ('#', '221588929897.21933')), {1, 2, 3}))), ('@', 'z'), ('#', '3'))), ('@', 'notin'), ('-func', 'abs', (('-func', 'slice', (('@', 'partialx'),)),))), {1, 2})
-py1:  Derivative(((partialy / (26.837972631310173*partial**4)) / (partialx**2*part*ialz**2*22110173*partial**4)) / (partialx**2*part*ialz**2*221588929897.21933), z, 3)*notin*abs(slice(partialx),)
-py2:  Derivative(((partialy / (26.837972631310173*partial**4)) / (partialx**2*part*ialz**2*22110173*partial**4)) / (partialx**2*part*ialz**2*221588929897.21933), z, 3)*notin*abs(slice(partialx))

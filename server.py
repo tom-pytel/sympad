@@ -557,15 +557,7 @@ def start_server (logging = True):
 	if ('--ugly', '') in __OPTS or ('-u', '') in __OPTS:
 		_DISPLAYSTYLE [0] = 0
 
-	# make sure all env options are initialized according to command line options
-	# for short, long in zip ('EqysmtNOSbgGLz', \
-	# 		['EI', 'quick', 'nopyS', 'simplify', 'nomatsimp', 'nodoit', 'noN', 'noO', 'noS', 'nobeta', 'nogamma', 'noGamma', 'noLambda', 'nozeta']):
-	# 	if (f'--{long}', '') in __OPTS or (f'-{short}', '') in __OPTS:
-	# 		_admin_env (AST ('@', long))
-	# 	else:
-	# 		_admin_env (AST ('@', long [2:] if long [:2] == 'no' else f'no{long}'))
-
-	for opt, arg in __OPTS:
+	for opt, _ in __OPTS:
 		opt = opt.lstrip ('-')
 
 		if opt in _ENV_CLOPTS_ALL:
