@@ -873,7 +873,7 @@ class Parser (LALR1):
 	_FUNCPY   = f"(?:{'|'.join (sorted (AST.Func.PY, reverse = True))})"
 	_FUNCTEX  = f"(?:{'|'.join (sorted (AST.Func.TEX, reverse = True))})"
 
-	TOKENS    = OrderedDict ([ # order matters due to Python regex non-greedy or
+	TOKENS    = OrderedDict ([ # order matters due to Python regex non-greedy or operator '|'
 		('UFUNC',        fr'\?'),
 		('UFUNCPY',       r'Function(?!\w|\\_)'),
 		('SYM',          fr'\$|\\\$'),

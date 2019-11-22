@@ -30,8 +30,8 @@ class AST_Text (AST): # for displaying elements we do not know how to handle, on
 
 AST.register_AST (AST_Text)
 
-class EqAss (sp.Eq): # assignment instead of equality comparison
-	pass
+class EqAss (sp.Eq): pass # explicit assignment instead of equality comparison
+class EqCmp (sp.Eq): pass # explicit equality comparison instead of assignment
 
 class NoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
 	is_number    = False
@@ -198,6 +198,20 @@ def _ast_is_top_ass_lhs (self, ast):
 	return (self.parent.is_ass and ast is self.parent.lhs and self.parents [-2].op in {None, ';'}) or \
 		(self.parent.is_comma and self.parents [-2].is_ass and self.parent is self.parents [-2].lhs and self.parents [-3].op in {None, ';'})
 
+def _ast_eqcmp2ass (ast, parent = AST.Null):
+	if not isinstance (ast, AST):
+		return ast
+
+	if ast.is_cmp and not ast.is_cmp_explicit and ast.cmp.len == 1 and ast.cmp [0] [0] == '==' and (
+			parent.op in {None, ';', '<>', ',', '(', '[', '-', '!', '+', '*', '/', '^', '-log', '-sqrt', '-diff', '-diffp', '-mat', '-lamb', '-idx', '-set', '||', '^^', '&&', '-subs'} or
+			parent.is_attr_var or
+			(parent.is_attr_func and (ast is parent.obj or not ast.lhs.as_identifier)) or
+			(parent.op in {'-lim', '-sum', '-intg'} and ast is parent [1]) or
+			(parent.is_func and not ast.lhs.as_identifier)):
+		return AST ('=', _ast_eqcmp2ass (ast.lhs, ast), _ast_eqcmp2ass (ast.cmp [0] [1], ast))
+
+	return AST (*(_ast_eqcmp2ass (a, ast) for a in ast))
+
 def _ast_slice_bounds (ast, None_ = AST.VarNull, allow1 = False):
 	if allow1 and not ast.start and not ast.step:
 		return (ast.stop or None_,)
@@ -302,14 +316,14 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'\\left({s} \\right)' if paren else f'{{{s}}}' if curly else s
 
 	def _ast2tex_cmp (self, ast):
-		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==' and (
-				self.parent.op in {None, ';', '<>', ',', '(', '[', '-', '!', '+', '*', '/', '^', '-log', '-sqrt', '-diff', '-diffp', '-mat', '-lamb', '-idx', '-set', '||', '^^', '&&', '-subs'} or
-				self.parent.is_attr_var or
-				(self.parent.is_attr_func and (ast is self.parent.obj or not ast.lhs.as_identifier)) or
-				(self.parent.op in {'-lim', '-sum', '-intg'} and ast is self.parent [1]) or
-				(self.parent.is_func and not ast.lhs.as_identifier) or
-				(self.parent.is_piece and any (ast is p [0] for p in self.parent.piece))):
-			return f'{self._ast2tex_cmp_hs (ast.lhs)} = {self._ast2tex_cmp_hs (ast.cmp [0] [1])}'
+		# if ast.cmp.len == 1 and ast.cmp [0] [0] == '==' and (
+		# 		self.parent.op in {None, ';', '<>', ',', '(', '[', '-', '!', '+', '*', '/', '^', '-log', '-sqrt', '-diff', '-diffp', '-mat', '-lamb', '-idx', '-set', '||', '^^', '&&', '-subs'} or
+		# 		self.parent.is_attr_var or
+		# 		(self.parent.is_attr_func and (ast is self.parent.obj or not ast.lhs.as_identifier)) or
+		# 		(self.parent.op in {'-lim', '-sum', '-intg'} and ast is self.parent [1]) or
+		# 		(self.parent.is_func and not ast.lhs.as_identifier) or
+		# 		(self.parent.is_piece and any (ast is p [0] for p in self.parent.piece))):
+		# 	return f'{self._ast2tex_cmp_hs (ast.lhs)} = {self._ast2tex_cmp_hs (ast.cmp [0] [1])}'
 
 		return f'{self._ast2tex_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PY2TEX.get (r, r)} {self._ast2tex_cmp_hs (e)}" for r, e in ast.cmp)}'
 
@@ -651,7 +665,6 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-intg' : _ast2tex_intg,
 		'-mat'  : lambda self, ast: '\\begin{bmatrix} ' + r' \\ '.join (' & '.join (self._ast2tex_wrap (e, 0, e.is_slice) for e in row) for row in ast.mat) + f'{" " if ast.mat else ""}\\end{{bmatrix}}',
 		'-piece': lambda self, ast: '\\begin{cases} ' + r' \\ '.join (f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "-slice"})} & \\text{{otherwise}}' if p [1] is True else f'{self._ast2tex_wrap (p [0], 0, {"=", "<>", ",", "-slice"})} & \\text{{for}}\\: {self._ast2tex_wrap (p [1], 0, {"-slice"})}' for p in ast.piece) + ' \\end{cases}',
-		# '-lamb' : lambda self, ast: f'\\left({self._ast2tex (AST ("@", ast.vars [0]) if ast.vars.len == 1 else AST ("(", (",", tuple (("@", v) for v in ast.vars))))} \\mapsto {self._ast2tex_wrap (ast.lamb, 0, ast.lamb.is_ass)} \\right)',
 		'-lamb' : lambda self, ast: f'\\left({self._ast2tex (AST ("@", ast.vars [0]) if ast.vars.len == 1 else AST ("(", (",", tuple (("@", v) for v in ast.vars))))} \\mapsto {self._ast2tex (ast.lamb)} \\right)',
 		'-idx'  : _ast2tex_idx,
 		'-slice': lambda self, ast: self._ast2tex_wrap ('{:}'.join (self._ast2tex_wrap (a, a and _ast_is_neg (a), a and a.op in {'=', ',', '-slice'}) for a in _ast_slice_bounds (ast, '')), 0, not ast.start and self.parent.is_comma and ast is self.parent.comma [0] and self.parents [-2].is_ass and self.parent is self.parents [-2].rhs),
@@ -733,13 +746,13 @@ class ast2nat: # abstract syntax tree -> native text
 		return self._ast2nat_wrap (hs, 0, {'=', '<>', '-piece', '-lamb', '-slice', '-or', '-and', '-not'})
 
 	def _ast2nat_cmp (self, ast):
-		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==' and (
-				self.parent.op in {None, ';', '<>', ',', '(', '[', '-', '!', '+', '*', '/', '^', '-log', '-sqrt', '-diff', '-diffp', '-mat', '-lamb', '-idx', '-set', '||', '^^', '&&', '-subs'} or
-				self.parent.is_attr_var or
-				(self.parent.is_attr_func and (ast is self.parent.obj or not ast.lhs.as_identifier)) or
-				(self.parent.op in {'-lim', '-sum', '-intg'} and ast is self.parent [1]) or
-				(self.parent.is_func and not ast.lhs.as_identifier)):
-			return f'{self._ast2nat_cmp_hs (ast.lhs)} = {self._ast2nat_cmp_hs (ast.cmp [0] [1])}'
+		# if ast.cmp.len == 1 and ast.cmp [0] [0] == '==' and (
+		# 		self.parent.op in {None, ';', '<>', ',', '(', '[', '-', '!', '+', '*', '/', '^', '-log', '-sqrt', '-diff', '-diffp', '-mat', '-lamb', '-idx', '-set', '||', '^^', '&&', '-subs'} or
+		# 		self.parent.is_attr_var or
+		# 		(self.parent.is_attr_func and (ast is self.parent.obj or not ast.lhs.as_identifier)) or
+		# 		(self.parent.op in {'-lim', '-sum', '-intg'} and ast is self.parent [1]) or
+		# 		(self.parent.is_func and not ast.lhs.as_identifier)):
+		# 	return f'{self._ast2nat_cmp_hs (ast.lhs)} = {self._ast2nat_cmp_hs (ast.cmp [0] [1])}'
 
 		return f'{self._ast2nat_cmp_hs (ast.lhs)} {" ".join (f"{AST.Cmp.PYFMT.get (r, r)} {self._ast2nat_cmp_hs (e)}" for r, e in ast.cmp)}'
 
@@ -1007,7 +1020,6 @@ class ast2nat: # abstract syntax tree -> native text
 		'-intg' : _ast2nat_intg,
 		'-mat'  : _ast2nat_mat,
 		'-piece': lambda self, ast: ' else '.join (f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "-piece", "-lamb"}, {",", "-slice"})}' if p [1] is True else f'{self._ast2nat_wrap (p [0], p [0].op in {"=", "-piece", "-lamb"}, {",", "-slice"})} if {self._ast2nat_wrap (p [1], p [1].op in {"=", "-piece", "-lamb"}, {",", "-slice"})}' for p in ast.piece),
-		# '-lamb' : lambda self, ast: f'lambda{" " + ", ".join (ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.is_lamb, ast.lamb.op in {"=", "<>", "-slice"})}',
 		'-lamb' : lambda self, ast: f'lambda{" " + ", ".join (ast.vars) if ast.vars else ""}: {self._ast2nat_wrap (ast.lamb, ast.lamb.op in {"=", "<>", "-lamb"}, ast.lamb.is_slice)}',
 		'-idx'  : _ast2nat_idx,
 		'-slice': _ast2nat_slice,
@@ -1343,7 +1355,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			return lhs == rhs # fall back to Python comparison
 
 	_ast2spt_cmpfuncs = {
-		'=='   : (sp.Eq, lambda a, b: a == b),
+		'=='   : (EqCmp, lambda a, b: a == b),
 		'!='   : (sp.Ne, lambda a, b: a != b),
 		'<'    : (sp.Lt, lambda a, b: a < b),
 		'<='   : (sp.Le, lambda a, b: a <= b),
@@ -1504,7 +1516,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	def _ast2spt_lamb (self, ast):
 		i = self.parent.mul.index (ast) if self.parent.is_mul else None
 
-		if not (self.parent.op in {None, ',', '[', '-func', '-lamb', '-set', '-dict'} or # '(', # treat body of lambda as expression for calculation?
+		if not (self.parent.op in {None, ',', '[', '-func', '-lamb', '-set', '-dict'} or # '(', # treat body of lambda as expression for calculation
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
 			return self._ast2spt (AST.apply_vars (ast.lamb, _SYM_USER_VARS))
@@ -1610,7 +1622,7 @@ class spt2ast:
 		self.parents = [None]
 		self.parent  = self.spt = None
 
-		return self._spt2ast (spt)
+		return _ast_eqcmp2ass (self._spt2ast (spt))
 
 	def _spt2ast (self, spt): # sympy tree (expression) -> abstract syntax tree
 		def __spt2ast (spt):
@@ -1620,15 +1632,16 @@ class spt2ast:
 				if func:
 					return func (self, spt)
 
-			tex = sp.latex (spt)
+			tex  = sp.latex (spt)
+			text = str (spt)
 
-			if tex == str (spt): # no native latex representation?
+			if tex == text: # no native latex representation?
 				tex = tex.replace ('_', '\\_')
 
 			if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
 				tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
 
-			return AST ('-text', tex, str (spt), str (spt), spt)
+			return AST ('-text', tex, text, text, spt)
 
 		self.parents.append (self.spt)
 
@@ -1848,6 +1861,7 @@ class spt2ast:
 		sp.Not: lambda self, spt: AST ('-not', self._spt2ast (spt.args [0])),
 
 		EqAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
+		EqCmp: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('==', self._spt2ast (spt.args [1])),), is_cmp_explicit = True),
 		sp.Eq: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('==', self._spt2ast (spt.args [1])),)),
 		sp.Ne: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('!=', self._spt2ast (spt.args [1])),)),
 		sp.Lt: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('<',  self._spt2ast (spt.args [1])),)),
@@ -1938,10 +1952,13 @@ if __name__ == '__main__': # DEBUG!
 	# set_sym_user_funcs (set (vars))
 	# set_sym_user_vars (vars)
 
-	ast = AST ('-subs', ('@', 'x'), ((('-ufunc', 'f', (('@', 'x'),), (('commutative', ('@', 'True')),)), ('#', '1')),))
+	ast = AST ('(', ('<>', ('@', 'a'), (('==', ('@', 'b')),)))
 	# res = ast2tex (ast)
-	res = ast2nat (ast)
+	# res = ast2nat (ast)
 	# res = ast2py (ast)
+	res = ast2spt (ast)
+	res = spt2ast (res)
+	res = _ast_eqcmp2ass (ast)
 
 	# res = ast2spt (ast)
 	# res = spt2ast (res)

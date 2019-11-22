@@ -1,5 +1,7 @@
-> a == b at top level wrong, should stay ==
+> {()} is binding to lambda functions and variables assigned to lambda functions
 > remove non-free variables in apply_vars in _ast2spt_lamb
+
+> set full result of assignment to previous variable '_'
 
 > (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
@@ -42,6 +44,7 @@
 > "__" subscript shortcut with rules like "**"?
 
 
+> doc: caveats with variable mapping and functions like Integral, Sum due to their unfree vars being remapped
 > doc: new == vs. = display behavior
 > doc: change to binding priority - sin**f(x) - sin**a.b(x) - sin**a.b{x}
 > doc: new integration behavior
@@ -265,3 +268,17 @@ Errors:
 -------
 
 
+text: (LambertW(5.194664222299675e-09[1e100]=-4.904486369506518e-17*\lambda*a,lambdax,y,z:\emptyset'''))
+ast:  ('(', ('-func', 'LambertW', (('=', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')), {1, 2})), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), None))))
+ast:  ('-func', 'LambertW', (('=', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')))), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), False)))
+tex1: \operatorname{LambertW}{\left(5.194664222299675{e}{-09}\left[1{e}{+100} \right] = -4.904486369506518{e}{-17}\ \lambda a, lambdax, y, z{:}\emptyset'''{:} \right)}
+ast:  ('-func', 'LambertW', (('=', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')))), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), False)))
+nat:  LambertW(5.194664222299675e-09[1e+100] = -4.904486369506518e-17 lambda * a, lambdax, y, z:\{}''':)
+ast:  ('-func', 'LambertW', (('=', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')), {2})), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), False)))
+py:   LambertW(Eq(5.194664222299675e-09[1e+100], -4.904486369506518e-17*lambda*a), lambdax, y, slice(z, diff(diff(diff(FiniteSet())))))
+ast:  ('-func', 'LambertW', (('-func', 'Eq', (('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')), {1, 2}))), ('@', 'lambdax'), ('@', 'y'), ('-func', 'slice', (('@', 'z'), ('-func', 'diff', (('-func', 'diff', (('-func', 'diff', (('-func', 'FiniteSet', ()),)),)),))))))
+tex2: \operatorname{LambertW}{\left(5.194664222299675{e}{-09}\left[1{e}{+100} \right] == -4.904486369506518{e}{-17}\ \lambda a, lambdax, y, z{:}\emptyset''' \right)}
+ast:  ('-func', 'LambertW', (('<>', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), (('==', ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')))),)), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), False)))
+org:  ('-func', 'LambertW', (('=', ('-idx', ('#', '5.194664222299675e-09'), (('#', '1e+100'),)), ('*', (('#', '-4.904486369506518e-17'), ('@', 'lambda'), ('@', 'a')))), ('@', 'lambdax'), ('@', 'y'), ('-slice', ('@', 'z'), ('-diffp', ('-set', ()), 3), False)))
+
+LambertW(Eq(5.194664222299675e-09[1e+100], -4.904486369506518e-17*lambda*a, 1), lambdax, y, slice(z, diff(diff(diff(FiniteSet())))))

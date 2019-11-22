@@ -449,7 +449,7 @@ class AST (tuple):
 		return vars
 
 	@staticmethod
-	def args2kwargs (args, func = None, ass2eq = False):
+	def args2kwargs (args, func = None, ass2eq = False): # ass2eq means convert assignment to comparison so it can be represented as Eq() in the py representation of argument list of functions
 		func  = (lambda x: x) if func is None else func
 		rargs = []
 		kw    = []
@@ -601,11 +601,10 @@ class AST (tuple):
 					elif exc:
 						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
-					else:
-						return AST ('-func', ast.func,
-								tuple (('(', AST.apply_vars (a, vars, recurse, exc))
-								if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
-								else AST.apply_vars (a, vars, recurse, exc) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+					return AST ('-func', ast.func,
+							tuple (('(', AST.apply_vars (a, vars, recurse, exc))
+							if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
+							else AST.apply_vars (a, vars, recurse, exc) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
 		return AST (*(AST.apply_vars (a, vars, recurse, exc) for a in ast))
 

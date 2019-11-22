@@ -1065,7 +1065,7 @@ def test (argv = None):
 							sym._SYM_MARK_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
 							status.extend (['', f'ast:  {ast2}'])
-							py   = sym.ast2py (ast2)
+							py   = sym.ast2py (ast2, ass2eq = False)
 							status.extend (['', f'py:   {py}'])
 							ast2 = parse (py)
 
@@ -1093,7 +1093,7 @@ def test (argv = None):
 						sym._SYM_MARK_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
 						status.extend (['', f'ast:  {ast2}'])
-						py   = sym.ast2py (ast2)
+						py   = sym.ast2py (ast2, ass2eq = False)
 						status.extend (['', f'py:   {py}'])
 						ast2 = parse (py)
 
@@ -1132,5 +1132,5 @@ def test (argv = None):
 	return True
 
 if __name__ == '__main__':
-	# test (['-e', r"""{\int_{{{-1.0}''}||{\int_{None}^{.1} {dz} dx}||{{\tilde\infty }+{None}}}^{{\lim_{x \to {oo}} {\partial }}**{{1.0}**{1e+100}}} {{-{-1}}^{{1.} == {\partialx} == {\emptyset} < {dx}}} dx}""", '-c'])
+	# test (['-c', '-e', r"""(LambertW(5.194664222299675e-09[1e100]=-4.904486369506518e-17*\lambda*a,lambdax,y,z:\emptyset'''))"""])
 	test ()
