@@ -502,7 +502,7 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 
 		return ret ()
 
-	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast))
+	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast), **ast._kw)
 
 #...............................................................................................
 _XLAT_FUNC2TEX = {

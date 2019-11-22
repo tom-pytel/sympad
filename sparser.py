@@ -79,7 +79,7 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 	elif ast.is_mulexp:
 		return AST ('*', tuple (_ast_mulexps_to_muls (a) for a in ast.mul), frozenset (range (1, ast.mul.len)))
 	else:
-		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast))
+		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast), **ast._kw)
 
 def _ast_tail_differential (self, must_have_pre = False, from_add = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
 	lself = lambda a: a

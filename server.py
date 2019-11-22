@@ -28,6 +28,8 @@ __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnuEqysmtNOSgGz', ['child', 
 	'help', 'version', 'debug', 'nobrowser', 'ugly', 'EI', 'quick', 'nopyS', 'simplify', 'nomatsimp',
 	'nodoit', 'noN', 'noO', 'noS', 'nogamma', 'noGamma', 'nozeta'])
 
+_SERVER_DEBUG    = __name__ == '__main__' and __ARGV and __ARGV [0] == 'server-debug'
+
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
 _SYMPAD_CHILD    = ('--child', '') in __OPTS
@@ -477,7 +479,7 @@ class Handler (SimpleHTTPRequestHandler):
 
 			if ast:
 				for ast in (ast.scolon if ast.is_scolon else (ast,)):
-					sys.stdout = io.StringIO ()
+					sys.stdout = _SYS_STDOUT if _SERVER_DEBUG else io.StringIO ()
 					response   = evalexpr (ast)
 
 					if sys.stdout.tell ():
@@ -661,12 +663,12 @@ def parent ():
 
 #...............................................................................................
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
-if __name__ == '__main__' and __ARGV and __ARGV [0] == 'server-debug': # DEBUG!
+if _SERVER_DEBUG: # DEBUG!
 	Handler.__init__ = lambda self: None
 
 	h = Handler ()
 
-	print (h.evaluate ({'text': '?f () = x**2'}))
+	print (h.evaluate ({'text': r'\sum_{x=0}**10 lambda: x + y'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END

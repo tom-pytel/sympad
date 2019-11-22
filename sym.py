@@ -1519,7 +1519,13 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		if not (self.parent.op in {None, ',', '[', '-func', '-lamb', '-set', '-dict'} or # '(', # treat body of lambda as expression for calculation
 				(self.parent.is_ass and ast is self.parent.rhs) or
 				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
-			return self._ast2spt (AST.apply_vars (ast.lamb, _SYM_USER_VARS))
+
+			if ast.lamb_vars_notfree:
+				vars = dict (va for va in filter (lambda va: va [0] not in ast.lamb_vars_notfree, _SYM_USER_VARS.items ()))
+			else:
+				vars = _SYM_USER_VARS
+
+			return self._ast2spt (AST.apply_vars (ast.lamb, vars))
 
 		spt = self._ast2spt (ast.lamb)
 

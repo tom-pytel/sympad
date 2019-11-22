@@ -90,7 +90,10 @@ class AST (tuple):
 			if self.op:
 				self._init (*cls_args)
 
-		if kw:
+		if not kw:
+			self._kw = {}
+		else:
+			self._kw = kw # this is for kws on ast rebuild where necessary (not done everywhere)
 			self.__dict__.update (kw)
 
 		return self
@@ -132,7 +135,7 @@ class AST (tuple):
 		if self.is_curly:
 			return self.curly.no_curlys
 		else:
-			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))
+			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self), **self._kw)
 
 	def _flat (self, op = None, seq = None, exp = None): # flatten trees of '+', '*', '||', '^^', '&&', '-or' and '-and' into single ASTs
 		def subflat (op, seq, exp):
@@ -534,6 +537,9 @@ class AST (tuple):
 		if not isinstance (ast, AST) or ast.is_ufunc: # or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
 			return ast
 
+		if ast.is_num:
+			return ast
+
 		if ast.is_var: # regular var substitution?
 			var = vars.get (ast.var)
 
@@ -583,7 +589,10 @@ class AST (tuple):
 			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse, exc), dv, *(AST.apply_vars (a, vars, recurse, exc) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
-			vars = push (vars, {v: False for v in ast.vars})
+			nonfree = frozenset (va [0] for va in filter (lambda va: va [1] is False, vars.items ())) # pass all non-free variables for possible translation of lambda as expression so those vars don't get globally mapped
+			vars    = push (vars, {v: False for v in ast.vars})
+
+			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, recurse, exc), ast.vars, lamb_vars_notfree = nonfree)
 
 		elif ast.is_func: # function, might be user lambda call
 			if ast.func == AST.Func.NOREMAP:
@@ -606,7 +615,7 @@ class AST (tuple):
 							if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
 							else AST.apply_vars (a, vars, recurse, exc) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
-		return AST (*(AST.apply_vars (a, vars, recurse, exc) for a in ast))
+		return AST (*(AST.apply_vars (a, vars, recurse, exc) for a in ast), **ast._kw)
 
 	@staticmethod
 	def register_AST (cls):

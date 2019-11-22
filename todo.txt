@@ -1,15 +1,16 @@
-> {()} is binding to lambda functions and variables assigned to lambda functions
-> remove non-free variables in apply_vars in _ast2spt_lamb
+> overhaul server env option command line setting
+> add spt2ast_Mul option to get rationals in front of other multiplicands
 
-> set full result of assignment to previous variable '_'
+> {()} is binding to lambda functions and variables assigned to lambda functions
 
 > (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
 
+> set full result of assignment to previous variable '_'
+
 > ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
 
 > option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
-> overhaul server env option command line setting
 
 > "d / 2" is "(d) / 2", fix it
 
