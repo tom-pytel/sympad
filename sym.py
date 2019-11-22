@@ -442,8 +442,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
 					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or # comment this IN if separating all variables with spaces
-					(p.is_var_long and s [:6] not in {'\\left(', '\\left['}) or
-					(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})):
+					(s [:6] not in {'\\left(', '\\left['} and (
+						p.is_var_long or
+						(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})
+					))):
 				t.append (f'\\ {s}')
 
 			else:

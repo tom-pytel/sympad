@@ -11,9 +11,6 @@
 
 > "d / 2" is "(d) / 2", fix it
 
-> \sum, \lim accept only body of paren if paren follows directly
-> \sum, \lim and \intg to take expr_add for body
-
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
@@ -46,18 +43,14 @@
 
 
 > doc: new == vs. = display behavior
-> doc: \lim and \sum current delimiting on + or *
 > doc: change to binding priority - sin**f(x) - sin**a.b(x) - sin**a.b{x}
 > doc: new integration behavior
-> doc: can call derivative of lambda
-> doc: give anonymous ufuncs name of var on assignment to var
 > doc: removed $ function escape character
-> doc: ast2spt calls even though they look like multiplies
 > doc: ufuncs
 > doc: parentheses create implicit undefined functions
+> doc: give anonymous ufuncs name of var on assignment to var
 > doc: new functionality of @ and %
-> doc: lowercase functions limit, integrate, etc... always execute
-> doc: lambda function execution and binding
+> doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
 > doc: ODEs
 > doc: PDEs
 
@@ -66,6 +59,9 @@
 
 > allow N**2 y?
 > N -N x -> N (-N (x))
+
+> \sum, \lim accept only body of paren if paren follows directly
+> \sum, \lim and \intg to take expr_add for body
 
 > test_sym - test parsing sympy latex
 
@@ -253,19 +249,17 @@ print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
 Slow parse:
 -----------
 
-13.4375s:   \left.-\emptyset**False/"s"'\right|_{\substack{\.lambdax,y,z:0*y1*dz|_{b^munotinlambda:y1notin\fracPix0notin[[False,-1.217383816320693e-12,a]]={{:w_{1}}:((a)),((oo,1e+100)):\sum_{x=False}^\pix0,{\partial:1.5165219116286896e-05}:\{w_{1},\xi,-.1}},\{((Complexes)),$nvQUW(real=True,commutative=True)}={},\frac\{y1,1310759352132.995}\left.\partialx\right|_{-1.0=2}=\partialx!andy1\cdot\partialxandnotw_{1}}={{{8.752331030243382e+16,oo}}}*:\left.1.0\right|_{True=False}>=sqrt_mod_iter(1e100)lnpartialx/Lambda_{63}oraor\xi}}
-- This is slow due to abuse of regex!
-
-17.671875s: \int\{}dG*"s"'=dx**dxif\partial^\partialy&&\mu=\partialy.HZm7Ur.Xaiyk.OO1M()else\[[[[1.or\emptysetor\partial,nth_power_roots_poly((w_{1})),\sqrt[\partialy]oo]]],(not\partialy),\lim_{x\to\log_\partialy0}\[[-4.469111038573928e-16,],],]if{1,x0&&c[5.6422000714431704e+16,dx,"s"]&&RealField((-1,y1)):\sqrt[(7.668680606727133e-14::)]\left|oo\right|,d^{1}/dy^{1}iotaand1.0and.1:{$bd(commutative=True),1.0/\partial}}else\frac$mjVIF(commutative=True)\cdot3.2935527643376255e-06:-1sqrtlambda;b;2
-28.453125s: {\.(:)|_{Sigma_{12}::'=-0>a,\left|\partial\right|&&chinotin-.1=lambdax,y,z:$qqq(real=True,commutative=True),Segment({})=\frac-88183020.84443538/-.1\s um_{x=0}^NONE\partialx}:\[\[[\emptyset,\emptyset,dz,],[\nu,\Lambda,dz,],]in\lim_{x\toz20}\partialyin-.1,]:\.4499484.467734945|_{\substack{1e+100=2067.693449705334\\y1=1e100}}\cdotxyzdif\partialelse-1.0ifcelse-5.542490885645353e-09if-1^\lim_{x\toz20^^1.}$B6uENQP()}
-163.28125s: lambda:   - xyzd   if u(x, y, z)   and  (  :  62313.47619053531  :  , dy ',  1.0  [ z20 ,  \partial x ]) && \left.   1e+100  or  1e+100   \right|_{\substack{  dx !  = \sqrt[ \phi_{29} ] -5.529339448748291e-09  }}  and \sum_{x = \[  dx .bO0xI.z4rtZp4N() ,\int  0  dT ,\left.  0  \right|_{\substack{ None  =  partial  \\  1e+100  =  6.352354272671388e-16 }},]}^ \left| \partialy \right| and   \partial   ||  \partial x       -1.0  &&  1.0  &&  -1.5418373774276718e-05   &&   \tilde\infty   \cdot  \partial x  \cdot  0   &&  \tilde\infty  ;  oo
 283.53125s: \[[ \arccot() or  \[[ \lambda ,],[ w_{1} ,],[ 0 ,],] \cdot $zRF(real = True) \cdot  d^{5} / dy^{3} dy^{2}  \emptyset    or    x0  if  1e100    else  None  if  1.0   \cdot   \Phi_{27}  /  \partialy   \cdot   False  \cdot  1.0  \cdot  0.01466869603275454    ,\int  \frac "s"  eta   /  lambda_{4} ;  .1 ;  b ;  1.   dCneFiF4u ,   oo  ||  -4.383422266575117e-14   in \log_ \omega  Pi   in \int  dz  dh  \cdot   dx  \cdot  \psi_{84}  \cdot  True  ' ,],[\[ \left| a \right|*\left| z20 \right| ,   w_{1} !  ||   a  or  1   ||   Theta  or  1.   ,],\.  \[ \partial x , 1. ,]* \emptyset ;  dy ;  xyzd ;  \tilde\infty  *  None  if  26320873337533.05    else  21134.155295076693    |_{\substack{   1.2227127498338437e+19  ^^  "s"  ^^  \partialy   / \.  \Xi  |_{ c  =  y1 ,  eta  =  \Gamma_{51} ,  sigma  =  -.1 }  = $QV(commutative = True) \\    None  and  \emptyset   and  partial^{4} / partialz^{2} partialx^{1} partialz^{1}  -0.0008452535981829209    =   difference_delta((())) and   None  &&  \xi  &&  beta   }},\sum_{x =  {{{ 1e100 , c , 2 }}}** partial  in  0  not in  False  not in  \Lambda  }^   -7.85992240533836e+20  [ None ,  b ]^  \infty zoo  and  \Psi_{93}     { 0 , "s" }^\sum_{x =  \partial x }^ oo   dx    ,],]
-14.71875s:  {\lim_{x\to"s"'}\lim_{x\to\partialx}.1:\[[d^{4}/dy^{1}dy^{1}dz^{2}-1,notTrue,],[\fracdy\iota,\logdx,],[lambdax,y:.1,dx.SkjaV().xAaTvJE(),],]}^-\.g(x,y,z)|_{\.1e-100|_{\zeta,None,\Gamma_{47}=\emptyset,y1,\em ptyset}=\left.partialx\right|_{\substack{dx=tau\\\partialx=False}},\left|a\right|=\left|-9.408023550902053e+16\right|}
-10.125s:    {NONE:':1**3.480067056030083e-12\cdot36094604.0569791^2,\sum_{x=\sum_{x=\partialx}^dydz}^minpoly(((\emptyset)))\sqrt[-1.7454803239022647e-10]kappa:lambdax,y,z:b.teI5N().dH()},-1e+100^^\[\partialx,]^^$ouQVqO(real=True)+\.\left.\partialy\right|_{\tilde\infty=z20}|_{\substack{-2.335660686903354e-20;partial;2.9245005768789054e-13;1.8693689910922626e-21=\.z20|_{None=1e+100,1.458621 6274097632e-09=oo_{76},partial=0}\\w_{1}&&-3.357729778121166e-11&&x0=\upsilon,\partial\\-.1!=b+\partialy}}
-2.765625s:  {lambda:{\tilde\infty:None,y1:\partialx}[partial^{2}/partialy^{2}\sqrt[\tilde\infty]\partial,Function('',)(x)(0),\sum_{x=0}^c1.*"s"'*\ln\partial] :\partialx\cdot1e100\cdot-.1/False,1.0if1.,-1,1e-100**1.0[-1],\lim_{x\to{{{oo}}}}\lim_{x\to0}\partialyand\left|\partialy\right|\cdot\tilde\infty^^"s"^^Lambda:d^{3}/dx^{1}dz^{2}\[\partialyifpartialxelse1e-100ifTrueelse-1,\partialyor1e-100,]}
+163.28125s: lambda:   - xyzd   if u(x, y, z)   and  (  :  62313.47619053531  :  , dy ',  1.0  [ z20 ,  \partial x ]) && \left.   1e+100  or  1e+100   \right|_{\substack{  dx !  = \sqrt[ \phi_{29} ] -5.529339448748291e-09  }}  and \sum_{x = \[  dx .bO0xI.z4rtZp4N() ,\int  0  dT ,\left.  0  \right|_{\substack{ None  =  partial  \\  1e+100  =  6.352354272671388e-16 }},]}^ \left| \partialy \right| and   \partial   ||  \partial x       -1.0  &&  1.0  &&  -1.5418373774276718e-05   &&   \tilde\infty   \cdot  \partial x  \cdot  0   &&  \tilde\infty  ;  oo
+28.453125s: {\.(:)|_{Sigma_{12}::'=-0>a,\left|\partial\right|&&chinotin-.1=lambdax,y,z:$qqq(real=True,commutative=True),Segment({})=\frac-88183020.84443538/-.1\s um_{x=0}^NONE\partialx}:\[\[[\emptyset,\emptyset,dz,],[\nu,\Lambda,dz,],]in\lim_{x\toz20}\partialyin-.1,]:\.4499484.467734945|_{\substack{1e+100=2067.693449705334\\y1=1e100}}\cdotxyzdif\partialelse-1.0ifcelse-5.542490885645353e-09if-1^\lim_{x\toz20^^1.}$B6uENQP()}
 20.671875s: {{partial^{5}/partialx^{2}partialy^{3}xyzd!,\fracDelta'' 'dz**1e+100}}if\.0andband6.191305469846304e-09[\partialif0.0010151362451333347]|_{\substack{\gcd(({1,1.0},\int_-.1^-.1partialxdq))=\sqrtdxifFalse>y1else(dy,"s","s")if\partialx*c*-4.4653096888116064e-21elseNone==1e-100>=-2.0251011102347307e-18if\partial||2else1+1e+100+\partial}}elselambdax:\{x0,0,b,d/dy(u()(x,y))(0,1)}if\sqrt[d^{1}/dz^{1}{}]\{Falsein0,-1,1.,((b,-9.580303685500166e-07,phi))}else{True+x0:::Monomial((()))/\int\emptysetdP,notpartialx+\emptyset+2:::,(((1.))),\sigma[\partial]:dx=249.84211067914106and\left.\partialx\right|_{-2.3110629421441234e+20,1,\emptyset=c,c,False}and\sum_{x=1e100}^1.y1}
+17.671875s: \int\{}dG*"s"'=dx**dxif\partial^\partialy&&\mu=\partialy.HZm7Ur.Xaiyk.OO1M()else\[[[[1.or\emptysetor\partial,nth_power_roots_poly((w_{1})),\sqrt[\partialy]oo]]],(not\partialy),\lim_{x\to\log_\partialy0}\[[-4.469111038573928e-16,],],]if{1,x0&&c[5.6422000714431704e+16,dx,"s"]&&RealField((-1,y1)):\sqrt[(7.668680606727133e-14::)]\left|oo\right|,d^{1}/dy^{1}iotaand1.0and.1:{$bd(commutative=True),1.0/\partial}}else\frac$mjVIF(commutative=True)\cdot3.2935527643376255e-06:-1sqrtlambda;b;2
+14.71875s:  {\lim_{x\to"s"'}\lim_{x\to\partialx}.1:\[[d^{4}/dy^{1}dy^{1}dz^{2}-1,notTrue,],[\fracdy\iota,\logdx,],[lambdax,y:.1,dx.SkjaV().xAaTvJE(),],]}^-\.g(x,y,z)|_{\.1e-100|_{\zeta,None,\Gamma_{47}=\emptyset,y1,\em ptyset}=\left.partialx\right|_{\substack{dx=tau\\\partialx=False}},\left|a\right|=\left|-9.408023550902053e+16\right|}
+13.4375s:   \left.-\emptyset**False/"s"'\right|_{\substack{\.lambdax,y,z:0*y1*dz|_{b^munotinlambda:y1notin\fracPix0notin[[False,-1.217383816320693e-12,a]]={{:w_{1}}:((a)),((oo,1e+100)):\sum_{x=False}^\pix0,{\partial:1.5165219116286896e-05}:\{w_{1},\xi,-.1}},\{((Complexes)),$nvQUW(real=True,commutative=True)}={},\frac\{y1,1310759352132.995}\left.\partialx\right|_{-1.0=2}=\partialx!andy1\cdot\partialxandnotw_{1}}={{{8.752331030243382e+16,oo}}}*:\left.1.0\right|_{True=False}>=sqrt_mod_iter(1e100)lnpartialx/Lambda_{63}oraor\xi}}
+10.125s:    {NONE:':1**3.480067056030083e-12\cdot36094604.0569791^2,\sum_{x=\sum_{x=\partialx}^dydz}^minpoly(((\emptyset)))\sqrt[-1.7454803239022647e-10]kappa:lambdax,y,z:b.teI5N().dH()},-1e+100^^\[\partialx,]^^$ouQVqO(real=True)+\.\left.\partialy\right|_{\tilde\infty=z20}|_{\substack{-2.335660686903354e-20;partial;2.9245005768789054e-13;1.8693689910922626e-21=\.z20|_{None=1e+100,1.458621 6274097632e-09=oo_{76},partial=0}\\w_{1}&&-3.357729778121166e-11&&x0=\upsilon,\partial\\-.1!=b+\partialy}}
 5.859375s:  \left.notb[-0.012450983090926753,partial,True]*\frac ()1e-100**\partialx*"s"'/partialx&&\iota\right|_{\int_partialx.xU5FHek()^1e+100>=dzd**3/dydxdx(h(x,y,real=True))dd&&\lim_{x\to1}1.0,?()(),\lim_{x\to-1.0}dz=-1.CvNb.IU().W5vX6rtI[\[[$tBZvdy(real=True,commutative=True),lambdax,y:\alpha,],[\partialx=2.745117662780435e-08,a&&w_{1},],[\lim_{x\topartial}xyzd,\tilde\infty,\partialx,],],\sum_{x=BlockDiagMatrix(1e100,c,\partialy)}^--11.0.dg.FcNr]=\{},{{1.0[1.,False,\inftyzoo]}}^[[[-7.141733656844623e-16,"s"]]]/\emptyset^^xyzd}
-20.859375s: \left.\frac\sqrt[a]1.+dx||\delta[\left|a\right|,z20and\Lambda,\.2|_{-9.623041909111814e-22=w_{1},\partialx=b,False=8.18045963500626}]\right|_{\substack{-1^^\partialxand\partialxifxyzdelse\theta_{15}ifx0else"s"'=oo||z20||.1**\lim_{x\tosigma}1.057736829336749e-11and\.psi+\zeta+1e-100|_{\substack{notdz=$m_2i(real=True,commutative=True)}}and\[a,x0,y1,]/partial\cdotdy\cdot-1\\lambdax:Phinotin1e-100^^\rho^^1in1.0[\partialx]\int\sqrt[1.0]\upsilondC=lambdax:\left|not1e-100\right|\\partial^{1}/partialx^{1}\[[1.0,],[0,],]^-y1;1;2=\f rac(lambda:1e+100,\partialx+Theta)-Trueifbelse-4666997.365800223ifzoo_{94}}}
+2.765625s:  {lambda:{\tilde\infty:None,y1:\partialx}[partial^{2}/partialy^{2}\sqrt[\tilde\infty]\partial,Function('',)(x)(0),\sum_{x=0}^c1.*"s"'*\ln\partial] :\partialx\cdot1e100\cdot-.1/False,1.0if1.,-1,1e-100**1.0[-1],\lim_{x\to{{{oo}}}}\lim_{x\to0}\partialyand\left|\partialy\right|\cdot\tilde\infty^^"s"^^Lambda:d^{3}/dx^{1}dz^{2}\[\partialyifpartialxelse1e-100ifTrueelse-1,\partialyor1e-100,]}
+- These are slow due to abuse of regex!
 
 Errors:
 -------

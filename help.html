@@ -97,6 +97,7 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 &emsp;<a href="#SymPy Functions">SymPy Functions</a><br>
 &emsp;<a href="#Lambda Functions">Lambda Functions</a><br>
 &emsp;<a href="#Undefined Functions">Undefined Functions</a><br>
+&emsp;<a href="#Pseudo-Functions">Pseudo-Functions</a><br>
 &emsp;<a href="#Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</a><br>
 
 <h4><a href="#Plotting">Plotting</a></h4>
@@ -363,11 +364,11 @@ The shorthand for the absolute value of "<b>x</b>" is "<b>|x|</b>" though this m
 
 <p>
 To take the limit of an expression "<b>z</b>" as variable "<b>x</b>" approaches "<b>y</b>" enter "<b>\lim_{x \to y} (z)</b>" = $\lim_{x\to y} (z)$.
-This will only give the limit if it exists and is the same when approaching from both directions, unlike SymPy which defaults to approaching from the
-positive direction. To specify a direction add "<b>^+</b>" or "<b>^-</b>" to the equation as such: "<b>\lim_{x \to 0^+} 1/x</b>" = $\lim_{x\to 0^+}
-\frac1x$ = $\infty$ and "<b>\lim_{x \to 0^-} 1/x</b>" = $\lim_{x\to 0^-} \frac1x$ = $-\infty$. Addition and explicit multiplication terminate a limit
-expression. Limits may also be entered using the standard SymPy syntax "<b>Limit (expression, variable, to)</b>", this defaults to limit from positive
-direction like SymPy, or you may specify a direction "<b>Limit (expression, variable, to, dir='+-')</b>".
+This will only give the limit if it exists and is the same when approaching from both directions, unlike SymPy which defaults to approaching from the positive direction.
+To specify a direction add "<b>^+</b>" or "<b>^-</b>" to the equation as such: "<b>\lim_{x \to 0^+} 1/x</b>" = $\lim_{x\to 0^+} \frac1x$ = $\infty$ and "<b>\lim_{x \to 0^-} 1/x</b>" = $\lim_{x\to 0^-} \frac1x$ = $-\infty$.
+Addition and explicit multiplication terminate a limit expression.
+Limits may also be entered using the standard SymPy syntax "<b>Limit (expression, variable, to)</b>", this defaults to limit from positive direction like SymPy, or you may specify a direction "<b>Limit (expression, variable, to, dir='+-')</b>".
+SymPad "<b>\lim</b>" expressions are delimited by explicit multiplication or any operation with lower precedence like addition, set operation, comparisons, etc... so if you want to include those in the limit you need to parenthesize the limit expression like "<b>\lim_{x\to oo} (1/x + x)</b>".
 </p>
 
 <h4 id="Sums">Sums</h4>
@@ -377,6 +378,7 @@ The summation (finite or infinite) of expression "<b>z</b>" as variable "<b>n</b
 (z)</b>" = $\sum_{n=a}^b (z)$. Iterated sums work as expected, "<b>\sum_{n=1}^3 \sum_{m=1}^n m</b>" = $\sum_{n=1}^3 \sum_{m=1}^n m$ = 10. Addition and
 explicit multiplication terminate a sum expression.
 Sums may also be entered using the standard SymPy syntax "<b>Sum (expression, (variable, from, to))</b>".
+Like limits, the "<b>\sum</b>" expression is normally delimited by explicit multiplication and below, so use parentheses to include those operations in the expression which is being summed over.
 </p>
 
 <h4 id="Differentiation">Differentiation</h4>
@@ -536,29 +538,26 @@ There are three types of functions SymPad deals with:
 Native SymPy functions are available for use directly, they cannot be assigned however so aliases like "<b>D = Derivative</b>" do not work, though there is a workaround described below.
 User created concrete lambda functions can represent any expression, can be called for evaluation, passed to native SymPy functions and can be referenced by and copied to variables.
 And finally undefined functions are abstract mathematical objects used in differential equations.
-In addition, member functions of objects are supported and callable like "<b>Matrix ([1, 2, 3]).transpose ()</b>".
+In addition, member functions of objects are supported like "<b>Matrix ([1, 2, 3]).transpose ()</b>".
 The first two classes of functions may take a single unparenthesized argument or multiple parenthesized comma-separated arguments and the SymPy functions take optional keyword arguments as well.
 </p>
 
 <h4 id="SymPy Functions">SymPy Functions</h4>
 
-<p style="color: red">
+<p>
 Almost all SymPy functions and objects from the top level of the SymPy module are made available directly for calling by their name like "<b>tan(x)</b>", the only restriction being they must be longer than a single character and may not begin with an underscore.
 Many functions from the "<b>__builtins__</b>" module are made available as well as a convenience, for example "<b>print ("Hello World...")</b>".
 Only the "safe" "<b>__builtin__</b>" functions are specifically made available, functions like "<b>eval</b>", "<b>exec</b>" and many more have been left out and are not accessible.
-The reason for excluding single letter functions is that due to the way the grammar works all natively recognized function names are permanently excluded from being used as variable names and since very often single letters are used for this purpose this would be problematic.
-A workaround is in place and described further down.
-</p><p style="color: red">
-The standard trigonometric and hyperbolic functions and their inverses can be entered as usual, the forward functions with or without a leading slash: "<b>sin</b>", "<b>\coth</b>".
-The inverses are entered as Pythonic functions without a slash like "<b>atan</b>" or "<b>acscsh</b>" and the LaTeX versions take a slash and and are spelled out "<b>\arctan</b>".
-The inverses may also be specified using the common mathematical syntax: "<b>\tan^{-1}x</b>" or "<b>cos**-1 x</b>".
-This form of exponentiating a function is extended as an input shortcut for all native SymPy functions so that typing "<b>ln**2x</b>" is a quick way to enter "<b>(ln(x))**2</b>".
-This does not apply to user created lambda functions, member functions or undefined functions.
-Keep in mind that a "<b>-1</b>" exponent when used in this way is just a -1 and does not specify the inverse function as it does for the forward trigonometric and hyperbolic functions.
 </p><p>
-SymPy and user lambda functions also don't require explicit parentheses if they take a single argument in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin**-1x</b>", but for any argument more complicated than another function or variable to a power parentheses will be needed.
+SymPy functions accept a standard notation for exponentiation in the form of "<b>sin**2(x)</b>", this is equivalent to "<b>(sin (x))**2</b>".
+In the case of trigonometric and hyperbolic functions this shorthand changes the function to its inverse if the exponent is "<b>-1</b>" so that "<b>sin**-1 (x)</b>" is the same as "<b>acos (x)</b>".
+This only applies to a "<b>-1</b>" exponent right after the function name and before the argument of a trigonometric or hyperbolic function, in all other cases a negative exponent is just a negative exponent.
+This shorthand exists only for the concrete SymPy functions, it does not work with lambdas or undefined functions.
+</p><p>
+SymPy and user lambda functions don't require explicit parentheses if they take a single argument in order to allow quick entry like "<b>sqrt 2</b>" or "<b>sin**-1 x</b>", but for any argument more complicated than another function or variable to a power parentheses will be needed.
 These unparenthesized functions can be chained like "<b>N ln sin 2</b>".
 Functions which take zero or more than one argument, as well as member functions such as "<b>\[[1, 1], [0, 1]].det()</b>" always require explicit parentheses.
+</p><p>
 Many functions which have a standard mathematical display style are translated on the fly for rendering in that style, these include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
 Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>", "<b>Sum</b>" and more...
 </p>
@@ -572,21 +571,24 @@ You can assign them to a variable like "<b>f = lambda x: x**2</b>", or with the 
 </p><p>
 When a lambda function is defined any non-private lambda variables in the body of the lambda are mapped to their global values and no expressions "<b>doit ()</b>"-ed, this means that if a lambda references an assigned global variable the variable will be replaced with its value within the lambda definition.
 If you do not want to use the value of a global variable in a lambda definition but rather have the value bound upon execution of the lambda then use the "<b>@</b>" pseudo-function when referencing that variable as such "<b>f = lambda: @x</b>", this will leave the lambda definition referencing an "<b>x</b>" variable which will be bound upon execution.
-This also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed, since that is one of the operations that is not evaluated unless a "<b>doit ()</b>" is called.
+</p><p>
+Since lambda definitions do not have "<b>.doit()</b>" executed by default, this also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed, since that is one of the operations that is not evaluated unless a "<b>doit ()</b>" is called.
 In this case, whatever is passed in for the "<b>x</b>" variable upon evaluation will attempt to convert the "<b>dx</b>" to its own differential, and if that "<b>x</b>" variable resolves to a pure variable like "<b>y</b>" and not an expression then the "<b>dx</b>" will be changed to a "<b>dy</b>", otherwise the integration is done with respect to the original "<b>dx</b>".
-This does not apply if you use the lowercase SymPy functions like "<b>integrate ()</b>" or "<b>.limit ()</b>" which are always evaluated even in the definition of a lambda function unless they are prevented from doing so by a "<b>%</b>" or double "<b>%%</b>" pseudo-function, for more on that see <span style="color: red">PSEUDO-FUNCTIONS</span>
+This does not apply if you use the lowercase SymPy functions like "<b>integrate ()</b>" or "<b>limit ()</b>" which are always evaluated even in the definition of a lambda function unless they are prevented from doing so by a "<b>%</b>" or double "<b>%%</b>" pseudo-function, for more on that see the section on pseudo-functions just below.
 </p><p>
 Lambdas may be passed to SymPy and other Python functions and they will be passed as SymPy "<b>Lambda</b>" objects.
 Lambda functions may reference other lambda functions as long as those are defined at the time of creation and will normally map be body of the target lambda into itself.
 This is done on purpose because outside of SymPad "<b>Lambda</b>" objects can not reference other "<b>Lambda</b>" objects indirectly and thus these lambdas would not work if passed on to a SymPy function.
-Lambdas can be called directly as in "<b>(lambda x: x**2) (3)</b>".
+Lambdas can be called directly as in "<b>{lambda x: x**2} (3)</b>".
 Lambda recursion is not supported because there is no underlying mechanism to make it work with SymPy "<b>Lambda</b>" objects.
-</p><p style="color: red">
-Lambdas as expressions...
+Lambda functions can be used as expressions in most contexts, this means that the body of the function is used directly in a calculation with the variables being mapped to their global values.
+They can also be called after differentiating the lambda, something with makes working with differential equations easier.
+For more on all of this see the <a href="#Lambda Functions Examples">Lambda Functions Examples</a>.
 </p>
 
 <h4 id="Undefined Functions">Undefined Functions</h4>
 
+<div style="color: red">
 <p>
 Undefined functions are mathematical function objects but without any specific expression or lambda body defined, they are used mainly in differential equations.
 These functions are entered explicitly as "<b>?name (x, y, ...)</b>" with the name being optional but necessary if you need to differentiate between various functions (like in a system of differential equations).
@@ -603,6 +605,11 @@ This will give you a clean "<b>dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</b>" 
 Initial values for differential functions are supported and can be passed of the form "<b>dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</b>" if "<b>y = y(x)</b>" is already defined or "<b>dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(0): 0, y(x)'(0): -7})</b>" if it is not, notice that the first initial condition "<b>y(0)</b>" did not need to be specified as an undefined function of a variable first.
 The "<b>ics</b>" keyword argument is a dictionary of undefined functuions at specific points with their values.
 </p>
+</div>
+
+<h4 id="Pseudo-Functions">Pseudo-Functions</h4>
+
+...
 
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
 
