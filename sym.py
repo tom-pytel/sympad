@@ -19,6 +19,7 @@ _SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as
 _POST_SIMPLIFY  = True # post-evaluation simplification
 _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
+_MUL_RATIONAL   = False # products should lead with a rational fraction if one is present instead of absorbing into it
 
 class _None: pass # unique non-None None marker
 
@@ -89,14 +90,15 @@ def _simplify (spt): # extend sympy simplification into standard python containe
 	elif isinstance (spt, dict):
 		return dict ((_simplify (k), _simplify (v)) for k, v in spt.items ())
 
-	try:
-		spt2 = sp.simplify (spt)
+	if not isinstance (spt, (sp.Naturals.__class__, sp.Integers.__class__)): # these break on count_ops()
+		try:
+			spt2 = sp.simplify (spt)
 
-		if sp.count_ops (spt2) <= sp.count_ops (spt): # sometimes simplify doesn't
-			spt = spt2
+			if sp.count_ops (spt2) <= sp.count_ops (spt): # sometimes simplify doesn't
+				spt = spt2
 
-	except:
-		pass
+		except:
+			pass
 
 	return spt
 
@@ -1733,9 +1735,9 @@ class spt2ast:
 
 		numer = []
 		denom = []
-		neg   = False
+		neg = False
 
-		for arg in args:
+		for arg in args: # absorb products into rational
 			if isinstance (arg, sp.Pow) and arg.args [1].is_negative:
 				denom.append (self._spt2ast (arg.args [0] if arg.args [1] is sp.S.NegativeOne else _Pow (arg.args [0], -arg.args [1])))
 			elif not isinstance (arg, sp.Rational) or arg.q == 1:
@@ -1761,8 +1763,13 @@ class spt2ast:
 		if not numer:
 			return neg (AST ('/', AST.One, AST ('*', tuple (denom)) if len (denom) > 1 else denom [0]))
 
-		return neg (AST ('/', AST ('*', tuple (numer)) if len (numer) > 1 else numer [0], \
-				AST ('*', tuple (denom)) if len (denom) > 1 else denom [0]))
+		if _MUL_RATIONAL and len (denom) == 1 and denom [0].is_num: # leading rational enabled?
+			if numer [0].is_num:
+				return neg (AST ('*', (('/', numer [0], denom [0]), AST ('*', tuple (numer [1:])) if len (numer) > 2 else numer [1])))
+			else:
+				return neg (AST ('*', (('/', AST.One, denom [0]), AST ('*', tuple (numer)) if len (numer) > 1 else numer [0])))
+
+		return neg (AST ('/', AST ('*', tuple (numer)) if len (numer) > 1 else numer [0], AST ('*', tuple (denom)) if len (denom) > 1 else denom [0]))
 
 	def _spt2ast_Pow (self, spt):
 		if spt.args [1].is_negative:
@@ -1940,12 +1947,17 @@ def set_doit (state):
 	global _DOIT
 	_DOIT = state
 
+def set_prodrat (state):
+	global _MUL_RATIONAL
+	_MUL_RATIONAL = state
+
 class sym: # for single script
 	set_sym_user_funcs = set_sym_user_funcs
 	set_sym_user_vars  = set_sym_user_vars
 	set_pyS            = set_pyS
 	set_simplify       = set_simplify
 	set_doit           = set_doit
+	set_prodrat        = set_prodrat
 	ast2tex            = ast2tex
 	ast2nat            = ast2nat
 	ast2py             = ast2py
@@ -1958,15 +1970,12 @@ if __name__ == '__main__': # DEBUG!
 	# set_sym_user_funcs (set (vars))
 	# set_sym_user_vars (vars)
 
-	ast = AST ('(', ('<>', ('@', 'a'), (('==', ('@', 'b')),)))
+	ast = AST ('@', 'Naturals0')
 	# res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
-	res = ast2spt (ast)
-	res = spt2ast (res)
-	res = _ast_eqcmp2ass (ast)
 
-	# res = ast2spt (ast)
+	res = ast2spt (ast)
 	# res = spt2ast (res)
 	# res = ast2nat (res)
 

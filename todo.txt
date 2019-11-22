@@ -1,4 +1,5 @@
 > add spt2ast_Mul option to get rationals in front of other multiplicands
+
 > help.html - convert <p> to tables in appendix
 
 > {()} is binding to lambda functions and variables assigned to lambda functions
@@ -16,6 +17,8 @@
 > "d / 2" is "(d) / 2", fix it
 
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
+
+> SymmetricDifference()
 
 
 > test_sym cases - call derivative of lambda
@@ -269,3 +272,8 @@ Errors:
 -------
 
 
+text: {\int {\frac{[[{ dz },{ Naturals0 },{ \emptyset }]]}{\. { None } |_{{ -4095787588.6369934 } = { xyzd }, { None } = { b }, { 1e+100 } = { 0 }}} } dA }
+ast:  ('-intg', ('/', ('[', (('[', (('@', 'dz'), ('@', 'Naturals0'), ('-set', ()))),)), ('-subs', ('@', 'None'), ((('#', '-4095787588.6369934'), ('*', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('@', 'd')))), (('@', 'None'), ('@', 'b')), (('#', '1e+100'), ('#', '0'))))), ('@', 'dA'))
+ast:  ('-intg', ('/', ('[', (('[', (('@', 'dz'), ('*', (('@', 'Naturals'), ('@', '_'), ('#', '0'))), ('-set', ()))),)), ('-subs', ('@', 'None'), ((('#', '-4095787588.6369934'), ('*', (('@', 'x'), ('@', 'y'), ('@', 'z'), ('@', 'd')))), (('@', 'None'), ('@', 'b')), (('#', '1e+100'), ('#', '0'))))), ('@', 'dA'))
+tex1: \int \frac{\left[\left[dz, \mathbb{N}_{0}, \emptyset \right] \right]}{\left. None \right|_{\substack{-4095787588.6369934 = x y z\ d \\ None = b \\ 1{e}{+100} = 0}}} \ dA
+tex2: \int \frac{\left[\left[dz, \mathbb{N} \_ \cdot 0, \emptyset \right] \right]}{\left. None \right|_{\substack{-4095787588.6369934 = x y z\ d \\ None = b \\ 1{e}{+100} = 0}}} \ dA

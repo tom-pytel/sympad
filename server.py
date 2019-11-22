@@ -24,9 +24,10 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _VERSION         = '1.0.20'
 
-_ENV_CLOPTS      = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'doit', 'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
-_ENV_CLOPTS_ALL  = _ENV_CLOPTS.union (f'no{opt}' for opt in _ENV_CLOPTS)
-__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnu', ['child', 'firstrun', 'help', 'version', 'debug', 'nobrowser', 'ugly', *_ENV_CLOPTS_ALL])
+_ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
+_ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'prodrat', 'doit', *_ONE_FUNCS}
+_ENV_OPTS_ALL    = _ENV_OPTS.union (f'no{opt}' for opt in _ENV_OPTS)
+__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnu', ['child', 'firstrun', 'help', 'version', 'debug', 'nobrowser', 'ugly', *_ENV_OPTS_ALL])
 
 _SERVER_DEBUG    = __name__ == '__main__' and __ARGV and __ARGV [0] == 'server-debug'
 
@@ -53,6 +54,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} [options] [host:port | host | :port]'
   --pyS, --nopyS           - Start with/out Python S escaping
   --simplify, --nosimplify - Start with/out post-evaluation simplification
   --matsimp, --nomatsimp   - Start with/out matrix simplification
+	--prodrat, --noprodrat   - Start with/out separate product leading rational
   --doit, --nodoit         - Start with/out automatic expression doit()
   --N, --noN               - Start with/out N function
   --S, --noS               - Start with/out S function
@@ -80,9 +82,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_HISTORY      = []  # persistent history across browser closings
 
 	_PARSER       = sparser.Parser ()
-	_ONE_FUNCS    = ('N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta')
-
-	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', False), ('matsimp', True), ('doit', True),
+	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', False), ('matsimp', True), ('prodrat', False), ('doit', True),
 		('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('Lambda', True), ('zeta', True)])
 
 	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
@@ -177,6 +177,12 @@ def _admin_env (*args):
 				if apply:
 					spatch.set_matmulsimp (state)
 
+			elif var == 'prodrat':
+				msgs.append (f'Leading product rational is {"on" if state else "off"}.')
+
+				if apply:
+					sym.set_prodrat (state)
+
 			elif var == 'doit':
 				msgs.append (f'Expression doit is {"on" if state else "off"}.')
 
@@ -215,7 +221,7 @@ def _admin_env (*args):
 
 		if var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
-		elif var not in {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'doit', *_ONE_FUNCS}:
+		elif var not in _ENV_OPTS: # {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'doit', 'prodrat', *_ONE_FUNCS}:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
@@ -560,7 +566,7 @@ def start_server (logging = True):
 	for opt, _ in __OPTS:
 		opt = opt.lstrip ('-')
 
-		if opt in _ENV_CLOPTS_ALL:
+		if opt in _ENV_OPTS_ALL:
 			_admin_env (AST ('@', opt))
 
 	_START_ENV.update (_ENV)
