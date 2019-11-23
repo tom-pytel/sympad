@@ -1,3 +1,4 @@
+> ERROR! x = lambda (t), x'(t)
 > ERROR! assign to ufuncs from iterable
 
 > ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
