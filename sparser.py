@@ -564,14 +564,14 @@ def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 
 	return Reduce
 
-def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
+def _expr_func (iparm, *args, is_operatorname = False): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
 	rhs        = args [iparm]
 	arg, wrapa = _ast_func_reorder (rhs)
 
 	if args [0] == '-func':
 		name = args [1]
 
-		if name not in ALL_FUNC_NAMES and name not in _SP_USER_FUNCS: # could be \operatorname ufunc like SymPy writes out
+		if is_operatorname and name not in _SP_USER_FUNCS and name not in ALL_FUNC_NAMES: # \operatorname ufunc like SymPy writes out
 			ast = _ast_var_as_ufunc (AST ('@', name), arg, rhs)
 
 			if ast:
@@ -591,10 +591,11 @@ def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses lik
 	return wrapa (ast2)
 
 def _expr_func_func (FUNC, args, expr_super = None):
-	func = _FUNC_name (FUNC) if isinstance (FUNC, Token) else FUNC
+	istok = isinstance (FUNC, Token)
+	func  = _FUNC_name (FUNC) if istok else FUNC
 
 	if expr_super is None:
-		return _expr_func (2, '-func', func, args)
+		return _expr_func (2, '-func', func, args, is_operatorname = istok and FUNC.grp [2])
 	elif expr_super.strip_curly != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
 		return AST ('^', _expr_func_func (FUNC, args), expr_super, is_pypow = expr_super.is_pypow)
 	else:
@@ -1541,6 +1542,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	a = p.parse (r"f(x) = x**2")
+	a = p.parse (r"\operatorname{x1} x")
 	print (a)
 

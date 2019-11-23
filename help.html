@@ -887,6 +887,18 @@ dsolve (y' + 4/x * y = x**3 y**2)<br>
 dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})<i>&emsp; with initial condition</i><br>
 dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order initial conditions</i><br>
 <br>
+delall<i>&emsp; clean up and start again</i><br>
+y = y(x)<br>
+eq = y' + 4/x * y == x**3 y**2<i>&emsp; assign equality (equation) to "eq"</i><br>
+dsolve (eq, ics = {y(2): -1})<i>&emsp; solve with ics to avoid constant symbol which would throw off prime derivtion</i><br>
+sol = _.args [1]<i>&emsp; assign the right-hand part of the solution to "sol"</i><br>
+checkodesol (eq, sol, y)<i>&emsp; check the solution for the function "y" using the checkodesol () function</i><br>
+\. eq |_{y (x) = sol}<i>&emsp; check the solution by manually substituting it for the function "y (x)" in "eq"</i><br>
+y (x) = sol<i>&emsp; assign solution to a concrete lambda function</i><br>
+eq<i>&emsp; and check it by evaluating "eq"</i><br>
+y' + 4/x * y, x**3 y**2<i>&emsp; check by eye</i><br>
+
+<br>
 delall<br>
 x, y = x(t), y(t)<i>&emsp; two distinct undefined functions</i><br>
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
