@@ -810,7 +810,7 @@ parser = sparser.Parser ()
 
 sym.set_pyS (False)
 
-def parse (text):
+def parse (text, retprepost = False):
 	t0  = time.process_time ()
 	ret = parser.parse (text)
 	t   = time.process_time () - t0
@@ -822,7 +822,7 @@ def parse (text):
 	if not ret [0] or ret [1] or ret [2]:
 		return None
 
-	return ret [0]
+	return (ret [0], ret [0].pre_parse_postprocess) if retprepost else ret [0]
 
 def test (argv = None):
 	global DEPTH, CURLYS
@@ -836,14 +836,16 @@ def test (argv = None):
 
 	depth   = 3
 	single  = None
+	quick   = False
 	topexpr = None
-	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:E:', ['tex', 'nat', 'py', 'dump', 'show', 'inf', 'infinite', 'nc', 'nocurlys', 'ns', 'nospaces', 'rs', 'randomspaces', 'tp', 'transpose', 'quick', 'pyS', 'cross', 'depth=', 'expr=', 'topexpr='])
+	opts, _ = getopt (sys.argv [1:] if argv is None else argv, 'tnpiqScd:e:E:', ['tex', 'nat', 'py', 'dump', 'show', 'se', 'showerr', 'inf', 'infinite', 'nc', 'nocurlys', 'ns', 'nospaces', 'rs', 'randomspaces', 'tp', 'transpose', 'quick', 'nopyS', 'cross', 'depth=', 'expr=', 'topexpr='])
 
 	if ('-q', '') in opts or ('--quick', '') in opts:
 		parser.set_quick (True)
+		quick = True
 
-	if ('-S', '') in opts or ('--pyS', '') in opts:
-		sym.set_pyS (True)
+	if ('-S', '') in opts or ('--nopyS', '') in opts:
+		sym.set_pyS (False)
 
 	for opt, arg in opts:
 		if opt in ('-d', '--depth'):
@@ -866,20 +868,20 @@ def test (argv = None):
 
 		sys.exit (0)
 
-	dotex   = ('--tex', '') in opts or ('-t', '') in opts
-	donat   = ('--nat', '') in opts or ('-n', '') in opts
-	dopy    = ('--py', '') in opts or ('-p', '') in opts
-	docross = ('--cross', '') in opts or ('-c', '') in opts
-
-	if not (dotex or donat or dopy):
-		dotex = donat = dopy = True
-
+	dotex     = ('--tex', '') in opts or ('-t', '') in opts
+	donat     = ('--nat', '') in opts or ('-n', '') in opts
+	dopy      = ('--py', '') in opts or ('-p', '') in opts
+	showerr   = ('--se', '') in opts or ('--showerr', '') in opts
 	CURLYS    = not (('--nc', '') in opts or ('--nocurlys', '') in opts)
 	spaces    = not (('--ns', '') in opts or ('--nospaces', '') in opts)
 	rndspace  = ('--rs', '') in opts or ('--randomspaces', '') in opts
 	transpose = ('--tp', '') in opts or ('--transpose', '') in opts
 	show      = ('--show', '') in opts
 	infinite  = (('-i', '') in opts or ('--inf', '') in opts or ('--infinite', '') in opts)
+	docross   = ('--cross', '') in opts or ('-c', '') in opts
+
+	if not (dotex or donat or dopy):
+		dotex = donat = dopy = True
 
 	if infinite and not single:
 		expr_func = (lambda: topexpr ()) if spaces else (lambda: topexpr ().replace (' ', ''))
@@ -925,6 +927,15 @@ def test (argv = None):
 
 				return AST (*(validate (a) for a in ast))
 
+			def check_double_curlys (ast):
+				if not isinstance (ast, AST):
+					return False
+				elif ast.is_curly and ast.curly.is_curly:
+					return True
+
+				return any (check_double_curlys (a) for a in ast)
+
+			# start here
 			status = []
 			DEPTH  = depth
 			text   = expr_func ()
@@ -943,29 +954,40 @@ def test (argv = None):
 			ast = parse (text) # fixstuff (parse (text))
 			status.append (f'ast:  {ast}')
 
+			err = None
+
 			if not ast:
-				if single or (not infinite and not quick):
-					raise ValueError ("error parsing")
+				if single or (not infinite and not quick) or showerr:
+					err = ValueError ("error parsing")
 
-				continue
+			if ast and not err:
+				try:
+					ast2 = validate (ast)
 
-			try:
-				ast2 = validate (ast)
+				except Exception as e: # make sure garbling functions did not create an invalid ast
+					if single or showerr:
+						err = e
+					else:
+						ast = None
 
-			except: # make sure garbling functions did not create an invalid ast
-				if single:
-					raise
+			if ast and not err:
+				if ast2 != ast:
+					status.append (f'astv: {ast2}')
 
-				continue
+					ast = ast2
 
-			if ast2 != ast:
-				status.append (f'astv: {ast2}')
+				if dopy and any (a.is_ass for a in (ast.scolon if ast.is_scolon else (ast,))): # reject assignments at top level if doing py because all sorts of mangling goes on there, we just want expressions in that case
+					if single or showerr:
+						err = ValueError ("disallowed assignment")
+					else:
+						ast = None
 
-				ast = ast2
+			if err or not ast:
+				if err and not showerr:
+					raise err
 
-			if dopy and any (a.is_ass for a in (ast.scolon if ast.is_scolon else (ast,))): # reject assignments at top level if doing py because all sorts of mangling goes on there, we just want expressions in that case
-				if single:
-					raise ValueError ("disallowed assignment")
+				if showerr:
+					print (f'\n{text} ... {err}')
 
 				continue
 
@@ -985,10 +1007,15 @@ def test (argv = None):
 
 					status.append ('parse ()')
 
-					rast        = parse (text1) # fixstuff (parse (text1))
+					rast, rpre  = parse (text1, retprepost = True) # fixstuff (parse (text1))
 
 					if not rast:
-						raise ValueError ("error parsing 2")
+						raise ValueError (f"error parsing")
+
+					if check_double_curlys (rpre):
+						status [-1] = f'astd: {rpre}'
+
+						raise ValueError ("doubled curlys")
 
 					status [-1:] = [f'ast:  {rast}', f'sym.ast2{rep} ()']
 					text2        = symfunc (rast)
@@ -1158,5 +1185,8 @@ def test (argv = None):
 	return True
 
 if __name__ == '__main__':
+	# test ('-d4 --nc --ns --rs --tp --quick --showerr'.split ())
 	# test (['-c', '-e', r"""{{\int { { log{ oo } }+{ { 1e+100 } \cdot { \Omega } }+{ { \infty zoo }^{ \zeta } } } dS }'}"""])
+	# test (['--quick', '--showerr'])
+	# test ([])
 	test ()

@@ -1184,7 +1184,7 @@ class Parser (LALR1):
 	def subsvarsv_1        (self, subsvarsv, DBLSLASH, expr_ass):                      return subsvarsv + (expr_ass,) if expr_ass.is_ass else _raise (SyntaxError ('expecting assignment'))
 	def subsvarsv_2        (self, expr_ass):                                           return (expr_ass,) if expr_ass.is_ass else _raise (SyntaxError ('expecting assignment'))
 
-	def expr_cases_1       (self, BEG_CASES, casess, END_CASES):                       return AST ('{', ('-piece', casess))
+	def expr_cases_1       (self, BEG_CASES, casess, END_CASES):                       return AST ('-piece', casess) # AST ('{', ('-piece', casess))
 	def expr_cases_2       (self, expr_mat):                                           return expr_mat
 	def casess_1           (self, casessp, DBLSLASH):                                  return casessp
 	def casess_2           (self, casessp):                                            return casessp
@@ -1435,7 +1435,7 @@ class Parser (LALR1):
 
 	def parse (self, text):
 		def postprocess (res):
-			return (_ast_mulexps_to_muls (res [0].no_curlys).flat,) + res [1:] if isinstance (res [0], AST) else res
+			return (_ast_mulexps_to_muls (res [0].no_curlys).flat.setkw (pre_parse_postprocess = res [0]),) + res [1:] if isinstance (res [0], AST) else res
 
 		if not text.strip:
 			return (AST.VarNull, 0, [])
@@ -1509,6 +1509,6 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d**2 / dy dx (f) (3)")
 	# a = p.parse (r"d/dx (f) (3)")
 
-	a = p.parse (r"(\int ln(oo) + 1e+100 Omega + (oo zoo)**zeta dS)'")
+	a = p.parse (r"\left(a_{1} \cdot 0.0 \right) + a! + {\begin{cases} d & \text{for}\: 1 \\ dx & \text{otherwise} \end{cases}}")
 	print (a)
 

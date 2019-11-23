@@ -320,18 +320,18 @@ Multiplication is explicit with a "<b>*</b>" operator or implicit simply by writ
 There is however a difference between the two in that the implicit version has a higher precedence than the explicit, which means that explicit multiplication will end a limit, sum, derivative or division "<b>/</b>" expression whereas implicit multiplication will not, e.g. "<b>1/x y</b>" = $\frac{1}{x y}$ whereas "<b>1/x*y</b>" = $\frac{1}{x} \cdot y$.
 </p><p>
 Division also has two operators, the normal "<b>/</b>" which has a fairly low precedence and the LaTeX "<b>\frac</b>" version which has a very high precedence, even higher than exponentiation.
-So high in fact that parentheses are not needed if using "<b>\frac</b>" as an exponent as in "<b>x^\frac{1}{2}</b>" = $x^\frac{1}{2}$.
+So high in fact that parentheses are not needed if using "<b>\frac</b>" as an exponent as in "<b>x**\frac{3}{2}</b>" = $x^\frac{3}{2}$, whereas "<b>x**3/2</b>" is $\frac{x^3}{2}$.
 The "<b>\frac</b>" operation also does not need parentheses if using single digit operands or single letter variables (Latin or Greek) such as "<b>\frac12</b>" = $\frac12$ or "<b>\frac\alpha\beta</b>" = $\frac\alpha\beta$.
 </p>
 
 <h4 id="Exponentiation">Exponentiation</h4>
 
 <p>
-There are two power opearators "<b>^</b>" and "<b>**</b>". They have the same precedence and can be used interchangeably but follow slightly different
-parsing rules. The "<b>^</b>" operator follows LaTeX rules which only allow a single positive digit or letter variable (Lating or Greek) without the use
-of curly braces whereas the "<b>**</b>" follows Python rules which allow negative values or variables or functions. To illustrate the diffference:
-"<b>x**-2</b>" = $x^{-2}$ whereas "<b>x^-2</b>" = $x^-2$ (which makes no sense). Also, "<b>e**ln(x)</b>" will work as expected $e^{\ln(x)}$ whereas
-"<b>e^ln(x)</b>" = $e^ln(x)$.
+There are two power opearators "<b>^</b>" and "<b>**</b>".
+They have the same precedence and can be used interchangeably but follow slightly different parsing rules.
+The "<b>^</b>" operator follows LaTeX rules which only allow a single positive digit or letter variable (Latin or Greek) without the use of curly braces whereas the "<b>**</b>" follows Python rules which allow negative values or variables or functions.
+To illustrate the diffference: "<b>x**ab</b>" = $x^{ab}$ whereas "<b>x^ab</b>" parses to $x^ab$.
+Also, "<b>e**ln(x)</b>" will work as expected $e^{\ln(x)}$ whereas "<b>e^ln(x)</b>" = $e^ln(x)$.
 </p>
 
 <h4 id="Logarithms">Logarithms</h4>
