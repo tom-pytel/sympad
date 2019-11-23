@@ -16,7 +16,7 @@ _SYM_MARK_PY_ASS_EQ = False # for testing to write extra information into python
 _SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
 _SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as AST.Null
-_POST_SIMPLIFY  = True # post-evaluation simplification
+_POST_SIMPLIFY  = False # post-evaluation simplification
 _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
 _MUL_RATIONAL   = False # products should lead with a rational fraction if one is present instead of absorbing into it
@@ -33,6 +33,12 @@ AST.register_AST (AST_Text)
 
 class EqAss (sp.Eq): pass # explicit assignment instead of equality comparison
 class EqCmp (sp.Eq): pass # explicit equality comparison instead of assignment
+
+class IdLambda (sp.Lambda): # having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
+	def __new__ (cls, a, l, **kw):
+		self = sp.Lambda.__new__ (cls, sp.Symbol (l.name), l.name)
+
+		return self
 
 class NoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation or doit, args = (str (AST), sp.S.One)
 	is_number    = False
@@ -605,9 +611,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	def _ast2tex_ufunc (self, ast):
 		user = _SYM_USER_ALL.get (ast.ufunc)
 
+		# if user and user.is_lamb and ast.matches_lamb_sig (user):
+		# 	return self._ast2tex_func (AST ('-func', ast.ufunc, ast.vars))
+
 		if (ast.is_ufunc_explicit or not ast.ufunc or
 					(user and
 					(not user.is_ufunc or (ast != user and not user.can_apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
+					not (user.is_lamb and ast.matches_lamb_sig (user)) and
 					not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?' # '\\: ?'
@@ -1525,8 +1535,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		spt = self._ast2spt (ast.lamb)
 
 		if ast.vars.len == 1 and isinstance (spt, sp.Symbol) and not isinstance (spt, sp.Dummy) and spt.name == ast.vars [0]:
-			spt      = sp.Lambda (sp.Symbol (ast.vars [0]), ast.vars [0]) # having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
-			spt.doit = lambda self, *args, **kw: self
+			spt = IdLambda (None, sp.Symbol (ast.vars [0]))
 
 		else:
 			spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), spt)
@@ -1967,13 +1976,13 @@ if __name__ == '__main__': # DEBUG!
 	# set_sym_user_funcs (set (vars))
 	# set_sym_user_vars (vars)
 
-	ast = AST ('-slice', False, ('-intg', ('*', (('-mat', ((('"', 's'),), (('@', 'dy'),), (('@', 'beta'),))), ('#', '-9.712711016258549e-12'), ('@', 'Gamma'), ('#', '-1.0'), ('&&', (('#', '0'), ('#', '6.222789060821971e-22'))), ('-diff', ('-sum', ('#', '2.040706058303616e-14'), ('@', 'x'), ('@', 'x0'), ('#', '0.1')), 'd', (('z', 1), ('z', 2), ('y', 1)))), {1, 4, 5}), ('@', 'dz')), None)
+	ast = AST ('-lamb', ('@', 'y'), ('y',))
 	# res = ast2tex (ast)
-	res = ast2nat (ast)
+	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	# res = ast2spt (ast)
-	# res = spt2ast (res)
+	res = ast2spt (ast)
+	res = spt2ast (res)
 	# res = ast2nat (res)
 
 
