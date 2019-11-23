@@ -1118,7 +1118,7 @@ class AST_Subs (AST):
 
 	_is_subs_diff_ufunc     = lambda self: self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc
 	_is_subs_diff_d_ufunc   = lambda self: self.expr.is_diff_d and self.expr.diff.strip_paren1.is_ufunc
-	_is_subs_diff_any_ufunc = lambda self: self.expr.op in {'-diff', '-diffp'} and self.expr [1].strip_paren1.is_ufunc
+	_is_subs_diff_any_ufunc = lambda self: (self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc) or (self.expr.is_diffp and self.expr.diffp.is_ufunc)
 
 class AST_Sym (AST):
 	op, is_sym = '-sym', True

@@ -164,11 +164,11 @@ class Test (unittest.TestCase):
 		reset ()
 		self.assertEqual (get ('env (quick)'), {'msg': ['Quick input mode is on.']})
 		self.assertEqual (get ('env (noquick)'), {'msg': ['Quick input mode is off.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 		self.assertEqual (get ('env (EI, quick, nopyS, nosimplify, nomatsimp, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Leading product rational is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function beta is on.', 'Function gamma is off.', 'Function Gamma is off.', 'Function Lambda is on.', 'Function zeta is off.']})
-		self.assertEqual (get ('envreset'), {'msg': ['Environment has been reset.', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function beta is on.', 'Function gamma is off.', 'Function Gamma is off.', 'Function Lambda is on.', 'Function zeta is off.']})
+		self.assertEqual (get ('envreset'), {'msg': ['Environment has been reset.', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 
 	def test_idx_and_attr (self):
 		reset ()
@@ -324,19 +324,19 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (x)'), {'math': ('g(x)', "Function('g')(x)", 'g\\left(x \\right)')})
 		self.assertEqual (get ('f (x) (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
 		self.assertEqual (get ('f (0)'), {'math': ('g(0)', "Function('g')(0)", 'g\\left(0 \\right)')})
-		self.assertEqual (get ("f' (x)"), {'math': ("x g(x)'", "x*diff(Function('g')(x))", "x g\\left(x \\right)'")})
-		self.assertEqual (get ('d/dx (f) (x)'), {'math': ("x g(x)'", "x*diff(Function('g')(x))", "x g\\left(x \\right)'")})
-		self.assertEqual (get ("f (x)' (0)"), {'math': ("g(x)'(0)", "Subs(diff(Function('g')(x)), x, 0)", "g\\left(x \\right)'\\left(0 \\right)")})
-		self.assertEqual (get ('d/dx (f (x)) (0)'), {'math': ("g(x)'(0)", "Subs(diff(Function('g')(x)), x, 0)", "g\\left(x \\right)'\\left(0 \\right)")})
+		self.assertEqual (get ("f' (x)"), {'math': ("x f'", 'x*diff(f)', "x f'")})
+		self.assertEqual (get ('d/dx (f) (x)'), {'math': ("x f'", 'x*diff(f)', "x f'")})
+		self.assertEqual (get ("f (x)' (0)"), {'math': ("f'(0)", 'Subs(diff(f), x, 0)', "f'\\left(0 \\right)")})
+		self.assertEqual (get ('d/dx (f (x)) (0)'), {'math': ("f'(0)", 'Subs(diff(f), x, 0)', "f'\\left(0 \\right)")})
 		self.assertEqual (get ('u = u (x, t)'), {'math': ('u = u(x, t)', "u = Function('u')(x, t)", 'u = u\\left(x, t \\right)')})
-		self.assertEqual (get ('du/dx (x, t)'), {'math': ('d / dx (u(x, t)) * (x, t)', "Derivative(Function('u')(x, t), x)*(x, t)", '\\frac{\\partial}{\\partial x}\\left(u\\left(x, t \\right) \\right) \\cdot \\left(x, t \\right)')})
-		self.assertEqual (get ('du/dx (1, t)'), {'math': ('d / dx (u(x, t))(1, t)', "Subs(Derivative(Function('u')(x, t), x), x, 1)", '\\frac{\\partial}{\\partial x}\\left(u\\left(x, t \\right) \\right)\\left(1, t \\right)')})
-		self.assertEqual (get ('du/dx (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), x), (x, t), (1, 0))", '\\frac{\\partial}{\\partial x}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
-		self.assertEqual (get ('d**2u / dx dt (1, 0)'), {'math': ('d**2 / dt dx (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), t, x), (x, t), (1, 0))", '\\frac{\\partial^2}{\\partial t \\partial x}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('du/dx (x, t)'), {'math': ('du / dx * (x, t)', 'Derivative(u, x)*(x, t)', '\\frac{\\partial u}{\\partial x} \\cdot \\left(x, t \\right)')})
+		self.assertEqual (get ('du/dx (1, t)'), {'math': ('du / dx(1, t)', 'Subs(Derivative(u, x), x, 1)', '\\frac{\\partial u}{\\partial x}\\left(1, t \\right)')})
+		self.assertEqual (get ('du/dx (1, 0)'), {'math': ('du / dx(1, 0)', 'Subs(Derivative(u, x), (x, t), (1, 0))', '\\frac{\\partial u}{\\partial x}\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d**2u / dx dt (1, 0)'), {'math': ('d**2 u / dt dx(1, 0)', 'Subs(Derivative(u, t, x), (x, t), (1, 0))', '\\frac{\\partial^2 u}{\\partial t \\partial x}\\left(1, 0 \\right)')})
 		self.assertEqual (get ('d/dx u (1, 0)'), {'math': ('0', '0', '0')})
-		self.assertEqual (get ('d/dx (u) (1, 0)'), {'math': ('d / dx (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), x), (x, t), (1, 0))", '\\frac{\\partial}{\\partial x}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d/dx (u) (1, 0)'), {'math': ('du / dx(1, 0)', 'Subs(Derivative(u, x), (x, t), (1, 0))', '\\frac{\\partial u}{\\partial x}\\left(1, 0 \\right)')})
 		self.assertEqual (get ('d**2 / dx dt u (1, 0)'), {'math': ('0', '0', '0')})
-		self.assertEqual (get ('d**2 / dx dt (u) (1, 0)'), {'math': ('d**2 / dt dx (u(x, t))(1, 0)', "Subs(Derivative(Function('u')(x, t), t, x), (x, t), (1, 0))", '\\frac{\\partial^2}{\\partial t \\partial x}\\left(u\\left(x, t \\right) \\right)\\left(1, 0 \\right)')})
+		self.assertEqual (get ('d**2 / dx dt (u) (1, 0)'), {'math': ('d**2 u / dt dx(1, 0)', 'Subs(Derivative(u, t, x), (x, t), (1, 0))', '\\frac{\\partial^2 u}{\\partial t \\partial x}\\left(1, 0 \\right)')})
 		self.assertEqual (get ('f () = x**2'), {'math': ('f() = x**2', 'f = Lambda((), x**2)', 'f\\left( \\right) = x^2')})
 		self.assertEqual (get ('g (2) = x**2'), {'err': 'server.RealityRedefinitionError: cannot assign to a function containing non-variable parameters'})
 		self.assertEqual (get ('h (x) = x**2'), {'math': ('h(x) = x**2', 'h = Lambda(x, x**2)', 'h\\left(x \\right) = x^2')})
@@ -359,6 +359,15 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('d / dx (f) (3, 2)'), {'math': ('48', '48', '48')})
 		self.assertEqual (get ('d / dy (f) (3, 2)'), {'math': ('108', '108', '108')})
 		self.assertEqual (get ('d**2 / dx dy (f) (3, 2)'), {'math': ('72', '72', '72')})
+		self.assertEqual (get ('f = ?f (x)'), {'math': ('f = f(x)', "f = Function('f')(x)", 'f = f\\left(x \\right)')})
+		self.assertEqual (get ('f'), {'math': ('f(x)', "Function('f')(x)", 'f\\left(x \\right)')})
+		self.assertEqual (get ('1 + f'), {'math': ('f + 1', 'f + 1', 'f + 1')})
+		self.assertEqual (get ('g = f'), {'math': ('g = f(x)', "g = Function('f')(x)", 'g = f\\left(x \\right)')})
+		self.assertEqual (get ('g'), {'math': ('f(x)', "Function('f')(x)", 'f\\left(x \\right)')})
+		self.assertEqual (get ('1 + g'), {'math': ('f + 1', 'f + 1', 'f + 1')})
+		self.assertEqual (get ('del f'), {'msg': ["Undefined function 'f' deleted."]})
+		self.assertEqual (get ('g'), {'math': ('f(x)', "Function('f')(x)", 'f\\left(x \\right)')})
+		self.assertEqual (get ('1 + g'), {'math': ('g + 1', 'g + 1', 'g + 1')})
 
 	def test_intro_examples (self):
 		reset ()
@@ -744,6 +753,16 @@ d**2 f / dx dy (3, 2)
 d / dx (f) (3, 2)
 d / dy (f) (3, 2)
 d**2 / dx dy (f) (3, 2)
+
+f = ?f (x)
+f
+1 + f
+g = f
+g
+1 + g
+del f
+g
+1 + g
 
 """), ('intro_examples', """
 

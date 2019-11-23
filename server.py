@@ -25,7 +25,7 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _VERSION         = '1.0.20'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
-_ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'prodrat', 'doit', *_ONE_FUNCS}
+_ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', *_ONE_FUNCS}
 _ENV_OPTS_ALL    = _ENV_OPTS.union (f'no{opt}' for opt in _ENV_OPTS)
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnu', ['child', 'firstrun', 'help', 'version', 'debug', 'nobrowser', 'ugly', *_ENV_OPTS_ALL])
 
@@ -54,6 +54,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} [options] [host:port | host | :port]'
   --pyS, --nopyS           - Start with/out Python S escaping
   --simplify, --nosimplify - Start with/out post-evaluation simplification
   --matsimp, --nomatsimp   - Start with/out matrix simplification
+	--ufuncmap, --noufuncmap - Start with/out undefined function mapping back to variables
 	--prodrat, --noprodrat   - Start with/out separate product leading rational
   --doit, --nodoit         - Start with/out automatic expression doit()
   --N, --noN               - Start with/out N function
@@ -77,16 +78,19 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	import spatch        # AUTO_REMOVE_IN_SINGLE_SCRIPT
 	import splot         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-	_SYS_STDOUT   = sys.stdout
-	_DISPLAYSTYLE = [1] # use "\displaystyle{}" formatting in MathJax
-	_HISTORY      = []  # persistent history across browser closings
+	_SYS_STDOUT    = sys.stdout
+	_DISPLAYSTYLE  = [1] # use "\displaystyle{}" formatting in MathJax
+	_HISTORY       = []  # persistent history across browser closings
 
-	_PARSER       = sparser.Parser ()
-	_START_ENV    = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', False), ('matsimp', True), ('prodrat', False), ('doit', True),
+	_UFUNC_MAPBACK = True # map undefined functions from SymPy back to variables if possible
+	_UFUNC_MAP     = {} # map of ufunc asts to ordered sequence of variable names
+
+	_PARSER        = sparser.Parser ()
+	_START_ENV     = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', False), ('matsimp', True), ('ufuncmap', True), ('prodrat', False), ('doit', True),
 		('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('Lambda', True), ('zeta', True)])
 
-	_ENV          = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
-	_VARS         = {'_': AST.Zero} # This also!
+	_ENV           = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
+	_VARS          = {'_': AST.Zero} # This also!
 
 #...............................................................................................
 def _admin_vars (*args):
@@ -177,6 +181,13 @@ def _admin_env (*args):
 				if apply:
 					spatch.set_matmulsimp (state)
 
+			elif var == 'ufuncmap':
+				msgs.append (f'Undefined function map to variable is {"on" if state else "off"}.')
+
+				if apply:
+					global _UFUNC_MAPBACK
+					_UFUNC_MAPBACK = state
+
 			elif var == 'prodrat':
 				msgs.append (f'Leading product rational is {"on" if state else "off"}.')
 
@@ -221,7 +232,7 @@ def _admin_env (*args):
 
 		if var is None:
 			raise TypeError (f'invalid argument {sym.ast2nat (arg)!r}')
-		elif var not in _ENV_OPTS: # {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'doit', 'prodrat', *_ONE_FUNCS}:
+		elif var not in _ENV_OPTS:
 			raise NameError (f'invalid environment setting {var!r}')
 
 		env [var] = state
@@ -265,6 +276,30 @@ def _vars_updated ():
 	sym.set_sym_user_vars (vars)
 	sparser.set_sp_user_funcs (user_funcs)
 	sparser.set_sp_user_vars (vars)
+
+	_UFUNC_MAP.clear ()
+
+	for v, a in vars.items (): # build ufunc mapback list
+		if v != '_' and a.is_ufunc:
+			_UFUNC_MAP.setdefault (a, []).append (v)
+
+def _ufunc_mapback (ast):
+	if not isinstance (ast, AST):
+		return ast
+	elif ast.is_ass and ast.lhs.is_ufunc:
+		return AST ('=', ast.lhs, _ufunc_mapback (ast.rhs))
+	elif not ast.is_ufunc:
+		return AST (*(_ufunc_mapback (a) for a in ast))
+
+	vars = _UFUNC_MAP.get (ast)
+
+	if vars:
+		if ast.ufunc in vars:
+			return AST ('@', ast.ufunc)
+		else:
+			return AST ('@', vars [0])
+
+	return AST (*(_ufunc_mapback (a) for a in ast))
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	if not ast.ass_validate:
@@ -359,7 +394,7 @@ class Handler (SimpleHTTPRequestHandler):
 			nat, xlatnat = sym.ast2nat (ast, retxlat = True)
 			py, xlatpy  = sym.ast2py (ast, retxlat = True)
 
-			if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+			if _SYMPAD_DEBUG:
 				print ('free:', list (v.var for v in ast.free_vars), file = sys.stderr)
 				print ('ast: ', ast, file = sys.stderr)
 
@@ -413,25 +448,27 @@ class Handler (SimpleHTTPRequestHandler):
 			else: # not admin function, normal evaluation
 				ast, vars = _prepare_ass (ast)
 
-				if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+				if _SYMPAD_DEBUG:
 					print ('ast:       ', ast, file = sys.stderr)
 
 				try:
 					spt, xlat = sym.ast2spt (ast, retxlat = True) # , _VARS)
 
-					if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
-						if xlat:
-							print ('xlat:      ', xlat, file = sys.stderr)
+					if _SYMPAD_DEBUG and xlat:
+						print ('xlat:      ', xlat, file = sys.stderr)
 
 					sptast = sym.spt2ast (spt)
 
 				except:
-					if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+					if _SYMPAD_DEBUG:
 						print (file = sys.stderr)
 
 					raise
 
-				if _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+				if _UFUNC_MAPBACK and not sptast.is_ufunc:
+					sptast = _ufunc_mapback (sptast)
+
+				if _SYMPAD_DEBUG:
 					try:
 						print ('spt:       ', repr (spt), file = sys.stderr)
 					except:
@@ -648,7 +685,7 @@ def parent ():
 			ret       = subprocess.run (base + opts + first_run + __ARGV)
 			first_run = []
 
-			if ret.returncode != 0 and not _SYMPAD_DEBUG: # os.environ.get ('SYMPAD_DEBUG'):
+			if ret.returncode != 0 and not _SYMPAD_DEBUG:
 				sys.exit (0)
 
 	except KeyboardInterrupt:

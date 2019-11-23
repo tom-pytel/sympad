@@ -1,5 +1,3 @@
-> option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x), but not on lhs of assignment
-
 > ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
 
 > mark \operatorname funcs so they can't be rewound?
