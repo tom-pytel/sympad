@@ -1,12 +1,11 @@
-> ufunc variables absorb identical signature? or can be fixed with ufunc mapback to variables, but ideal?
+> option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x), but not on lhs of assignment
+
 > ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
 
 > mark \operatorname funcs so they can't be rewound?
 
 > (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
-
-> option to convert diffs of undefined functions assigned to variables back to to df/dx instead of d/dx f(x)
 
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 > "d / 2" is "(d) / 2", fix it
@@ -28,8 +27,6 @@
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > keep track of what undefined functions are created during processing?
-
-> set full result of assignment to previous variable '_'?
 
 
 > SymmetricDifference()
@@ -87,7 +84,6 @@
 
 
 > again redo spt2ast_Add?
-> _spt2ast_Mul - option to not absorb fraction into non-fraction
 
 > parse from python ln x / ln base -> \log_{base} x? only for number bases?
 
@@ -100,22 +96,19 @@
 > test_server multi maths from semicolon expressions
 
 
-> \log loggamma=2 py representation? also sqrt? (use = instead of Eq due to function names as variables)
 > proper sqrt and log AST initialization via __new__, slice, maybe others
 
 > f (x) = x**2; f (x)
 
-> quick mode function name characters allow to follow immediately?
 > allow log_base without the \?
 > sum_{start <= x < stop} -> \sum_{x = start}^{stop - 1}?
 > do not write out parentheses for integration where not needed - \int {d / dx (x**2)} dx -> \int d / dx (x**2) dx?
 
-> xlat py f = Lambda (x, x**2) -> f (x) = x**2?
-
-> make test_sym friendlier to quick mode
 > verify all is_var -> is_var_nonconst where consts not allowed
 > worry about invalid varnames (reserved function names) or leave as convenience?
 > SymPy function aliases as vars? "D = Derivative"?
+
+> set full result of assignment to previous variable '_'?
 
 > make semicolon separated plots work
 

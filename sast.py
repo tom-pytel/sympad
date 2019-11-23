@@ -1091,9 +1091,9 @@ class AST_UFunc (AST):
 		if argskw:
 			args, kw = argskw
 
-			if args and not kw:
+			if not kw and args:
 				if not self.vars.len:
-					return AST ('-ufunc', self.ufunc_full, args, self.kw)
+					return True
 
 				if self.vars.len == len (args):
 					for v, a in zip (self.vars, args):

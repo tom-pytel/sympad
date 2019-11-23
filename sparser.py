@@ -66,20 +66,36 @@ def _ast_func_reorder (ast):
 
 def _ast_var_as_ufunc (var, arg, rhs):
 	if var.var != '_' and arg.is_paren and var.is_var_nonconst and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
-		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
+		argskw = arg.paren.as_ufunc_argskw
 
-		if ufunc.op is None:
-			return AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw, src_rhs = rhs)
+		if argskw:
+			ufunc = _SP_USER_VARS.get (var.var, AST.Null)
 
-		elif ufunc.is_ufunc:
-			if ufunc.is_ufunc_unapplied:
-				ast = ufunc.apply_argskw (arg.paren.as_ufunc_argskw)
+			# if ufunc.op in {None, '-ufunc'}:
+			# 	return AST ('-ufunc', var.var, *argskw, src_rhs = rhs)
 
-				if ast:
-					return ast
 
-			elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-				return AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))))
+			if ufunc.op is None:
+				return AST ('-ufunc', var.var, *argskw, src_rhs = rhs)
+			elif ufunc.is_ufunc:
+				return AST ('-ufunc', ufunc.ufunc_full, *argskw, src_rhs = rhs, src_var_name = var.var)
+
+
+			# if ufunc.op is None:
+			# 	return AST ('-ufunc', var.var, *argskw, src_rhs = rhs)
+
+			# if ufunc.is_ufunc:
+			# 	if ufunc.is_ufunc_unapplied:
+			# 		ast = ufunc.apply_argskw (argskw)
+
+			# 		if ast:
+			# 			return ast
+
+			# 	elif argskw [0] == ufunc.vars and argskw [1] == ufunc.kw: # absorb identical ufunc signature since that could be returned from SymPy
+			# 		return ufunc
+
+			# 	elif ufunc.can_apply_argskw (argskw):
+			# 		return AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))))
 
 	return None
 
@@ -225,7 +241,12 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 			return AST ('-ufunc', ast.mul [0].var, *ast.mul [1].paren.as_ufunc_argskw)
 
 	def lhs_ufunc_py_explicitize (ast):
-		return AST ('-ufunc', f'?{ast.ufunc}', *ast [2:]) if not allow_lexprs and (ast.is_ufunc_py or (ast.is_ufunc and ast.kw)) else ast
+		if not allow_lexprs and (ast.is_ufunc_py or (ast.is_ufunc and ast.kw)):
+			return AST ('-ufunc', f'?{ast.ufunc}', *ast [2:])
+		elif ast.src_var_name:
+			return AST ('-ufunc', f'{ast.src_var_name}', *ast [2:])
+		else:
+			return ast
 
 	# start here
 	if ast.is_ass: # if assigning to function call then is assignment to function instead, rewrite
@@ -1506,6 +1527,7 @@ if __name__ == '__main__': # DEBUG!
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
 	# _SP_USER_FUNCS.update ({'f'})
 	# set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
+	set_sp_user_vars ({'f': AST ('-ufunc', 'g', (('@', 'x'),))})
 
 
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
@@ -1519,16 +1541,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	# a = p.parse (r"dsolve (y(x)'' + 11 y(x)' + 24 y(x), ics = {y(0): 0, y(x)'(0): -7})")
-
-	# a = p.parse (r"\frac{d}{dx}(f)(3)")
-	# a = p.parse (r"d**4 / dw dz**2 dy dx (f) (3)")
-	# a = p.parse (r"d**4 / dw dz dy dx (f) (3)")
-	# a = p.parse (r"d**3 / dz dy dx (f) (3)")
-	# a = p.parse (r"d**2 / dy dx (f) (3)")
-	# a = p.parse (r"d/dx (f) (3)")
-
-	# a = p.parse (r"\operatorname{x_{0}}{\left(t \right)}")
-	a = p.parse (r"sin**2 N x")
+	a = p.parse (r"f(x) = x**2")
 	print (a)
 

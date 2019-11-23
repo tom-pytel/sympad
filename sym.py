@@ -606,7 +606,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		user = _SYM_USER_ALL.get (ast.ufunc)
 
 		if (ast.is_ufunc_explicit or not ast.ufunc or
-				(user and (not user.is_ufunc or (ast != user if user.vars else ast.kw != user.kw)) and not _ast_is_top_ass_lhs (self, ast)) or
+					(user and
+					(not user.is_ufunc or (ast != user and not user.can_apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
+					not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?' # '\\: ?'
 		else:
@@ -954,7 +956,9 @@ class ast2nat: # abstract syntax tree -> native text
 		user = _SYM_USER_ALL.get (ast.ufunc)
 
 		if (ast.is_ufunc_explicit or not ast.ufunc or
-				(user and (not user.is_ufunc or (ast != user if user.vars else ast.kw != user.kw)) and not _ast_is_top_ass_lhs (self, ast)) or
+					(user and
+					(not user.is_ufunc or (ast != user and not user.can_apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
+					not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?'
 		else:

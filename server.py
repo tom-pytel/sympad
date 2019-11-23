@@ -291,8 +291,9 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 		_VARS.update (vars)
 
-		return vars.items ()
+		return list (vars.items ())
 
+	# start here
 	if not vars: # no assignment
 		_VARS ['_'] = ast
 
@@ -660,7 +661,7 @@ if _SERVER_DEBUG: # DEBUG!
 
 	h = Handler ()
 
-	print (h.evaluate ({'text': r'\sum_{x=0}**10 lambda: x + y'}))
+	print (h.evaluate ({'text': r'x = 1'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END
