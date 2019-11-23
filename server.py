@@ -160,7 +160,7 @@ def _admin_env (*args):
 					_PARSER.set_quick (state)
 
 			elif var == 'pyS':
-				msgs.append (f'Python S escaping {"on" if state else "off"}.')
+				msgs.append (f'Python S escaping is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_pyS (state)

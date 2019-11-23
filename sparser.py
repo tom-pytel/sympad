@@ -15,16 +15,13 @@ RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} |
 _SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SP_USER_VARS  = {} # flattened user vars {name: ast, ...}
 
-_rec_valid_var_name       = re.compile (fr'^(?:(?:[A-Za-z]\w*)|(?:[{"".join (AST.Var.GREEKUNI)}]))$')
-_rec_valid_var_name_quick = re.compile (fr'^(?:[A-Za-z{"".join (AST.Var.GREEKUNI)}]\d*)$')
-
 def _raise (exc):
 	raise exc
 
 def _is_valid_var_name (self, text):
-	m = self.rec_valid_var_name.match (text)
+	toks = self.tokenize (text)
 
-	return m and not text.endswith ('_')
+	return toks == ['VAR', '$end'] and not toks [0].grp [4]
 
 def _FUNC_name (FUNC):
 	if FUNC.grp [1]:
@@ -82,7 +79,7 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 	else:
 		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast), **ast._kw)
 
-def _ast_tail_differential (self, must_have_pre = False, from_add = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
+def _ast_tail_differential (self, want_pre = False, from_add = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
 	lself = lambda a: a
 
 	if self.is_differential or self.is_var_null: # AST.VarNull is for autocomplete
@@ -111,8 +108,8 @@ def _ast_tail_differential (self, must_have_pre = False, from_add = False): # fi
 			pre, dv, wrap, wrapp = ast.tail_differential
 
 			if dv:
-				if must_have_pre and (pre or not i):
-					must_have_pre = False
+				if want_pre and (pre or not i):
+					want_pre = False
 
 					if ast is not self.mul [-1]:
 						continue
@@ -139,7 +136,7 @@ def _ast_tail_differential (self, must_have_pre = False, from_add = False): # fi
 		if dv:
 			return pre, dv, lambda a: AST ('/', wrap (a), self.denom), wrapp
 
-		pre, dv, wrap, wrapp = self.denom.tail_differential_with_pre
+		pre, dv, wrap, wrapp = self.denom.tail_differential_want_pre
 
 		if dv and pre:
 			return AST ('/', self.numer, wrapp (pre)), dv, wrap, lself
@@ -147,12 +144,17 @@ def _ast_tail_differential (self, must_have_pre = False, from_add = False): # fi
 	elif self.is_pow:
 		pre, dv, wrap, wrapp = self.base.tail_differential
 
-		if dv:
+		if dv and (pre or not want_pre):
 			return pre, dv, lambda a: AST ('^', wrap (a), self.exp), wrapp
+
+		pre, dv, wrap, wrapp = self.exp.tail_differential_want_pre
+
+		if dv and pre:
+			return AST ('^', self.base, wrapp (pre)), dv, wrap, lself
 
 	elif self.is_func:
 		if self.src:
-			if self.src.mul [0].is_differential and self.func in _SP_USER_FUNCS:
+			if not want_pre and self.src.mul [0].is_differential and self.func in _SP_USER_FUNCS:
 				return None, self.src.mul [0], lambda a: AST ('*', (a, self.src.mul [1])), lself
 
 			pre, dv, wrap, wrapp = self.src.mul [1].tail_differential
@@ -177,7 +179,7 @@ def _ast_tail_differential (self, must_have_pre = False, from_add = False): # fi
 					return pre, dv, wrap, lself
 
 	elif self.op in {'-lim', '-sum'}:
-		pre, dv, wrap, wrapp = self [1].tail_differential_with_pre
+		pre, dv, wrap, wrapp = self [1].tail_differential_want_pre
 
 		if dv and pre:
 			return AST (self.op, wrapp (pre), *self [2:]), dv, wrap, lself
@@ -185,7 +187,7 @@ def _ast_tail_differential (self, must_have_pre = False, from_add = False): # fi
 	return None, None, None, None
 
 AST._tail_differential          = _ast_tail_differential # adding to AST class so it can be cached and accessed as member
-AST._tail_differential_with_pre = lambda self: self._tail_differential (must_have_pre = True)
+AST._tail_differential_want_pre = lambda self: self._tail_differential (want_pre = True)
 AST._tail_differential_from_add = lambda self: self._tail_differential (from_add = True)
 AST._has_tail_differential      = lambda self: self.tail_differential [1]
 
@@ -295,10 +297,17 @@ def _expr_cmp (lhs, CMP, rhs):
 def _expr_add (self, lhs, rhs):
 	ast = AST.flatcat ('+', lhs, rhs)
 
-	if self.stack_has_sym ('INTG') and lhs.has_tail_differential:
+	if self.in_intg () and lhs.has_tail_differential:
 		return Reduce (ast)#, keep = True)
 
 	return PopConfs (ast)
+
+def _expr_mul_exp (self, lhs, rhs): # fix side-effect of integral parsing
+	if lhs.is_mulexp:
+		if lhs.mul [-1].is_differential and self.in_intg ():
+			return Reduce (AST.flatcat ('*exp', lhs, rhs))
+
+	return PopConfs (AST.flatcat ('*exp', lhs, rhs))
 
 def _expr_neg (expr): # conditionally push negation into certain operations to make up for grammar higherarchy missing negative numbers
 	if expr.op in {'!', '-diffp', '-idx'}:
@@ -470,9 +479,9 @@ def _expr_div (numer, denom):
 
 	return AST ('/', numer, denom)
 
-def _expr_mul_imp (lhs, rhs):
+def _expr_mul_imp (self, lhs, rhs): # fix side-effect of integral parsing
 	if rhs.is_div:
-		if rhs.numer.is_intg: # fix side-effect of integral parsing that it winds up numerator of fraction even if implicitly multiplied on the left
+		if rhs.numer.is_intg:
 			return PopConfs (AST ('/', AST.flatcat ('*', lhs, rhs.numer), rhs.denom))
 		elif rhs.numer.is_mul and rhs.numer.mul [0].is_intg:
 			return PopConfs (AST ('/', AST.flatcat ('*', lhs, rhs.numer), rhs.denom))
@@ -480,6 +489,10 @@ def _expr_mul_imp (lhs, rhs):
 	elif rhs.is_mulexp:
 		if rhs.mul [0].is_div and rhs.mul [0].numer.is_intg:
 			return PopConfs (AST ('*exp', (('/', ('*', (lhs, rhs.mul [0].numer)), rhs.mul [0].denom), *rhs.mul [1:])))
+
+	elif lhs.is_mul:
+		if lhs.mul [-1].is_differential and self.in_intg ():
+			return Reduce (AST.flatcat ('*', lhs, rhs))
 
 	return PopConfs (AST.flatcat ('*', lhs, rhs))
 
@@ -742,13 +755,9 @@ class Parser (LALR1):
 
 		self.TOKENS_LONG.update ([(v, self.TOKENS [v]) for v in self.TOKENS_QUICK])
 
-		self.rec_valid_var_name = _rec_valid_var_name
-
 	def set_quick (self, state = True):
 		self.TOKENS.update (self.TOKENS_QUICK if state else self.TOKENS_LONG)
 		self.set_tokens (self.TOKENS)
-
-		self.rec_valid_var_name = _rec_valid_var_name_quick if state else _rec_valid_var_name
 
 	_PARSER_TABLES = \
 			b'eJztnXmv3DaW6L/MA9oGqgBJpEjp/ucsPROMs0yWnmkYQeAk7kHwsiFO8nowmO/+zkbqUEWVpCpd31oIy1cSRXE7h+cnUoeqZ6/+8sX7n7789JO/7P7yf978/D3swun7X33+8u8v4eDlN5+9+PzDT/AwHrz85r3PX7z/b3gYD77661efvP/Z38MR7D/59Ev4' \
@@ -1070,8 +1079,8 @@ class Parser (LALR1):
 	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return _expr_add (self, expr_add, AST ('-', expr_mul_exp))
 	def expr_add_4         (self, expr_mul_exp):                                       return expr_mul_exp
 
-	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                       return AST.flatcat ('*exp', expr_mul_exp, expr_neg)
-	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                       return AST.flatcat ('*exp', expr_mul_exp, expr_neg)
+	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                       return _expr_mul_exp (self, expr_mul_exp, expr_neg) # AST.flatcat ('*exp', expr_mul_exp, expr_neg)
+	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                       return _expr_mul_exp (self, expr_mul_exp, expr_neg) # AST.flatcat ('*exp', expr_mul_exp, expr_neg)
 	def expr_mul_exp_3     (self, expr_neg):                                           return expr_neg
 
 	def expr_neg_1         (self, MINUS, expr_neg):                                    return _expr_neg (expr_neg)
@@ -1082,7 +1091,7 @@ class Parser (LALR1):
 	def expr_divm_1        (self, MINUS, expr_divm):                                   return PopConfs (_expr_neg (expr_divm))
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
 
-	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return _expr_mul_imp (expr_mul_imp, expr_intg) # PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg))
+	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return _expr_mul_imp (self, expr_mul_imp, expr_intg) # PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg))
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
 	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
@@ -1245,6 +1254,22 @@ class Parser (LALR1):
 
 	#...............................................................................................
 	# autocomplete means autocomplete AST tree so it can be rendered, not necessarily expression
+
+	def stack_has_sym (self, sym):
+		return any (st.sym == sym for st in self.stack)
+
+	def in_intg (self):
+		for st in reversed (self.stack):
+			if st.sym == 'INTG':
+				return True
+
+			if st.sym in {'LIM', 'SUM', 'L_DOT', 'L_PARENL', 'L_BRACKL', 'L_BAR', 'L_SLASHCURLYL', 'TO', 'UNION', 'SDIFF', 'XSECT', 'BEG_MAT',
+					'BEG_BMAT', 'BEG_VMAT', 'BEG_PMAT', 'BEG_CASES', 'SLASHDOT', 'SCOLON', 'SLASHCURLYL', 'SLASHBRACKL', 'CURLYL', 'PARENL', 'BRACKL'}:
+				break
+
+		return False
+
+	#...............................................................................................
 
 	_AUTOCOMPLETE_SUBSTITUTE = {
 		'CARET1'          : 'CARET',
@@ -1484,7 +1509,6 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d**2 / dy dx (f) (3)")
 	# a = p.parse (r"d/dx (f) (3)")
 
-	a = p.parse (r"f{(x)}")
-	# a = p.parse (r"f{\left(x\right)}")
+	a = p.parse (r"(\int ln(oo) + 1e+100 Omega + (oo zoo)**zeta dS)'")
 	print (a)
 

@@ -472,6 +472,16 @@ Function('f', positive = True)(x, real = True)
 {a \int x dx / c}*b
 {( {\frac{ { { \tilde\infty  } or { a } or { c } }+{ d^{5} / dz^{2} dz^{1} dy^{2} { b } } }{ -{ not { \lambda } } } } :  :  )}
 a / { -{d/dx (?f(x))(0)}}
+{\int x dx a + b * c + d}
+{\int x dx * a + b * c + d}
+\int^{a dx b} x dx
+\int {d**2 / dx dx (f(0))} dx
+\int {d**2 / dy dx (?f(x, y))(0, 1)} dx
+{\int { d^{1} / dz^{1} ({d**3 / dx dx dx g(commutative = True)(x, y)(0, 1)}) } dZ }
+\int {{d / dy dy dx a} [dz]} dx
+\frac{a}{b}*{{{{xx}'}^c}!}
+\int a**N dx
+{  : {\int { { {\[{ 's' },{ dy },{ \beta },]} \cdot { { -9.712711016258549e-12 }  { Gamma }  { -1.0 } } \cdot { { 0 } && { 6.222789060821971e-22 } } }*{ d^{4} / dz^{1} dz^{2} dy^{1} {\sum_{x = { x0 }}^{ .1 } { 2.040706058303616e-14 } } } } dz } }
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -880,35 +890,40 @@ def test (argv = None):
 		while 1:
 			def validate (ast): # validate ast rules have not been broken by garbling functions
 				if not isinstance (ast, AST):
-					return True
+					return ast
 
 				if ast.is_var:
 					if ast.var in sparser.RESERVED_WORDS or ast.var_name.startswith ('_'):
-						return False
+						return AST ('@', 'C')
 
 				if ast.is_func: # the slice function is evil
 					if ast.func == 'slice' and ast.args.len == 2 and ast.args [0] == AST.None_: # :x gets written as slice(x) but may come from slice(None, x)
-						return False
+						ast = AST ('-slice', AST.None_, ast.args [1], None)
 					elif ast.func in _FORBIDDEN_SXLAT_FUNCS: # random spaces can create forbidden functions
-						return False
+						ast = AST ('-func', 'print', *ast [2:])
 
 				elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
 					if any (v [0] in sparser.RESERVED_WORDS for v in ast.dvs):
-						return False
+						return AST ('@', 'C')
 
 				elif ast.is_intg: # same
 					if ast.dv.as_var.var in sparser.RESERVED_WORDS:
-						return False
+						return AST ('@', 'C')
 
 				elif ast.is_slice: # the slice object is evil
 					if ast.start == AST.None_ or ast.stop == AST.None_ or ast.step == AST.None_:
-						return False
+						raise ValueError ('malformed slice')
+						# ast = AST ('-slice', ast.start, ast.stop, None)
 
-				elif ast.op in {'-ufunc', '-sym'}:
-					if ' ' in ast [1]:
-						return False
+				elif ast.is_ufunc: # remove spaces inserted into ufunc name
+					if ' ' in ast.ufunc:
+						ast = AST ('-ufunc', ast.ufunc_full.replace (' ', ''), ast.vars, ast.kw)
 
-				return all (validate (a) for a in ast)
+				elif ast.is_sym: # remove spaces inserted into ufunc name
+					if ' ' in ast.sym:
+						ast = AST ('-sym', ast.sym.replace (' ', ''), ast.kw)
+
+				return AST (*(validate (a) for a in ast))
 
 			status = []
 			DEPTH  = depth
@@ -926,19 +941,27 @@ def test (argv = None):
 
 			status.append (f'text: {text}')
 			ast = parse (text) # fixstuff (parse (text))
-			status.extend (['', f'ast:  {ast}'])
+			status.append (f'ast:  {ast}')
 
 			if not ast:
-				if single or not infinite:
+				if single or (not infinite and not quick):
 					raise ValueError ("error parsing")
 
 				continue
 
-			if not validate (ast): # make sure garbling functions did not create an invalid ast
+			try:
+				ast2 = validate (ast)
+
+			except: # make sure garbling functions did not create an invalid ast
 				if single:
-					raise ValueError ("invalid")
+					raise
 
 				continue
+
+			if ast2 != ast:
+				status.append (f'astv: {ast2}')
+
+				ast = ast2
 
 			if dopy and any (a.is_ass for a in (ast.scolon if ast.is_scolon else (ast,))): # reject assignments at top level if doing py because all sorts of mangling goes on there, we just want expressions in that case
 				if single:
@@ -955,26 +978,26 @@ def test (argv = None):
 				if locals () [f'do{rep}']:
 					symfunc     = getattr (sym, f'ast2{rep}')
 
-					status.extend (['', f'sym.ast2{rep} ()'])
+					status.append (f'sym.ast2{rep} ()')
 
 					text1       = symfunc (ast)
 					status [-1] = f'{rep}1: {" " if rep == "py" else ""}{text1}'
 
-					status.extend (['', 'parse ()'])
+					status.append ('parse ()')
 
 					rast        = parse (text1) # fixstuff (parse (text1))
 
 					if not rast:
-						raise ValueError ("error parsing")
+						raise ValueError ("error parsing 2")
 
-					status [-1:] = [f'ast:  {rast}', '', f'sym.ast2{rep} ()']
+					status [-1:] = [f'ast:  {rast}', f'sym.ast2{rep} ()']
 					text2        = symfunc (rast)
 					status [-1]  = f'{rep}2: {" " if rep == "py" else ""}{text2}'
 
 					if text2 != text1:
 						raise ValueError ("doesn't match")
 
-					del status [-6:]
+					del status [-3:]
 
 			if docross and dotex + donat + dopy > 1:
 				def sanitize (ast): # prune or reformat information not encoded same across different representations and asts which are not possible from parsing
@@ -1050,26 +1073,26 @@ def test (argv = None):
 
 				# start here
 				ast = sanitize (ast)
-				status.extend (['', f'ast:  {ast}'])
+				status.append (f'ast:  {ast}')
 
 				if dotex:
 					tex1 = sym.ast2tex (ast)
-					status.extend (['', f'tex1: {tex1}'])
+					status.append (f'tex1: {tex1}')
 					ast2 = ast = sanitize (parse (tex1)).flat
 
 					if donat:
-						status.extend (['', f'ast:  {ast2}'])
+						status.append (f'ast:  {ast2}')
 						nat  = sym.ast2nat (ast2)
-						status.extend (['', f'nat:  {nat}'])
+						status.append (f'nat:  {nat}')
 						ast2 = parse (nat)
 
 					if dopy:
 						try:
 							sym._SYM_MARK_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
-							status.extend (['', f'ast:  {ast2}'])
+							status.append (f'ast:  {ast2}')
 							py   = sym.ast2py (ast2, ass2eq = False)
-							status.extend (['', f'py:   {py}'])
+							status.append (f'py:   {py}')
 							ast2 = parse (py)
 
 						finally:
@@ -1079,9 +1102,9 @@ def test (argv = None):
 						if dopy:
 							sxlat._SX_READ_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
-						status.extend (['', f'ast:  {ast2}'])
+						status.append (f'ast:  {ast2}')
 						tex2 = sym.ast2tex (ast2)
-						status.extend (['', f'tex2: {tex2}'])
+						status.append (f'tex2: {tex2}')
 						ast2 = sanitize (parse (tex2)).flat
 
 					finally:
@@ -1089,15 +1112,15 @@ def test (argv = None):
 
 				elif donat: # TODO: add more status updates for intermediate steps like above
 					nat1 = sym.ast2nat (ast)
-					status.extend (['', f'nat1: {nat1}'])
+					status.append (f'nat1: {nat1}')
 					ast2 = ast = sanitize (parse (nat1)).flat
 
 					try:
 						sym._SYM_MARK_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
-						status.extend (['', f'ast:  {ast2}'])
+						status.append (f'ast:  {ast2}')
 						py   = sym.ast2py (ast2, ass2eq = False)
-						status.extend (['', f'py:   {py}'])
+						status.append (f'py:   {py}')
 						ast2 = parse (py)
 
 					finally:
@@ -1106,16 +1129,16 @@ def test (argv = None):
 					try:
 						sxlat._SX_READ_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
-						status.extend (['', f'ast:  {ast2}'])
+						status.append (f'ast:  {ast2}')
 						nat2 = sym.ast2nat (ast2)
-						status.extend (['', f'nat2: {nat2}'])
+						status.append (f'nat2: {nat2}')
 						ast2 = sanitize (parse (nat2)).flat
 
 					finally:
 						sxlat._SX_READ_PY_ASS_EQ = False # allow xlat of marked Eq functions which indicate assignment in python text
 
 				if ast2 != ast:
-					status.extend (['', f'ast:  {ast2}', '', f'org:  {ast}'])
+					status.extend ([f'ast:  {ast2}', f'org:  {ast}'])
 
 					raise ValueError ("doesn't match across representations")
 
@@ -1135,5 +1158,5 @@ def test (argv = None):
 	return True
 
 if __name__ == '__main__':
-	# test (['-c', '-e', r"""(LambertW(5.194664222299675e-09[1e100]=-4.904486369506518e-17*\lambda*a,lambdax,y,z:\emptyset'''))"""])
+	# test (['-c', '-e', r"""{{\int { { log{ oo } }+{ { 1e+100 } \cdot { \Omega } }+{ { \infty zoo }^{ \zeta } } } dS }'}"""])
 	test ()

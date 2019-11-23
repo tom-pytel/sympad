@@ -241,15 +241,15 @@ def _ast_func_call (func, args, _ast2spt = None):
 
 	return func (*pyargs, **pykw)
 
-def _ast_has_open_differential (ast):
-	if ast.is_differential:
+def _ast_has_open_differential (ast, dodiff = False):
+	if ast.is_differential or (dodiff and ((ast.is_diff_d and (not ast.is_diff_dvdv and ast.dvs [-1] [-1] == 1)) or (ast.is_subs_diff_d_ufunc and (not ast.expr.is_diff_dvdv and ast.expr.dvs [-1] [-1] == 1)))):
 		return True
 	elif ast.op in {'[', '|', '-log', '-sqrt', '-func', '-diff', '-intg', '-mat', '-set', '-dict', '-ufunc', '-subs'}: # specifically not checking '(' because that might be added by ast2tex/nat in subexpressions
 		return False
 	elif ast.op in {'.', '^', '-log', '-sqrt', '-lim', '-sum', '-diffp', '-lamb', '-idx'}:
-		return _ast_has_open_differential (ast [1])
+		return _ast_has_open_differential (ast [1], dodiff = dodiff)
 
-	return any (_ast_has_open_differential (a) if isinstance (a, AST) else False for a in (ast if ast.op is None else ast [1:]))
+	return any (_ast_has_open_differential (a, dodiff = dodiff) if isinstance (a, AST) else False for a in (ast if ast.op is None else ast [1:]))
 
 def _ast_subs2func (ast): # ast is '-subs'
 	func = ast.expr
@@ -463,7 +463,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
 					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or # comment this IN if separating all variables with spaces
-					(s [:6] not in {'\\left(', '\\left['} and (
+					(not s.startswith ('{') and s [:6] not in {'\\left(', '\\left['} and (
 						p.is_var_long or
 						(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})
 					))):
@@ -592,11 +592,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			intg  = ' '
 
 		else:
-			intg  = self._ast2tex_wrap (ast.intg,
-					ast.intg.op in {"-diff", "-slice", "||", "^^", "&&", "-or", "-and", "-not"} or
-					ast.intg.tail_mul.op in {"-lim", "-sum"},
-				{"=", "<>"})
-			intg  = f' {{{intg}}} ' if _ast_has_open_differential (ast.intg) else f' {intg} '
+			curly = ast.intg.op in {"-diff", "-slice", "||", "^^", "&&", "-or", "-and", "-not"} or ast.intg.tail_mul.op in {"-lim", "-sum"}
+			intg  = self._ast2tex_wrap (ast.intg, curly, {"=", "<>"})
+			intg  = f' {{{intg}}} ' if not curly and _ast_has_open_differential (ast.intg) else f' {intg} '
 
 		if ast.from_ is None:
 			return f'\\int{intg}\\ {self._ast2tex (ast.dv)}'
@@ -918,13 +916,12 @@ class ast2nat: # abstract syntax tree -> native text
 		if ast.intg is None:
 			intg  = ' '
 		else:
-			intg  = self._ast2nat_wrap (ast.intg,
-					ast.intg.op in {"-piece", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"} or
-					ast.intg.is_mul_has_abs or
-					ast.intg.tail_mul.op in {"-lim", "-sum"} or
-					(ast.intg.tail_mul.is_var and ast.intg.tail_mul.var in _SYM_USER_FUNCS),
-				{"=", "<>"})
-			intg  = f' {{{intg}}} ' if _ast_has_open_differential (ast.intg) else f' {intg} '
+			curly = (ast.intg.op in {"-piece", "-lamb", "-slice", "||", "^^", "&&", "-or", "-and", "-not"} or
+				ast.intg.is_mul_has_abs or
+				ast.intg.tail_mul.op in {"-lim", "-sum"} or
+				(ast.intg.tail_mul.is_var and ast.intg.tail_mul.var in _SYM_USER_FUNCS))
+			intg  = self._ast2nat_wrap (ast.intg, curly, {"=", "<>"})
+			intg  = f' {{{intg}}} ' if not curly and _ast_has_open_differential (ast.intg, dodiff = True) else f' {intg} '
 
 		if ast.from_ is None:
 			return f'\\int{intg}{self._ast2nat (ast.dv)}'
@@ -1980,7 +1977,7 @@ if __name__ == '__main__': # DEBUG!
 	# set_sym_user_funcs (set (vars))
 	# set_sym_user_vars (vars)
 
-	ast = AST ('(', ('-slice', ('/', ('+', (('-or', (('@', 'zoo'), ('@', 'a'), ('@', 'c'))), ('-diff', ('@', 'b'), 'd', (('z', 2), ('z', 1), ('y', 2))))), ('-', ('-not', ('@', 'lambda')))), False, False))
+	ast = AST ('-slice', False, ('-intg', ('*', (('-mat', ((('"', 's'),), (('@', 'dy'),), (('@', 'beta'),))), ('#', '-9.712711016258549e-12'), ('@', 'Gamma'), ('#', '-1.0'), ('&&', (('#', '0'), ('#', '6.222789060821971e-22'))), ('-diff', ('-sum', ('#', '2.040706058303616e-14'), ('@', 'x'), ('@', 'x0'), ('#', '0.1')), 'd', (('z', 1), ('z', 2), ('y', 1)))), {1, 4, 5}), ('@', 'dz')), None)
 	# res = ast2tex (ast)
 	res = ast2nat (ast)
 	# res = ast2py (ast)

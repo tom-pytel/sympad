@@ -970,6 +970,7 @@ class AST_Diff (AST):
 
 	_is_diff_d       = lambda self: self.d == 'd'
 	_is_diff_partial = lambda self: self.d == 'partial'
+	_is_diff_dvdv    = lambda self: self.d == 'd' and self.dvs.len == 1 # and self.diff.is_var and self.dvs [0] [1] == 1
 
 class AST_DiffP (AST):
 	op, is_diffp = '-diffp', True
@@ -1116,6 +1117,7 @@ class AST_Subs (AST):
 		self.expr, self.subs = expr, subs
 
 	_is_subs_diff_ufunc     = lambda self: self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc
+	_is_subs_diff_d_ufunc   = lambda self: self.expr.is_diff_d and self.expr.diff.strip_paren1.is_ufunc
 	_is_subs_diff_any_ufunc = lambda self: self.expr.op in {'-diff', '-diffp'} and self.expr [1].strip_paren1.is_ufunc
 
 class AST_Sym (AST):

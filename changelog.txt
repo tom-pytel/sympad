@@ -4,11 +4,11 @@ v1.0.20:
 * Added symbols with assumptions.
 * Added ability to 'call' derivatives of lambda functions.
 * Added parsing of 'not' as possible unary prefix to unparenthesized function arguments.
-* Added differentiation of parenthesis grouping vs. call via curly enclosed parentheses.
+* Added differentiation of parentheses grouping vs. call via curly enclosed parentheses.
 * Added parsing of LaTeX subscripts in \operatorname.
-* Made supported builtin functions accessible directly by name without need of $ escape character.
-* Made == operators display as = when unambiguous in grammar.
-* Brought quick mode up to date many recent changes.
+* Made supported builtin functions accessible directly by name without need of escape character.
+* Made Eq returned from SymPy display as = when unambiguous in grammar.
+* Brought quick mode up to date with many recent changes.
 * Lots of tweaks to undefined functions for display and use in assignment to lambdas.
 * Finally documented lots of changes.
 

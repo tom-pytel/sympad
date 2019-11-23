@@ -165,9 +165,6 @@ class LALR1:
 
 		return tokens
 
-	def stack_has_sym (self, sym):
-		return any (state.sym == sym for state in self.stack)
-
 	#...............................................................................................
 	def parse_getextrastate (self):
 		return None
