@@ -1064,29 +1064,29 @@ Differentials will also work so "<b>dx</b>", "<b>dtheta</b>", "<b>d\theta</b>" a
 
 <h4 id="Special Characters">Special Characters</h4>
 
-<p><b>_</b> - Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose.
-Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</p>
 <p style="color: red"><b>$</b> - </p>
-<p><b>@</b> - "<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value.
-This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</p>
-<p><b>?</b> - "<b>?name(vars)</b>" - Used for specifying an undefined function to be used for solving differential equations.
-The name is optional but required if different functions of the same signature are needed like "<b>?x(t), ?y(t)</b>", otherwise you can just use "<b>?(t)</b>".</p>
-<p><b>;</b> - Semicolon is used to separate statements on a single line to be executed as if they were individual statements on separate lines like in Pyhon, e.g. "<b>1; expand (_(x+1)); expand (_(x+1)); expand (_(x+1))</b>".
-There is one caveat at the moment in that parsing is influenced by the variables assigned and these assignments are not done until after the whole line has been parsed.
-What this means for example is that for ambiguous expressions like "<b>f(x)</b>" which can be interpreted either as a concrete lambda call or an undefined function the parser will not get it right if the variable "<b>f</b>" is assigned a lambda and then called on the same line after a semicolon.</p>
-<p><b>Unicode Greek Letters</b> - α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</p>
-<p><b>Unicode Symbols</b> - ∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</p>
+
+<table class="HelpTable">
+<tr><td><b>_</b></td><td>&emsp;-</td><td>Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose. Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</td></tr>
+<tr><td><b>@</b></td><td>&emsp;-</td><td>"<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value. This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</td></tr>
+<tr><td><b>?</b></td><td>&emsp;-</td><td>"<b>?name(vars)</b>" - Used for specifying an undefined function to be used for solving differential equations. The name is optional but required if different functions of the same signature are needed like "<b>?x(t), ?y(t)</b>", otherwise you can just use "<b>?(t)</b>".</td></tr>
+<tr><td><b>;</b></td><td>&emsp;-</td><td>Semicolon is used to separate statements on a single line to be executed as if they were individual statements on separate lines like in Pyhon, e.g. "<b>1; expand (_(x+1)); expand (_(x+1)); expand (_(x+1))</b>". There is one caveat at the moment in that parsing is influenced by the variables assigned and these assignments are not done until after the whole line has been parsed. What this means for example is that for ambiguous expressions like "<b>f(x)</b>" which can be interpreted either as a concrete lambda call or an undefined function the parser will not get it right if the variable "<b>f</b>" is assigned a lambda and then called on the same line after a semicolon.</td></tr>
+<tr><td><b>Greek</b></td><td>&emsp;-</td><td>α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</td></tr>
+<tr><td><b>Symbols</b></td><td>&emsp;-</td><td>∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</td></tr>
+</table>
 
 <h4 id="Admin Functions">Admin Functions</h4>
 
-<p><b>vars()</b> - Show all currently mapped variables.</p>
-<p><b>del(var1, var2, ...)</b> - Delete variable assignments, lambda or non-lambda.</p>
-<p><b>delall()</b> - Delete ALL variables, lambda and non-lambda.</p>
-<p><b>env()</b> - Show or change current SymPad runtime environment.
+<table class="HelpTable">
+<tr><td><b>vars ()</b></td><td>&emsp;-</td><td>Show all currently mapped variables.</td></tr>
+<tr><td><b>del (var1, var2, ...)</b></td><td>&emsp;-</td><td>Delete individual variable assignments.</td></tr>
+<tr><td><b>delall ()</b></td><td>&emsp;-</td><td>Delete ALL variable assignments.</td></tr>
+<tr><td><b>env ()</b></td><td>&emsp;-</td><td>Show or change current SymPad runtime environment.
 Called without any arguments it will show the current state of the environment.
 If arguments are present they specify turning on or off a certain aspect of SymPad functionality.
-For example the quick input functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>", "<b>env('quick')</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</p>
-<p><b>envreset()</b> - Reset environment to what it was at startup.</p>
+For example the quick input functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>", "<b>env('quick')</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</td></tr>
+<tr><td><b>envreset ()</b></td><td>&emsp;-</td><td>Reset environment to what it was at startup.</td></tr>
+</table>
 
 <h4 id="Environment Settings for env()">Environment Settings for env()</h4>
 

@@ -10,6 +10,7 @@ from lalr1 import Token, State, Incomplete, PopConfs, Reduce, LALR1 # , KeepConf
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
+ALL_FUNC_NAMES = AST.Func.PY | AST.Func.TEX | {'sech', 'csch', AST.Func.NOREMAP, AST.Func.NOEVAL}
 RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | AST.Func.PY
 
 _SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
@@ -62,6 +63,25 @@ def _ast_func_reorder (ast):
 			return ast3, lambda a: wrap2 (wrap3 (a))
 
 	return ast, lambda a: a
+
+def _ast_var_as_ufunc (var, arg, rhs):
+	if var.var != '_' and arg.is_paren and var.is_var_nonconst and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
+		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
+
+		if ufunc.op is None:
+			return AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw, src_rhs = rhs)
+
+		elif ufunc.is_ufunc:
+			if ufunc.is_ufunc_unapplied:
+				ast = ufunc.apply_argskw (arg.paren.as_ufunc_argskw)
+
+				if ast:
+					return ast
+
+			elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
+				return AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))))
+
+	return None
 
 def _ast_pre_slice (pre, post):
 	if not post.is_slice:
@@ -524,21 +544,30 @@ def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 	return Reduce
 
 def _expr_func (iparm, *args): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
-	ast, wrapf = _ast_func_reorder (args [iparm])
+	rhs        = args [iparm]
+	arg, wrapa = _ast_func_reorder (rhs)
 
 	if args [0] == '-func':
-		ast2     = AST (*(args [:iparm] + (_ast_func_tuple_args (ast),) + args [iparm + 1:]))
-		ast2.src = AST ('*', (('@', args [1]), args [iparm]))
+		name = args [1]
+
+		if name not in ALL_FUNC_NAMES and name not in _SP_USER_FUNCS: # could be \operatorname ufunc like SymPy writes out
+			ast = _ast_var_as_ufunc (AST ('@', name), arg, rhs)
+
+			if ast:
+				return wrapa (ast)
+
+		ast2     = AST (*(args [:iparm] + (_ast_func_tuple_args (arg),) + args [iparm + 1:]))
+		ast2.src = AST ('*', (('@', args [1]), rhs))
 
 		if ast2.args.len != 1 and ast2.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
 			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseudo-function takes a single argument')
 
 	else: # args [0] in {'-sqrt', '-log'}:
-		fargs    = ast.strip_curly.strip_paren1 if args [0] == '-log' or (not ast.is_paren_tex or ast.paren.op in {',', '-slice'}) else ast.strip_curly
+		fargs    = arg.strip_curly.strip_paren1 if args [0] == '-log' or (not arg.is_paren_tex or arg.paren.op in {',', '-slice'}) else arg.strip_curly
 		ast2     = AST (*(args [:iparm] + (fargs,) + args [iparm + 1:]))
-		ast2.src = AST ('*', (AST.VarNull, args [iparm])) # VarNull is placeholder
+		ast2.src = AST ('*', (AST.VarNull, rhs)) # VarNull is placeholder
 
-	return wrapf (ast2)
+	return wrapa (ast2)
 
 def _expr_func_func (FUNC, args, expr_super = None):
 	func = _FUNC_name (FUNC) if isinstance (FUNC, Token) else FUNC
@@ -600,21 +629,11 @@ def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 		elif not (arg.is_curly and arg.strip_curly.is_paren) and var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have parenthesized args (because they take two)
 			return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
 
-	elif var.var != '_' and arg.is_paren and var.is_var_nonconst and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
-		ufunc = _SP_USER_VARS.get (var.var, AST.Null)
+	else:
+		ast = _ast_var_as_ufunc (var, arg, rhs)
 
-		if ufunc.op is None:
-			return PopConfs (wrapa (AST ('-ufunc', var.var, *arg.paren.as_ufunc_argskw, src_rhs = rhs)))
-
-		elif ufunc.is_ufunc:
-			if ufunc.is_ufunc_unapplied:
-				ast = ufunc.apply_argskw (arg.paren.as_ufunc_argskw)
-
-				if ast:
-					return PopConfs (wrapa (ast))
-
-			elif ufunc.can_apply_argskw (arg.paren.as_ufunc_argskw):
-				return PopConfs (wrapa (AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))))))
+		if ast:
+			return PopConfs (wrapa (ast))
 
 	return Reduce
 
@@ -1485,8 +1504,8 @@ if __name__ == '__main__': # DEBUG!
 	# p.set_quick (True)
 
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
-	_SP_USER_FUNCS.update ({'f'})
-	set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
+	# _SP_USER_FUNCS.update ({'f'})
+	# set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
 
 
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
@@ -1509,6 +1528,7 @@ if __name__ == '__main__': # DEBUG!
 	# a = p.parse (r"d**2 / dy dx (f) (3)")
 	# a = p.parse (r"d/dx (f) (3)")
 
-	a = p.parse (r"\left(a_{1} \cdot 0.0 \right) + a! + {\begin{cases} d & \text{for}\: 1 \\ dx & \text{otherwise} \end{cases}}")
+	# a = p.parse (r"\operatorname{x_{0}}{\left(t \right)}")
+	a = p.parse (r"sin**2 N x")
 	print (a)
 

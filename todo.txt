@@ -1,4 +1,7 @@
-> help.html - convert <p> to tables in appendix
+> ufunc variables absorb identical signature? or can be fixed with ufunc mapback to variables, but ideal?
+> ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
+
+> mark \operatorname funcs so they can't be rewound?
 
 > (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
@@ -8,11 +11,11 @@
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 > "d / 2" is "(d) / 2", fix it
 
-> ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
-
-> test parse (ast2tex (spt2ast(spt))) vs. parse (latex (spt))
+> test parse (ast2tex (spt2ast(spt))) vs. parse (latex (spt))?
 
 
+
+> sin**2 N x -> sin**(N) x ... intermittent problem?
 
 > test_sym cases - call derivative of lambda
 
@@ -21,8 +24,6 @@
 
 > subs autocomplete
 
-
-> \operatorname ufuncs from sympy latex
 
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
@@ -271,5 +272,5 @@ Errors:
 -------
 
 
-x\left(t \right) = \left(C_{1} + 8\ C_{2}\ \int \frac{e^{\frac{19}{2} t^2}}{x_{0}\left(t \right)^2} \ dt \right) x_{0}\left(t \right),
-y\left(t \right) = C_{1}\ y_{0}\left(t \right) + C_{2} \cdot \left(\frac{e^{\frac{19}{2} t^2}}{x_{0}\left(t \right)} + 8 {\int \frac{e^{\frac{19}{2} t^2}}{x_{0}\left(t \right)^2} \ dt} \cdot y_{0}\left(t \right) \right)
+x{\left(t \right)} = C_{1} \operatorname{x_{0}}{\left(t \right)} + C_{2} \operatorname{x_{0}}{\left(t \right)} \int \frac{8 \left(e^{\int 7 t\, dt}\right) e^{\int 12 t\, dt}}{\operatorname{x_{0}}^{2}{\left(t \right)}}\, dt
+y{\left(t \right)} = C_{1} \operatorname{y_{0}}{\left(t \right)} + C_{2} \left(\operatorname{y_{0}}{\left(t \right)} \int \frac{8 \left(e^{\int 7 t\, dt}\right) e^{\int 12 t\, dt}}{\operatorname{x_{0}}^{2}{\left(t \right)}}\, dt + \frac{\left(e^{\int 7 t\, dt}\right) e^{\int 12 t\, dt}}{\operatorname{x_{0}}{\left(t \right)}}\right)
