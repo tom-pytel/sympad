@@ -72,7 +72,7 @@ def _ast_var_as_ufunc (var, arg, rhs):
 	if var.var != '_' and arg.is_paren and var.is_var_nonconst and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		argskw = arg.paren.as_ufunc_argskw
 
-		if argskw:
+		if argskw and AST.UFunc.can_apply_argskw_implicit (argskw):
 			ufunc = _SP_USER_VARS.get (var.var, AST.Null)
 
 			if ufunc.op is None:
@@ -637,7 +637,8 @@ def _expr_ufunc (self, args, py = False, name = ''):
 	if AST ('@', name).is_var_const:
 		raise SyntaxError ('cannot use constant as undefined function name')
 
-	return AST ('-ufunc', name if py else f'?{name}', *argskw, is_ufunc_py = py)
+	return AST ('-ufunc', f'?{name}', *argskw, is_ufunc_py = py)
+	# return AST ('-ufunc', name if py else f'?{name}', *argskw, is_ufunc_py = py)
 
 def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 	arg, wrapa = _ast_func_reorder (rhs)
@@ -1523,8 +1524,8 @@ if __name__ == '__main__': # DEBUG!
 	# p.set_quick (True)
 
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
-	_SP_USER_FUNCS.update ({'f'})
-	set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
+	# _SP_USER_FUNCS.update ({'f'})
+	# set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
 	# set_sp_user_vars ({'f': AST ('-lamb', ('@', 't'), ('t',))})
 
 
@@ -1539,6 +1540,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	a = p.parse (r"Limit (1/x, x, 0, dir='+-')")
+	a = p.parse (r"\left(\operatorname{Integral}{\left(\frac{\sqrt{-3.1998205710155103{e}{-09}}}{\left(xyzd \cdot {-1.1280663779264902{e}{-08}} \right)}, \left(i, \frac{-1 \wedge 2 \wedge b}{\begin{bmatrix} -1.4889652631788537{e}{-21} \\ 1.3055109314191486{e}{-10} \end{bmatrix}}, \left(\int \beta \ do \right)^{\frac{\partial^3}{\partial x \partial y \partial z}\left(?f\left(x, y, z \right) \right)\left(0, 1, 2 \right)} \right) \right)} \right)^{{{\begin{bmatrix} -38542497339338.06 \end{bmatrix}}^{dz \cup \text{'s'} \cup -1}}!}")
 	print (a)
 

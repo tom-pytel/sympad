@@ -885,8 +885,9 @@ dsolve (y'' + 9y)<i>&emsp; easiest like this</i><br>
 dsolve (sin x cos y + cos x sin y y')<br>
 dsolve (y' + 4/x * y = x**3 y**2)<br>
 dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})<i>&emsp; with initial condition</i><br>
-dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order initial conditions</i><br>
+dsolve (cos y - y' * (x sin y - y**2))<i>&emsp; implicit solution</i><br>
 <br>
+
 delall<i>&emsp; clean up and start again</i><br>
 y = y(x)<br>
 eq = y' + 4/x * y == x**3 y**2<i>&emsp; assign equality (equation) to "eq"</i><br>
@@ -897,10 +898,11 @@ checkodesol (eq, sol, y)<i>&emsp; check the solution for the function "y" using 
 y (x) = sol<i>&emsp; assign solution to a concrete lambda function</i><br>
 eq<i>&emsp; and check it by evaluating "eq"</i><br>
 y' + 4/x * y, x**3 y**2<i>&emsp; check by eye</i><br>
-
 <br>
+
 delall<br>
 x, y = x(t), y(t)<i>&emsp; two distinct undefined functions</i><br>
+dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order with initial conditions</i><br>
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
 </p>
 

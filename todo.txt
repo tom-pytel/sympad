@@ -1,5 +1,9 @@
-> ufunc as explicit accept any args.
 > ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
+
+> ufunc mapback problem with generalized args - do not map if target var same?
+> ufunc subs with new args
+
+> tex 2*ux/u -> 2 ux/u
 
 > Sigma -> Si(g m a) problem in quick mode.
 
@@ -7,6 +11,8 @@
 
 > display ufunc as func in loose tex mode?
 > mark \operatorname funcs so they can't be rewound?
+
+> logic xor operator
 
 > (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
@@ -267,17 +273,17 @@ Slow parse - These are slow due to abuse of regex!
 Errors:
 -------
 
+f = free variable for func name
+x = nonconst variable
+C = constant
+E = non-constant expression
+A = any of (x, C, E) not covered by rule yet
 
-text: {{lambda x, y, z: {1}}+{{1.0} > {1.0}}+{{oo} / {'s'}}}
-ast:  ('+', (('-lamb', ('#', '1'), ('x', 'y', 'z')), ('<>', ('#', '1.0'), (('>', ('#', '1.0')),)), ('/', ('@', 'oo'), ('"', 's'))))
-ast:  ('+', (('-lamb', ('#', '1'), ('x', 'y', 'z')), ('<>', ('#', '1.0'), (('>', ('#', '1.0')),)), ('/', ('@', 'oo'), ('"', 's'))))
-tex1: \left(\left(x, y, z \right) \mapsto 1 \right) + \left(1.0 > 1.0 \right) + \frac{\infty}{\text{'s'}}
-ast:  ('+', (('-lamb', ('#', '1'), ('x', 'y', 'z')), ('<>', ('#', '1.0'), (('>', ('#', '1.0')),)), ('/', ('@', 'oo'), ('"', 's'))))
-nat:  (lambda x, y, z: 1) + (1.0 > 1.0) + oo /  's'
-ast:  ('+', (('(', ('-lamb', ('#', '1'), ('x', 'y', 'z'))), ('(', ('<>', ('#', '1.0'), (('>', ('#', '1.0')),))), ('/', ('@', 'oo'), ('"', 's'))))
-py:   (Lambda((x, y, z), 1)) + (Gt(1.0, 1.0)) + oo / 's'
-ast:  ('+', (('(', ('-func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('#', '1')))), ('(', ('-func', 'Gt', (('#', '1.0'), ('#', '1.0')))), ('/', ('@', 'oo'), ('"', 's'))))
-tex2: \left(\Lambda{\left(\left(x, y, z \right), 1 \right)} \right) + \left(1.0 > 1.0 \right) + \frac{\infty}{\text{'s'}}
-ast:  ('+', (('-func', 'Lambda', (('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('#', '1'))), ('<>', ('#', '1.0'), (('>', ('#', '1.0')),)), ('/', ('@', 'oo'), ('"', 's'))))
-org:  ('+', (('-lamb', ('#', '1'), ('x', 'y', 'z')), ('<>', ('#', '1.0'), (('>', ('#', '1.0')),)), ('/', ('@', 'oo'), ('"', 's'))))
-
+f ()       = f () - _expr_varfunc ()
+f (E)      = f * (E)
+f (A)      = f (A)
+?f ()      = ?f () - _expr_ufunc ()
+?f (A)     = ?f (A)
+?f () (A)  = ?f (A) - _expr_ufunc_ics () - from here on kw disallowed
+?f (x) (A) = ?f (A)
+?f (A) (A) = ?f (A) * (A)

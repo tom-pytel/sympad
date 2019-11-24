@@ -391,10 +391,12 @@ class AST (tuple):
 	def _as_ufunc_argskw (self):
 		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,) if self.op is not None else self)
 
-		if any (not a.is_var and not a.is_const for a in args):
-			return None
+		# if any (not a.is_var and not a.is_const for a in args):
+		# 	return None
 
 		return tuple (args), tuple (sorted (kw.items ()))
+
+		# return AST (tuple (args), tuple (sorted (kw.items ())), can_apply_implicit = not any (not a.is_var and not a.is_const for a in args))
 
 	def _free_vars (self): # return set of unique unbound variables found in tree, not reliable especially if used before sxlat due to things like ('-func', 'Derivative', ...), '-subs' is particularly problematic
 		def _free_vars (ast, vars):
@@ -1123,9 +1125,16 @@ class AST_UFunc (AST):
 	# matches_lamb_sig    = lambda self, lamb: self.vars and self.vars.len == lamb.vars.len and all (a.is_var_nonconst and a.var == v for a, v in zip (self.vars, lamb.vars))
 	matches_lamb_sig    = lambda self, lamb: self.vars and self.vars.len == lamb.vars.len
 
+	@staticmethod
+	def can_apply_argskw_implicit (argskw):
+		return not any (not a.is_var and not a.is_const for a in argskw [0])
+
 	def can_apply_argskw (self, argskw):
 		if argskw:
 			args, kw = argskw
+
+			if self.is_ufunc_implicit and not self.can_apply_argskw_implicit (argskw):
+				return False
 
 			if not kw and args:
 				if not self.vars.len:

@@ -280,7 +280,8 @@ def _ast_subs2func (ast): # ast is '-subs'
 		vars = OrderedDict ((v, v) for v in func.vars)
 
 		for s, d in ast.subs:
-			if s.is_var_nonconst and d.is_const and vars.get (s) == s:
+			# if s.is_var_nonconst and d.is_const and vars.get (s) == s:
+			if s.is_var_nonconst and vars.get (s) == s:
 				vars [s] = d
 			else:
 				subs.append (AST ('=', s, d))
@@ -1569,12 +1570,14 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	def _ast2spt_ufunc (self, ast):
-		spt = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
+		# spt = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
 
-		if _ast_is_top_ass_lhs (self, ast): # pass explicit state of ufunc through spt if it is on left side of assign at top level
-			spt.is_ufunc_explicit = ast.is_ufunc_explicit
+		# if _ast_is_top_ass_lhs (self, ast): # pass explicit state of ufunc through spt if it is on left side of assign at top level
+		# 	spt.is_ufunc_explicit = ast.is_ufunc_explicit
 
-		return spt
+		# return spt
+
+		return sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
 
 	def _ast2spt_subs (self, ast):
 		return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
@@ -1828,9 +1831,11 @@ class spt2ast:
 		# else:
 		# 	name = spt.name
 
-		name = f'?{spt.name}' if getattr (spt, 'is_ufunc_explicit', False) else spt.name
+		# name = f'?{spt.name}' if getattr (spt, 'is_ufunc_explicit', False) else spt.name
 
-		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		# return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+
+		return AST ('-ufunc', f'?{spt.name}', tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__
@@ -1985,13 +1990,13 @@ if __name__ == '__main__': # DEBUG!
 
 	# set_strict (True)
 
-	ast = AST ('-lim', ('/', ('#', '1'), ('@', 'x')), ('@', 'x'), ('#', '0'))
+	ast = AST ('=', ('-ufunc', '?f', (('@', 'x'), ('@', 'y'))), ('*', (('-ufunc', '?F', (('+', (('*', (('#', '3'), ('@', 'x'))), ('-', ('*', (('#', '2'), ('@', 'y')))))),)), ('^', ('@', 'e'), ('+', (('-', ('/', ('*', (('#', '3'), ('@', 'y'))), ('#', '13'))), ('-', ('/', ('*', (('#', '2'), ('@', 'x'))), ('#', '13')))))))))
 	# res = ast2tex (ast)
-	# res = ast2nat (ast)
+	res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	res = ast2spt (ast)
-	res = spt2ast (res)
+	# res = ast2spt (ast)
+	# res = spt2ast (res)
 	# res = ast2nat (res)
 
 

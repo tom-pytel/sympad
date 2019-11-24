@@ -255,6 +255,24 @@ class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
+def _ufunc_mapback (ast):
+	if not isinstance (ast, AST):
+		return ast
+	elif ast.is_ass and ast.lhs.is_ufunc:
+		return AST ('=', ast.lhs, _ufunc_mapback (ast.rhs))
+	elif not ast.is_ufunc:
+		return AST (*(_ufunc_mapback (a) for a in ast))
+
+	vars = _UFUNC_MAP.get (ast)
+
+	if vars:
+		if ast.ufunc in vars:
+			return AST ('@', ast.ufunc)
+		else:
+			return AST ('@', vars [0])
+
+	return AST (*(_ufunc_mapback (a) for a in ast))
+
 def _present_vars (vars):
 	asts = []
 
@@ -265,6 +283,7 @@ def _present_vars (vars):
  				# asts.append (AST ('=', ('-func', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
 			else:
 				asts.append (AST ('=', ('@', v), e))
+				# asts.append (AST ('=', ('@', v), _ufunc_mapback (e)))
 
 	return asts
 
@@ -291,24 +310,6 @@ def _vars_updated ():
 	for v, a in vars.items (): # build ufunc mapback list
 		if v != '_' and a.is_ufunc:
 			_UFUNC_MAP.setdefault (a, []).append (v)
-
-def _ufunc_mapback (ast):
-	if not isinstance (ast, AST):
-		return ast
-	elif ast.is_ass and ast.lhs.is_ufunc:
-		return AST ('=', ast.lhs, _ufunc_mapback (ast.rhs))
-	elif not ast.is_ufunc:
-		return AST (*(_ufunc_mapback (a) for a in ast))
-
-	vars = _UFUNC_MAP.get (ast)
-
-	if vars:
-		if ast.ufunc in vars:
-			return AST ('@', ast.ufunc)
-		else:
-			return AST ('@', vars [0])
-
-	return AST (*(_ufunc_mapback (a) for a in ast))
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	if not ast.ass_validate:
