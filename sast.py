@@ -550,7 +550,7 @@ class AST (tuple):
 			return ast
 
 		elif ast.is_ufunc: # possibly convert non-explicit ufunc to concrete function call if signature matches destination lambda
-			if not mode: # do not map ufuncs to func calls when mapping vars onto themselves or inside lambda definition
+			if mode is not True: # do not map ufuncs to func calls when mapping vars onto themselves or inside lambda definition
 				return ast
 
 			lamb = vars.get (ast.ufunc)
@@ -615,7 +615,7 @@ class AST (tuple):
 			nonfree = frozenset (va [0] for va in filter (lambda va: va [1] is False, vars.items ())) # pass all non-free variables for possible translation of lambda as expression so those vars don't get globally mapped
 			vars    = push (vars, {v: False for v in ast.vars})
 
-			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, mode), ast.vars, lamb_vars_notfree = nonfree)
+			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, mode and 'lamb'), ast.vars, lamb_vars_notfree = nonfree)
 
 		elif ast.is_func: # function, might be user lambda call
 			if ast.func == AST.Func.NOREMAP:

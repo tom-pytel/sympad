@@ -71,31 +71,10 @@ def _ast_var_as_ufunc (var, arg, rhs):
 		if argskw:
 			ufunc = _SP_USER_VARS.get (var.var, AST.Null)
 
-			# if ufunc.op in {None, '-ufunc'}:
-			# 	return AST ('-ufunc', var.var, *argskw, src_rhs = rhs)
-
-
 			if ufunc.op is None:
 				return AST ('-ufunc', var.var, *argskw, src_rhs = rhs)
 			elif ufunc.is_ufunc:
 				return AST ('-ufunc', ufunc.ufunc_full, *argskw, src_rhs = rhs, src_var_name = var.var)
-
-
-			# if ufunc.op is None:
-			# 	return AST ('-ufunc', var.var, *argskw, src_rhs = rhs)
-
-			# if ufunc.is_ufunc:
-			# 	if ufunc.is_ufunc_unapplied:
-			# 		ast = ufunc.apply_argskw (argskw)
-
-			# 		if ast:
-			# 			return ast
-
-			# 	elif argskw [0] == ufunc.vars and argskw [1] == ufunc.kw: # absorb identical ufunc signature since that could be returned from SymPy
-			# 		return ufunc
-
-			# 	elif ufunc.can_apply_argskw (argskw):
-			# 		return AST ('-subs', var, tuple (filter (lambda va: va [1] != va [0], zip (ufunc.vars, arg.paren.comma if arg.paren.is_comma else (arg.paren,)))))
 
 	return None
 
@@ -1533,9 +1512,9 @@ if __name__ == '__main__': # DEBUG!
 	# p.set_quick (True)
 
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
-	# _SP_USER_FUNCS.update ({'f'})
+	_SP_USER_FUNCS.update ({'f'})
+	set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
 	# set_sp_user_vars ({'f': AST ('-lamb', ('@', 't'), ('t',))})
-	# set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
 
 
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
@@ -1549,6 +1528,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	a = p.parse (r"d / dx (u (x, y)) (x, y)")
+	a = p.parse (r"g(x) = ?f(x)")
 	print (a)
 

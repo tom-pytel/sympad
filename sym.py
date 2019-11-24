@@ -16,10 +16,12 @@ _SYM_MARK_PY_ASS_EQ = False # for testing to write extra information into python
 _SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
 _SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as AST.Null
+
 _POST_SIMPLIFY  = False # post-evaluation simplification
 _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
 _MUL_RATIONAL   = False # products should lead with a rational fraction if one is present instead of absorbing into it
+_STRICT_TEX     = False # strict LaTeX formatting to assure copy-in ability of generated tex
 
 class _None: pass # unique non-None None marker
 
@@ -611,13 +613,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	def _ast2tex_ufunc (self, ast):
 		user = _SYM_USER_ALL.get (ast.ufunc)
 
-		# if user and user.is_lamb and ast.matches_lamb_sig (user):
+		# if not _STRICT_TEX and user and user.is_lamb and ast.matches_lamb_sig (user):
 		# 	return self._ast2tex_func (AST ('-func', ast.ufunc, ast.vars))
 
-		if (ast.is_ufunc_explicit or not ast.ufunc or
+		if _STRICT_TEX and (ast.is_ufunc_explicit or not ast.ufunc or
 					(user and
 					(not user.is_ufunc or (ast != user and not user.can_apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
-					not (user.is_lamb and ast.matches_lamb_sig (user)) and
+					# not (user.is_lamb and ast.matches_lamb_sig (user)) and
 					not _ast_is_top_ass_lhs (self, ast)) or
 				not ast.vars.as_ufunc_argskw):
 			pre = '?' # '\\: ?'
@@ -1957,6 +1959,10 @@ def set_prodrat (state):
 	global _MUL_RATIONAL
 	_MUL_RATIONAL = state
 
+def set_strict (state):
+	global _STRICT_TEX
+	_STRICT_TEX = state
+
 class sym: # for single script
 	set_sym_user_funcs = set_sym_user_funcs
 	set_sym_user_vars  = set_sym_user_vars
@@ -1964,6 +1970,7 @@ class sym: # for single script
 	set_simplify       = set_simplify
 	set_doit           = set_doit
 	set_prodrat        = set_prodrat
+	set_strict         = set_strict
 	ast2tex            = ast2tex
 	ast2nat            = ast2nat
 	ast2py             = ast2py
@@ -1972,17 +1979,19 @@ class sym: # for single script
 
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
-	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	# set_sym_user_funcs (set (vars))
-	# set_sym_user_vars (vars)
+	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	set_sym_user_funcs (set (vars))
+	set_sym_user_vars (vars)
+
+	set_strict (True)
 
 	ast = AST ('-lamb', ('@', 'y'), ('y',))
-	# res = ast2tex (ast)
+	res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	res = ast2spt (ast)
-	res = spt2ast (res)
+	# res = ast2spt (ast)
+	# res = spt2ast (res)
 	# res = ast2nat (res)
 
 

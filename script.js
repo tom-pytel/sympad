@@ -585,7 +585,9 @@ class _Variables {
 		for (let r of Array.from (this.eVarTable.childNodes)) {
 			let v = vars.get (r.name);
 
-			if (v === undefined || r.val !== v.nat [1]) {
+			console.log (v.tex);
+
+			if (v === undefined || r.val !== v.tex.join (' = ')) {
 				this.eVarTable.removeChild (r);
 			} else {
 				same.add (r.name);
@@ -603,7 +605,7 @@ class _Variables {
 			let isfunc   = n.includes ('(');
 			let e        = $(`<tr><td onclick="copyVarToClipboard (this)">$${v.tex [0]}$</td><td class="VarTCell" onclick="copyVarToClipboard (this)">$=$</td><td class="VarTCell" onclick="copyVarToClipboard (this, false)">$${v.tex [1]}$</td></tr>`);
 			e [0].name   = n;
-			e [0].val    = v.nat [1];
+			e [0].val    = v.tex.join (' = ');
 			added        = true;
 
 			for (let r of this.eVarTable.childNodes) {

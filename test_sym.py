@@ -831,6 +831,7 @@ def test (argv = None):
 
 	sym.set_sym_user_funcs (funcs)
 	sparser.set_sp_user_funcs (funcs)
+	sym.set_strict (True)
 
 	# sxlat._SX_XLAT_AND = False # turn off py And translation because it mangles things
 

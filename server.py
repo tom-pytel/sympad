@@ -25,7 +25,7 @@ _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _VERSION         = '1.0.20'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
-_ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', *_ONE_FUNCS}
+_ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
 _ENV_OPTS_ALL    = _ENV_OPTS.union (f'no{opt}' for opt in _ENV_OPTS)
 __OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnu', ['child', 'firstrun', 'help', 'version', 'debug', 'nobrowser', 'ugly', *_ENV_OPTS_ALL])
 
@@ -54,9 +54,10 @@ _HELP            = f'usage: {_SYMPAD_NAME} [options] [host:port | host | :port]'
   --pyS, --nopyS           - Start with/out Python S escaping
   --simplify, --nosimplify - Start with/out post-evaluation simplification
   --matsimp, --nomatsimp   - Start with/out matrix simplification
-	--ufuncmap, --noufuncmap - Start with/out undefined function mapping back to variables
-	--prodrat, --noprodrat   - Start with/out separate product leading rational
+  --ufuncmap, --noufuncmap - Start with/out undefined function mapping back to variables
+  --prodrat, --noprodrat   - Start with/out separate product leading rational
   --doit, --nodoit         - Start with/out automatic expression doit()
+  --strict, --nostrict     - Start with/out strict LaTeX formatting
   --N, --noN               - Start with/out N function
   --S, --noS               - Start with/out S function
   --O, --noO               - Start with/out O function
@@ -86,7 +87,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 	_UFUNC_MAP     = {} # map of ufunc asts to ordered sequence of variable names
 
 	_PARSER        = sparser.Parser ()
-	_START_ENV     = OrderedDict ([('EI', False), ('quick', False), ('pyS', True), ('simplify', False), ('matsimp', True), ('ufuncmap', True), ('prodrat', False), ('doit', True),
+	_START_ENV     = OrderedDict ([
+		('EI', False), ('quick', False), ('pyS', True), ('simplify', False), ('matsimp', True), ('ufuncmap', True), ('prodrat', False), ('doit', True), ('strict', False),
 		('N', True), ('O', True), ('S', True), ('beta', True), ('gamma', True), ('Gamma', True), ('Lambda', True), ('zeta', True)])
 
 	_ENV           = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
@@ -199,6 +201,12 @@ def _admin_env (*args):
 
 				if apply:
 					sym.set_doit (state)
+
+			elif var == 'strict':
+				msgs.append (f'Strict LaTeX formatting is {"on" if state else "off"}.')
+
+				if apply:
+					sym.set_strict (state)
 
 			elif var in _ONE_FUNCS:
 				msgs.append (f'Function {var} is {"on" if state else "off"}.')
@@ -609,6 +617,7 @@ def start_server (logging = True):
 			_admin_env (AST ('@', opt))
 
 	_START_ENV.update (_ENV)
+	_vars_updated ()
 
 	if not __ARGV:
 		host, port = _DEFAULT_ADDRESS
@@ -702,9 +711,8 @@ if _SERVER_DEBUG: # DEBUG!
 	_VARS ['_'] = AST ('[', (('=', ('-ufunc', 'x', (('@', 't'),)), ('*', (('+', (('@', 'C1'), ('*', (('#', '8'), ('@', 'C2'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')))))), ('-ufunc', 'x0', (('@', 't'),))))), ('=', ('-ufunc', 'y', (('@', 't'),)), ('+', (('*', (('@', 'C1'), ('-ufunc', 'y0', (('@', 't'),)))), ('*', (('@', 'C2'), ('+', (('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('-ufunc', 'x0', (('@', 't'),))), ('*', (('#', '8'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')), ('-ufunc', 'y0', (('@', 't'),))), {2}))))))))))
 
 	# print (h.validate ({'text': r'del'}))
-	print (h.evaluate ({'text': r'u (t) = \int v (t) dt'}))
-	print (h.evaluate ({'text': r'v (t) = t'}))
-	print (h.evaluate ({'text': r'u (1)'}))
+	print (h.evaluate ({'text': r'sin**2 N x'}))
+	print (h.evaluate ({'text': r'sin**2 N x'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END

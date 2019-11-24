@@ -164,11 +164,11 @@ class Test (unittest.TestCase):
 		reset ()
 		self.assertEqual (get ('env (quick)'), {'msg': ['Quick input mode is on.']})
 		self.assertEqual (get ('env (noquick)'), {'msg': ['Quick input mode is off.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 		self.assertEqual (get ('env (EI, quick, nopyS, nosimplify, nomatsimp, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function beta is on.', 'Function gamma is off.', 'Function Gamma is off.', 'Function Lambda is on.', 'Function zeta is off.']})
-		self.assertEqual (get ('envreset'), {'msg': ['Environment has been reset.', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is off.', 'Strict LaTeX formatting is on.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function beta is on.', 'Function gamma is off.', 'Function Gamma is off.', 'Function Lambda is on.', 'Function zeta is off.']})
+		self.assertEqual (get ('envreset'), {'msg': ['Environment has been reset.', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 
 	def test_idx_and_attr (self):
 		reset ()
@@ -344,6 +344,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('?f () = x**2'), {'math': ('?f() = x**2', "Eq(Function('f'), x**2)", '?f\\left( \\right) = x^2')})
 		self.assertEqual (get ('?g (2) = x**2'), {'math': ('?g(2) = x**2', "Eq(Function('g')(2), x**2)", '?g\\left(2 \\right) = x^2')})
 		self.assertEqual (get ('?h (x) = x**2'), {'math': ('?h(x) = x**2', "Eq(Function('h')(x), x**2)", '?h\\left(x \\right) = x^2')})
+		self.assertEqual (get ('f (x) = x'), {'math': ('f(x) = x', 'f = Lambda(x, x)', 'f\\left(x \\right) = x')})
 		self.assertEqual (get ('f (x) = x**3'), {'math': ('f(x) = x**3', 'f = Lambda(x, x**3)', 'f\\left(x \\right) = x^3')})
 		self.assertEqual (get ("f'(3)"), {'math': ('27', '27', '27')})
 		self.assertEqual (get ("f''(3)"), {'math': ('18', '18', '18')})
@@ -789,7 +790,7 @@ y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})
 )
 
 SYSARGV  = sys.argv [:]
-sys.argv = [os.path.abspath ('server.py'), '--child', '127.0.0.1:9001']
+sys.argv = [os.path.abspath ('server.py'), '--child', '--strict', '127.0.0.1:9001']
 
 import server
 

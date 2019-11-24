@@ -1,5 +1,3 @@
-> display ufuncs as funcs if lambda exists
-
 > ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
 
 > ERROR! assign to ufuncs from iterable
@@ -15,8 +13,6 @@
 > test parse (ast2tex (spt2ast(spt))) vs. parse (latex (spt))?
 
 
-
-> sin**2 N x -> sin**(N) x ... intermittent problem?
 
 > test_sym cases - call derivative of lambda
 
@@ -46,6 +42,7 @@
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
 
+> doc: new lambda undefined function behavior
 > doc: quick mode variables can have numerical tails as subscripts
 > doc: caveats with variable mapping and functions like Integral, Sum due to their unfree vars being remapped
 > doc: new == vs. = display behavior

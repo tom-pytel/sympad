@@ -22,6 +22,7 @@ sym.set_sym_user_funcs (_USER_FUNCS)
 sym.set_pyS (False)
 sym.set_simplify (False)
 sym.set_doit (False)
+sym.set_strict (True)
 
 @lru_cache (maxsize = None)
 def sparser (text): return parser.parse (text) [0]
