@@ -1,7 +1,8 @@
-> ERROR! x = lambda (t), x'(t)
-> ERROR! assign to ufuncs from iterable
+> display ufuncs as funcs if lambda exists
 
 > ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
+
+> ERROR! assign to ufuncs from iterable
 
 > mark \operatorname funcs so they can't be rewound?
 

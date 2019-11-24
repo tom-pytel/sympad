@@ -253,7 +253,8 @@ def _present_vars (vars):
 	for v, e in vars:
 		if v != '_':
 			if e.is_lamb:
- 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
+				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
+ 				# asts.append (AST ('=', ('-func', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
 			else:
 				asts.append (AST ('=', ('@', v), e))
 
@@ -270,7 +271,7 @@ def _vars_updated ():
 		if ast.is_lamb:
 			user_funcs.add (var)
 
-	vars = {v: AST.apply_vars (a, _VARS, exc = False) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
+	vars = {v: AST.apply_vars (a, _VARS, mode = False) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
 
 	sym.set_sym_user_funcs (user_funcs)
 	sym.set_sym_user_vars (vars)
@@ -700,7 +701,10 @@ if _SERVER_DEBUG: # DEBUG!
 
 	_VARS ['_'] = AST ('[', (('=', ('-ufunc', 'x', (('@', 't'),)), ('*', (('+', (('@', 'C1'), ('*', (('#', '8'), ('@', 'C2'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')))))), ('-ufunc', 'x0', (('@', 't'),))))), ('=', ('-ufunc', 'y', (('@', 't'),)), ('+', (('*', (('@', 'C1'), ('-ufunc', 'y0', (('@', 't'),)))), ('*', (('@', 'C2'), ('+', (('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('-ufunc', 'x0', (('@', 't'),))), ('*', (('#', '8'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')), ('-ufunc', 'y0', (('@', 't'),))), {2}))))))))))
 
-	print (h.evaluate ({'text': r'x (t), y (t) = _'}))
+	# print (h.validate ({'text': r'del'}))
+	print (h.evaluate ({'text': r'u (t) = \int v (t) dt'}))
+	print (h.evaluate ({'text': r'v (t) = t'}))
+	print (h.evaluate ({'text': r'u (1)'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END
