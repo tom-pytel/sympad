@@ -585,8 +585,6 @@ class _Variables {
 		for (let r of Array.from (this.eVarTable.childNodes)) {
 			let v = vars.get (r.name);
 
-			console.log (v.tex);
-
 			if (v === undefined || r.val !== v.tex.join (' = ')) {
 				this.eVarTable.removeChild (r);
 			} else {

@@ -465,9 +465,19 @@ XLAT_FUNC2AST_PY  = {**_XLAT_FUNC2AST_TEXNATPY, **_XLAT_FUNC2AST_REIM,
 	'Gamma'                : lambda *args: AST ('-func', 'gamma', tuple (args)),
 }
 
+XLAT_FUNC2AST_SPARSER = {
+	'Lambda'               : _xlat_f2a_Lambda,
+	'Limit'                : _xlat_f2a_Limit,
+	'Sum'                  : _xlat_f2a_Sum_NAT,
+	'Derivative'           : _xlat_f2a_Derivative_NAT,
+	'Integral'             : _xlat_f2a_Integral_NAT,
+	'Subs'                 : _xlat_f2a_Subs,
+	'.subs'                : _xlat_f2a_subs,
+}
+
 XLAT_FUNC2AST_SPT = XLAT_FUNC2AST_PY
 
-def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible functions in tree to other AST representations
+def xlat_funcs2asts (ast, xlat, func_call = None, recurse = True): # translate eligible functions in tree to other AST representations
 	if not isinstance (ast, AST):
 		return ast
 
@@ -485,7 +495,8 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 		xact = None
 
 	if xact is not None:
-		args = AST (*(xlat_funcs2asts (a, xlat, func_call = func_call) for a in args))
+		if recurse:
+			args = AST (*(xlat_funcs2asts (a, xlat, func_call = func_call) for a in args))
 
 		try:
 			if xact is True: # True means execute function and use return value for ast, only happens for -func
@@ -502,7 +513,10 @@ def xlat_funcs2asts (ast, xlat, func_call = None): # translate eligible function
 
 		return ret ()
 
-	return AST (*(xlat_funcs2asts (e, xlat, func_call = func_call) for e in ast), **ast._kw)
+	if recurse:
+		return AST (*(xlat_funcs2asts (a, xlat, func_call = func_call) for a in ast), **ast._kw)
+
+	return ast
 
 #...............................................................................................
 _XLAT_FUNC2TEX = {
@@ -601,15 +615,16 @@ xlat_pyS = lambda ast: _xlat_pyS (ast) [0]
 
 #...............................................................................................
 class sxlat: # for single script
-	XLAT_FUNC2AST_TEX = XLAT_FUNC2AST_TEX
-	XLAT_FUNC2AST_NAT = XLAT_FUNC2AST_NAT
-	XLAT_FUNC2AST_PY  = XLAT_FUNC2AST_PY
-	XLAT_FUNC2AST_SPT = XLAT_FUNC2AST_SPT
-	xlat_funcs2asts   = xlat_funcs2asts
-	xlat_func2tex     = xlat_func2tex
-	xlat_attr2tex     = xlat_attr2tex
-	xlat_pyS          = xlat_pyS
-	_xlat_f2a_And     = _xlat_f2a_And
+	XLAT_FUNC2AST_SPARSER = XLAT_FUNC2AST_SPARSER
+	XLAT_FUNC2AST_TEX     = XLAT_FUNC2AST_TEX
+	XLAT_FUNC2AST_NAT     = XLAT_FUNC2AST_NAT
+	XLAT_FUNC2AST_PY      = XLAT_FUNC2AST_PY
+	XLAT_FUNC2AST_SPT     = XLAT_FUNC2AST_SPT
+	xlat_funcs2asts       = xlat_funcs2asts
+	xlat_func2tex         = xlat_func2tex
+	xlat_attr2tex         = xlat_attr2tex
+	xlat_pyS              = xlat_pyS
+	_xlat_f2a_And         = _xlat_f2a_And
 
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!

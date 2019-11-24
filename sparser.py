@@ -8,6 +8,7 @@ import sys
 
 from lalr1 import Token, State, Incomplete, PopConfs, Reduce, LALR1 # , KeepConf # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
+import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 ALL_FUNC_NAMES = AST.Func.PY | AST.Func.TEX | {'sech', 'csch', AST.Func.NOREMAP, AST.Func.NOEVAL}
@@ -41,6 +42,9 @@ def _ast_func_tuple_args (ast):
 	ast = ast.strip_curly.strip_paren1 # ast = ast._strip (1) # ast = ast._strip_curly_of_paren_tex.strip_paren1 # ast = ast._strip (1)
 
 	return ast.comma if ast.is_comma else (ast,)
+
+def _ast_func_sxlat (func, args, **kw):
+	return sxlat.xlat_funcs2asts (AST ('-func', func, args, **kw), sxlat.XLAT_FUNC2AST_SPARSER, recurse = False)
 
 def _ast_func_reorder (ast):
 	wrap2 = None
@@ -563,10 +567,17 @@ def _expr_func (iparm, *args, is_operatorname = False): # rearrange ast tree for
 			if ast:
 				return wrapa (ast)
 
-		ast2     = AST (*(args [:iparm] + (_ast_func_tuple_args (arg),) + args [iparm + 1:]))
-		ast2.src = AST ('*', (('@', args [1]), rhs))
+		# ast2     = AST (*(args [:iparm] + (_ast_func_tuple_args (arg),) + args [iparm + 1:]))
+		# ast2.src = AST ('*', (('@', name), rhs))
 
-		if ast2.args.len != 1 and ast2.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
+		src = AST ('*', (('@', name), rhs))
+
+		if arg.is_paren:
+			ast2 = _ast_func_sxlat (name, _ast_func_tuple_args (arg), src = src)
+		else:
+			ast2 = AST ('-func', name, _ast_func_tuple_args (arg), src = src)
+
+		if ast2.is_func and ast2.args.len != 1 and ast2.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
 			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseudo-function takes a single argument')
 
 	else: # args [0] in {'-sqrt', '-log'}:
@@ -633,7 +644,7 @@ def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 
 	if var.var in _SP_USER_FUNCS:
 		if arg.is_paren:
-			return PopConfs (wrapa (AST ('-func', var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg)))))
+			return PopConfs (wrapa (_ast_func_sxlat (var.var, _ast_func_tuple_args (arg), src = AST ('*', (var, arg)))))
 		elif not (arg.is_curly and arg.strip_curly.is_paren) and var.var not in {'beta', 'Lambda'}: # special case beta and Lambda reject if they don't have parenthesized args (because they take two)
 			return PopConfs (wrapa (AST ('-func', var.var, (arg,), src = AST ('*', (var, arg)))))
 
@@ -1528,6 +1539,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	a = p.parse (r"g(x) = ?f(x)")
+	a = p.parse (r"Limit (1/x, x, 0, dir='+-')")
 	print (a)
 

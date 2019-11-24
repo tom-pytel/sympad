@@ -1647,8 +1647,8 @@ class spt2ast:
 			tex  = sp.latex (spt)
 			text = str (spt)
 
-			if tex == text: # no native latex representation?
-				tex = tex.replace ('_', '\\_')
+			# if tex == text: # no native latex representation?
+			# 	tex = tex.replace ('_', '\\_')
 
 			if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
 				tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
@@ -1983,15 +1983,15 @@ if __name__ == '__main__': # DEBUG!
 	set_sym_user_funcs (set (vars))
 	set_sym_user_vars (vars)
 
-	set_strict (True)
+	# set_strict (True)
 
-	ast = AST ('-lamb', ('@', 'y'), ('y',))
-	res = ast2tex (ast)
+	ast = AST ('-lim', ('/', ('#', '1'), ('@', 'x')), ('@', 'x'), ('#', '0'))
+	# res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	# res = ast2spt (ast)
-	# res = spt2ast (res)
+	res = ast2spt (ast)
+	res = spt2ast (res)
 	# res = ast2nat (res)
 
 
