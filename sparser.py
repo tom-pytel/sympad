@@ -99,6 +99,23 @@ def _ast_var_as_ufunc (var, arg, rhs):
 
 	return None
 
+def _ast_ufunc_apply_ics (var, expr, arg):
+	func = _SP_USER_VARS.get (var, expr [1])
+	args = arg.comma if arg.is_comma else (arg,)
+
+	if func.is_lamb:
+		if len (args) == func.vars.len:
+			subs = tuple (filter (lambda va: va [1] != va [0], zip ((AST ('@', v) for v in func.vars), args)))
+
+			return AST ('-subs', expr, subs) if subs else expr
+
+	if func.is_ufunc_applied and func.can_apply_argskw (arg.as_ufunc_argskw):
+		subs = tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args)))
+
+		return AST ('-subs', expr, subs) if subs else expr
+
+	return None
+
 def _ast_pre_slice (pre, post):
 	if not post.is_slice:
 		return AST ('-slice', pre, post, None)
@@ -441,15 +458,10 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 	def try_apply_ics (ast, arg): # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
 		if arg.is_paren:
 			diff = ast.diff.strip_paren1
-			func = _SP_USER_VARS.get (diff.var, diff)
-			args = arg.paren.comma if arg.paren.is_comma else (arg.paren,)
+			ast2 = _ast_ufunc_apply_ics (diff.var, AST ('-diff', diff, ast.d, ast.dvs), arg.paren)
 
-			if func.is_lamb:
-				if len (args) == func.vars.len:
-					return AST ('-subs', AST ('-diff', diff, ast.d, ast.dvs), tuple (filter (lambda va: va [1] != va [0], zip ((AST ('@', v) for v in func.vars), args))))
-
-			if func.is_ufunc_applied and func.can_apply_argskw (arg.paren.as_ufunc_argskw):
-				return AST ('-subs', AST ('-diff', diff, ast.d, ast.dvs), tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args))))
+			if ast2:
+				return ast2
 
 		return AST ('*', (ast, arg))
 
@@ -552,15 +564,10 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 	if lhs.is_diffp:
-		func = _SP_USER_VARS.get (lhs.diffp.var, lhs.diffp)
-		args = commas.comma if commas.is_comma else (commas,)
+		ast = _ast_ufunc_apply_ics (lhs.diffp.var, lhs, commas)
 
-		if func.is_lamb:
-			if len (args) == func.vars.len:
-				return AST ('-subs', lhs, tuple (filter (lambda va: va [1] != va [0], zip ((AST ('@', v) for v in func.vars), args))))
-
-		elif func.is_ufunc_applied and func.can_apply_argskw (commas.as_ufunc_argskw): # more general than necessary since func only valid for ufuncs of one variable
-			return AST ('-subs', lhs, tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args))))
+		if ast:
+			return ast
 
 	return Reduce
 
@@ -1527,8 +1534,8 @@ if __name__ == '__main__': # DEBUG!
 
 	set_sp_user_funcs ({'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'})
 	# _SP_USER_FUNCS.update ({'f'})
+	# set_sp_user_vars ({'f': AST ('-lamb', ('@', 't'), ('t',))})
 	# set_sp_user_vars ({'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))})
-	set_sp_user_vars ({'f': AST ('-ufunc', 'g', (('@', 'x'),))})
 
 
 	# a = p.parse (r"""Limit({|xyzd|}, x, 'str' or 2 or partialx)[\int_{1e-100 || partial}^{partialx or dy} \{} dx, oo zoo**b * 1e+100 <= 1. * {-1} = \{}, \sqrt[-1]{0.1**{partial or None}}] ^^ sqrt(partialx)[oo zoo] + \sqrt[-1.0]{1e+100!} if \[d^6 / dx**1 dz**2 dz**3 (oo zoo 'str') + d^4 / dz**1 dy**3 (\[-1.0]), \int \['str' 'str' dy] dx] else {|(\lim_{x \to 'str'} zoo {|partial|}d**6/dy**2 dy**3 dy**1 partial)[(True, zoo, True)**{oo zoo None}]|} if \[[[partial[1.] {0: partialx, partialx: dx, 'str': b} {-{1.0 * 0.1}} if (False:dx, 1e+100 * 1e+100 b) else {|True**partialx|}, \[0] \[partialy] / Limit(\{}, x, 2) not in a ^^ zoo ^^ 1e-100]], [[Sum({} / {}, (x, lambda x: False ^^ partialx ^^ 0.1, Sum(dx, (x, b, 'str'))[-{1 'str' False}, partialx && 'str' && a, oo:dy])), ln(x) \sqrt['str' / 0]{d**3}/dx**3 Truelambda x, y, z:a if a else b if partialy]], [[lambda: {1e-100, oo zoo, 1e-100} / \[b || 0.1 || None, \{}, \[[dy, c]]], {}]]] else lambda x:ln({}) if {\int_b^p artial * 1e+100 dx or \['str'] or 2 if partialx else 1e+100} else [] if {|{dz,} / [partial]|} and B/a * sePolynomialError(True * {-1}, d^4 / dy**2 dz**2 (partialx), 1e-100 && 1.) Sum(\[1, 1e+100], (x, {'str', 1.}, \sqrt[1]{partial})) and {d^5 / dz**2 dy**1 dx**2 (oo zoo && xyzd), {dz 'str' * 1. && lambda x, y, (z:zoo && lambda x), (y:0)}} else {}""")
@@ -1542,6 +1549,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	a = p.parse (r"\operatorname{x1} x")
+	a = p.parse (r"d / dx (u (x, y)) (x, y)")
 	print (a)
 

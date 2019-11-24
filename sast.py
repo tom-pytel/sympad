@@ -503,8 +503,8 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
-	def apply_vars (ast, vars, recurse = True, mode = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
-		def push (vars, newvars): # create new frame and add new variables
+	def apply_vars (ast, vars = True, mode = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
+		def push (vars, newvars): # create new frame and add new variables, this is really overkill
 			frame       = vars.copy ()
 			frame ['<'] = vars
 			frame ['>'] = newvars
@@ -513,7 +513,19 @@ class AST (tuple):
 
 			return frame
 
-		def pop (vars): # pop one layer of variables (not frames) and create new frame
+		def pop (vars, var): # find variable and return frame just below it
+			prev = vars.get ('<')
+
+			while prev:
+				if var in prev.get ('>', {}):
+					return prev
+
+				vars = prev
+				prev = vars.get ('<')
+
+			return vars
+
+		def scope (vars): # scope out one layer of variables (not frames) and create new frame
 			count = vars.get ('#', 1)
 			frame = {'<': vars.get ('<', {}), '>': vars.get ('>', vars), '#': count + 1}
 
@@ -547,7 +559,6 @@ class AST (tuple):
 				return ast
 
 			ast = AST ('-func', ast.ufunc, ast.vars)
-			# ast = AST ('-func', ast.ufunc, AST.apply_vars (ast.vars, vars, recurse, mode))
 
 		if ast.is_num:
 			return ast
@@ -556,17 +567,17 @@ class AST (tuple):
 			var = vars.get (ast.var)
 
 			if var: # user var
-				return var if var.is_lamb or not recurse else AST.apply_vars (var, vars, recurse, mode)
+				return var if var.is_lamb else AST.apply_vars (var, pop (vars, ast.var), mode)
 
 			return ast
 
 		elif ast.is_subs:
-			return AST ('-subs', AST.apply_vars (ast.expr, vars, recurse, mode), tuple ((src, AST.apply_vars (dst, vars, recurse, mode)) for src, dst in ast.subs))
+			return AST ('-subs', AST.apply_vars (ast.expr, vars, mode), tuple ((src, AST.apply_vars (dst, vars, mode)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})
 
-			return AST (ast.op, AST.apply_vars (ast [1], vars, recurse, mode), ast [2], *(AST.apply_vars (a, vars, recurse, mode) for a in ast [3:]))
+			return AST (ast.op, AST.apply_vars (ast [1], vars, mode), ast [2], *(AST.apply_vars (a, vars, mode) for a in ast [3:]))
 
 		elif ast.is_diff:
 			dvs = []
@@ -580,7 +591,7 @@ class AST (tuple):
 
 				dvs.append ((v, p))
 
-			return AST ('-diff', AST.apply_vars (ast.diff, vars, recurse, mode), ast.d, tuple (dvs))
+			return AST ('-diff', AST.apply_vars (ast.diff, vars, mode), ast.d, tuple (dvs))
 
 		elif ast.is_intg:
 			dv = ast.dv
@@ -598,47 +609,46 @@ class AST (tuple):
 					else:
 						dv = ast.dv
 
-			return AST ('-intg', AST.apply_vars (ast.intg, vars, recurse, mode), dv, *(AST.apply_vars (a, vars, recurse, mode) for a in ast [3:]))
+			return AST ('-intg', AST.apply_vars (ast.intg, vars, mode), dv, *(AST.apply_vars (a, vars, mode) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
 			nonfree = frozenset (va [0] for va in filter (lambda va: va [1] is False, vars.items ())) # pass all non-free variables for possible translation of lambda as expression so those vars don't get globally mapped
 			vars    = push (vars, {v: False for v in ast.vars})
 
-			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, recurse, mode), ast.vars, lamb_vars_notfree = nonfree)
+			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, mode), ast.vars, lamb_vars_notfree = nonfree)
 
 		elif ast.is_func: # function, might be user lambda call
 			if ast.func == AST.Func.NOREMAP:
-				vars = pop (vars)
+				vars = scope (vars)
 
 			else:
 				lamb = vars.get (ast.func)
 
 				if lamb and lamb.is_lamb: # 'execute' user lambda
 					if ast.args.len == lamb.vars.len:
-						# args = dict (zip (lamb.vars, ast.args))
+						vars = push (vars, dict (zip (lamb.vars, ast.args)))
 
+						return AST.apply_vars (lamb.lamb, vars, mode) # remap lambda vars to func args then global remap
+
+						# args = dict (zip (lamb.vars, ast.args))
 						# return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False, mode), vars, recurse, mode) # remap lambda vars to func args then global remap
 
+						# args = dict (filter (lambda va: isinstance (va [1], AST) and va [1].is_lamb, vars.items ()))
+						# args.update (zip (lamb.vars, ast.args))
+						# return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False, mode), vars, recurse, mode) # remap lambda vars to func args then global remap
 
-						# vars = push (vars, dict (zip (lamb.vars, ast.args)))
-
+						# vars = push (vars, {v: AST.apply_vars (a, vars, recurse, mode) for v, a in zip (lamb.vars, ast.args)})
 						# return AST.apply_vars (lamb.lamb, vars, recurse, mode) # remap lambda vars to func args then global remap
-
-						args = dict (filter (lambda va: isinstance (va [1], AST) and va [1].is_lamb, vars.items ()))
-
-						args.update (zip (lamb.vars, ast.args))
-
-						return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False, mode), vars, recurse, mode) # remap lambda vars to func args then global remap
 
 					elif mode:
 						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
 					return AST ('-func', ast.func,
-							tuple (('(', AST.apply_vars (a, vars, recurse, mode))
+							tuple (('(', AST.apply_vars (a, vars, mode))
 							if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
-							else AST.apply_vars (a, vars, recurse, mode) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+							else AST.apply_vars (a, vars, mode) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
-		return AST (*(AST.apply_vars (a, vars, recurse, mode) for a in ast), **ast._kw)
+		return AST (*(AST.apply_vars (a, vars, mode) for a in ast), **ast._kw)
 
 	@staticmethod
 	def register_AST (cls):
