@@ -68,21 +68,23 @@ def _ast_func_reorder (ast):
 
 	return ast, lambda a: a
 
-def _ast_var_as_ufunc (var, arg, rhs):
-	if var.var != '_' and arg.is_paren and var.is_var_nonconst and arg.paren.as_ufunc_argskw: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
+def _ast_var_as_ufunc (var, arg, rhs, force_implicit = False): # var guaranteed not to be in _SP_USER_FUNCS
+	if var.var != '_' and arg.is_paren and var.is_var_nonconst: # f (vars[, kws]) -> ('-ufunc', 'f', (vars)[, kws]) ... implicit undefined function
 		argskw = arg.paren.as_ufunc_argskw
+		ufunc  = _SP_USER_VARS.get (var.var, AST.Null)
 
-		if argskw and AST.UFunc.can_apply_argskw_implicit (argskw):
-			ufunc = _SP_USER_VARS.get (var.var, AST.Null)
+		if ufunc.is_ufunc:
+			ast = ufunc.apply_argskw (argskw) # AST ('-ufunc', ufunc.ufunc_full, *argskw, src_rhs = rhs, src_var_name = var.var)
 
-			if ufunc.op is None:
-				return AST ('-ufunc', var.var, *argskw, src_rhs = rhs)
-			elif ufunc.is_ufunc:
-				return AST ('-ufunc', ufunc.ufunc_full, *argskw, src_rhs = rhs, src_var_name = var.var)
+			if ast:
+				return ast.setkw (src_rhs = rhs, src_var_name = var.var)
+
+		elif ufunc.op is None and (force_implicit or AST.UFunc.valid_implicit_args (argskw [0])):
+			return AST ('-ufunc', var.var, *argskw, src_rhs = rhs)
 
 	return None
 
-def _ast_ufunc_apply_ics (var, expr, arg):
+def _ast_diff_func_apply_call (var, expr, arg):
 	func = _SP_USER_VARS.get (var, expr [1])
 	args = arg.comma if arg.is_comma else (arg,)
 
@@ -92,10 +94,15 @@ def _ast_ufunc_apply_ics (var, expr, arg):
 
 			return AST ('-subs', expr, subs) if subs else expr
 
-	if func.is_ufunc_applied and func.can_apply_argskw (arg.as_ufunc_argskw):
-		subs = tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args)))
+	# if func.is_ufunc_applied and func.can_apply_argskw (arg.as_ufunc_argskw):
+	# 	subs = tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args)))
 
-		return AST ('-subs', expr, subs) if subs else expr
+	# 	return AST ('-subs', expr, subs) if subs else expr
+	elif func.is_ufunc_applied:
+		ast = func.apply_argskw (arg.as_ufunc_argskw)
+
+		if ast:
+			return AST ('-subs', expr, ast.ufunc_subs) if ast.ufunc_subs else expr
 
 	return None
 
@@ -441,7 +448,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 	def try_apply_ics (ast, arg): # {d/dx u (x, t)} * (0, t) -> \. d/dx u (x, t) |_{x = 0}, {d/dx u (x, t)} * (0, 0) -> \. d/dx u (x, 0) |_{x = 0}
 		if arg.is_paren:
 			diff = ast.diff.strip_paren1
-			ast2 = _ast_ufunc_apply_ics (diff.var, AST ('-diff', diff, ast.d, ast.dvs), arg.paren)
+			ast2 = _ast_diff_func_apply_call (diff.var, AST ('-diff', diff, ast.d, ast.dvs), arg.paren)
 
 			if ast2:
 				return ast2
@@ -547,7 +554,7 @@ def _expr_intg (ast, from_to = ()): # find differential for integration if prese
 
 def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 	if lhs.is_diffp:
-		ast = _ast_ufunc_apply_ics (lhs.diffp.var, lhs, commas)
+		ast = _ast_diff_func_apply_call (lhs.diffp.var, lhs, commas)
 
 		if ast:
 			return ast
@@ -562,7 +569,7 @@ def _expr_func (iparm, *args, is_operatorname = False): # rearrange ast tree for
 		name = args [1]
 
 		if is_operatorname and name not in _SP_USER_FUNCS and name not in ALL_FUNC_NAMES: # \operatorname ufunc like SymPy writes out
-			ast = _ast_var_as_ufunc (AST ('@', name), arg, rhs)
+			ast = _ast_var_as_ufunc (AST ('@', name), arg, rhs, force_implicit = True)
 
 			if ast:
 				return wrapa (ast)
@@ -599,19 +606,25 @@ def _expr_func_func (FUNC, args, expr_super = None):
 		return _expr_func_func (f'a{func}', args)
 
 def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
-	if lhs.is_ufunc:
+	# if lhs.is_ufunc:
+	# 	ast = lhs.apply_argskw (commas.as_ufunc_argskw)
+
+	# 	if lhs.is_ufunc_py:
+	# 		if ast:
+	# 			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw, is_ufunc_py = lhs.is_ufunc_py))
+
+	# 	else:
+	# 		if ast:
+	# 			if not lhs.is_ufunc_explicit and AST ('@', lhs.ufunc).is_differential and self.stack_has_sym ('DIVIDE'): # could be derivative of form "d / dx (f)"
+	# 				return Reduce (ast)
+	# 			else:
+	# 				return PopConfs (ast.setkw (src_rhs = AST ('*', (lhs.src_rhs, ('(', commas)))))
+
+	if lhs.is_ufunc_py:
 		ast = lhs.apply_argskw (commas.as_ufunc_argskw)
 
-		if lhs.is_ufunc_py:
-			if ast:
-				return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw, is_ufunc_py = lhs.is_ufunc_py))
-
-		else:
-			if ast:
-				if not lhs.is_ufunc_explicit and AST ('@', lhs.ufunc).is_differential and self.stack_has_sym ('DIVIDE'): # could be derivative of form "d / dx (f)"
-					return Reduce (ast)
-				else:
-					return PopConfs (ast.setkw (src_rhs = AST ('*', (lhs.src_rhs, ('(', commas)))))
+		if ast:
+			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw, is_ufunc_py = lhs.is_ufunc_py))
 
 	return Reduce
 
@@ -638,7 +651,6 @@ def _expr_ufunc (self, args, py = False, name = ''):
 		raise SyntaxError ('cannot use constant as undefined function name')
 
 	return AST ('-ufunc', f'?{name}', *argskw, is_ufunc_py = py)
-	# return AST ('-ufunc', name if py else f'?{name}', *argskw, is_ufunc_py = py)
 
 def _expr_varfunc (self, var, rhs): # user_func *imp* (...) -> user_func (...)
 	arg, wrapa = _ast_func_reorder (rhs)

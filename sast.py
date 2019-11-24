@@ -131,6 +131,13 @@ class AST (tuple):
 	def tuple2ast (args):
 		return args [0] if len (args) == 1 else AST (',', args)
 
+	@staticmethod
+	def tuple2argskw (args):
+		args, kw = AST.args2kwargs
+		args     = args + [AST ('=', kw, a) for kw, a in kw.items ()]
+
+		return args [0] if len (args) == 1 else AST (',', tuple (args))
+
 	def _no_curlys (self): # remove ALL curlys from entire tree, not just top level
 		if self.is_curly:
 			return self.curly.no_curlys
@@ -391,12 +398,7 @@ class AST (tuple):
 	def _as_ufunc_argskw (self):
 		args, kw = AST.args2kwargs (self.comma if self.is_comma else (self,) if self.op is not None else self)
 
-		# if any (not a.is_var and not a.is_const for a in args):
-		# 	return None
-
 		return tuple (args), tuple (sorted (kw.items ()))
-
-		# return AST (tuple (args), tuple (sorted (kw.items ())), can_apply_implicit = not any (not a.is_var and not a.is_const for a in args))
 
 	def _free_vars (self): # return set of unique unbound variables found in tree, not reliable especially if used before sxlat due to things like ('-func', 'Derivative', ...), '-subs' is particularly problematic
 		def _free_vars (ast, vars):
@@ -1125,35 +1127,59 @@ class AST_UFunc (AST):
 	# matches_lamb_sig    = lambda self, lamb: self.vars and self.vars.len == lamb.vars.len and all (a.is_var_nonconst and a.var == v for a, v in zip (self.vars, lamb.vars))
 	matches_lamb_sig    = lambda self, lamb: self.vars and self.vars.len == lamb.vars.len
 
+	# @staticmethod
+	# def can_apply_argskw_implicit (argskw):
+	# 	return not any (not a.is_var and not a.is_const for a in argskw [0])
+
+	# def can_apply_argskw (self, argskw):
+	# 	if argskw:
+	# 		args, kw = argskw
+
+	# 		if self.is_ufunc_implicit and not self.can_apply_argskw_implicit (argskw):
+	# 			return False
+
+	# 		if not kw and args:
+	# 			if not self.vars.len:
+	# 				return True
+
+	# 			if self.vars.len == len (args):
+	# 				for v, a in zip (self.vars, args):
+	# 					if not v.is_var_nonconst or (a.is_var_nonconst and a.var != v.var):
+	# 						return False
+
+	# 				return args != self.vars
+
+	# 	return False
+
+	# def apply_argskw (self, argskw):
+	# 	if self.can_apply_argskw (argskw):
+	# 		return AST ('-ufunc', self.ufunc_full, argskw [0], self.kw)
+
+	# 	return None
+
 	@staticmethod
-	def can_apply_argskw_implicit (argskw):
-		return not any (not a.is_var and not a.is_const for a in argskw [0])
-
-	def can_apply_argskw (self, argskw):
-		if argskw:
-			args, kw = argskw
-
-			if self.is_ufunc_implicit and not self.can_apply_argskw_implicit (argskw):
-				return False
-
-			if not kw and args:
-				if not self.vars.len:
-					return True
-
-				if self.vars.len == len (args):
-					for v, a in zip (self.vars, args):
-						if not v.is_var_nonconst or (a.is_var_nonconst and a.var != v.var):
-							return False
-
-					return args != self.vars
-
-		return False
+	def valid_implicit_args (args):
+		return not any (not a.is_var and not a.is_const for a in args)
 
 	def apply_argskw (self, argskw):
-		if self.can_apply_argskw (argskw):
-			return AST ('-ufunc', self.ufunc_full, argskw [0], self.kw)
+		if not argskw or argskw [1]:
+			return None
 
-		return None
+		args = argskw [0]
+		subs = []
+
+		if self.vars:
+			if len (args) != self.vars.len:
+				return None
+
+			for v, a in zip (self.vars, args):
+				if not v.is_var_nonconst: # or (a.is_var_nonconst and a.var != v.var):
+					return None
+
+				if a != v:
+					subs.append ((v, a))
+
+		return AST ('-ufunc', self.ufunc_full, args, self.kw, ufunc_subs = tuple (subs))
 
 class AST_Subs (AST):
 	op, is_subs = '-subs', True

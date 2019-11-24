@@ -262,6 +262,34 @@ def _ast_has_open_differential (ast, istex):
 	return any (_ast_has_open_differential (a, istex = istex) if isinstance (a, AST) else False for a in (ast if ast.op is None else ast [1:]))
 
 def _ast_subs2func (ast): # ast is '-subs'
+	# func = ast.expr
+
+	# if func.op in {'-diff', '-diffp'}:
+	# 	func = func [1]
+
+	# func = _SYM_USER_VARS.get (func.var, func)
+
+	# if func.is_lamb:
+	# 	vars = ast.subs [:func.vars.len]
+
+	# 	if tuple (s.var for s, _ in vars) == func.vars:
+	# 		return [AST ('=', s, d) for s, d in ast.subs [func.vars.len:]], tuple (d for _, d in vars)
+
+	# elif func.is_ufunc_applied:
+	# 	subs = []
+	# 	vars = OrderedDict ((v, v) for v in func.vars)
+
+	# 	for s, d in ast.subs:
+	# 		# if s.is_var_nonconst and d.is_const and vars.get (s) == s:
+	# 		if s.is_var_nonconst and vars.get (s) == s:
+	# 			vars [s] = d
+	# 		else:
+	# 			subs.append (AST ('=', s, d))
+
+	# 	return subs, vars.values ()
+
+	# func = ast.expr
+
 	func = ast.expr
 
 	if func.op in {'-diff', '-diffp'}:
@@ -280,13 +308,15 @@ def _ast_subs2func (ast): # ast is '-subs'
 		vars = OrderedDict ((v, v) for v in func.vars)
 
 		for s, d in ast.subs:
-			# if s.is_var_nonconst and d.is_const and vars.get (s) == s:
 			if s.is_var_nonconst and vars.get (s) == s:
 				vars [s] = d
 			else:
 				subs.append (AST ('=', s, d))
 
-		return subs, vars.values ()
+		vars = vars.values ()
+
+		if func.apply_argskw ((vars, ())):
+			return subs, vars
 
 	return [AST ('=', s, d) for s, d in ast.subs], None
 
@@ -617,13 +647,18 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		# if not _STRICT_TEX and user and user.is_lamb and ast.matches_lamb_sig (user):
 		# 	return self._ast2tex_func (AST ('-func', ast.ufunc, ast.vars))
 
-		if _STRICT_TEX and (ast.is_ufunc_explicit or not ast.ufunc or
-					(user and
-					(not user.is_ufunc or (ast != user and not user.can_apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
-					# not (user.is_lamb and ast.matches_lamb_sig (user)) and
-					not _ast_is_top_ass_lhs (self, ast)) or
-				not ast.vars.as_ufunc_argskw):
-			pre = '?' # '\\: ?'
+		# if _STRICT_TEX and (ast.is_ufunc_explicit or not ast.ufunc or (
+		# 			user and
+		# 			(not user.is_ufunc or (ast != user and not user.apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
+		# 			# not (user.is_lamb and ast.matches_lamb_sig (user)) and
+		# 			not _ast_is_top_ass_lhs (self, ast)) or
+		# 		not ast.vars.as_ufunc_argskw):
+		if _STRICT_TEX and (
+					not ast.ufunc or
+					(user and (not user.is_ufunc or not user.apply_argskw ((ast.vars, ast.kw)))) or
+					(not user and not AST.UFunc.valid_implicit_args (ast.vars)) and
+				not _ast_is_top_ass_lhs (self, ast)):
+			pre = '?'
 		else:
 			pre = ''
 
@@ -968,11 +1003,16 @@ class ast2nat: # abstract syntax tree -> native text
 	def _ast2nat_ufunc (self, ast):
 		user = _SYM_USER_ALL.get (ast.ufunc)
 
-		if (ast.is_ufunc_explicit or not ast.ufunc or
-					(user and
-					(not user.is_ufunc or (ast != user and not user.can_apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
-					not _ast_is_top_ass_lhs (self, ast)) or
-				not ast.vars.as_ufunc_argskw):
+		# if (ast.is_ufunc_explicit or not ast.ufunc or
+		# 			(user and
+		# 			(not user.is_ufunc or (ast != user and not user.apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
+		# 			not _ast_is_top_ass_lhs (self, ast)) or
+		# 		not ast.vars.as_ufunc_argskw):
+		if not ast.ufunc or (
+					not ast.ufunc or
+					(user and (not user.is_ufunc or not user.apply_argskw ((ast.vars, ast.kw)))) or
+					(not user and not AST.UFunc.valid_implicit_args (ast.vars)) and
+				not _ast_is_top_ass_lhs (self, ast)):
 			pre = '?'
 		else:
 			pre = ''
