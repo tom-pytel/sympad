@@ -427,7 +427,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		a = ast.attr.replace ('_', '\\_')
 
 		if ast.is_attr_func:
-			a = f'\\operatorname{{{a}}}\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)'
+			a = f'\\operatorname{{{a}}}\\left({self._ast2tex (AST.tuple2argskw (ast.args))} \\right)'
 
 		return f'{self._ast2tex_wrap (ast.obj, ast.obj.is_pow or ast.obj.is_subs_diff_ufunc, {"=", "<>", "#", ",", "-", "+", "*", "/", "-lim", "-sum", "-diff", "-intg", "-piece", "-slice", "||", "^^", "&&", "-or", "-and", "-not"})}.{a}'
 
@@ -543,7 +543,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			else:
 				n = f'\\{ast.func [1:]}^{{-1}}'
 
-			return f'{n}{{\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)}}'
+			return f'{n}{{\\left({self._ast2tex (AST.tuple2argskw (ast.args))} \\right)}}'
 
 		tex = sxlat.xlat_func2tex (ast, self._ast2tex)
 
@@ -557,7 +557,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			func = ast.func.replace (AST.Func.NOEVAL, '\\%')
 
 			if ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'}:
-				return f'{func}{self._ast2tex (AST.tuple2ast (ast.args))}'
+				return f'{func}{self._ast2tex (AST.tuple2argskw (ast.args))}'
 
 		elif ast.func not in AST.Func.PY:
 			m         = self._rec_tailnum.match (ast.func)
@@ -569,7 +569,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			func = ast.func.replace ('_', '\\_')
 			func = f'\\operatorname{{{AST.Var.GREEK2TEX.get (ast.func, func)}}}'
 
-		return f'{func}{{\\left({self._ast2tex (AST.tuple2ast (ast.args))} \\right)}}'
+		return f'{func}{{\\left({self._ast2tex (AST.tuple2argskw (ast.args))} \\right)}}'
 
 	def _ast2tex_lim (self, ast):
 		s = self._ast2tex_wrap (ast.to, False, ast.to.is_slice) if ast.dir is None else (self._ast2tex_pow (AST ('^', ast.to, AST.Zero), trighpow = False) [:-1] + ast.dir)
@@ -804,7 +804,7 @@ class ast2nat: # abstract syntax tree -> native text
 		if ast.is_attr_var:
 			return f'{obj}.{ast.attr}'
 		else:
-			return f'{obj}.{ast.attr}({self._ast2nat (AST.tuple2ast (ast.args))})'
+			return f'{obj}.{ast.attr}({self._ast2nat (AST.tuple2argskw (ast.args))})'
 
 	def _ast2nat_minus (self, ast):
 		s = self._ast2nat_wrap (ast.minus, ast.minus.op in {"*", "-diff", "-piece", "||", "^^", "&&", "-or", "-and"}, {"=", "<>", "+", "-lamb", "-slice", "-not"})
@@ -1060,7 +1060,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'^'     : _ast2nat_pow,
 		'-log'  : _ast2nat_log,
 		'-sqrt' : lambda self, ast: f'sqrt{"" if ast.idx is None else f"[{self._ast2nat (ast.idx)}]"}({self._ast2nat (ast.rad)})',
-		'-func' : lambda self, ast: f"{ast.func}{self._ast2nat_wrap (AST.tuple2ast (ast.args), 0, not (ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-set', '-dict'}))}",
+		'-func' : lambda self, ast: f"{ast.func}{self._ast2nat_wrap (AST.tuple2argskw (ast.args), 0, not (ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-set', '-dict'}))}",
 		'-lim'  : _ast2nat_lim,
 		'-sum'  : _ast2nat_sum,
 		'-diff' : _ast2nat_diff,
@@ -1089,9 +1089,9 @@ class ast2nat: # abstract syntax tree -> native text
 #...............................................................................................
 class ast2py: # abstract syntax tree -> Python code text
 	def __init__ (self): self.parent = self.ast = None # pylint droppings
-	def __new__ (cls, ast, retxlat = False, ass2eq = True):
+	def __new__ (cls, ast, retxlat = False, ass2cmp = True):
 		self         = super ().__new__ (cls)
-		self.ass2eq  = ass2eq
+		self.ass2cmp  = ass2cmp
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
@@ -1163,7 +1163,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		obj = self._ast2py_paren (ast.obj, ast.obj.is_log_with_base or ast.obj.op in {"=", "<>", "#", ",", "-", "+", "*", "/", "^"})
 
 		if ast.is_attr_func:
-			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
+			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2cmp = self.ass2cmp)
 
 			return f'{obj}.{ast.attr}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
@@ -1208,7 +1208,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		if ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
 			return self._ast2py (ast.args [0])
 
-		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
+		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2cmp = self.ass2cmp)
 
 		return f'{ast.func}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
@@ -1288,7 +1288,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		else:
 			subs = f'{tupletuple (ast.subs [0] [0])}, {tupletuple (ast.subs [0] [1])}'
 
-		return f'Subs({self._ast2py (ast.expr)}, {subs})'
+		return f'Subs({self._ast2py_paren (ast.expr, ast.expr.is_comma)}, {subs})'
 
 	_ast2py_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2py (a) for a in ast.scolon),

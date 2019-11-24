@@ -520,14 +520,14 @@ def xlat_funcs2asts (ast, xlat, func_call = None, recurse = True): # translate e
 
 #...............................................................................................
 _XLAT_FUNC2TEX = {
-	'beta'    : lambda ast2tex, *args: f'\\beta{{\\left({ast2tex (AST.tuple2ast (args))} \\right)}}',
-	'gamma'   : lambda ast2tex, *args: f'\\Gamma{{\\left({ast2tex (AST.tuple2ast (args))} \\right)}}',
-	'Gamma'   : lambda ast2tex, *args: f'\\Gamma{{\\left({ast2tex (AST.tuple2ast (args))} \\right)}}',
-	'Lambda'  : lambda ast2tex, *args: f'\\Lambda{{\\left({ast2tex (AST.tuple2ast (args))} \\right)}}',
-	'zeta'    : lambda ast2tex, *args: f'\\zeta{{\\left({ast2tex (AST.tuple2ast (args))} \\right)}}',
+	'beta'    : lambda ast2tex, *args: f'\\beta{{\\left({ast2tex (AST.tuple2argskw (args))} \\right)}}',
+	'gamma'   : lambda ast2tex, *args: f'\\Gamma{{\\left({ast2tex (AST.tuple2argskw (args))} \\right)}}',
+	'Gamma'   : lambda ast2tex, *args: f'\\Gamma{{\\left({ast2tex (AST.tuple2argskw (args))} \\right)}}',
+	'Lambda'  : lambda ast2tex, *args: f'\\Lambda{{\\left({ast2tex (AST.tuple2argskw (args))} \\right)}}',
+	'zeta'    : lambda ast2tex, *args: f'\\zeta{{\\left({ast2tex (AST.tuple2argskw (args))} \\right)}}',
 
-	're'      : lambda ast2tex, *args: f'\\Re{{\\left({ast2tex (AST.tuple2ast (args))} \\right)}}',
-	'im'      : lambda ast2tex, *args: f'\\Im{{\\left({ast2tex (AST.tuple2ast (args))} \\right)}}',
+	're'      : lambda ast2tex, *args: f'\\Re{{\\left({ast2tex (AST.tuple2argskw (args))} \\right)}}',
+	'im'      : lambda ast2tex, *args: f'\\Im{{\\left({ast2tex (AST.tuple2argskw (args))} \\right)}}',
 
 	'binomial': lambda ast2tex, *args: f'\\binom{{{ast2tex (args [0])}}}{{{ast2tex (args [1])}}}' if len (args) == 2 else None,
 	'set'     : lambda ast2tex, *args: '\\emptyset' if not args else None,

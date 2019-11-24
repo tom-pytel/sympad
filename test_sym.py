@@ -482,6 +482,9 @@ a / { -{d/dx (?f(x))(0)}}
 \frac{a}{b}*{{{{xx}'}^c}!}
 \int a**N dx
 {  : {\int { { {\[{ 's' },{ dy },{ \beta },]} \cdot { { -9.712711016258549e-12 }  { Gamma }  { -1.0 } } \cdot { { 0 } && { 6.222789060821971e-22 } } }*{ d^{4} / dz^{1} dz^{2} dy^{1} {\sum_{x = { x0 }}^{ .1 } { 2.040706058303616e-14 } } } } dz } }
+sin (a b = c)
+x.y (a b = c)
+\. a, b |_{x = 1}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -922,6 +925,10 @@ def test (argv = None):
 					if ' ' in ast.ufunc:
 						ast = AST ('-ufunc', ast.ufunc_full.replace (' ', ''), ast.vars, ast.kw)
 
+				elif ast.is_subs:
+					if ast.expr.is_comma:
+						ast = AST ('-subs', ('(', ast.expr), ast.subs)
+
 				elif ast.is_sym: # remove spaces inserted into ufunc name
 					if ' ' in ast.sym:
 						ast = AST ('-sym', ast.sym.replace (' ', ''), ast.kw)
@@ -1119,7 +1126,7 @@ def test (argv = None):
 							sym._SYM_MARK_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
 							status.append (f'ast:  {ast2}')
-							py   = sym.ast2py (ast2, ass2eq = False)
+							py   = sym.ast2py (ast2, ass2cmp = False)
 							status.append (f'py:   {py}')
 							ast2 = parse (py)
 
@@ -1147,7 +1154,7 @@ def test (argv = None):
 						sym._SYM_MARK_PY_ASS_EQ = True # allow xlat of marked Eq functions which indicate assignment in python text
 
 						status.append (f'ast:  {ast2}')
-						py   = sym.ast2py (ast2, ass2eq = False)
+						py   = sym.ast2py (ast2, ass2cmp = False)
 						status.append (f'py:   {py}')
 						ast2 = parse (py)
 

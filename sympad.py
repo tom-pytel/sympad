@@ -3927,7 +3927,7 @@ class AST (tuple):
 		return vars
 
 	@staticmethod
-	def args2kwargs (args, func = None, ass2eq = False): # ass2eq means convert assignment to comparison so it can be represented as Eq() in the py representation of argument list of functions
+	def args2kwargs (args, func = None, ass2cmp = False): # ass2cmp means convert assignment to comparison so it can be represented as Eq() in the py representation of argument list of functions
 		func  = (lambda x: x) if func is None else func
 		rargs = []
 		kw    = []
@@ -3942,10 +3942,10 @@ class AST (tuple):
 
 					continue
 
-				elif ass2eq: # rewrite assignment = as == for equations passed to functions
+				elif ass2cmp: # rewrite assignment = as == for equations passed to functions
 					arg = AST ('<>', arg.lhs, (('==', arg.rhs),))
 
-			if ass2eq:
+			if ass2cmp:
 				rargs = [func (arg)] + [func (AST ('<>', a.lhs, (('==', a.rhs),)) if a.is_ass else a) for a in itr]
 			else:
 				rargs = [func (arg)] + [func (a) for a in itr]
@@ -6283,9 +6283,9 @@ class ast2nat: # abstract syntax tree -> native text
 #...............................................................................................
 class ast2py: # abstract syntax tree -> Python code text
 	def __init__ (self): self.parent = self.ast = None # pylint droppings
-	def __new__ (cls, ast, retxlat = False, ass2eq = True):
+	def __new__ (cls, ast, retxlat = False, ass2cmp = True):
 		self         = super ().__new__ (cls)
-		self.ass2eq  = ass2eq
+		self.ass2cmp  = ass2cmp
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
@@ -6357,7 +6357,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		obj = self._ast2py_paren (ast.obj, ast.obj.is_log_with_base or ast.obj.op in {"=", "<>", "#", ",", "-", "+", "*", "/", "^"})
 
 		if ast.is_attr_func:
-			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
+			args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2cmp = self.ass2cmp)
 
 			return f'{obj}.{ast.attr}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 
@@ -6402,7 +6402,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		if ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
 			return self._ast2py (ast.args [0])
 
-		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2eq = self.ass2eq)
+		args, kw = AST.args2kwargs (ast.args, self._ast2py, ass2cmp = self.ass2cmp)
 
 		return f'{ast.func}({", ".join (args + [f"{k} = {a}" for k, a in kw.items ()])})'
 

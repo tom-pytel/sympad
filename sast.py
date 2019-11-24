@@ -133,8 +133,8 @@ class AST (tuple):
 
 	@staticmethod
 	def tuple2argskw (args):
-		args, kw = AST.args2kwargs
-		args     = args + [AST ('=', kw, a) for kw, a in kw.items ()]
+		args, kw = AST.args2kwargs (args)
+		args     = args + [AST ('=', ('@', kw), a) for kw, a in kw.items ()]
 
 		return args [0] if len (args) == 1 else AST (',', tuple (args))
 
@@ -456,7 +456,7 @@ class AST (tuple):
 		return vars
 
 	@staticmethod
-	def args2kwargs (args, func = None, ass2eq = False): # ass2eq means convert assignment to comparison so it can be represented as Eq() in the py representation of argument list of functions
+	def args2kwargs (args, func = None, ass2cmp = False): # ass2cmp means convert assignment to comparison so it can be represented as Eq() in the py representation of argument list of functions
 		func  = (lambda x: x) if func is None else func
 		rargs = []
 		kw    = []
@@ -471,10 +471,10 @@ class AST (tuple):
 
 					continue
 
-				elif ass2eq: # rewrite assignment = as == for equations passed to functions
+				elif ass2cmp: # rewrite assignment = as == for equations passed to functions
 					arg = AST ('<>', arg.lhs, (('==', arg.rhs),))
 
-			if ass2eq:
+			if ass2cmp:
 				rargs = [func (arg)] + [func (AST ('<>', a.lhs, (('==', a.rhs),)) if a.is_ass else a) for a in itr]
 			else:
 				rargs = [func (arg)] + [func (a) for a in itr]

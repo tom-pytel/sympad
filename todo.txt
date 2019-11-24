@@ -1,18 +1,16 @@
-> ufunc variable acceptance in general (like for differential functions taking function of multiple variables)
-
 > ufunc mapback problem with generalized args - do not map if target var same?
-> ufunc subs with new args
 
 > tex 2*ux/u -> 2 ux/u
 > "d / 2" is "(d) / 2", fix it
 > (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
+? $s() -> $s
 
 > Sigma -> Si(g m a) problem in quick mode.
 
 > ERROR! assign to ufuncs from iterable?
 
-> display ufunc as func in loose tex mode?
+> display ufunc as \operatorname{func} in loose tex mode?
 > mark \operatorname funcs so they can't be rewound?
 
 > logic xor operator
@@ -20,7 +18,6 @@
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 
 > test parse (ast2tex (spt2ast(spt))) vs. parse (latex (spt))?
-
 
 
 > test_sym cases - call derivative of lambda
@@ -61,8 +58,8 @@
 > doc: ufuncs
 > doc: parentheses create implicit undefined functions
 > doc: give anonymous ufuncs name of var on assignment to var
-> doc: new functionality of @ and %
 > doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
+> doc: new functionality of @ and %
 > doc: ODEs
 > doc: PDEs
 
@@ -289,68 +286,3 @@ Errors:
 -------
 
 
-text: -$Ss(commutative=Tru e),\log_lambdax,y:1.0^0**NoneFunction('f',)()/\left.-2846log_lambdax,y:1.0^0**NoneFun87083\right|_{1e-100=True}
-ast:  (',', (('-', ('-sym', 'Ss', (('commutative', ('*', (('@', 'Tru'), ('@', 'e')))),))), ('-log', ('@', 'ambdax'), ('@', 'l')), ('-slice', ('@', 'y'), ('/', ('*', (('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFunction')), ('(', (',', (('"', 'f'),))), ('(', (',', ())))), ('-subs', (',', (('*', (('#', '-2846'), ('@', 'log_lambdax'))), ('-slice', ('@', 'y'), ('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFun87083')), None))), ((('#', '1e-100'), ('@', 'True')),))), None)))
-ast:  (',', (('-', ('-sym', 'Ss', (('commutative', ('*', (('@', 'Tru'), ('@', 'e')))),))), ('-log', ('@', 'ambdax')), ('-slice', ('@', 'y'), ('/', ('*', (('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFunction')), ('(', (',', (('"', 'f'),))), ('(', (',', ())))), ('-subs', (',', (('*', (('#', '-2846'), ('@', 'log_lambdax'))), ('-slice', ('@', 'y'), ('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFun87083')), False))), ((('#', '1e-100'), ('@', 'True')),))), False)))
-tex1: -\$Ss\left(commutative = Tru\ e \right), \ln{\left(ambdax \right)}, y{:}\frac{\left(1.0^0 \right)^{NoneFunction} \cdot \left(\text{'f'}, \right) \left( \right)}{\left. -2846\ log\_lambdax, y{:}\left(1.0^0 \right)^{NoneFun_{87083}}{:} \right|_{1{e}{-100} = True}}{:}
-ast:  (',', (('-', ('-sym', 'Ss', (('commutative', ('*', (('@', 'Tru'), ('@', 'e')))),))), ('-log', ('@', 'ambdax')), ('-slice', ('@', 'y'), ('/', ('*', (('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFunction')), ('(', (',', (('"', 'f'),))), ('(', (',', ())))), ('-subs', (',', (('*', (('#', '-2846'), ('@', 'log_lambdax'))), ('-slice', ('@', 'y'), ('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFun87083')), False))), ((('#', '1e-100'), ('@', 'True')),))), False)))
-nat:  -$Ss(commutative = Tru e), ln(ambdax), y:{(1.0**0)**NoneFunction * ( 'f',) ()} / \. -2846 log_lambdax, y:(1.0**0)**NoneFun87083: |_{1e-100 = True}:
-ast:  (',', (('-', ('-sym', 'Ss', (('commutative', ('*', (('@', 'Tru'), ('@', 'e')))),))), ('-log', ('@', 'ambdax')), ('-slice', ('@', 'y'), ('/', ('*', (('^', ('(', ('^', ('#', '1.0'), ('#', '0'))), ('@', 'NoneFunction')), ('(', (',', (('"', 'f'),))), ('(', (',', ()))), {1}), ('-subs', (',', (('*', (('#', '-2846'), ('@', 'log_lambdax'))), ('-slice', ('@', 'y'), ('^', ('(', ('^', ('#', '1.0'), ('#', '0'))), ('@', 'NoneFun87083')), False))), ((('#', '1e-100'), ('@', 'True')),))), False)))
-py:   -Symbol('Ss', commutative = Tru*e), ln(ambdax), slice(y, ((1.0**0)**NoneFunction*('f',)*()) / Subs(-2846*log_lambdax, slice(y, (1.0**0)**NoneFun87083), 1e-100, True))
-ast:  (',', (('-', ('-sym', 'Ss', (('commutative', ('*', (('@', 'Tru'), ('@', 'e')), {1})),))), ('-log', ('@', 'ambdax')), ('-func', 'slice', (('@', 'y'), ('/', ('(', ('*', (('^', ('(', ('^', ('#', '1.0'), ('#', '0'))), ('@', 'NoneFunction')), ('(', (',', (('"', 'f'),))), ('(', (',', ()))), {1, 2})), ('-func', 'Subs', (('*', (('#', '-2846'), ('@', 'log_lambdax')), {1}), ('-func', 'slice', (('@', 'y'), ('^', ('(', ('^', ('#', '1.0'), ('#', '0'))), ('@', 'NoneFun87083')))), ('#', '1e-100'), ('@', 'True'))))))))
-tex2: -\$Ss\left(commutative = Tru\ e \right), \ln{\left(ambdax \right)}, y{:}\frac{\left(\left(1.0^0 \right)^{NoneFunction} \cdot \left(\text{'f'}, \right) \left( \right) \right)}{\operatorname{Subs}{\left(-2846\ log\_lambdax, y{:}\left(1.0^0 \right)^{NoneFun_{87083}}, 1{e}{-100}, True \right)}}
-ast:  (',', (('-', ('-sym', 'Ss', (('commutative', ('*', (('@', 'Tru'), ('@', 'e')))),))), ('-log', ('@', 'ambdax')), ('-slice', ('@', 'y'), ('/', ('*', (('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFunction')), ('(', (',', (('"', 'f'),))), ('(', (',', ())))), ('-func', 'Subs', (('*', (('#', '-2846'), ('@', 'log_lambdax'))), ('-slice', ('@', 'y'), ('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFun87083')), False), ('#', '1e-100'), ('@', 'True')))), False)))
-org:  (',', (('-', ('-sym', 'Ss', (('commutative', ('*', (('@', 'Tru'), ('@', 'e')))),))), ('-log', ('@', 'ambdax')), ('-slice', ('@', 'y'), ('/', ('*', (('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFunction')), ('(', (',', (('"', 'f'),))), ('(', (',', ())))), ('-subs', (',', (('*', (('#', '-2846'), ('@', 'log_lambdax'))), ('-slice', ('@', 'y'), ('^', ('^', ('#', '1.0'), ('#', '0')), ('@', 'NoneFun87083')), False))), ((('#', '1e-100'), ('@', 'True')),))), False)))
-
-
-text: []jxlh().lS.TDHWrSymbol('Og',real=True'Og',real=True,co mmutative=True)
-ast:  ('*', (('[', ()), ('.', ('.', ('-ufunc', 'jxlh', ()), 'lS'), 'TDHWrSymbol', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))))
-ast:  ('*', (('[', ()), ('.', ('.', ('-ufunc', 'jxlh', ()), 'lS'), 'TDHWrSymbol', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))))
-tex1: \left[ \right] jxlh\left( \right).lS.\operatorname{TDHWrSymbol}\left(\text{'Og'}, real = True'\ Og', real = True, co\ mmutative = True \right)
-ast:  ('*', (('[', ()), ('.', ('.', ('-ufunc', 'jxlh', ()), 'lS'), 'TDHWrSymbol', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))))
-nat:  [] jxlh().lS.TDHWrSymbol( 'Og', real = True' Og', real = True, co mmutative = True)
-ast:  ('*', (('[', ()), ('.', ('.', ('-ufunc', 'jxlh', ()), 'lS'), 'TDHWrSymbol', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))))
-py:   []*Function('jxlh').lS.TDHWrSymbol('Og', real = True, commutative = True)
-ast:  ('*', (('[', ()), ('.', ('.', ('-ufunc', '?jxlh', ()), 'lS'), 'TDHWrSymbol', (('"', 'Og'), ('=', ('@', 'real'), ('@', 'True')), ('=', ('@', 'commutative'), ('@', 'True'))))), {1})
-tex2: \left[ \right] jxlh\left( \right).lS.\operatorname{TDHWrSymbol}\left(\text{'Og'}, real = True, commutative = True \right)
-ast:  ('*', (('[', ()), ('.', ('.', ('-ufunc', 'jxlh', ()), 'lS'), 'TDHWrSymbol', (('"', 'Og'), ('=', ('@', 'real'), ('@', 'True')), ('=', ('@', 'commutative'), ('@', 'True'))))))
-org:  ('*', (('[', ()), ('.', ('.', ('-ufunc', 'jxlh', ()), 'lS'), 'TDHWrSymbol', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))))
-
-text: a.b('Og',real=True'Og',real=True,co mmutative=True)
-ast:  ('.', ('@', 'a'), 'b', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))
-ast:  ('.', ('@', 'a'), 'b', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))
-tex1: a.\operatorname{b}\left(\text{'Og'}, real = True'\ Og', real = True, co\ mmutative = True \right)
-ast:  ('.', ('@', 'a'), 'b', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))
-nat:  a.b( 'Og', real = True' Og', real = True, co mmutative = True)
-ast:  ('.', ('@', 'a'), 'b', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))
-py:   a.b('Og', real = True, commutative = True)
-ast:  ('.', ('@', 'a'), 'b', (('"', 'Og'), ('=', ('@', 'real'), ('@', 'True')), ('=', ('@', 'commutative'), ('@', 'True'))))
-tex2: a.\operatorname{b}\left(\text{'Og'}, real = True, commutative = True \right)
-ast:  ('.', ('@', 'a'), 'b', (('"', 'Og'), ('=', ('@', 'real'), ('@', 'True')), ('=', ('@', 'commutative'), ('@', 'True'))))
-org:  ('.', ('@', 'a'), 'b', (('"', 'Og'), ('=', ('@', 'real'), ('*', (('-diffp', ('@', 'True'), 1), ('-diffp', ('@', 'Og'), 1)))), ('=', ('@', 'real'), ('@', 'True')), ('=', ('*', (('@', 'co'), ('@', 'mmutative'))), ('@', 'True'))))
-
-text: a.b(c d = True)
-ast:  ('.', ('@', 'a'), 'b', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-ast:  ('.', ('@', 'a'), 'b', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-tex1: a.\operatorname{b}\left(c\ d = True \right)
-ast:  ('.', ('@', 'a'), 'b', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-nat:  a.b(c d = True)
-ast:  ('.', ('@', 'a'), 'b', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-py:   a.b(cd = True)
-ast:  ('.', ('@', 'a'), 'b', (('=', ('@', 'cd'), ('@', 'True')),))
-tex2: a.\operatorname{b}\left(cd = True \right)
-ast:  ('.', ('@', 'a'), 'b', (('=', ('@', 'cd'), ('@', 'True')),))
-org:  ('.', ('@', 'a'), 'b', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-
-text: sin(c d = True)
-ast:  ('-func', 'sin', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-ast:  ('-func', 'sin', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-tex1: \sin{\left(c\ d = True \right)}
-ast:  ('-func', 'sin', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-nat:  sin(c d = True)
-ast:  ('-func', 'sin', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
-py:   sin(cd = True)
-ast:  ('-func', 'sin', (('=', ('@', 'cd'), ('@', 'True')),))
-tex2: \sin{\left(cd = True \right)}
-ast:  ('-func', 'sin', (('=', ('@', 'cd'), ('@', 'True')),))
-org:  ('-func', 'sin', (('=', ('*', (('@', 'c'), ('@', 'd'))), ('@', 'True')),))
