@@ -453,6 +453,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					_ast_is_neg (n) or
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
+					(s.startswith ('\\left(') and i in ast.exp) or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.tail_mul.is_var and (p.tail_mul.var == '_' or p.tail_mul.var in _SYM_USER_FUNCS)) or
 					(n.is_div and p.is_div) or
@@ -838,6 +839,7 @@ class ast2nat: # abstract syntax tree -> native text
 					n.is_num or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or
+					(s.startswith ('(') and i in ast.exp) or
 					n.strip_attrdp.is_subs_diff_ufunc or
 					p.strip_minus.op in {'/', '-lim', '-sum', '-diff', '-intg'} or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
@@ -1576,7 +1578,13 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	def _ast2spt_ufunc (self, ast):
-		return sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
+		spt                   = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
+		spt.is_ufunc_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through
+
+		# if _ast_is_top_ass_lhs (self, ast): # spt if it is on left side of assign at top level
+		# 	spt.is_ufunc_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through
+
+		return spt
 
 	def _ast2spt_subs (self, ast):
 		return _subs (self._ast2spt (ast.expr), [(self._ast2spt (s), self._ast2spt (d)) for s, d in ast.subs])
@@ -1822,8 +1830,11 @@ class spt2ast:
 	def _spt2ast_AppliedUndef (self, spt):
 		if spt.__class__.__name__ == 'slice': # special cased converted slice object with start, stop and step present, this is REALLY unnecessary...
 			return AST ('-slice', *tuple (self._spt2ast (s) for s in spt.args))
-		else:
-			return AST ('-ufunc', f'?{spt.name}', tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+
+		name = f'?{spt.name}' if not spt.name or getattr (spt, 'is_ufunc_explicit', False) else spt.name
+
+		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		# return AST ('-ufunc', f'?{spt.name}', tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__

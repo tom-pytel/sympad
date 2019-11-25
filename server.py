@@ -142,7 +142,11 @@ def _admin_delall (*args):
 	return 'All variables deleted.'
 
 def _admin_env (*args):
+	vars_updated = False
+
 	def _envop (env, apply):
+		nonlocal vars_updated
+
 		msgs = []
 
 		for var, state in env.items ():
@@ -165,6 +169,8 @@ def _admin_env (*args):
 				if apply:
 					sym.set_quick (state)
 					_PARSER.set_quick (state)
+
+					vars_updated = True
 
 			elif var == 'pyS':
 				msgs.append (f'Python S escaping is {"on" if state else "off"}.<i> - "pyS"</i>')
@@ -213,7 +219,7 @@ def _admin_env (*args):
 				msgs.append (f'Function {var} is {"on" if state else "off"}.')
 
 				if apply:
-					_vars_updated ()
+					vars_updated = True
 
 		return msgs
 
@@ -246,7 +252,12 @@ def _admin_env (*args):
 
 		env [var] = state
 
-	return _envop (env, True)
+	ret = _envop (env, True)
+
+	if vars_updated:
+		_vars_updated ()
+
+	return ret
 
 def _admin_envreset (*args):
 	return ['Environment has been reset.<br><br>'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
@@ -341,20 +352,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		_VARS.update (vars)
 
 		return list (vars.items ())
-		# newvars = {}
-
-		# for v, a in vars.items ():
-		# 	if (a.is_ufunc and not a.ufunc) or (a.is_sym and not a.sym):
-		# 		a = AST (a.op, v, *a [2:])
-
-		# 	if _UFUNC_MAPBACK:
-		# 		a = _ufunc_mapback (a, {v})
-
-		# 	newvars [v] = a
-
-		# _VARS.update (newvars)
-
-		# return list (newvars.items ())
 
 	# start here
 	if not vars: # no assignment
@@ -738,10 +735,8 @@ if _SERVER_DEBUG: # DEBUG!
 	_VARS ['_'] = AST.Zero
 
 	# print (h.validate ({'text': r'del'}))
-	# print (h.evaluate ({'text': r'f, g = f (x), g (x)'}))
-	# print (h.evaluate ({'text': r'f, g = f (x), g (x)'}))
-	print (h.evaluate ({'text': r'f = g ()'}))
-	print (h.evaluate ({'text': r'f = g ()'}))
+	print (h.evaluate ({'text': r'u (x, y) = ?v (x + y)'}))
+	print (h.evaluate ({'text': r'u (1, 2)'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END

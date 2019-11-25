@@ -339,10 +339,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('z = z(x)'), {'math': ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)')})
 		self.assertEqual (get ('g (x) = x**3'), {'math': ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3')})
 		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
-		self.assertEqual (get ('z = y'), {'math': ('z = ?y(x, real = True)', "z = Function('y', real = True)(x)", 'z = ?y\\left(x, real = True \\right)')})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('z = ?y(x, real = True)', "z = Function('y', real = True)(x)", 'z = ?y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
+		self.assertEqual (get ('z = y'), {'math': ('z = y', 'z = y', 'z = y')})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1'), ('z = y', 'z = y', 'z = y')]})
 		self.assertEqual (get ('del y'), {'msg': ["Undefined function 'y' deleted."]})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('z = y(x, real = True)', "z = Function('y', real = True)(x)", 'z = y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('x = 1', 'x = 1', 'x = 1'), ('z = y', 'z = y', 'z = y')]})
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
 
@@ -422,13 +422,19 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('g'), {'math': ('f', 'f', 'f')})
 		self.assertEqual (get ('1 + g'), {'math': ('f + 1', 'f + 1', 'f + 1')})
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
-		self.assertEqual (get ('f(x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
-		self.assertEqual (get ('y = 1 + (?f(x) = 2)'), {'math': ('y = (?f(x) = 2) + 1', "y = Eq(Function('f')(x), 2) + 1", 'y = \\left(?f\\left(x \\right) = 2 \\right) + 1')})
-		self.assertEqual (get ('g(x) = ?f(x)'), {'math': ('g(x) = ?f(x)', "g = Lambda(x, Function('f')(x))", 'g\\left(x \\right) = ?f\\left(x \\right)')})
-		self.assertEqual (get ('g(2)'), {'math': ('4', '4', '4')})
+		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
+		self.assertEqual (get ('y = 1 + (?f (x) = 2)'), {'math': ('y = (?f(x) = 2) + 1', "y = Eq(Function('f')(x), 2) + 1", 'y = \\left(?f\\left(x \\right) = 2 \\right) + 1')})
+		self.assertEqual (get ('g (x) = ?f (x)'), {'math': ('g(x) = ?f(x)', "g = Lambda(x, Function('f')(x))", 'g\\left(x \\right) = ?f\\left(x \\right)')})
+		self.assertEqual (get ('g (2)'), {'math': ('4', '4', '4')})
 		self.assertEqual (get ('def (f, g)'), {'math': ('def(f, g)', "Function('def')(f, g)", 'def\\left(f, g \\right)')})
 		self.assertEqual (get ('f = f (x, y)'), {'err': "TypeError: lambda function 'f' takes 1 argument(s)"})
 		self.assertEqual (get ('f = 1 + f (x, y)'), {'err': "TypeError: lambda function 'f' takes 1 argument(s)"})
+		self.assertEqual (get ('del f'), {'msg': ["Lambda function 'f' deleted."]})
+		self.assertEqual (get ('f (x, y) = ?g (x + y)'), {'math': ('f(x, y) = ?g(x + y)', "f = Lambda((x, y), Function('g')(x + y))", 'f\\left(x, y \\right) = ?g\\left(x + y \\right)')})
+		self.assertEqual (get ('f (x, y)'), {'math': ('?f(x + (?f(x) = 2) + 1)', "Function('f')(x + Eq(Function('f')(x), 2) + 1)", '?f\\left(x + \\left(?f\\left(x \\right) = 2 \\right) + 1 \\right)')})
+		self.assertEqual (get ('f (1, y)'), {'err': 'TypeError: cannot determine truth value of Relational'})
+		self.assertEqual (get ('f (x, 2)'), {'math': ('?f(x + 2)', "Function('f')(x + 2)", '?f\\left(x + 2 \\right)')})
+		self.assertEqual (get ('f (a, b)'), {'math': ('?f(a + b)', "Function('f')(a + b)", '?f\\left(a + b \\right)')})
 
 	def test_intro_examples (self):
 		reset ()
@@ -446,7 +452,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}'), {'math': ('{2, 5, 7}', 'FiniteSet(2, 5, 7)', '\\left\\{2, 5, 7 \\right\\}')})
 		self.assertEqual (get ('f (x, y) = sqrt (x**2 + y**2)'), {'math': ('f(x, y) = sqrt(x**2 + y**2)', 'f = Lambda((x, y), sqrt(x**2 + y**2))', 'f\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
 		self.assertEqual (get ('solve (x**2 + y = 4, x)'), {'math': ('[-sqrt(4 - y), sqrt(4 - y)]', '[-sqrt(4 - y), sqrt(4 - y)]', '\\left[-\\sqrt{4 - y}, \\sqrt{4 - y} \\right]')})
-		self.assertEqual (get ("dsolve (y(x)'' + 9y(x))"), {'math': ('?y(x) = C1 sin(3 x) + C2 cos(3 x)', "Eq(Function('y')(x), C1*sin(3*x) + C2*cos(3*x))", '?y\\left(x \\right) = C_{1}\\ \\sin{\\left(3 x \\right)} + C_{2}\\ \\cos{\\left(3 x \\right)}')})
+		self.assertEqual (get ("dsolve (y(x)'' + 9y(x))"), {'math': ('y(x) = C1 sin(3 x) + C2 cos(3 x)', 'y = Lambda(x, C1*sin(3*x) + C2*cos(3*x))', 'y\\left(x \\right) = C_{1}\\ \\sin{\\left(3 x \\right)} + C_{2}\\ \\cos{\\left(3 x \\right)}')})
 		self.assertEqual (get ("y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})"), {'math': ('y = y(t)', "y = Function('y')(t)", 'y = y\\left(t \\right)')})
 	# END UPDATE BLOCK
 
@@ -879,13 +885,19 @@ g
 1 + g
 
 delall
-f(x) = x**2
-y = 1 + (?f(x) = 2)
-g(x) = ?f(x)
-g(2)
+f (x) = x**2
+y = 1 + (?f (x) = 2)
+g (x) = ?f (x)
+g (2)
 def (f, g)
 f = f (x, y)
 f = 1 + f (x, y)
+del f
+f (x, y) = ?g (x + y)
+f (x, y)
+f (1, y)
+f (x, 2)
+f (a, b)
 
 """), ('intro_examples', """
 

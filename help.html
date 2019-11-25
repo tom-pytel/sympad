@@ -909,6 +909,31 @@ dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i>
 
 <h4 id="Partial Differential Equations">Partial Differential Equations</h4>
 
+<p>
+delall<br>
+u, X, T = u (x, t), X (x), T (t)<i>&emsp; assign undefined functions</i><br>
+eq = (du / dx = e**u * du / dt)<i>&emsp; assign equation</i><br>
+pde_separate_add (eq, u, [X, T])<i>&emsp; separate equation into additive functions</i><br>
+u, Y = u (x, y), Y (y)<br>
+eq = d**2u / dx**2 == d**2u / dy**2<i>&emsp; assign equation using "=="</i><br>
+pde_separate_mul (eq, u, [X, Y])<i>&emsp; separate equation into multiplicative functions</i><br>
+<br>
+
+eq = Eq (1 + 2 * {du/dx / u} + 3 * {du/dy / u})<i>&emsp; set equation using SymPy Eq()</i><br>
+pdsolve (eq)<i>&emsp; solve for u (x, y)</i><br>
+sol = _.args [1]<i>&emsp; assign right hand side of equation returned to "sol"ution</i>
+checkpdesol (eq, sol)<i>&emsp; check solution using SymPy checkpdesol ()</i><br>
+u (x, y) = sol<i>&emsp; assign solution to concrete lambda u (x, y)</i><br>
+eq<i>&emsp; evaluate equation with u (x, y) being set to the solution</i><br>
+simplify _<i>simplify this since it comes back as a mess, will evaluate to True since eq = 0</i><br>
+<br>
+
+u = ?u (x, y)<i>&emsp; set "u" back to undefined function, need the "?" because u is currently a concrete lambda</i><br>
+eq = x * du/dx - y * du/dy + y**2u - y**2<i>&emsp; just set "eq" to an expression, don't even need the equality</i><br>
+v (x, y) = _.args [1]<br>
+u (1, 1)<i>&emsp; evaluate the solution at some point</i>
+</p>
+
 <h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>
 
 <p>
