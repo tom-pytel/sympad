@@ -556,7 +556,7 @@ class AST (tuple):
 			return ast
 
 		if ast.is_ufunc: # possibly convert non-explicit ufunc to concrete function call if signature matches destination lambda
-			if mode is not True:# or ast.is_ufunc_explicit: # do not map ufuncs to func calls when mapping vars onto themselves, inside lambda definition or is explicit
+			if not ((mode is True and not ast.is_ufunc_explicit) or mode == 'lambfunc'): # do not map ufuncs to func calls when mapping vars onto themselves, inside lambda definition or is explicit
 				return ast
 
 			lamb = vars.get (ast.ufunc)
@@ -649,7 +649,7 @@ class AST (tuple):
 					if ast.args.len == lamb.vars.len:
 						vars = push (vars, dict (zip (lamb.vars, ast.args)))
 
-						return AST.apply_vars (lamb.lamb, vars, ast, mode) # remap lambda vars to func args then global remap
+						return AST.apply_vars (lamb.lamb, vars, ast, mode and 'lambfunc') # remap lambda vars to func args then global remap
 
 					elif mode:
 						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")

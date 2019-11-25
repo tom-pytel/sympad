@@ -256,23 +256,26 @@ class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
-def _ufunc_mapback (ast):
+def _ufunc_mapback (ast, exclude = {}):
 	if not isinstance (ast, AST):
 		return ast
 	elif ast.is_ass and ast.lhs.is_ufunc:
-		return AST ('=', ast.lhs, _ufunc_mapback (ast.rhs))
+		return AST ('=', ast.lhs, _ufunc_mapback (ast.rhs, exclude))
 	elif not ast.is_ufunc:
-		return AST (*(_ufunc_mapback (a) for a in ast))
+		return AST (*(_ufunc_mapback (a, exclude) for a in ast))
 
 	vars = _UFUNC_MAP.get (ast)
 
-	if vars:
-		if ast.ufunc in vars:
+	if vars: # prevent mapping to self on assignment
+		if ast.ufunc in vars and ast.ufunc not in exclude:
 			return AST ('@', ast.ufunc)
-		else:
-			return AST ('@', vars [0])
 
-	return AST (*(_ufunc_mapback (a) for a in ast))
+		else:
+			for var in vars:
+				if var not in exclude:
+					return AST ('@', var)
+
+	return AST (*(_ufunc_mapback (a, exclude) for a in ast))
 
 def _present_vars (vars):
 	asts = []
@@ -310,7 +313,7 @@ def _vars_updated ():
 
 	for v, a in vars.items (): # build ufunc mapback list
 		if v != '_' and a.is_ufunc:
-			_UFUNC_MAP.setdefault (a, []).append (v)
+			_UFUNC_MAP.setdefault (a, set ()).add (v)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	if not ast.ass_valid:
@@ -338,9 +341,26 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		_VARS.update (vars)
 
 		return list (vars.items ())
+		# newvars = {}
+
+		# for v, a in vars.items ():
+		# 	if (a.is_ufunc and not a.ufunc) or (a.is_sym and not a.sym):
+		# 		a = AST (a.op, v, *a [2:])
+
+		# 	if _UFUNC_MAPBACK:
+		# 		a = _ufunc_mapback (a, {v})
+
+		# 	newvars [v] = a
+
+		# _VARS.update (newvars)
+
+		# return list (newvars.items ())
 
 	# start here
 	if not vars: # no assignment
+		if _UFUNC_MAPBACK and not ast.is_ufunc:
+			ast = _ufunc_mapback (ast)
+
 		_VARS ['_'] = ast
 
 		_vars_updated ()
@@ -348,6 +368,9 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		return [ast]
 
 	if len (vars) == 1: # simple assignment
+		if _UFUNC_MAPBACK:
+			ast = _ufunc_mapback (ast, {vars [0].var})
+
 		vars = set_vars ({vars [0]: ast})
 
 	else: # tuple assignment
@@ -378,6 +401,10 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 			raise ValueError (f'too many values to unpack (expected {len (vars)})')
 		elif len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
+
+		if _UFUNC_MAPBACK:
+			exclude = set (v.var for v in vars)
+			asts    = [_ufunc_mapback (ast, exclude) for ast in asts]
 
 		vars = set_vars (dict (zip (vars, asts)))
 
@@ -475,9 +502,6 @@ class Handler (SimpleHTTPRequestHandler):
 						print (file = sys.stderr)
 
 					raise
-
-				if _UFUNC_MAPBACK and not sptast.is_ufunc:
-					sptast = _ufunc_mapback (sptast)
 
 				if _SYMPAD_DEBUG:
 					try:
@@ -710,12 +734,14 @@ if _SERVER_DEBUG: # DEBUG!
 
 	h = Handler ()
 
-	_VARS ['_'] = AST ('[', (('=', ('-ufunc', 'x', (('@', 't'),)), ('*', (('+', (('@', 'C1'), ('*', (('#', '8'), ('@', 'C2'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')))))), ('-ufunc', 'x0', (('@', 't'),))))), ('=', ('-ufunc', 'y', (('@', 't'),)), ('+', (('*', (('@', 'C1'), ('-ufunc', 'y0', (('@', 't'),)))), ('*', (('@', 'C2'), ('+', (('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('-ufunc', 'x0', (('@', 't'),))), ('*', (('#', '8'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')), ('-ufunc', 'y0', (('@', 't'),))), {2}))))))))))
+	# _VARS ['_'] = AST ('[', (('=', ('-ufunc', 'x', (('@', 't'),)), ('*', (('+', (('@', 'C1'), ('*', (('#', '8'), ('@', 'C2'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')))))), ('-ufunc', 'x0', (('@', 't'),))))), ('=', ('-ufunc', 'y', (('@', 't'),)), ('+', (('*', (('@', 'C1'), ('-ufunc', 'y0', (('@', 't'),)))), ('*', (('@', 'C2'), ('+', (('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('-ufunc', 'x0', (('@', 't'),))), ('*', (('#', '8'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')), ('-ufunc', 'y0', (('@', 't'),))), {2}))))))))))
+	_VARS ['_'] = AST.Zero
 
 	# print (h.validate ({'text': r'del'}))
-	print (h.evaluate ({'text': r'g (x) = x + 1'}))
-	print (h.evaluate ({'text': r'f (x) = ?g (@x + 1)'}))
-	print (h.evaluate ({'text': r'f (0)'}))
+	# print (h.evaluate ({'text': r'f, g = f (x), g (x)'}))
+	# print (h.evaluate ({'text': r'f, g = f (x), g (x)'}))
+	print (h.evaluate ({'text': r'f = g ()'}))
+	print (h.evaluate ({'text': r'f = g ()'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END

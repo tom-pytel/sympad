@@ -476,7 +476,6 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(_QUICK_MODE and p.is_attr_var and not s.startswith ('\\left(')) or
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
-
 					(not _QUICK_MODE and (
 						not s.startswith ('{') and not s.startswith ('\\left(') and
 						(p.tail_mul.is_var or p.tail_mul.is_attr_var) and
@@ -630,22 +629,15 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		return f'{obj}{idx}'
 
 	def _ast2tex_ufunc (self, ast):
-		user = _SYM_USER_ALL.get (ast.ufunc)
+		user       = _SYM_USER_ALL.get (ast.ufunc)
+		is_top_ass = _ast_is_top_ass_lhs (self, ast)
 
-		# if not _STRICT_TEX and user and user.is_lamb and ast.matches_lamb_sig (user):
-		# 	return self._ast2tex_func (AST ('-func', ast.ufunc, ast.vars))
-
-		# if _STRICT_TEX and (ast.is_ufunc_explicit or not ast.ufunc or (
-		# 			user and
-		# 			(not user.is_ufunc or (ast != user and not user.apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
-		# 			# not (user.is_lamb and ast.matches_lamb_sig (user)) and
-		# 			not _ast_is_top_ass_lhs (self, ast)) or
-		# 		not ast.vars.as_ufunc_argskw):
-		if _STRICT_TEX and (
-					not ast.ufunc or
-					(user and (not user.is_ufunc or not user.apply_argskw ((ast.vars, ast.kw)))) or
-					(not user and not AST.UFunc.valid_implicit_args (ast.vars)) and
-				not _ast_is_top_ass_lhs (self, ast)):
+		if (not ast.ufunc or
+				(_STRICT_TEX and
+				((ast.is_ufunc_explicit and is_top_ass) or
+					((user and (not user.is_ufunc or not user.apply_argskw ((ast.vars, ast.kw))) or
+							(not user and not AST.UFunc.valid_implicit_args (ast.vars))) and
+						not is_top_ass)))):
 			pre = '?'
 		else:
 			pre = ''
@@ -994,18 +986,14 @@ class ast2nat: # abstract syntax tree -> native text
 		return f'''{{{", ".join (f'{k}: {v}' for k, v in items)}}}'''
 
 	def _ast2nat_ufunc (self, ast):
-		user = _SYM_USER_ALL.get (ast.ufunc)
+		user       = _SYM_USER_ALL.get (ast.ufunc)
+		is_top_ass = _ast_is_top_ass_lhs (self, ast)
 
-		# if (ast.is_ufunc_explicit or not ast.ufunc or
-		# 			(user and
-		# 			(not user.is_ufunc or (ast != user and not user.apply_argskw ((ast.vars, ast.kw)) if user.vars else (ast.kw and ast.kw != user.kw))) and
-		# 			not _ast_is_top_ass_lhs (self, ast)) or
-		# 		not ast.vars.as_ufunc_argskw):
-		if not ast.ufunc or (
-					not ast.ufunc or
-					(user and (not user.is_ufunc or not user.apply_argskw ((ast.vars, ast.kw)))) or
-					(not user and not AST.UFunc.valid_implicit_args (ast.vars)) and
-				not _ast_is_top_ass_lhs (self, ast)):
+		if (not ast.ufunc or
+				((ast.is_ufunc_explicit and is_top_ass) or
+						((user and (not user.is_ufunc or not user.apply_argskw ((ast.vars, ast.kw))) or
+							(not user and not AST.UFunc.valid_implicit_args (ast.vars))) and
+					not is_top_ass))):
 			pre = '?'
 		else:
 			pre = ''
@@ -1989,19 +1977,19 @@ class sym: # for single script
 
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
-	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	# set_sym_user_funcs (set (vars))
-	# set_sym_user_vars (vars)
+	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	set_sym_user_funcs (set (vars))
+	set_sym_user_vars (vars)
 
-	# set_strict (True)
+	set_strict (True)
 
-	ast = AST ('-diff', ('-ufunc', '?G', (('*', (('@', 'x'), ('@', 'y'))),)), 'd', (('x', 1),))
-	# res = ast2tex (ast)
+	ast = AST ('=', ('-ufunc', 'f', (('@', 'x'),)), ('^', ('@', 'x'), ('#', '2')))
+	res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	res = ast2spt (ast)
-	res = spt2ast (res)
+	# res = ast2spt (ast)
+	# res = spt2ast (res)
 	# res = ast2nat (res)
 
 
