@@ -22,6 +22,7 @@ _PYS            = True # Python S() escaping
 _DOIT           = True # expression doit()
 _MUL_RATIONAL   = False # products should lead with a rational fraction if one is present instead of absorbing into it
 _STRICT_TEX     = False # strict LaTeX formatting to assure copy-in ability of generated tex
+_QUICK_MODE     = False # quick input mode affects variable spacing in products
 
 class _None: pass # unique non-None None marker
 
@@ -491,10 +492,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			elif p and (
 					p.is_sqrt or
 					p.num_exp or
-					(p.is_attr_var and s [:6] != '\\left(') or # comment this out if separating all variables with spaces
+					(_QUICK_MODE and p.is_attr_var and s [:6] != '\\left(') or
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
-					# ((p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and n.strip_afpdpi.is_var) or # comment this IN if separating all variables with spaces
+					(not _QUICK_MODE and (
+						(p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and (n.strip_afpdpi.op in {'@', '-ufunc'} or
+						n.strip_afpdpi.is_subs_diffp_ufunc))) or
 					(not s.startswith ('{') and s [:6] not in {'\\left(', '\\left['} and (
 						p.is_var_long or
 						(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})
@@ -1914,7 +1917,7 @@ class spt2ast:
 		sp.numbers.ComplexInfinity: lambda self, spt: AST.CInfty,
 		sp.numbers.NaN: lambda self, spt: AST.NaN,
 
-		sp.Symbol: lambda self, spt: AST ('@', spt.name) if spt.name and spt == sp.Symbol (spt.name) else AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ()))),
+		sp.Symbol: lambda self, spt: AST ('@', spt.name) if spt.name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)) else AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ()))),
 
 		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
@@ -2008,6 +2011,10 @@ def set_strict (state):
 	global _STRICT_TEX
 	_STRICT_TEX = state
 
+def set_quick (state):
+	global _QUICK_MODE
+	_QUICK_MODE = state
+
 class sym: # for single script
 	set_sym_user_funcs = set_sym_user_funcs
 	set_sym_user_vars  = set_sym_user_vars
@@ -2016,6 +2023,7 @@ class sym: # for single script
 	set_doit           = set_doit
 	set_prodrat        = set_prodrat
 	set_strict         = set_strict
+	set_quick          = set_quick
 	ast2tex            = ast2tex
 	ast2nat            = ast2nat
 	ast2py             = ast2py
@@ -2024,19 +2032,19 @@ class sym: # for single script
 
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
-	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	set_sym_user_funcs (set (vars))
-	set_sym_user_vars (vars)
+	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	# set_sym_user_funcs (set (vars))
+	# set_sym_user_vars (vars)
 
 	# set_strict (True)
 
-	ast = AST ('=', ('-ufunc', '?f', (('@', 'x'), ('@', 'y'))), ('*', (('-ufunc', '?F', (('+', (('*', (('#', '3'), ('@', 'x'))), ('-', ('*', (('#', '2'), ('@', 'y')))))),)), ('^', ('@', 'e'), ('+', (('-', ('/', ('*', (('#', '3'), ('@', 'y'))), ('#', '13'))), ('-', ('/', ('*', (('#', '2'), ('@', 'x'))), ('#', '13')))))))))
+	ast = AST ('-diff', ('-ufunc', '?G', (('*', (('@', 'x'), ('@', 'y'))),)), 'd', (('x', 1),))
 	# res = ast2tex (ast)
-	res = ast2nat (ast)
+	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	# res = ast2spt (ast)
-	# res = spt2ast (res)
+	res = ast2spt (ast)
+	res = spt2ast (res)
 	# res = ast2nat (res)
 
 

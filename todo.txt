@@ -1,6 +1,7 @@
 > ufunc mapback problem with generalized args - do not map if target var same?
 
-> tex 2*ux/u -> 2 ux/u
+> f = ?f (x) when f is a lambda function
+
 > "d / 2" is "(d) / 2", fix it
 > (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c

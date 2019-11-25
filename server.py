@@ -163,6 +163,7 @@ def _admin_env (*args):
 				msgs.append (f'Quick input mode is {"on" if state else "off"}.')
 
 				if apply:
+					sym.set_quick (state)
 					_PARSER.set_quick (state)
 
 			elif var == 'pyS':

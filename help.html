@@ -108,7 +108,8 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 <h4><a href="#More Examples">More Examples</a></h4>
 &emsp;<a href="#Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</a><br>
 &emsp;<a href="#Solving Equations">Solving Equations</a><br>
-&emsp;<a href="#Differential Equations">Differential Equations</a><br>
+&emsp;<a href="#Ordinary Differential Equations">Ordinary Differential Equations</a><br>
+&emsp;<a href="#Partial Differential Equations">Partial Differential Equations</a><br>
 &emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><i>&emsp; (by "hand")</i><br>
 &emsp;<a href="#Lambda Functions Examples">Lambda Functions</a><br>
 &emsp;<a href="#Last Expression Variable">Last Expression Variable</a><br>
@@ -873,7 +874,7 @@ w = {x: 1, y: 2}<br>
 a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
 </p>
 
-<h4 id="Differential Equations">Differential Equations</h4>
+<h4 id="Ordinary Differential Equations">Ordinary Differential Equations</h4>
 
 <p>
 delall<i>&emsp; make sure no variables are mapped</i><br>
@@ -905,6 +906,8 @@ x, y = x(t), y(t)<i>&emsp; two distinct undefined functions</i><br>
 dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order with initial conditions</i><br>
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
 </p>
+
+<h4 id="Partial Differential Equations">Partial Differential Equations</h4>
 
 <h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>
 

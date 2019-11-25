@@ -554,7 +554,7 @@ class AST (tuple):
 			return ast
 
 		elif ast.is_ufunc: # possibly convert non-explicit ufunc to concrete function call if signature matches destination lambda
-			if mode is not True: # do not map ufuncs to func calls when mapping vars onto themselves or inside lambda definition
+			if mode is not True or ast.is_ufunc_explicit: # do not map ufuncs to func calls when mapping vars onto themselves or inside lambda definition
 				return ast
 
 			lamb = vars.get (ast.ufunc)
@@ -1188,6 +1188,7 @@ class AST_Subs (AST):
 		self.expr, self.subs = expr, subs
 
 	_is_subs_diff_ufunc     = lambda self: self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc
+	_is_subs_diffp_ufunc    = lambda self: self.expr.is_diffp and self.expr.diffp.is_ufunc
 	_is_subs_diff_d_ufunc   = lambda self: self.expr.is_diff_d and self.expr.diff.strip_paren1.is_ufunc
 	_is_subs_diff_any_ufunc = lambda self: (self.expr.is_diff and self.expr.diff.strip_paren1.is_ufunc) or (self.expr.is_diffp and self.expr.diffp.is_ufunc)
 
