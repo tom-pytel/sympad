@@ -630,8 +630,8 @@ sin a
 \\sum_{n=0}^9 a
 d/dx a
 a'
-\int a dx
-\[[a, a], [a, a]]
+\\int a dx
+\\[[a, a], [a, a]]
 a if a else a
 a if a
 lambda: a

@@ -436,7 +436,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		p   = None
 		has = False
 
-		for n in ast.mul: # i, n in enumerate (ast.mul):
+		for i, n in enumerate (ast.mul):
 			s = self._ast2tex_wrap (n, (p and _ast_is_neg (n)),
 					n.op in {'=', '<>', '+', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or (n.is_piece and n is not ast.mul [-1]))
 
@@ -444,14 +444,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'})):
 				s = f'{{{s}}}'
 
-			if p and (
+			paren_after_var = p and (s.startswith ('\\left(') and (p.tail_mul.is_attr_var or p.tail_mul.op in {'@', '-diffp', '-ufunc', '-subs'}))
+
+			if paren_after_var or (p and (
 					t [-1].endswith ('.') or
 					s [:1].isdigit () or
 					s.startswith ('\\left[') or
-					(s.startswith ('\\left(') and (
-						p.tail_mul.is_attr_var or
-						p.tail_mul.op in {'@', '-diffp', '-ufunc', '-subs'})) or
-						# i in ast.exp)) or
 					_ast_is_neg (n) or
 					n.is_var_null or
 					n.op in {'#', '-mat'} or
@@ -460,9 +458,17 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.is_div and p.is_div) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
-					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma))):
-				t.append (f' \\cdot {s}')
-				has = True
+					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)))):
+
+				if paren_after_var and i not in ast.exp:
+					t.append (s)
+
+					if not t [-2].startswith ('{'):
+						t [-2] = f'{{{t [-2]}}}'
+
+				else:
+					t.extend ([' \\cdot ', s])
+					has = True
 
 			elif p and (
 					p.is_sqrt or
@@ -479,10 +485,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 						p.is_var_long or
 						(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})
 					))):
-				t.append (f'{_TEX_SPACE}{s}')
+				t.extend ([_TEX_SPACE, s])
 
+			elif p:
+				t.extend ([' ', s])
 			else:
-				t.append (f'{"" if not p else " "}{s}')
+				t.append (s)
 
 			p = n
 
@@ -818,7 +826,7 @@ class ast2nat: # abstract syntax tree -> native text
 		p   = None
 		has = False
 
-		for n in ast.mul: # i, n in enumerate (ast.mul):
+		for i, n in enumerate (ast.mul):
 			s = self._ast2nat_wrap (n,
 				n.op in {'+', '-piece', '-lamb', '-slice', '||', '^^', '&&', '-or', '-and', '-not'} or
 				(p and (
@@ -829,13 +837,11 @@ class ast2nat: # abstract syntax tree -> native text
 			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
 				s = f'{{{s}}}'
 
-			if p and (
-					s [:1] == '[' or
+			paren_after_var = p and (s.startswith ('(') and (p.tail_mul.is_attr_var or p.tail_mul.op in ('@', '-diffp', '-ufunc', '-subs')))
+
+			if paren_after_var or (p and (
+					s.startswith ('[') or
 					s [:1].isdigit () or
-					(s [:1] == '(' and (
-						p.tail_mul.is_attr_var or
-						p.tail_mul.op in ('@', '-diffp', '-ufunc', '-subs'))) or
-						# i in ast.exp)) or
 					t [-1] [-1:] == '.' or
 					n.is_num or
 					n.is_var_null or
@@ -848,16 +854,23 @@ class ast2nat: # abstract syntax tree -> native text
 					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist) or
 					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
 					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
-					s [:1] in {'e', 'E'} and t [-1] [-1].isdigit ()
-					):
-				t.append (f' * {s}')
-				has = True
+					s [:1] in {'e', 'E'} and t [-1] [-1].isdigit ())):
+
+				if paren_after_var and i not in ast.exp:
+					t.append (f'{{{s}}}') # t.append (s)
+
+					# if not t [-2].startswith ('{'):
+					# 	t [-2] = f'{{{t [-2]}}}'
+
+				else:
+					t.extend ([' * ', s])
+					has = True
 
 			elif p and (
 					p.is_diff_or_part_solo or
 					n.op not in {'#', '|', '^'} or
 					p.op not in {'#', '|'}):
-				t.append (f' {s}')
+				t.extend ([' ', s])
 
 			else:
 				t.append (s)

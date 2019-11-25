@@ -1,27 +1,22 @@
-> AST_UFunc.argskw_can_create_implicit () - accept any non-single expr sig?
+> ufunc mapback problem with generalized args - do not map if target var same? f = f (x, y) ... f = 1 + f (x, y)
 
-> {a = lambda: l}
+> extend mapback to symbols?
+> $s() -> $s - symbols don't need paren?
 
 > test_server for semicolon stuff - multiple returns
 
-> ufunc mapback problem with generalized args - do not map if target var same? f = f (x, y) ... f = 1 + f (x, y)
+> ERROR! assign to ufuncs from iterable?
 
 > "d / 2" is "(d) / 2", fix it
-> (f)(x) -> (f) * (x)
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c0
-? $s() -> $s
-> {a = a}
+> {a = a} assigns, it shouldn't
+
+> @var is not dynamic, restrict to simple cases of accessing global from lambda definition
 
 > Sigma -> Si(g m a) problem in quick mode.
 
-> extend mapback to symbols?
-
-> ERROR! assign to ufuncs from iterable?
-
 > display ufunc as \operatorname{func} in loose tex mode?
 > mark \operatorname funcs so they can't be rewound?
-
-> logic xor operator
 
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
 
@@ -56,6 +51,7 @@
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
 
+> doc: operations, these are not all that sympad can do, see sympy documentation
 > doc: new lambda undefined function behavior
 > doc: new lambda as expression behavior (only when mapped from var)
 > doc: quick mode variables can have numerical tails as subscripts
@@ -68,7 +64,8 @@
 > doc: parentheses create implicit undefined functions
 > doc: give anonymous ufuncs name of var on assignment to var
 > doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
-> doc: new functionality of @ and %
+> doc: scoping behavior of @
+> doc: % no-eval pseudo-func better
 > doc: ODEs
 > doc: PDEs
 
@@ -83,6 +80,8 @@
 
 > test_sym - test parsing sympy latex
 
+
+> logic xor operator
 
 > Boolean .could_extract_minus_sign() for calculations
 

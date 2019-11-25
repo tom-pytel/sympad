@@ -485,6 +485,7 @@ a / { -{d/dx (?f(x))(0)}}
 sin (a b = c)
 x.y (a b = c)
 \. a, b |_{x = 1}
+ln(1).or lambda: 1
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters

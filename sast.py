@@ -556,7 +556,7 @@ class AST (tuple):
 			return ast
 
 		if ast.is_ufunc: # possibly convert non-explicit ufunc to concrete function call if signature matches destination lambda
-			if mode is not True or ast.is_ufunc_explicit: # do not map ufuncs to func calls when mapping vars onto themselves, inside lambda definition or is explicit
+			if mode is not True:# or ast.is_ufunc_explicit: # do not map ufuncs to func calls when mapping vars onto themselves, inside lambda definition or is explicit
 				return ast
 
 			lamb = vars.get (ast.ufunc)
