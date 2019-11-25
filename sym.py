@@ -445,10 +445,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				s = f'{{{s}}}'
 
 			if p and (
-					t [-1] [-1:] == '.' or
+					t [-1].endswith ('.') or
 					s [:1].isdigit () or
-					s [:6] == '\\left[' or
-					(s [:6] == '\\left(' and (
+					s.startswith ('\\left[') or
+					(s.startswith ('\\left(') and (
 						p.tail_mul.is_attr_var or
 						p.tail_mul.op in {'@', '-diffp', '-ufunc', '-subs'})) or
 						# i in ast.exp)) or
@@ -467,12 +467,12 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			elif p and (
 					p.is_sqrt or
 					p.num_exp or
-					(_QUICK_MODE and p.is_attr_var and s [:6] != '\\left(') or
+					(_QUICK_MODE and p.is_attr_var and not s.startswith ('\\left(')) or
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
 
 					(not _QUICK_MODE and (
-						s [:1] != '{' and s [:6] != '\\left(' and
+						not s.startswith ('{') and not s.startswith ('\\left(') and
 						(p.tail_mul.is_var or p.tail_mul.is_attr_var) and
 						(n.strip_afpdpi.op in {'@', '-ufunc'} or (n.is_subs and n.expr.strip_afpdpi.op in {'@', '-ufunc'})))) or
 					(not s.startswith ('{') and s [:6] not in {'\\left(', '\\left['} and (

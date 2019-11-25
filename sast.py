@@ -583,8 +583,8 @@ class AST (tuple):
 			i = index_by_is (parent.mul, ast) if parent.is_mul else None
 
 			if (parent.op in {None, ';', '@', ',', '[', '-func', '-lamb', '-set', '-dict'} or
-					# (parent.is_ass and ast is parent.rhs) or
-					(i is not None and i < (parent.mul.len - 1) and parent.mul [i + 1].is_paren and i not in parent.exp)): # followed by implicit mul paren, is call not multiply
+					(parent.is_piece and any (p [0] is ast for p in parent.piece)) or
+					(i is not None and i < (parent.mul.len - 1) and parent.mul [i + 1].is_paren and i not in parent.exp)): # if followed by implicit mul paren then is call not multiply
 				return expr
 
 			vars = push (vars, {v: False for v in expr.vars})
