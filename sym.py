@@ -14,6 +14,8 @@ import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 _SYM_MARK_PY_ASS_EQ = False # for testing to write extra information into python text representation of Eq() if is assignment
 
+_TEX_SPACE      = '\\ ' # explicit LaTeX space
+
 _SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
 _SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as AST.Null
@@ -38,7 +40,7 @@ AST.register_AST (AST_Text)
 class EqAss (sp.Eq): pass # explicit assignment instead of equality comparison
 class EqCmp (sp.Eq): pass # explicit equality comparison instead of assignment
 
-class IdLambda (sp.Lambda): # having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
+class IdLambda (sp.Lambda): # identity lambda - having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
 	def __new__ (cls, a, l, **kw):
 		self = sp.Lambda.__new__ (cls, sp.Symbol (l.name), l.name)
 
@@ -505,7 +507,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 						p.is_var_long or
 						(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})
 					))):
-				t.append (f'\\ {s}')
+				t.append (f'{_TEX_SPACE}{s}')
 
 			else:
 				t.append (f'{"" if not p else " "}{s}')
@@ -1570,26 +1572,32 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.var_name), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
 	def _ast2spt_lamb (self, ast):
-		i = self.parent.mul.index (ast) if self.parent.is_mul else None
+		# i = self.parent.mul.index (ast) if self.parent.is_mul else None
 
-		if not (self.parent.op in {None, ',', '[', '-func', '-lamb', '-set', '-dict'} or # '(', # treat body of lambda as expression for calculation
-				(self.parent.is_ass and ast is self.parent.rhs) or
-				(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
+		# if not (self.parent.op in {None, ';', ',', '[', '-func', '-lamb', '-set', '-dict'} or # '(', # treat body of lambda as expression for calculation
+		# 		(self.parent.is_ass and ast is self.parent.rhs) or
+		# 		(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
 
-			if ast.lamb_vars_notfree:
-				vars = dict (va for va in filter (lambda va: va [0] not in ast.lamb_vars_notfree, _SYM_USER_VARS.items ()))
-			else:
-				vars = _SYM_USER_VARS
+		# 	if ast.lamb_vars_notfree:
+		# 		vars = dict (va for va in filter (lambda va: va [0] not in ast.lamb_vars_notfree, _SYM_USER_VARS.items ()))
+		# 	else:
+		# 		vars = _SYM_USER_VARS
 
-			return self._ast2spt (AST.apply_vars (ast.lamb, vars))
+		# 	return self._ast2spt (AST.apply_vars (ast.lamb, vars))
 
-		spt = self._ast2spt (ast.lamb)
+		# spt = self._ast2spt (ast.lamb)
 
-		if ast.vars.len == 1 and isinstance (spt, sp.Symbol) and not isinstance (spt, sp.Dummy) and spt.name == ast.vars [0]:
+		# if ast.vars.len == 1 and isinstance (spt, sp.Symbol) and not isinstance (spt, sp.Dummy) and spt.name == ast.vars [0]:
+		# 	spt = IdLambda (None, sp.Symbol (ast.vars [0]))
+
+		# else:
+		# 	spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), spt)
+
+		if ast.vars.len == 1 and ast.lamb.strip_paren.is_var and ast.lamb.strip_paren.var == ast.vars [0]: # identity lambda
 			spt = IdLambda (None, sp.Symbol (ast.vars [0]))
 
 		else:
-			spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), spt)
+			spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), self._ast2spt (ast.lamb))
 
 			if not (ast.lamb.is_func and ast.lamb.func == AST.Func.NOEVAL):
 				spt.doit = lambda self, *args, **kw: self # disable doit for lambda definition
