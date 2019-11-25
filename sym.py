@@ -1679,6 +1679,21 @@ class spt2ast:
 
 		return spt
 
+	def _spt2ast_NoEval (self, spt):
+		def dummys2vars (ast): # convert our own dummy variables to normal
+			if not isinstance (ast, AST):
+				return ast
+
+			if ast.is_var:
+				if ast.var.startswith ('_'):
+					return AST ('@', ast.var.lstrip ('_'))
+
+				return ast
+
+			return AST (*(dummys2vars (a) for a in ast))
+
+		return dummys2vars (spt.ast)
+
 	def _spt2ast_num (self, spt):
 		s = str (spt)
 
@@ -1696,6 +1711,14 @@ class spt2ast:
 				f'{num.grp [0]}{num.grp [1]}e+{e}'     if e >= 16 else \
 				f'{num.grp [0]}{num.grp [1]}{"0" * e}' if e >= 0 else \
 				f'{num.grp [0]}{num.grp [1]}e{e}')
+
+	def _spt2ast_Symbol (self, spt):
+		name = spt.name.lstrip ('_') # convert our own dummy variables to normal
+
+		if name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)):
+			return AST ('@', name)
+		else:
+			return AST ('-sym', name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ())))
 
 	def _spt2ast_Union (self, spt): # convert union of complements to symmetric difference if present
 		if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
@@ -1843,7 +1866,7 @@ class spt2ast:
 	_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 	_spt2ast_funcs = {
-		NoEval: lambda self, spt: spt.ast,
+		NoEval: _spt2ast_NoEval,
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,
@@ -1873,7 +1896,7 @@ class spt2ast:
 		sp.numbers.ComplexInfinity: lambda self, spt: AST.CInfty,
 		sp.numbers.NaN: lambda self, spt: AST.NaN,
 
-		sp.Symbol: lambda self, spt: AST ('@', spt.name) if spt.name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)) else AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ()))),
+		sp.Symbol: _spt2ast_Symbol,
 
 		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
@@ -1992,15 +2015,15 @@ if __name__ == '__main__': # DEBUG!
 	set_sym_user_funcs (set (vars))
 	set_sym_user_vars (vars)
 
-	set_strict (True)
+	# set_strict (True)
 
-	ast = AST ('=', ('-ufunc', 'f', (('@', 'x'),)), ('^', ('@', 'x'), ('#', '2')))
-	res = ast2tex (ast)
+	ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', '_x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', '_x'))),)))),)), ('x',))
+	# res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	# res = ast2spt (ast)
-	# res = spt2ast (res)
+	res = ast2spt (ast)
+	res = spt2ast (res)
 	# res = ast2nat (res)
 
 

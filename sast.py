@@ -576,7 +576,11 @@ class AST (tuple):
 			expr = vars.get (ast.var)
 
 			if not expr:
-				return ast
+				if expr is not False and '#' in vars: # if scoped out and var is masked out then replace with dummy
+					return AST ('@', f'_{ast.var}')
+				else:
+					return ast
+
 			elif not expr.is_lamb:
 				return AST.apply_vars (expr, pop (vars, ast.var), ast, mode)
 
