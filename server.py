@@ -150,7 +150,7 @@ def _admin_env (*args):
 				_ENV [var] = state
 
 			if var == 'EI':
-				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.')
+				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.<i> - "EI"</i>')
 
 				if apply:
 					AST.EI (state)
@@ -160,51 +160,51 @@ def _admin_env (*args):
 							del _VARS [var]
 
 			elif var == 'quick':
-				msgs.append (f'Quick input mode is {"on" if state else "off"}.')
+				msgs.append (f'Quick input mode is {"on" if state else "off"}.<i> - "quick"</i>')
 
 				if apply:
 					sym.set_quick (state)
 					_PARSER.set_quick (state)
 
 			elif var == 'pyS':
-				msgs.append (f'Python S escaping is {"on" if state else "off"}.')
+				msgs.append (f'Python S escaping is {"on" if state else "off"}.<i> - "pyS"</i>')
 
 				if apply:
 					sym.set_pyS (state)
 
 			elif var == 'simplify':
-				msgs.append (f'Post-evaluation simplify is {"on" if state else "off"}.')
+				msgs.append (f'Post-evaluation simplify is {"on" if state else "off"}.<i> - "simplify"</i>')
 
 				if apply:
 					sym.set_simplify (state)
 
 			elif var == 'matsimp':
-				msgs.append (f'Matrix simplify is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.')
+				msgs.append (f'Matrix simplify is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.<i> - "matsimp"</i>')
 
 				if apply:
 					spatch.set_matmulsimp (state)
 
 			elif var == 'ufuncmap':
-				msgs.append (f'Undefined function map to variable is {"on" if state else "off"}.')
+				msgs.append (f'Undefined function map to variable is {"on" if state else "off"}.<i> - "ufuncmap"</i>')
 
 				if apply:
 					global _UFUNC_MAPBACK
 					_UFUNC_MAPBACK = state
 
 			elif var == 'prodrat':
-				msgs.append (f'Leading product rational is {"on" if state else "off"}.')
+				msgs.append (f'Leading product rational is {"on" if state else "off"}.<i> - "prodrat"</i>')
 
 				if apply:
 					sym.set_prodrat (state)
 
 			elif var == 'doit':
-				msgs.append (f'Expression doit is {"on" if state else "off"}.')
+				msgs.append (f'Expression doit is {"on" if state else "off"}.<i> - "doit"</i>')
 
 				if apply:
 					sym.set_doit (state)
 
 			elif var == 'strict':
-				msgs.append (f'Strict LaTeX formatting is {"on" if state else "off"}.')
+				msgs.append (f'Strict LaTeX formatting is {"on" if state else "off"}.<i> - "strict"</i>')
 
 				if apply:
 					sym.set_strict (state)
@@ -249,7 +249,7 @@ def _admin_env (*args):
 	return _envop (env, True)
 
 def _admin_envreset (*args):
-	return ['Environment has been reset.'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
+	return ['Environment has been reset.<br><br>'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
 
 #...............................................................................................
 class RealityRedefinitionError (NameError):	pass

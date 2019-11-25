@@ -1,6 +1,4 @@
-> ufunc mapback problem with generalized args - do not map if target var same?
-
-> f = ?f (x) when f is a lambda function
+> ufunc mapback problem with generalized args - do not map if target var same? f = f (x, y) ... f = 1 + f (x, y)
 
 > "d / 2" is "(d) / 2", fix it
 > (f)(x) -> (f) * (x)
@@ -8,6 +6,8 @@
 ? $s() -> $s
 
 > Sigma -> Si(g m a) problem in quick mode.
+
+> extend mapback to symbols?
 
 > ERROR! assign to ufuncs from iterable?
 

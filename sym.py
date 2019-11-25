@@ -6,6 +6,7 @@ from collections import OrderedDict
 from functools import reduce
 import re
 import sympy as sp
+from sympy.core.cache import clear_cache
 from sympy.core.function import AppliedUndef as sp_AppliedUndef
 
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -495,9 +496,11 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(_QUICK_MODE and p.is_attr_var and s [:6] != '\\left(') or
 					p.strip_minus.is_diff_or_part_any or
 					n.is_diff_or_part_any or
+
 					(not _QUICK_MODE and (
-						(p.tail_mul.is_var or p.tail_mul.is_attr_var) and s [:1] != '{' and s [:6] != '\\left(' and (n.strip_afpdpi.op in {'@', '-ufunc'} or
-						n.strip_afpdpi.is_subs_diffp_ufunc))) or
+						s [:1] != '{' and s [:6] != '\\left(' and
+						(p.tail_mul.is_var or p.tail_mul.is_attr_var) and
+						(n.strip_afpdpi.op in {'@', '-ufunc'} or (n.is_subs and n.expr.strip_afpdpi.op in {'@', '-ufunc'})))) or
 					(not s.startswith ('{') and s [:6] not in {'\\left(', '\\left['} and (
 						p.is_var_long or
 						(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})
@@ -1370,6 +1373,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		self         = super ().__new__ (cls)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
+
+		clear_cache () # don't want ?F(x) to come back as ?F(xi_1)
 
 		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
 		spt  = self._ast2spt (astx)
