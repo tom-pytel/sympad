@@ -210,7 +210,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('a and a'), {'math': ('l', 'l', 'l')})
 		self.assertEqual (get ('not a'), {'math': ('not l', 'Not(l)', '\\neg\\ l')})
 		self.assertEqual (get ('\\. a |_{a = a}'), {'math': ('l', 'l', 'l')})
-		self.assertEqual (get ('\\. a |_{a = b}'), {'math': ('l', 'l', 'l')})
+		self.assertEqual (get ('\\. a |_{a = b}'), {'math': ('b', 'b', 'b')})
 
 	def test_env (self):
 		reset ()

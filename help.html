@@ -313,6 +313,11 @@ For a list of assumptions you can assign to symbols see <a href="#Assumptions">A
 
 <h2 id="Operations">Operations</h2>
 
+<p>
+What follows is a list of common mathematical operations which SymPy facilitates via a quick input shorthand vs. having to write out entire functions in SymPy.
+This is not a list of everything which can be done in SymPad, since SymPad sits on top of SymPy which provides a large library of mathematical operations, see <a href="https://docs.sympy.org/latest/index.html" target="_blank">SymPy Documentation</a> for more information and experiment.
+</p>
+
 <h4 id="Addition and Multiplication">Addition and Multiplication</h4>
 
 <p>
@@ -814,6 +819,7 @@ It may also never finish if a complex circular vector field introduces enough er
 <p>
 Note that some of these are single line examples and others make use of variables.
 If you see variables being assigned make sure to execute those lines before the lines which follow, also make sure to delete the variable assigment afterwards in order to not affect any other examples which expect those variables to be free.
+All these examples assume you are running with default environment settings.
 </p>
 
 <h4 id="Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</h4>
@@ -921,17 +927,23 @@ pde_separate_mul (eq, u, [X, Y])<i>&emsp; separate equation into multiplicative 
 
 eq = Eq (1 + 2 * {du/dx / u} + 3 * {du/dy / u})<i>&emsp; set equation using SymPy Eq()</i><br>
 pdsolve (eq)<i>&emsp; solve for u (x, y)</i><br>
-sol = _.args [1]<i>&emsp; assign right hand side of equation returned to "sol"ution</i>
+sol = _.args [1]<i>&emsp; assign right hand side of equation returned to "sol"ution</i><br>
 checkpdesol (eq, sol)<i>&emsp; check solution using SymPy checkpdesol ()</i><br>
 u (x, y) = sol<i>&emsp; assign solution to concrete lambda u (x, y)</i><br>
 eq<i>&emsp; evaluate equation with u (x, y) being set to the solution</i><br>
-simplify _<i>simplify this since it comes back as a mess, will evaluate to True since eq = 0</i><br>
+simplify _<i>&emsp; simplify this since it comes back as a mess, will evaluate to True since eq = 0</i><br>
 <br>
 
 u = ?u (x, y)<i>&emsp; set "u" back to undefined function, need the "?" because u is currently a concrete lambda</i><br>
 eq = x * du/dx - y * du/dy + y**2u - y**2<i>&emsp; just set "eq" to an expression, don't even need the equality</i><br>
-v (x, y) = _.args [1]<br>
-u (1, 1)<i>&emsp; evaluate the solution at some point</i>
+pdsolve (eq)<br>
+v (x, y) = _.args [1]<i>&emsp; assign solution to a different function</i><br>
+eq<i>&emsp; original equation</i><br>
+\. eq |_{u = v}<i>&emsp; equation with solution</i><br>
+simplify _<i>&emsp; verify that it equals 0 with solution function</i><br>
+F (x) = e**x<i>&emsp; assign arbitrary function for undefined function in solution</i><br>
+\. eq |_{u = v}<i>&emsp; see what the solution looks like with this function</i><br>
+simplify _<i>&emsp; and verify again that it zeroes out</i><br>
 </p>
 
 <h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>

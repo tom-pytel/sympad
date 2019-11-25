@@ -587,7 +587,7 @@ class AST (tuple):
 
 			if (parent.op in {None, ';', '@', ',', '[', '-func', '-lamb', '-set', '-dict'} or
 					(parent.is_piece and any (p [0] is ast for p in parent.piece)) or
-					(i is not None and i < (parent.mul.len - 1) and parent.mul [i + 1].is_paren and i not in parent.exp)): # if followed by implicit mul paren then is call not multiply
+					(i is not None and i < (parent.mul.len - 1) and parent.mul [i + 1].is_paren and (i + 1) not in parent.exp)): # if followed by implicit mul paren then is call not multiply
 				return expr
 
 			vars = push (vars, {v: False for v in expr.vars})
@@ -595,7 +595,8 @@ class AST (tuple):
 			return AST.apply_vars (expr.lamb, vars, ast, mode)
 
 		elif ast.is_subs:
-			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
+			# return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
+			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((AST.apply_vars (src, vars, ast, mode), AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})

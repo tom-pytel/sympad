@@ -735,8 +735,8 @@ if _SERVER_DEBUG: # DEBUG!
 	_VARS ['_'] = AST.Zero
 
 	# print (h.validate ({'text': r'del'}))
-	print (h.evaluate ({'text': r'u (x, y) = ?v (x + y)'}))
-	print (h.evaluate ({'text': r'u (1, 2)'}))
+	print (h.evaluate ({'text': r'lambda: x'}))
+	print (h.evaluate ({'text': r'_ * (3)'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END
