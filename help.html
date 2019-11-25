@@ -939,10 +939,10 @@ eq = x * du/dx - y * du/dy + y**2u - y**2<i>&emsp; just set "eq" to an expressio
 pdsolve (eq)<br>
 v (x, y) = _.args [1]<i>&emsp; assign solution to a different function</i><br>
 eq<i>&emsp; original equation</i><br>
-\. eq |_{u = v}<i>&emsp; equation with solution</i><br>
+\. eq |_{u (x, y) = v}<i>&emsp; equation with solution, need to specify the full function "u (x, y)" here</i><br>
 simplify _<i>&emsp; verify that it equals 0 with solution function</i><br>
 F (x) = e**x<i>&emsp; assign arbitrary function for undefined function in solution</i><br>
-\. eq |_{u = v}<i>&emsp; see what the solution looks like with this function</i><br>
+\. eq |_{u (x, y) = v}<i>&emsp; see what the solution looks like with this function</i><br>
 simplify _<i>&emsp; and verify again that it zeroes out</i><br>
 </p>
 
@@ -996,29 +996,41 @@ _ (4)<i>&emsp; call the lambda that was returned</i><br>
 f (3)<br>
 _ * (4)<i>&emsp; will be multiplied instead of called if using explicit multiply operator</i><br>
 <br>
+
 x, y, z = 3, 4, 5<i>&emsp; assign global variablesy</i><br>
 f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
 f (x, y) = sqrt (x**2 + y**2) + @z<i>&emsp; do not bind global variable</i><br>
 f (x) = x**2<br>
 f (x) = @x**2<i>&emsp; use global value of x</i><br>
-f (x) = y**2<i>&emsp; binds global value of y into lambda</i><br>
+f (x) = y**2<i>&emsp; binds global value of y into lambda since it is not a lambda variable</i><br>
 f (2)<i>&emsp; doesn't matter what you pass, f(x) is set to equal 16</i><br>
 f (x) = @y**2<i>&emsp; go up one more scope above global and use pure y variable</i><br>
 f (2)<i>&emsp; still get 16 because global y = 4</i><br>
 y = 6<i>&emsp; change global y</i><br>
 f (2)<i>&emsp; global y = 6 so y**2 = 36</i><br>
 <br>
-delall<br>
+
+delall<i>&emsp; embedding lambda calls by using undefined functions</i><br>
+g (x, y) = sqrt (f (x) + f (y))<i>&emsp; defer call to other lambda by using undefined functions</i><br>
+g (3, 4)<i>&emsp; will return undefined functions</i><br>
+f (x) = x**2<i>&emsp; define the function</i><br>
+g (3, 4)<i>&emsp; now call out to concrete defined function</i><br>
+f (x) = x<i>&emsp; redefine the function to something else</i><br>
+g (3, 4)<i>&emsp; now we have a different result</i><br>
+<br>
+
+delall<i>&emsp; embedding lambda calls by using deferring lambda name binding</i><br>
 f (x) = x**2<br>
 g (x, y) = sqrt (f(x) + f(y))<i>&emsp; calling other lambda is evaluated immediately</i><br>
 g (3, 4)<i>&emsp; no surprise here</i><br>
-f (x) = x**3<i>&emsp; will have no effect on g() since those were already evaluated at definition</i><br>
-g (3, 4)<i>&emsp; still using old x**2 since that was evaluated upon definition of g()</i><br>
-g (x, y) = @sqrt (f(x) + f(y))<i>&emsp; prevent binding of f() lambda until evaluation of g()</i><br>
-g (3, 4)<i>&emsp; now we get sqrt (x**3 + y**3</i><br>
-f (x) = x**2<i>&emsp; set f() back to x**2</i><br>
-g (3, 4)<i>&emsp; now we get sqrt (x**2 + y**2) since the f() lambda is unevaluated in g()</i><br>
+f (x) = x**3<i>&emsp; will have no effect on g () since those were already evaluated at definition</i><br>
+g (3, 4)<i>&emsp; still using old x**2 since that was evaluated upon definition of g ()</i><br>
+g (x, y) = @sqrt (f(x) + f(y))<i>&emsp; prevent binding of f () lambda until evaluation of g ()</i><br>
+g (3, 4)<i>&emsp; now we get sqrt (x**3 + y**3)</i><br>
+f (x) = x**2<i>&emsp; set f () back to x**2</i><br>
+g (3, 4)<i>&emsp; now we get sqrt (x**2 + y**2) since the f () lambda is unevaluated in g ()</i><br>
 <br>
+
 delall<br>
 f (x) = \int x dx<i>&emsp; normally integral, limits, derivatives and things like that are not evaluated on lambda definition</i><br>
 f (sin x)<i>&emsp; only on execution</i><br>

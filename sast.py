@@ -599,8 +599,8 @@ class AST (tuple):
 			return AST.apply_vars (expr.lamb, vars, ast, mode)
 
 		elif ast.is_subs:
-			# return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
-			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((AST.apply_vars (src, vars, ast, mode), AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
+			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
+			# return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((AST.apply_vars (src, vars, ast, mode), AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})

@@ -148,9 +148,12 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers, s
 			return spt.__class__ (_subs (a, subs) for a in spt)
 
 	elif isinstance (spt, sp.Derivative) and isinstance (spt.args [0], sp_AppliedUndef): # do not subs derivative of appliedundef (d/dx (f (x, y))) to preserve info about variables
-		vars     = set (spt.args [0].args)
-		spt      = sp.Subs (spt, *zip (*filter (lambda sd: sd [0] in vars, subs)))
-		spt.doit = lambda self = spt, *args, **kw: self # disable doit because loses information
+		vars = set (spt.args [0].args)
+		subs = list (zip (*filter (lambda sd: sd [0] in vars, subs)))
+
+		if subs:
+			spt      = sp.Subs (spt, *subs)
+			spt.doit = lambda self = spt, *args, **kw: self # disable doit because loses information
 
 	else:
 		try:
@@ -2017,13 +2020,13 @@ if __name__ == '__main__': # DEBUG!
 
 	# set_strict (True)
 
-	ast = AST ('-lamb', ('-func', '@', (('+', (('-func', 'f', (('@', '_x'),)), ('-func', 'f', (('*', (('#', '2'), ('@', '_x'))),)))),)), ('x',))
+	ast = AST ('-subs', ('-diffp', ('-ufunc', 'h', (('@', 'x'),)), 1), ((('#', '2'), ('#', '3')),))
 	# res = ast2tex (ast)
 	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
 	res = ast2spt (ast)
-	res = spt2ast (res)
+	# res = spt2ast (res)
 	# res = ast2nat (res)
 
 
