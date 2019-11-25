@@ -90,10 +90,7 @@ class AST (tuple):
 			if self.op:
 				self._init (*cls_args)
 
-		if not kw:
-			self._kw = {}
-		else:
-			self._kw = kw # this is for kws on ast rebuild where necessary (not done everywhere)
+		if kw:
 			self.__dict__.update (kw)
 
 		return self
@@ -142,7 +139,7 @@ class AST (tuple):
 		if self.is_curly:
 			return self.curly.no_curlys
 		else:
-			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self), **self._kw)
+			return AST (*tuple (a.no_curlys if isinstance (a, AST) else a for a in self))#, **self._kw)
 
 	def _flat (self, op = None, seq = None, exp = None): # flatten trees of '+', '*', '||', '^^', '&&', '-or' and '-and' into single ASTs
 		def subflat (op, seq, exp):
@@ -216,8 +213,6 @@ class AST (tuple):
 	_strip_fdpi     = lambda self, count = None: self._strip (count, {'!', '-diffp', '-idx'})
 	_strip_pow      = lambda self, count = None: self._strip (count, {'^'})
 	_strip_afpdpi   = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
-
-	# _strip_curly_of_paren_tex = lambda self: self.strip_curly if self.strip_curly.is_paren_tex else self
 
 	def _strip_minus_retneg (self):
 		neg         = lambda ast: ast
@@ -637,10 +632,9 @@ class AST (tuple):
 			return AST ('-intg', AST.apply_vars (ast.intg, vars, ast, mode), dv, *(AST.apply_vars (a, vars, ast, mode) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
-			# nonfree = frozenset (va [0] for va in filter (lambda va: va [1] is False, vars.items ())) # pass all non-free variables for possible translation of lambda as expression so those vars don't get globally mapped
-			vars    = push (vars, {v: False for v in ast.vars})
+			vars = push (vars, {v: False for v in ast.vars})
 
-			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, ast, mode and 'lamb'), ast.vars)#, lamb_vars_notfree = nonfree)
+			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, ast, mode and 'lamb'), ast.vars)
 
 		elif ast.is_func: # function, might be user lambda call
 			if ast.func == AST.Func.NOREMAP:
@@ -665,7 +659,7 @@ class AST (tuple):
 							if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
 							else AST.apply_vars (a, vars, ast, mode) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
-		return AST (*(AST.apply_vars (a, vars, ast if ast.op else parent, mode) for a in ast), **ast._kw)
+		return AST (*(AST.apply_vars (a, vars, ast if ast.op else parent, mode) for a in ast))#, **ast._kw)
 
 	@staticmethod
 	def register_AST (cls):
@@ -701,7 +695,7 @@ class AST_Ass (AST):
 	def ufunc2lamb (ufunc, lamb):
 		return AST ('-lamb', lamb, tuple (v.var or 'NONVARIABLE' for v in ufunc.vars))
 
-	def _ass_validate (self):
+	def _ass_valid (self):
 		def verify (ast, lhs, multi = False):
 			for lhs in (lhs if multi else (lhs,)):
 				if lhs.is_var_const:
@@ -1137,38 +1131,7 @@ class AST_UFunc (AST):
 	_is_ufunc_pure      = lambda self: self.vars and all (v.is_var_nonconst for v in self.vars)
 	_is_ufunc_impure    = lambda self: self.vars and any (not v.is_var_nonconst for v in self.vars)
 
-	# matches_lamb_sig    = lambda self, lamb: self.vars and self.vars.len == lamb.vars.len and all (a.is_var_nonconst and a.var == v for a, v in zip (self.vars, lamb.vars))
 	matches_lamb_sig    = lambda self, lamb: self.vars and self.vars.len == lamb.vars.len
-
-	# @staticmethod
-	# def can_apply_argskw_implicit (argskw):
-	# 	return not any (not a.is_var and not a.is_const for a in argskw [0])
-
-	# def can_apply_argskw (self, argskw):
-	# 	if argskw:
-	# 		args, kw = argskw
-
-	# 		if self.is_ufunc_implicit and not self.can_apply_argskw_implicit (argskw):
-	# 			return False
-
-	# 		if not kw and args:
-	# 			if not self.vars.len:
-	# 				return True
-
-	# 			if self.vars.len == len (args):
-	# 				for v, a in zip (self.vars, args):
-	# 					if not v.is_var_nonconst or (a.is_var_nonconst and a.var != v.var):
-	# 						return False
-
-	# 				return args != self.vars
-
-	# 	return False
-
-	# def apply_argskw (self, argskw):
-	# 	if self.can_apply_argskw (argskw):
-	# 		return AST ('-ufunc', self.ufunc_full, argskw [0], self.kw)
-
-	# 	return None
 
 	@staticmethod
 	def valid_implicit_args (args):

@@ -1,6 +1,5 @@
-> remove lamb.lamb_vars_notfree
-> remove **ast.__kw
-> AST_UFunc.argskw_can_create_implicit ()
+> AST_UFunc.argskw_can_create_implicit () - accept any non-single expr sig?
+
 > {a = lambda: l}
 
 > test_server for semicolon stuff - multiple returns
@@ -58,6 +57,7 @@
 
 
 > doc: new lambda undefined function behavior
+> doc: new lambda as expression behavior (only when mapped from var)
 > doc: quick mode variables can have numerical tails as subscripts
 > doc: caveats with variable mapping and functions like Integral, Sum due to their unfree vars being remapped
 > doc: new == vs. = display behavior

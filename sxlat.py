@@ -514,7 +514,7 @@ def xlat_funcs2asts (ast, xlat, func_call = None, recurse = True): # translate e
 		return ret ()
 
 	if recurse:
-		return AST (*(xlat_funcs2asts (a, xlat, func_call = func_call) for a in ast), **ast._kw)
+		return AST (*(xlat_funcs2asts (a, xlat, func_call = func_call) for a in ast))#, **ast._kw)
 
 	return ast
 

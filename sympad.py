@@ -4126,7 +4126,7 @@ class AST_Ass (AST):
 	def ufunc2lamb (ufunc, lamb):
 		return AST ('-lamb', lamb, tuple (v.var or 'NONVARIABLE' for v in ufunc.vars))
 
-	def _ass_validate (self):
+	def _ass_valid (self):
 		def verify (ast, lhs, multi = False):
 			for lhs in (lhs if multi else (lhs,)):
 				if lhs.is_var_const:
@@ -6329,8 +6329,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		is_top_ass = self.parent.op in {None, ';'}
 
 		if is_top_ass:
-			if ast.ass_validate:
-				ast = ast.ass_validate
+			if ast.ass_valid:
+				ast = ast.ass_valid
 			else:
 				is_top_ass = False
 
@@ -9664,13 +9664,13 @@ def _vars_updated ():
 	sparser.set_sp_user_vars (vars)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
-	if not ast.ass_validate:
+	if not ast.ass_valid:
 		vars = None
-	elif ast.ass_validate.error:
-		raise RealityRedefinitionError (ast.ass_validate.error)
+	elif ast.ass_valid.error:
+		raise RealityRedefinitionError (ast.ass_valid.error)
 
 	else:
-		vars, ast = ast.ass_validate.lhs, ast.ass_validate.rhs
+		vars, ast = ast.ass_valid.lhs, ast.ass_valid.rhs
 		vars      = list (vars.comma) if vars.is_comma else [vars]
 
 	return AST.apply_vars (ast, _VARS), vars

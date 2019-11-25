@@ -94,10 +94,6 @@ def _ast_diff_func_apply_call (var, expr, arg):
 
 			return AST ('-subs', expr, subs) if subs else expr
 
-	# if func.is_ufunc_applied and func.can_apply_argskw (arg.as_ufunc_argskw):
-	# 	subs = tuple (filter (lambda va: va [1] != va [0], zip (func.vars, args)))
-
-	# 	return AST ('-subs', expr, subs) if subs else expr
 	elif func.is_ufunc_applied:
 		ast = func.apply_argskw (arg.as_ufunc_argskw)
 
@@ -120,7 +116,7 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 	elif ast.is_mulexp:
 		return AST ('*', tuple (_ast_mulexps_to_muls (a) for a in ast.mul), frozenset (range (1, ast.mul.len)))
 	else:
-		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast), **ast._kw)
+		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast))#, **ast._kw)
 
 def _ast_tail_differential (self, want_pre = False, from_add = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
 	lself = lambda a: a
@@ -235,7 +231,7 @@ AST._tail_differential_from_add = lambda self: self._tail_differential (from_add
 AST._has_tail_differential      = lambda self: self.tail_differential [1]
 
 #...............................................................................................
-def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
+def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues ... {a}, {b = x}, {y} -> {a, b} = {x, y}
 	def can_be_ufunc (ast):
 		return (
 			(ast.is_func and ast.func in _SP_USER_FUNCS and all (a.is_var_nonconst for a in ast.args)) or
@@ -247,7 +243,7 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 		else: # is_mul
 			return AST ('-ufunc', ast.mul [0].var, *ast.mul [1].paren.as_ufunc_argskw)
 
-	def lhs_ufunc_py_explicitize (ast):
+	def lhs_ufunc_explicitize (ast):
 		if not allow_lexprs and (ast.is_ufunc_py or (ast.is_ufunc and ast.kw)):
 			return AST ('-ufunc', f'?{ast.ufunc}', *ast [2:])
 		elif ast.src_var_name:
@@ -260,7 +256,7 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 		if can_be_ufunc (ast.lhs):
 			ast = AST ('=', as_ufunc (ast.lhs), ast.rhs)
 		else:
-			ast = AST ('=', lhs_ufunc_py_explicitize (ast.lhs), ast.rhs)
+			ast = AST ('=', lhs_ufunc_explicitize (ast.lhs), ast.rhs)
 
 	elif ast.is_comma: # tuple assignment? ('x, y = y, x' comes from parsing as ('x', 'y = y', 'x')) so rewrite
 		vars = []
@@ -268,13 +264,13 @@ def _expr_ass_lvals (ast, allow_lexprs = False): # process assignment lvalues
 
 		for c in itr:
 			if c.op in {'@', '-ufunc'}:
-				vars.append (lhs_ufunc_py_explicitize (c))
+				vars.append (lhs_ufunc_explicitize (c))
 			elif can_be_ufunc (c):
 				vars.append (as_ufunc (c))
 
 			elif c.is_ass:
 				t = (c.rhs,) + tuple (itr)
-				v = lhs_ufunc_py_explicitize (c.lhs) if c.lhs.op in {'@', '-ufunc'} else as_ufunc (c.lhs) if can_be_ufunc (c.lhs) else c.lhs if allow_lexprs else None
+				v = lhs_ufunc_explicitize (c.lhs) if c.lhs.op in {'@', '-ufunc'} else as_ufunc (c.lhs) if can_be_ufunc (c.lhs) else c.lhs if allow_lexprs else None
 
 				if v:
 					ast = AST ('=', (',', tuple (vars) + (v,)) if len (vars) else v, t [0] if len (t) == 1 else AST (',', t))
@@ -574,9 +570,6 @@ def _expr_func (iparm, *args, is_operatorname = False): # rearrange ast tree for
 			if ast:
 				return wrapa (ast)
 
-		# ast2     = AST (*(args [:iparm] + (_ast_func_tuple_args (arg),) + args [iparm + 1:]))
-		# ast2.src = AST ('*', (('@', name), rhs))
-
 		src = AST ('*', (('@', name), rhs))
 
 		if arg.is_paren:
@@ -606,20 +599,6 @@ def _expr_func_func (FUNC, args, expr_super = None):
 		return _expr_func_func (f'a{func}', args)
 
 def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', (x,)), ufunc ('f', (x,)) * (0) -> ufunc ('f', (0,)), ...
-	# if lhs.is_ufunc:
-	# 	ast = lhs.apply_argskw (commas.as_ufunc_argskw)
-
-	# 	if lhs.is_ufunc_py:
-	# 		if ast:
-	# 			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw, is_ufunc_py = lhs.is_ufunc_py))
-
-	# 	else:
-	# 		if ast:
-	# 			if not lhs.is_ufunc_explicit and AST ('@', lhs.ufunc).is_differential and self.stack_has_sym ('DIVIDE'): # could be derivative of form "d / dx (f)"
-	# 				return Reduce (ast)
-	# 			else:
-	# 				return PopConfs (ast.setkw (src_rhs = AST ('*', (lhs.src_rhs, ('(', commas)))))
-
 	if lhs.is_ufunc_py:
 		ast = lhs.apply_argskw (commas.as_ufunc_argskw)
 

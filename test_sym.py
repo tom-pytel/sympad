@@ -1102,7 +1102,7 @@ def test (argv = None):
 						if ast.is_ufunc_explicit:
 							ast = AST ('-ufunc', ast.ufunc, *ast [2:])
 
-					return AST (*tuple (sanitize (a) for a in ast), **ast._kw)
+					return AST (*tuple (sanitize (a) for a in ast))#, **ast._kw)
 
 				sxlat._SX_XLAT_AND = True # turn on py And translation because it is needed here
 

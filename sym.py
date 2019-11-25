@@ -266,34 +266,6 @@ def _ast_has_open_differential (ast, istex):
 	return any (_ast_has_open_differential (a, istex = istex) if isinstance (a, AST) else False for a in (ast if ast.op is None else ast [1:]))
 
 def _ast_subs2func (ast): # ast is '-subs'
-	# func = ast.expr
-
-	# if func.op in {'-diff', '-diffp'}:
-	# 	func = func [1]
-
-	# func = _SYM_USER_VARS.get (func.var, func)
-
-	# if func.is_lamb:
-	# 	vars = ast.subs [:func.vars.len]
-
-	# 	if tuple (s.var for s, _ in vars) == func.vars:
-	# 		return [AST ('=', s, d) for s, d in ast.subs [func.vars.len:]], tuple (d for _, d in vars)
-
-	# elif func.is_ufunc_applied:
-	# 	subs = []
-	# 	vars = OrderedDict ((v, v) for v in func.vars)
-
-	# 	for s, d in ast.subs:
-	# 		# if s.is_var_nonconst and d.is_const and vars.get (s) == s:
-	# 		if s.is_var_nonconst and vars.get (s) == s:
-	# 			vars [s] = d
-	# 		else:
-	# 			subs.append (AST ('=', s, d))
-
-	# 	return subs, vars.values ()
-
-	# func = ast.expr
-
 	func = ast.expr
 
 	if func.op in {'-diff', '-diffp'}:
@@ -1143,8 +1115,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		is_top_ass = self.parent.op in {None, ';'}
 
 		if is_top_ass:
-			if ast.ass_validate:
-				ast = ast.ass_validate
+			if ast.ass_valid:
+				ast = ast.ass_valid
 			else:
 				is_top_ass = False
 
@@ -1199,9 +1171,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		return f'{n}{s}{d}'
 
 	def _ast2py_pow (self, ast):
-		# b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow or (ast.base.is_idx and self.parent.is_pow and ast is self.parent.exp) else self._ast2py_curly (ast.base)
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow else self._ast2py_curly (ast.base)
-		# e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base or (ast.base.op in {'|', '-set'} and ast.exp.strip_attrm.is_idx) or (ast.exp.is_attr and ast.exp.strip_attrm.is_idx) else self._ast2py_curly (ast.exp)
 		e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
@@ -1572,31 +1542,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 				return sp.Integral (self._ast2spt (ast [1]), (sp.Symbol (ast.dv.var_name), self._ast2spt (ast.from_), self._ast2spt (ast.to)))
 
 	def _ast2spt_lamb (self, ast):
-		# i = self.parent.mul.index (ast) if self.parent.is_mul else None
-
-		# if not (self.parent.op in {None, ';', ',', '[', '-func', '-lamb', '-set', '-dict'} or # '(', # treat body of lambda as expression for calculation
-		# 		(self.parent.is_ass and ast is self.parent.rhs) or
-		# 		(i is not None and i < (self.parent.mul.len - 1) and self.parent.mul [i + 1].is_paren and i not in self.parent.exp)):
-
-		# 	if ast.lamb_vars_notfree:
-		# 		vars = dict (va for va in filter (lambda va: va [0] not in ast.lamb_vars_notfree, _SYM_USER_VARS.items ()))
-		# 	else:
-		# 		vars = _SYM_USER_VARS
-
-		# 	return self._ast2spt (AST.apply_vars (ast.lamb, vars))
-
-		# spt = self._ast2spt (ast.lamb)
-
-		# if ast.vars.len == 1 and isinstance (spt, sp.Symbol) and not isinstance (spt, sp.Dummy) and spt.name == ast.vars [0]:
-		# 	spt = IdLambda (None, sp.Symbol (ast.vars [0]))
-
-		# else:
-		# 	spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), spt)
-
-		# return spt
-
-
-
 		if ast.vars.len == 1 and ast.lamb.strip_paren.is_var and ast.lamb.strip_paren.var == ast.vars [0]: # identity lambda
 			spt = IdLambda (None, sp.Symbol (ast.vars [0]))
 
@@ -1630,13 +1575,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return sdiff
 
 	def _ast2spt_ufunc (self, ast):
-		# spt = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
-
-		# if _ast_is_top_ass_lhs (self, ast): # pass explicit state of ufunc through spt if it is on left side of assign at top level
-		# 	spt.is_ufunc_explicit = ast.is_ufunc_explicit
-
-		# return spt
-
 		return sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
 
 	def _ast2spt_subs (self, ast):
@@ -1883,19 +1821,8 @@ class spt2ast:
 	def _spt2ast_AppliedUndef (self, spt):
 		if spt.__class__.__name__ == 'slice': # special cased converted slice object with start, stop and step present, this is REALLY unnecessary...
 			return AST ('-slice', *tuple (self._spt2ast (s) for s in spt.args))
-
-		# if getattr (spt, 'is_explicit', False) or \
-		# 		(isinstance (self.parent, EqAss) and self.parents [-2] is None and spt is self.parent.args [0]) or \
-		# 		(isinstance (self.parent, sp.Tuple) and isinstance (self.parents [-2], EqAss) and self.parents [-3] is None and spt in self.parent):
-		# 	name = f'?{spt.name}'
-		# else:
-		# 	name = spt.name
-
-		# name = f'?{spt.name}' if getattr (spt, 'is_ufunc_explicit', False) else spt.name
-
-		# return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
-
-		return AST ('-ufunc', f'?{spt.name}', tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		else:
+			return AST ('-ufunc', f'?{spt.name}', tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__

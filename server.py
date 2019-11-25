@@ -313,13 +313,13 @@ def _vars_updated ():
 			_UFUNC_MAP.setdefault (a, []).append (v)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
-	if not ast.ass_validate:
+	if not ast.ass_valid:
 		vars = None
-	elif ast.ass_validate.error:
-		raise RealityRedefinitionError (ast.ass_validate.error)
+	elif ast.ass_valid.error:
+		raise RealityRedefinitionError (ast.ass_valid.error)
 
 	else:
-		vars, ast = ast.ass_validate.lhs, ast.ass_validate.rhs
+		vars, ast = ast.ass_valid.lhs, ast.ass_valid.rhs
 		vars      = list (vars.comma) if vars.is_comma else [vars]
 
 	return AST.apply_vars (ast, _VARS), vars
