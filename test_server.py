@@ -436,7 +436,7 @@ del vars
 x
 y
 
-"""), ('lambdas', """
+"""), ('lambda', """
 
 f = lambda: 2
 f
@@ -507,7 +507,7 @@ f (x, y) = sqrt {x**2 + y**2}
 f (3, 4)
 del f
 
-"""), ('lambdas2', """
+"""), ('lambda2', """
 
 f = lambda x: x**2
 f (2)
@@ -550,6 +550,54 @@ f (x) = \\int x dx
 f (sin x)
 f (sin y)
 \\int sin y dx
+
+"""), ('lambda_expr', """
+
+a = lambda l: l
+a; a
+{a = a}
+a == a
+a.b
+a, a
+{a}
+(a)
+[a]
+|a|
+-a
+a!
+a + a
+a a
+a * a
+a / a
+a ** a
+ln a
+sqrt a
+sin a
+\\lim_{a\\to0} a
+\\sum_{n=0}^9 a
+d/dx a
+a'
+\int a dx
+\[[a, a], [a, a]]
+1 if True else a
+1 if a
+lambda: a
+a [a]
+: a
+a: a
+:b a
+a:b: a
+::c a
+a:b:c a
+{a, a}
+{a: a}
+a || a
+a ^^ a
+a && a
+a or a
+a and a
+not a
+\\. a |_{a = x}
 
 """), ('env', """
 

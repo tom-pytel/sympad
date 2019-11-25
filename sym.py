@@ -1593,6 +1593,10 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		# else:
 		# 	spt = sp.Lambda (tuple (sp.Symbol (v) for v in ast.vars), spt)
 
+		# return spt
+
+
+
 		if ast.vars.len == 1 and ast.lamb.strip_paren.is_var and ast.lamb.strip_paren.var == ast.vars [0]: # identity lambda
 			spt = IdLambda (None, sp.Symbol (ast.vars [0]))
 

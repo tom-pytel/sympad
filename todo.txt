@@ -1,9 +1,16 @@
+> move lambda as expression to apply_vars
+> remove lamb.lamb_vars_notfree
+> remove **ast.__kw
+> AST_UFunc.argskw_can_create_implicit ()
+> {a = lambda: l}
+
 > ufunc mapback problem with generalized args - do not map if target var same? f = f (x, y) ... f = 1 + f (x, y)
 
 > "d / 2" is "(d) / 2", fix it
 > (f)(x) -> (f) * (x)
-> a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c
+> a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c0
 ? $s() -> $s
+> {a = a}
 
 > Sigma -> Si(g m a) problem in quick mode.
 

@@ -507,7 +507,7 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
-	def apply_vars (ast, vars = True, mode = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
+	def apply_vars (ast, vars, parent = None, mode = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
 		def push (vars, newvars): # create new frame and add new variables, this is really overkill
 			frame       = vars.copy ()
 			frame ['<'] = vars
@@ -529,7 +529,7 @@ class AST (tuple):
 
 			return vars
 
-		def scope (vars): # scope out one layer of variables (not frames) and create new frame
+		def scopeout (vars): # scope out one layer of variables (not frames) and create new frame
 			count = vars.get ('#', 1)
 			frame = {'<': vars.get ('<', {}), '>': vars.get ('>', vars), '#': count + 1}
 
@@ -549,12 +549,19 @@ class AST (tuple):
 
 			return frame
 
+		def index_by_is (seq, obj):
+			for i, o in enumerate (seq):
+				if o is obj:
+					return i
+
+			return None
+
 		# start here
 		if not isinstance (ast, AST): # or (ast.is_func and ast.func == AST.Func.NOREMAP): # non-AST, ufunc definition or stop remap
 			return ast
 
-		elif ast.is_ufunc: # possibly convert non-explicit ufunc to concrete function call if signature matches destination lambda
-			if mode is not True or ast.is_ufunc_explicit: # do not map ufuncs to func calls when mapping vars onto themselves or inside lambda definition
+		if ast.is_ufunc: # possibly convert non-explicit ufunc to concrete function call if signature matches destination lambda
+			if mode is not True or ast.is_ufunc_explicit: # do not map ufuncs to func calls when mapping vars onto themselves, inside lambda definition or is explicit
 				return ast
 
 			lamb = vars.get (ast.ufunc)
@@ -568,20 +575,34 @@ class AST (tuple):
 			return ast
 
 		elif ast.is_var: # regular var substitution?
-			var = vars.get (ast.var)
+			expr = vars.get (ast.var)
 
-			if var: # user var
-				return var if var.is_lamb else AST.apply_vars (var, pop (vars, ast.var), mode)
+			if not expr:
+				return ast
+			elif not expr.is_lamb:
+				return AST.apply_vars (expr, pop (vars, ast.var), ast, mode)
 
-			return ast
+			if parent is None:
+				parent = AST.Null
+
+			i = index_by_is (parent.mul, ast) if parent.is_mul else None
+
+			if (parent.op in {None, ';', '@', ',', '[', '-func', '-lamb', '-set', '-dict'} or
+					# (parent.is_ass and ast is parent.rhs) or
+					(i is not None and i < (parent.mul.len - 1) and parent.mul [i + 1].is_paren and i not in parent.exp)): # followed by implicit mul paren, is call not multiply
+				return expr
+
+			vars = push (vars, {v: False for v in expr.vars})
+
+			return AST.apply_vars (expr.lamb, vars, ast, mode)
 
 		elif ast.is_subs:
-			return AST ('-subs', AST.apply_vars (ast.expr, vars, mode), tuple ((src, AST.apply_vars (dst, vars, mode)) for src, dst in ast.subs))
+			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})
 
-			return AST (ast.op, AST.apply_vars (ast [1], vars, mode), ast [2], *(AST.apply_vars (a, vars, mode) for a in ast [3:]))
+			return AST (ast.op, AST.apply_vars (ast [1], vars, ast, mode), ast [2], *(AST.apply_vars (a, vars, ast, mode) for a in ast [3:]))
 
 		elif ast.is_diff:
 			dvs = []
@@ -595,7 +616,7 @@ class AST (tuple):
 
 				dvs.append ((v, p))
 
-			return AST ('-diff', AST.apply_vars (ast.diff, vars, mode), ast.d, tuple (dvs))
+			return AST ('-diff', AST.apply_vars (ast.diff, vars, ast, mode), ast.d, tuple (dvs))
 
 		elif ast.is_intg:
 			dv = ast.dv
@@ -613,17 +634,19 @@ class AST (tuple):
 					else:
 						dv = ast.dv
 
-			return AST ('-intg', AST.apply_vars (ast.intg, vars, mode), dv, *(AST.apply_vars (a, vars, mode) for a in ast [3:]))
+			return AST ('-intg', AST.apply_vars (ast.intg, vars, ast, mode), dv, *(AST.apply_vars (a, vars, ast, mode) for a in ast [3:]))
 
 		elif ast.is_lamb: # lambda definition
-			nonfree = frozenset (va [0] for va in filter (lambda va: va [1] is False, vars.items ())) # pass all non-free variables for possible translation of lambda as expression so those vars don't get globally mapped
+			# nonfree = frozenset (va [0] for va in filter (lambda va: va [1] is False, vars.items ())) # pass all non-free variables for possible translation of lambda as expression so those vars don't get globally mapped
 			vars    = push (vars, {v: False for v in ast.vars})
 
-			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, mode and 'lamb'), ast.vars, lamb_vars_notfree = nonfree)
+			return AST ('-lamb', AST.apply_vars (ast.lamb, vars, ast, mode and 'lamb'), ast.vars)#, lamb_vars_notfree = nonfree)
 
 		elif ast.is_func: # function, might be user lambda call
 			if ast.func == AST.Func.NOREMAP:
-				vars = scope (vars)
+				vars = scopeout (vars)
+
+				return AST ('-func', ast.func, tuple (AST.apply_vars (a, vars, ast, mode) for a in ast.args))
 
 			else:
 				lamb = vars.get (ast.func)
@@ -632,27 +655,17 @@ class AST (tuple):
 					if ast.args.len == lamb.vars.len:
 						vars = push (vars, dict (zip (lamb.vars, ast.args)))
 
-						return AST.apply_vars (lamb.lamb, vars, mode) # remap lambda vars to func args then global remap
-
-						# args = dict (zip (lamb.vars, ast.args))
-						# return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False, mode), vars, recurse, mode) # remap lambda vars to func args then global remap
-
-						# args = dict (filter (lambda va: isinstance (va [1], AST) and va [1].is_lamb, vars.items ()))
-						# args.update (zip (lamb.vars, ast.args))
-						# return AST.apply_vars (AST.apply_vars (lamb.lamb, args, False, mode), vars, recurse, mode) # remap lambda vars to func args then global remap
-
-						# vars = push (vars, {v: AST.apply_vars (a, vars, recurse, mode) for v, a in zip (lamb.vars, ast.args)})
-						# return AST.apply_vars (lamb.lamb, vars, recurse, mode) # remap lambda vars to func args then global remap
+						return AST.apply_vars (lamb.lamb, vars, ast, mode) # remap lambda vars to func args then global remap
 
 					elif mode:
 						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
 
 					return AST ('-func', ast.func,
-							tuple (('(', AST.apply_vars (a, vars, mode))
+							tuple (('(', AST.apply_vars (a, vars, ast, mode))
 							if (a.is_var and (vars.get (a.var) or AST.VarNull).is_ass)
-							else AST.apply_vars (a, vars, mode) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
+							else AST.apply_vars (a, vars, ast, mode) for a in ast.args)) # wrap var assignment args in parens to avoid creating kwargs
 
-		return AST (*(AST.apply_vars (a, vars, mode) for a in ast), **ast._kw)
+		return AST (*(AST.apply_vars (a, vars, ast if ast.op else parent, mode) for a in ast), **ast._kw)
 
 	@staticmethod
 	def register_AST (cls):
@@ -1231,6 +1244,8 @@ AST.DictEmpty  = AST ('-dict', ())
 
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
-	ast = AST ('-lamb', ('+', (('-func', '@', (('-func', '@', (('@', 'x'),)),)), ('@', 'y'))), ('x',))
-	res = AST.apply_vars (ast, {'x': AST.One, 'y': AST ('#', '2')})
+	vars = {'a': AST ('-lamb', ('@', 'l'), ('l',))}
+	expr = AST ('<>', ('@', 'a'), (('==', ('@', 'a')),))
+
+	res  = AST.apply_vars (expr, vars)
 	print (res)
