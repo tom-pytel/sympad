@@ -567,6 +567,7 @@ a, a
 a!
 a + a
 a a
+{a} a
 a * a
 a / a
 a ** a
@@ -579,10 +580,11 @@ d/dx a
 a'
 \int a dx
 \[[a, a], [a, a]]
-1 if True else a
-1 if a
+a if a else a
+a if a
 lambda: a
 a [a]
+{a} [a]
 : a
 a: a
 :b a
@@ -590,6 +592,7 @@ a:b: a
 ::c a
 a:b:c a
 {a, a}
+{a, a + 1}
 {a: a}
 a || a
 a ^^ a
@@ -597,7 +600,8 @@ a && a
 a or a
 a and a
 not a
-\\. a |_{a = x}
+\\. a |_{a = a}
+\\. a |_{a = b}
 
 """), ('env', """
 

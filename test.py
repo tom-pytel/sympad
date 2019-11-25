@@ -5053,6 +5053,13 @@ f = lambda x, y, z: 0
 \left(\left(\right) \mapsto x \right)
 \left(\left(x \right) \mapsto x^2 \right)
 \left(\left(x, y \right) \mapsto x + y \right)
+\lambda: x
+\lambda x: x
+\lambda x, y: x
+{lambda}: x
+{lambda} x: x
+{lambda} x, y: x
+
 eye (2).is_diagonal ()
 a [2]
 a [2,3]
@@ -5230,117 +5237,6 @@ f()()
 f()*()
 f*()*()
 f*()()
-
-\lambda: x
-\lambda x: x
-\lambda x, y: x
-{lambda}: x
-{lambda} x: x
-{lambda} x, y: x
-a, lambda: x
-a + lambda: x
-a lambda: x
-a * lambda: x
-a || lambda: x
-a ^^ lambda: x
-a && lambda: x
-a or lambda: x
-a and lambda: x
-a = lambda: x
-a / lambda: x
-a ** lambda: x
--lambda: x
-not lambda: x
-\lim_{x\to0} lambda: x
-\sum_{n=0}^9 lambda: x
-d/dx lambda: x
-1 if True else lambda: x
-1 if lambda: x
-lambda: lambda: x
-: lambda: x
-a: lambda: x
-:b lambda: x
-a:b: lambda: x
-::c lambda: x
-a:b:c lambda: x
-a, lambda x: x
-a + lambda x: x
-a lambda x: x
-a * lambda x: x
-a || lambda x: x
-a ^^ lambda x: x
-a && lambda x: x
-a or lambda x: x
-a and lambda x: x
-a = lambda x: x
-a / lambda x: x
-a ** lambda x: x
--lambda x: x
-not lambda x: x
-\lim_{x\to0} lambda x: x
-\sum_{n=0}^9 lambda x: x
-d/dx lambda x: x
-1 if True else lambda x: x
-1 if lambda x: x
-lambda: lambda x: x
-: lambda x: x
-a: lambda x: x
-:b lambda x: x
-a:b: lambda x: x
-::c lambda x: x
-a:b:c lambda x: x
-a, lambda x, y: x
-a + lambda x, y: x
-a lambda x, y: x
-a * lambda x, y: x
-a || lambda x, y: x
-a ^^ lambda x, y: x
-a && lambda x, y: x
-a or lambda x, y: x
-a and lambda x, y: x
-a = lambda x, y: x
-a / lambda x, y: x
-a ** lambda x, y: x
--lambda x, y: x
-not lambda x, y: x
-\lim_{x\to0} lambda x, y: x
-\sum_{n=0}^9 lambda x, y: x
-d/dx lambda x, y: x
-1 if True else lambda x, y: x
-1 if lambda x, y: x
-lambda: lambda x, y: x
-: lambda x, y: x
-a: lambda x, y: x
-:b lambda x, y: x
-a:b: lambda x, y: x
-::c lambda x, y: x
-a:b:c lambda x, y: x
-a, lambda x, y, z: x
-a + lambda x, y, z: x
-a lambda x, y, z: x
-a * lambda x, y, z: x
-a || lambda x, y, z: x
-a ^^ lambda x, y, z: x
-a && lambda x, y, z: x
-a or lambda x, y, z: x
-a and lambda x, y, z: x
-a = lambda x, y, z: x
-a / lambda x, y, z: x
-a ** lambda x, y, z: x
--lambda x, y, z: x
-not lambda x, y, z: x
-\lim_{x\to0} lambda x, y, z: x
-\sum_{n=0}^9 lambda x, y, z: x
-d/dx lambda x, y, z: x
-1 if True else lambda x, y, z: x
-1 if lambda x, y, z: x
-lambda: lambda x, y, z: x
-: lambda x, y, z: x
-a: lambda x, y, z: x
-:b lambda x, y, z: x
-a:b: lambda x, y, z: x
-::c lambda x, y, z: x
-a:b:c lambda x, y, z: x
 
 dy / dx
 dy / dx z

@@ -1,8 +1,9 @@
-> move lambda as expression to apply_vars
 > remove lamb.lamb_vars_notfree
 > remove **ast.__kw
 > AST_UFunc.argskw_can_create_implicit ()
 > {a = lambda: l}
+
+> test_server for semicolon stuff - multiple returns
 
 > ufunc mapback problem with generalized args - do not map if target var same? f = f (x, y) ... f = 1 + f (x, y)
 
