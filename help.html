@@ -33,13 +33,15 @@
 
 <body>
 
+<input id="Clipboard">
+
 <h1 style="margin: 0; text-align: center">SymPad</h1>
 <h4 style="margin: 0; text-align: center"><script type="text/javascript">document.write (Version)</script></h4>
 
 <h2 id="Introduction">Introduction</h2>
 
 <p>
-SymPad is a simple single script graphical symbolic calculator / scratchpad using SymPy for the math, MathJax for the display in a browser and matplotlib for plotting.
+SymPad is a simple single script graphical symbolic calculator / scratchpad using SymPy for the math, MathJax for the display in a browser and matplotlib for plotting.plotf (2, x**2)
 It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally that last bit is exactly what happens but the response time is better :)
 This desire for simplicity led to the single script option "<b>sympad.py</b>" which I could plop down on the desktop and execute when needed.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
@@ -604,7 +606,7 @@ This is done on purpose because outside of SymPad "<b>Lambda</b>" objects can no
 Lambdas can be called directly as in "<b>{lambda x: x**2} (3)</b>".
 Lambda recursion is not supported because there is no underlying mechanism to make it work with SymPy "<b>Lambda</b>" objects.
 </p><p>
-Lambda functions can be used as expressions in most contexts, this means that the body of the function is used directly in a calculation with the variables being mapped to their global values.
+Lambda functions can be used as expressions in most contexts, this means that the body of the function is used directly in a calculation with the non-local variables being mapped to their global values.
 Specifically, lambdas are treated as expressions if they are not enclosed in parentheses, brackets, tuples, sets or dictionaries or if they are part of an argument list to a function call.
 If you want the lambda treated as an expression in these contexts then wrap it in parentheses.
 Note that this only applies to lambdas assigned to and accessed through variables, lambdas declared directly are always treated as lambdas.
@@ -870,36 +872,37 @@ It may also never finish if a complex circular vector field introduces enough er
 Note that some of these are single line examples and others make use of variables.
 If you see variables being assigned make sure to execute those lines before the lines which follow, also make sure to delete the variable assigment afterwards in order to not affect any other examples which expect those variables to be free.
 All these examples assume you are running with default environment settings.
+You can click on any of these lines to copy it to the clipboard for pasting into SymPad.
 </p>
 
 <h4 id="Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-\lim_{h\to0} {(x + h)**2 - x**2} / h<br>
-Limit ((1 + 1/x)**x, x, \infty)<br>
-{(1 - 1/x)**x}.limit (x, \infty)<br>
-limit (sin x / x, x, 0)<br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">\lim_{h\to0} {(x + h)**2 - x**2} / h</span><br>
+<span onclick="cE2C (this)">Limit ((1 + 1/x)**x, x, \infty)</span><br>
+<span onclick="cE2C (this)">{(1 - 1/x)**x}.limit (x, \infty)</span><br>
+<span onclick="cE2C (this)">limit (sin x / x, x, 0)</span><br>
 <br>
-\sum_{n=0}^\infty (-1)**n x**{2n} / (2n)!<br>
-Sum ((-1)**n x**{2n + 1} / (2n + 1)!, (n, 0, oo))<br>
-summation ((-3)^n / n 7^{n+1} * (x - 5)^n, (n, 1, oo))<br>
+<span onclick="cE2C (this)">\sum_{n=0}^\infty (-1)**n x**{2n} / (2n)!</span><br>
+<span onclick="cE2C (this)">Sum ((-1)**n x**{2n + 1} / (2n + 1)!, (n, 0, oo))</span><br>
+<span onclick="cE2C (this)">summation ((-3)^n / n 7^{n+1} * (x - 5)^n, (n, 1, oo))</span><br>
 <br>
-d/dx ln x<br>
-Derivative (x**3y**2, x, y)<br>
-diff (sin x + cos x, x, 2)<br>
-{x**2sin**2y}.diff (x, y)<br>
-d**3/dx**2dy x**3y**2<br>
-sin (x)'<br>
-(e**{2x})''<br>
-d/dx ln (y(x))<i>&emsp; derivative of logarithm of abstract undefined function y(x)</i><br>
+<span onclick="cE2C (this)">d/dx ln x</span><br>
+<span onclick="cE2C (this)">Derivative (x**3y**2, x, y)</span><br>
+<span onclick="cE2C (this)">diff (sin x + cos x, x, 2)</span><br>
+<span onclick="cE2C (this)">{x**2sin**2y}.diff (x, y)</span><br>
+<span onclick="cE2C (this)">d**3/dx**2dy x**3y**2</span><br>
+<span onclick="cE2C (this)">sin (x)'</span><br>
+<span onclick="cE2C (this)">(e**{2x})''</span><br>
+<span onclick="cE2C (this)">d/dx ln (y(x))</span><i>&emsp; derivative of logarithm of abstract undefined function y(x)</i><br>
 <br>
-\int x**a dx<br>
-Integral (a**x, x)<br>
-{x**3y**2}.integrate (x, y)<br>
-\int_0**oo e**{-st} dt<br>
-Integral (r, (r, 0, 1), (theta, 0, 2pi))<br>
-integrate (sin x / x, (x, -oo, oo))<br>
+<span onclick="cE2C (this)">\int x**a dx</span><br>
+<span onclick="cE2C (this)">Integral (a**x, x)</span><br>
+<span onclick="cE2C (this)">{x**3y**2}.integrate (x, y)</span><br>
+<span onclick="cE2C (this)">\int_0**oo e**{-st} dt</span><br>
+<span onclick="cE2C (this)">Integral (r, (r, 0, 1), (theta, 0, 2pi))</span><br>
+<span onclick="cE2C (this)">integrate (sin x / x, (x, -oo, oo))</span><br>
 <br>
 </p>
 
@@ -908,29 +911,28 @@ integrate (sin x / x, (x, -oo, oo))<br>
 <p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/solvers.html" target="_blank">Equation Solvers</a>.</p>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-solve (x**2 = 4)<i>&emsp; x**2 - 4 = 0</i><br>
-solve (x**2 - 4)<i>&emsp; same</i><br>
-solve (|x| >= x**2)<i>&emsp; inequality</i><br>
-solve (x**2 + 2 x - 1 > 7)<br>
-solve (y = x**2 + 2 x - 1, x)<i>&emsp; solve for x from y</i><br>
-solve (x + (e**x)**2, e**x)<i>&emsp; solve for e**x</i><br>
-solve (x + e**x, x)<i>&emsp; explicit solution</i><br>
-solve (x + e**x, x, implicit = True)<i>&emsp; implicit solution</i><br>
-solve ((x + 2y = 5, y - 2x = 0))<i>&emsp; system of equations, solve for x and y</i><br>
-solve ((a + b)x - b + 2, a, b)<i>&emsp; one equation relating two variables</i><br>
-solve ((a + b)x - b**2 + 2, a, b)<i>&emsp; non-linear</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">solve (x**2 = 4)</span><i>&emsp; x**2 - 4 = 0</i><br>
+<span onclick="cE2C (this)">solve (x**2 - 4)</span><i>&emsp; same</i><br>
+<span onclick="cE2C (this)">solve (|x| >= x**2)</span><i>&emsp; inequality</i><br>
+<span onclick="cE2C (this)">solve (x**2 + 2 x - 1 > 7)</span><br>
+<span onclick="cE2C (this)">solve (y = x**2 + 2 x - 1, x)</span><i>&emsp; solve for x from y</i><br>
+<span onclick="cE2C (this)">solve (x + (e**x)**2, e**x)</span><i>&emsp; solve for e**x</i><br>
+<span onclick="cE2C (this)">solve (x + e**x, x)</span><i>&emsp; explicit solution</i><br>
+<span onclick="cE2C (this)">solve (x + e**x, x, implicit = True)</span><i>&emsp; implicit solution</i><br>
+<span onclick="cE2C (this)">solve ((x + 2y = 5, y - 2x = 0))</span><i>&emsp; system of equations, solve for x and y</i><br>
+<span onclick="cE2C (this)">solve ((a + b)x - b + 2, a, b)</span><i>&emsp; one equation relating two variables</i><br>
+<span onclick="cE2C (this)">solve ((a + b)x - b**2 + 2, a, b)</span><i>&emsp; non-linear</i><br>
 <br>
-a = x**2 + y -2<br>
-b = y**2 - 4<br>
-solve ([a, b])<i>&emsp; system of two non-linear</i><br>
-s = _<i>&emsp; store result</i><br>
-a.subs (s [0]), b.subs (s [0])<i>&emsp; check solutions</i><br>
-a.subs (s [1]), b.subs (s [1])<br>
-a.subs (s [2]), b.subs (s [2])<br>
-a.subs (s [3]), b.subs (s [3])<br>
-w = {x: 1, y: 2}<br>
-a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
+<span onclick="cE2C (this)">a, b = x**2 + y -2, y**2 - 4</span><br>
+<span onclick="cE2C (this)">solve ([a, b])</span><i>&emsp; system of two non-linear</i><br>
+<span onclick="cE2C (this)">s = _</span><i>&emsp; store result</i><br>
+<span onclick="cE2C (this)">a.subs (s [0]), b.subs (s [0])</span><i>&emsp; check solutions</i><br>
+<span onclick="cE2C (this)">a.subs (s [1]), b.subs (s [1])</span><br>
+<span onclick="cE2C (this)">a.subs (s [2]), b.subs (s [2])</span><br>
+<span onclick="cE2C (this)">a.subs (s [3]), b.subs (s [3])</span><br>
+<span onclick="cE2C (this)">w = {x: 1, y: 2}</span><br>
+<span onclick="cE2C (this)">a.subs (w), b.subs (w)</span><i>&emsp; test incorrect solution</i><br>
 <br>
 </p>
 
@@ -939,34 +941,34 @@ a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
 <p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/ode.html" target="_blank">Ordinary Differential Equations</a>.</p>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-dsolve (d**2/dx**2 ?(x) + 9?(x))<i>&emsp; using undefined functions directly</i><br>
-dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative of anonymous functrion since function of only one variable</i><br>
-dsolve (y(x)'' + 9y(x))<i>&emsp; or implicit named undefined function</i><br>
-y = y(x)<i>&emsp; define y variable as undefined function of one variable</i><br>
-dsolve (y'' + 9y)<i>&emsp; easiest like this</i><br>
-dsolve (sin x cos y + cos x sin y y')<br>
-dsolve (y' + 4/x * y = x**3 y**2)<br>
-dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})<i>&emsp; with initial condition</i><br>
-dsolve (cos y - y' * (x sin y - y**2))<i>&emsp; implicit solution</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">dsolve (d**2/dx**2 ?(x) + 9?(x))</span><i>&emsp; using undefined functions directly</i><br>
+<span onclick="cE2C (this)">dsolve (?(x)'' + 9?(x))</span><i>&emsp; quicker using prime derivative of anonymous functrion since function of only one variable</i><br>
+<span onclick="cE2C (this)">dsolve (y(x)'' + 9y(x))</span><i>&emsp; or implicit named undefined function</i><br>
+<span onclick="cE2C (this)">y = y(x)</span><i>&emsp; define y variable as undefined function of one variable</i><br>
+<span onclick="cE2C (this)">dsolve (y'' + 9y)</span><i>&emsp; easiest like this</i><br>
+<span onclick="cE2C (this)">dsolve (sin x cos y + cos x sin y y')</span><br>
+<span onclick="cE2C (this)">dsolve (y' + 4/x * y = x**3 y**2)</span><br>
+<span onclick="cE2C (this)">dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})</span><i>&emsp; with initial condition</i><br>
+<span onclick="cE2C (this)">dsolve (cos y - y' * (x sin y - y**2))</span><i>&emsp; implicit solution</i><br>
 <br>
 
-delall<i>&emsp; clean up and start again</i><br>
-y = y(x)<br>
-eq = y' + 4/x * y == x**3 y**2<i>&emsp; assign equality (equation) to "eq"</i><br>
-dsolve (eq, ics = {y(2): -1})<i>&emsp; solve with ics to avoid constant symbol which would throw off prime derivtion</i><br>
-sol = _.args [1]<i>&emsp; assign the right-hand part of the solution to "sol"</i><br>
-checkodesol (eq, sol, y)<i>&emsp; check the solution for the function "y" using the checkodesol () function</i><br>
-\. eq |_{y (x) = sol}<i>&emsp; check the solution by manually substituting it for the function "y (x)" in "eq"</i><br>
-y (x) = sol<i>&emsp; assign solution to a concrete lambda function</i><br>
-eq<i>&emsp; and check it by evaluating "eq"</i><br>
-y' + 4/x * y, x**3 y**2<i>&emsp; check by eye</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; clean up and start again</i><br>
+<span onclick="cE2C (this)">y = y(x)</span><br>
+<span onclick="cE2C (this)">eq = y' + 4/x * y == x**3 y**2</span><i>&emsp; assign equality (equation) to "eq"</i><br>
+<span onclick="cE2C (this)">dsolve (eq, ics = {y(2): -1})</span><i>&emsp; solve with ics to avoid constant symbol which would throw off prime derivtion</i><br>
+<span onclick="cE2C (this)">sol = _.args [1]</span><i>&emsp; assign the right-hand part of the solution to "sol"</i><br>
+<span onclick="cE2C (this)">checkodesol (eq, sol, y)</span><i>&emsp; check the solution for the function "y" using the checkodesol () function</i><br>
+<span onclick="cE2C (this)">\. eq |_{y (x) = sol}</span><i>&emsp; check the solution by manually substituting it for the function "y (x)" in "eq"</i><br>
+<span onclick="cE2C (this)">y (x) = sol</span><i>&emsp; assign solution to a concrete lambda function</i><br>
+<span onclick="cE2C (this)">eq</span><i>&emsp; and check it by evaluating "eq"</i><br>
+<span onclick="cE2C (this)">y' + 4/x * y, x**3 y**2</span><i>&emsp; check by eye</i><br>
 <br>
 
-delall<br>
-x, y = x(t), y(t)<i>&emsp; two distinct undefined functions</i><br>
-dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order with initial conditions</i><br>
-dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">x, y = x(t), y(t)</span><i>&emsp; two distinct undefined functions</i><br>
+<span onclick="cE2C (this)">dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</span><i>&emsp; second order with initial conditions</i><br>
+<span onclick="cE2C (this)">dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</span><i>&emsp; system of two equations</i><br>
 <br>
 </p>
 
@@ -975,207 +977,207 @@ dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i>
 <p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/pde.html" target="_blank">Partial Differential Equations</a>.</p>
 
 <p>
-delall<br>
-u, X, T = u (x, t), X (x), T (t)<i>&emsp; assign undefined functions</i><br>
-eq = (du / dx = e**u * du / dt)<i>&emsp; assign equation</i><br>
-pde_separate_add (eq, u, [X, T])<i>&emsp; separate equation into additive functions</i><br>
-u, Y = u (x, y), Y (y)<br>
-eq = d**2u / dx**2 == d**2u / dy**2<i>&emsp; assign equation using "=="</i><br>
-pde_separate_mul (eq, u, [X, Y])<i>&emsp; separate equation into multiplicative functions</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">u, X, T = u (x, t), X (x), T (t)</span><i>&emsp; assign undefined functions</i><br>
+<span onclick="cE2C (this)">eq = (du / dx = e**u * du / dt)</span><i>&emsp; assign equation</i><br>
+<span onclick="cE2C (this)">pde_separate_add (eq, u, [X, T])</span><i>&emsp; separate equation into additive functions</i><br>
+<span onclick="cE2C (this)">u, Y = u (x, y), Y (y)</span><br>
+<span onclick="cE2C (this)">eq = d**2u / dx**2 == d**2u / dy**2</span><i>&emsp; assign equation using "=="</i><br>
+<span onclick="cE2C (this)">pde_separate_mul (eq, u, [X, Y])</span><i>&emsp; separate equation into multiplicative functions</i><br>
 <br>
 
-eq = Eq (1 + 2 * {du/dx / u} + 3 * {du/dy / u})<i>&emsp; set equation using SymPy Eq()</i><br>
-pdsolve (eq)<i>&emsp; solve for u (x, y)</i><br>
-sol = _.args [1]<i>&emsp; assign right hand side of equation returned to "sol"ution</i><br>
-checkpdesol (eq, sol)<i>&emsp; check solution using SymPy checkpdesol ()</i><br>
-u (x, y) = sol<i>&emsp; assign solution to concrete lambda u (x, y)</i><br>
-eq<i>&emsp; evaluate equation with u (x, y) being set to the solution</i><br>
-simplify _<i>&emsp; simplify this since it comes back as a mess, will evaluate to True since eq = 0</i><br>
+<span onclick="cE2C (this)">eq = Eq (1 + 2 * {du/dx / u} + 3 * {du/dy / u})</span><i>&emsp; set equation using SymPy Eq()</i><br>
+<span onclick="cE2C (this)">pdsolve (eq)</span><i>&emsp; solve for u (x, y)</i><br>
+<span onclick="cE2C (this)">sol = _.args [1]</span><i>&emsp; assign right hand side of equation returned to "sol"ution</i><br>
+<span onclick="cE2C (this)">checkpdesol (eq, sol)</span><i>&emsp; check solution using SymPy checkpdesol ()</i><br>
+<span onclick="cE2C (this)">u (x, y) = sol</span><i>&emsp; assign solution to concrete lambda u (x, y)</i><br>
+<span onclick="cE2C (this)">eq</span><i>&emsp; evaluate equation with u (x, y) being set to the solution</i><br>
+<span onclick="cE2C (this)">simplify _</span><i>&emsp; simplify this since it comes back as a mess, will evaluate to True since eq = 0</i><br>
 <br>
 
-u = ?u (x, y)<i>&emsp; set "u" back to undefined function, need the "?" because u is currently a concrete lambda</i><br>
-eq = x * du/dx - y * du/dy + y**2u - y**2<i>&emsp; just set "eq" to an expression, don't even need the equality</i><br>
-pdsolve (eq)<br>
-v (x, y) = _.args [1]<i>&emsp; assign solution to a different function</i><br>
-eq<i>&emsp; original equation</i><br>
-\. eq |_{u (x, y) = v}<i>&emsp; equation with solution, need to specify the full function "u (x, y)" here</i><br>
-simplify _<i>&emsp; verify that it equals 0 with solution function</i><br>
-F (x) = e**x<i>&emsp; assign arbitrary function for undefined function in solution</i><br>
-\. eq |_{u (x, y) = v}<i>&emsp; see what the solution looks like with this function</i><br>
-simplify _<i>&emsp; and verify again that it zeroes out</i><br>
+<span onclick="cE2C (this)">u = ?u (x, y)</span><i>&emsp; set "u" back to undefined function, need the "?" because u is currently a concrete lambda</i><br>
+<span onclick="cE2C (this)">eq = x * du/dx - y * du/dy + y**2u - y**2</span><i>&emsp; just set "eq" to an expression, don't even need the equality</i><br>
+<span onclick="cE2C (this)">pdsolve (eq)</span><br>
+<span onclick="cE2C (this)">v (x, y) = _.args [1]</span><i>&emsp; assign solution to a different function</i><br>
+<span onclick="cE2C (this)">eq</span><i>&emsp; original equation</i><br>
+<span onclick="cE2C (this)">\. eq |_{u (x, y) = v}</span><i>&emsp; equation with solution, need to specify the full function "u (x, y)" here</i><br>
+<span onclick="cE2C (this)">simplify _</span><i>&emsp; verify that it equals 0 with solution function</i><br>
+<span onclick="cE2C (this)">F (x) = e**x</span><i>&emsp; assign arbitrary function for undefined function in solution</i><br>
+<span onclick="cE2C (this)">\. eq |_{u (x, y) = v}</span><i>&emsp; see what the solution looks like with this function</i><br>
+<span onclick="cE2C (this)">simplify _</span><i>&emsp; and verify again that it zeroes out</i><br>
 <br>
 </p>
 
-<h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>
+<span onclick="cE2C (this)"><h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</span><i>&emsp; (by "hand")</i></h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-m = \[[1, 2], [3, 4]]<br>
-l = m - lambda eye 2<br>
-l.det ()<br>
-solve _<i>&emsp; this will give the eigenvalues</i><br>
-a, b = _<i>&emsp; assign to vars</i><br>
-m.eigenvals ()<i>&emsp; verify eigenvalues</i><br>
-Subs (l, lambda, a) \[x, y]<br>
-solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
-\[_ [0] [x], y].subs (y, 1)<i>&emsp; first eigenvector for eigenvalue a</i><br>
-\. l |_{lambda = b} \[x, y]<i>&emsp; shorthand for substitution</i><br>
-solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
-\. \[_ [0] [x], y] |_{y = 1}<i>&emsp; second eigenvector for eigenvalue b</i><br>
-m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
-simplify _<i>&emsp; simplify result to easier see if it matches</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">m = \[[1, 2], [3, 4]]</span><br>
+<span onclick="cE2C (this)">l = m - lambda eye 2</span><br>
+<span onclick="cE2C (this)">l.det ()</span><br>
+<span onclick="cE2C (this)">solve _</span><i>&emsp; this will give the eigenvalues</i><br>
+<span onclick="cE2C (this)">a, b = _</span><i>&emsp; assign to vars</i><br>
+<span onclick="cE2C (this)">m.eigenvals ()</span><i>&emsp; verify eigenvalues</i><br>
+<span onclick="cE2C (this)">Subs (l, lambda, a) \[x, y]</span><br>
+<span onclick="cE2C (this)">solve (_ [0], _ [1], x, y)</span><i>&emsp; relation between x and y</i><br>
+<span onclick="cE2C (this)">\[_ [0] [x], y].subs (y, 1)</span><i>&emsp; first eigenvector for eigenvalue a</i><br>
+<span onclick="cE2C (this)">\. l |_{lambda = b} \[x, y]</span><i>&emsp; shorthand for substitution</i><br>
+<span onclick="cE2C (this)">solve (_ [0], _ [1], x, y)</span><i>&emsp; relation between x and y</i><br>
+<span onclick="cE2C (this)">\. \[_ [0] [x], y] |_{y = 1}</span><i>&emsp; second eigenvector for eigenvalue b</i><br>
+<span onclick="cE2C (this)">m.eigenvects ()</span><i>&emsp; verify eigenvectors</i><br>
+<span onclick="cE2C (this)">simplify _</span><i>&emsp; simplify result to easier see if it matches</i><br>
 <br>
 </p>
 
 <h4 id="Lambda Function Examples">Lambda Function Examples</h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-f = lambda x: x**2<i>&emsp; simple example of lambda which squares its argument</i><br>
-f (2)<br>
-f (x) = x**2<i>&emsp; differnt syntax to specify the same thing</i><br>
-f (3)<br>
-f (x, y) = sqrt (x**2 + y**2)<i>&emsp; function of two variables</i><br>
-f (3, 4)<br>
-f**2<i>&emsp; lambda functions can be used as expression in many contexts</i><br>
-df / dx<i>&emsp; take derivative</i><br>
-\int f dx<i>&emsp; integrate</i><br>
-\sum_{x = 0}^2 f<i>&emsp; when used as an expression the lambda's variables are mapped</i><br>
-(f)<i>&emsp; this is how you get the expression within a lambda</i><br>
-x, y = 3, 4<br>
-(f)<i>&emsp; variables are mapped to their current values</i><br>
-del (x, y)<br>
-(f)<i>&emsp; and now the lambda body is back</i><br>
-f (x) = x**3<br>
-f'<i>&emsp; only has one variable so can derivate like this</i><br>
-f' (3)<i>&emsp; can also "call" the derivative of a lambda</i><br>
-d**2f / dx**2 (3)<i>&emsp; also like this</i><br>
-d**2 / dx**2 (f) (3)<i>&emsp; and this</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">f = lambda x: x**2</span><i>&emsp; simple example of lambda which squares its argument</i><br>
+<span onclick="cE2C (this)">f (2)</span><br>
+<span onclick="cE2C (this)">f (x) = x**2</span><i>&emsp; differnt syntax to specify the same thing</i><br>
+<span onclick="cE2C (this)">f (3)</span><br>
+<span onclick="cE2C (this)">f (x, y) = sqrt (x**2 + y**2)</span><i>&emsp; function of two variables</i><br>
+<span onclick="cE2C (this)">f (3, 4)</span><br>
+<span onclick="cE2C (this)">f**2</span><i>&emsp; lambda functions can be used as expression in many contexts</i><br>
+<span onclick="cE2C (this)">df / dx</span><i>&emsp; take derivative</i><br>
+<span onclick="cE2C (this)">\int f dx</span><i>&emsp; integrate</i><br>
+<span onclick="cE2C (this)">\sum_{x = 0}^2 f</span><i>&emsp; when used as an expression the lambda's variables are mapped</i><br>
+<span onclick="cE2C (this)">(f)</span><i>&emsp; this is how you get the expression within a lambda</i><br>
+<span onclick="cE2C (this)">x, y = 3, 4</span><br>
+<span onclick="cE2C (this)">(f)</span><i>&emsp; variables are mapped to their current values</i><br>
+<span onclick="cE2C (this)">del (x, y)</span><br>
+<span onclick="cE2C (this)">(f)</span><i>&emsp; and now the lambda body is back</i><br>
+<span onclick="cE2C (this)">f (x) = x**3</span><br>
+<span onclick="cE2C (this)">f'</span><i>&emsp; only has one variable so can derivate like this</i><br>
+<span onclick="cE2C (this)">f' (3)</span><i>&emsp; can also "call" the derivative of a lambda</i><br>
+<span onclick="cE2C (this)">d**2f / dx**2 (3)</span><i>&emsp; also like this</i><br>
+<span onclick="cE2C (this)">d**2 / dx**2 (f) (3)</span><i>&emsp; and this</i><br>
 <br>
 
-f (x) = lambda y: sqrt (x**2 + y**2)<i>&emsp; lambda returning a lambda</i><br>
-f (3)<br>
-_ (4)<i>&emsp; call the lambda that was returned</i><br>
-f (3)<br>
-_ * (4)<i>&emsp; will be multiplied instead of called if using explicit multiply operator</i><br>
+<span onclick="cE2C (this)">f (x) = lambda y: sqrt (x**2 + y**2)</span><i>&emsp; lambda returning a lambda</i><br>
+<span onclick="cE2C (this)">f (3)</span><br>
+<span onclick="cE2C (this)">_ (4)</span><i>&emsp; call the lambda that was returned</i><br>
+<span onclick="cE2C (this)">f (3)</span><br>
+<span onclick="cE2C (this)">_ * (4)</span><i>&emsp; will be multiplied instead of called if using explicit multiply operator</i><br>
 <br>
 
-delall<i>&emsp; undefined functions can be used to avoid embedding body of target lambda in parent</i><br>
-g (x, y) = sqrt (f (x) + f (y))<i>&emsp; target lambda doesn't need to be defined ahead of time</i><br>
-g (3, 4)<i>&emsp; will return undefined functions</i><br>
-f (x) = x**2<i>&emsp; define the function</i><br>
-g (3, 4)<i>&emsp; now call out to concrete defined function</i><br>
-f (x) = x<i>&emsp; redefine the function to something else</i><br>
-g (3, 4)<i>&emsp; now we have a different result</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; undefined functions can be used to avoid embedding body of target lambda in parent</i><br>
+<span onclick="cE2C (this)">g (x, y) = sqrt (f (x) + f (y))</span><i>&emsp; target lambda doesn't need to be defined ahead of time</i><br>
+<span onclick="cE2C (this)">g (3, 4)</span><i>&emsp; will return undefined functions</i><br>
+<span onclick="cE2C (this)">f (x) = x**2</span><i>&emsp; define the function</i><br>
+<span onclick="cE2C (this)">g (3, 4)</span><i>&emsp; now call out to concrete defined function</i><br>
+<span onclick="cE2C (this)">f (x) = x</span><i>&emsp; redefine the function to something else</i><br>
+<span onclick="cE2C (this)">g (3, 4)</span><i>&emsp; now we have a different result</i><br>
 <br>
 
-delall<i>&emsp; @ no-remap pseudo-function</i><br>
-x, y, z = 3, 4, 5<i>&emsp; assign global variablesy</i><br>
-f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
-f (x, y) = sqrt (x**2 + y**2) + @z<i>&emsp; do not bind global variable</i><br>
-f (x) = x**2<br>
-f (x) = @x**2<i>&emsp; use global value of x</i><br>
-f (x) = y**2<i>&emsp; binds global value of y into lambda since it is not a lambda variable</i><br>
-f (2)<i>&emsp; doesn't matter what you pass, f(x) is set to equal 16</i><br>
-f (x) = @y**2<i>&emsp; go up one more scope above global and use pure y variable</i><br>
-f (2)<i>&emsp; still get 16 because global y = 4</i><br>
-y = 6<i>&emsp; change global y</i><br>
-f (2)<i>&emsp; global y = 6 so y**2 = 36</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; @ no-remap pseudo-function</i><br>
+<span onclick="cE2C (this)">x, y, z = 3, 4, 5</span><i>&emsp; assign global variablesy</i><br>
+<span onclick="cE2C (this)">f (x, y) = sqrt (x**2 + y**2) + z</span><i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
+<span onclick="cE2C (this)">f (x, y) = sqrt (x**2 + y**2) + @z</span><i>&emsp; do not bind global variable</i><br>
+<span onclick="cE2C (this)">f (x) = x**2</span><br>
+<span onclick="cE2C (this)">f (x) = @x**2</span><i>&emsp; use global value of x</i><br>
+<span onclick="cE2C (this)">f (x) = y**2</span><i>&emsp; binds global value of y into lambda since it is not a lambda variable</i><br>
+<span onclick="cE2C (this)">f (2)</span><i>&emsp; doesn't matter what you pass, f(x) is set to equal 16</i><br>
+<span onclick="cE2C (this)">f (x) = @y**2</span><i>&emsp; go up one more scope above global and use pure y variable</i><br>
+<span onclick="cE2C (this)">f (2)</span><i>&emsp; still get 16 because global y = 4</i><br>
+<span onclick="cE2C (this)">y = 6</span><i>&emsp; change global y</i><br>
+<span onclick="cE2C (this)">f (2)</span><i>&emsp; global y = 6 so y**2 = 36</i><br>
 <br>
 
-delall<i>&emsp; % no-evaluate pseudo-function forcees "doit()" on lambda body</i><br>
-f (x) = \int x dx<i>&emsp; normally integral, limits, derivatives and things like that are not evaluated on lambda definition</i><br>
-f (sin x)<i>&emsp; only on execution</i><br>
-f (x) = %(\int x dx)<i>&emsp; force evaluation of integral and store result in lambda definition, the % only works this way at the top level of the lambda body</i><br>
-f (sin x)<i>&emsp; different result since integral was already evaluated</i><br>
-f (sin y)<i>&emsp; this is as expected</i><br>
-f (x) = \int x dx<i>&emsp; going back to the unevaluated integral</i><br>
-f (sin x)<i>&emsp; as expected</i><br>
-f (sin y)<i>&emsp; different, the differential is only changed to dy if the argument is a pure variable, if not then the original dx is used</i><br>
-\int sin y dx<i>&emsp; which results in this expression</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; % no-evaluate pseudo-function forcees "doit()" on lambda body</i><br>
+<span onclick="cE2C (this)">f (x) = \int x dx</span><i>&emsp; normally integral, limits, derivatives and things like that are not evaluated on lambda definition</i><br>
+<span onclick="cE2C (this)">f (sin x)</span><i>&emsp; only on execution</i><br>
+<span onclick="cE2C (this)">f (x) = %(\int x dx)</span><i>&emsp; force evaluation of integral and store result in lambda definition, the % only works this way at the top level of the lambda body</i><br>
+<span onclick="cE2C (this)">f (sin x)</span><i>&emsp; different result since integral was already evaluated</i><br>
+<span onclick="cE2C (this)">f (sin y)</span><i>&emsp; this is as expected</i><br>
+<span onclick="cE2C (this)">f (x) = \int x dx</span><i>&emsp; going back to the unevaluated integral</i><br>
+<span onclick="cE2C (this)">f (sin x)</span><i>&emsp; as expected</i><br>
+<span onclick="cE2C (this)">f (sin y)</span><i>&emsp; different, the differential is only changed to dy if the argument is a pure variable, if not then the original dx is used</i><br>
+<span onclick="cE2C (this)">\int sin y dx</span><i>&emsp; which results in this expression</i><br>
 <br>
 </p>
 
 <h4 id="Pseudo-Function Examples">Pseudo-Function Examples</h4>
 
 <p>
-delall<br>
-1 + 2<i>&emsp; evaluated</i><br>
-%(1 + 2)<i>&emsp; unevaluated</i><br>
-_<i>&emsp; evaluated</i><br>
-x, y = 1, 2<br>
-x + y<i>&emsp; evaluated</i><br>
-%(x + y)<i>&emsp; unevaluated but remapped</i><br>
-%@(x + y)<i>&emsp; unevaluated and not remapped</i><br>
-@(x + y)<i>&emsp; not remapped and thus unevaluated</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">1 + 2</span><i>&emsp; evaluated</i><br>
+<span onclick="cE2C (this)">%(1 + 2)</span><i>&emsp; unevaluated</i><br>
+<span onclick="cE2C (this)">_</span><i>&emsp; evaluated</i><br>
+<span onclick="cE2C (this)">x, y = 1, 2</span><br>
+<span onclick="cE2C (this)">x + y</span><i>&emsp; evaluated</i><br>
+<span onclick="cE2C (this)">%(x + y)</span><i>&emsp; unevaluated but remapped</i><br>
+<span onclick="cE2C (this)">%@(x + y)</span><i>&emsp; unevaluated and not remapped</i><br>
+<span onclick="cE2C (this)">@(x + y)</span><i>&emsp; not remapped and thus unevaluated</i><br>
 <br>
 
-delall<br>
-x<i>&emsp; just a happy little "x"</i><br>
-x = 2<br>
-x<i>&emsp; now the "x" has value</i><br>
-@x<i>&emsp; no-remap removes that value</i><br>
-lambda x: x<i>&emsp; local variable "x" as expected, not global</i><br>
-lambda x: @x<i>&emsp; now the global value of "x"</i><br>
-lambda x: @@x<i>&emsp; back to "x" and will take on the value of the local "x" since we stepped out beyond the global scope</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">x</span><i>&emsp; just a happy little "x"</i><br>
+<span onclick="cE2C (this)">x = 2</span><br>
+<span onclick="cE2C (this)">x</span><i>&emsp; now the "x" has value</i><br>
+<span onclick="cE2C (this)">@x</span><i>&emsp; no-remap removes that value</i><br>
+<span onclick="cE2C (this)">lambda x: x</span><i>&emsp; local variable "x" as expected, not global</i><br>
+<span onclick="cE2C (this)">lambda x: @x</span><i>&emsp; now the global value of "x"</i><br>
+<span onclick="cE2C (this)">lambda x: @@x</span><i>&emsp; back to "x" and will take on the value of the local "x" since we stepped out beyond the global scope</i><br>
 <br>
 
-delall<br>
-lambda x: \int x + 1 + 2 dx<i>&emsp; body is evaluated but not "doit()"ed</i><br>
-lambda x: %(\int x + 1 + 2 dx)<i>&emsp; body is evaluated and "doit()"ed</i><br>
-lambda x: %%(\int x + 1 + 2 dx)<i>&emsp; body is fully unevaluated</i><br>
-lambda x: %%(\int x + y + y dx)<i>&emsp; same</i><br>
-y = 2<br>
-lambda x: %%(\int x + y + y dx)<i>&emsp; however, variables are mapped</i><br>
-lambda x: %%@(\int x + y + y dx)<i>&emsp; now they are not</i><br>
-lambda x: %%(\int x + @y + y dx)<i>&emsp; now just one variable is mapped</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">lambda x: \int x + 1 + 2 dx</span><i>&emsp; body is evaluated but not "doit()"ed</i><br>
+<span onclick="cE2C (this)">lambda x: %(\int x + 1 + 2 dx)</span><i>&emsp; body is evaluated and "doit()"ed</i><br>
+<span onclick="cE2C (this)">lambda x: %%(\int x + 1 + 2 dx)</span><i>&emsp; body is fully unevaluated</i><br>
+<span onclick="cE2C (this)">lambda x: %%(\int x + y + y dx)</span><i>&emsp; same</i><br>
+<span onclick="cE2C (this)">y = 2</span><br>
+<span onclick="cE2C (this)">lambda x: %%(\int x + y + y dx)</span><i>&emsp; however, variables are mapped</i><br>
+<span onclick="cE2C (this)">lambda x: %%@(\int x + y + y dx)</span><i>&emsp; now they are not</i><br>
+<span onclick="cE2C (this)">lambda x: %%(\int x + @y + y dx)</span><i>&emsp; now just one variable is mapped</i><br>
 <br>
 </p>
 
 <h4 id="Last Expression Variable">Last Expression Variable</h4>
 
 <p>
-1<i>&emsp; "evaluate" 1 to set the last expression variable "_" to this</i><br>
-expand (_(x+1))<br>
-expand (_(x+1))<i>&emsp; or press the up arrow</i><br>
-expand (_(x+1))<i>&emsp; ...</i><br>
+<span onclick="cE2C (this)">1</span><i>&emsp; "evaluate" 1 to set the last expression variable "_" to this</i><br>
+<span onclick="cE2C (this)">expand (_(x+1))</span><br>
+<span onclick="cE2C (this)">expand (_(x+1))</span><i>&emsp; or press the up arrow</i><br>
+<span onclick="cE2C (this)">expand (_(x+1))</span><i>&emsp; ...</i><br>
 <br>
-1, 1<i>&emsp; again, set initial values</i><br>
-_[1], _[0] + _[1]<br>
-_[1], _[0] + _[1]<i>&emsp; or press the up arrow</i><br>
-_[1], _[0] + _[1]<br>
-_[1], _[0] + _[1]<i>&emsp; notice a pattern?</i><br>
+<span onclick="cE2C (this)">1, 1</span><i>&emsp; again, set initial values</i><br>
+<span onclick="cE2C (this)">_[1], _[0] + _[1]</span><br>
+<span onclick="cE2C (this)">_[1], _[0] + _[1]</span><i>&emsp; or press the up arrow</i><br>
+<span onclick="cE2C (this)">_[1], _[0] + _[1]</span><br>
+<span onclick="cE2C (this)">_[1], _[0] + _[1]</span><i>&emsp; notice a pattern?</i><br>
 <br>
 </p>
 
 <h4 id="Plotting Functions">Plotting Functions</h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-plotf (2, x**2)<i>&emsp; plot expression directly</i><br>
-f = x**2<br>
-plotf (2, f)<i>&emsp; plot expression from assigned variable</i><br>
-plotf (2, lambda x: x**2)<i>&emsp; plot lambda function directly</i><br>
-l = lambda x: x**2<br>
-plotf (2, l)<i>&emsp; plot lambda function from variable</i><br>
-plotf (2, lambda x: l (x - 1))<i>&emsp; plot lambda function from variable modifying the argument</i><br>
-plotf (2, f if x &lt; 0, 'r', f if x >= 0, 'g')<i>&emsp; different colors on either side of x = 0</i><br>
-plotf ('+', 2 if l (x) &lt; 2)<i>&emsp; add to previous plot</i><br>
-plotf ('+', 2, -4, 4, -x**2)<br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">plotf (2, x**2)</span><i>&emsp; plot expression directly</i><br>
+<span onclick="cE2C (this)">f = x**2</span><br>
+<span onclick="cE2C (this)">plotf (2, f)</span><i>&emsp; plot expression from assigned variable</i><br>
+<span onclick="cE2C (this)">plotf (2, lambda x: x**2)</span><i>&emsp; plot lambda function directly</i><br>
+<span onclick="cE2C (this)">l = lambda x: x**2</span><br>
+<span onclick="cE2C (this)">plotf (2, l)</span><i>&emsp; plot lambda function from variable</i><br>
+<span onclick="cE2C (this)">plotf (2, lambda x: l (x - 1))</span><i>&emsp; plot lambda function from variable modifying the argument</i><br>
+<span onclick="cE2C (this)">plotf (2, f if x &lt; 0, 'r', f if x >= 0, 'g')</span><i>&emsp; different colors on either side of x = 0</i><br>
+<span onclick="cE2C (this)">plotf ('+', 2 if l (x) &lt; 2)</span><i>&emsp; add to previous plot</i><br>
+<span onclick="cE2C (this)">plotf ('+', 2, -4, 4, -x**2)</span><br>
 <br>
 </p>
 
 <h4 id="Plotting Vector Walks">Plotting Vector Walks</h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-f = lambda x, y: (2x + sec**2x) / 2y<br>
-plotv (6, -6, 6, f, fs = -8, res = 33)<i>&emsp;plot vector field</i><br>
-plotw ('+', f, (-1, 0))<i>&emsp;add first walk starting at point (-1, 0)</i><br>
-plotw ('+', f, (-2, 0))<br>
-plotw ('+', f, (-3, 0))<br>
-plotw ('+', f, (-4, 0))<br>
-plotw ('+', f, (-5, 0))<br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">f = lambda x, y: (2x + sec**2x) / 2y</span><br>
+<span onclick="cE2C (this)">plotv (6, -6, 6, f, fs = -8, res = 33)</span><i>&emsp;plot vector field</i><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-1, 0))</span><i>&emsp;add first walk starting at point (-1, 0)</i><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-2, 0))</span><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-3, 0))</span><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-4, 0))</span><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-5, 0))</span><br>
 <br>
 </p>
 

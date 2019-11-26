@@ -7,6 +7,7 @@
 URL              = '/';
 WaitIcon         = '/wait.webp'; // 'https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp';
 
+JQInput          = null;
 MJQueue          = null;
 MarginTop        = Infinity;
 PreventFocusOut  = true;
@@ -171,7 +172,15 @@ function writeToClipboard (text) {
 
 	PreventFocusOut = true;
 
-	JQInput.focus ();
+	if (JQInput !== null) {
+		JQInput.focus ();
+	}
+}
+
+//...............................................................................................
+function cE2C (e) {
+	writeToClipboard (e.textContent);
+	flashElement (e);
 }
 
 //...............................................................................................

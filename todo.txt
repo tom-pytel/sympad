@@ -8,7 +8,6 @@
 
 > subs autocomplete
 
-> (f) of lambda does not bind global variables, should it? if it won't need to change lambda section of help.
 > next (t) (2) at end of iterator t gives IndexError instead of StopIteration
 
 > extend mapback to symbols?
@@ -294,50 +293,44 @@ Errors:
 -------
 
 
-'integer_log', 'init_session', 'interactive_traversal', 'loggamma', 'ordered', 'not_empty_in', 'sqrtdenest', 'ord', 'interpolate', 'sqrt_mod', 'inverse_hankel_transform', 'inverse_sine_transform', 'intersection', 'logcombine', 'int', 'inverse_mobius_transform', 'integer_nthroot', 'inverse_fourier_transform', 'intervals', 'interpolating_poly', 'sqrt_mod_iter', 'inverse_laplace_transform', 'intersecting_product', 'inverse_cosine_transform', 'interpolating_spline', 'invert', 'integrate', 'inv_quick', 'intt', 'inverse_mellin_transform', init_printing
-
-int
-intt
-
-integer_log
-integer_nthroot
-
-integrate
-
-interpolate
-
-interpolating_poly
-interpolating_spline
-
-intersecting_product
-intersection
-
-intervals
-
-inv_quick
-
-inverse_cosine_transform
-inverse_fourier_transform
-inverse_hankel_transform
-inverse_laplace_transform
-inverse_mellin_transform
-inverse_mobius_transform
-inverse_sine_transform
-
-invert
-
-logcombine
-loggamma
-not_empty_in
-ordered
-sqrt_mod
-sqrt_mod_iter
-sqrtdenest
-
-
 Quick Mode
+
 text: \[[9.08830^1 e-100.LRPl().qtXX().ojbKXNA||-\int a dm20^1 e-100.LRPl().qtXX().ojbKXNA||-\int a dm9S,],]
 ast:  ('-mat', ((('||', (('+', (('*', (('^', ('#', '9.08830'), ('#', '1')), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')))))), ('+', (('*', (('-', ('^', ('-intg', ('@', 'a'), ('@', 'dm20')), ('#', '1'))), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')))))), ('*', (('-', ('-intg', ('@', 'a'), ('@', 'dm9'))), ('@', 'S'))))),),))
 ast:  ('-mat', ((('||', (('+', (('*', (('^', ('#', '9.08830'), ('#', '1')), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')), {1})))), ('+', (('*', (('-', ('^', ('(', ('-intg', ('@', 'a'), ('@', 'dm20'))), ('#', '1'))), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')), {1})))), ('-', ('*', (('-intg', ('@', 'a'), ('@', 'dm9')), ('@', 'S')), {1})))),),))
 tex1: \begin{bmatrix} 9.08830^1 e - 100. \cdot L\ R\ P\ l\left( \right).\operatorname{qtXX}\left( \right).ojbKXNA \cup -\left(\int a \ dm_{20} \right)^1 e - 100. \cdot L\ R\ P\ l\left( \right).\operatorname{qtXX}\left( \right).ojbKXNA \cup -\int a \ dm_{9} \cdot S \end{bmatrix}
 tex2: \begin{bmatrix} 9.08830^1 e - 100. \cdot L\ R\ P\ l\left( \right).\operatorname{qtXX}\left( \right).ojbKXNA \cup -\left(\int a \ dm_{20} \right)^1 e - 100. \cdot L\ R\ P\ l\left( \right).\operatorname{qtXX}\left( \right).ojbKXNA \cup -{\int a \ dm_{9} \cdot S} \end{bmatrix}
+
+
+text: h(r(r eal=True)True)()
+ast:  ('*', (('@', 'h'), ('(', ('*', (('-ufunc', 'r', (), (('real', ('@', 'True')),)), ('@', 'True')))), ('(', (',', ()))))
+ast:  ('*', (('@', 'h'), ('(', ('*', (('@', 'r'), ('(', ('=', ('*', (('-func', 're', (('@', 'a'),)), ('@', 'l'))), ('@', 'True'))), ('@', 'True')))), ('(', (',', ()))))
+tex1: {h}\left(r\left(real = True \right) True \right) \left( \right)
+tex2: {h}\left({r}\left(\Re{\left(a \right)} l = True \right) True \right) \left( \right)
+
+
+text: ?h(r eal=True,coh(r eal=True,commutative=True)(x,y,z)utative=True)(x,y,z)(0,1,2)
+ast:  ('*', (('-ufunc', '?h', (('=', ('*', (('@', 'r'), ('@', 'e'), ('@', 'a'), ('@', 'l'))), ('@', 'True')), ('=', ('*', (('@', 'c'), ('@', 'o'), ('-ufunc', 'h', (), (('commutative', ('@', 'True')), ('real', ('@', 'True')))), ('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('@', 'u'), ('@', 't'), ('@', 'a'), ('@', 't'), ('@', 'i'), ('@', 'v'), ('@', 'e'))), ('@', 'True')))), ('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('(', (',', (('#', '0'), ('#', '1'), ('#', '2'))))))
+ast:  ('*', (('-ufunc', '?h', (('=', ('*', (('@', 'r'), ('@', 'e'), ('@', 'a'), ('@', 'l'))), ('@', 'True')), ('=', ('*', (('@', 'c'), ('@', 'o'), ('@', 'h'), ('(', (',', (('=', ('*', (('@', 'c'), ('@', 'o'), ('@', 'm'), ('@', 'mu'), ('@', 't'), ('@', 'a'), ('@', 't'), ('@', 'i'), ('@', 'v'), ('@', 'e'))), ('@', 'True')), ('=', ('*', (('-func', 're', (('@', 'a'),)), ('@', 'l'))), ('@', 'True'))))), ('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('@', 'u'), ('@', 't'), ('@', 'a'), ('@', 't'), ('@', 'i'), ('@', 'v'), ('@', 'e'))), ('@', 'True')))), ('(', (',', (('@', 'x'), ('@', 'y'), ('@', 'z')))), ('(', (',', (('#', '0'), ('#', '1'), ('#', '2'))))))
+tex1: {?h\left(r\ e\ a\ l = True, c\ o\ {h\left(commutative = True, real = True \right)}\left(x, y, z \right) u\ t\ a\ t\ i\ v\ e = True \right)}\left(x, y, z \right) \left(0, 1, 2 \right)
+tex2: {?h\left(r\ e\ a\ l = True, c\ o\ {h}\left(c\ o\ m\ \mu\ t\ a\ t\ i\ v\ e = True, \Re{\left(a \right)} l = True \right) \left(x, y, z \right) u\ t\ a\ t\ i\ v\ e = True \right)}\left(x, y, z \right) \left(0, 1, 2 \right)
+
+
+text: ?(x,y,r eal=e)(0,1)
+ast:  ('*', (('-ufunc', '?', (('@', 'x'), ('@', 'y')), (('real', ('@', 'e')),)), ('(', (',', (('#', '0'), ('#', '1'))))))
+ast:  ('*', (('-ufunc', '?', (('@', 'x'), ('@', 'y'), ('=', ('*', (('-func', 're', (('@', 'a'),)), ('@', 'l'))), ('@', 'e')))), ('(', (',', (('#', '0'), ('#', '1'))))))
+tex1: {?\left(x, y, real = e \right)}\left(0, 1 \right)
+tex2: {?\left(x, y, \Re{\left(a \right)} l = e \right)}\left(0, 1 \right)
+
+
+text: d**2/dzdydz?h(r eal=True,)
+ast:  ('-diff', ('*', (('@', 'dz'), ('-ufunc', '?h', (), (('real', ('@', 'True')),)))), 'd', (('z', 1), ('y', 1)))
+ast:  ('-diff', ('(', ('*', (('@', 'dz'), ('@', 'h'), ('(', ('=', ('*', (('-func', 're', (('@', 'a'),)), ('@', 'l'))), ('@', 'True')))))), 'partial', (('z', 1), ('y', 1)))
+tex1: \frac{\partial^2}{\partial z \partial y}\left(dz\ h\left(real = True \right) \right)
+tex2: \frac{\partial^2}{\partial z \partial y}\left(dz\ {h}\left(\Re{\left(a \right)} l = True \right) \right)
+
+
+text: \[notintt((\partialx)),not-1.31=\emptyset.lyTD0S1I.FoVz,\partial'''^^1=Vz,\partial'''^^1=oo,]!
+ast:  ('!', ('-mat', ((('-not', ('-func', 'intt', (('(', ('@', 'partialx')),))),), (('=', ('-not', ('#', '-1.31')), ('.', ('.', ('-set', ()), 'lyTD0S1I'), 'FoVz')),), (('=', ('^^', (('-diffp', ('@', 'partial'), 3), ('#', '1'))), ('*', (('@', 'V'), ('@', 'z')))),), (('=', ('^^', (('-diffp', ('@', 'partial'), 3), ('#', '1'))), ('@', 'oo')),))))
+nat1: \[not intt((partialx)), not -1.31 = \{}.lyTD0S1I.FoVz, partial''' ^^ 1 = V z, partial''' ^^ 1 = oo]!
+parse ()

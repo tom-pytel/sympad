@@ -17,7 +17,7 @@ i {
 
 #Clipboard {
 	position: fixed;
-	bottom: 0;
+	bottom: -2em;
 	color: transparent;
 	border: 0px;
 }
@@ -217,4 +217,8 @@ table.HelpTable td {
 
 table.HelpTable tr td:first-child {
 	white-space: nowrap;
+}
+
+p span:hover {
+	color: gray;
 }
