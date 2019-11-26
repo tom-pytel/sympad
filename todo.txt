@@ -1,3 +1,6 @@
+> (f) of lambda does not bind global variables, should it? if it won't need to change lambda section of help.
+> next (t) (2) at end of iterator t gives IndexError instead of StopIteration
+
 > \. ?F (x, 0)' |_{x = 0} -> \. ?F (x, y) |_{x = 0, y = 0}
 
 > extend mapback to symbols?
@@ -51,18 +54,14 @@
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
 
-> doc: new lambda undefined function behavior
-> doc: new lambda as expression behavior (only when mapped from var)
-> doc: ufuncs
 > doc: parentheses create implicit undefined functions
-> doc: give anonymous ufuncs name of var on assignment to var
 > doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
 
 > doc: scoping behavior of @, not dynamic
 > doc: % no-eval pseudo-func better
 
 > doc: quick mode variables can have numerical tails as subscripts
-> doc: caveats with variable mapping and functions like Integral, Sum due to their unfree vars being remapped
+> doc: caveats with variable mapping and functions like integrate, summation due to their unfree vars being remapped
 > doc: new == vs. = display behavior
 > doc: change to binding priority - sin**f(x) - sin**a.b(x) - sin**a.b{x}
 > doc: new integration behavior

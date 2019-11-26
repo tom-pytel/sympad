@@ -148,12 +148,9 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers, s
 			return spt.__class__ (_subs (a, subs) for a in spt)
 
 	elif isinstance (spt, sp.Derivative) and isinstance (spt.args [0], sp_AppliedUndef): # do not subs derivative of appliedundef (d/dx (f (x, y))) to preserve info about variables
-		vars = set (spt.args [0].args)
-		subs = list (zip (*filter (lambda sd: sd [0] in vars, subs)))
-
-		if subs:
-			spt      = sp.Subs (spt, *subs)
-			spt.doit = lambda self = spt, *args, **kw: self # disable doit because loses information
+		vars     = set (spt.args [0].args)
+		spt      = sp.Subs (spt, *zip (*filter (lambda sd: sd [0] in vars, subs)))
+		spt.doit = lambda self = spt, *args, **kw: self # disable doit because loses information
 
 	else:
 		try:
@@ -166,20 +163,6 @@ def _subs (spt, subs): # extend sympy .subs() into standard python containers, s
 			pass
 
 	return spt
-
-# def _dsolve (*args, **kw):
-# 	ast = spt2ast (sp.dsolve (*args, **kw))
-
-# 	if ast.is_brack:
-# 		ast = AST ('[', tuple (AST ('=', a.lhs, a.cmp [0] [1]) if a.cmp.len == 1 and a.cmp [0] [0] == '==' else a for a in ast.brack))
-
-# 	elif ast.is_cmp:
-# 		if ast.cmp.len == 1 and ast.cmp [0] [0] == '==': # convert equality to assignment
-# 			ast = AST ('=', ast.lhs, ast.cmp [0] [1])
-
-# 	return NoEval (ast) # never automatically simplify dsolve
-
-# 	return ast
 
 def _Mul (*args):
 	itr = iter (args)
@@ -1324,7 +1307,7 @@ class ast2py: # abstract syntax tree -> Python code text
 # Potentially bad __builtins__: eval, exec, globals, locals, vars, setattr, delattr, exit, help, input, license, open, quit, __import__
 _builtins_dict         = __builtins__ if isinstance (__builtins__, dict) else __builtins__.__dict__
 _ast2spt_func_builtins = dict (no for no in filter (lambda no: no [1], ((n, _builtins_dict.get (n)) for n in AST.Func.BUILTINS)))
-_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify}#, 'dsolve': _dsolve}
+_ast2spt_pyfuncs       = {**_ast2spt_func_builtins, **sp.__dict__, 'simplify': _simplify}
 
 class ast2spt: # abstract syntax tree -> sympy tree (expression)
 	_SYMPY_FLOAT_PRECISION = None

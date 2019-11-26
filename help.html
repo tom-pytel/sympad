@@ -144,8 +144,9 @@ f (x, y) = sqrt (x**2 + y**2)<i>&emsp; assign functions intuitively</i><br>
 f (3, 4)<i>&emsp; and then call them</i><br>
 solve (x**2 + y = 4, x)<i>&emsp; solve equations</i><br>
 dsolve (y(x)'' + 9y(x))<i>&emsp; differential equations</i><br>
-y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t})<i>&emsp; using prime notation</i><br>
-simplify (not (not a and not b))<i>&emsp; simplify complicated logic</i><br>
+y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y<i>&emsp; using prime notation</i><br>
+pdsolve (x * d/dx u (x, y) - y * d/dy u (x, y) + y**2u (x, y) - y**2)<i>&emsp; partial differential equations</i><br>
+simplify (not (not a and not b) and not (not a or not c))<i>&emsp; simplify complicated logic</i><br>
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<i>&emsp; set operations</i><br>
 plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<i>&emsp; plotting (if you have matplotlib installed)</i><br>
 </p><p>
@@ -299,12 +300,12 @@ This extra information comes in the form of SymPy assumptions which allow you to
 To create a symbol with this extra information use the "<b>$</b>" symbol pseudo-function, the format is "<b>$name (assumption = True | False | None)</b>", so for example a variable "<b>x</b>" known to be real would be created as "<b>$x (real = True)</b>".
 The name part of a "<b>$name (...)</b>" symbol is optional and you can use anonymous symbols without any problems.
 The SymPy assumption model works on fuzzy boolean logic where "<b>True</b>" means that the assumption is true, "<b>False</b>" means that it is false and "<b>None</b>" means that it is unknown whether the assumption is true or false.
-It is the true and false values for the assumptions which can simplify calculations or even make them possible whereas they would not be so if the information was not provided.
+It is the true and false values for the assumptions which can simplify calculations or even make them possible whereas they would not normally be so if the information were not provided.
 </p><p>
 To get an idea for how the assumptions operate try entering "<b>$(negative = True) &lt; 0</b>" and see what you get, this is "<b>True</b>" because all negative numbers are smaller than "<b>0</b>".
 The only assumption that is made for default symbols which are created is "<b>commutative = True</b>", but of course you can create a symbol where this is false, though it can not be unknown.
 It is not convenient to have to type all this every time you reference a symbol in an expression so of course these symbols may be assigned to variables, even variables of the same name (where normally this is disallowed).
-In fact for the sake of sanity it is suggested that you assign "<b>$</b>" symbols the same name as the variable you assign them to, though this is not enforced and you can even reassign them from one variable to another.
+In fact for the sake of sanity it is suggested that you give "<b>$</b>" symbols the same name as the variable you assign them to, though this is not enforced and you can even reassign them from one variable to another.
 Thus if you do "<b>x = $x (real = True)</b>" then from that point on any time you use the "<b>x</b>" variable in an expression it will be assumed to be real until you delete the variable.
 As a convenience any time you assign an anonymous symbol "<b>$(something = True)</b>" to a variable then the symbol will take on the name of the variable you are assigning it to.
 </p><p>
@@ -571,12 +572,12 @@ Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>"
 <h4 id="Lambda Functions">Lambda Functions</h4>
 
 <p>
-User created lambda functions are supported and are defined in the same way as Python lambdas - "<b>lambda x, y: sqrt (x**2 + y**2)</b>" or via the SymPy "<b>Lambda</b>" function like "<b>Lambda ((x, y), sqrt (x**2 + y**2))</b>", but only the Pythonic "<b>lambda</b>" definition syntax guarantees that the lambda's own private variables are not mapped to any global assigned variables.
+User created lambda functions are supported and are defined in the same way as Python lambdas - "<b>lambda x, y: sqrt (x**2 + y**2)</b>" or via the SymPy "<b>Lambda</b>" function like "<b>Lambda ((x, y), sqrt (x**2 + y**2))</b>".
 These functions can be defined on-the-fly in a call to a SymPy function for use within that function or they can be assigned to a variable to make them usable in SymPad.
 You can assign them to a variable like "<b>f = lambda x: x**2</b>", or with the alternative shorthand "<b>f (x) = x**2</b>", now when you call "<b>f (3)</b>" you will get "<b>9</b>" as the result.
 </p><p>
-When a lambda function is defined any non-private lambda variables in the body of the lambda are mapped to their global values and no expressions "<b>doit ()</b>"-ed, this means that if a lambda references an assigned global variable the variable will be replaced with its value within the lambda definition.
-If you do not want to use the value of a global variable in a lambda definition but rather have the value bound upon execution of the lambda then use the "<b>@</b>" pseudo-function when referencing that variable as such "<b>f = lambda: @x</b>", this will leave the lambda definition referencing an "<b>x</b>" variable which will be bound upon execution.
+When a lambda function is defined any non-private lambda variables in the body of the lambda are mapped to their global values and no expressions are "<b>doit ()</b>"-ed, this means that if a lambda references an assigned global variable the variable will be replaced with its value within the lambda definition.
+If you do not want to bind the value of a global variable in a lambda definition but rather have the value retrieved upon execution of the lambda then use the "<b>@</b>" pseudo-function when referencing that variable as such "<b>f = lambda: @x</b>", this will leave the lambda definition referencing an "<b>x</b>" variable which will be bound upon execution.
 </p><p>
 Since lambda definitions do not have "<b>.doit()</b>" executed by default, this also means that if you create a lambda like "<b>f = lambda x: \int x dx</b>", the integral will not be evaluated until the lambda is executed, since that is one of the operations that is not evaluated unless a "<b>doit ()</b>" is called.
 In this case, whatever is passed in for the "<b>x</b>" variable upon evaluation will attempt to convert the "<b>dx</b>" to its own differential, and if that "<b>x</b>" variable resolves to a pure variable like "<b>y</b>" and not an expression then the "<b>dx</b>" will be changed to a "<b>dy</b>", otherwise the integration is done with respect to the original "<b>dx</b>".
@@ -584,34 +585,44 @@ This does not apply if you use the lowercase SymPy functions like "<b>integrate 
 </p><p>
 Lambdas may be passed to SymPy and other Python functions and they will be passed as SymPy "<b>Lambda</b>" objects.
 Lambda functions may reference other lambda functions as long as those are defined at the time of creation and will normally map be body of the target lambda into itself.
+They may also use undefined functions in the body which, if a lambda is defined at the time of execution with the same name, will attempt to call that lambda, otherwise they will just be evaluated as undefined functions.
 This is done on purpose because outside of SymPad "<b>Lambda</b>" objects can not reference other "<b>Lambda</b>" objects indirectly and thus these lambdas would not work if passed on to a SymPy function.
 Lambdas can be called directly as in "<b>{lambda x: x**2} (3)</b>".
 Lambda recursion is not supported because there is no underlying mechanism to make it work with SymPy "<b>Lambda</b>" objects.
+</p><p>
 Lambda functions can be used as expressions in most contexts, this means that the body of the function is used directly in a calculation with the variables being mapped to their global values.
-They can also be called after differentiating the lambda, something with makes working with differential equations easier.
+Specifically, lambdas are treated as expressions if they are not enclosed in parentheses, brackets, tuples, sets or dictionaries or if they are part of an argument list to a function call.
+If you want the lambda treated as an expression in these contexts then wrap it in parentheses.
+Note that this only applies to lambdas assigned to and accessed through variables, lambdas declared directly are always treated as lambdas.
+</p><p>
+Lambdas can also be called after differentiating the lambda, something with makes working with differential equations easier since you can assign the result of a solve to a lambda and call its derivatives to check on initial or boundary conditions.
 For more on all of this see the <a href="#Lambda Functions Examples">Lambda Functions Examples</a>.
 </p>
 
 <h4 id="Undefined Functions">Undefined Functions</h4>
 
-<div style="color: red">
 <p>
 Undefined functions are mathematical function objects but without any specific expression or lambda body defined, they are used mainly in differential equations.
 These functions are entered explicitly as "<b>?name (x, y, ...)</b>" with the name being optional but necessary if you need to differentiate between various functions (like in a system of differential equations).
 They can also be specified implicitly as "<b>name (x, y, ...)</b>" without the question mark if the name is not already defined as another lambda function.
-The arguments to an undefined function can only be variable names, concrete immediate values to specify initial conditions and optional keyword arguments which will be passed on to the SymPy "<b>Function()</b>" call.
-The variable list for an undefined function, just like the variable list for a lambda function, is never remapped which means that even if you have the variable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
-Assignment to an undefined function at the highest level of an expression is a shortcut for defining a lambda function, e.g. "<b>f(x) = x**2</b>" is equivalent to "<b>f = lambda x: x**2</b>".
+The arguments to an undefined function can be anything, variable names, concrete immediate values to specify initial conditions or even entire expressions - though only if using the explicit form of definition with the question mark, the parenthesized expression is treated as a gouping.
+Optional keyword arguments for specifying assumptions about the function are also accepted which will be passed on to the SymPy "<b>Function()</b>" call.
 </p><p>
-Undefined functions may be used directly in "<b>dsolve()</b>" and "<b>pdsolve()</b>" functions to solve a differential equation or system of equations, but it is cleaner to first map them to a variable so that the resulting equation looks as it normally does in mathematical syntax.
-For example you can do "<b>dsolve (y(x)'' + 2y(x)' - y(x))</b>", but it is much cleaner to first set "<b>y = y(x)</b>" and then do "<b>dsolve (y'' + 2y' - y)</b>".
+The variable list for an undefined function, just like the variable list for a lambda function, is never remapped which means that even if you have the ariable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
+Implicit assignment to an undefined function at the highest level of an expression is a shortcut for defining a lambda function, e.g. "<b>f(x) = x**2</b>" is equivalent to "<b>f = lambda x: x**2</b>".
+Conversely the assignment "<b>f = f (x)</b>" will designate the variable "<b>f</b>" to always act as an undefined function of one variable "<b>x</b>".
+This form of definition works if "<b>f</b>" is not already assigned to something, if it is then you need to specify the undefined function explicitly like "<b>f = ?f (x)</b>".
+One point of convenience is that anonymous undefined functions will take on the name of the variable they are being assigned to, so for example the assignment "<b>u = ? (u, t)</b>" is equivalent to writing "<b>u = ?u (u, t)</b>".
+For the sake of your own mental health you should try to always give an undefined function the same name as the variable it is being assigned to.
 </p><p>
-If you are solving a system of differential equations then it is even more useful to use variables since you will need to differentiate the undefined functions using names like "<b>x, y = x(t), y(t)</b>".
+Undefined functions may be used directly in the "<b>dsolve()</b>" and "<b>pdsolve()</b>" functions to solve a differential equation or system of equations, but it is cleaner to first map them to a variable so that the resulting equation looks as it normally does in mathematical syntax.
+For example you can do "<b>dsolve (y(x)'' + 2y(x)' - y(x))</b>", but it is much cleaner to first set "<b>y = y(x)</b>" and then do "<b>dsolve (y'' + 2y' - y)</b>". If you are solving a system of differential equations then it is even more useful to use variables since you will need to differentiate the undefined functions using names like "<b>x, y = x(t), y(t)</b>".
 This will give you a clean "<b>dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</b>" instead of having to type the functions out constantly like "<b>dsolve ((x(t)' = 12t x(t) + 8 y(t), y(t)' = 21x(t) + 7t y(t)))</b>".
 Initial values for differential functions are supported and can be passed of the form "<b>dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</b>" if "<b>y = y(x)</b>" is already defined or "<b>dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(0): 0, y(x)'(0): -7})</b>" if it is not, notice that the first initial condition "<b>y(0)</b>" did not need to be specified as an undefined function of a variable first.
 The "<b>ics</b>" keyword argument is a dictionary of undefined functuions at specific points with their values.
+</p><p>
+For examples of the usage of undefined functions see <a href="#Ordinary Differential Equations">Ordinary Differential Equations</a> and <a href="#Partial Differential Equations">Partial Differential Equations</a>.
 </p>
-</div>
 
 <h4 id="Pseudo-Functions">Pseudo-Functions</h4>
 
@@ -650,7 +661,7 @@ Also remember that these functions are always available for calling using the "<
 
 <p>
 Basic plotting functionality is available if you have the matplotlib Python module installed on your system.
-These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas or tuples or assignments.
+These functions work more like statements in that they only work at the top level of the parse tree, which means you can not use them in other lambdas, tuples, assignments or semicolon expressions.
 </p>
 
 <h4 id="plotf() - Plot Function">plotf() - Plot Function</h4>
@@ -854,6 +865,8 @@ integrate (sin x / x, (x, -oo, oo))<br>
 
 <h4 id="Solving Equations">Solving Equations</h4>
 
+<p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/solvers.html" target="_blank">Equation Solvers</a>.</p>
+
 <p>
 delall<i>&emsp; make sure no variables are mapped</i><br>
 solve (x**2 = 4)<i>&emsp; x**2 - 4 = 0</i><br>
@@ -881,6 +894,8 @@ a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
 </p>
 
 <h4 id="Ordinary Differential Equations">Ordinary Differential Equations</h4>
+
+<p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/ode.html" target="_blank">Ordinary Differential Equations</a>.</p>
 
 <p>
 delall<i>&emsp; make sure no variables are mapped</i><br>
@@ -914,6 +929,8 @@ dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i>
 </p>
 
 <h4 id="Partial Differential Equations">Partial Differential Equations</h4>
+
+<p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/pde.html" target="_blank">Partial Differential Equations</a>.</p>
 
 <p>
 delall<br>
@@ -1010,25 +1027,13 @@ y = 6<i>&emsp; change global y</i><br>
 f (2)<i>&emsp; global y = 6 so y**2 = 36</i><br>
 <br>
 
-delall<i>&emsp; embedding lambda calls by using undefined functions</i><br>
-g (x, y) = sqrt (f (x) + f (y))<i>&emsp; defer call to other lambda by using undefined functions</i><br>
+delall<i>&emsp; undefined functions can be used to avoid embedding body of target lambda in parent</i><br>
+g (x, y) = sqrt (f (x) + f (y))<i>&emsp; target lambda doesn't need to be defined ahead of time</i><br>
 g (3, 4)<i>&emsp; will return undefined functions</i><br>
 f (x) = x**2<i>&emsp; define the function</i><br>
 g (3, 4)<i>&emsp; now call out to concrete defined function</i><br>
 f (x) = x<i>&emsp; redefine the function to something else</i><br>
 g (3, 4)<i>&emsp; now we have a different result</i><br>
-<br>
-
-delall<i>&emsp; embedding lambda calls by using deferring lambda name binding</i><br>
-f (x) = x**2<br>
-g (x, y) = sqrt (f(x) + f(y))<i>&emsp; calling other lambda is evaluated immediately</i><br>
-g (3, 4)<i>&emsp; no surprise here</i><br>
-f (x) = x**3<i>&emsp; will have no effect on g () since those were already evaluated at definition</i><br>
-g (3, 4)<i>&emsp; still using old x**2 since that was evaluated upon definition of g ()</i><br>
-g (x, y) = @sqrt (f(x) + f(y))<i>&emsp; prevent binding of f () lambda until evaluation of g ()</i><br>
-g (3, 4)<i>&emsp; now we get sqrt (x**3 + y**3)</i><br>
-f (x) = x**2<i>&emsp; set f () back to x**2</i><br>
-g (3, 4)<i>&emsp; now we get sqrt (x**2 + y**2) since the f () lambda is unevaluated in g ()</i><br>
 <br>
 
 delall<br>
