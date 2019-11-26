@@ -33,8 +33,8 @@
 
 <body>
 
-<h1 align="center" style="margin: 0">SymPad</h1>
-<h4 align="center" style="margin: 0"><script type="text/javascript">document.write (Version)</script></h4>
+<h1 style="margin: 0; text-align: center">SymPad</h1>
+<h4 style="margin: 0; text-align: center"><script type="text/javascript">document.write (Version)</script></h4>
 
 <h2 id="Introduction">Introduction</h2>
 
@@ -60,6 +60,7 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 <h4><a href="#Quick Start">Quick Start</a></h4>
 &emsp;<a href="#Usage">Usage</a><br>
 &emsp;<a href="#How it Works">How it Works</a><br>
+&emsp;<a href="#Quick Input Mode">Quick Input Mode</a><br>
 
 <h4><a href="#Elements">Elements</a></h4>
 &emsp;<a href="#Numbers">Numbers</a><br>
@@ -111,13 +112,13 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 &emsp;<a href="#Ordinary Differential Equations">Ordinary Differential Equations</a><br>
 &emsp;<a href="#Partial Differential Equations">Partial Differential Equations</a><br>
 &emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><i>&emsp; (by "hand")</i><br>
-&emsp;<a href="#Lambda Functions Examples">Lambda Functions</a><br>
+&emsp;<a href="#Lambda Function Examples">Lambda Function Examples</a><br>
+&emsp;<a href="#Pseudo-Function Examples">Pseudo-Function Examples</a><br>
 &emsp;<a href="#Last Expression Variable">Last Expression Variable</a><br>
 &emsp;<a href="#Plotting Functions">Plotting Functions</a><br>
 &emsp;<a href="#Plotting Vector Walks">Plotting Vector Walks</a><br>
 
 <h4><a href="#Appendix">Appendix</a></h4>
-&emsp;<a href="#Quick Input Mode">Quick Input Mode</a><br>
 &emsp;<a href="#Assumptions">Assumptions</a><br>
 &emsp;<a href="#Special Characters">Special Characters</a><br>
 &emsp;<a href="#Admin Functions">Admin Functions</a><br>
@@ -197,6 +198,19 @@ Any variables used in an expression are normally converted to SymPy "<b>Symbol</
 Functions assigned as variables such as "<b>f (x) = x**2</b>" are technically mapped internally as "<b>f = Lambda (x, x**2)</b>" and these lambdas can be passed into native SymPy functions and will act as expected, which means they can be used to populate a "<b>Matrix</b>" for example.
 User assigned functions like this can be assigned, copied and passed into SymPy functions but the concrete SymPy classes and functions cannot.
 For more on the differences between the various types of functions see the <a href="#Functions">Functions</a> section.
+</p>
+
+<h4 id="Quick Input Mode">Quick Input Mode</h4>
+
+<p>
+This is the input mode SymPad was born in for quick calculations due to speed of input.
+SymPad normally allows multi-character variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names, variables and text operators like "<b>in</b>" and "<b>or</b>".
+This can be turned off by switching into quick input mode using the function "<b>env(quick)</b>" or by using the "<b>--quick</b>" option on the command line.
+When in this input mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between variables, recognized function names and text operators.
+</p><p>
+What quick mode allows is the input of expressions which would normally by entered in normal mode like this "<b>x y sin**-1z cos e**2</b>" without grammatical breaks - "<b>xysin**-1zcose**2</b>".
+For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
+Differentials will also work so "<b>dx</b>", "<b>dtheta</b>", "<b>d\theta</b>" and the partial variations like "<b>partialx</b>" and "<b>\partial x</b>" will all be considered as a single variable.
 </p>
 
 <h2 id="Elements">Elements</h2>
@@ -496,7 +510,7 @@ The value of "<b>y</b>" will be independent of whatever else happens to the vari
 The other kind of assignment is a reference assignment which will map the source variable instead of copying its value to the target.
 This means that if you have a reference set like "<b>y = x</b>" and the value of "<b>x</b>" changes then the value of "<b>y</b>" will reflect this new value as well.
 The reference assignment happens if you try to assign variables which do not exist, so setting "<b>y = x</b>" before "<b>x</b>" has been created will result in a reference.
-Otherwise you can force a reference by using the "<b>@()</b>" pseudo-function.
+Otherwise you can force a reference by using the "<b>@</b>" pseudo-function.
 Doing "<b>y = @x</b>" will create a reference to "<b>x</b>" itself instead of copying the value if it exists.
 The "<b>@(expr)</b>" function technically prevents variable remapping for the expression it encompasses, so if you have the variable "<b>x = 2</b>" set and you do "<b>@x</b>" then you will get "<b>x</b>" and not "<b>2</b>".
 </p><p>
@@ -506,7 +520,7 @@ In this way you can assign different values to "<b>x</b>" and have the integrati
 </p><p>
 One more thing to be aware of is that differentials in derivatives and integrals get remapped based on the underlying variable if possible otherwise the original differential is used.
 For example the derivative "<b>d/dx (y**2)</b>" will be treated as "<b>d/dy (y**2)</b>" if you have a global variable set "<b>x = y</b>", likewise "<b>\int y dx</b>" will be remapped to "<b>\int y dy</b>" in that case.
-This also happens in lambda functions so that you can specify differentials to use (as non-d variables), see the <a href="#Lambda Functions Examples">Lambda&nbsp;Functions</a> examples section for more on this.
+This also happens in lambda functions so that you can specify differentials to use (as non-d variables), see the <a href="#Lambda Function Examples">Lambda Function Examples</a> section for more on this.
 </p><p>
 If you assign an unnamed undefined function or symbol to a variable then that undefined function or symbol will take on with the name of the variable it is being assigned to, this is done for convenience and sanity.
 
@@ -596,7 +610,7 @@ If you want the lambda treated as an expression in these contexts then wrap it i
 Note that this only applies to lambdas assigned to and accessed through variables, lambdas declared directly are always treated as lambdas.
 </p><p>
 Lambdas can also be called after differentiating the lambda, something with makes working with differential equations easier since you can assign the result of a solve to a lambda and call its derivatives to check on initial or boundary conditions.
-For more on all of this see the <a href="#Lambda Functions Examples">Lambda Functions Examples</a>.
+For more on all of this see <a href="#Lambda Function Examples">Lambda Function Examples</a>.
 </p>
 
 <h4 id="Undefined Functions">Undefined Functions</h4>
@@ -626,7 +640,32 @@ For examples of the usage of undefined functions see <a href="#Ordinary Differen
 
 <h4 id="Pseudo-Functions">Pseudo-Functions</h4>
 
-...
+<p>
+SymPad provides two pseudo-functions which control how it resolves variables and evaluates expressions, they are the "<b>@</b>" no-remap and the "<b>%</b>" no-evaluate functions.
+The reason these are called pseudo-functions is because they don't actually exist, they are merely annotations for how SymPad is to operate internally.
+For this reason they are never included in a Python representation of an expression and that expression pasted back into SymPad will not operate the same as it did originally.
+These functions have the highest binding priority in the grammar and thus something like "<b>sin a.b [2]</b>" which normally resolves to "<b>sin (a.b [2])</b>" becomes "<b>@ (a).b [2]</b>" when written without parentheses using a pseudo-function like "<b>@a.b [2]</b>".
+Note that, like other functions, they may take a non-parenthesized argument and in fact this is just a quick way to annotate variables like "<b>@x</b>" or ask that the contents of a variable not be evaluated when mapping the variable into the expression like "<b>%x</b>".
+</p><p>
+The "<b>@</b>" no-remap pseudo function is not actually a no variable remap but rather a scope operation where the value of that variable will be taken from the next outermost scope rather than the current, and normally would be used only once.
+This results in an effective no-remap operation when used in the definition of a lambda like "<b>lambda x: x + @x</b>".
+What happens in this lambda body is that the first "<b>x</b>" variable binds to the value that is passed in at the time of lambda execution and the second is taken from the global scope, so if "<b>x</b>" is set to "<b>2</b>" globally then the body of the lambda actually becomes "<b>x + 2</b>".
+If the "<b>x</b>" variable is not defined globally then the lambda gets a second "<b>x</b>" variable and becomes "<b>2x</b>" since any globally undefined variables default to themselves.
+Obviously this is just meant to allow binding of globally defined expressions into a lambda even if a lambda uses local variables of the same name, or for deferred evaluation of a variable name if that variable is defined globally at the time of lambda definition.
+This function is not dynamic and only operates at the time of lambda definition, thus you can not access outer scope values once the lambda has been defined.
+To be clear though, the use of this function is not restricted to lambdas, if you have a variable assigned to something in the global scope and wish to use the variable itself rather than its contents then prepend the variable with this function.
+</p><p>
+The "<b>%</b>" no-evaluate pseudo function defers any evaluation of the expression it encloses when the expression is presented to SymPy.
+This means that "<b>%(\int x dx)</b>" will return $\int x\ dx$ instead of $\frac{x^2}{2}$ and even "<b>%(1 + 2)</b>" will just return $1 + 2$.
+This only operates at the time of the initial evaluation and then the pseudo-function disappears, thus if you evaluate the result again like for example with an assignment from the previous variable like "<b>x = _</b>" then the expression will be fully evaluated before being assigned to "<b>x</b>".
+If you want the "<b>x</b>" variable to contain the expression "<b>1 + 2</b>" instead of "<b>3</b>", for some bizarre reason, then simply do the assignment in one step as "<b>x = %(1 + 2)</b>".
+</p><p>
+This function takes on a different meaning when used at the top level of a lambda function body definition, in this case it actually indicates that the body of the lambda should be "<b>doit()</b>"ed in the lambda whereas normally they are not.
+After this initial topmost use the function reverts to its normal mode of operation, which means that if you want to completely defer evaluation at the top level of the body of a lambda then you actually have to specify the "<b>%</b>" function twice like "<b>lambda x: %%(1 + 2 + x)</b>".
+The same thing can be achieved by simply doing "<b>f = lambda x: %(1 + 2) + x</b>" instead since in this expression the "<b>%</b>" is no longer the topmost function, the addition is.
+</p><p>
+Use of these functions is demonstrated <a href="#Lambda Function Examples">Lambda Function Examples</a> and <a href="#Pseudo-Function Examples">Pseudo-Function Examples</a>.
+</p>
 
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
 
@@ -861,6 +900,7 @@ Integral (a**x, x)<br>
 \int_0**oo e**{-st} dt<br>
 Integral (r, (r, 0, 1), (theta, 0, 2pi))<br>
 integrate (sin x / x, (x, -oo, oo))<br>
+<br>
 </p>
 
 <h4 id="Solving Equations">Solving Equations</h4>
@@ -891,6 +931,7 @@ a.subs (s [2]), b.subs (s [2])<br>
 a.subs (s [3]), b.subs (s [3])<br>
 w = {x: 1, y: 2}<br>
 a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
+<br>
 </p>
 
 <h4 id="Ordinary Differential Equations">Ordinary Differential Equations</h4>
@@ -926,6 +967,7 @@ delall<br>
 x, y = x(t), y(t)<i>&emsp; two distinct undefined functions</i><br>
 dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order with initial conditions</i><br>
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
+<br>
 </p>
 
 <h4 id="Partial Differential Equations">Partial Differential Equations</h4>
@@ -961,6 +1003,7 @@ simplify _<i>&emsp; verify that it equals 0 with solution function</i><br>
 F (x) = e**x<i>&emsp; assign arbitrary function for undefined function in solution</i><br>
 \. eq |_{u (x, y) = v}<i>&emsp; see what the solution looks like with this function</i><br>
 simplify _<i>&emsp; and verify again that it zeroes out</i><br>
+<br>
 </p>
 
 <h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>
@@ -981,9 +1024,10 @@ solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
 \. \[_ [0] [x], y] |_{y = 1}<i>&emsp; second eigenvector for eigenvalue b</i><br>
 m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
 simplify _<i>&emsp; simplify result to easier see if it matches</i><br>
+<br>
 </p>
 
-<h4 id="Lambda Functions Examples">Lambda Functions</h4>
+<h4 id="Lambda Function Examples">Lambda Function Examples</h4>
 
 <p>
 delall<i>&emsp; make sure no variables are mapped</i><br>
@@ -1007,6 +1051,8 @@ f'<i>&emsp; only has one variable so can derivate like this</i><br>
 f' (3)<i>&emsp; can also "call" the derivative of a lambda</i><br>
 d**2f / dx**2 (3)<i>&emsp; also like this</i><br>
 d**2 / dx**2 (f) (3)<i>&emsp; and this</i><br>
+<br>
+
 f (x) = lambda y: sqrt (x**2 + y**2)<i>&emsp; lambda returning a lambda</i><br>
 f (3)<br>
 _ (4)<i>&emsp; call the lambda that was returned</i><br>
@@ -1014,6 +1060,16 @@ f (3)<br>
 _ * (4)<i>&emsp; will be multiplied instead of called if using explicit multiply operator</i><br>
 <br>
 
+delall<i>&emsp; undefined functions can be used to avoid embedding body of target lambda in parent</i><br>
+g (x, y) = sqrt (f (x) + f (y))<i>&emsp; target lambda doesn't need to be defined ahead of time</i><br>
+g (3, 4)<i>&emsp; will return undefined functions</i><br>
+f (x) = x**2<i>&emsp; define the function</i><br>
+g (3, 4)<i>&emsp; now call out to concrete defined function</i><br>
+f (x) = x<i>&emsp; redefine the function to something else</i><br>
+g (3, 4)<i>&emsp; now we have a different result</i><br>
+<br>
+
+delall<i>&emsp; @ no-remap pseudo-function</i><br>
 x, y, z = 3, 4, 5<i>&emsp; assign global variablesy</i><br>
 f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
 f (x, y) = sqrt (x**2 + y**2) + @z<i>&emsp; do not bind global variable</i><br>
@@ -1027,25 +1083,53 @@ y = 6<i>&emsp; change global y</i><br>
 f (2)<i>&emsp; global y = 6 so y**2 = 36</i><br>
 <br>
 
-delall<i>&emsp; undefined functions can be used to avoid embedding body of target lambda in parent</i><br>
-g (x, y) = sqrt (f (x) + f (y))<i>&emsp; target lambda doesn't need to be defined ahead of time</i><br>
-g (3, 4)<i>&emsp; will return undefined functions</i><br>
-f (x) = x**2<i>&emsp; define the function</i><br>
-g (3, 4)<i>&emsp; now call out to concrete defined function</i><br>
-f (x) = x<i>&emsp; redefine the function to something else</i><br>
-g (3, 4)<i>&emsp; now we have a different result</i><br>
-<br>
-
-delall<br>
+delall<i>&emsp; % no-evaluate pseudo-function forcees "doit()" on lambda body</i><br>
 f (x) = \int x dx<i>&emsp; normally integral, limits, derivatives and things like that are not evaluated on lambda definition</i><br>
 f (sin x)<i>&emsp; only on execution</i><br>
-f (x) = %(\int x dx)<i>&emsp; force evaluation of integral and store result in lambda definition, the %() only works this way at the top level of the lambda body</i><br>
+f (x) = %(\int x dx)<i>&emsp; force evaluation of integral and store result in lambda definition, the % only works this way at the top level of the lambda body</i><br>
 f (sin x)<i>&emsp; different result since integral was already evaluated</i><br>
 f (sin y)<i>&emsp; this is as expected</i><br>
 f (x) = \int x dx<i>&emsp; going back to the unevaluated integral</i><br>
 f (sin x)<i>&emsp; as expected</i><br>
 f (sin y)<i>&emsp; different, the differential is only changed to dy if the argument is a pure variable, if not then the original dx is used</i><br>
 \int sin y dx<i>&emsp; which results in this expression</i><br>
+<br>
+</p>
+
+<h4 id="Pseudo-Function Examples">Pseudo-Function Examples</h4>
+
+<p>
+delall<br>
+1 + 2<i>&emsp; evaluated</i><br>
+%(1 + 2)<i>&emsp; unevaluated</i><br>
+_<i>&emsp; evaluated</i><br>
+x, y = 1, 2<br>
+x + y<i>&emsp; evaluated</i><br>
+%(x + y)<i>&emsp; unevaluated but remapped</i><br>
+%@(x + y)<i>&emsp; unevaluated and not remapped</i><br>
+@(x + y)<i>&emsp; not remapped and thus unevaluated</i><br>
+<br>
+
+delall<br>
+x<i>&emsp; just a happy little "x"</i><br>
+x = 2<br>
+x<i>&emsp; now the "x" has value</i><br>
+@x<i>&emsp; no-remap removes that value</i><br>
+lambda x: x<i>&emsp; local variable "x" as expected, not global</i><br>
+lambda x: @x<i>&emsp; now the global value of "x"</i><br>
+lambda x: @@x<i>&emsp; back to "x" and will take on the value of the local "x" since we stepped out beyond the global scope</i><br>
+<br>
+
+delall<br>
+lambda x: \int x + 1 + 2 dx<i>&emsp; body is evaluated but not "doit()"ed</i><br>
+lambda x: %(\int x + 1 + 2 dx)<i>&emsp; body is evaluated and "doit()"ed</i><br>
+lambda x: %%(\int x + 1 + 2 dx)<i>&emsp; body is fully unevaluated</i><br>
+lambda x: %%(\int x + y + y dx)<i>&emsp; same</i><br>
+y = 2<br>
+lambda x: %%(\int x + y + y dx)<i>&emsp; however, variables are mapped</i><br>
+lambda x: %%@(\int x + y + y dx)<i>&emsp; now they are not</i><br>
+lambda x: %%(\int x + @y + y dx)<i>&emsp; now just one variable is mapped</i><br>
+<br>
 </p>
 
 <h4 id="Last Expression Variable">Last Expression Variable</h4>
@@ -1061,6 +1145,7 @@ _[1], _[0] + _[1]<br>
 _[1], _[0] + _[1]<i>&emsp; or press the up arrow</i><br>
 _[1], _[0] + _[1]<br>
 _[1], _[0] + _[1]<i>&emsp; notice a pattern?</i><br>
+<br>
 </p>
 
 <h4 id="Plotting Functions">Plotting Functions</h4>
@@ -1077,6 +1162,7 @@ plotf (2, lambda x: l (x - 1))<i>&emsp; plot lambda function from variable modif
 plotf (2, f if x &lt; 0, 'r', f if x >= 0, 'g')<i>&emsp; different colors on either side of x = 0</i><br>
 plotf ('+', 2 if l (x) &lt; 2)<i>&emsp; add to previous plot</i><br>
 plotf ('+', 2, -4, 4, -x**2)<br>
+<br>
 </p>
 
 <h4 id="Plotting Vector Walks">Plotting Vector Walks</h4>
@@ -1090,23 +1176,10 @@ plotw ('+', f, (-2, 0))<br>
 plotw ('+', f, (-3, 0))<br>
 plotw ('+', f, (-4, 0))<br>
 plotw ('+', f, (-5, 0))<br>
+<br>
 </p>
 
 <h2 id="Appendix">Appendix</h2>
-
-<h4 id="Quick Input Mode">Quick Input Mode</h4>
-
-<p>
-This is the input mode SymPad was born in for quick calculations due to speed of input, though I focus less on this and do less testing in this mode nowadays so no guarantees.
-SymPad normally allows multi-character variable names, requires spaces between them for implicit multiplication and enforces grammatical breaks between function names and variables.
-This can be turned off by switching into quick input mode using the function "<b>env(quick)</b>" or by using the "<b>--quick</b>" option on the command line.
-When in this mode long variable names are sacrificed for quicker input of single letter variables (Latin or Greek - with or without leading slash) and explicit space characters are no longer necessary between variables and recognized function names, though they are required AFTER function names.
-This means that an expression entered in normal mode like this "<b>x y z sin w**2</b>" can be entered in quick mode like this "<b>xyzsin w**2</b>".
-Note that a grammatical break is also still required AFTER text operators like "<b>if</b>", "<b>else</b>", "<b>in</b>", "<b>not in</b>", etc... otherwise they would make too many functions inaccessible by being recognized as part of a word.
-For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
-Differentials will also work so "<b>dx</b>", "<b>dtheta</b>", "<b>d\theta</b>" and the partial variations like "<b>partialx</b>" and "<b>\partial x</b>" will all be considered as a single variable.
-</p>
-
 
 <h4 id="Assumptions">Assumptions</h4>
 
@@ -1139,7 +1212,7 @@ Differentials will also work so "<b>dx</b>", "<b>dtheta</b>", "<b>d\theta</b>" a
 
 <table class="HelpTable">
 <tr><td><b>_</b></td><td>&emsp;-</td><td>Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose. Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</td></tr>
-<tr><td><b>@</b></td><td>&emsp;-</td><td>"<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value. This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@()</b> function then the called lambda will be bound on execution rather than copied at definition.</td></tr>
+<tr><td><b>@</b></td><td>&emsp;-</td><td>"<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value. This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@</b> function then the called lambda will be bound on execution rather than copied at definition.</td></tr>
 <tr><td><b>?</b></td><td>&emsp;-</td><td>"<b>?name(vars)</b>" - Used for specifying an undefined function to be used for solving differential equations. The name is optional but required if different functions of the same signature are needed like "<b>?x(t), ?y(t)</b>", otherwise you can just use "<b>?(t)</b>".</td></tr>
 <tr><td><b>;</b></td><td>&emsp;-</td><td>Semicolon is used to separate statements on a single line to be executed as if they were individual statements on separate lines like in Pyhon, e.g. "<b>1; expand (_(x+1)); expand (_(x+1)); expand (_(x+1))</b>". There is one caveat at the moment in that parsing is influenced by the variables assigned and these assignments are not done until after the whole line has been parsed. What this means for example is that for ambiguous expressions like "<b>f(x)</b>" which can be interpreted either as a concrete lambda call or an undefined function the parser will not get it right if the variable "<b>f</b>" is assigned a lambda and then called on the same line after a semicolon.</td></tr>
 <tr><td><b>Greek</b></td><td>&emsp;-</td><td>α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</td></tr>

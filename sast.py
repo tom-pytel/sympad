@@ -214,6 +214,12 @@ class AST (tuple):
 	_strip_pow      = lambda self, count = None: self._strip (count, {'^'})
 	_strip_afpdpi   = lambda self, count = None: self._strip (count, ('.', '!', '^', '-diffp', '-idx')) # not currently used, possibly used in future in one place
 
+	def _strip_pseudo (self):
+		while self.is_func_pseudo:
+			self = self.args [0]
+
+		return self
+
 	def _strip_minus_retneg (self):
 		neg         = lambda ast: ast
 		neg.has_neg = False
@@ -503,6 +509,7 @@ class AST (tuple):
 
 	@staticmethod
 	def apply_vars (ast, vars, parent = None, mode = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
+		# print ('/n'.join (f'{v} ... {a}' for v, a in vars.items ()) + f'\n{ast}')
 		def push (vars, newvars): # create new frame and add new variables, this is really overkill
 			frame       = vars.copy ()
 			frame ['<'] = vars
@@ -575,12 +582,14 @@ class AST (tuple):
 		elif ast.is_var: # regular var substitution?
 			expr = vars.get (ast.var)
 
-			if not expr:
-				if expr is not False and '#' in vars: # if scoped out and var is masked out then replace with dummy
-					return AST ('@', f'_{ast.var}')
-				else:
-					return ast
+			# if not expr:
+			# 	if expr is not False and '#' in vars: # if scoped out and var is masked out then replace with dummy
+			# 		return AST ('@', f'_{ast.var}')
+			# 	else:
+			# 		return ast
 
+			if not expr:
+				return ast
 			elif not expr.is_lamb:
 				return AST.apply_vars (expr, pop (vars, ast.var), ast, mode)
 
@@ -599,8 +608,8 @@ class AST (tuple):
 			return AST.apply_vars (expr.lamb, vars, ast, mode)
 
 		elif ast.is_subs:
-			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
-			# return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((AST.apply_vars (src, vars, ast, mode), AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs))
+			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs)) # without mapping src
+			# return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((AST.apply_vars (src, vars, ast, mode), AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs)) # mapping src
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})
@@ -646,9 +655,10 @@ class AST (tuple):
 
 		elif ast.is_func: # function, might be user lambda call
 			if ast.func == AST.Func.NOREMAP:
-				vars = scopeout (vars)
+				return AST.apply_vars (ast.args [0], scopeout (vars), ast, mode)
+				# vars = scopeout (vars)
 
-				return AST ('-func', ast.func, tuple (AST.apply_vars (a, vars, ast, mode) for a in ast.args))
+				# return AST ('-func', ast.func, tuple (AST.apply_vars (a, vars, ast, mode) for a in ast.args))
 
 			else:
 				lamb = vars.get (ast.func)
@@ -657,7 +667,7 @@ class AST (tuple):
 					if ast.args.len == lamb.vars.len:
 						vars = push (vars, dict (zip (lamb.vars, ast.args)))
 
-						return AST.apply_vars (lamb.lamb, vars, ast, mode and 'lambexec') # remap lambda vars to func args then global remap
+						return AST.apply_vars (lamb.lamb, vars, ast, mode and 'lambexec') # remap lambda vars in body to func args and return body
 
 					elif mode:
 						raise TypeError (f"lambda function '{ast.func}' takes {lamb.vars.len} argument(s)")
@@ -979,28 +989,26 @@ class AST_Func (AST):
 	TEXNATIVE         = {'max', 'min', 'arg', 'deg', 'exp', 'gcd', 'Re', 'Im'}
 	TRIGH             = {'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch'}
 	BUILTINS          = {'abs', 'all', 'any', 'ascii', 'bin', 'callable', 'chr', 'dir', 'divmod', 'format', 'getattr', 'hasattr', 'hash', 'hex', 'id',
-                       'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'ord', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
+                       'isinstance', 'issubclass', 'iter', 'len', 'max', 'min', 'next', 'oct', 'pow', 'print', 'repr', 'round', 'sorted', 'sum', 'bool',
                        'bytearray', 'bytes', 'complex', 'dict', 'enumerate', 'filter', 'float', 'frozenset', 'property', 'int', 'list', 'map', 'range',
                        'reversed', 'set', 'slice', 'str', 'tuple', 'type', 'zip'}
 
-	PY_TRIGHINV       = {f'a{f}' for f in TRIGH}
-	TEX_TRIGHINV      = {f'arc{f}' for f in TRIGH}
-	TEX2PY_TRIGHINV   = {f'arc{f}': f'a{f}' for f in TRIGH}
+	PY_TRIGH_INV      = {f'a{f}' for f in TRIGH}
+	TEX_TRIGH_INV     = {f'arc{f}' for f in TRIGH}
+	TEX2PY_TRIGH_INV  = {f'arc{f}': f'a{f}' for f in TRIGH}
 
-	PYALL             = ADMIN | PLOT | BUILTINS | PY_TRIGHINV | TRIGH | _SYMPY_FUNCS
-	PY                = PYALL - {'sqrt', 'log', 'ln', 'beta', 'gamma', 'zeta', 'Lambda'}
-	TEX               = TEXNATIVE | TEX_TRIGHINV | (TRIGH - {'sech', 'csch'})
-
-	_rec_trigh        = re.compile (r'^a?(?:sin|cos|tan|csc|sec|cot)h?$')
-	_rec_trigh_inv    = re.compile (r'^a(?:sin|cos|tan|csc|sec|cot)h?$')
-	_rec_trigh_noninv = re.compile (r'^(?:sin|cos|tan|csc|sec|cot)h?$')
+	PY_TRIGH_ALL      = TRIGH | PY_TRIGH_INV
+	PYALL             = ADMIN | PLOT | BUILTINS | PY_TRIGH_ALL | _SYMPY_FUNCS
+	PY                = PYALL - {'sqrt', 'log', 'ln', 'beta', 'gamma', 'zeta', 'Lambda', 'Function', 'Symbol'} - {'init_printing', 'init_session', 'interactive_traversal'}
+	TEX               = TEXNATIVE | TEX_TRIGH_INV | (TRIGH - {'sech', 'csch'})
 
 	def _init (self, func, args):
 		self.func, self.args = func, args
 
-	_is_trigh_func        = lambda self: AST_Func._rec_trigh.match (self.func)
-	_is_trigh_func_inv    = lambda self: AST_Func._rec_trigh_inv.match (self.func)
-	_is_trigh_func_noninv = lambda self: AST_Func._rec_trigh_noninv.match (self.func)
+	_is_func_pseudo       = lambda self: self.func in {AST_Func.NOREMAP, AST_Func.NOEVAL}
+	_is_func_trigh        = lambda self: self.func in AST_Func.PY_TRIGH_ALL
+	_is_func_trigh_inv    = lambda self: self.func in AST_Func.PY_TRIGH_INV
+	_is_func_trigh_noninv = lambda self: self.func in AST_Func.TRIGH
 
 class AST_Lim (AST):
 	op, is_lim = '-lim', True
@@ -1215,8 +1223,8 @@ AST.DictEmpty  = AST ('-dict', ())
 
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
-	vars = {'a': AST ('-lamb', ('@', 'l'), ('l',))}
-	expr = AST ('<>', ('@', 'a'), (('==', ('@', 'a')),))
+	vars = {'x': AST.Zero}
+	expr = AST ('*', (('-lamb', ('*', (('-lamb', ('+', (('-func', '@', (('@', 'x'),)), ('#', '1'))), ('x',)), ('(', ('+', (('@', 'x'), ('#', '1')))))), ('x',)), ('(', ('#', '0'))))
 
 	res  = AST.apply_vars (expr, vars)
 	print (res)

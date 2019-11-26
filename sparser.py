@@ -12,7 +12,7 @@ import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
 ALL_FUNC_NAMES = AST.Func.PY | AST.Func.TEX | {'sech', 'csch', AST.Func.NOREMAP, AST.Func.NOEVAL}
-RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln'} | AST.Func.PY
+RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln', 'Function', 'Symbol'} | AST.Func.PY
 
 _SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SP_USER_VARS  = {} # flattened user vars {name: ast, ...}
@@ -27,7 +27,7 @@ def _is_valid_var_name (self, text):
 
 def _FUNC_name (FUNC):
 	if FUNC.grp [1]:
-		return AST.Func.TEX2PY_TRIGHINV.get (FUNC.grp [1], FUNC.grp [1])
+		return AST.Func.TEX2PY_TRIGH_INV.get (FUNC.grp [1], FUNC.grp [1])
 
 	else:
 		func = (FUNC.grp [0] or FUNC.grp [2] or FUNC.text).replace ('\\', '')
@@ -46,7 +46,7 @@ def _ast_func_tuple_args (ast):
 def _ast_func_sxlat (func, args, **kw):
 	return sxlat.xlat_funcs2asts (AST ('-func', func, args, **kw), sxlat.XLAT_FUNC2AST_SPARSER, recurse = False)
 
-def _ast_func_reorder (ast):
+def _ast_func_reorder (ast, unconditional = False):
 	wrap2 = None
 
 	if ast.is_diffp:
@@ -61,9 +61,9 @@ def _ast_func_reorder (ast):
 		ast2, wrap2 = ast.obj, lambda a: AST ('-idx', a, ast.idx)
 
 	if wrap2:
-		ast3, wrap3 = _ast_func_reorder (ast2)
+		ast3, wrap3 = _ast_func_reorder (ast2, unconditional = unconditional)
 
-		if ast3.op in {'{', '(', '[', '-lamb'}: # ast3.is_curly or ast3.is_paren or ast3.is_brack:
+		if unconditional or ast3.op in {'{', '(', '[', '-lamb'}: # ast3.is_curly or ast3.is_paren or ast3.is_brack:
 			return ast3, lambda a: wrap2 (wrap3 (a))
 
 	return ast, lambda a: a
@@ -558,13 +558,15 @@ def _expr_diffp_ics (lhs, commas): # f (x)' * (0) -> \. f (x) |_{x = 0}
 	return Reduce
 
 def _expr_func (iparm, *args, is_operatorname = False): # rearrange ast tree for explicit parentheses like func (x)^y to give (func (x))^y instead of func((x)^y)
+	is_func    = args [0] == '-func'
+	is_pseudo  = is_func and args [1] in {AST.Func.NOREMAP, AST.Func.NOEVAL}
 	rhs        = args [iparm]
-	arg, wrapa = _ast_func_reorder (rhs)
+	arg, wrapa = _ast_func_reorder (rhs, unconditional = is_pseudo)
 
-	if args [0] == '-func':
+	if is_func:
 		name = args [1]
 
-		if is_operatorname and name not in _SP_USER_FUNCS and name not in ALL_FUNC_NAMES: # \operatorname ufunc like SymPy writes out
+		if is_operatorname and name not in _SP_USER_FUNCS and name not in ALL_FUNC_NAMES: # \operatorname ufunc like SymPy writes out, will not catch unparend arg - shouldn't need to
 			ast = _ast_var_as_ufunc (AST ('@', name), arg, rhs, force_implicit = True)
 
 			if ast:
@@ -577,7 +579,7 @@ def _expr_func (iparm, *args, is_operatorname = False): # rearrange ast tree for
 		else:
 			ast2 = AST ('-func', name, _ast_func_tuple_args (arg), src = src)
 
-		if ast2.is_func and ast2.args.len != 1 and ast2.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
+		if is_pseudo and ast2.is_func and ast2.args.len != 1:
 			raise SyntaxError (f'no-{"remap" if ast2.func == AST.Func.NOREMAP else "eval"} pseudo-function takes a single argument')
 
 	else: # args [0] in {'-sqrt', '-log'}:
@@ -593,7 +595,7 @@ def _expr_func_func (FUNC, args, expr_super = None):
 
 	if expr_super is None:
 		return _expr_func (2, '-func', func, args, is_operatorname = istok and FUNC.grp [2])
-	elif expr_super.strip_curly != AST.NegOne or not AST ('-func', func, ()).is_trigh_func_noninv:
+	elif expr_super.strip_curly != AST.NegOne or not AST ('-func', func, ()).is_func_trigh_noninv:
 		return AST ('^', _expr_func_func (FUNC, args), expr_super, is_pypow = expr_super.is_pypow)
 	else:
 		return _expr_func_func (f'a{func}', args)
@@ -1020,8 +1022,13 @@ class Parser (LALR1):
 	_VARPY_QUICK   = fr'(?:{_PYGREEK_QUICK}\d*|None|True|False|nan|{_LTR}\d*)'
 	_VAR_QUICK     = fr'(?:{_VARTEX}|{_PYMULTI_QUICK}\d*|{_VARPY_QUICK}|{_VARUNI})'
 
+	_FUNCPY_QUICK  = _FUNCPY.replace (r'|del|', r'|del(?!ta)|').replace (r'|det|', r'|det(?!a)|').replace (r'|Integer|', r'|Integer(?!s)|').replace (r'|Si|', r'|Si(?!gma)|')
+
+	_IN_QUICK      = r"in(?!teger_|tegrate|teractive_traversal|terpolate|tersecti|tervals|v_quick|verse_|vert)"
+
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens (differences from normal)
-		('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:(?:\w|\\_)*{_LTRD})?)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		# ('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:(?:\w|\\_)*{_LTRD})?)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
+		('FUNC',         fr'(@|\%|{_FUNCPY_QUICK})|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:(?:\w|\\_)*{_LTRD})?)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'\\lim_'),
 		('SUM',          fr'(?:\\sum(?:\s*\\limits)?|{_USUM})_'),
@@ -1036,13 +1043,13 @@ class Parser (LALR1):
 		('SETMINUS',     fr'\\setminus'),
 		('SUBSTACK',      r'\\substack'),
 
-		('CMP',          fr'==|!=|<=|<|>=|>|in\b|not\s+in\b|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)|{"|".join (AST.Cmp.UNI2PY)}'),
-		('OR',           fr'or(?!\w|\\_)|\\vee|{_UOR}'),
-		('AND',          fr'and(?!\w|\\_)|\\wedge|{_UAND}'),
-		('NOT',          fr'not(?!\w|\\_)|\\neg|{_UNOT}'),
-		('SQRT',          r'sqrt(?!\w|\\_)|\\sqrt'),
-		('LOG',           r'log(?!\w|\\_)|\\log'),
-		('LN',            r'ln(?!\w|\\_)|\\ln'),
+		('CMP',          fr'==|!=|<=|<|>=|>|{_IN_QUICK}|not\s+{_IN_QUICK}|(?:\\ne(?!g)q?|\\le|\\lt|\\ge|\\gt|\\in(?!fty)|\\notin)|{"|".join (AST.Cmp.UNI2PY)}'),
+		('OR',           fr'\\vee|{_UOR}|or(?!dered)'),
+		('AND',          fr'\\wedge|{_UAND}|and'),
+		('NOT',          fr'\\neg|{_UNOT}|not(?!_empty_in)'),
+		('SQRT',          r'\\sqrt|sqrt(?!_mod|_mod_iter|denest)'),
+		('LOG',           r'\\log|log(?!combine|gamma)'),
+		('LN',            r'\\ln|ln'),
 
 		('VAR',          fr"(?:(?:(\\partial\s?|partial|{_UPARTIAL})|(d(?!elta)))(partial|{_VAR_QUICK})|({_VAR_QUICK}))(?:(?<!\d)_{{(\d+)}})?"),
 	])
@@ -1531,6 +1538,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	a = p.parse (r"\left(\operatorname{Integral}{\left(\frac{\sqrt{-3.1998205710155103{e}{-09}}}{\left(xyzd \cdot {-1.1280663779264902{e}{-08}} \right)}, \left(i, \frac{-1 \wedge 2 \wedge b}{\begin{bmatrix} -1.4889652631788537{e}{-21} \\ 1.3055109314191486{e}{-10} \end{bmatrix}}, \left(\int \beta \ do \right)^{\frac{\partial^3}{\partial x \partial y \partial z}\left(?f\left(x, y, z \right) \right)\left(0, 1, 2 \right)} \right) \right)} \right)^{{{\begin{bmatrix} -38542497339338.06 \end{bmatrix}}^{dz \cup \text{'s'} \cup -1}}!}")
+	a = p.parse (r"@x!!")
 	print (a)
 

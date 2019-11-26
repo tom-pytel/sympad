@@ -1,29 +1,29 @@
-> (f) of lambda does not bind global variables, should it? if it won't need to change lambda section of help.
-> next (t) (2) at end of iterator t gives IndexError instead of StopIteration
+> ERROR! assign to ufuncs from iterable?
+
+> py representation multiply lambda by pared, drop the '*' operator to make it a call
 
 > \. ?F (x, 0)' |_{x = 0} -> \. ?F (x, y) |_{x = 0, y = 0}
+
+> somehow allow \. u (x, y) |_{u = v} when u and v are ufunc variables
+
+> subs autocomplete
+
+> (f) of lambda does not bind global variables, should it? if it won't need to change lambda section of help.
+> next (t) (2) at end of iterator t gives IndexError instead of StopIteration
 
 > extend mapback to symbols?
 > $s() -> $s - symbols don't need paren?
 
 > test_server for semicolon stuff - multiple returns
 
-> ERROR! assign to ufuncs from iterable?
-
 > "d / 2" is "(d) / 2", fix it
 > a / -{b \int x dx} * c -> py: a / (-(b*Integral(x, x)))*c0
 > {a = a} assigns, it shouldn't
 
-> @var is not dynamic, restrict to simple cases of accessing global from lambda definition
-
-> Sigma -> Si(g m a) problem in quick mode.
-
 > display ufunc as \operatorname{func} in loose tex mode?
-> mark \operatorname funcs so they can't be rewound?
+> mark \operatorname funcs so they can't be rewound? doesn't seem to be necessary.
 
 > redo _expr_diff "a d/dx b"? - * Differentiation now has higher precedence than implicit multiplication ahead of it: "a d/dx b" -> "a * d/dx (b)", "\int a dx d / dx b"
-
-> test parse (ast2tex (spt2ast(spt))) vs. parse (latex (spt))?
 
 
 > test_sym cases - call derivative of lambda
@@ -31,15 +31,13 @@
 > "d / dx (2)" vs. "d**2 / dx (2)" when dx is a lambda, intricate - would need to analyze parser stack to see if valid diff, but if someone is naming their lambdas "dx" that is their problem
 > better potential derivative test than self.stack_has_sym ('DIVIDE')
 
-> subs autocomplete
-
 
 > \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
 > ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
 > keep track of what undefined functions are created during processing?
 
-
 > SymmetricDifference()
+
 
 > \int doesn't need curlys for star multiply
 > subs clarity parentheses for tex display like d/dx (f), attr, etc...?
@@ -49,16 +47,18 @@
 > clean up safety parens from grammar tail element overhaul
 > clean up sym lambda keyword safety wrapping
 
+> test parse (ast2tex (spt2ast(spt))) vs. parse (latex (spt))?
+
 > "__" subscript shortcut with rules like "**"?
 
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
 
-> doc: parentheses create implicit undefined functions
-> doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
-
 > doc: scoping behavior of @, not dynamic
 > doc: % no-eval pseudo-func better
+
+> doc: parentheses create implicit undefined functions
+> doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
 
 > doc: quick mode variables can have numerical tails as subscripts
 > doc: caveats with variable mapping and functions like integrate, summation due to their unfree vars being remapped
@@ -294,3 +294,50 @@ Errors:
 -------
 
 
+'integer_log', 'init_session', 'interactive_traversal', 'loggamma', 'ordered', 'not_empty_in', 'sqrtdenest', 'ord', 'interpolate', 'sqrt_mod', 'inverse_hankel_transform', 'inverse_sine_transform', 'intersection', 'logcombine', 'int', 'inverse_mobius_transform', 'integer_nthroot', 'inverse_fourier_transform', 'intervals', 'interpolating_poly', 'sqrt_mod_iter', 'inverse_laplace_transform', 'intersecting_product', 'inverse_cosine_transform', 'interpolating_spline', 'invert', 'integrate', 'inv_quick', 'intt', 'inverse_mellin_transform', init_printing
+
+int
+intt
+
+integer_log
+integer_nthroot
+
+integrate
+
+interpolate
+
+interpolating_poly
+interpolating_spline
+
+intersecting_product
+intersection
+
+intervals
+
+inv_quick
+
+inverse_cosine_transform
+inverse_fourier_transform
+inverse_hankel_transform
+inverse_laplace_transform
+inverse_mellin_transform
+inverse_mobius_transform
+inverse_sine_transform
+
+invert
+
+logcombine
+loggamma
+not_empty_in
+ordered
+sqrt_mod
+sqrt_mod_iter
+sqrtdenest
+
+
+Quick Mode
+text: \[[9.08830^1 e-100.LRPl().qtXX().ojbKXNA||-\int a dm20^1 e-100.LRPl().qtXX().ojbKXNA||-\int a dm9S,],]
+ast:  ('-mat', ((('||', (('+', (('*', (('^', ('#', '9.08830'), ('#', '1')), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')))))), ('+', (('*', (('-', ('^', ('-intg', ('@', 'a'), ('@', 'dm20')), ('#', '1'))), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')))))), ('*', (('-', ('-intg', ('@', 'a'), ('@', 'dm9'))), ('@', 'S'))))),),))
+ast:  ('-mat', ((('||', (('+', (('*', (('^', ('#', '9.08830'), ('#', '1')), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')), {1})))), ('+', (('*', (('-', ('^', ('(', ('-intg', ('@', 'a'), ('@', 'dm20'))), ('#', '1'))), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')), {1})))), ('-', ('*', (('-intg', ('@', 'a'), ('@', 'dm9')), ('@', 'S')), {1})))),),))
+tex1: \begin{bmatrix} 9.08830^1 e - 100. \cdot L\ R\ P\ l\left( \right).\operatorname{qtXX}\left( \right).ojbKXNA \cup -\left(\int a \ dm_{20} \right)^1 e - 100. \cdot L\ R\ P\ l\left( \right).\operatorname{qtXX}\left( \right).ojbKXNA \cup -\int a \ dm_{9} \cdot S \end{bmatrix}
+tex2: \begin{bmatrix} 9.08830^1 e - 100. \cdot L\ R\ P\ l\left( \right).\operatorname{qtXX}\left( \right).ojbKXNA \cup -\left(\int a \ dm_{20} \right)^1 e - 100. \cdot L\ R\ P\ l\left( \right).\operatorname{qtXX}\left( \right).ojbKXNA \cup -{\int a \ dm_{9} \cdot S} \end{bmatrix}

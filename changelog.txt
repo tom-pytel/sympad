@@ -13,6 +13,7 @@ v1.0.20:
 * Made supported builtin functions accessible directly by name without need of escape character.
 * Made Eq returned from SymPy display as = when unambiguous in grammar.
 * Brought quick mode up to date with many recent changes.
+* Re-enabled unspaced quick mode function arguments.
 * Lots of tweaks to undefined functions for display and use in assignment to lambdas.
 * Finally documented lots of changes.
 

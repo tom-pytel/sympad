@@ -51,13 +51,16 @@ class NoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation
 	free_symbols = set ()
 
 	def __new__ (cls, ast):
-		self     = sp.Expr.__new__ (cls, str (ast))
-		self.ast = AST (*literal_eval (ast)) if isinstance (ast, str) else ast # SymPy might re-create this object using string argument
+		self      = sp.Expr.__new__ (cls, str (ast))
+		self._ast = ast
 
 		return self
 
 	def doit (self, *args, **kw):
 		return self
+
+	def ast (self):
+		return AST (*literal_eval (self._ast)) if isinstance (self._ast, str) else self._ast # SymPy might have re-create this object using string argument
 
 def _raise (exc):
 	raise exc
@@ -462,15 +465,17 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					p.num_exp or
 					(_QUICK_MODE and p.is_attr_var and not s.startswith ('\\left(')) or
 					p.strip_minus.is_diff_or_part_any or
-					n.is_diff_or_part_any or
 					(not _QUICK_MODE and (
-						not s.startswith ('{') and not s.startswith ('\\left(') and
-						(p.tail_mul.is_var or p.tail_mul.is_attr_var) and
-						(n.strip_afpdpi.op in {'@', '-ufunc'} or (n.is_subs and n.expr.strip_afpdpi.op in {'@', '-ufunc'})))) or
-					(not s.startswith ('{') and s [:6] not in {'\\left(', '\\left['} and (
-						p.is_var_long or
-						(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})
-					))):
+						n.is_sym or
+						n.strip_pseudo.is_diff_or_part_any or
+						(not s.startswith ('{') and (
+							(not s.startswith ('\\left(') and
+								(p.tail_mul.strip_pseudo.is_var or p.tail_mul.is_attr_var) and
+								(n.strip_afpdpi.op in {'@', '-ufunc'} or (n.is_subs and n.expr.strip_afpdpi.op in {'@', '-ufunc'}))) or
+							(s [:6] not in {'\\left(', '\\left['} and (
+								p.is_var_long or
+								n.is_func_pseudo or
+								(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})))))))):
 				t.extend ([_TEX_SPACE, s])
 
 			elif p:
@@ -493,7 +498,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		b = self._ast2tex_wrap (ast.base, {'-mat'}, not (ast.base.op in {'@', '.', '"', '(', '[', '|', '-log', '-func', '-mat', '-lamb', '-idx', '-set', '-dict', '-ufunc'} or ast.base.is_num_pos))
 		p = self._ast2tex_curly (ast.exp)
 
-		if trighpow and ast.base.is_trigh_func_noninv and ast.exp.is_num and ast.exp.num != '-1': # and ast.exp.is_single_unit
+		if trighpow and ast.base.is_func_trigh_noninv and ast.exp.is_num and ast.exp.num != '-1': # and ast.exp.is_single_unit
 			i = len (ast.base.func) + (15 if ast.base.func in {'sech', 'csch'} else 1)
 
 			return f'{b [:i]}^{p}{b [i:]}'
@@ -509,7 +514,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 	_rec_tailnum = re.compile (r'^(.+)(?<![\d_])(\d*)$')
 
 	def _ast2tex_func (self, ast):
-		if ast.is_trigh_func:
+		if ast.is_func_trigh:
 			if ast.func [0] != 'a':
 				n = f'\\operatorname{{{ast.func}}}' if ast.func in {'sech', 'csch'} else f'\\{ast.func}'
 			elif ast.func in {'asech', 'acsch'}:
@@ -530,7 +535,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		elif ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL}:
 			func = ast.func.replace (AST.Func.NOEVAL, '\\%')
 
-			if ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'}:
+			if ast.args [0].op in {'#', '@', '(', '[', '|', '-func', '-mat', '-lamb', '-set', '-dict'}:
 				return f'{func}{self._ast2tex (AST.tuple2argskw (ast.args))}'
 
 		elif ast.func not in AST.Func.PY:
@@ -884,7 +889,7 @@ class ast2nat: # abstract syntax tree -> native text
 				ast.exp.strip_minus.is_subs_diff_ufunc,
 				{","})
 
-		if trighpow and ast.base.is_trigh_func_noninv and ast.exp.is_num and ast.exp.num != '-1': # and ast.exp.is_single_unit
+		if trighpow and ast.base.is_func_trigh_noninv and ast.exp.is_num and ast.exp.num != '-1': # and ast.exp.is_single_unit
 			i = len (ast.base.func)
 
 			return f'{b [:i]}**{p}{b [i:]}'
@@ -1029,7 +1034,8 @@ class ast2nat: # abstract syntax tree -> native text
 		'^'     : _ast2nat_pow,
 		'-log'  : _ast2nat_log,
 		'-sqrt' : lambda self, ast: f'sqrt{"" if ast.idx is None else f"[{self._ast2nat (ast.idx)}]"}({self._ast2nat (ast.rad)})',
-		'-func' : lambda self, ast: f"{ast.func}{self._ast2nat_wrap (AST.tuple2argskw (ast.args), 0, not (ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'@', '(', '[', '|', '-func', '-mat', '-set', '-dict'}))}",
+		'-func' : lambda self, ast: f"{ast.func}{self._ast2nat_wrap (AST.tuple2argskw (ast.args), 0, not (ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'#', '@', '(', '[', '|', '-func', '-mat', '-set', '-dict'}))}",
+		# '-func' : lambda self, ast: f"{ast.func}({self._ast2nat (AST.tuple2argskw (ast.args))})",
 		'-lim'  : _ast2nat_lim,
 		'-sum'  : _ast2nat_sum,
 		'-diff' : _ast2nat_diff,
@@ -1665,20 +1671,20 @@ class spt2ast:
 
 		return spt
 
-	def _spt2ast_NoEval (self, spt):
-		def dummys2vars (ast): # convert our own dummy variables to normal
-			if not isinstance (ast, AST):
-				return ast
+	# def _spt2ast_NoEval (self, spt):
+	# 	def dummys2vars (ast): # convert our own dummy variables to normal
+	# 		if not isinstance (ast, AST):
+	# 			return ast
 
-			if ast.is_var:
-				if ast.var.startswith ('_'):
-					return AST ('@', ast.var.lstrip ('_'))
+	# 		if ast.is_var:
+	# 			if ast.var.startswith ('_'):
+	# 				return AST ('@', ast.var.lstrip ('_'))
 
-				return ast
+	# 			return ast
 
-			return AST (*(dummys2vars (a) for a in ast))
+	# 		return AST (*(dummys2vars (a) for a in ast))
 
-		return dummys2vars (spt.ast)
+	# 	return dummys2vars (spt.ast)
 
 	def _spt2ast_num (self, spt):
 		s = str (spt)
@@ -1699,12 +1705,17 @@ class spt2ast:
 				f'{num.grp [0]}{num.grp [1]}e{e}')
 
 	def _spt2ast_Symbol (self, spt):
-		name = spt.name.lstrip ('_') # convert our own dummy variables to normal
+		# name = spt.name.lstrip ('_') # convert our own dummy variables to normal
 
-		if name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)):
-			return AST ('@', name)
+		# if name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)):
+		# 	return AST ('@', name)
+		# else:
+		# 	return AST ('-sym', name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ())))
+
+		if spt.name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)):
+			return AST ('@', spt.name)
 		else:
-			return AST ('-sym', name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ())))
+			return AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ())))
 
 	def _spt2ast_Union (self, spt): # convert union of complements to symmetric difference if present
 		if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
@@ -1852,7 +1863,7 @@ class spt2ast:
 	_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 	_spt2ast_funcs = {
-		NoEval: _spt2ast_NoEval,
+		NoEval: lambda self, spt: spt.ast (), # _spt2ast_NoEval,
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,
@@ -1997,18 +2008,22 @@ class sym: # for single script
 
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
-	vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	set_sym_user_funcs (set (vars))
+	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
+	vars = {'x': AST.Zero}
+	# set_sym_user_funcs (set (vars))
 	set_sym_user_vars (vars)
 
 	# set_strict (True)
 
-	ast = AST ('-subs', ('-diffp', ('-ufunc', 'h', (('@', 'x'),)), 1), ((('#', '2'), ('#', '3')),))
+	# ast = AST ('*', (('-lamb', ('*', (('-lamb', ('+', (('-func', '@', (('@', 'x'),)), ('#', '1'))), ('x',)), ('(', ('+', (('@', 'x'), ('#', '1')))))), ('x',)), ('(', ('#', '0'))))
+	ast = AST ('*', (('-lamb', ('*', (('-lamb', ('-func', '@', (('@', 'x'),)), ('x',)), ('(', ('+', (('@', 'x'), ('#', '1')))))), ('x',)), ('(', ('#', '0'))))
+	ast = AST.apply_vars (ast, vars)
+
 	# res = ast2tex (ast)
-	# res = ast2nat (ast)
+	res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	res = ast2spt (ast)
+	# res = ast2spt (ast)
 	# res = spt2ast (res)
 	# res = ast2nat (res)
 
