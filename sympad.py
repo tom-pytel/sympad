@@ -4607,7 +4607,7 @@ class AST_Sqrt (AST):
 	def _init (self, rad, idx = None):
 		self.rad, self.idx = rad, idx
 
-	_is_sqrt_with_base = lambda self: self.idx is not None
+	_is_sqrt_with_idx = lambda self: self.idx is not None
 
 class AST_Func (AST):
 	op, is_func = '-func', True
@@ -6650,7 +6650,7 @@ class ast2py: # abstract syntax tree -> Python code text
 
 	def _ast2py_pow (self, ast):
 		b = self._ast2py_paren (ast.base) if _ast_is_neg (ast.base) or ast.base.is_pow else self._ast2py_curly (ast.base)
-		e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_base else self._ast2py_curly (ast.exp)
+		e = self._ast2py_paren (ast.exp) if ast.exp.strip_minus.is_sqrt_with_idx else self._ast2py_curly (ast.exp)
 
 		return f'{b}**{e}'
 
@@ -6700,7 +6700,7 @@ class ast2py: # abstract syntax tree -> Python code text
 			return f"""Matrix([{', '.join (f'[{", ".join (self._ast2py (e) for e in row)}]' for row in ast.mat)}])"""
 
 	def _ast2py_idx (self, ast):
-		obj = self._ast2py_paren (ast.obj, ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.is_sqrt_with_base or (ast.obj.is_var and ast.obj.var in _SYM_USER_FUNCS) or
+		obj = self._ast2py_paren (ast.obj, ast.obj.is_num_neg or ast.obj.is_log_with_base or ast.obj.is_sqrt_with_idx or (ast.obj.is_var and ast.obj.var in _SYM_USER_FUNCS) or
 			ast.obj.op in {"=", "<>", ",", "+", "*", "/", "^", "-", "-lim", "-sum", "-diff", "-intg", "-piece"})
 
 		if ast.idx.len and ast.idx [0].is_var_null:

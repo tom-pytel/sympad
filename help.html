@@ -213,6 +213,7 @@ When in this input mode long variable names are sacrificed for quicker input of 
 What quick mode allows is the input of expressions which would normally by entered in normal mode like this "<b>x y sin**-1z cos e**2</b>" without grammatical breaks - "<b>xysin**-1zcose**2</b>".
 For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
 Differentials will also work so "<b>dx</b>", "<b>dtheta</b>", "<b>d\theta</b>" and the partial variations like "<b>partialx</b>" and "<b>\partial x</b>" will all be considered as a single variable.
+Variables in quick mode can only be one letter but they may have optional numerical tails which will be displayed as subscripts, so "<b>x12</b>" ($x_{12}$) and "<b>alpha_{3}</b>" ($\alpha_{3}$) are valid variables in quick mode, this extends to differentials and partials as well.
 </p>
 
 <h2 id="Elements">Elements</h2>
@@ -621,10 +622,10 @@ For more on all of this see <a href="#Lambda Function Examples">Lambda Function 
 Undefined functions are mathematical function objects but without any specific expression or lambda body defined, they are used mainly in differential equations.
 These functions are entered explicitly as "<b>?name (x, y, ...)</b>" with the name being optional but necessary if you need to differentiate between various functions (like in a system of differential equations).
 They can also be specified implicitly as "<b>name (x, y, ...)</b>" without the question mark if the name is not already defined as another lambda function.
-The arguments to an undefined function can be anything, variable names, concrete immediate values to specify initial conditions or even entire expressions - though only if using the explicit form of definition with the question mark, the parenthesized expression is treated as a gouping.
+The arguments to an undefined function can be anything, variable names, concrete immediate values to specify initial conditions or even entire expressions - though only if using the explicit form of definition with the question mark, otherwise the parenthesized expression is treated as a gouping.
 Optional keyword arguments for specifying assumptions about the function are also accepted which will be passed on to the SymPy "<b>Function()</b>" call.
 </p><p>
-The variable list for an undefined function, just like the variable list for a lambda function, is never remapped which means that even if you have the ariable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
+The variable list for an undefined function, just like the variable list for a lambda function, is usually not remapped (except if doing substitution or "calling" the undefined function) which means that even if you have the variable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
 Implicit assignment to an undefined function at the highest level of an expression is a shortcut for defining a lambda function, e.g. "<b>f(x) = x**2</b>" is equivalent to "<b>f = lambda x: x**2</b>".
 Conversely the assignment "<b>f = f (x)</b>" will designate the variable "<b>f</b>" to always act as an undefined function of one variable "<b>x</b>".
 This form of definition works if "<b>f</b>" is not already assigned to something, if it is then you need to specify the undefined function explicitly like "<b>f = ?f (x)</b>".
@@ -636,6 +637,25 @@ For example you can do "<b>dsolve (y(x)'' + 2y(x)' - y(x))</b>", but it is much 
 This will give you a clean "<b>dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</b>" instead of having to type the functions out constantly like "<b>dsolve ((x(t)' = 12t x(t) + 8 y(t), y(t)' = 21x(t) + 7t y(t)))</b>".
 Initial values for differential functions are supported and can be passed of the form "<b>dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</b>" if "<b>y = y(x)</b>" is already defined or "<b>dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(0): 0, y(x)'(0): -7})</b>" if it is not, notice that the first initial condition "<b>y(0)</b>" did not need to be specified as an undefined function of a variable first.
 The "<b>ics</b>" keyword argument is a dictionary of undefined functuions at specific points with their values.
+</p><p>
+Pure undefined functions are those which have only non-constant variables as parameters.
+If a pure undefined function is assigned to a variable then that variable may be "called" with a parenthesized list of expressions matching the number of variables in the undefined function.
+This will create a new undefined function with those values as parameters which can be used to set initial conditions for a differential equation solver, for example a variable mapped as "<b>y = y(x)</b>" will turn into the function "<b>y(0)</b>" if the variable "<b>y</b>" is called as "<b>y(0)</b>".
+If a variable is not currently mapped to an undefined function then this initial condition can be created directly just by writing "<b>y(0)</b>".
+However if the variable is mapped to something which is not an undefined function, or is not pure, or the number of arguments don't match then you will need to use the explicit "<b>?y(0)</b>" form to specify this initial condition.
+</p><p>
+The derivative of an undefined function may be called to specify initial conditions for that derivative of the function.
+"<b>y(x)'(0)</b>" means the value of the first derivative of the function at "<b>0</b>", this is of course easier if the function is already mapped to a variable like "<b>y = y(x)</b>" so you can do "<b>y'(0)</b>".
+Partial derivatives of multi-variable undefined functions can also be taken and called.
+In the case of a function mapped as "<b>u = u(x, t)</b>", you can do "<b>du/dx (0,0)</b>" or $\frac{du}{dx} (0, 0)$ to specify the initial condition at x = 0 and t = 0 of the first derivative of "<b>x</b>" of the function.
+If the function is not assigned to a variable then the format to do this is "<b>d/dx(u(x, t))(0,0)</b>" - $\frac{d}{dx}(u(x, t))(0, 0)$, so obviously it saves some typing to assign the function to a varaible.
+Also if you have an undefined function assigned to a variable then SymPad will map any undefined functions matching it coming from a SymPy calculation back to the variable to which it is assigned, easier on the eyes this way. One more detail, whereas trying to create an undefined function implicitly like "<b>y(a + b)</b>" will be interpreted as "<b>y * (a + b)</b>", this is not the case if "<b>y</b>" is a variable containing a pure undefined function, in which case a new undefined function "<b>y(a + b)</b>" is created.
+And you can always assure an undefined function is created by use of the explicit "<b>?</b>" form of the definition.
+</p><p>
+The last use of undefined functions is as placeholders in concrete lambda functions for calls to be bound at evaluation.
+Normally when a lambda references another lambda, that lambda needs to exist at the time of definition of the second lambda and the body of the referred lambda is simply copied into the new lambda.
+If you use an undefined function in a lambda definition then upon lambda execution it will be bound to any lambda defined with the same name mapped globally, needless to say the number of parameters needs to match.
+This is also useful for assigning functions returned from differential equation solvers after getting the solution.
 </p><p>
 For examples of the usage of undefined functions see <a href="#Ordinary Differential Equations">Ordinary Differential Equations</a> and <a href="#Partial Differential Equations">Partial Differential Equations</a>.
 </p>
@@ -666,7 +686,7 @@ This function takes on a different meaning when used at the top level of a lambd
 After this initial topmost use the function reverts to its normal mode of operation, which means that if you want to completely defer evaluation at the top level of the body of a lambda then you actually have to specify the "<b>%</b>" function twice like "<b>lambda x: %%(1 + 2 + x)</b>".
 The same thing can be achieved by simply doing "<b>f = lambda x: %(1 + 2) + x</b>" instead since in this expression the "<b>%</b>" is no longer the topmost function, the addition is.
 </p><p>
-Use of these functions is demonstrated <a href="#Lambda Function Examples">Lambda Function Examples</a> and <a href="#Pseudo-Function Examples">Pseudo-Function Examples</a>.
+Use of these functions is demonstrated <a href="#Pseudo-Function Examples">Pseudo-Function Examples</a> and <a href="#Lambda Function Examples">Lambda Function Examples</a>.
 </p>
 
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
@@ -1248,7 +1268,7 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <tr><td><b>ufuncmap</b></td><td>&emsp;-</td><td>When on, undefined functions resulting from SymPy calculations will be mapped back to the variables they are assigned to if possible.</td></tr>
 <tr><td><b>prodrat</b></td><td>&emsp;-</td><td>Controls whether products with leading rationals are displayed as $\frac75x^2$ (on), or $\frac{7x^2}5$ (off, default).</td></tr>
 <tr><td><b>doit</b></td><td>&emsp;-</td><td>Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</td></tr>
-<tr><td><b>strict</b></td><td>&emsp;-</td><td>This controls whether the LaTeX generated for expressions is guaranteed to be pasteable into SymPad or if it looks prettier (default).</td></tr>
+<tr><td><b>strict</b></td><td>&emsp;-</td><td>This controls whether the LaTeX generated for expressions is guaranteed to be pasteable into SymPad or if it looks prettier (default), it currently only affects how undefined functions are displayed.</td></tr>
 <tr><td><b>N</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</td></tr>
 <tr><td><b>O</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</td></tr>
 <tr><td><b>S</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</td></tr>

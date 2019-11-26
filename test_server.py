@@ -164,7 +164,7 @@ class Test (unittest.TestCase):
 		reset ()
 		self.assertEqual (get ('a = lambda l: l'), {'math': ('a(l) = l', 'a = Lambda(l, l)', 'a\\left(l \\right) = l')})
 		self.assertEqual (get ('a; a'), {'math': ('lambda l: l', 'Lambda(l, l)', '\\left(l \\mapsto l \\right)')})
-		self.assertEqual (get ('{a = a}'), {'math': ('a(l) = l', 'a = Lambda(l, l)', 'a\\left(l \\right) = l')})
+		self.assertEqual (get ('{a = a}'), {'math': ('True', 'True', 'True')})
 		self.assertEqual (get ('a == a'), {'math': ('True', 'True', 'True')})
 		self.assertEqual (get ('a.b'), {'math': ('l.b', 'l.b', 'l.b')})
 		self.assertEqual (get ('a, a'), {'math': ('(lambda l: l, lambda l: l)', '(Lambda(l, l), Lambda(l, l))', '\\left(\\left(l \\mapsto l \\right), \\left(l \\mapsto l \\right) \\right)')})
@@ -457,7 +457,32 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('simplify (not (not a and not b) and not (not a or not c))'), {'math': ('a and c', 'And(a, c)', 'a \\wedge c')})
 		self.assertEqual (get ('(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}'), {'math': ('{2, 5, 7}', 'FiniteSet(2, 5, 7)', '\\left\\{2, 5, 7 \\right\\}')})
 
-	def test_test_solve (self):
+	def test_LSDI (self):
+		reset ()
+		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('\\lim_{h\\to0} {(x + h)**2 - x**2} / h'), {'math': ('2 x', '2*x', '2 x')})
+		self.assertEqual (get ('Limit ((1 + 1/x)**x, x, \\infty)'), {'math': ('e', 'e', 'e')})
+		self.assertEqual (get ('{(1 - 1/x)**x}.limit (x, \\infty)'), {'math': ('e**-1', 'e**-1', 'e^{-1}')})
+		self.assertEqual (get ('limit (sin x / x, x, 0)'), {'math': ('1', '1', '1')})
+		self.assertEqual (get ('\\sum_{n=0}^\\infty (-1)**n x**{2n} / (2n)!'), {'math': ('cos(x)', 'cos(x)', '\\cos{\\left(x \\right)}')})
+		self.assertEqual (get ('Sum ((-1)**n x**{2n + 1} / (2n + 1)!, (n, 0, oo))'), {'math': ('sin(x)', 'sin(x)', '\\sin{\\left(x \\right)}')})
+		self.assertEqual (get ('summation ((-3)^n / n 7^{n+1} * (x - 5)^n, (n, 1, oo))'), {'math': ('{7 {15/7 - 3 x / 7} ln(3 x / 7 - 8/7) / 3 {x - 5} if 8/3 < x <= 22/3 else {7 {15/7 - 3 x / 7} ln(3 x / 7 - 8/7) / 3 {x - 5} if 8/3 < x <= 22/3 else \\sum_{n = 1}^{oo} {(-3)**n * 7**-n{(x - 5)**n}} / n}} / 7', 'Piecewise(((7*(S(15)/7 - (3*x) / 7)*ln((3*x) / 7 - S(8)/7)) / (3*(x - 5)), And(Lt(S(8)/3, x), Le(x, S(22)/3))), (Piecewise(((7*(S(15)/7 - (3*x) / 7)*ln((3*x) / 7 - S(8)/7)) / (3*(x - 5)), And(Lt(S(8)/3, x), Le(x, S(22)/3))), (Sum(((-3)**n*7**-n*(x - 5)**n) / n, (n, 1, oo)), True)), True)) / 7', '\\frac{\\begin{cases} \\frac{7 \\left(\\frac{15}{7} - \\frac{3 x}{7} \\right) \\ln{\\left(\\frac{3 x}{7} - \\frac{8}{7} \\right)}}{3 \\left(x - 5 \\right)} & \\text{for}\\: \\frac{8}{3} < x \\le \\frac{22}{3} \\\\ \\begin{cases} \\frac{7 \\left(\\frac{15}{7} - \\frac{3 x}{7} \\right) \\ln{\\left(\\frac{3 x}{7} - \\frac{8}{7} \\right)}}{3 \\left(x - 5 \\right)} & \\text{for}\\: \\frac{8}{3} < x \\le \\frac{22}{3} \\\\ \\sum_{n = 1}^\\infty \\frac{\\left(-3 \\right)^n \\cdot {7^{-n}}\\left(x - 5 \\right)^n}{n} & \\text{otherwise} \\end{cases} & \\text{otherwise} \\end{cases}}{7}')})
+		self.assertEqual (get ('d/dx ln x'), {'math': ('1/x', '1/x', '\\frac{1}{x}')})
+		self.assertEqual (get ('Derivative (x**3y**2, x, y)'), {'math': ('6 y x**2', '6*y*x**2', '6 y\\ x^2')})
+		self.assertEqual (get ('diff (sin x + cos x, x, 2)'), {'math': ('-cos(x) - sin(x)', '-cos(x) - sin(x)', '-\\cos{\\left(x \\right)} - \\sin{\\left(x \\right)}')})
+		self.assertEqual (get ('{x**2sin**2y}.diff (x, y)'), {'math': ('4 x cos(y) sin(y)', '4*x*cos(y)*sin(y)', '4 x \\cos{\\left(y \\right)} \\sin{\\left(y \\right)}')})
+		self.assertEqual (get ('d**3/dx**2dy x**3y**2'), {'math': ('12 x y', '12*x*y', '12 x\\ y')})
+		self.assertEqual (get ("sin (x)'"), {'math': ('cos(x)', 'cos(x)', '\\cos{\\left(x \\right)}')})
+		self.assertEqual (get ("(e**{2x})''"), {'math': ('4 * e**{2 x}', '4*e**(2*x)', '4 e^{2 x}')})
+		self.assertEqual (get ('d/dx ln (y(x))'), {'math': ("y(x)' / y(x)", "diff(Function('y')(x)) / Function('y')(x)", "\\frac{y\\left(x \\right)'}{y\\left(x \\right)}")})
+		self.assertEqual (get ('\\int x**a dx'), {'math': ('x**{a + 1} / {a + 1} if a != -1 else ln(x)', 'Piecewise((x**(a + 1) / (a + 1), Ne(a, -1)), (ln(x), True))', '\\begin{cases} \\frac{x^{a + 1}}{a + 1} & \\text{for}\\: a \\ne -1 \\\\ \\ln{\\left(x \\right)} & \\text{otherwise} \\end{cases}')})
+		self.assertEqual (get ('Integral (a**x, x)'), {'math': ('a**x / ln(a) if ln(a) != 0 else x', 'Piecewise((a**x / ln(a), Ne(ln(a), 0)), (x, True))', '\\begin{cases} \\frac{a^x}{\\ln{\\left(a \\right)}} & \\text{for}\\: \\ln{\\left(a \\right)} \\ne 0 \\\\ x & \\text{otherwise} \\end{cases}')})
+		self.assertEqual (get ('{x**3y**2}.integrate (x, y)'), {'math': ('x**4 y**3 / 12', '(x**4*y**3) / 12', '\\frac{x^4 y^3}{12}')})
+		self.assertEqual (get ('\\int_0**oo e**{-st} dt'), {'math': ('oo sign(e**-st)', 'oo*sign(e**-st)', '\\infty \\operatorname{sign}{\\left(e^{-st} \\right)}')})
+		self.assertEqual (get ('Integral (r, (r, 0, 1), (theta, 0, 2pi))'), {'math': ('pi', 'pi', '\\pi')})
+		self.assertEqual (get ('integrate (sin x / x, (x, -oo, oo))'), {'math': ('pi', 'pi', '\\pi')})
+
+	def test_solve (self):
 		reset ()
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('solve (x**2 = 4)'), {'math': ('[-2, 2]', '[-2, 2]', '\\left[-2, 2 \\right]')})
@@ -481,7 +506,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('w = {x: 1, y: 2}'), {'math': ('w = {x: 1, y: 2}', 'w = {x: 1, y: 2}', 'w = \\left\\{x{:} 1, y{:} 2 \\right\\}')})
 		self.assertEqual (get ('a.subs (w), b.subs (w)'), {'math': ('(1, 0)', '(1, 0)', '\\left(1, 0 \\right)')})
 
-	def test_test_ode (self):
+	def test_ode (self):
 		reset ()
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('dsolve (d**2/dx**2 ?(x) + 9?(x))'), {'math': ('?(x) = C1 sin(3 x) + C2 cos(3 x)', "Eq(Function('')(x), C1*sin(3*x) + C2*cos(3*x))", '?\\left(x \\right) = C_{1}\\ \\sin{\\left(3 x \\right)} + C_{2}\\ \\cos{\\left(3 x \\right)}')})
@@ -508,7 +533,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ("dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})"), {'math': ('y(t) = {{7 * e**{-5 t}} / 5 - 7/5} e**{-3 t}', 'y = Lambda(t, ((7*e**(-5*t)) / 5 - S(7)/5)*e**(-3*t))', 'y\\left(t \\right) = \\left(\\frac{7 e^{-5 t}}{5} - \\frac{7}{5} \\right) e^{-3 t}')})
 		self.assertEqual (get ("dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))"), {'math': ('[x(t) = C1 x0(t) + 8 C2 {\\int e**{19t**2 / 2} / x0(t)**2 dt} * x0(t), y(t) = C1 y0(t) + C2 {e**{19t**2 / 2} / x0(t) + 8 {\\int e**{19t**2 / 2} / x0(t)**2 dt} * y0(t)}]', "[Eq(Function('x')(t), C1*Function('x0')(t) + 8*C2*Integral(e**((19*t**2) / 2) / Function('x0')(t)**2, t)*Function('x0')(t)), Eq(Function('y')(t), C1*Function('y0')(t) + C2*(e**((19*t**2) / 2) / Function('x0')(t) + 8*Integral(e**((19*t**2) / 2) / Function('x0')(t)**2, t)*Function('y0')(t)))]", '\\left[x\\left(t \\right) = C_{1}\\ x_{0}\\left(t \\right) + 8\\ C_{2} {\\int \\frac{e^\\frac{19 t^2}{2}}{x_{0}\\left(t \\right)^2} \\ dt} \\cdot x_{0}\\left(t \\right), y\\left(t \\right) = C_{1}\\ y_{0}\\left(t \\right) + {C_{2}}\\left(\\frac{e^\\frac{19 t^2}{2}}{x_{0}\\left(t \\right)} + 8 {\\int \\frac{e^\\frac{19 t^2}{2}}{x_{0}\\left(t \\right)^2} \\ dt} \\cdot y_{0}\\left(t \\right) \\right) \\right]')})
 
-	def test_test_pde (self):
+	def test_pde (self):
 		reset ()
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('u, X, T = u (x, t), X (x), T (t)'), {'math': [('u = u(x, t)', "u = Function('u')(x, t)", 'u = u\\left(x, t \\right)'), ('X = X(x)', "X = Function('X')(x)", 'X = X\\left(x \\right)'), ('T = T(t)', "T = Function('T')(t)", 'T = T\\left(t \\right)')]})
@@ -534,6 +559,35 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('F (x) = e**x'), {'math': ('F(x) = e**x', 'F = Lambda(x, e**x)', 'F\\left(x \\right) = e^x')})
 		self.assertEqual (get ('\\. eq |_{u (x, y) = v}'), {'math': ('-y**2 + y**2 {e**{y**2 / 2} e**{x y} + 1} - y {x e**{y**2 / 2} e**{x y} + y e**{y**2 / 2} e**{x y}} + x y e**{y**2 / 2} e**{x y}', '-y**2 + y**2*(e**(y**2 / 2)*e**(x*y) + 1) - y*(x*e**(y**2 / 2)*e**(x*y) + y*e**(y**2 / 2)*e**(x*y)) + x*y*e**(y**2 / 2)*e**(x*y)', '-y^2 + y^2 \\left(e^\\frac{y^2}{2} e^{x\\ y} + 1 \\right) - {y}\\left(x\\ e^\\frac{y^2}{2} e^{x\\ y} + y\\ e^\\frac{y^2}{2} e^{x\\ y} \\right) + x\\ y\\ e^\\frac{y^2}{2} e^{x\\ y}')})
 		self.assertEqual (get ('simplify _'), {'math': ('0', '0', '0')})
+
+	def test_pseudo_functions (self):
+		reset ()
+		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('1 + 2'), {'math': ('3', '3', '3')})
+		self.assertEqual (get ('%(1 + 2)'), {'math': ('1 + 2', '1 + 2', '1 + 2')})
+		self.assertEqual (get ('_'), {'math': ('3', '3', '3')})
+		self.assertEqual (get ('x, y = 1, 2'), {'math': [('x = 1', 'x = 1', 'x = 1'), ('y = 2', 'y = 2', 'y = 2')]})
+		self.assertEqual (get ('x + y'), {'math': ('3', '3', '3')})
+		self.assertEqual (get ('%(x + y)'), {'math': ('1 + 2', '1 + 2', '1 + 2')})
+		self.assertEqual (get ('%@(x + y)'), {'math': ('x + y', 'x + y', 'x + y')})
+		self.assertEqual (get ('@(x + y)'), {'math': ('x + y', 'x + y', 'x + y')})
+		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
+		self.assertEqual (get ('x = 2'), {'math': ('x = 2', 'x = 2', 'x = 2')})
+		self.assertEqual (get ('x'), {'math': ('2', '2', '2')})
+		self.assertEqual (get ('@x'), {'math': ('x', 'x', 'x')})
+		self.assertEqual (get ('lambda x: x'), {'math': ('lambda x: x', 'Lambda(x, x)', '\\left(x \\mapsto x \\right)')})
+		self.assertEqual (get ('lambda x: @x'), {'math': ('lambda x: 2', 'Lambda(x, 2)', '\\left(x \\mapsto 2 \\right)')})
+		self.assertEqual (get ('lambda x: @@x'), {'math': ('lambda x: x', 'Lambda(x, x)', '\\left(x \\mapsto x \\right)')})
+		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('lambda x: \\int x + 1 + 2 dx'), {'math': ('lambda x: \\int x + 3 dx', 'Lambda(x, Integral(x + 3, x))', '\\left(x \\mapsto \\int x + 3 \\ dx \\right)')})
+		self.assertEqual (get ('lambda x: %(\\int x + 1 + 2 dx)'), {'math': ('lambda x: x**2 / 2 + 3 x', 'Lambda(x, x**2 / 2 + 3*x)', '\\left(x \\mapsto \\frac{x^2}{2} + 3 x \\right)')})
+		self.assertEqual (get ('lambda x: %%(\\int x + 1 + 2 dx)'), {'math': ('lambda x: \\int x + 1 + 2 dx', 'Lambda(x, Integral(x + 1 + 2, x))', '\\left(x \\mapsto \\int x + 1 + 2 \\ dx \\right)')})
+		self.assertEqual (get ('lambda x: %%(\\int x + y + y dx)'), {'math': ('lambda x: \\int x + y + y dx', 'Lambda(x, Integral(x + y + y, x))', '\\left(x \\mapsto \\int x + y + y \\ dx \\right)')})
+		self.assertEqual (get ('y = 2'), {'math': ('y = 2', 'y = 2', 'y = 2')})
+		self.assertEqual (get ('lambda x: %%(\\int x + y + y dx)'), {'math': ('lambda x: \\int x + 2 + 2 dx', 'Lambda(x, Integral(x + 2 + 2, x))', '\\left(x \\mapsto \\int x + 2 + 2 \\ dx \\right)')})
+		self.assertEqual (get ('lambda x: %%@(\\int x + y + y dx)'), {'math': ('lambda x: \\int x + y + y dx', 'Lambda(x, Integral(x + y + y, x))', '\\left(x \\mapsto \\int x + y + y \\ dx \\right)')})
+		self.assertEqual (get ('lambda x: %%(\\int x + @y + y dx)'), {'math': ('lambda x: \\int x + y + 2 dx', 'Lambda(x, Integral(x + y + 2, x))', '\\left(x \\mapsto \\int x + y + 2 \\ dx \\right)')})
 	# END UPDATE BLOCK
 
 def get (text):
@@ -1000,7 +1054,35 @@ pdsolve (x * d/dx u (x, y) - y * d/dy u (x, y) + y**2u (x, y) - y**2)
 simplify (not (not a and not b) and not (not a or not c))
 (({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \\{4} || {7,}
 
-"""), ('test_solve', """
+"""), ('LSDI', """
+
+delall
+\\lim_{h\\to0} {(x + h)**2 - x**2} / h
+Limit ((1 + 1/x)**x, x, \\infty)
+{(1 - 1/x)**x}.limit (x, \\infty)
+limit (sin x / x, x, 0)
+
+\\sum_{n=0}^\\infty (-1)**n x**{2n} / (2n)!
+Sum ((-1)**n x**{2n + 1} / (2n + 1)!, (n, 0, oo))
+summation ((-3)^n / n 7^{n+1} * (x - 5)^n, (n, 1, oo))
+
+d/dx ln x
+Derivative (x**3y**2, x, y)
+diff (sin x + cos x, x, 2)
+{x**2sin**2y}.diff (x, y)
+d**3/dx**2dy x**3y**2
+sin (x)'
+(e**{2x})''
+d/dx ln (y(x))
+
+\\int x**a dx
+Integral (a**x, x)
+{x**3y**2}.integrate (x, y)
+\\int_0**oo e**{-st} dt
+Integral (r, (r, 0, 1), (theta, 0, 2pi))
+integrate (sin x / x, (x, -oo, oo))
+
+"""), ('solve', """
 
 delall
 solve (x**2 = 4)
@@ -1025,7 +1107,7 @@ a.subs (s [3]), b.subs (s [3])
 w = {x: 1, y: 2}
 a.subs (w), b.subs (w)
 
-"""), ('test_ode', """
+"""), ('ode', """
 
 delall
 dsolve (d**2/dx**2 ?(x) + 9?(x))
@@ -1054,7 +1136,7 @@ x, y = x(t), y(t)
 dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))
 
-"""), ('test_pde', """
+"""), ('pde', """
 
 delall
 u, X, T = u (x, t), X (x), T (t)
@@ -1082,6 +1164,37 @@ simplify _
 F (x) = e**x
 \\. eq |_{u (x, y) = v}
 simplify _
+
+"""), ('pseudo_functions', """
+
+delall
+1 + 2
+%(1 + 2)
+_
+x, y = 1, 2
+x + y
+%(x + y)
+%@(x + y)
+@(x + y)
+
+delall
+x
+x = 2
+x
+@x
+lambda x: x
+lambda x: @x
+lambda x: @@x
+
+delall
+lambda x: \\int x + 1 + 2 dx
+lambda x: %(\\int x + 1 + 2 dx)
+lambda x: %%(\\int x + 1 + 2 dx)
+lambda x: %%(\\int x + y + y dx)
+y = 2
+lambda x: %%(\\int x + y + y dx)
+lambda x: %%@(\\int x + y + y dx)
+lambda x: %%(\\int x + @y + y dx)
 
 """),
 

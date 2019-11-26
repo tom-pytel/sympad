@@ -895,7 +895,7 @@ class Parser (LALR1):
 			b'CqcswjPmpPg107t+wXSJBgEXd5+0UdWgaU9O4MiGi6cfI925jfVq/bzVlZsGXNp/9RvL7ozZsfLqOaMZbnfOxhUzZ6Uxu+HXFR41g4ONVW39pNojm4kT3zevNxf97gk3VOYN4/Ea+jPm8IrZONQQ/D5M2ZKN9Wxy3q/o2Ul6ZnZlSzfWs20mOS+FUCd5ROF3' \
 			b'qW5tY+EWd7dX+LmxW9tYuFc0t3kprydwYe3ZG6+NHf5vluiwG+WiTpM4i5LMbaxAZaXpegUyu3vdWGeKd996nbG7e91YZ8oS2/U60+/udWOdKb6Lq3UGv6R7pxvrTPnM3XqdqXf3uvFHSYtL5nqdaXb3urHOnDE1e7c6Y3b3urHO4Eeq6YvTDT/ggEpIgCyF' \
 			b'bi0GYLNTYI2fbucLMEzXmgSKQDFAZBYXtKB/BX56kD3eQM+ysUG46X+O7Q9io8DpDlSv9H8j78BAs4YvaLeoNvyes+05PP16GccABYGmwPgdf5gfVZJUsCW1Q7XCcFAd/igzGOYkFVLldqS+QXXRkxe/yM2f9ocWkc/686fzu9Hn8sOn8nE1Pw9RQJ9fYacB' \
-			b'Jafv26BqMyAg2+Sz4HBfx35hzuB5g6HyAOIsHre03F7ubocQMB5fP///uqCkuw=='
+			b'Jafv26BqMyAg2+Sz4HBfx35hzuB5g6HyAOIsHre03F7ubocQMB5fP///uqCkuw==' 
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1062,7 +1062,7 @@ class Parser (LALR1):
 	# grammar definition and implementation
 
 	def expr_scolon_1      (self, expr_scolon, SCOLON, expr_ass_lvals):                return expr_scolon if expr_ass_lvals == AST.CommaEmpty else AST.flatcat (';', expr_scolon, expr_ass_lvals)
-	def expr_scolon_2      (self, expr_ass_lvals):                                     return AST ('(', expr_ass_lvals.curly) if expr_ass_lvals.is_curly else expr_ass_lvals
+	def expr_scolon_2      (self, expr_ass_lvals):                                     return AST ('(', expr_ass_lvals.curly) if expr_ass_lvals.is_curly and expr_ass_lvals.curly.ass_valid else expr_ass_lvals
 
 	def expr_ass_lvals     (self, expr_commas):                                        return _expr_ass_lvals (expr_commas)
 
@@ -1209,7 +1209,9 @@ class Parser (LALR1):
 	def expr_sym_1         (self, SYMPY, expr_pcommas):                                return _expr_sym (self, expr_pcommas, py = True)
 	def expr_sym_2         (self, SYM, expr_var, expr_pcommas):                        return _expr_sym (self, expr_pcommas, name = expr_var.var)
 	def expr_sym_3         (self, SYM, expr_pcommas):                                  return _expr_sym (self, expr_pcommas)
-	def expr_sym_4         (self, expr_subs):                                          return expr_subs
+	# def expr_sym_4         (self, SYM, expr_var):                                      return _expr_sym (self, AST.CommaEmpty, name = expr_var.var)
+	# def expr_sym_5         (self, SYM):                                                return _expr_sym (self, AST.CommaEmpty, name = '')
+	def expr_sym_6         (self, expr_subs):                                          return expr_subs
 
 	def expr_subs_1        (self, L_DOT, expr_commas, R_BAR, SUB, CURLYL, subsvars, CURLYR):  return _expr_subs (expr_commas, subsvars)
 	def expr_subs_2        (self, SLASHDOT, expr_commas, BAR, SUB, CURLYL, subsvars, CURLYR): return _expr_subs (expr_commas, subsvars)
@@ -1538,6 +1540,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	a = p.parse (r"@x!!")
+	a = p.parse (r"{a = a}")
 	print (a)
 

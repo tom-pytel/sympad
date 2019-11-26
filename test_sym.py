@@ -697,7 +697,7 @@ def expr_idx ():
 		return f' {expr ()} [{expr ()}, {expr ()}, {expr ()}]'
 
 def expr_slice ():
-	start, stop, step = expr ().replace ('None', 'NONE'), expr ().replace ('None', 'NONE'), expr ().replace ('None', 'NONE')
+	start, stop, step = expr ().replace ('None', 'C'), expr ().replace ('None', 'C'), expr ().replace ('None', 'C')
 
 	if random () >= 0.5:
 		ret = f' {choice ([start, ""])} : {choice ([stop, ""])} '
@@ -1090,7 +1090,7 @@ def test (argv = None):
 							ast = ast.piece [0] [0]
 
 					elif ast.is_slice:
-						ast = AST ('-slice', False if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, AST ('@', 'NONE') if ast.step == AST.None_ else False if ast.step is None else ast.step)
+						ast = AST ('-slice', False if ast.start == AST.None_ else ast.start, False if ast.stop == AST.None_ else ast.stop, AST ('@', 'C') if ast.step == AST.None_ else False if ast.step is None else ast.step)
 
 					elif ast.is_and:
 						args = sanitize (ast.and_)

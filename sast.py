@@ -849,8 +849,11 @@ class AST_Var (AST):
 class AST_Attr (AST):
 	op, is_attr = '.', True
 
-	def _init (self, obj, attr, args = None):
+	def __new__ (cls, obj, attr, args = None):
+		self                           = tuple.__new__ (cls, ('.', obj, attr) if args is None else ('.', obj, attr, args))
 		self.obj, self.attr, self.args = obj, attr, args
+
+		return self
 
 	_is_attr_var  = lambda self: self.args is None
 	_is_attr_func = lambda self: self.args is not None
@@ -961,18 +964,24 @@ class AST_Pow (AST):
 class AST_Log (AST):
 	op, is_log = '-log', True
 
-	def _init (self, log, base = None):
+	def __new__ (cls, log, base = None):
+		self               = tuple.__new__ (cls, ('-log', log) if base is None or base == AST.E else ('-log', log, base))
 		self.log, self.base = log, base
+
+		return self
 
 	_is_log_with_base = lambda self: self.base is not None
 
 class AST_Sqrt (AST):
 	op, is_sqrt = '-sqrt', True
 
-	def _init (self, rad, idx = None):
+	def __new__ (cls, rad, idx = None):
+		self               = tuple.__new__ (cls, ('-sqrt', rad) if idx is None or idx == AST.Two else ('-sqrt', rad, idx))
 		self.rad, self.idx = rad, idx
 
-	_is_sqrt_with_base = lambda self: self.idx is not None
+		return self
+
+	_is_sqrt_with_idx = lambda self: self.idx is not None
 
 class AST_Func (AST):
 	op, is_func = '-func', True
@@ -1013,8 +1022,11 @@ class AST_Func (AST):
 class AST_Lim (AST):
 	op, is_lim = '-lim', True
 
-	def _init (self, lim, lvar, to, dir = None):
+	def __new__ (cls, lim, lvar, to, dir = None):
+		self                                   = tuple.__new__ (cls, ('-lim', lim, lvar, to) if dir is None else ('-lim', lim, lvar, to, dir))
 		self.lim, self.lvar, self.to, self.dir = lim, lvar, to, dir
+
+		return self
 
 class AST_Sum (AST):
 	op, is_sum = '-sum', True
@@ -1041,8 +1053,11 @@ class AST_DiffP (AST):
 class AST_Intg (AST):
 	op, is_intg = '-intg', True
 
-	def _init (self, intg, dv, from_ = None, to = None):
+	def __new__ (cls, intg, dv, from_ = None, to = None):
+		self                                    = tuple.__new__ (cls, ('-intg', intg, dv) if from_ is None else ('-intg', intg, dv, from_, to))
 		self.intg, self.dv, self.from_, self.to = intg, dv, from_, to
+
+		return self
 
 	_is_intg_definite = lambda self: self.from_ is not None
 
@@ -1214,6 +1229,7 @@ for _vp, _vv in _AST_CONSTS:
 AST.Null       = AST ()
 AST.Zero       = AST ('#', '0')
 AST.One        = AST ('#', '1')
+AST.Two        = AST ('#', '2')
 AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())

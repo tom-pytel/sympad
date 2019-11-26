@@ -1,6 +1,7 @@
 > ERROR! assign to ufuncs from iterable?
 
 > \. ?F (x, 0)' |_{x = 0} ---> \. ?F (x, y) |_{x = 0, y = 0}
+> keep track of what undefined functions are created during processing?
 
 > somehow allow \. u (x, y) |_{u = v} when u and v are ufunc variables
 
@@ -10,6 +11,8 @@
 
 > extend mapback to symbols?
 > $s() -> $s - symbols don't need paren?
+
+> subs_diff_any_ufunc and other ufunc implicit multiply with invalid call paren show as cdot
 
 > next (t) (2) at end of iterator t gives IndexError instead of StopIteration
 
@@ -29,10 +32,7 @@
 > "d / dx (2)" vs. "d**2 / dx (2)" when dx is a lambda, intricate - would need to analyze parser stack to see if valid diff, but if someone is naming their lambdas "dx" that is their problem
 > better potential derivative test than self.stack_has_sym ('DIVIDE')
 
-
-> \. F(xi_0) |_{x_i0 = 2x - 3y} F(xi_0) (x_i0 = 2x - 3y) from pdsolve and the parsing
-> ?x0(t) -> ?x(t)(0), ?x0(t)' -> ?x(t)'(0) from dsolve
-> keep track of what undefined functions are created during processing?
+> again redo spt2ast_Add?
 
 > SymmetricDifference()
 
@@ -52,20 +52,15 @@
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
 
-> doc: scoping behavior of @, not dynamic
-> doc: % no-eval pseudo-func better
-
 > doc: parentheses create implicit undefined functions
 > doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
+> doc: SymPy one letter functions in section on SymPy functions
 
-> doc: quick mode variables can have numerical tails as subscripts
 > doc: caveats with variable mapping and functions like integrate, summation due to their unfree vars being remapped
 > doc: new == vs. = display behavior
 > doc: change to binding priority - sin**f(x) - sin**a.b(x) - sin**a.b{x}
 > doc: new integration behavior
 > doc: removed $ function escape character
-> doc: ODEs
-> doc: PDEs
 
 
 > allow funcs as vars for like symbols (..., cls = Functions)?
@@ -94,10 +89,6 @@
 > CENSORED variables problem with matches
 
 
-> again redo spt2ast_Add?
-
-> parse from python ln x / ln base -> \log_{base} x? only for number bases?
-
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)?
 
 > CREATE SYMPY OBJECTS FOR PYTHON OBJECTS IN SYM?!?
@@ -106,8 +97,6 @@
 
 > test_server multi maths from semicolon expressions
 
-
-> proper sqrt and log AST initialization via __new__, slice, maybe others
 
 > f (x) = x**2; f (x)
 
