@@ -405,6 +405,11 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 
 		vars = set_vars (dict (zip (vars, asts)))
 
+	if len (vars) == 1:
+		_VARS ['_'] = AST ('=', ('@', vars [0] [0]), vars [0] [1])
+	else:
+		_VARS ['_'] = AST ('(', (',', tuple (AST ('=', ('@', v [0]), v [1]) for v in vars)))
+
 	_vars_updated ()
 
 	return _present_vars (vars)

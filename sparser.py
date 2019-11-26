@@ -1062,7 +1062,7 @@ class Parser (LALR1):
 	# grammar definition and implementation
 
 	def expr_scolon_1      (self, expr_scolon, SCOLON, expr_ass_lvals):                return expr_scolon if expr_ass_lvals == AST.CommaEmpty else AST.flatcat (';', expr_scolon, expr_ass_lvals)
-	def expr_scolon_2      (self, expr_ass_lvals):                                     return expr_ass_lvals
+	def expr_scolon_2      (self, expr_ass_lvals):                                     return AST ('(', expr_ass_lvals.curly) if expr_ass_lvals.is_curly else expr_ass_lvals
 
 	def expr_ass_lvals     (self, expr_commas):                                        return _expr_ass_lvals (expr_commas)
 
