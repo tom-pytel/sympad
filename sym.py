@@ -1187,7 +1187,44 @@ class ast2py: # abstract syntax tree -> Python code text
 		return ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - ')
 
 	def _ast2py_mul (self, ast):
-		return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
+		# return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
+		def py (a):
+			return self._ast2py_paren (a, a.is_cmp_in or a.op in {',', '+'} or (a is not ast.mul [0] and (a.is_div or a.is_log_with_base)))
+
+		mul  = [py (ast.mul [0])]
+		lamb = ast.mul [0]
+
+		for i in range (1, ast.mul.len):
+			a = ast.mul [i]
+
+			if a.is_paren_free and i not in ast.exp:
+				if lamb.is_lamb: # lambda call so merge into one string without '*'
+					mul [-1] += py (a)
+					lamb      = lamb.lamb
+
+					continue
+
+				lamb = AST.Null
+
+				if ast.mul [i - 1].is_var:
+					diff = _SYM_USER_VARS.get (ast.mul [i - 1].var, AST.Null)
+
+					if diff.is_diff_any_ufunc: # possible ics call to derivative of ufunc
+						if diff.diff_any.apply_argskw (a.paren.as_ufunc_argskw):
+							subs = []
+
+							for s, d in zip (diff.diff_any.vars, a.paren.comma if isinstance (a.paren.comma, tuple) else (a.paren,)):
+								if s != d:
+									subs.append ((s, d))
+
+							if subs:
+								mul [-1] = self._ast2py_subs (AST ('-subs', None, tuple (subs)), exprstr = mul [-1])
+
+						continue
+
+			mul.append (py (a))
+
+		return mul [0] if len (mul) == 1 else '*'.join (mul)
 
 	def _ast2py_div (self, ast):
 		nn = _ast_is_neg (ast.numer)
@@ -1285,7 +1322,7 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return sdiff
 
-	def _ast2py_subs (self, ast):
+	def _ast2py_subs (self, ast, exprstr = None):
 		def tupletuple (a):
 			return self._ast2py (AST ('(', (',', (a,))) if a.strip_paren.is_comma else a)
 
@@ -1294,7 +1331,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		else:
 			subs = f'{tupletuple (ast.subs [0] [0])}, {tupletuple (ast.subs [0] [1])}'
 
-		return f'Subs({self._ast2py_paren (ast.expr, ast.expr.is_comma)}, {subs})'
+		return f'Subs({exprstr or self._ast2py_paren (ast.expr, ast.expr.is_comma)}, {subs})'
 
 	_ast2py_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2py (a) for a in ast.scolon),
@@ -2036,19 +2073,19 @@ class sym: # for single script
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	vars = {'x': AST.Zero}
+	vars = {'u': AST ('-diff', ('-ufunc', 'u', (('@', 'x'), ('@', 't'))), 'd', (('x', 1),))}
 	# set_sym_user_funcs (set (vars))
 	set_sym_user_vars (vars)
 
 	# set_strict (True)
 
 	# ast = AST ('*', (('-lamb', ('*', (('-lamb', ('+', (('-func', '@', (('@', 'x'),)), ('#', '1'))), ('x',)), ('(', ('+', (('@', 'x'), ('#', '1')))))), ('x',)), ('(', ('#', '0'))))
-	ast = AST ('*', (('@', 'f'), ('-diffp', ('(', ('@', 'x')), 1), ('(', ('#', '0'))))
+	ast = AST ('*', (('@', 'u'), ('(', (',', (('#', '0'), ('#', '1'))))))
 	# ast = AST.apply_vars (ast, vars)
 
-	res = ast2tex (ast)
+	# res = ast2tex (ast)
 	# res = ast2nat (ast)
-	# res = ast2py (ast)
+	res = ast2py (ast)
 
 	# res = ast2spt (ast)
 	# res = spt2ast (res)
