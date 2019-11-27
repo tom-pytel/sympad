@@ -339,10 +339,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('z = z(x)'), {'math': ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)')})
 		self.assertEqual (get ('g (x) = x**3'), {'math': ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3')})
 		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
-		self.assertEqual (get ('z = y'), {'math': ('z = y', 'z = y', 'z = y')})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1'), ('z = y', 'z = y', 'z = y')]})
+		self.assertEqual (get ('z = y'), {'math': ('z = ?y(x, real = True)', "z = Function('y', real = True)(x)", 'z = ?y\\left(x, real = True \\right)')})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('z = ?y(x, real = True)', "z = Function('y', real = True)(x)", 'z = ?y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('del y'), {'msg': ["Undefined function 'y' deleted."]})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('x = 1', 'x = 1', 'x = 1'), ('z = y', 'z = y', 'z = y')]})
+		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('z = y(x, real = True)', "z = Function('y', real = True)(x)", 'z = y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
 
@@ -415,26 +415,26 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f = ?f (x)'), {'math': ('f = f(x)', "f = Function('f')(x)", 'f = f\\left(x \\right)')})
 		self.assertEqual (get ('f'), {'math': ('f(x)', "Function('f')(x)", 'f\\left(x \\right)')})
 		self.assertEqual (get ('1 + f'), {'math': ('f + 1', 'f + 1', 'f + 1')})
-		self.assertEqual (get ('g = f'), {'math': ('g = f', 'g = f', 'g = f')})
+		self.assertEqual (get ('g = f'), {'math': ('g = f(x)', "g = Function('f')(x)", 'g = f\\left(x \\right)')})
 		self.assertEqual (get ('g'), {'math': ('f(x)', "Function('f')(x)", 'f\\left(x \\right)')})
 		self.assertEqual (get ('1 + g'), {'math': ('f + 1', 'f + 1', 'f + 1')})
 		self.assertEqual (get ('del f'), {'msg': ["Undefined function 'f' deleted."]})
-		self.assertEqual (get ('g'), {'math': ('f', 'f', 'f')})
-		self.assertEqual (get ('1 + g'), {'math': ('f + 1', 'f + 1', 'f + 1')})
+		self.assertEqual (get ('g'), {'math': ('f(x)', "Function('f')(x)", 'f\\left(x \\right)')})
+		self.assertEqual (get ('1 + g'), {'math': ('g + 1', 'g + 1', 'g + 1')})
 		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('y = 1 + (?f (x) = 2)'), {'math': ('y = (?f(x) = 2) + 1', "y = Eq(Function('f')(x), 2) + 1", 'y = \\left(?f\\left(x \\right) = 2 \\right) + 1')})
 		self.assertEqual (get ('g (x) = ?f (x)'), {'math': ('g(x) = ?f(x)', "g = Lambda(x, Function('f')(x))", 'g\\left(x \\right) = ?f\\left(x \\right)')})
 		self.assertEqual (get ('g (2)'), {'math': ('4', '4', '4')})
-		self.assertEqual (get ('def (f, g)'), {'math': ('def(f, g)', "Function('def')(f, g)", 'def\\left(f, g \\right)')})
-		self.assertEqual (get ('f = f (x, y)'), {'err': "TypeError: lambda function 'f' takes 1 argument(s)"})
-		self.assertEqual (get ('f = 1 + f (x, y)'), {'err': "TypeError: lambda function 'f' takes 1 argument(s)"})
-		self.assertEqual (get ('del f'), {'msg': ["Lambda function 'f' deleted."]})
+		self.assertEqual (get ('del (f, g)'), {'msg': ["Lambda function 'f' deleted.", "Lambda function 'g' deleted."]})
+		self.assertEqual (get ('f = f (x, y)'), {'math': ('f = f(x, y)', "f = Function('f')(x, y)", 'f = f\\left(x, y \\right)')})
+		self.assertEqual (get ('f = 1 + f (x, y)'), {'math': ('f = ?f(x, y) + 1', "f = Function('f')(x, y) + 1", 'f = ?f\\left(x, y \\right) + 1')})
+		self.assertEqual (get ('del f'), {'msg': ["Variable 'f' deleted."]})
 		self.assertEqual (get ('f (x, y) = ?g (x + y)'), {'math': ('f(x, y) = ?g(x + y)', "f = Lambda((x, y), Function('g')(x + y))", 'f\\left(x, y \\right) = ?g\\left(x + y \\right)')})
-		self.assertEqual (get ('f (x, y)'), {'math': ('?f(x + (?f(x) = 2) + 1)', "Function('f')(x + Eq(Function('f')(x), 2) + 1)", '?f\\left(x + \\left(?f\\left(x \\right) = 2 \\right) + 1 \\right)')})
+		self.assertEqual (get ('f (x, y)'), {'math': ('?g(x + (?f(x) = 2) + 1)', "Function('g')(x + Eq(Function('f')(x), 2) + 1)", '?g\\left(x + \\left(?f\\left(x \\right) = 2 \\right) + 1 \\right)')})
 		self.assertEqual (get ('f (1, y)'), {'err': 'TypeError: cannot determine truth value of Relational'})
-		self.assertEqual (get ('f (x, 2)'), {'math': ('?f(x + 2)', "Function('f')(x + 2)", '?f\\left(x + 2 \\right)')})
-		self.assertEqual (get ('f (a, b)'), {'math': ('?f(a + b)', "Function('f')(a + b)", '?f\\left(a + b \\right)')})
+		self.assertEqual (get ('f (x, 2)'), {'math': ('?g(x + 2)', "Function('g')(x + 2)", '?g\\left(x + 2 \\right)')})
+		self.assertEqual (get ('f (a, b)'), {'math': ('?g(a + b)', "Function('g')(a + b)", '?g\\left(a + b \\right)')})
 
 	def test_intro_examples (self):
 		reset ()
@@ -588,6 +588,32 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('lambda x: %%(\\int x + y + y dx)'), {'math': ('lambda x: \\int x + 2 + 2 dx', 'Lambda(x, Integral(x + 2 + 2, x))', '\\left(x \\mapsto \\int x + 2 + 2 \\ dx \\right)')})
 		self.assertEqual (get ('lambda x: %%@(\\int x + y + y dx)'), {'math': ('lambda x: \\int x + y + y dx', 'Lambda(x, Integral(x + y + y, x))', '\\left(x \\mapsto \\int x + y + y \\ dx \\right)')})
 		self.assertEqual (get ('lambda x: %%(\\int x + @y + y dx)'), {'math': ('lambda x: \\int x + y + 2 dx', 'Lambda(x, Integral(x + y + 2, x))', '\\left(x \\mapsto \\int x + y + 2 \\ dx \\right)')})
+
+	def test_assign_and_mapback (self):
+		reset ()
+		self.assertEqual (get ('f = ?()'), {'math': ('f = f()', "f = Function('f')", 'f = f\\left( \\right)')})
+		self.assertEqual (get ('g = f'), {'math': ('g = f()', "g = Function('f')", 'g = f\\left( \\right)')})
+		self.assertEqual (get ('f = ?f(x)'), {'math': ('f = f(x)', "f = Function('f')(x)", 'f = f\\left(x \\right)')})
+		self.assertEqual (get ('g = f'), {'math': ('g = f(x)', "g = Function('f')(x)", 'g = f\\left(x \\right)')})
+		self.assertEqual (get ('$'), {'math': ('$', "Symbol('')", '\\$')})
+		self.assertEqual (get ('$()'), {'math': ('$', "Symbol('')", '\\$')})
+		self.assertEqual (get ('$(real = True)'), {'math': ('$(real = True)', "Symbol('', real = True)", '\\$\\left(real = True \\right)')})
+		self.assertEqual (get ('$s'), {'math': ('s', 's', 's')})
+		self.assertEqual (get ('$s()'), {'math': ('s', 's', 's')})
+		self.assertEqual (get ('$s(real = True)'), {'math': ('$s(real = True)', "Symbol('s', real = True)", '\\$s\\left(real = True \\right)')})
+		self.assertEqual (get ('s = $'), {'err': 'server.CircularReferenceError: cannot asign unqualified anonymous symbol'})
+		self.assertEqual (get ('t = s'), {'math': ('t = s', 't = s', 't = s')})
+		self.assertEqual (get ('s = $r'), {'math': ('s = r', 's = r', 's = r')})
+		self.assertEqual (get ('t = s'), {'math': ('t = r', 't = r', 't = r')})
+		self.assertEqual (get ('s = $s'), {'err': "server.CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
+		self.assertEqual (get ('del s'), {'msg': ["Variable 's' deleted."]})
+		self.assertEqual (get ('s = $s'), {'err': "server.CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
+		self.assertEqual (get ('s = $(real = True)'), {'math': ('s = $s(real = True)', "s = Symbol('s', real = True)", 's = \\$s\\left(real = True \\right)')})
+		self.assertEqual (get ('s'), {'math': ('s', 's', 's')})
+		self.assertEqual (get ('s = $s'), {'err': 'server.CircularReferenceError: trying to assign unqualified symbol to variable of same name'})
+		self.assertEqual (get ('s'), {'math': ('s', 's', 's')})
+		self.assertEqual (get ('s = $s(real = True)'), {'math': ('s = $s(real = True)', "s = Symbol('s', real = True)", 's = \\$s\\left(real = True \\right)')})
+		self.assertEqual (get ('s'), {'math': ('s', 's', 's')})
 	# END UPDATE BLOCK
 
 def get (text):
@@ -1023,7 +1049,7 @@ f (x) = x**2
 y = 1 + (?f (x) = 2)
 g (x) = ?f (x)
 g (2)
-def (f, g)
+del (f, g)
 f = f (x, y)
 f = 1 + f (x, y)
 del f
@@ -1195,6 +1221,35 @@ y = 2
 lambda x: %%(\\int x + y + y dx)
 lambda x: %%@(\\int x + y + y dx)
 lambda x: %%(\\int x + @y + y dx)
+
+"""), ('assign_and_mapback', """
+
+f = ?()
+g = f
+f = ?f(x)
+g = f
+
+$
+$()
+$(real = True)
+$s
+$s()
+$s(real = True)
+
+s = $
+t = s
+s = $r
+t = s
+s = $s
+del s
+s = $s
+
+s = $(real = True)
+s
+s = $s
+s
+s = $s(real = True)
+s
 
 """),
 

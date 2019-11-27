@@ -250,6 +250,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('{lambda}: x'), ('-slice', ('@', 'lambda'), ('@', 'x'), None))
 		self.assertEqual (p ('{lambda} x: x'), ('-slice', ('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'x'), None))
 		self.assertEqual (p ('{lambda} x, y: x'), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('-slice', ('@', 'y'), ('@', 'x'), None))))
+		self.assertEqual (p ('$'), ('-sym', ''))
+		self.assertEqual (p ('$s'), ('-sym', 's'))
+		self.assertEqual (p ('$ (real = True)'), ('-sym', '', (('real', ('@', 'True')),)))
+		self.assertEqual (p ('$s (real = True)'), ('-sym', 's', (('real', ('@', 'True')),)))
 
 		self.assertEqual (p ('eye (2).is_diagonal ()'), ('.', ('-func', 'eye', (('#', '2'),)), 'is_diagonal', ()))
 		self.assertEqual (p ('a [2]'), ('-idx', ('@', 'a'), (('#', '2'),)))
@@ -747,6 +751,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('{lambda}: x')), '\\lambda{:}x')
 		self.assertEqual (ast2tex (p ('{lambda} x: x')), '\\lambda\\ x{:}x')
 		self.assertEqual (ast2tex (p ('{lambda} x, y: x')), '\\lambda\\ x, y{:}x')
+		self.assertEqual (ast2tex (p ('$')), '\\$')
+		self.assertEqual (ast2tex (p ('$s')), '\\$s')
+		self.assertEqual (ast2tex (p ('$ (real = True)')), '\\$\\left(real = True \\right)')
+		self.assertEqual (ast2tex (p ('$s (real = True)')), '\\$s\\left(real = True \\right)')
 
 		self.assertEqual (ast2tex (p ('eye (2).is_diagonal ()')), '\\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix}.\\operatorname{is\\_diagonal}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('a [2]')), 'a\\left[2 \\right]')
@@ -1244,6 +1252,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('{lambda}: x')), '{lambda}:x')
 		self.assertEqual (ast2nat (p ('{lambda} x: x')), 'lambda * x:x')
 		self.assertEqual (ast2nat (p ('{lambda} x, y: x')), 'lambda * x, y:x')
+		self.assertEqual (ast2nat (p ('$')), '$')
+		self.assertEqual (ast2nat (p ('$s')), '$s')
+		self.assertEqual (ast2nat (p ('$ (real = True)')), '$(real = True)')
+		self.assertEqual (ast2nat (p ('$s (real = True)')), '$s(real = True)')
 
 		self.assertEqual (ast2nat (p ('eye (2).is_diagonal ()')), 'eye(2).is_diagonal()')
 		self.assertEqual (ast2nat (p ('a [2]')), 'a[2]')
@@ -1741,6 +1753,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('{lambda}: x')), 'slice(lambda, x)')
 		self.assertEqual (ast2py (p ('{lambda} x: x')), 'slice(lambda*x, x)')
 		self.assertEqual (ast2py (p ('{lambda} x, y: x')), 'lambda*x, slice(y, x)')
+		self.assertEqual (ast2py (p ('$')), "Symbol('')")
+		self.assertEqual (ast2py (p ('$s')), "Symbol('s')")
+		self.assertEqual (ast2py (p ('$ (real = True)')), "Symbol('', real = True)")
+		self.assertEqual (ast2py (p ('$s (real = True)')), "Symbol('s', real = True)")
 
 		self.assertEqual (ast2py (p ('eye (2).is_diagonal ()')), 'eye(2).is_diagonal()')
 		self.assertEqual (ast2py (p ('a [2]')), 'a[2]')
@@ -2238,6 +2254,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('{lambda}: x')), ('-slice', ('@', 'lambda'), ('@', 'x'), None))
 		self.assertEqual (ast2tex2ast (p ('{lambda} x: x')), ('-slice', ('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'x'), None))
 		self.assertEqual (ast2tex2ast (p ('{lambda} x, y: x')), (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('-slice', ('@', 'y'), ('@', 'x'), None))))
+		self.assertEqual (ast2tex2ast (p ('$')), ('-sym', ''))
+		self.assertEqual (ast2tex2ast (p ('$s')), ('-sym', 's'))
+		self.assertEqual (ast2tex2ast (p ('$ (real = True)')), ('-sym', '', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2tex2ast (p ('$s (real = True)')), ('-sym', 's', (('real', ('@', 'True')),)))
 
 		self.assertEqual (ast2tex2ast (p ('eye (2).is_diagonal ()')), ('.', ('-mat', ((('#', '1'), ('#', '0')), (('#', '0'), ('#', '1')))), 'is_diagonal', ()))
 		self.assertEqual (ast2tex2ast (p ('a [2]')), ('-idx', ('@', 'a'), (('#', '2'),)))
@@ -2735,6 +2755,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('{lambda}: x')), ('-slice', ('@', 'lambda'), ('@', 'x'), None))
 		self.assertEqual (ast2nat2ast (p ('{lambda} x: x')), ('-slice', ('*', (('@', 'lambda'), ('@', 'x')), {1}), ('@', 'x'), None))
 		self.assertEqual (ast2nat2ast (p ('{lambda} x, y: x')), (',', (('*', (('@', 'lambda'), ('@', 'x')), {1}), ('-slice', ('@', 'y'), ('@', 'x'), None))))
+		self.assertEqual (ast2nat2ast (p ('$')), ('-sym', ''))
+		self.assertEqual (ast2nat2ast (p ('$s')), ('-sym', 's'))
+		self.assertEqual (ast2nat2ast (p ('$ (real = True)')), ('-sym', '', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2nat2ast (p ('$s (real = True)')), ('-sym', 's', (('real', ('@', 'True')),)))
 
 		self.assertEqual (ast2nat2ast (p ('eye (2).is_diagonal ()')), ('.', ('-func', 'eye', (('#', '2'),)), 'is_diagonal', ()))
 		self.assertEqual (ast2nat2ast (p ('a [2]')), ('-idx', ('@', 'a'), (('#', '2'),)))
@@ -3232,6 +3256,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('{lambda}: x')), ('-func', 'slice', (('@', 'lambda'), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('{lambda} x: x')), ('-func', 'slice', (('*', (('@', 'lambda'), ('@', 'x')), {1}), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('{lambda} x, y: x')), (',', (('*', (('@', 'lambda'), ('@', 'x')), {1}), ('-func', 'slice', (('@', 'y'), ('@', 'x'))))))
+		self.assertEqual (ast2py2ast (p ('$')), ('-sym', ''))
+		self.assertEqual (ast2py2ast (p ('$s')), ('-sym', 's'))
+		self.assertEqual (ast2py2ast (p ('$ (real = True)')), ('-sym', '', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2py2ast (p ('$s (real = True)')), ('-sym', 's', (('real', ('@', 'True')),)))
 
 		self.assertEqual (ast2py2ast (p ('eye (2).is_diagonal ()')), ('.', ('-func', 'eye', (('#', '2'),)), 'is_diagonal', ()))
 		self.assertEqual (ast2py2ast (p ('a [2]')), ('-idx', ('@', 'a'), (('#', '2'),)))
@@ -3729,6 +3757,10 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('{lambda}: x')), ('-slice', ('@', 'lambda'), ('@', 'x'), None))
 		self.assertEqual (ast2spt2ast (p ('{lambda} x: x')), ('-slice', ('*', (('@', 'lambda'), ('@', 'x'))), ('@', 'x'), None))
 		self.assertEqual (ast2spt2ast (p ('{lambda} x, y: x')), ('(', (',', (('*', (('@', 'lambda'), ('@', 'x'))), ('-slice', ('@', 'y'), ('@', 'x'), None)))))
+		self.assertEqual (ast2spt2ast (p ('$')), ('-sym', ''))
+		self.assertEqual (ast2spt2ast (p ('$s')), ('@', 's'))
+		self.assertEqual (ast2spt2ast (p ('$ (real = True)')), ('-sym', '', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2spt2ast (p ('$s (real = True)')), ('-sym', 's', (('real', ('@', 'True')),)))
 
 		self.assertEqual (ast2spt2ast (p ('eye (2).is_diagonal ()')), ('@', 'True'))
 		self.assertEqual (ast2spt2ast (p ('a [2]')), ('-idx', ('@', 'a'), (('#', '2'),)))
@@ -4227,6 +4259,10 @@ f = lambda x, y, z: 0
 {lambda}: x
 {lambda} x: x
 {lambda} x, y: x
+$
+$s
+$ (real = True)
+$s (real = True)
 
 eye (2).is_diagonal ()
 a [2]

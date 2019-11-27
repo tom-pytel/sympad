@@ -1,16 +1,15 @@
 > ERROR! assign to ufuncs from iterable?
 
+> explicit dot for ambiguous multiplication with parentheses
+
+> py representation multiply lambda by paren, drop the '*' operator to make it a call
+
 > \. ?F (x, 0)' |_{x = 0} ---> \. ?F (x, y) |_{x = 0, y = 0}
 > keep track of what undefined functions are created during processing?
 
 > somehow allow \. u (x, y) |_{u = v} when u and v are ufunc variables
 
 > subs autocomplete
-
-> py representation multiply lambda by paren, drop the '*' operator to make it a call
-
-> extend mapback to symbols?
-> $s() -> $s - symbols don't need paren?
 
 > subs_diff_any_ufunc and other ufunc implicit multiply with invalid call paren show as cdot
 
@@ -56,6 +55,7 @@
 > doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
 > doc: SymPy one letter functions in section on SymPy functions
 
+> doc: $symbol without parens
 > doc: caveats with variable mapping and functions like integrate, summation due to their unfree vars being remapped
 > doc: new == vs. = display behavior
 > doc: change to binding priority - sin**f(x) - sin**a.b(x) - sin**a.b{x}
@@ -277,11 +277,9 @@ f (A)      = f (A)
 ?f (A) (A) = ?f (A) * (A)
 
 
-Errors:
--------
+Quick Mode Errors:
+------------------
 
-
-Quick Mode
 
 text: \[[9.08830^1 e-100.LRPl().qtXX().ojbKXNA||-\int a dm20^1 e-100.LRPl().qtXX().ojbKXNA||-\int a dm9S,],]
 ast:  ('-mat', ((('||', (('+', (('*', (('^', ('#', '9.08830'), ('#', '1')), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')))))), ('+', (('*', (('-', ('^', ('-intg', ('@', 'a'), ('@', 'dm20')), ('#', '1'))), ('@', 'e'))), ('-', ('*', (('#', '100.'), ('@', 'L'), ('@', 'R'), ('@', 'P'), ('.', ('.', ('-ufunc', 'l', ()), 'qtXX', ()), 'ojbKXNA')))))), ('*', (('-', ('-intg', ('@', 'a'), ('@', 'dm9'))), ('@', 'S'))))),),))
@@ -322,3 +320,9 @@ text: \[notintt((\partialx)),not-1.31=\emptyset.lyTD0S1I.FoVz,\partial'''^^1=Vz,
 ast:  ('!', ('-mat', ((('-not', ('-func', 'intt', (('(', ('@', 'partialx')),))),), (('=', ('-not', ('#', '-1.31')), ('.', ('.', ('-set', ()), 'lyTD0S1I'), 'FoVz')),), (('=', ('^^', (('-diffp', ('@', 'partial'), 3), ('#', '1'))), ('*', (('@', 'V'), ('@', 'z')))),), (('=', ('^^', (('-diffp', ('@', 'partial'), 3), ('#', '1'))), ('@', 'oo')),))))
 nat1: \[not intt((partialx)), not -1.31 = \{}.lyTD0S1I.FoVz, partial''' ^^ 1 = V z, partial''' ^^ 1 = oo]!
 parse ()
+
+
+Errors:
+-------
+
+

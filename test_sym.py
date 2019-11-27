@@ -486,6 +486,7 @@ sin (a b = c)
 x.y (a b = c)
 \. a, b |_{x = 1}
 ln(1).or lambda: 1
+\$()*{a**b}
 """.strip ().split ('\n')
 
 _LETTERS         = string.ascii_letters
@@ -777,7 +778,7 @@ def expr_subs ():
 	# else: Subs ()
 
 def expr_sym ():
-	name = _randidentifier ()
+	name = _randidentifier () if random () < 0.95 else ''
 	kw   = (() if random () < 0.5 else ('real = True',)) + (() if random () < 0.5 else ('commutative = True',))
 
 	if random () < 0.25:

@@ -1208,6 +1208,9 @@ class AST_Sym (AST):
 
 		return self
 
+	_is_sym_anonymous   = lambda self: not self.sym
+	_is_sym_unqualified = lambda self: not self.kw
+
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
 	AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_MulExp, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func,

@@ -85,6 +85,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_UFUNC_MAPBACK = True # map undefined functions from SymPy back to variables if possible
 	_UFUNC_MAP     = {} # map of ufunc asts to ordered sequence of variable names
+	_SYM_MAP       = {} # map of sym asts to ordered sequence of variable names
+	_SYM_VARS      = set () # set of all variables mapped to symbols
 
 	_PARSER        = sparser.Parser ()
 	_START_ENV     = OrderedDict ([
@@ -267,26 +269,47 @@ class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
-def _ufunc_mapback (ast, exclude = {}):
+def _mapback (ast, assvar = None, exclude = set ()): # map back ufuncs and symbols to the variables they are assigned to if possible
 	if not isinstance (ast, AST):
 		return ast
-	elif ast.is_ass and ast.lhs.is_ufunc:
-		return AST ('=', ast.lhs, _ufunc_mapback (ast.rhs, exclude))
-	elif not ast.is_ufunc:
-		return AST (*(_ufunc_mapback (a, exclude) for a in ast))
 
-	vars = _UFUNC_MAP.get (ast)
+	if ast.is_var:
+		if ast.var not in _SYM_VARS:
+			return ast
 
-	if vars: # prevent mapping to self on assignment
-		if ast.ufunc in vars and ast.ufunc not in exclude:
-			return AST ('@', ast.ufunc)
+		if ast.var == assvar:
+			raise CircularReferenceError ('trying to assign unqualified symbol to variable of same name')
 
-		else:
+		return AST ('-sym', ast.var)
+
+	if ast.is_sym:
+		vars = _SYM_MAP.get (ast)
+
+		if not vars:
+			return ast
+
+		if ast.sym in vars:
+			return AST ('@', ast.sym)
+
+		return AST ('@', next (iter (vars)))
+
+	if _UFUNC_MAPBACK:
+		if ast.is_ass and ast.lhs.is_ufunc:
+			return AST ('=', ast.lhs, _mapback (ast.rhs, assvar, exclude))
+		elif not ast.is_ufunc:
+			return AST (*(_mapback (a, assvar, exclude) for a in ast))
+
+		vars = _UFUNC_MAP.get (ast)
+
+		if vars: # prevent mapping to self on assignment
+			if ast.ufunc in vars and ast.ufunc not in exclude:
+				return AST ('@', ast.ufunc)
+
 			for var in vars:
 				if var not in exclude:
 					return AST ('@', var)
 
-	return AST (*(_ufunc_mapback (a, exclude) for a in ast))
+	return AST (*(_mapback (a, assvar, exclude) for a in ast))
 
 def _present_vars (vars):
 	asts = []
@@ -295,10 +318,8 @@ def _present_vars (vars):
 		if v != '_':
 			if e.is_lamb:
 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
- 				# asts.append (AST ('=', ('-func', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
 			else:
 				asts.append (AST ('=', ('@', v), e))
-				# asts.append (AST ('=', ('@', v), _ufunc_mapback (e)))
 
 	return asts
 
@@ -321,10 +342,17 @@ def _vars_updated ():
 	sparser.set_sp_user_vars (vars)
 
 	_UFUNC_MAP.clear ()
+	_SYM_MAP.clear ()
+	_SYM_VARS.clear ()
 
-	for v, a in vars.items (): # build ufunc mapback list
-		if v != '_' and a.is_ufunc:
-			_UFUNC_MAP.setdefault (a, set ()).add (v)
+	for v, a in vars.items (): # build ufunc and sym mapback dict
+		if v != '_':
+			if a.is_ufunc:
+				_UFUNC_MAP.setdefault (a, set ()).add (v)
+
+			elif a.is_sym:
+				_SYM_MAP.setdefault (a, set ()).add (v)
+				_SYM_VARS.add (v)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	if not ast.ass_valid:
@@ -340,23 +368,38 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
-		vars = dict ((v.var, a) for v, a in vars.items ())
+		# vars = dict ((v.var, a) for v, a in vars.items ())
+		# vars = {v: AST (a.op, v, *a [2:]) if a.is_ufunc_anonymous or a.is_sym_anonymous else a for v, a in vars.items ()}
+
+		nvars = {}
+
+		for v, a in vars.items ():
+			v = v.var
+
+			if a.is_ufunc_anonymous:
+				a = AST (a.op, v, *a [2:])
+
+			elif a.is_sym_anonymous:
+				if a.is_sym_unqualified:
+					raise CircularReferenceError ('cannot asign unqualified anonymous symbol')
+
+				a = AST (a.op, v, *a [2:])
+
+			nvars [v] = a
 
 		try: # check for circular references
-			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
+			AST.apply_vars (AST (',', tuple (('@', v) for v in nvars)), {**_VARS, **nvars})
 		except RecursionError:
 			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
 
-		vars = {v: AST (a.op, v, *a [2:]) if ((a.is_ufunc and not a.ufunc) or (a.is_sym and not a.sym)) else a for v, a in vars.items ()}
+		_VARS.update (nvars)
 
-		_VARS.update (vars)
-
-		return list (vars.items ())
+		return list (nvars.items ())
 
 	# start here
 	if not vars: # no assignment
-		if _UFUNC_MAPBACK and not ast.is_ufunc:
-			ast = _ufunc_mapback (ast)
+		if not ast.is_ufunc:
+			ast = _mapback (ast)
 
 		_VARS ['_'] = ast
 
@@ -365,8 +408,8 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		return [ast]
 
 	if len (vars) == 1: # simple assignment
-		if _UFUNC_MAPBACK:
-			ast = _ufunc_mapback (ast, {vars [0].var})
+		if ast.op not in {'-ufunc', '-sym'}:
+			ast = _mapback (ast, vars [0].var, {vars [0].var})
 
 		vars = set_vars ({vars [0]: ast})
 
@@ -399,16 +442,15 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		elif len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
-		if _UFUNC_MAPBACK:
-			exclude = set (v.var for v in vars)
-			asts    = [_ufunc_mapback (ast, exclude) for ast in asts]
+		vasts   = list (zip (vars, asts))
+		exclude = set (va [0].var for va in filter (lambda va: va [1].is_ufunc, vasts))
+		asts    = [a if a.op in {'-ufunc', '-sym'} else _mapback (a, v.var, exclude) for v, a in vasts]
+		vars    = set_vars (dict (zip (vars, asts)))
 
-		vars = set_vars (dict (zip (vars, asts)))
-
-	if len (vars) == 1:
-		_VARS ['_'] = AST ('=', ('@', vars [0] [0]), vars [0] [1])
-	else:
-		_VARS ['_'] = AST ('(', (',', tuple (AST ('=', ('@', v [0]), v [1]) for v in vars)))
+	# if len (vars) == 1:
+	# 	_VARS ['_'] = AST ('=', ('@', vars [0] [0]), vars [0] [1])
+	# else:
+	# 	_VARS ['_'] = AST ('(', (',', tuple (AST ('=', ('@', v [0]), v [1]) for v in vars)))
 
 	_vars_updated ()
 
@@ -740,8 +782,8 @@ if _SERVER_DEBUG: # DEBUG!
 	_VARS ['_'] = AST.Zero
 
 	# print (h.validate ({'text': r'del'}))
-	print (h.evaluate ({'text': r'lambda: x'}))
-	print (h.evaluate ({'text': r'_ * (3)'}))
+	print (h.evaluate ({'text': r'f = f(x)'}))
+	print (h.evaluate ({'text': r'f = 1 + f(x)'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END

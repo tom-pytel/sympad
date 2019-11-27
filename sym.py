@@ -441,8 +441,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					s.startswith ('\\left[') or
 					_ast_is_neg (n) or
 					n.is_var_null or
-					n.op in {'#', '-mat'} or
+ 					n.op in {'#', '-mat'} or
 					(s.startswith ('\\left(') and i in ast.exp) or
+ 					(t [-1] [-1:] not in {'}', ')', ']'} and p.tail_mul.is_sym_unqualified) or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.tail_mul.is_var and (p.tail_mul.var == '_' or p.tail_mul.var in _SYM_USER_FUNCS)) or
 					(n.is_div and p.is_div) or
@@ -700,7 +701,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
 		'-ufunc': _ast2tex_ufunc,
 		'-subs' : _ast2tex_subs,
-		'-sym'  : lambda self, ast: f'\\${self._ast2tex (AST ("@", ast.sym)) if ast.sym else ""}\\left({", ".join (tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
+		'-sym'  : lambda self, ast: f'\\${self._ast2tex (AST ("@", ast.sym)) if ast.sym else ""}' + ('' if ast.is_sym_unqualified else f'\\left({", ".join (tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'),
 
 		'-text' : lambda self, ast: ast.tex,
 	}
@@ -833,6 +834,7 @@ class ast2nat: # abstract syntax tree -> native text
 					n.op in {'/', '-diff'} or
 					(s.startswith ('(') and i in ast.exp) or
 					n.strip_attrdp.is_subs_diff_ufunc or
+ 					(t [-1] [-1:] not in {'}', ')', ']'} and p.tail_mul.is_sym_unqualified) or
 					p.strip_minus.op in {'/', '-lim', '-sum', '-diff', '-intg'} or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
@@ -1057,7 +1059,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
 		'-ufunc': _ast2nat_ufunc,
 		'-subs' : _ast2nat_subs,
-		'-sym'  : lambda self, ast: f'${ast.sym}({", ".join (tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
+		'-sym'  : lambda self, ast: f'${ast.sym}' if ast.is_sym_unqualified else f'${ast.sym}({", ".join (tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
 
 		'-text' : lambda self, ast: ast.nat,
 	}
@@ -1342,7 +1344,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		clear_cache () # don't want ?F(x) to come back as ?F(xi_1)
+		clear_cache () # don't want sympy object annotations to stick around like ?F(x) coming back as ?F(xi_1)
 
 		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
 		spt  = self._ast2spt (astx)
@@ -1672,21 +1674,6 @@ class spt2ast:
 
 		return spt
 
-	# def _spt2ast_NoEval (self, spt):
-	# 	def dummys2vars (ast): # convert our own dummy variables to normal
-	# 		if not isinstance (ast, AST):
-	# 			return ast
-
-	# 		if ast.is_var:
-	# 			if ast.var.startswith ('_'):
-	# 				return AST ('@', ast.var.lstrip ('_'))
-
-	# 			return ast
-
-	# 		return AST (*(dummys2vars (a) for a in ast))
-
-	# 	return dummys2vars (spt.ast)
-
 	def _spt2ast_num (self, spt):
 		s = str (spt)
 
@@ -1706,17 +1693,13 @@ class spt2ast:
 				f'{num.grp [0]}{num.grp [1]}e{e}')
 
 	def _spt2ast_Symbol (self, spt):
-		# name = spt.name.lstrip ('_') # convert our own dummy variables to normal
+		if isinstance (spt, sp.Dummy):
+			spt = sp.Symbol (spt.name, **spt._assumptions.generator)
 
-		# if name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)):
-		# 	return AST ('@', name)
-		# else:
-		# 	return AST ('-sym', name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ())))
-
-		if spt.name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)):
+		if spt.name and spt == sp.Symbol (spt.name):
 			return AST ('@', spt.name)
 		else:
-			return AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ())))
+			return AST ('-sym', spt.name, tuple (sorted ((k, self._spt2ast (v)) for k, v in spt._assumptions.generator.items ())))
 
 	def _spt2ast_Union (self, spt): # convert union of complements to symmetric difference if present
 		if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
