@@ -1556,10 +1556,11 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 					if ast.mul [i - 1].diff_any.apply_argskw (a.paren.as_ufunc_argskw):
 						src, dst = [], []
 
-						for s, d in zip (mul [-1].args [0].args, m if isinstance (m, tuple) else (m,)): # ast.mul [i - 1].diff_any.vars,
-							if s != d:
-								src.append (s)
-								dst.append (d)
+						if isinstance (mul [-1], sp.Derivative) and isinstance (mul [-1].args [0], sp_AppliedUndef):
+							for s, d in zip (mul [-1].args [0].args, m if isinstance (m, tuple) else (m,)): # ast.mul [i - 1].diff_any.vars,
+								if s != d:
+									src.append (s)
+									dst.append (d)
 
 					if src:
 						mul [-1] = spt = sp.Subs (mul [-1], tuple (src), tuple (dst))
@@ -2073,21 +2074,22 @@ class sym: # for single script
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_START
 if __name__ == '__main__': # DEBUG!
 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
-	vars = {'u': AST ('-diff', ('-ufunc', 'u', (('@', 'x'), ('@', 't'))), 'd', (('x', 1),))}
+	# vars = {'u': AST ('-diff', ('-ufunc', 'u', (('@', 'x'), ('@', 't'))), 'd', (('x', 1),))}
+	vars = {'f': AST ('-ufunc', 'f', ())}
 	# set_sym_user_funcs (set (vars))
 	set_sym_user_vars (vars)
 
 	# set_strict (True)
 
 	# ast = AST ('*', (('-lamb', ('*', (('-lamb', ('+', (('-func', '@', (('@', 'x'),)), ('#', '1'))), ('x',)), ('(', ('+', (('@', 'x'), ('#', '1')))))), ('x',)), ('(', ('#', '0'))))
-	ast = AST ('*', (('@', 'u'), ('(', (',', (('#', '0'), ('#', '1'))))))
-	# ast = AST.apply_vars (ast, vars)
+	ast = AST ('*', (('-diff', ('(', ('@', 'f')), 'd', (('x', 1),)), ('(', ('@', 'x'))))
+	ast = AST.apply_vars (ast, vars)
 
 	# res = ast2tex (ast)
 	# res = ast2nat (ast)
-	res = ast2py (ast)
+	# res = ast2py (ast)
 
-	# res = ast2spt (ast)
+	res = ast2spt (ast)
 	# res = spt2ast (res)
 	# res = ast2nat (res)
 

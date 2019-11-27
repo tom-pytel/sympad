@@ -1,8 +1,5 @@
 > ERROR! assign to ufuncs from iterable?
 
-> allow variables containing diff of ufunc to create ics ufunc in _ast2spt_mul ... u = d/dx(u(x,t)), u (0, 1)
-> py representation multiply lambda by paren, drop the '*' operator to make it a call
-
 > \. ?F (x, 0)' |_{x = 0} ---> \. ?F (x, y) |_{x = 0, y = 0}
 > keep track of what undefined functions are created during processing?
 
