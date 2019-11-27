@@ -1,5 +1,8 @@
 > ERROR! assign to ufuncs from iterable?
 
+> \gamma not accepted for gamma()?
+> Gamma not accepted for \Gamma -> gamma()?
+
 > \. ?F (x, 0)' |_{x = 0} ---> \. ?F (x, y) |_{x = 0, y = 0}
 > keep track of what undefined functions are created during processing?
 
@@ -47,16 +50,9 @@
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
 
 
-> doc: parentheses create implicit undefined functions
-> doc: lambda function execution and binding - ast2spt calls even though they look like multiplies
-> doc: SymPy one letter functions in section on SymPy functions
-
-> doc: $symbol without parens
-> doc: caveats with variable mapping and functions like integrate, summation due to their unfree vars being remapped
 > doc: new == vs. = display behavior
-> doc: change to binding priority - sin**f(x) - sin**a.b(x) - sin**a.b{x}
 > doc: new integration behavior
-> doc: removed $ function escape character
+> doc: caveats with variable mapping and functions like integrate, summation due to their unfree vars being remapped
 
 
 > allow funcs as vars for like symbols (..., cls = Functions)?

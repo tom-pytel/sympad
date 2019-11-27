@@ -41,7 +41,7 @@
 <h2 id="Introduction">Introduction</h2>
 
 <p>
-SymPad is a simple single script graphical symbolic calculator / scratchpad using SymPy for the math, MathJax for the display in a browser and matplotlib for plotting.plotf (2, x**2)
+SymPad is a simple single script graphical symbolic calculator / scratchpad using SymPy for the math, MathJax for the display in a browser and matplotlib for plotting.
 It is a labor of love and grew out of a desire for an easy way to calculate a quick integral while studying some math without having to start a shell every time and import a package or fire up a browser and navigate to a site (technincally that last bit is exactly what happens but the response time is better :)
 This desire for simplicity led to the single script option "<b>sympad.py</b>" which I could plop down on the desktop and execute when needed.
 User input is intended to be quick, easy and intuitive and is displayed in symbolic form as it is being entered.
@@ -316,15 +316,18 @@ The default symbols which are created for normal variables like "<b>x</b>" howev
 This extra information comes in the form of SymPy assumptions which allow you to specify whether a variable is real or positive or commutative or hermitian etc...
 To create a symbol with this extra information use the "<b>$</b>" symbol pseudo-function, the format is "<b>$name (assumption = True | False | None)</b>", so for example a variable "<b>x</b>" known to be real would be created as "<b>$x (real = True)</b>".
 The name part of a "<b>$name (...)</b>" symbol is optional and you can use anonymous symbols without any problems.
+The "<b>(...)</b>" part is also optional but if that is omitted then the symbol created is just the normal variable without any assumptions, which is normally not useful except if you have that variable already mapped to a symbol which does have some assumptions and is thus not equivalent.
+</p><p>
 The SymPy assumption model works on fuzzy boolean logic where "<b>True</b>" means that the assumption is true, "<b>False</b>" means that it is false and "<b>None</b>" means that it is unknown whether the assumption is true or false.
 It is the true and false values for the assumptions which can simplify calculations or even make them possible whereas they would not normally be so if the information were not provided.
-</p><p>
-To get an idea for how the assumptions operate try entering "<b>$(negative = True) &lt; 0</b>" and see what you get, this is "<b>True</b>" because all negative numbers are smaller than "<b>0</b>".
+To get an idea for how the assumptions operate try entering "<b>$(negative = True) &lt; 0</b>" and see what you get, this evaluates to "<b>True</b>" because all negative numbers are smaller than "<b>0</b>".
 The only assumption that is made for default symbols which are created is "<b>commutative = True</b>", but of course you can create a symbol where this is false, though it can not be unknown.
+</p><p>
 It is not convenient to have to type all this every time you reference a symbol in an expression so of course these symbols may be assigned to variables, even variables of the same name (where normally this is disallowed).
 In fact for the sake of sanity it is suggested that you give "<b>$</b>" symbols the same name as the variable you assign them to, though this is not enforced and you can even reassign them from one variable to another.
 Thus if you do "<b>x = $x (real = True)</b>" then from that point on any time you use the "<b>x</b>" variable in an expression it will be assumed to be real until you delete the variable.
 As a convenience any time you assign an anonymous symbol "<b>$(something = True)</b>" to a variable then the symbol will take on the name of the variable you are assigning it to.
+Any symbols with assumptions coming back from SymPy calculations are automatically mapped back to the variables to which they are assigned, if any, in order to keep things tidy.
 </p><p>
 For a list of assumptions you can assign to symbols see <a href="#Assumptions">Assumptions</a>.
 </p>
@@ -585,6 +588,11 @@ Functions which take zero or more than one argument, as well as member functions
 </p><p>
 Many functions which have a standard mathematical display style are translated on the fly for rendering in that style, these include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
 Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>", "<b>Sum</b>" and more...
+</p><p>
+Top level SymPy functions with a single letter name are treated specially in SymPad, this is because single letters are very commonly used as variables.
+These special single letter functions are "<b>N</b>", "<b>O</b>", "<b>S</b>", "<b>beta</b>", "<b>gamma</b>", "<b>Gamma</b>", "<b>Lambda</b>" and "<b>zeta</b>", as you can see "single letter" does not mean "single character" but rather includes Greek letters as well.
+Normally these letters can be used as variables and assigned to, but if they are used in a function context (including unparenthesized calls or implicit undefined function specification) they will instead be parsed as a function call to the SymPy function instead.
+SymPad allows you to disable this behavior individually for each of these functions thus freeing up the letter to be used as a variable in all contexts via the "<b>env()</b>" environment function or command line options, for more on manipulating the environment and these options see <a href="#Admin Functions">Admin Functions</a>.
 </p>
 
 <h4 id="Lambda Functions">Lambda Functions</h4>
@@ -650,8 +658,9 @@ The derivative of an undefined function may be called to specify initial conditi
 Partial derivatives of multi-variable undefined functions can also be taken and called.
 In the case of a function mapped as "<b>u = u(x, t)</b>", you can do "<b>du/dx (0,0)</b>" or $\frac{du}{dx} (0, 0)$ to specify the initial condition at x = 0 and t = 0 of the first derivative of "<b>x</b>" of the function.
 If the function is not assigned to a variable then the format to do this is "<b>d/dx(u(x, t))(0,0)</b>" - $\frac{d}{dx}(u(x, t))(0, 0)$, so obviously it saves some typing to assign the function to a varaible.
-Also if you have an undefined function assigned to a variable then SymPad will map any undefined functions matching it coming from a SymPy calculation back to the variable to which it is assigned, easier on the eyes this way. One more detail, whereas trying to create an undefined function implicitly like "<b>y(a + b)</b>" will be interpreted as "<b>y * (a + b)</b>", this is not the case if "<b>y</b>" is a variable containing a pure undefined function, in which case a new undefined function "<b>y(a + b)</b>" is created.
+Also if you have an undefined function assigned to a variable then SymPad will map any undefined functions matching it coming from a SymPy calculation back to the variable to which it is assigned, easier on the eyes this way. Whereas trying to create an undefined function implicitly like "<b>y(a + b)</b>" will be interpreted as "<b>y * (a + b)</b>", this is not the case if "<b>y</b>" is a variable containing a pure undefined function, in which case a new undefined function "<b>y(a + b)</b>" is created.
 And you can always assure an undefined function is created by use of the explicit "<b>?</b>" form of the definition.
+One last detail is that a derivative of a pure undefined function mapped to a variable will resolve to a derivative of that undefined functions with new elements if called with a parenthesized expression containing the same number of elements as the undefined function has varaibles.
 </p><p>
 The last use of undefined functions is as placeholders in concrete lambda functions for calls to be bound at evaluation.
 Normally when a lambda references another lambda, that lambda needs to exist at the time of definition of the second lambda and the body of the referred lambda is simply copied into the new lambda.
@@ -692,32 +701,28 @@ Use of these functions is demonstrated <a href="#Pseudo-Function Examples">Pseud
 
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
 
-<div style="color: red">
 <p>
 SymPad supports implicit multiplication, that is writing two variables next to each other to indicate multiplication so "<b>x y</b>" = "<b>x * y</b>".
 This brings some problems, such as deciding when "<b>x (a + b)</b>" is a function call and when it is multiplication.
-SymPad solves this by recognizing all top-level SymPy package function names and classes as functions and accepting the next expression as the argument(s) to that function.
-This brings along its own set of peculiarities such as removing those names from the possible namespace pool of variables, this means that you can never redefine "<b>sin</b>" as anything else, but why would you want to?
+Normally in an unabiguous grammar a set of parentheses will indicate a function call if it is not preceded by an operator, but since with implicit multiplication an operator is optional then interpreting the parentheses becomes trickier.
 </p><p>
-This recognition only works on top-level objects, for members of an object the presence of a parenthesized expression after the attribute name will imply a function call.
-If that is not the intent and you instead want to treat the member as a data variable and multiply it with something then you must use explicit "<b>*</b>" multiplication or the curly parentheses as such "<b>\[1, 2, 3].T * (a + b)</b>" or "<b>\[1, 2, 3].T {a + b}</b>".
-If you try to do this with regular parentheses then a function call will be attempted with "<b>a + b</b>" as the argument.
-The meaning of parentheses for assigned user variables is inferred from whether the variable is a lambda or not, for lambdas parentheses are a function call and for other types they indicate multiplication.
+SymPad solves this for SymPy functions by recognizing all top-level SymPy package function names and classes accepting the next expression as the argument(s) to that function and the whole thing as a call.
+Variables mapped to lambda functions are also recognized and treated as a call, whereas variables mapped to other expressions are treated as multiplies with whatever expression follows them (with the exception of undefined functions, more on that further down).
+An unmapped variable followed by a parenthesized list of expressions may be treated as the creation of an undefined function if the list of expressions contain only variable names and other constant expressions, or as a multiply if the list of expressions contains any non-constant expression containing other variables.
+Member references followed by parenthesized expressions are always treated as member function calls such as "<b>a.b (c)</b>".
 </p><p>
-In a roundabout sort of way this all led to a peculiar delima.
-There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>gamma</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy "<b>gamma()</b>" really, but it is represented normally with the uppercase Greek letter).
-This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
-This was not very elegant so the workaround is as follows:
-This is not a problem for "<b>beta</b>" and "<b>Lambda</b>" since they require multiple arguments and can be recognized as function calls from an implicit multiplication with a tuple of size 2, but the others can not be recognized this way.
+When a variable is mapped to a pure undefined function or a derivative of a pure undefined function then a parenthesized list of expressions following that variable with the same number of elements as the undefined function has arguments will create another undefined function with the expressions replacing the original arguments.
+However if the undefined function is not pure then the whole thing is treated as a multiply of the undefined function or derivative of the undefined function and the grouping of expressions.
 </p><p>
-These function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
-These lambda functions do not appear in the normal list of functions shown by "<b>vars()</b>" but their status can be checked by using the "<b>env()</b>" function.
-When these functions are mapped they are treated exactly like variables mapped to a lambda for the purposes of calling them, but they are still available as free variables to use and even assign to.
-To enable or disable environment mapping of these functions like "<b>gamma()</b>" enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>" to disable and "<b>env (gamma)</b>" or "<b>env (gamma=True)</b>" to enable.
-Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always available because they are special cased, even if "<b>S()</b>" is not mapped, though if it is assigned to something else then these attributes are lost.
-Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
+If you wish to prevent any attempt at treating a parenthesized expression as creating a function call or undefined function then simply use the explicit "<b>*</b>" multiplication operator between a variable and the parentheses.
+You can also use the curly braces "<b>{...}</b>" as parentheses in place of the normal rounded parentheses "<b>(...)</b>" as long as the expression is not a comma expression which would create a set and has no chance to create a dictionary if there are colons "<b>:</b>" present.
+Or you can "parenthesize" the normal rounded parentheses with curly parentheses as "<b>a{(pi + 2)}</b>".
+Parenthesizing the parentheses always prevents the parentheses from being treated as a call as well with variables mapped to lambdas and member access.
+</p><p>
+SymPad normally displays implicit multiplicating with a parenthesized expression without the use of an explicit multiplication operator if that will be unambiguous in the grammar, but sometimes an explicit operator is thrown in just to clarify the meaning if it would appear ambiguous visually or for aesthetic purposes.
+There may cases where a variable is mapped to something that will resolve to a Python "callable" object on evaluation but will be displayed with an explicit multiplication operator.
+In those cases if the variable does in fact resolve to a callable then even though it was displayed with as an explicit multiplication the parenthesized expression will instead be used as an argument list to the callable, unless you specifically used explicit multiplication or parenthesized the parentheses.
 </p>
-</div>
 
 <h2 id="Plotting">Plotting</h2>
 
@@ -1270,12 +1275,14 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <tr><td><b>prodrat</b></td><td>&emsp;-</td><td>Controls whether products with leading rationals are displayed as $\frac75x^2$ (on), or $\frac{7x^2}5$ (off, default).</td></tr>
 <tr><td><b>doit</b></td><td>&emsp;-</td><td>Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</td></tr>
 <tr><td><b>strict</b></td><td>&emsp;-</td><td>This controls whether the LaTeX generated for expressions is guaranteed to be pasteable into SymPad or if it looks prettier (default), it currently only affects how undefined functions are displayed.</td></tr>
-<tr><td><b>N</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</td></tr>
-<tr><td><b>O</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</td></tr>
-<tr><td><b>S</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</td></tr>
-<tr><td><b>gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</td></tr>
-<tr><td><b>Gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</td></tr>
-<tr><td><b>zeta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</td></tr>
+<tr><td><b>N</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" letter.</td></tr>
+<tr><td><b>O</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" letter.</td></tr>
+<tr><td><b>S</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" letter.</td></tr>
+<tr><td><b>beta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>beta()</b>" function via the "<b>beta</b>" letter.</td></tr>
+<tr><td><b>gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" letter.</td></tr>
+<tr><td><b>Gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" letter.</td></tr>
+<tr><td><b>Lambda</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Lambda()</b>" function via the "<b>Lambda</b>" letter.</td></tr>
+<tr><td><b>zeta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" letter.</td></tr>
 </table>
 
 <h4 id="Command Line Arguments">Command Line Arguments</h4>

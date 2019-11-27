@@ -278,7 +278,7 @@ def _mapback (ast, assvar = None, exclude = set ()): # map back ufuncs and symbo
 			return ast
 
 		if ast.var == assvar:
-			raise CircularReferenceError ('trying to assign unqualified symbol to variable of same name')
+			raise CircularReferenceError ('trying to assign unqualified symbol to variable of the same name')
 
 		return AST ('-sym', ast.var)
 
