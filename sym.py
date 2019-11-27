@@ -1503,23 +1503,36 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return res
 
 	def _ast2spt_mul (self, ast): # handle dynamic cases of function calls due to usage of implicit multiplication
-		mul = list (self._ast2spt (a) for a in ast.mul)
-		out = mul [:1]
+		mul = [self._ast2spt (ast.mul [0])]
 
 		for i in range (1, ast.mul.len):
-			m = mul [i]
+			a = ast.mul [i]
+			m = self._ast2spt (a)
 
-			if ast.mul [i].is_paren_free and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
-				o = out [-1]
-
-				if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?
-					out [-1] = o (*m) if isinstance (m, tuple) else o (m)
+			if a.is_paren_free and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
+				if callable (mul [-1]): # isinstance (o, sp.Lambda): # Lambda or other callable being called
+					mul [-1] = mul [-1] (*m) if isinstance (m, tuple) else mul [-1] (m)
 
 					continue
 
-			out.append (mul [i])
+				if ast.mul [i - 1].is_diff_any_ufunc: # possible ics call to derivative of ufunc
+					if ast.mul [i - 1].diff_any.apply_argskw (a.paren.as_ufunc_argskw):
+						src, dst = [], []
 
-		return out [0] if len (out) == 1 else _Mul (*out)
+						for s, d in zip (mul [-1].args [0].args, m if isinstance (m, tuple) else (m,)): # ast.mul [i - 1].diff_any.vars,
+							if s != d:
+								src.append (s)
+								dst.append (d)
+
+					if src:
+						mul [-1] = spt = sp.Subs (mul [-1], tuple (src), tuple (dst))
+						spt.doit = lambda self = spt, *args, **kw: self # disable doit because loses information
+
+					continue
+
+			mul.append (m)
+
+		return mul [0] if len (mul) == 1 else _Mul (*mul)
 
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
