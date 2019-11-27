@@ -433,7 +433,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'})):
 				s = f'{{{s}}}'
 
-			paren_after_var = p and (s.startswith ('\\left(') and (p.tail_mul.is_attr_var or p.tail_mul.op in {'@', '-diffp', '-ufunc', '-subs'}))
+			paren_after_var = p and (s.startswith ('\\left(') and (p.tail_mul.is_var or p.tail_mul.is_attr_var))
 
 			if paren_after_var or (p and (
 					t [-1].endswith ('.') or
@@ -442,7 +442,10 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					_ast_is_neg (n) or
 					n.is_var_null or
  					n.op in {'#', '-mat'} or
-					(s.startswith ('\\left(') and i in ast.exp) or
+					(s.startswith ('\\left(') and (
+						p.is_ufunc or
+						i in ast.exp or
+						(p.is_diff_any_ufunc and not p.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw)))) or
  					(t [-1] [-1:] not in {'}', ')', ']'} and p.tail_mul.is_sym_unqualified) or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.tail_mul.is_var and (p.tail_mul.var == '_' or p.tail_mul.var in _SYM_USER_FUNCS)) or
@@ -451,7 +454,17 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)))):
 
-				if paren_after_var and i not in ast.exp:
+				v = p.tail_mul
+				a = _SYM_USER_VARS.get (v.var, AST.Null)
+
+				if paren_after_var and not (
+						i in ast.exp or
+						(v.is_var and (
+							AST.UFunc.valid_implicit_args (n.strip_paren1.as_ufunc_argskw [0])) or
+							(n.is_diffp and n.diffp.is_paren and AST.UFunc.valid_implicit_args (n.diffp.paren.as_ufunc_argskw [0])) or
+							(a.is_ufunc and a.apply_argskw (n.strip_paren1.as_ufunc_argskw)))):
+						# (a.is_diff_any_ufunc and a.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw))):
+
 					t.append (s)
 
 					if not t [-2].startswith ('{'):
@@ -823,7 +836,7 @@ class ast2nat: # abstract syntax tree -> native text
 			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
 				s = f'{{{s}}}'
 
-			paren_after_var = p and (s.startswith ('(') and (p.tail_mul.is_attr_var or p.tail_mul.op in ('@', '-diffp', '-ufunc', '-subs')))
+			paren_after_var = p and (s.startswith ('(') and (p.tail_mul.is_var or p.tail_mul.is_attr_var))
 
 			if paren_after_var or (p and (
 					s.startswith ('[') or
@@ -832,23 +845,33 @@ class ast2nat: # abstract syntax tree -> native text
 					n.is_num or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or
-					(s.startswith ('(') and i in ast.exp) or
+					(s.startswith ('(') and (
+						p.is_ufunc or
+						i in ast.exp or
+						(p.is_diff_any_ufunc and not p.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw)))) or
 					n.strip_attrdp.is_subs_diff_ufunc or
  					(t [-1] [-1:] not in {'}', ')', ']'} and p.tail_mul.is_sym_unqualified) or
 					p.strip_minus.op in {'/', '-lim', '-sum', '-diff', '-intg'} or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist) or
+					# (n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist) or
 					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
 					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 					s [:1] in {'e', 'E'} and t [-1] [-1].isdigit ())):
 
-				if paren_after_var and i not in ast.exp:
-					t.append (f'{{{s}}}') # t.append (s)
+				v = p.tail_mul
+				a = _SYM_USER_VARS.get (v.var, AST.Null)
 
-					# if not t [-2].startswith ('{'):
-					# 	t [-2] = f'{{{t [-2]}}}'
+				if paren_after_var and not (
+						i in ast.exp or
+						(v.is_var and (
+							AST.UFunc.valid_implicit_args (n.strip_paren1.as_ufunc_argskw [0])) or
+							(n.is_diffp and n.diffp.is_paren and AST.UFunc.valid_implicit_args (n.diffp.paren.as_ufunc_argskw [0])) or
+							(a.is_ufunc and a.apply_argskw (n.strip_paren1.as_ufunc_argskw)))):
+						# (a.is_diff_any_ufunc and a.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw))):
+
+					t.append (f'{{{s}}}')
 
 				else:
 					t.extend ([' * ', s])
@@ -2000,11 +2023,11 @@ if __name__ == '__main__': # DEBUG!
 	# set_strict (True)
 
 	# ast = AST ('*', (('-lamb', ('*', (('-lamb', ('+', (('-func', '@', (('@', 'x'),)), ('#', '1'))), ('x',)), ('(', ('+', (('@', 'x'), ('#', '1')))))), ('x',)), ('(', ('#', '0'))))
-	ast = AST ('*', (('-lamb', ('*', (('-lamb', ('-func', '@', (('@', 'x'),)), ('x',)), ('(', ('+', (('@', 'x'), ('#', '1')))))), ('x',)), ('(', ('#', '0'))))
-	ast = AST.apply_vars (ast, vars)
+	ast = AST ('*', (('@', 'f'), ('-diffp', ('(', ('@', 'x')), 1), ('(', ('#', '0'))))
+	# ast = AST.apply_vars (ast, vars)
 
-	# res = ast2tex (ast)
-	res = ast2nat (ast)
+	res = ast2tex (ast)
+	# res = ast2nat (ast)
 	# res = ast2py (ast)
 
 	# res = ast2spt (ast)

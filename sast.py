@@ -1040,15 +1040,20 @@ class AST_Diff (AST):
 	def _init (self, diff, d, dvs):
 		self.diff, self.d, self.dvs = diff, d, dvs
 
-	_is_diff_d       = lambda self: self.d == 'd'
-	_is_diff_partial = lambda self: self.d == 'partial'
-	_is_diff_dvdv    = lambda self: self.d == 'd' and self.dvs.len == 1 # and self.diff.is_var and self.dvs [0] [1] == 1
+	_is_diff_d         = lambda self: self.d == 'd'
+	_is_diff_partial   = lambda self: self.d == 'partial'
+	_is_diff_dvdv      = lambda self: self.d == 'd' and self.dvs.len == 1 # and self.diff.is_var and self.dvs [0] [1] == 1
+	_is_diff_any_ufunc = lambda self: self.diff.strip_paren1.is_ufunc
+	_diff_any          = lambda self: self.diff.strip_paren1
 
 class AST_DiffP (AST):
 	op, is_diffp = '-diffp', True
 
 	def _init (self, diffp, count):
 		self.diffp, self.count = diffp, count
+
+	_is_diff_any_ufunc = lambda self: self.diffp.is_ufunc
+	_diff_any          = lambda self: self.diffp
 
 class AST_Intg (AST):
 	op, is_intg = '-intg', True

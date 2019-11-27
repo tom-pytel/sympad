@@ -605,7 +605,7 @@ def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', 
 		ast = lhs.apply_argskw (commas.as_ufunc_argskw)
 
 		if ast:
-			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw, is_ufunc_py = lhs.is_ufunc_py))
+			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw))#, is_ufunc_py = lhs.is_ufunc_py))
 
 	return Reduce
 
@@ -896,7 +896,7 @@ class Parser (LALR1):
 			b'j5Hu3MZ6tXze6spNAy70v/qNZXfB7Fh59JzRDLe7ZOOKmYvSmN3wPQuPmsFgY1VbPqn2yGbizOfNy81Ft3vCDZV5xXi8hv6CObxiNoYagm+LKVuysZ6NzvsVPTtLz8yubOnGerbOJOdWCHWWRxS+perWNhZucXd7hS8fu7WNhXtFc5tbeTyBC2sv3nhtbP9Z' \
 			b'LdH+6ygXdZjEOSnJ3MYKVFaaLlcgs7vXjXWmePct1xm7u9eNdaYssV2uM93uXjfWmeK7uFhn8L26d7qxzpTX3C3XmWp3rxu/lLS4ZC7XmXp3rxvrzAVTs3erM2Z3rxvrDL6kmt44XfMNDqiEBMhS6MZiADY7BVb4Enc+AcN0rUmgCBQDRGZxQQv6V+CrB9nj' \
 			b'DfQsGxuEm344th/ERoHTFahe6aeWZ2CgWf0btBtUG37O2XQcnr69jGOAgkBTYPyWX9GPKkkq2JDaoVphOKgOv5QZDHOSCqlyc6S+QXXRkxffyM0v+YcWkRf880v026MX54eX5uNqfh6igD6/wk4DSk7vt0HVZkBAtslrweG6lv3CnMHjGkPlBsRZ3G9oub1c' \
-			b'3fQhYDy+fv7/AWiDPAA=' 
+			b'3fQhYDy+fv7/AWiDPAA='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
