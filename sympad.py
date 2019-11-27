@@ -55,7 +55,7 @@ i {
 
 #Clipboard {
 	position: fixed;
-	bottom: 0;
+	bottom: -2em;
 	color: transparent;
 	border: 0px;
 }
@@ -255,7 +255,12 @@ table.HelpTable td {
 
 table.HelpTable tr td:first-child {
 	white-space: nowrap;
-}""".encode ("utf8"),
+}
+
+p span:hover {
+	color: gray;
+}
+""".encode ("utf8"),
 
 	'script.js': # script.js
 
@@ -268,6 +273,7 @@ r"""// TODO: Change how left/right arrows interact with autocomplete.
 URL              = '/';
 WaitIcon         = '/wait.webp'; // 'https://i.gifer.com/origin/3f/3face8da2a6c3dcd27cb4a1aaa32c926_w200.webp';
 
+JQInput          = null;
 MJQueue          = null;
 MarginTop        = Infinity;
 PreventFocusOut  = true;
@@ -432,7 +438,15 @@ function writeToClipboard (text) {
 
 	PreventFocusOut = true;
 
-	JQInput.focus ();
+	if (JQInput !== null) {
+		JQInput.focus ();
+	}
+}
+
+//...............................................................................................
+function cE2C (e) {
+	writeToClipboard (e.textContent);
+	flashElement (e);
 }
 
 //...............................................................................................
@@ -1115,6 +1129,8 @@ r"""<!DOCTYPE html>
 
 <body>
 
+<input id="Clipboard">
+
 <h1 style="margin: 0; text-align: center">SymPad</h1>
 <h4 style="margin: 0; text-align: center"><script type="text/javascript">document.write (Version)</script></h4>
 
@@ -1211,27 +1227,27 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 <h2 id="Quick Start">Quick Start</h2>
 
 <p>
-The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad:
+The best way to see what SymPad can do is by doing, so try entering any of the following into SymPad (you can click on them to copy for pasting into SymPad):
 </p><p>
-cos -pi<i>&emsp; functions with a single argument don't need parentheses </i><br>
-N cos**-1 -\log_2 sqrt[4] 16<i>&emsp; they can be chained</i><br>
-factor (x^3 + 3y x^2 + 3x y^2 + y^3)<i>&emsp; implicit multiplication without the need for * operator</i><br>
-Limit (\frac1x, x, 0, dir='-')<i>&emsp; mix Python and LaTeX</i><br>
-\sum_{n=0}**oo x**n / n!<i>&emsp; ** is quicker to type than ^</i><br>
-d**3 / dx dy^2 x^3 y^3<i>&emsp; standard derivative shorthand</i><br>
-Integral (e^{-x^2}, (x, 0, \infty))<i>&emsp; SymPy integral object or function</i><br>
-\int^\pi \int^{2pi} \int^1 rho**2 sin\phi drho dtheta dphi<i>&emsp; or standard notation</i><br>
-\[[1, 2], [3, 4]]**-1<i>&emsp; quick matrix shorthand</i><br>
-Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)<i>&emsp; matrix created from a lambda that populates each element based on row and column</i><br>
-f (x, y) = sqrt (x**2 + y**2)<i>&emsp; assign functions intuitively</i><br>
-f (3, 4)<i>&emsp; and then call them</i><br>
-solve (x**2 + y = 4, x)<i>&emsp; solve equations</i><br>
-dsolve (y(x)'' + 9y(x))<i>&emsp; differential equations</i><br>
-y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y<i>&emsp; using prime notation</i><br>
-pdsolve (x * d/dx u (x, y) - y * d/dy u (x, y) + y**2u (x, y) - y**2)<i>&emsp; partial differential equations</i><br>
-simplify (not (not a and not b) and not (not a or not c))<i>&emsp; simplify complicated logic</i><br>
-(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}<i>&emsp; set operations</i><br>
-plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')<i>&emsp; plotting (if you have matplotlib installed)</i><br>
+<span onclick="cE2C (this)">cos -pi</span><i>&emsp; functions with a single argument don't need parentheses </i><br>
+<span onclick="cE2C (this)">N cos**-1 -\log_2 sqrt[4] 16</span><i>&emsp; they can be chained</i><br>
+<span onclick="cE2C (this)">factor (x^3 + 3y x^2 + 3x y^2 + y^3)</span><i>&emsp; implicit multiplication without the need for * operator</i><br>
+<span onclick="cE2C (this)">Limit (\frac1x, x, 0, dir='-')</span><i>&emsp; mix Python and LaTeX</i><br>
+<span onclick="cE2C (this)">\sum_{n=0}**oo x**n / n!</span><i>&emsp; ** is quicker to type than ^</i><br>
+<span onclick="cE2C (this)">d**3 / dx dy^2 x^3 y^3</span><i>&emsp; standard derivative shorthand</i><br>
+<span onclick="cE2C (this)">Integral (e^{-x^2}, (x, 0, \infty))</span><i>&emsp; SymPy integral object or function</i><br>
+<span onclick="cE2C (this)">\int^\pi \int^{2pi} \int^1 rho**2 sin\phi drho dtheta dphi</span><i>&emsp; or standard notation</i><br>
+<span onclick="cE2C (this)">\[[1, 2], [3, 4]]**-1</span><i>&emsp; quick matrix shorthand</i><br>
+<span onclick="cE2C (this)">Matrix (4, 4, lambda r, c: c + r if c &gt; r else 0)</span><i>&emsp; matrix created from a lambda that populates each element based on row and column</i><br>
+<span onclick="cE2C (this)">f (x, y) = sqrt (x**2 + y**2)</span><i>&emsp; assign functions intuitively</i><br>
+<span onclick="cE2C (this)">f (3, 4)</span><i>&emsp; and then call them</i><br>
+<span onclick="cE2C (this)">solve (x**2 + y = 4, x)</span><i>&emsp; solve equations</i><br>
+<span onclick="cE2C (this)">dsolve (y(x)'' + 9y(x))</span><i>&emsp; differential equations</i><br>
+<span onclick="cE2C (this)">y = y(t); dsolve (y'' - 4y' - 12y = 3e**{5t}); del y</span><i>&emsp; using prime notation</i><br>
+<span onclick="cE2C (this)">pdsolve (x * d/dx u (x, y) - y * d/dy u (x, y) + y**2u (x, y) - y**2)</span><i>&emsp; partial differential equations</i><br>
+<span onclick="cE2C (this)">simplify (not (not a and not b) and not (not a or not c))</span><i>&emsp; simplify complicated logic</i><br>
+<span onclick="cE2C (this)">(({1, 2, 3} && {2, 3, 4}) ^^ {3, 4, 5}) - \{4} || {7,}</span><i>&emsp; set operations</i><br>
+<span onclick="cE2C (this)">plotf (2pi, -2, 2, sin x, 'r=sin', cos x, 'g=cos', tan x, 'b=tan')</span><i>&emsp; plotting (if you have matplotlib installed)</i><br>
 </p><p>
 For more detailed examples see <a href="#More Examples">More Examples</a>.
 </p>
@@ -1293,6 +1309,7 @@ When in this input mode long variable names are sacrificed for quicker input of 
 What quick mode allows is the input of expressions which would normally by entered in normal mode like this "<b>x y sin**-1z cos e**2</b>" without grammatical breaks - "<b>xysin**-1zcose**2</b>".
 For convenience certain multi-character variables are accepted in quick mode - Greek letters (including "<b>pi</b>"), "<b>oo</b>" for infinity and "<b>zoo</b>" for complex infinity, "<b>partial</b>", "<b>True</b>", "<b>False</b>" and "<b>None</b>".
 Differentials will also work so "<b>dx</b>", "<b>dtheta</b>", "<b>d\theta</b>" and the partial variations like "<b>partialx</b>" and "<b>\partial x</b>" will all be considered as a single variable.
+Variables in quick mode can only be one letter but they may have optional numerical tails which will be displayed as subscripts, so "<b>x12</b>" ($x_{12}$) and "<b>alpha_{3}</b>" ($\alpha_{3}$) are valid variables in quick mode, this extends to differentials and partials as well.
 </p>
 
 <h2 id="Elements">Elements</h2>
@@ -1395,15 +1412,18 @@ The default symbols which are created for normal variables like "<b>x</b>" howev
 This extra information comes in the form of SymPy assumptions which allow you to specify whether a variable is real or positive or commutative or hermitian etc...
 To create a symbol with this extra information use the "<b>$</b>" symbol pseudo-function, the format is "<b>$name (assumption = True | False | None)</b>", so for example a variable "<b>x</b>" known to be real would be created as "<b>$x (real = True)</b>".
 The name part of a "<b>$name (...)</b>" symbol is optional and you can use anonymous symbols without any problems.
+The "<b>(...)</b>" part is also optional but if that is omitted then the symbol created is just the normal variable without any assumptions, which is normally not useful except if you have that variable already mapped to a symbol which does have some assumptions and is thus not equivalent.
+</p><p>
 The SymPy assumption model works on fuzzy boolean logic where "<b>True</b>" means that the assumption is true, "<b>False</b>" means that it is false and "<b>None</b>" means that it is unknown whether the assumption is true or false.
 It is the true and false values for the assumptions which can simplify calculations or even make them possible whereas they would not normally be so if the information were not provided.
-</p><p>
-To get an idea for how the assumptions operate try entering "<b>$(negative = True) &lt; 0</b>" and see what you get, this is "<b>True</b>" because all negative numbers are smaller than "<b>0</b>".
+To get an idea for how the assumptions operate try entering "<b>$(negative = True) &lt; 0</b>" and see what you get, this evaluates to "<b>True</b>" because all negative numbers are smaller than "<b>0</b>".
 The only assumption that is made for default symbols which are created is "<b>commutative = True</b>", but of course you can create a symbol where this is false, though it can not be unknown.
+</p><p>
 It is not convenient to have to type all this every time you reference a symbol in an expression so of course these symbols may be assigned to variables, even variables of the same name (where normally this is disallowed).
 In fact for the sake of sanity it is suggested that you give "<b>$</b>" symbols the same name as the variable you assign them to, though this is not enforced and you can even reassign them from one variable to another.
 Thus if you do "<b>x = $x (real = True)</b>" then from that point on any time you use the "<b>x</b>" variable in an expression it will be assumed to be real until you delete the variable.
 As a convenience any time you assign an anonymous symbol "<b>$(something = True)</b>" to a variable then the symbol will take on the name of the variable you are assigning it to.
+Any symbols with assumptions coming back from SymPy calculations are automatically mapped back to the variables to which they are assigned, if any, in order to keep things tidy.
 </p><p>
 For a list of assumptions you can assign to symbols see <a href="#Assumptions">Assumptions</a>.
 </p>
@@ -1557,6 +1577,7 @@ They may be used interchangeably for single expressions, the only difference bei
 The case where explicit "<b>( )</b>" parentheses are needed ... explicitly ... is when calling functions in general and always when calling functions which take multiple parameters like "<b>max(1, 2, 3)</b>".
 The curly braces are used as shorthand for sets and dictionaries if commas are present, but that is a different syntactic usage, curlys with no commas are essentially invisible parentheses.
 Parentheses following undefined variables can also create undefined function objects if the contents of the parentheses are valid for such a definition, for more on this see <a href="#Undefined Functions">Undefined Functions</a>.
+For more on parentheses in general see <a href="#Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</a>.
 </p>
 
 <h4 id="Indexing">Indexing</h4>
@@ -1663,6 +1684,11 @@ Functions which take zero or more than one argument, as well as member functions
 </p><p>
 Many functions which have a standard mathematical display style are translated on the fly for rendering in that style, these include the functions "<b>abs/Abs (x)</b>" which are rendered as the standard bar syntax for absolute value "<b>|x|</b>", the "<b>factorial (x)</b>" function becomes "<b>x!</b>" and "<b>exp (x)</b>" displays as "<b>e^x</b>".
 Some other functions which are translated are "<b>Derivative</b>", "<b>diff</b>", "<b>Integral</b>", "<b>integrate</b>", "<b>Limit</b>", "<b>limit</b>", "<b>Matrix</b>", "<b>Piecewise</b>", "<b>pow</b>", "<b>Pow</b>", "<b>Sum</b>" and more...
+</p><p>
+Top level SymPy functions with a single letter name are treated specially in SymPad, this is because single letters are very commonly used as variables.
+These special single letter functions are "<b>N</b>", "<b>O</b>", "<b>S</b>", "<b>beta</b>", "<b>gamma</b>", "<b>Gamma</b>", "<b>Lambda</b>" and "<b>zeta</b>", as you can see "single letter" does not mean "single character" but rather includes Greek letters as well.
+Normally these letters can be used as variables and assigned to, but if they are used in a function context (including unparenthesized calls or implicit undefined function specification) they will instead be parsed as a function call to the SymPy function instead.
+SymPad allows you to disable this behavior individually for each of these functions thus freeing up the letter to be used as a variable in all contexts via the "<b>env()</b>" environment function or command line options, for more on manipulating the environment and these options see <a href="#Admin Functions">Admin Functions</a>.
 </p>
 
 <h4 id="Lambda Functions">Lambda Functions</h4>
@@ -1686,7 +1712,7 @@ This is done on purpose because outside of SymPad "<b>Lambda</b>" objects can no
 Lambdas can be called directly as in "<b>{lambda x: x**2} (3)</b>".
 Lambda recursion is not supported because there is no underlying mechanism to make it work with SymPy "<b>Lambda</b>" objects.
 </p><p>
-Lambda functions can be used as expressions in most contexts, this means that the body of the function is used directly in a calculation with the variables being mapped to their global values.
+Lambda functions can be used as expressions in most contexts, this means that the body of the function is used directly in a calculation with the non-local variables being mapped to their global values.
 Specifically, lambdas are treated as expressions if they are not enclosed in parentheses, brackets, tuples, sets or dictionaries or if they are part of an argument list to a function call.
 If you want the lambda treated as an expression in these contexts then wrap it in parentheses.
 Note that this only applies to lambdas assigned to and accessed through variables, lambdas declared directly are always treated as lambdas.
@@ -1701,10 +1727,10 @@ For more on all of this see <a href="#Lambda Function Examples">Lambda Function 
 Undefined functions are mathematical function objects but without any specific expression or lambda body defined, they are used mainly in differential equations.
 These functions are entered explicitly as "<b>?name (x, y, ...)</b>" with the name being optional but necessary if you need to differentiate between various functions (like in a system of differential equations).
 They can also be specified implicitly as "<b>name (x, y, ...)</b>" without the question mark if the name is not already defined as another lambda function.
-The arguments to an undefined function can be anything, variable names, concrete immediate values to specify initial conditions or even entire expressions - though only if using the explicit form of definition with the question mark, the parenthesized expression is treated as a gouping.
+The arguments to an undefined function can be anything, variable names, concrete immediate values to specify initial conditions or even entire expressions - though only if using the explicit form of definition with the question mark, otherwise the parenthesized expression is treated as a gouping.
 Optional keyword arguments for specifying assumptions about the function are also accepted which will be passed on to the SymPy "<b>Function()</b>" call.
 </p><p>
-The variable list for an undefined function, just like the variable list for a lambda function, is never remapped which means that even if you have the ariable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
+The variable list for an undefined function, just like the variable list for a lambda function, is usually not remapped (except if doing substitution or "calling" the undefined function) which means that even if you have the variable "<b>x</b>" assigned globally you can still use the variable name "<b>x</b>" in the definition of an undefined function.
 Implicit assignment to an undefined function at the highest level of an expression is a shortcut for defining a lambda function, e.g. "<b>f(x) = x**2</b>" is equivalent to "<b>f = lambda x: x**2</b>".
 Conversely the assignment "<b>f = f (x)</b>" will designate the variable "<b>f</b>" to always act as an undefined function of one variable "<b>x</b>".
 This form of definition works if "<b>f</b>" is not already assigned to something, if it is then you need to specify the undefined function explicitly like "<b>f = ?f (x)</b>".
@@ -1717,6 +1743,26 @@ This will give you a clean "<b>dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</b>" 
 Initial values for differential functions are supported and can be passed of the form "<b>dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</b>" if "<b>y = y(x)</b>" is already defined or "<b>dsolve (y(x)'' + 11y(x)' + 24y(x), ics = {y(0): 0, y(x)'(0): -7})</b>" if it is not, notice that the first initial condition "<b>y(0)</b>" did not need to be specified as an undefined function of a variable first.
 The "<b>ics</b>" keyword argument is a dictionary of undefined functuions at specific points with their values.
 </p><p>
+Pure undefined functions are those which have only non-constant variables as parameters.
+If a pure undefined function is assigned to a variable then that variable may be "called" with a parenthesized list of expressions matching the number of variables in the undefined function.
+This will create a new undefined function with those values as parameters which can be used to set initial conditions for a differential equation solver, for example a variable mapped as "<b>y = y(x)</b>" will turn into the function "<b>y(0)</b>" if the variable "<b>y</b>" is called as "<b>y(0)</b>".
+If a variable is not currently mapped to an undefined function then this initial condition can be created directly just by writing "<b>y(0)</b>".
+However if the variable is mapped to something which is not an undefined function, or is not pure, or the number of arguments don't match then you will need to use the explicit "<b>?y(0)</b>" form to specify this initial condition.
+</p><p>
+The derivative of an undefined function may be called to specify initial conditions for that derivative of the function.
+"<b>y(x)'(0)</b>" means the value of the first derivative of the function at "<b>0</b>", this is of course easier if the function is already mapped to a variable like "<b>y = y(x)</b>" so you can do "<b>y'(0)</b>".
+Partial derivatives of multi-variable undefined functions can also be taken and called.
+In the case of a function mapped as "<b>u = u(x, t)</b>", you can do "<b>du/dx (0,0)</b>" or $\frac{du}{dx} (0, 0)$ to specify the initial condition at x = 0 and t = 0 of the first derivative of "<b>x</b>" of the function.
+If the function is not assigned to a variable then the format to do this is "<b>d/dx(u(x, t))(0,0)</b>" - $\frac{d}{dx}(u(x, t))(0, 0)$, so obviously it saves some typing to assign the function to a varaible.
+Also if you have an undefined function assigned to a variable then SymPad will map any undefined functions matching it coming from a SymPy calculation back to the variable to which it is assigned, easier on the eyes this way. Whereas trying to create an undefined function implicitly like "<b>y(a + b)</b>" will be interpreted as "<b>y * (a + b)</b>", this is not the case if "<b>y</b>" is a variable containing a pure undefined function, in which case a new undefined function "<b>y(a + b)</b>" is created.
+And you can always assure an undefined function is created by use of the explicit "<b>?</b>" form of the definition.
+One last detail is that a derivative of a pure undefined function mapped to a variable will resolve to a derivative of that undefined functions with new elements if called with a parenthesized expression containing the same number of elements as the undefined function has varaibles.
+</p><p>
+The last use of undefined functions is as placeholders in concrete lambda functions for calls to be bound at evaluation.
+Normally when a lambda references another lambda, that lambda needs to exist at the time of definition of the second lambda and the body of the referred lambda is simply copied into the new lambda.
+If you use an undefined function in a lambda definition then upon lambda execution it will be bound to any lambda defined with the same name mapped globally, needless to say the number of parameters needs to match.
+This is also useful for assigning functions returned from differential equation solvers after getting the solution.
+</p><p>
 For examples of the usage of undefined functions see <a href="#Ordinary Differential Equations">Ordinary Differential Equations</a> and <a href="#Partial Differential Equations">Partial Differential Equations</a>.
 </p>
 
@@ -1726,7 +1772,7 @@ For examples of the usage of undefined functions see <a href="#Ordinary Differen
 SymPad provides two pseudo-functions which control how it resolves variables and evaluates expressions, they are the "<b>@</b>" no-remap and the "<b>%</b>" no-evaluate functions.
 The reason these are called pseudo-functions is because they don't actually exist, they are merely annotations for how SymPad is to operate internally.
 For this reason they are never included in a Python representation of an expression and that expression pasted back into SymPad will not operate the same as it did originally.
-These functions have the highest binding priority in the grammar and thus something like "<b>sin a.b [2]</b>" which normally resolves to "<b>sin (a.b [2])</b>" becomes "<b>@ (a).b [2]</b>" when written without parentheses using a pseudo-function like "<b>@a.b [2]</b>".
+These functions have a very high binding priority in the grammar and thus something like "<b>sin a.b [2]</b>" which normally resolves to "<b>sin (a.b [2])</b>" becomes "<b>@ (a).b [2]</b>" when written without parentheses using a pseudo-function like "<b>@a.b [2]</b>".
 Note that, like other functions, they may take a non-parenthesized argument and in fact this is just a quick way to annotate variables like "<b>@x</b>" or ask that the contents of a variable not be evaluated when mapping the variable into the expression like "<b>%x</b>".
 </p><p>
 The "<b>@</b>" no-remap pseudo function is not actually a no variable remap but rather a scope operation where the value of that variable will be taken from the next outermost scope rather than the current, and normally would be used only once.
@@ -1746,37 +1792,33 @@ This function takes on a different meaning when used at the top level of a lambd
 After this initial topmost use the function reverts to its normal mode of operation, which means that if you want to completely defer evaluation at the top level of the body of a lambda then you actually have to specify the "<b>%</b>" function twice like "<b>lambda x: %%(1 + 2 + x)</b>".
 The same thing can be achieved by simply doing "<b>f = lambda x: %(1 + 2) + x</b>" instead since in this expression the "<b>%</b>" is no longer the topmost function, the addition is.
 </p><p>
-Use of these functions is demonstrated <a href="#Lambda Function Examples">Lambda Function Examples</a> and <a href="#Pseudo-Function Examples">Pseudo-Function Examples</a>.
+Use of these functions is demonstrated <a href="#Pseudo-Function Examples">Pseudo-Function Examples</a> and <a href="#Lambda Function Examples">Lambda Function Examples</a>.
 </p>
 
 <h4 id="Functions, Parentheses and Implicit Multiplication">Functions, Parentheses and Implicit Multiplication</h4>
 
-<div style="color: red">
 <p>
 SymPad supports implicit multiplication, that is writing two variables next to each other to indicate multiplication so "<b>x y</b>" = "<b>x * y</b>".
 This brings some problems, such as deciding when "<b>x (a + b)</b>" is a function call and when it is multiplication.
-SymPad solves this by recognizing all top-level SymPy package function names and classes as functions and accepting the next expression as the argument(s) to that function.
-This brings along its own set of peculiarities such as removing those names from the possible namespace pool of variables, this means that you can never redefine "<b>sin</b>" as anything else, but why would you want to?
+Normally in an unabiguous grammar a set of parentheses will indicate a function call if it is not preceded by an operator, but since with implicit multiplication an operator is optional then interpreting the parentheses becomes trickier.
 </p><p>
-This recognition only works on top-level objects, for members of an object the presence of a parenthesized expression after the attribute name will imply a function call.
-If that is not the intent and you instead want to treat the member as a data variable and multiply it with something then you must use explicit "<b>*</b>" multiplication or the curly parentheses as such "<b>\[1, 2, 3].T * (a + b)</b>" or "<b>\[1, 2, 3].T {a + b}</b>".
-If you try to do this with regular parentheses then a function call will be attempted with "<b>a + b</b>" as the argument.
-The meaning of parentheses for assigned user variables is inferred from whether the variable is a lambda or not, for lambdas parentheses are a function call and for other types they indicate multiplication.
+SymPad solves this for SymPy functions by recognizing all top-level SymPy package function names and classes accepting the next expression as the argument(s) to that function and the whole thing as a call.
+Variables mapped to lambda functions are also recognized and treated as a call, whereas variables mapped to other expressions are treated as multiplies with whatever expression follows them (with the exception of undefined functions, more on that further down).
+An unmapped variable followed by a parenthesized list of expressions may be treated as the creation of an undefined function if the list of expressions contain only variable names and other constant expressions, or as a multiply if the list of expressions contains any non-constant expression containing other variables.
+Member references followed by parenthesized expressions are always treated as member function calls such as "<b>a.b (c)</b>".
 </p><p>
-In a roundabout sort of way this all led to a peculiar delima.
-There is a namespace collision between the Greek letters "<b>beta</b>", "<b>zeta</b>", "<b>gamma</b>", "<b>Gamma</b>" and "<b>Lambda</b>" and SymPy functions with those names (well, lowercase SymPy "<b>gamma()</b>" really, but it is represented normally with the uppercase Greek letter).
-This means that those function names could be encoded in the grammar and never be available for use as free variables, or they could be excluded from the grammar forcing the user to call them each time using the function escape character "<b>$</b>".
-This was not very elegant so the workaround is as follows:
-This is not a problem for "<b>beta</b>" and "<b>Lambda</b>" since they require multiple arguments and can be recognized as function calls from an implicit multiplication with a tuple of size 2, but the others can not be recognized this way.
+When a variable is mapped to a pure undefined function or a derivative of a pure undefined function then a parenthesized list of expressions following that variable with the same number of elements as the undefined function has arguments will create another undefined function with the expressions replacing the original arguments.
+However if the undefined function is not pure then the whole thing is treated as a multiply of the undefined function or derivative of the undefined function and the grouping of expressions.
 </p><p>
-These function names have been left out of the grammar but hidden lambda functions are created for them on startup so that they may be called using normal syntax.
-These lambda functions do not appear in the normal list of functions shown by "<b>vars()</b>" but their status can be checked by using the "<b>env()</b>" function.
-When these functions are mapped they are treated exactly like variables mapped to a lambda for the purposes of calling them, but they are still available as free variables to use and even assign to.
-To enable or disable environment mapping of these functions like "<b>gamma()</b>" enter "<b>env (nogamma)</b>" or "<b>env (gamma=False)</b>" to disable and "<b>env (gamma)</b>" or "<b>env (gamma=True)</b>" to enable.
-Note that objects like "<b>S.Half</b>" or "<b>S.ComplexInfinity</b>" are always available because they are special cased, even if "<b>S()</b>" is not mapped, though if it is assigned to something else then these attributes are lost.
-Also remember that these functions are always available for calling using the "<b>$</b>" function call escape character regardless of if they are mapped in the environment or not.
+If you wish to prevent any attempt at treating a parenthesized expression as creating a function call or undefined function then simply use the explicit "<b>*</b>" multiplication operator between a variable and the parentheses.
+You can also use the curly braces "<b>{...}</b>" as parentheses in place of the normal rounded parentheses "<b>(...)</b>" as long as the expression is not a comma expression which would create a set and has no chance to create a dictionary if there are colons "<b>:</b>" present.
+Or you can "parenthesize" the normal rounded parentheses with curly parentheses as "<b>a{(pi + 2)}</b>".
+Parenthesizing the parentheses always prevents the parentheses from being treated as a call as well with variables mapped to lambdas and member access.
+</p><p>
+SymPad normally displays implicit multiplicating with a parenthesized expression without the use of an explicit multiplication operator if that will be unambiguous in the grammar, but sometimes an explicit operator is thrown in just to clarify the meaning if it would appear ambiguous visually or for aesthetic purposes.
+There may cases where a variable is mapped to something that will resolve to a Python "callable" object on evaluation but will be displayed with an explicit multiplication operator.
+In those cases if the variable does in fact resolve to a callable then even though it was displayed with as an explicit multiplication the parenthesized expression will instead be used as an argument list to the callable, unless you specifically used explicit multiplication or parenthesized the parentheses.
 </p>
-</div>
 
 <h2 id="Plotting">Plotting</h2>
 
@@ -1790,17 +1832,17 @@ These functions work more like statements in that they only work at the top leve
 <p><b>Examples</b></p>
 
 <p>
-plotf (x**2)<br>
-plotf (2pi, sin x, cos x, sinc x, tanh x)<br>
-plotf (2, lambda x: 1 / x, '--r')<br>
-plotf (-2, 5, (x**2 - 6x + 9) / (x**2 - 9), ':#green')<br>
-plotf (4, (x**2 + x - 2) / (x - 1), 'b=line', (1, 3), 'o#red=point')<br>
-plotf (-1, 2, -3, 4, (0, 0), 'xr', [1, 1, 1.9, 1], 'vb', [(0.5, 2), (1.5, 3), (1.5, 0), (-0.5, -2)], ':g')<br>
-plotf (pi, -20, 20, tan x, '#c08040=tan x', fs = (12, 4.8), linewidth = 1)<br>
-plotf (2pi, sin x, 'r', {'linewidth': 1}, cos x, 'g', {'linewidth': 3}, fs = 12)<br>
-plotf (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = -8, res = 32)<br>
-plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)<br>
-plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)<br>
+<span onclick="cE2C (this)">plotf (x**2)</span><br>
+<span onclick="cE2C (this)">plotf (2pi, sin x, cos x, sinc x, tanh x)</span><br>
+<span onclick="cE2C (this)">plotf (2, lambda x: 1 / x, '--r')</span><br>
+<span onclick="cE2C (this)">plotf (-2, 5, (x**2 - 6x + 9) / (x**2 - 9), ':#green')</span><br>
+<span onclick="cE2C (this)">plotf (4, (x**2 + x - 2) / (x - 1), 'b=line', (1, 3), 'o#red=point')</span><br>
+<span onclick="cE2C (this)">plotf (-1, 2, -3, 4, (0, 0), 'xr', [1, 1, 1.9, 1], 'vb', [(0.5, 2), (1.5, 3), (1.5, 0), (-0.5, -2)], ':g')</span><br>
+<span onclick="cE2C (this)">plotf (pi, -20, 20, tan x, '#c08040=tan x', fs = (12, 4.8), linewidth = 1)</span><br>
+<span onclick="cE2C (this)">plotf (2pi, sin x, 'r', {'linewidth': 1}, cos x, 'g', {'linewidth': 3}, fs = 12)</span><br>
+<span onclick="cE2C (this)">plotf (1.5, -1.5, 1.5, sqrt (1 - x**2), 'r', -sqrt (1 - x**2), 'r', fs = -8, res = 32)</span><br>
+<span onclick="cE2C (this)">plotf (\sum_{n=0}**oo x**n / n!, 'd-#chocolate=e^x', res = 1, linewidth=0.5)</span><br>
+<span onclick="cE2C (this)">plotf (4pi, d / dx (sin x / x), sin x / x, \int sin x / x dx)</span><br>
 </p>
 
 <p><b>Usage</b></p>
@@ -1859,13 +1901,13 @@ Keep in mind that this does not re-plot any previously plotted functions so that
 <p><b>Examples</b></p>
 
 <p>
-plotv ((-y, x))<br>
-plotv (2, y - 2 x, '#green')<br>
-plotv (lambda x, y: (y, -x), 'dir')<br>
-plotv (2, -2, 2, y / x, '#red=dy/dx', fs = -6, width = 0.005)<br>
-plotv (4, -4, 4, (lambda a, b: a + b**2, lambda a, b: a**2 - b), lambda x, y, u, v: y, res = 31, fs = -8, width = 0.003)<br>
-plotv (-2, 2, -2, 2, (v (sign (Max (u, 0)) * 2 - 1), -u (sign (Max (u, 0)) * 2 - 1)), 'dir', width = 0.003, pivot = 'mid', fs = -8)<br>
-plotv (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)<br>
+<span onclick="cE2C (this)">plotv ((-y, x))</span><br>
+<span onclick="cE2C (this)">plotv (2, y - 2 x, '#green')</span><br>
+<span onclick="cE2C (this)">plotv (lambda x, y: (y, -x), 'dir')</span><br>
+<span onclick="cE2C (this)">plotv (2, -2, 2, y / x, '#red=dy/dx', fs = -6, width = 0.005)</span><br>
+<span onclick="cE2C (this)">plotv (4, -4, 4, (lambda a, b: a + b**2, lambda a, b: a**2 - b), lambda x, y, u, v: y, res = 31, fs = -8, width = 0.003)</span><br>
+<span onclick="cE2C (this)">plotv (-2, 2, -2, 2, (v (sign (Max (u, 0)) * 2 - 1), -u (sign (Max (u, 0)) * 2 - 1)), 'dir', width = 0.003, pivot = 'mid', fs = -8)</span><br>
+<span onclick="cE2C (this)">plotv (-6, 6, -2, 2, lambda x, y: (re (sin (x + i y)), im (sin (x + i y))), 'mag', '=sin (x + iy)', fs=-12, res=33)</span><br>
 </p>
 
 <p><b>Usage</b></p>
@@ -1912,19 +1954,19 @@ See the documentation for that function for usage and formatting of these parame
 <p><b>Examples</b></p>
 
 <p>
-plotw (3, -3, 3, y - 2x, (1, 1))<br>
-plotw (3, -3, 3, y - 2x, (1, 1), (1, 2), (1, 0))<br>
-plotw (6, -6, 6, lambda x, y: (2x + sec**2x) / 2y, (0, -5), 'r=u(0) = -5', fs = -7)<br>
-plotw (2.5, -2.5, 2.5, (-y, x), (0.5, 0), '=(0.5,0)', (1, 0), '=(1,0)', (1.5, 0), '=(1.5,0)', (2, 0), '=(2,0)', fs = -6)<br>
-plotw (pi, -pi, pi, sin x - sin y, (0, 0), (1, 1), (2, 2), (-1, -1), (-2, -2), fs = -8, linewidth = 5)<br>
+<span onclick="cE2C (this)">plotw (3, -3, 3, y - 2x, (1, 1))</span><br>
+<span onclick="cE2C (this)">plotw (3, -3, 3, y - 2x, (1, 1), (1, 2), (1, 0))</span><br>
+<span onclick="cE2C (this)">plotw (6, -6, 6, lambda x, y: (2x + sec**2x) / 2y, (0, -5), 'r=u(0) = -5', fs = -7)</span><br>
+<span onclick="cE2C (this)">plotw (2.5, -2.5, 2.5, (-y, x), (0.5, 0), '=(0.5,0)', (1, 0), '=(1,0)', (1.5, 0), '=(1.5,0)', (2, 0), '=(2,0)', fs = -6)</span><br>
+<span onclick="cE2C (this)">plotw (pi, -pi, pi, sin x - sin y, (0, 0), (1, 1), (2, 2), (-1, -1), (-2, -2), fs = -8, linewidth = 5)</span><br>
 </p><p>
 These will make more sense if they are put in the context of their respective vector fields:
 </p><p>
-plotv (3, -3, 3, y - 2x, (1, 1))<br>
-plotv (3, -3, 3, y - 2x, (1, 1), (1, 2), (1, 0))<br>
-plotv (6, -6, 6, lambda x, y: (2x + sec**2x) / 2y, (0, -5), 'r=u(0) = -5', fs = -7, res = 33)<br>
-plotv (2.5, -2.5, 2.5, (-y, x), (0.5, 0), '=(0.5,0)', (1, 0), '=(1,0)', (1.5, 0), '=(1.5,0)', (2, 0), '=(2,0)', fs = -6, pivot = 'mid')<br>
-plotv (pi, -pi, pi, sin x - sin y, (0, 0), (1, 1), (2, 2), (-1, -1), (-2, -2), fs = -8, kww = {'linewidth': 5})<br>
+<span onclick="cE2C (this)">plotv (3, -3, 3, y - 2x, (1, 1))</span><br>
+<span onclick="cE2C (this)">plotv (3, -3, 3, y - 2x, (1, 1), (1, 2), (1, 0))</span><br>
+<span onclick="cE2C (this)">plotv (6, -6, 6, lambda x, y: (2x + sec**2x) / 2y, (0, -5), 'r=u(0) = -5', fs = -7, res = 33)</span><br>
+<span onclick="cE2C (this)">plotv (2.5, -2.5, 2.5, (-y, x), (0.5, 0), '=(0.5,0)', (1, 0), '=(1,0)', (1.5, 0), '=(1.5,0)', (2, 0), '=(2,0)', fs = -6, pivot = 'mid')</span><br>
+<span onclick="cE2C (this)">plotv (pi, -pi, pi, sin x - sin y, (0, 0), (1, 1), (2, 2), (-1, -1), (-2, -2), fs = -8, kww = {'linewidth': 5})</span><br>
 </p>
 
 <p><b>Usage</b></p>
@@ -1952,36 +1994,37 @@ It may also never finish if a complex circular vector field introduces enough er
 Note that some of these are single line examples and others make use of variables.
 If you see variables being assigned make sure to execute those lines before the lines which follow, also make sure to delete the variable assigment afterwards in order to not affect any other examples which expect those variables to be free.
 All these examples assume you are running with default environment settings.
+You can click on any of these lines to copy it to the clipboard for pasting into SymPad.
 </p>
 
 <h4 id="Limits, Sums, Derivatives and Integrals">Limits, Sums, Derivatives and Integrals</h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-\lim_{h\to0} {(x + h)**2 - x**2} / h<br>
-Limit ((1 + 1/x)**x, x, \infty)<br>
-{(1 - 1/x)**x}.limit (x, \infty)<br>
-limit (sin x / x, x, 0)<br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">\lim_{h\to0} {(x + h)**2 - x**2} / h</span><br>
+<span onclick="cE2C (this)">Limit ((1 + 1/x)**x, x, \infty)</span><br>
+<span onclick="cE2C (this)">{(1 - 1/x)**x}.limit (x, \infty)</span><br>
+<span onclick="cE2C (this)">limit (sin x / x, x, 0)</span><br>
 <br>
-\sum_{n=0}^\infty (-1)**n x**{2n} / (2n)!<br>
-Sum ((-1)**n x**{2n + 1} / (2n + 1)!, (n, 0, oo))<br>
-summation ((-3)^n / n 7^{n+1} * (x - 5)^n, (n, 1, oo))<br>
+<span onclick="cE2C (this)">\sum_{n=0}^\infty (-1)**n x**{2n} / (2n)!</span><br>
+<span onclick="cE2C (this)">Sum ((-1)**n x**{2n + 1} / (2n + 1)!, (n, 0, oo))</span><br>
+<span onclick="cE2C (this)">summation ((-3)^n / n 7^{n+1} * (x - 5)^n, (n, 1, oo))</span><br>
 <br>
-d/dx ln x<br>
-Derivative (x**3y**2, x, y)<br>
-diff (sin x + cos x, x, 2)<br>
-{x**2sin**2y}.diff (x, y)<br>
-d**3/dx**2dy x**3y**2<br>
-sin (x)'<br>
-(e**{2x})''<br>
-d/dx ln (y(x))<i>&emsp; derivative of logarithm of abstract undefined function y(x)</i><br>
+<span onclick="cE2C (this)">d/dx ln x</span><br>
+<span onclick="cE2C (this)">Derivative (x**3y**2, x, y)</span><br>
+<span onclick="cE2C (this)">diff (sin x + cos x, x, 2)</span><br>
+<span onclick="cE2C (this)">{x**2sin**2y}.diff (x, y)</span><br>
+<span onclick="cE2C (this)">d**3/dx**2dy x**3y**2</span><br>
+<span onclick="cE2C (this)">sin (x)'</span><br>
+<span onclick="cE2C (this)">(e**{2x})''</span><br>
+<span onclick="cE2C (this)">d/dx ln (y(x))</span><i>&emsp; derivative of logarithm of abstract undefined function y(x)</i><br>
 <br>
-\int x**a dx<br>
-Integral (a**x, x)<br>
-{x**3y**2}.integrate (x, y)<br>
-\int_0**oo e**{-st} dt<br>
-Integral (r, (r, 0, 1), (theta, 0, 2pi))<br>
-integrate (sin x / x, (x, -oo, oo))<br>
+<span onclick="cE2C (this)">\int x**a dx</span><br>
+<span onclick="cE2C (this)">Integral (a**x, x)</span><br>
+<span onclick="cE2C (this)">{x**3y**2}.integrate (x, y)</span><br>
+<span onclick="cE2C (this)">\int_0**oo e**{-st} dt</span><br>
+<span onclick="cE2C (this)">Integral (r, (r, 0, 1), (theta, 0, 2pi))</span><br>
+<span onclick="cE2C (this)">integrate (sin x / x, (x, -oo, oo))</span><br>
 <br>
 </p>
 
@@ -1990,29 +2033,28 @@ integrate (sin x / x, (x, -oo, oo))<br>
 <p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/solvers.html" target="_blank">Equation Solvers</a>.</p>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-solve (x**2 = 4)<i>&emsp; x**2 - 4 = 0</i><br>
-solve (x**2 - 4)<i>&emsp; same</i><br>
-solve (|x| >= x**2)<i>&emsp; inequality</i><br>
-solve (x**2 + 2 x - 1 > 7)<br>
-solve (y = x**2 + 2 x - 1, x)<i>&emsp; solve for x from y</i><br>
-solve (x + (e**x)**2, e**x)<i>&emsp; solve for e**x</i><br>
-solve (x + e**x, x)<i>&emsp; explicit solution</i><br>
-solve (x + e**x, x, implicit = True)<i>&emsp; implicit solution</i><br>
-solve ((x + 2y = 5, y - 2x = 0))<i>&emsp; system of equations, solve for x and y</i><br>
-solve ((a + b)x - b + 2, a, b)<i>&emsp; one equation relating two variables</i><br>
-solve ((a + b)x - b**2 + 2, a, b)<i>&emsp; non-linear</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">solve (x**2 = 4)</span><i>&emsp; x**2 - 4 = 0</i><br>
+<span onclick="cE2C (this)">solve (x**2 - 4)</span><i>&emsp; same</i><br>
+<span onclick="cE2C (this)">solve (|x| >= x**2)</span><i>&emsp; inequality</i><br>
+<span onclick="cE2C (this)">solve (x**2 + 2 x - 1 > 7)</span><br>
+<span onclick="cE2C (this)">solve (y = x**2 + 2 x - 1, x)</span><i>&emsp; solve for x from y</i><br>
+<span onclick="cE2C (this)">solve (x + (e**x)**2, e**x)</span><i>&emsp; solve for e**x</i><br>
+<span onclick="cE2C (this)">solve (x + e**x, x)</span><i>&emsp; explicit solution</i><br>
+<span onclick="cE2C (this)">solve (x + e**x, x, implicit = True)</span><i>&emsp; implicit solution</i><br>
+<span onclick="cE2C (this)">solve ((x + 2y = 5, y - 2x = 0))</span><i>&emsp; system of equations, solve for x and y</i><br>
+<span onclick="cE2C (this)">solve ((a + b)x - b + 2, a, b)</span><i>&emsp; one equation relating two variables</i><br>
+<span onclick="cE2C (this)">solve ((a + b)x - b**2 + 2, a, b)</span><i>&emsp; non-linear</i><br>
 <br>
-a = x**2 + y -2<br>
-b = y**2 - 4<br>
-solve ([a, b])<i>&emsp; system of two non-linear</i><br>
-s = _<i>&emsp; store result</i><br>
-a.subs (s [0]), b.subs (s [0])<i>&emsp; check solutions</i><br>
-a.subs (s [1]), b.subs (s [1])<br>
-a.subs (s [2]), b.subs (s [2])<br>
-a.subs (s [3]), b.subs (s [3])<br>
-w = {x: 1, y: 2}<br>
-a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
+<span onclick="cE2C (this)">a, b = x**2 + y -2, y**2 - 4</span><br>
+<span onclick="cE2C (this)">solve ([a, b])</span><i>&emsp; system of two non-linear</i><br>
+<span onclick="cE2C (this)">s = _</span><i>&emsp; store result</i><br>
+<span onclick="cE2C (this)">a.subs (s [0]), b.subs (s [0])</span><i>&emsp; check solutions</i><br>
+<span onclick="cE2C (this)">a.subs (s [1]), b.subs (s [1])</span><br>
+<span onclick="cE2C (this)">a.subs (s [2]), b.subs (s [2])</span><br>
+<span onclick="cE2C (this)">a.subs (s [3]), b.subs (s [3])</span><br>
+<span onclick="cE2C (this)">w = {x: 1, y: 2}</span><br>
+<span onclick="cE2C (this)">a.subs (w), b.subs (w)</span><i>&emsp; test incorrect solution</i><br>
 <br>
 </p>
 
@@ -2021,34 +2063,34 @@ a.subs (w), b.subs (w)<i>&emsp; test incorrect solution</i><br>
 <p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/ode.html" target="_blank">Ordinary Differential Equations</a>.</p>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-dsolve (d**2/dx**2 ?(x) + 9?(x))<i>&emsp; using undefined functions directly</i><br>
-dsolve (?(x)'' + 9?(x))<i>&emsp; quicker using prime derivative of anonymous functrion since function of only one variable</i><br>
-dsolve (y(x)'' + 9y(x))<i>&emsp; or implicit named undefined function</i><br>
-y = y(x)<i>&emsp; define y variable as undefined function of one variable</i><br>
-dsolve (y'' + 9y)<i>&emsp; easiest like this</i><br>
-dsolve (sin x cos y + cos x sin y y')<br>
-dsolve (y' + 4/x * y = x**3 y**2)<br>
-dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})<i>&emsp; with initial condition</i><br>
-dsolve (cos y - y' * (x sin y - y**2))<i>&emsp; implicit solution</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">dsolve (d**2/dx**2 ?(x) + 9?(x))</span><i>&emsp; using undefined functions directly</i><br>
+<span onclick="cE2C (this)">dsolve (?(x)'' + 9?(x))</span><i>&emsp; quicker using prime derivative of anonymous functrion since function of only one variable</i><br>
+<span onclick="cE2C (this)">dsolve (y(x)'' + 9y(x))</span><i>&emsp; or implicit named undefined function</i><br>
+<span onclick="cE2C (this)">y = y(x)</span><i>&emsp; define y variable as undefined function of one variable</i><br>
+<span onclick="cE2C (this)">dsolve (y'' + 9y)</span><i>&emsp; easiest like this</i><br>
+<span onclick="cE2C (this)">dsolve (sin x cos y + cos x sin y y')</span><br>
+<span onclick="cE2C (this)">dsolve (y' + 4/x * y = x**3 y**2)</span><br>
+<span onclick="cE2C (this)">dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})</span><i>&emsp; with initial condition</i><br>
+<span onclick="cE2C (this)">dsolve (cos y - y' * (x sin y - y**2))</span><i>&emsp; implicit solution</i><br>
 <br>
 
-delall<i>&emsp; clean up and start again</i><br>
-y = y(x)<br>
-eq = y' + 4/x * y == x**3 y**2<i>&emsp; assign equality (equation) to "eq"</i><br>
-dsolve (eq, ics = {y(2): -1})<i>&emsp; solve with ics to avoid constant symbol which would throw off prime derivtion</i><br>
-sol = _.args [1]<i>&emsp; assign the right-hand part of the solution to "sol"</i><br>
-checkodesol (eq, sol, y)<i>&emsp; check the solution for the function "y" using the checkodesol () function</i><br>
-\. eq |_{y (x) = sol}<i>&emsp; check the solution by manually substituting it for the function "y (x)" in "eq"</i><br>
-y (x) = sol<i>&emsp; assign solution to a concrete lambda function</i><br>
-eq<i>&emsp; and check it by evaluating "eq"</i><br>
-y' + 4/x * y, x**3 y**2<i>&emsp; check by eye</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; clean up and start again</i><br>
+<span onclick="cE2C (this)">y = y(x)</span><br>
+<span onclick="cE2C (this)">eq = y' + 4/x * y == x**3 y**2</span><i>&emsp; assign equality (equation) to "eq"</i><br>
+<span onclick="cE2C (this)">dsolve (eq, ics = {y(2): -1})</span><i>&emsp; solve with ics to avoid constant symbol which would throw off prime derivtion</i><br>
+<span onclick="cE2C (this)">sol = _.args [1]</span><i>&emsp; assign the right-hand part of the solution to "sol"</i><br>
+<span onclick="cE2C (this)">checkodesol (eq, sol, y)</span><i>&emsp; check the solution for the function "y" using the checkodesol () function</i><br>
+<span onclick="cE2C (this)">\. eq |_{y (x) = sol}</span><i>&emsp; check the solution by manually substituting it for the function "y (x)" in "eq"</i><br>
+<span onclick="cE2C (this)">y (x) = sol</span><i>&emsp; assign solution to a concrete lambda function</i><br>
+<span onclick="cE2C (this)">eq</span><i>&emsp; and check it by evaluating "eq"</i><br>
+<span onclick="cE2C (this)">y' + 4/x * y, x**3 y**2</span><i>&emsp; check by eye</i><br>
 <br>
 
-delall<br>
-x, y = x(t), y(t)<i>&emsp; two distinct undefined functions</i><br>
-dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})<i>&emsp; second order with initial conditions</i><br>
-dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">x, y = x(t), y(t)</span><i>&emsp; two distinct undefined functions</i><br>
+<span onclick="cE2C (this)">dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})</span><i>&emsp; second order with initial conditions</i><br>
+<span onclick="cE2C (this)">dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))</span><i>&emsp; system of two equations</i><br>
 <br>
 </p>
 
@@ -2057,207 +2099,207 @@ dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))<i>&emsp; system of two equations</i>
 <p>SymPy documentation for <a href="https://docs.sympy.org/latest/modules/solvers/pde.html" target="_blank">Partial Differential Equations</a>.</p>
 
 <p>
-delall<br>
-u, X, T = u (x, t), X (x), T (t)<i>&emsp; assign undefined functions</i><br>
-eq = (du / dx = e**u * du / dt)<i>&emsp; assign equation</i><br>
-pde_separate_add (eq, u, [X, T])<i>&emsp; separate equation into additive functions</i><br>
-u, Y = u (x, y), Y (y)<br>
-eq = d**2u / dx**2 == d**2u / dy**2<i>&emsp; assign equation using "=="</i><br>
-pde_separate_mul (eq, u, [X, Y])<i>&emsp; separate equation into multiplicative functions</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">u, X, T = u (x, t), X (x), T (t)</span><i>&emsp; assign undefined functions</i><br>
+<span onclick="cE2C (this)">eq = (du / dx = e**u * du / dt)</span><i>&emsp; assign equation</i><br>
+<span onclick="cE2C (this)">pde_separate_add (eq, u, [X, T])</span><i>&emsp; separate equation into additive functions</i><br>
+<span onclick="cE2C (this)">u, Y = u (x, y), Y (y)</span><br>
+<span onclick="cE2C (this)">eq = d**2u / dx**2 == d**2u / dy**2</span><i>&emsp; assign equation using "=="</i><br>
+<span onclick="cE2C (this)">pde_separate_mul (eq, u, [X, Y])</span><i>&emsp; separate equation into multiplicative functions</i><br>
 <br>
 
-eq = Eq (1 + 2 * {du/dx / u} + 3 * {du/dy / u})<i>&emsp; set equation using SymPy Eq()</i><br>
-pdsolve (eq)<i>&emsp; solve for u (x, y)</i><br>
-sol = _.args [1]<i>&emsp; assign right hand side of equation returned to "sol"ution</i><br>
-checkpdesol (eq, sol)<i>&emsp; check solution using SymPy checkpdesol ()</i><br>
-u (x, y) = sol<i>&emsp; assign solution to concrete lambda u (x, y)</i><br>
-eq<i>&emsp; evaluate equation with u (x, y) being set to the solution</i><br>
-simplify _<i>&emsp; simplify this since it comes back as a mess, will evaluate to True since eq = 0</i><br>
+<span onclick="cE2C (this)">eq = Eq (1 + 2 * {du/dx / u} + 3 * {du/dy / u})</span><i>&emsp; set equation using SymPy Eq()</i><br>
+<span onclick="cE2C (this)">pdsolve (eq)</span><i>&emsp; solve for u (x, y)</i><br>
+<span onclick="cE2C (this)">sol = _.args [1]</span><i>&emsp; assign right hand side of equation returned to "sol"ution</i><br>
+<span onclick="cE2C (this)">checkpdesol (eq, sol)</span><i>&emsp; check solution using SymPy checkpdesol ()</i><br>
+<span onclick="cE2C (this)">u (x, y) = sol</span><i>&emsp; assign solution to concrete lambda u (x, y)</i><br>
+<span onclick="cE2C (this)">eq</span><i>&emsp; evaluate equation with u (x, y) being set to the solution</i><br>
+<span onclick="cE2C (this)">simplify _</span><i>&emsp; simplify this since it comes back as a mess, will evaluate to True since eq = 0</i><br>
 <br>
 
-u = ?u (x, y)<i>&emsp; set "u" back to undefined function, need the "?" because u is currently a concrete lambda</i><br>
-eq = x * du/dx - y * du/dy + y**2u - y**2<i>&emsp; just set "eq" to an expression, don't even need the equality</i><br>
-pdsolve (eq)<br>
-v (x, y) = _.args [1]<i>&emsp; assign solution to a different function</i><br>
-eq<i>&emsp; original equation</i><br>
-\. eq |_{u (x, y) = v}<i>&emsp; equation with solution, need to specify the full function "u (x, y)" here</i><br>
-simplify _<i>&emsp; verify that it equals 0 with solution function</i><br>
-F (x) = e**x<i>&emsp; assign arbitrary function for undefined function in solution</i><br>
-\. eq |_{u (x, y) = v}<i>&emsp; see what the solution looks like with this function</i><br>
-simplify _<i>&emsp; and verify again that it zeroes out</i><br>
+<span onclick="cE2C (this)">u = ?u (x, y)</span><i>&emsp; set "u" back to undefined function, need the "?" because u is currently a concrete lambda</i><br>
+<span onclick="cE2C (this)">eq = x * du/dx - y * du/dy + y**2u - y**2</span><i>&emsp; just set "eq" to an expression, don't even need the equality</i><br>
+<span onclick="cE2C (this)">pdsolve (eq)</span><br>
+<span onclick="cE2C (this)">v (x, y) = _.args [1]</span><i>&emsp; assign solution to a different function</i><br>
+<span onclick="cE2C (this)">eq</span><i>&emsp; original equation</i><br>
+<span onclick="cE2C (this)">\. eq |_{u (x, y) = v}</span><i>&emsp; equation with solution, need to specify the full function "u (x, y)" here</i><br>
+<span onclick="cE2C (this)">simplify _</span><i>&emsp; verify that it equals 0 with solution function</i><br>
+<span onclick="cE2C (this)">F (x) = e**x</span><i>&emsp; assign arbitrary function for undefined function in solution</i><br>
+<span onclick="cE2C (this)">\. eq |_{u (x, y) = v}</span><i>&emsp; see what the solution looks like with this function</i><br>
+<span onclick="cE2C (this)">simplify _</span><i>&emsp; and verify again that it zeroes out</i><br>
 <br>
 </p>
 
-<h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>
+<span onclick="cE2C (this)"><h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</span><i>&emsp; (by "hand")</i></h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-m = \[[1, 2], [3, 4]]<br>
-l = m - lambda eye 2<br>
-l.det ()<br>
-solve _<i>&emsp; this will give the eigenvalues</i><br>
-a, b = _<i>&emsp; assign to vars</i><br>
-m.eigenvals ()<i>&emsp; verify eigenvalues</i><br>
-Subs (l, lambda, a) \[x, y]<br>
-solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
-\[_ [0] [x], y].subs (y, 1)<i>&emsp; first eigenvector for eigenvalue a</i><br>
-\. l |_{lambda = b} \[x, y]<i>&emsp; shorthand for substitution</i><br>
-solve (_ [0], _ [1], x, y)<i>&emsp; relation between x and y</i><br>
-\. \[_ [0] [x], y] |_{y = 1}<i>&emsp; second eigenvector for eigenvalue b</i><br>
-m.eigenvects ()<i>&emsp; verify eigenvectors</i><br>
-simplify _<i>&emsp; simplify result to easier see if it matches</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">m = \[[1, 2], [3, 4]]</span><br>
+<span onclick="cE2C (this)">l = m - lambda eye 2</span><br>
+<span onclick="cE2C (this)">l.det ()</span><br>
+<span onclick="cE2C (this)">solve _</span><i>&emsp; this will give the eigenvalues</i><br>
+<span onclick="cE2C (this)">a, b = _</span><i>&emsp; assign to vars</i><br>
+<span onclick="cE2C (this)">m.eigenvals ()</span><i>&emsp; verify eigenvalues</i><br>
+<span onclick="cE2C (this)">Subs (l, lambda, a) \[x, y]</span><br>
+<span onclick="cE2C (this)">solve (_ [0], _ [1], x, y)</span><i>&emsp; relation between x and y</i><br>
+<span onclick="cE2C (this)">\[_ [0] [x], y].subs (y, 1)</span><i>&emsp; first eigenvector for eigenvalue a</i><br>
+<span onclick="cE2C (this)">\. l |_{lambda = b} \[x, y]</span><i>&emsp; shorthand for substitution</i><br>
+<span onclick="cE2C (this)">solve (_ [0], _ [1], x, y)</span><i>&emsp; relation between x and y</i><br>
+<span onclick="cE2C (this)">\. \[_ [0] [x], y] |_{y = 1}</span><i>&emsp; second eigenvector for eigenvalue b</i><br>
+<span onclick="cE2C (this)">m.eigenvects ()</span><i>&emsp; verify eigenvectors</i><br>
+<span onclick="cE2C (this)">simplify _</span><i>&emsp; simplify result to easier see if it matches</i><br>
 <br>
 </p>
 
 <h4 id="Lambda Function Examples">Lambda Function Examples</h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-f = lambda x: x**2<i>&emsp; simple example of lambda which squares its argument</i><br>
-f (2)<br>
-f (x) = x**2<i>&emsp; differnt syntax to specify the same thing</i><br>
-f (3)<br>
-f (x, y) = sqrt (x**2 + y**2)<i>&emsp; function of two variables</i><br>
-f (3, 4)<br>
-f**2<i>&emsp; lambda functions can be used as expression in many contexts</i><br>
-df / dx<i>&emsp; take derivative</i><br>
-\int f dx<i>&emsp; integrate</i><br>
-\sum_{x = 0}^2 f<i>&emsp; when used as an expression the lambda's variables are mapped</i><br>
-(f)<i>&emsp; this is how you get the expression within a lambda</i><br>
-x, y = 3, 4<br>
-(f)<i>&emsp; variables are mapped to their current values</i><br>
-del (x, y)<br>
-(f)<i>&emsp; and now the lambda body is back</i><br>
-f (x) = x**3<br>
-f'<i>&emsp; only has one variable so can derivate like this</i><br>
-f' (3)<i>&emsp; can also "call" the derivative of a lambda</i><br>
-d**2f / dx**2 (3)<i>&emsp; also like this</i><br>
-d**2 / dx**2 (f) (3)<i>&emsp; and this</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">f = lambda x: x**2</span><i>&emsp; simple example of lambda which squares its argument</i><br>
+<span onclick="cE2C (this)">f (2)</span><br>
+<span onclick="cE2C (this)">f (x) = x**2</span><i>&emsp; differnt syntax to specify the same thing</i><br>
+<span onclick="cE2C (this)">f (3)</span><br>
+<span onclick="cE2C (this)">f (x, y) = sqrt (x**2 + y**2)</span><i>&emsp; function of two variables</i><br>
+<span onclick="cE2C (this)">f (3, 4)</span><br>
+<span onclick="cE2C (this)">f**2</span><i>&emsp; lambda functions can be used as expression in many contexts</i><br>
+<span onclick="cE2C (this)">df / dx</span><i>&emsp; take derivative</i><br>
+<span onclick="cE2C (this)">\int f dx</span><i>&emsp; integrate</i><br>
+<span onclick="cE2C (this)">\sum_{x = 0}^2 f</span><i>&emsp; when used as an expression the lambda's variables are mapped</i><br>
+<span onclick="cE2C (this)">(f)</span><i>&emsp; this is how you get the expression within a lambda</i><br>
+<span onclick="cE2C (this)">x, y = 3, 4</span><br>
+<span onclick="cE2C (this)">(f)</span><i>&emsp; variables are mapped to their current values</i><br>
+<span onclick="cE2C (this)">del (x, y)</span><br>
+<span onclick="cE2C (this)">(f)</span><i>&emsp; and now the lambda body is back</i><br>
+<span onclick="cE2C (this)">f (x) = x**3</span><br>
+<span onclick="cE2C (this)">f'</span><i>&emsp; only has one variable so can derivate like this</i><br>
+<span onclick="cE2C (this)">f' (3)</span><i>&emsp; can also "call" the derivative of a lambda</i><br>
+<span onclick="cE2C (this)">d**2f / dx**2 (3)</span><i>&emsp; also like this</i><br>
+<span onclick="cE2C (this)">d**2 / dx**2 (f) (3)</span><i>&emsp; and this</i><br>
 <br>
 
-f (x) = lambda y: sqrt (x**2 + y**2)<i>&emsp; lambda returning a lambda</i><br>
-f (3)<br>
-_ (4)<i>&emsp; call the lambda that was returned</i><br>
-f (3)<br>
-_ * (4)<i>&emsp; will be multiplied instead of called if using explicit multiply operator</i><br>
+<span onclick="cE2C (this)">f (x) = lambda y: sqrt (x**2 + y**2)</span><i>&emsp; lambda returning a lambda</i><br>
+<span onclick="cE2C (this)">f (3)</span><br>
+<span onclick="cE2C (this)">_ (4)</span><i>&emsp; call the lambda that was returned</i><br>
+<span onclick="cE2C (this)">f (3)</span><br>
+<span onclick="cE2C (this)">_ * (4)</span><i>&emsp; will be multiplied instead of called if using explicit multiply operator</i><br>
 <br>
 
-delall<i>&emsp; undefined functions can be used to avoid embedding body of target lambda in parent</i><br>
-g (x, y) = sqrt (f (x) + f (y))<i>&emsp; target lambda doesn't need to be defined ahead of time</i><br>
-g (3, 4)<i>&emsp; will return undefined functions</i><br>
-f (x) = x**2<i>&emsp; define the function</i><br>
-g (3, 4)<i>&emsp; now call out to concrete defined function</i><br>
-f (x) = x<i>&emsp; redefine the function to something else</i><br>
-g (3, 4)<i>&emsp; now we have a different result</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; undefined functions can be used to avoid embedding body of target lambda in parent</i><br>
+<span onclick="cE2C (this)">g (x, y) = sqrt (f (x) + f (y))</span><i>&emsp; target lambda doesn't need to be defined ahead of time</i><br>
+<span onclick="cE2C (this)">g (3, 4)</span><i>&emsp; will return undefined functions</i><br>
+<span onclick="cE2C (this)">f (x) = x**2</span><i>&emsp; define the function</i><br>
+<span onclick="cE2C (this)">g (3, 4)</span><i>&emsp; now call out to concrete defined function</i><br>
+<span onclick="cE2C (this)">f (x) = x</span><i>&emsp; redefine the function to something else</i><br>
+<span onclick="cE2C (this)">g (3, 4)</span><i>&emsp; now we have a different result</i><br>
 <br>
 
-delall<i>&emsp; @ no-remap pseudo-function</i><br>
-x, y, z = 3, 4, 5<i>&emsp; assign global variablesy</i><br>
-f (x, y) = sqrt (x**2 + y**2) + z<i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
-f (x, y) = sqrt (x**2 + y**2) + @z<i>&emsp; do not bind global variable</i><br>
-f (x) = x**2<br>
-f (x) = @x**2<i>&emsp; use global value of x</i><br>
-f (x) = y**2<i>&emsp; binds global value of y into lambda since it is not a lambda variable</i><br>
-f (2)<i>&emsp; doesn't matter what you pass, f(x) is set to equal 16</i><br>
-f (x) = @y**2<i>&emsp; go up one more scope above global and use pure y variable</i><br>
-f (2)<i>&emsp; still get 16 because global y = 4</i><br>
-y = 6<i>&emsp; change global y</i><br>
-f (2)<i>&emsp; global y = 6 so y**2 = 36</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; @ no-remap pseudo-function</i><br>
+<span onclick="cE2C (this)">x, y, z = 3, 4, 5</span><i>&emsp; assign global variablesy</i><br>
+<span onclick="cE2C (this)">f (x, y) = sqrt (x**2 + y**2) + z</span><i>&emsp; lambda variables are not mapped but unbound variables are</i><br>
+<span onclick="cE2C (this)">f (x, y) = sqrt (x**2 + y**2) + @z</span><i>&emsp; do not bind global variable</i><br>
+<span onclick="cE2C (this)">f (x) = x**2</span><br>
+<span onclick="cE2C (this)">f (x) = @x**2</span><i>&emsp; use global value of x</i><br>
+<span onclick="cE2C (this)">f (x) = y**2</span><i>&emsp; binds global value of y into lambda since it is not a lambda variable</i><br>
+<span onclick="cE2C (this)">f (2)</span><i>&emsp; doesn't matter what you pass, f(x) is set to equal 16</i><br>
+<span onclick="cE2C (this)">f (x) = @y**2</span><i>&emsp; go up one more scope above global and use pure y variable</i><br>
+<span onclick="cE2C (this)">f (2)</span><i>&emsp; still get 16 because global y = 4</i><br>
+<span onclick="cE2C (this)">y = 6</span><i>&emsp; change global y</i><br>
+<span onclick="cE2C (this)">f (2)</span><i>&emsp; global y = 6 so y**2 = 36</i><br>
 <br>
 
-delall<i>&emsp; % no-evaluate pseudo-function forcees "doit()" on lambda body</i><br>
-f (x) = \int x dx<i>&emsp; normally integral, limits, derivatives and things like that are not evaluated on lambda definition</i><br>
-f (sin x)<i>&emsp; only on execution</i><br>
-f (x) = %(\int x dx)<i>&emsp; force evaluation of integral and store result in lambda definition, the % only works this way at the top level of the lambda body</i><br>
-f (sin x)<i>&emsp; different result since integral was already evaluated</i><br>
-f (sin y)<i>&emsp; this is as expected</i><br>
-f (x) = \int x dx<i>&emsp; going back to the unevaluated integral</i><br>
-f (sin x)<i>&emsp; as expected</i><br>
-f (sin y)<i>&emsp; different, the differential is only changed to dy if the argument is a pure variable, if not then the original dx is used</i><br>
-\int sin y dx<i>&emsp; which results in this expression</i><br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; % no-evaluate pseudo-function forcees "doit()" on lambda body</i><br>
+<span onclick="cE2C (this)">f (x) = \int x dx</span><i>&emsp; normally integral, limits, derivatives and things like that are not evaluated on lambda definition</i><br>
+<span onclick="cE2C (this)">f (sin x)</span><i>&emsp; only on execution</i><br>
+<span onclick="cE2C (this)">f (x) = %(\int x dx)</span><i>&emsp; force evaluation of integral and store result in lambda definition, the % only works this way at the top level of the lambda body</i><br>
+<span onclick="cE2C (this)">f (sin x)</span><i>&emsp; different result since integral was already evaluated</i><br>
+<span onclick="cE2C (this)">f (sin y)</span><i>&emsp; this is as expected</i><br>
+<span onclick="cE2C (this)">f (x) = \int x dx</span><i>&emsp; going back to the unevaluated integral</i><br>
+<span onclick="cE2C (this)">f (sin x)</span><i>&emsp; as expected</i><br>
+<span onclick="cE2C (this)">f (sin y)</span><i>&emsp; different, the differential is only changed to dy if the argument is a pure variable, if not then the original dx is used</i><br>
+<span onclick="cE2C (this)">\int sin y dx</span><i>&emsp; which results in this expression</i><br>
 <br>
 </p>
 
 <h4 id="Pseudo-Function Examples">Pseudo-Function Examples</h4>
 
 <p>
-delall<br>
-1 + 2<i>&emsp; evaluated</i><br>
-%(1 + 2)<i>&emsp; unevaluated</i><br>
-_<i>&emsp; evaluated</i><br>
-x, y = 1, 2<br>
-x + y<i>&emsp; evaluated</i><br>
-%(x + y)<i>&emsp; unevaluated but remapped</i><br>
-%@(x + y)<i>&emsp; unevaluated and not remapped</i><br>
-@(x + y)<i>&emsp; not remapped and thus unevaluated</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">1 + 2</span><i>&emsp; evaluated</i><br>
+<span onclick="cE2C (this)">%(1 + 2)</span><i>&emsp; unevaluated</i><br>
+<span onclick="cE2C (this)">_</span><i>&emsp; evaluated</i><br>
+<span onclick="cE2C (this)">x, y = 1, 2</span><br>
+<span onclick="cE2C (this)">x + y</span><i>&emsp; evaluated</i><br>
+<span onclick="cE2C (this)">%(x + y)</span><i>&emsp; unevaluated but remapped</i><br>
+<span onclick="cE2C (this)">%@(x + y)</span><i>&emsp; unevaluated and not remapped</i><br>
+<span onclick="cE2C (this)">@(x + y)</span><i>&emsp; not remapped and thus unevaluated</i><br>
 <br>
 
-delall<br>
-x<i>&emsp; just a happy little "x"</i><br>
-x = 2<br>
-x<i>&emsp; now the "x" has value</i><br>
-@x<i>&emsp; no-remap removes that value</i><br>
-lambda x: x<i>&emsp; local variable "x" as expected, not global</i><br>
-lambda x: @x<i>&emsp; now the global value of "x"</i><br>
-lambda x: @@x<i>&emsp; back to "x" and will take on the value of the local "x" since we stepped out beyond the global scope</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">x</span><i>&emsp; just a happy little "x"</i><br>
+<span onclick="cE2C (this)">x = 2</span><br>
+<span onclick="cE2C (this)">x</span><i>&emsp; now the "x" has value</i><br>
+<span onclick="cE2C (this)">@x</span><i>&emsp; no-remap removes that value</i><br>
+<span onclick="cE2C (this)">lambda x: x</span><i>&emsp; local variable "x" as expected, not global</i><br>
+<span onclick="cE2C (this)">lambda x: @x</span><i>&emsp; now the global value of "x"</i><br>
+<span onclick="cE2C (this)">lambda x: @@x</span><i>&emsp; back to "x" and will take on the value of the local "x" since we stepped out beyond the global scope</i><br>
 <br>
 
-delall<br>
-lambda x: \int x + 1 + 2 dx<i>&emsp; body is evaluated but not "doit()"ed</i><br>
-lambda x: %(\int x + 1 + 2 dx)<i>&emsp; body is evaluated and "doit()"ed</i><br>
-lambda x: %%(\int x + 1 + 2 dx)<i>&emsp; body is fully unevaluated</i><br>
-lambda x: %%(\int x + y + y dx)<i>&emsp; same</i><br>
-y = 2<br>
-lambda x: %%(\int x + y + y dx)<i>&emsp; however, variables are mapped</i><br>
-lambda x: %%@(\int x + y + y dx)<i>&emsp; now they are not</i><br>
-lambda x: %%(\int x + @y + y dx)<i>&emsp; now just one variable is mapped</i><br>
+<span onclick="cE2C (this)">delall</span><br>
+<span onclick="cE2C (this)">lambda x: \int x + 1 + 2 dx</span><i>&emsp; body is evaluated but not "doit()"ed</i><br>
+<span onclick="cE2C (this)">lambda x: %(\int x + 1 + 2 dx)</span><i>&emsp; body is evaluated and "doit()"ed</i><br>
+<span onclick="cE2C (this)">lambda x: %%(\int x + 1 + 2 dx)</span><i>&emsp; body is fully unevaluated</i><br>
+<span onclick="cE2C (this)">lambda x: %%(\int x + y + y dx)</span><i>&emsp; same</i><br>
+<span onclick="cE2C (this)">y = 2</span><br>
+<span onclick="cE2C (this)">lambda x: %%(\int x + y + y dx)</span><i>&emsp; however, variables are mapped</i><br>
+<span onclick="cE2C (this)">lambda x: %%@(\int x + y + y dx)</span><i>&emsp; now they are not</i><br>
+<span onclick="cE2C (this)">lambda x: %%(\int x + @y + y dx)</span><i>&emsp; now just one variable is mapped</i><br>
 <br>
 </p>
 
 <h4 id="Last Expression Variable">Last Expression Variable</h4>
 
 <p>
-1<i>&emsp; "evaluate" 1 to set the last expression variable "_" to this</i><br>
-expand (_(x+1))<br>
-expand (_(x+1))<i>&emsp; or press the up arrow</i><br>
-expand (_(x+1))<i>&emsp; ...</i><br>
+<span onclick="cE2C (this)">1</span><i>&emsp; "evaluate" 1 to set the last expression variable "_" to this</i><br>
+<span onclick="cE2C (this)">expand (_(x+1))</span><br>
+<span onclick="cE2C (this)">expand (_(x+1))</span><i>&emsp; or press the up arrow</i><br>
+<span onclick="cE2C (this)">expand (_(x+1))</span><i>&emsp; ...</i><br>
 <br>
-1, 1<i>&emsp; again, set initial values</i><br>
-_[1], _[0] + _[1]<br>
-_[1], _[0] + _[1]<i>&emsp; or press the up arrow</i><br>
-_[1], _[0] + _[1]<br>
-_[1], _[0] + _[1]<i>&emsp; notice a pattern?</i><br>
+<span onclick="cE2C (this)">1, 1</span><i>&emsp; again, set initial values</i><br>
+<span onclick="cE2C (this)">_[1], _[0] + _[1]</span><br>
+<span onclick="cE2C (this)">_[1], _[0] + _[1]</span><i>&emsp; or press the up arrow</i><br>
+<span onclick="cE2C (this)">_[1], _[0] + _[1]</span><br>
+<span onclick="cE2C (this)">_[1], _[0] + _[1]</span><i>&emsp; notice a pattern?</i><br>
 <br>
 </p>
 
 <h4 id="Plotting Functions">Plotting Functions</h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-plotf (2, x**2)<i>&emsp; plot expression directly</i><br>
-f = x**2<br>
-plotf (2, f)<i>&emsp; plot expression from assigned variable</i><br>
-plotf (2, lambda x: x**2)<i>&emsp; plot lambda function directly</i><br>
-l = lambda x: x**2<br>
-plotf (2, l)<i>&emsp; plot lambda function from variable</i><br>
-plotf (2, lambda x: l (x - 1))<i>&emsp; plot lambda function from variable modifying the argument</i><br>
-plotf (2, f if x &lt; 0, 'r', f if x >= 0, 'g')<i>&emsp; different colors on either side of x = 0</i><br>
-plotf ('+', 2 if l (x) &lt; 2)<i>&emsp; add to previous plot</i><br>
-plotf ('+', 2, -4, 4, -x**2)<br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">plotf (2, x**2)</span><i>&emsp; plot expression directly</i><br>
+<span onclick="cE2C (this)">f = x**2</span><br>
+<span onclick="cE2C (this)">plotf (2, f)</span><i>&emsp; plot expression from assigned variable</i><br>
+<span onclick="cE2C (this)">plotf (2, lambda x: x**2)</span><i>&emsp; plot lambda function directly</i><br>
+<span onclick="cE2C (this)">l = lambda x: x**2</span><br>
+<span onclick="cE2C (this)">plotf (2, l)</span><i>&emsp; plot lambda function from variable</i><br>
+<span onclick="cE2C (this)">plotf (2, lambda x: l (x - 1))</span><i>&emsp; plot lambda function from variable modifying the argument</i><br>
+<span onclick="cE2C (this)">plotf (2, f if x &lt; 0, 'r', f if x >= 0, 'g')</span><i>&emsp; different colors on either side of x = 0</i><br>
+<span onclick="cE2C (this)">plotf ('+', 2 if l (x) &lt; 2)</span><i>&emsp; add to previous plot</i><br>
+<span onclick="cE2C (this)">plotf ('+', 2, -4, 4, -x**2)</span><br>
 <br>
 </p>
 
 <h4 id="Plotting Vector Walks">Plotting Vector Walks</h4>
 
 <p>
-delall<i>&emsp; make sure no variables are mapped</i><br>
-f = lambda x, y: (2x + sec**2x) / 2y<br>
-plotv (6, -6, 6, f, fs = -8, res = 33)<i>&emsp;plot vector field</i><br>
-plotw ('+', f, (-1, 0))<i>&emsp;add first walk starting at point (-1, 0)</i><br>
-plotw ('+', f, (-2, 0))<br>
-plotw ('+', f, (-3, 0))<br>
-plotw ('+', f, (-4, 0))<br>
-plotw ('+', f, (-5, 0))<br>
+<span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
+<span onclick="cE2C (this)">f = lambda x, y: (2x + sec**2x) / 2y</span><br>
+<span onclick="cE2C (this)">plotv (6, -6, 6, f, fs = -8, res = 33)</span><i>&emsp;plot vector field</i><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-1, 0))</span><i>&emsp;add first walk starting at point (-1, 0)</i><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-2, 0))</span><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-3, 0))</span><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-4, 0))</span><br>
+<span onclick="cE2C (this)">plotw ('+', f, (-5, 0))</span><br>
 <br>
 </p>
 
@@ -2328,13 +2370,15 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <tr><td><b>ufuncmap</b></td><td>&emsp;-</td><td>When on, undefined functions resulting from SymPy calculations will be mapped back to the variables they are assigned to if possible.</td></tr>
 <tr><td><b>prodrat</b></td><td>&emsp;-</td><td>Controls whether products with leading rationals are displayed as $\frac75x^2$ (on), or $\frac{7x^2}5$ (off, default).</td></tr>
 <tr><td><b>doit</b></td><td>&emsp;-</td><td>Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</td></tr>
-<tr><td><b>strict</b></td><td>&emsp;-</td><td>This controls whether the LaTeX generated for expressions is guaranteed to be pasteable into SymPad or if it looks prettier (default).</td></tr>
-<tr><td><b>N</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" variable.</td></tr>
-<tr><td><b>O</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" variable.</td></tr>
-<tr><td><b>S</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" variable.</td></tr>
-<tr><td><b>gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" variable.</td></tr>
-<tr><td><b>Gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" variable.</td></tr>
-<tr><td><b>zeta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" variable.</td></tr>
+<tr><td><b>strict</b></td><td>&emsp;-</td><td>This controls whether the LaTeX generated for expressions is guaranteed to be pasteable into SymPad or if it looks prettier (default), it currently only affects how undefined functions are displayed.</td></tr>
+<tr><td><b>N</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" letter.</td></tr>
+<tr><td><b>O</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" letter.</td></tr>
+<tr><td><b>S</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" letter.</td></tr>
+<tr><td><b>beta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>beta()</b>" function via the "<b>beta</b>" letter.</td></tr>
+<tr><td><b>gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" letter.</td></tr>
+<tr><td><b>Gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" letter.</td></tr>
+<tr><td><b>Lambda</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Lambda()</b>" function via the "<b>Lambda</b>" letter.</td></tr>
+<tr><td><b>zeta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" letter.</td></tr>
 </table>
 
 <h4 id="Command Line Arguments">Command Line Arguments</h4>
@@ -4484,8 +4528,11 @@ class AST_Var (AST):
 class AST_Attr (AST):
 	op, is_attr = '.', True
 
-	def _init (self, obj, attr, args = None):
+	def __new__ (cls, obj, attr, args = None):
+		self                           = tuple.__new__ (cls, ('.', obj, attr) if args is None else ('.', obj, attr, args))
 		self.obj, self.attr, self.args = obj, attr, args
+
+		return self
 
 	_is_attr_var  = lambda self: self.args is None
 	_is_attr_func = lambda self: self.args is not None
@@ -4513,16 +4560,14 @@ class AST_Curly (AST):
 class AST_Paren (AST):
 	op, is_paren = '(', True
 
-	def _init (self, paren):
-		self.paren = paren
+	def __new__ (cls, paren, isolated = False):
+		self                      = tuple.__new__ (cls, ('(', paren) if not isolated else ('(', paren, True))
+		self.paren, self.isolated = paren, isolated
 
-	def _as_pvarlist (self):
-		vars = self.paren.comma if self.paren.is_comma else (self.paren,)
+		return self
 
-		if all (v.is_var_nonconst for v in vars):
-			return vars
-
-		return None
+	_is_paren_isolated = lambda self: self.isolated
+	_is_paren_free     = lambda self: not self.isolated
 
 class AST_Brack (AST):
 	op, is_brack = '[', True
@@ -4596,16 +4641,22 @@ class AST_Pow (AST):
 class AST_Log (AST):
 	op, is_log = '-log', True
 
-	def _init (self, log, base = None):
+	def __new__ (cls, log, base = None):
+		self               = tuple.__new__ (cls, ('-log', log) if base is None or base == AST.E else ('-log', log, base))
 		self.log, self.base = log, base
+
+		return self
 
 	_is_log_with_base = lambda self: self.base is not None
 
 class AST_Sqrt (AST):
 	op, is_sqrt = '-sqrt', True
 
-	def _init (self, rad, idx = None):
+	def __new__ (cls, rad, idx = None):
+		self               = tuple.__new__ (cls, ('-sqrt', rad) if idx is None or idx == AST.Two else ('-sqrt', rad, idx))
 		self.rad, self.idx = rad, idx
+
+		return self
 
 	_is_sqrt_with_idx = lambda self: self.idx is not None
 
@@ -4648,8 +4699,11 @@ class AST_Func (AST):
 class AST_Lim (AST):
 	op, is_lim = '-lim', True
 
-	def _init (self, lim, lvar, to, dir = None):
+	def __new__ (cls, lim, lvar, to, dir = None):
+		self                                   = tuple.__new__ (cls, ('-lim', lim, lvar, to) if dir is None else ('-lim', lim, lvar, to, dir))
 		self.lim, self.lvar, self.to, self.dir = lim, lvar, to, dir
+
+		return self
 
 class AST_Sum (AST):
 	op, is_sum = '-sum', True
@@ -4663,9 +4717,11 @@ class AST_Diff (AST):
 	def _init (self, diff, d, dvs):
 		self.diff, self.d, self.dvs = diff, d, dvs
 
-	_is_diff_d       = lambda self: self.d == 'd'
-	_is_diff_partial = lambda self: self.d == 'partial'
-	_is_diff_dvdv    = lambda self: self.d == 'd' and self.dvs.len == 1 # and self.diff.is_var and self.dvs [0] [1] == 1
+	_is_diff_d         = lambda self: self.d == 'd'
+	_is_diff_partial   = lambda self: self.d == 'partial'
+	_is_diff_dvdv      = lambda self: self.d == 'd' and self.dvs.len == 1 # and self.diff.is_var and self.dvs [0] [1] == 1
+	_is_diff_any_ufunc = lambda self: self.diff.strip_paren1.is_ufunc
+	_diff_any          = lambda self: self.diff.strip_paren1
 
 class AST_DiffP (AST):
 	op, is_diffp = '-diffp', True
@@ -4673,11 +4729,17 @@ class AST_DiffP (AST):
 	def _init (self, diffp, count):
 		self.diffp, self.count = diffp, count
 
+	_is_diff_any_ufunc = lambda self: self.diffp.is_ufunc
+	_diff_any          = lambda self: self.diffp
+
 class AST_Intg (AST):
 	op, is_intg = '-intg', True
 
-	def _init (self, intg, dv, from_ = None, to = None):
+	def __new__ (cls, intg, dv, from_ = None, to = None):
+		self                                    = tuple.__new__ (cls, ('-intg', intg, dv) if from_ is None else ('-intg', intg, dv, from_, to))
 		self.intg, self.dv, self.from_, self.to = intg, dv, from_, to
+
+		return self
 
 	_is_intg_definite = lambda self: self.from_ is not None
 
@@ -4828,6 +4890,9 @@ class AST_Sym (AST):
 
 		return self
 
+	_is_sym_anonymous   = lambda self: not self.sym
+	_is_sym_unqualified = lambda self: not self.kw
+
 #...............................................................................................
 _AST_CLASSES = [AST_SColon, AST_Ass, AST_Cmp, AST_Num, AST_Var, AST_Attr, AST_Str, AST_Comma, AST_Curly, AST_Paren,
 	AST_Brack, AST_Abs, AST_Minus, AST_Fact, AST_Add, AST_Mul, AST_MulExp, AST_Div, AST_Pow, AST_Log, AST_Sqrt, AST_Func,
@@ -4849,6 +4914,7 @@ for _vp, _vv in _AST_CONSTS:
 AST.Null       = AST ()
 AST.Zero       = AST ('#', '0')
 AST.One        = AST ('#', '1')
+AST.Two        = AST ('#', '2')
 AST.NegOne     = AST ('#', '-1')
 AST.VarNull    = AST ('@', '')
 AST.CommaEmpty = AST (',', ())
@@ -5916,7 +5982,8 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'})):
 				s = f'{{{s}}}'
 
-			paren_after_var = p and (s.startswith ('\\left(') and (p.tail_mul.is_attr_var or p.tail_mul.op in {'@', '-diffp', '-ufunc', '-subs'}))
+			is_exp          = i in ast.exp
+			paren_after_var = p and (s.startswith ('\\left(') and (p.tail_mul.is_var or p.tail_mul.is_attr_var))
 
 			if paren_after_var or (p and (
 					t [-1].endswith ('.') or
@@ -5924,8 +5991,13 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					s.startswith ('\\left[') or
 					_ast_is_neg (n) or
 					n.is_var_null or
-					n.op in {'#', '-mat'} or
-					(s.startswith ('\\left(') and i in ast.exp) or
+ 					n.op in {'#', '-mat'} or
+					(s.startswith ('\\left(') and (
+						is_exp or
+						p.is_ufunc or
+						(p.strip_paren.is_lamb and n.is_paren_isolated) or
+						(p.is_diff_any_ufunc and not p.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw)))) or
+ 					(t [-1] [-1:] not in {'}', ')', ']'} and p.tail_mul.is_sym_unqualified) or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
 					(p.tail_mul.is_var and (p.tail_mul.var == '_' or p.tail_mul.var in _SYM_USER_FUNCS)) or
 					(n.is_div and p.is_div) or
@@ -5933,11 +6005,23 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.is_pow and (n.base.is_num_pos or n.base.strip_paren.is_comma)) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)))):
 
-				if paren_after_var and i not in ast.exp:
+				v = p.tail_mul
+				a = _SYM_USER_VARS.get (v.var, AST.Null)
+
+				if paren_after_var and not (
+						is_exp or
+						(v.is_var and (
+							AST.UFunc.valid_implicit_args (n.strip_paren1.as_ufunc_argskw [0])) or
+							(n.is_diffp and n.diffp.is_paren and AST.UFunc.valid_implicit_args (n.diffp.paren.as_ufunc_argskw [0])) or
+							(a.is_ufunc and a.apply_argskw (n.strip_paren1.as_ufunc_argskw)))):
+
 					t.append (s)
 
 					if not t [-2].startswith ('{'):
 						t [-2] = f'{{{t [-2]}}}'
+
+				elif paren_after_var and not is_exp and n.is_paren_free and a.is_diff_any_ufunc and a.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw):
+					t.append (s)
 
 				else:
 					t.extend ([' \\cdot ', s])
@@ -5959,6 +6043,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 								p.is_var_long or
 								n.is_func_pseudo or
 								(n.strip_afpdpi.is_var_long and t [-1] [-7:] not in {'\\right)', '\\right]'})))))))):
+
 				t.extend ([_TEX_SPACE, s])
 
 			elif p:
@@ -6182,7 +6267,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 		'-not'  : lambda self, ast: f'\\neg\\ {self._ast2tex_wrap (ast.not_, 0, ast.not_.op in {"=", ",", "-slice", "-or", "-and"})}',
 		'-ufunc': _ast2tex_ufunc,
 		'-subs' : _ast2tex_subs,
-		'-sym'  : lambda self, ast: f'\\${self._ast2tex (AST ("@", ast.sym)) if ast.sym else ""}\\left({", ".join (tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)',
+		'-sym'  : lambda self, ast: f'\\${self._ast2tex (AST ("@", ast.sym)) if ast.sym else ""}' + ('' if ast.is_sym_unqualified else f'\\left({", ".join (tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))} \\right)'),
 
 		'-text' : lambda self, ast: ast.tex,
 	}
@@ -6304,7 +6389,8 @@ class ast2nat: # abstract syntax tree -> native text
 			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
 				s = f'{{{s}}}'
 
-			paren_after_var = p and (s.startswith ('(') and (p.tail_mul.is_attr_var or p.tail_mul.op in ('@', '-diffp', '-ufunc', '-subs')))
+			is_exp          = i in ast.exp
+			paren_after_var = p and (s.startswith ('(') and (p.tail_mul.is_var or p.tail_mul.is_attr_var))
 
 			if paren_after_var or (p and (
 					s.startswith ('[') or
@@ -6313,22 +6399,35 @@ class ast2nat: # abstract syntax tree -> native text
 					n.is_num or
 					n.is_var_null or
 					n.op in {'/', '-diff'} or
-					(s.startswith ('(') and i in ast.exp) or
+					(s.startswith ('(') and (
+						is_exp or
+						p.is_ufunc or
+						(p.strip_paren.is_lamb and n.is_paren_isolated) or
+						(p.is_diff_any_ufunc and not p.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw)))) or
 					n.strip_attrdp.is_subs_diff_ufunc or
+ 					(t [-1] [-1:] not in {'}', ')', ']'} and p.tail_mul.is_sym_unqualified) or
 					p.strip_minus.op in {'/', '-lim', '-sum', '-diff', '-intg'} or
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					(n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist) or
 					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
 					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 					s [:1] in {'e', 'E'} and t [-1] [-1].isdigit ())):
 
-				if paren_after_var and i not in ast.exp:
-					t.append (f'{{{s}}}') # t.append (s)
+				v = p.tail_mul
+				a = _SYM_USER_VARS.get (v.var, AST.Null)
 
-					# if not t [-2].startswith ('{'):
-					# 	t [-2] = f'{{{t [-2]}}}'
+				if paren_after_var and not (
+						is_exp or
+						(v.is_var and (
+							AST.UFunc.valid_implicit_args (n.strip_paren1.as_ufunc_argskw [0])) or
+							(n.is_diffp and n.diffp.is_paren and AST.UFunc.valid_implicit_args (n.diffp.paren.as_ufunc_argskw [0])) or
+							(a.is_ufunc and a.apply_argskw (n.strip_paren1.as_ufunc_argskw)))):
+
+					t.append (f'{{{s}}}')
+
+				elif paren_after_var and not is_exp and n.is_paren_free and a.is_diff_any_ufunc and a.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw):
+					t.append (s)
 
 				else:
 					t.extend ([' * ', s])
@@ -6539,7 +6638,7 @@ class ast2nat: # abstract syntax tree -> native text
 		'-not'  : lambda self, ast: f'not {self._ast2nat_wrap (ast.not_, 0, {"=", ",", "-slice", "-piece", "-lamb", "-or", "-and"})}',
 		'-ufunc': _ast2nat_ufunc,
 		'-subs' : _ast2nat_subs,
-		'-sym'  : lambda self, ast: f'${ast.sym}({", ".join (tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
+		'-sym'  : lambda self, ast: f'${ast.sym}' if ast.is_sym_unqualified else f'${ast.sym}({", ".join (tuple (f"{k} = {self._ast2nat_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))})',
 
 		'-text' : lambda self, ast: ast.nat,
 	}
@@ -6637,14 +6736,51 @@ class ast2py: # abstract syntax tree -> Python code text
 		return ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - ')
 
 	def _ast2py_mul (self, ast):
-		return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
+		# return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
+		def py (a):
+			return self._ast2py_paren (a, a.is_cmp_in or a.op in {',', '+'} or (a is not ast.mul [0] and (a.is_div or a.is_log_with_base)))
+
+		mul  = [py (ast.mul [0])]
+		lamb = ast.mul [0]
+
+		for i in range (1, ast.mul.len):
+			a = ast.mul [i]
+
+			if a.is_paren_free and i not in ast.exp:
+				if lamb.is_lamb: # lambda call so merge into one string without '*'
+					mul [-1] += py (a)
+					lamb      = lamb.lamb
+
+					continue
+
+				lamb = AST.Null
+
+				if ast.mul [i - 1].is_var:
+					diff = _SYM_USER_VARS.get (ast.mul [i - 1].var, AST.Null)
+
+					if diff.is_diff_any_ufunc: # possible ics call to derivative of ufunc
+						if diff.diff_any.apply_argskw (a.paren.as_ufunc_argskw):
+							subs = []
+
+							for s, d in zip (diff.diff_any.vars, a.paren.comma if isinstance (a.paren.comma, tuple) else (a.paren,)):
+								if s != d:
+									subs.append ((s, d))
+
+							if subs:
+								mul [-1] = self._ast2py_subs (AST ('-subs', None, tuple (subs)), exprstr = mul [-1])
+
+						continue
+
+			mul.append (py (a))
+
+		return mul [0] if len (mul) == 1 else '*'.join (mul)
 
 	def _ast2py_div (self, ast):
 		nn = _ast_is_neg (ast.numer)
 		n  = self._ast2py_paren (ast.numer) if nn else self._ast2py_curly (ast.numer)
 		d  = self._ast2py_curly (ast.denom)
-		s  = " / " if nn or (ast.numer.strip_minus.op not in {"#", "@"} and not (ast.numer.is_func and ast.numer.func == 'S' and ast.numer.args.len == 1 and ast.numer.args [0].op in {"#", "@"})) or \
-			ast.denom.strip_minus.op not in {"#", "@"} or d.lstrip ("-") [:1] == "(" else "/"
+		s  = " / " if nn or (ast.numer.strip_minus.strip_pseudo.op not in {"#", "@"} and not (ast.numer.is_func and ast.numer.func == 'S' and ast.numer.args.len == 1 and ast.numer.args [0].op in {"#", "@"})) or \
+			ast.denom.strip_minus.strip_pseudo.op not in {"#", "@"} or d.lstrip ("-") [:1] == "(" else "/"
 
 		return f'{n}{s}{d}'
 
@@ -6735,7 +6871,7 @@ class ast2py: # abstract syntax tree -> Python code text
 
 		return sdiff
 
-	def _ast2py_subs (self, ast):
+	def _ast2py_subs (self, ast, exprstr = None):
 		def tupletuple (a):
 			return self._ast2py (AST ('(', (',', (a,))) if a.strip_paren.is_comma else a)
 
@@ -6744,7 +6880,7 @@ class ast2py: # abstract syntax tree -> Python code text
 		else:
 			subs = f'{tupletuple (ast.subs [0] [0])}, {tupletuple (ast.subs [0] [1])}'
 
-		return f'Subs({self._ast2py_paren (ast.expr, ast.expr.is_comma)}, {subs})'
+		return f'Subs({exprstr or self._ast2py_paren (ast.expr, ast.expr.is_comma)}, {subs})'
 
 	_ast2py_funcs = {
 		';'     : lambda self, ast: '; '.join (self._ast2py (a) for a in ast.scolon),
@@ -6824,7 +6960,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		self.parents = [None]
 		self.parent  = self.ast = AST.Null
 
-		clear_cache () # don't want ?F(x) to come back as ?F(xi_1)
+		clear_cache () # don't want sympy object annotations to stick around like ?F(x) coming back as ?F(xi_1)
 
 		astx = sxlat.xlat_funcs2asts (ast, sxlat.XLAT_FUNC2AST_SPT)
 		spt  = self._ast2spt (astx)
@@ -6953,23 +7089,37 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return res
 
 	def _ast2spt_mul (self, ast): # handle dynamic cases of function calls due to usage of implicit multiplication
-		mul = list (self._ast2spt (a) for a in ast.mul)
-		out = mul [:1]
+		mul = [self._ast2spt (ast.mul [0])]
 
 		for i in range (1, ast.mul.len):
-			m = mul [i]
+			a = ast.mul [i]
+			m = self._ast2spt (a)
 
-			if ast.mul [i].is_paren and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
-				o = out [-1]
-
-				if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?
-					out [-1] = o (*m) if isinstance (m, tuple) else o (m)
+			if a.is_paren_free and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
+				if callable (mul [-1]): # isinstance (o, sp.Lambda): # Lambda or other callable being called
+					mul [-1] = mul [-1] (*m) if isinstance (m, tuple) else mul [-1] (m)
 
 					continue
 
-			out.append (mul [i])
+				if ast.mul [i - 1].is_diff_any_ufunc: # possible ics call to derivative of ufunc
+					if ast.mul [i - 1].diff_any.apply_argskw (a.paren.as_ufunc_argskw):
+						src, dst = [], []
 
-		return out [0] if len (out) == 1 else _Mul (*out)
+						if isinstance (mul [-1], sp.Derivative) and isinstance (mul [-1].args [0], sp_AppliedUndef):
+							for s, d in zip (mul [-1].args [0].args, m if isinstance (m, tuple) else (m,)): # ast.mul [i - 1].diff_any.vars,
+								if s != d:
+									src.append (s)
+									dst.append (d)
+
+					if src:
+						mul [-1] = spt = sp.Subs (mul [-1], tuple (src), tuple (dst))
+						spt.doit = lambda self = spt, *args, **kw: self # disable doit because loses information
+
+					continue
+
+			mul.append (m)
+
+		return mul [0] if len (mul) == 1 else _Mul (*mul)
 
 	def _ast2spt_func (self, ast):
 		if ast.func == AST.Func.NOREMAP: # special reference meta-function
@@ -7154,21 +7304,6 @@ class spt2ast:
 
 		return spt
 
-	# def _spt2ast_NoEval (self, spt):
-	# 	def dummys2vars (ast): # convert our own dummy variables to normal
-	# 		if not isinstance (ast, AST):
-	# 			return ast
-
-	# 		if ast.is_var:
-	# 			if ast.var.startswith ('_'):
-	# 				return AST ('@', ast.var.lstrip ('_'))
-
-	# 			return ast
-
-	# 		return AST (*(dummys2vars (a) for a in ast))
-
-	# 	return dummys2vars (spt.ast)
-
 	def _spt2ast_num (self, spt):
 		s = str (spt)
 
@@ -7188,17 +7323,13 @@ class spt2ast:
 				f'{num.grp [0]}{num.grp [1]}e{e}')
 
 	def _spt2ast_Symbol (self, spt):
-		# name = spt.name.lstrip ('_') # convert our own dummy variables to normal
+		if isinstance (spt, sp.Dummy):
+			spt = sp.Symbol (spt.name, **spt._assumptions.generator)
 
-		# if name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)):
-		# 	return AST ('@', name)
-		# else:
-		# 	return AST ('-sym', name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ())))
-
-		if spt.name and (spt == sp.Symbol (spt.name) or isinstance (spt, sp.Dummy)):
+		if spt.name and spt == sp.Symbol (spt.name):
 			return AST ('@', spt.name)
 		else:
-			return AST ('-sym', spt.name, tuple ((k, self._spt2ast (v)) for k, v in sorted (spt._assumptions._generator.items ())))
+			return AST ('-sym', spt.name, tuple (sorted ((k, self._spt2ast (v)) for k, v in spt._assumptions.generator.items ())))
 
 	def _spt2ast_Union (self, spt): # convert union of complements to symmetric difference if present
 		if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
@@ -8092,7 +8223,7 @@ def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', 
 		ast = lhs.apply_argskw (commas.as_ufunc_argskw)
 
 		if ast:
-			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw, is_ufunc_py = lhs.is_ufunc_py))
+			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw))#, is_ufunc_py = lhs.is_ufunc_py))
 
 	return Reduce
 
@@ -8238,7 +8369,7 @@ def _expr_curly (ast, forceset = False):
 			elif forceset:
 				return AST ('-set', e)
 			else:
-				return AST ('{', ast)
+				return AST ('{', ast if not ast.is_paren else ('(', ast.paren, True))
 
 		kvs.append ((kv.start, kv.stop))
 
@@ -8279,110 +8410,111 @@ class Parser (LALR1):
 		self.set_tokens (self.TOKENS)
 
 	_PARSER_TABLES = \
-			b'eJztnXmv3DaW6L/MA9oGqgBJpEjp/ucsPROMs0yWnmkYQeAk7kHwsiFO8nowmO/+zkbqUEWVpCpd31oIy1cSRXE7h+cnUoeqZ6/+8sX7n7789JO/7P7yf978/D3swun7X33+8u8v4eDlN5+9+PzDT/AwHrz85r3PX7z/b3gYD77661efvP/Z38MR7D/59Ev4' \
-			b'+8VX7+Hfly+++Fc5/PvHFA328PdvLz6nBD/gyBiND9/78F++ef/FFx9+Iccfvwih7w2HfxsOP+NDSiEW6q9wILta9g3sP/7ok68o3Y8++fTjsK/DQUMFooRiK4zOvsRCf/jxZ1/+/YsPMdePPvnyX7DGX2FqLz/6mOpNf//9c7z+Epv05acYRxoHmpBqzn/f' \
-			b'//Tjj1+EVseAz7nVPw+tzmFUr89Dq0vYC94PJfw8KS+V9N/hz4uPP4O/H7z3kq5h6CcfSKvi0XvD4d+GQ2nVD19+8SEW5fOPPsb9h//5PjbDiy+pHTDJL7kaUNQvwx7b84OP/vbRB3jH+yJfjvfZS2p+aLsgif/84sP3KcIHH/31r6hDn3zEakiFfvHJB9jI' \
-			b'eOFTvP/jF5998eWnUsSgJBTwH6xjuKtZ+SDL9/8NDt/+8e3bP1//9vZPdfwWjr97/dub37/55bdvvv/2x7e/v/5NXYbDN//8Fa788OdP4fjnN//1zevf/iucvv3j1ze/DSffwuFPr3//5rtffpSj3375f8MR5/f2zdu338WjX+NRSOb1t/Hwh+//GUN//z1m' \
-			b'9I/X3/0ejn+lDDj4j5+/G8r8j3/8mpx888N3b4eSxgr9+MNQtyH09ze/xeOf/vjxmx9+iol998dvP/63appw+O0PP/+imymW6rfX3+mk4CCc/vkmXnn9/fcx0utYuX++fTPUlFop1gDrpBo+Xvjj5x9++Tle+O9Yoh9+/j0WCYSLEmd5cdpD/eCibsg/X8dm' \
-			b'//mXWJY/dJTXP3+fhOuW/va7X3766XU8/SUm9i00y/99M4gxjffrD2++exNPQEV/Hlrn17e//xKzjmoTa/LLj0P9KdHk5K2685sf/3z949CifOfXu1fP9s7sXPt8xwcOD9oG/5hd657LKZzRkcVou7bd7eVSCOAzE+6DG2wIwkOKtfcUUu+eWQiFaPXzGGAx' \
-			b'wNoQsO/xwNT8x0OAMc91UOMPgnyjg/AQjmrHfzzEr7vnEoSHcOThf7eDOuz5iscD2GNCuLc9/rE7BzFqLuwQFE73bUWpQks4qkT/PJx7qmXFRYKCNB0E0P8hqNenppIDDMNEoCS1jUckJUjkWQ2JgFQ6LhMlS3c2Nf/xkELDMoEzPMRmJSGgLJ+r03Cswhve' \
-			b'7UkXLP23bbhs8QALKeFc9N3eSiCfQxlJBru2GQKoddxw3lAEMwoYYuwtVcq2/MdxUlgUy0WzchpkA2WzXDjPfxwk4viiQWGQVjloJFQfueDqcMF2IlsuksUSsB5CRg1qKApGiodBrT5tnBxgGN4O0jUgXcfyD6ftQZBoSRJsD09HN9r64DQTo+3SoObgNL1p' \
-			b'b70q2dAzpBCjgHoc0KgAqBGLpLbhHHo2qSSoiWm5cJi9ETUOwYdBw+neknZCTs9AonBe97sOa7XD0hvR0cOraNzAjMxHAs1II+0t2QLUDYhXhX4AZa+5t1bY8WsUbbtrfej/GBwDY0hTcUg3hNQcMtzVNBQiQoGQvaE6G8N/XB+LF4J8pYPwEI96/gPN9vz5' \
-			b'cIhHLfeAcAu2MMndYaEH1cNT6inxFARK1qjjeMGiQmM0JFpQCdb+2vAfD5nW3EdqQ4fUjthl5YDqVtdoHxgCPpgADJSgeN7SuWRbSR6o5Dvsx5nwEAIBVEAvWikNDufQ0SkO/YeIbGbQbJLOef7j4Z6G78EmacgwgAY/67DBRcW7XUft00BnqB0zbgfFhiiu' \
-			b'CdWii555l7sI9pxKhrrfiX623A5OeocopwnygMBnro2ColM3FKvfORIv2LBnJAXpTnhqKf2DoHi6Z7uGFqhpwpGt5YghiwesF9BYXbwbz/ok+RASz/YNw7OV03AFjToXueU/HkIaVoOGDzFavxMmIh17OWLVwgMWYCURpBtgF2yYVmABGqMZ3VCbYaSe/3gz' \
-			b'GB82S9ienv+oxyAvtGwd/6EnIC6uHOJRGy4+l1M4Cxe4h0GJupY0wgaNcOFpxNGzVhtux4cSeW5rwwV8xJIQOIKnu1cVtAJoGbQZGBpLIActArMGyoPWDxSs34H8oOP2aMSgdXo4xFZE5WzhP4Q3mAxqMhg6EFMNHR7wbjAW/gerCenDNbDxNWo8ROl2NWRU' \
-			b'Q/+qLR5DKhX8rzEGnINOgtkxeA/k0eIeYkJxaihPDQWqoUQ1POPU8ARZg/rXYAhryLTGXDEv6IVg64C3NbRQDZa7h83u+nbXu13vdz2mtcNaQAYQH6xXDTaix4LAYVXDA8UOH3kB+BCjgohVi+YfHqdA1pAdisqTPerAqiOisW4V5FZhwrC3uIcboVXBDHR2' \
-			b'B8LrsI3qXed3HZiDftdjuSEelBSqgaYeKIlP2tAp8QEFzDmYb0/Pr6BuYGdA1z09sYIB88ScmrQZbqrQzMEJHINYuxrBhU0K5WrwYR4OQf4kchD/M5Q7BqDsnsNlLCucWg7FGmAsrAVeBX3AYBTCc6I7Xn2FDwJ0TmkXnbkxnXnWs/BrljJKjaTe16JKrCMo' \
-			b'XTytrexbuU3uI3HTXu6TGzGGY/0htSom6LbVCeXti6DvQ9ClR9+BoHEihx4LmmDxDVt4LwZenjF6U7Th9rUBxO2KnO9BziQB7Oct9X8lsK9pApqNgXUHFzGURxI1P/NRm6e3t61ECE+fFR0EuQZ5isxERkE6WhZKBqHdua1D4+rGfPcNqXR/rO8jPR9ruGj2' \
-			b'cZ1OdZl1OKO7oq9aSbVyjtVypI6ggox71gfThgf7thMhEhlKQ2/S0M/IIlC/k75hnJzLUIxKSQFeOg+P2MedUMbtNQ/cM53QyqwA9TEau7mQgw0pV8XY34Wx54e8IuibF3SR8x3I+VkdR2uNPIq5MB9nyNjjyzYo2K7duSLv65e3CcB2gnLZyWxteGTr6bx2' \
-			b'+KgCzeGxZbCF8Nka27MtunD1ugBSbouU70DKrkj5DqTsi5RvXcrP+jCbxgP7XgbuWF+eaamY22WC61EnuFyZ7LiH3oYV5P4l8180NFqlMFocNenp1+SAx8mZbZILj/QVz5W3Lrxv4/frp6TJ03mv0BH91CQamZVsZVxZlcnfLY2QLc4Td2CDQM7M+LYg5w7E' \
-			b'/awV4tgwLSPzMlaQ0XF4x8Edj9/RSKO1xRduKBB0zyxvPt+5TX7Wyeu2Wh4XOiZfx28/u14cJCuZeDPh1ZnIuCFAPuOHy2dy1ojA+dW6kjC1DRoIfgX3TF6U07u/Xfr+rpWcHJfPcbEcF8vzuLGCaxWqRJfkUkS/EMeOzbRn4fmuNOoGjerZGnruCp67gu+P' \
-			b'tW0whqWNl7Yxmw/P5qOriuKeDwIvIBDjLcPIRqAdXriVJ7o7eKJ7RWtsmudlVdU9yNqSqHG9VFNWQN2gfPG5mxe+FfnennxxAWMjS9xgXwR5rYKkRYmlh96iYGvum7SMFPtoEekNiJQel0QAZWHHhY5qeYE29b2ycPceeiYuxA/i5n0nj0d0XnrqpfZUXGhL' \
-			b'goLkUXDFmfcOOmsjtrmtpLPKHKR10mkt99rRyi7p4lV4qpKVZKRApU9fUJ/GArEgW35cKkK5AKGYIBSeOhj3rkqucucsonpSUYlhNLUYSJGN4+5UZPLuZWIMy4Bfk8mLSPaSEEdnfivpgnszxS/ieWcDPlva+522d1va+x2an94GBHSy9LWXfTQ44itF4yT6' \
-			b'4AH7buPKORpZ8UN372W8xQ8BRWiP2kmqqrTy439bhN9kY2KNLH1ozl+r8Kp83PE+ZiPkUz+4xIXUpyVDCe2NSl766rYWsSH8nLZIJ8z/NOy4IiCzPB1Ec0lfs9t5k7gfU6AtA6enEnnXymA2+/WGmpdtnZpFVlPqsJ6LtCD1ES1iW/rswp/o2lYw/DVuWm7Q' \
-			b'8HKDhpcb0BSu5XxNPKOFBg0vNKDOLqeNOZzB6mSShL/cWah949Ru+aGvFf2QNwdOXveV/r5+VQj3xfIl1HvoPq9wLVXxG7xqCZKVK8buxIkZX9ru5LbrzlgEiqsPCdW+Kqg+dR1cV2z3NdtuXCzKfaApfeDUPmBK053adGXJyJWbD3kZ6NvSB06dlKxKH7jq' \
-			b'PlCLixRcM7yMFXc4UfGcfqMWdyBeE37PzchCHPM8rOMw+vd+UN4mOpCzQ3k4N+JQLjfgDpTAiNeyeS5v59mxVTKk+agyi3LrSmg9C9y0rB3ycxbs+WqSn58wvehGI5omHy8nbz8j3n6sahLRSRK5Fyfoj8Y5UzegyZzy2fNbUCp0JKQp7bJm8DbEWQsj+vEH' \
-			b'cO1EeJsLR8aY4AHWiOcXOWrbsizmVjTF2dLpb0GU6HNp2OfSsM+l9GgjPdqIvxruBfOtPDvyD5AV96NHGfa1wag25QO/G67hZP22smM1byvW547wV1yvnmSWwx4ZQdTBoc4EBy1xouhYjh2PeLuexszkl2P4PY/hL3OSeB3HolVjX9MnOtnGyRLPih19PJs6' \
-			b'z5E9J+E5Qc/64tlkdmIcq2HobstEzfWikCdDbJxK+ZpnTexzeaL9ejfMvaBey0DY0qCW7Eh47A3DZhuWN7Byh7WmnZGbs26GUHXLOm1Zp215zroJ5TIk9jLTduuCdtxzefKsvPI4YZkMqHsrX1vAPWQTTm34WdwWP22EWt6UHnXzPQpbqAj8jgQOubb8DNTy' \
-			b'MxBKf9fIsz2GOb5Uy1fMsVkdnddyXuM5peTKssbHHrx11PjQeo6ed9m9LixsMSQBvcqJxOX5o1c1f6UO0sRvpuMH0/E736UHX3UPpv7nUSU87zre9SJ1KIYvvfKRn6J8eDsrP/FQy48SUCejfspf1Kf+2xVxPLaR7EsjP/7niAw2Mum+DbrfiM4jZwpXrpsr' \
-			b'kGPPIOlFqjxPV+1eVfiEuDM7S94lUDgcCUQN54bqRAM4dW4K9GkhUXNjs9DiaEIGGtw+XDt634Wayk3rQh117ahqUC8ovbQbtRNrHspRCxGLiAVMemDPComLFFC9qbdVg7Jgr6P36RBXf4ISn4fDwxS2K65uwN81w5/LQqWHvGv8ciX+SDn+hDX+wDGUocHP' \
-			b'f4DGNLhkHYTf4JcqcGa8wmvQZujEhh/3wq8K4wd10G0MHdCwMRuUGIRjq+LsOrYr6hgoWYPfB8Nvg6EtweWyOIOPs/e4zAI/84ZfeINmbixKBPLEtfL4+URcJA/K2OCqyRa7H1yDxm/wkwctLtHAOHAvLrfFZ0j0T8c+DnrV4IIxXHiAS+nR3w2/J4MvNqE+' \
-			b'Bupi6gpUZg9ihUbY19Cz91CDPbTyHkqxt3hc7fY9BFd4HQ7hP5qLPYpoj3LZG/xPwXALmoQ9KNce+/oeZbVHO7DHLrTHvrRHee2h3nu0BHs0BXvs/3uU5x4Fuq8pNWi6vcEzUK59jylidIcxQTp76Md7h5ehI++haffQxHtMjAqApcfeukeN2Xd4J4hs32NJ' \
-			b'MFEsHObn8QoIa4/pQj/Yg5Zic+zxXhDK3mAFWqoARrVYjqrntkDjtkc7tkcjtkezwvXEEjcUE046bAeDtWzwEpYULoMy7rGuLYZhyqBde9DcPUhw7zEhLA0mRrfChR7rRWLAvKkgNV6ixoYDEh6VERsOM8W0a6oAheP9DhPEtqH2wTiQMOxR/KAbe9CNfY93' \
-			b'VJgRFhbvQEGh1FAkmDpKFdukI2FR/SAGVQ+ueixVRXXCM4gHGrgHrdx7bHGsI8qEWgzSgWudkaLXpC5YDhQJtS5JDIreYapY9A5v6L9Gm4eWrti5YudW2Lli5IqRuyoj16CRmzJu/LTrlZVTT4yLbB1NGw+zyNro+Wm7d/gMO2v9Rk/r9FhuFhrCboUxrFOD' \
-			b'iOP6A6O4xhj66zCI+Pk0/BZWNIw2YxwhHn5w5aiR9CghP2MOPf1LjCIFbGAYJelp8+iXGEhK42wj6WNF+1C/xUbSrzKTPjGUPmMqV1pIf3U2kqqBRRBj6TPmkoRw3GTu/sc9INP9A1K9h53p/hcXGZ1uR2m+Q08WZAxq+uJtbFbTaQWeFBAr65ShpRG/nqlY' \
-			b'NXHAMwRT82dTljjx65PpDnpJ3yvjfDgnlkwVyYwF0py+DCZTIPSiQ09MJfNlMn2kp33CHJpM38TPmS8y9PK6BH9uGn8dGX/FNxp+iIc/bE4AgHg4bYO/nY0wwF/NxmmbraGAv2WCunQAB0gDNWoWEnYCFJXAojkTGPUADZxfxIUJER5mHiD4MTD8BBiBpFUw' \
-			b'ge4B7WTAIDNYOgUXtDI01zfDF1Q22hLESCgZ3E6mIxvFGrqbJh0nYTPclEBnyC9yhzIX9MTLVHDGUIgfUERAcK3sBUl0gpOZuG96lcohm2qFJ1wbgoiq6akZuxKWuR2VJIesJILpk3NVy8AxaQvFMr7cSWN0IUY1lRLOpVqJLryrpeIBe1QzCaulFehYk5Dy' \
-			b'6Vg3FAoP82MuhibQuuKDINfCkgs/T8uoIwkzg17MkVPijdhJjUNDoe5shnIHYIyGzhpwqppQE1XCcHlSH2onCQlddd8wXNxAWmZsYx7owc/UD6QCrn/AR7AOgqFnMoHRbj/gww7YtAd8hADbAufuf+mz/JdP5iVDIJcbBW3H4WZjFo85PGZw4G9h76OydxVz' \
-			b'V/PWMW/dHG9R2xzFS4DrQihqmRxF2jqhrZumrdySsnZINLLWKdY6FSOwVuIfHfYN8TJsdZmhH0UdZZhFqo5g+uRcFQ4VoPKC1fEIkWN0Um3Z22oqrcpKDAGqUzB1MoxsRAQJRB0z1KUMPUheGCp1rnUDBAGtZujCWbko+5ShIu9ZhnK8MUPdhgx1u4OhqGq6' \
-			b'hJ0c5oJY5ebATaXnLMKNudkWbr7r8Wth5h0w0zMz5+ZAUZFoS5EZQ1HJ5Cgi0wsy/TQy5ZYUmUN4RKaaGY2XqcyCTIl/HJnxrgwyfQ6ZnpGpM8wiU0cwfXKuKhNHoX6MSy+49IJLL7jMp1NZiSG49AqXXuHSj3HpGZfp7Oth8oJLqa8WvQ/CWY3LhRO0Ue4p' \
-			b'LkXWs7jkeGNc+g1x6TO4HJouwSWHuSBWuTngUuk4i3BjXLozX6RNgvI2EHkMjwWNBY2IRnKbwAaaQWPcEjRK0OE7Qgqlxp/E4giIQwYRiJSbADEpggAxxD8KxOGuQyBiqAYiqm14e5hkmANi2ih9cq4qk3+9yJc6qa+8ZJxIobK8FxTicUAhVUBQyEllXkQ2' \
-			b'qcvGKH2qs+tjTZNqB7GsRSGXdx6FUeIJCoOU51Ao8UYopDbZCIWsxikKlWQ0CiXMBZnKzYJCrd0swhEKxwhsHujpLDCwqx7ooSUDQV8gWCBYIHgWBBuGYDMHwUa2FIIclIFgIxBc7CkzZDBAsFEQbFSMAEGJfxyC8a4MBJsUghSrlUGhU7dmIahLZPrkXFVm' \
-			b'AoLiZsP1DRDMp1BZ3gcINgqCjYJgMwXBJoXgYRYulJ4YONQ6SGU1A5uFDAwCTxkoQp5lIMcbM7DZkIFNhoGDYBIGSksGkcrNgYFKuVmCmzGwKwwsDCwMPIuB7MfTzPnxYKPQljKQgzIMFAeeZtqBZ8zAmMHAQOW4Ey83g+NOiH+cgfGuDAOP+ZEmOWYhqCOY' \
-			b'PjlXtZmAoDjnNK2GYD6FyvI+QLBVEGwVBKdcUpvUEecwfZ4VDVXVwvZBMKsxuNARJ8o8xaDIeRaDHG+MwQ0dcRrliBMxODRdgkEOc0GocnPAoNJvluFxDAr+MtTrC/UK9Qr1zqIee9M0c9402CC0pdTjoAz1xJGmmXakGVMvZjBQT7nQxMvN4EIT4h+nXoyX' \
-			b'oV7OhSZST+eYpZ6OYPrkXNVmgnriPNM4Tb18CpXlfaCe8pxplOdMM/acidRLXWcO0xfqSVW1sH0QzGrqLXSdiTJPqSdynqUexxtTb0PXmSbjOqOaLqEeh7kgVLk5UE/pN8vwVOrV1QVh78wFdY8HvKXr7e4ZYlNr9jaA1xpoHQDrAFI9Q6qfg1QvWwopDspA' \
-			b'6oSlfEMWA6Z6halexQiY6ucYhf1d7lmzvo+VcPifp5QukemTc1WZ5YsAKXp+FSD5o4wXQUQK9SOPlE4yj8UfnFLoEnuldMOpjYdrYdQvhFGQbAojkeYcjKZXEW7BoX7AT2y1EX+4nGEpIddErSbEgBFzAmQUXOoLgssW6wgveHx16ysH8T2vLeOu7LjL8Gyj' \
-			b'mZttxM5DW4I0CTpEmpHZRrN4tnHIIALNqNnGeNkMs40hfmAanjgOC2QzDDfcNb1K4RBv5hjhktxzdEsimD45VzXL083IzKPRM48TKVQ2Hgr75DQQ0PD8oxEOxjbNkNCks5CHeTEGQ7W1EvhYjJUINNOzkGGpbILCWP4EhUEP5lAY2iaFodlwNtJkZiNVE2ou' \
-			b'SpgLgpabBY1a/w0X8dRx2bmfNSnoLOgsU5XTyOSpSjM3VYk9hrYUmRyUQaZMVZrFU5VDBgMy1VRlvGyGqcoQPyLTMTKdQqZjZDpGZrwng8xj05ZJ7llk6gimT85VzSaQKdOWRk9bTqRQ2XgYkMmnEZk8eUkxYpUnkJlOYR7mJciUamsl8LEYa5G5cAozljtF' \
-			b'pch/FpXSJiNUbjiFaTJTmKrpElRymAsClpsDKpXeGy7iqag848s15c1deXNXcAg49IxDP4dDL1uKQw7K4NALDv1iHMYMBhx6hUOvYgQcSvyjs6LDXRkE+mMI1DlmEagjmD45V7WZQKAXBHqNwHwKleV94J9X8PPDpCknlcOeT7F3kL5gT6qqhe2DYFZjzy/E' \
-			b'XpB5ij2R8yz2ON4Ye35D7PkM9oamS7DHYS4IVW4O2FP6zTI8GXtnfBamYK9gr2APsNcx9ro57HWypdjjoAz2OsFetxh7MYMBe53CXqdiBOxJ/OPYi3dlsNcdw57OMYs9HcH0ybmqzQT2OsGefiE4kUJleR+w1ynsdQp7U68KqfIKewfpC/akqlrYPghmNfa6' \
-			b'hdgLTZBiT+Q8iz2ON8ZetyH2QgU19oamS7DHYS7USG4O2FP6zTI8GXtnfNXFzZHv6b5QesEgPGd6FOXhCiCvFpD07f8a+8NxQNqwJYCUoABIPhZG0kld8T7PSLqUYHLIJmKS8hRMWl0QwWSIHzBpmZS0E1hSElySplcpHCITQyeRmeSeQ2YSwfTJuapZHpl8' \
-			b'SRoxIHMihcrGQ6GmnAZwUj24OnWsMuEzHI4gSs0xQPQwR4ZoqHzSErEwKyHK5Z+HaCx9AtGgBXMQDS2TQpQaaCOIsqanEFVNpyEqYS6IWW4WiGrtN1zEUyFavvVSxo4FjeehsWE0NnNobGRL0chBh2NHCkWrsdiLdMhggGKjoNioGAGKEv/o2HG4KwPC5hgI' \
-			b'dY5ZEOoIpk/OVW0mQCiepFzhAMJ8CpXlfaBgoxCo/Ew5qczYkSqvsHeQvmBPqqqF7YNgVmOvWYi9IPMUeyLnWexxvDH2mg2x12SwNzRdgj0Oc0GocnPAntJvluHJ2CtfdynYK9g7D3v8i3C4O449I1uKPQ7KYM8I9sxi7A2pRewZhT21RexJ/OPYi3dlsGeO' \
-			b'YU/nmMWejmD65FzVZgJ7RrBnNPbyKVSW9wF7am0F1SBgz0xhz6TYO0hfsCdV1cL2QTCrsWcWYi/IPMWeyHkWe9IaI+yZDbFnMtgbip1gj8NcEKrcHLCn6sr7k7FXPuhSsFewdx722EHGzjnIWC9bij0OymBPHGTsYgeZIYMBe8pBJl62g4NMiH8ce/GuDPaO' \
-			b'OcgkOWaxpyOYPjlXtZnAnjjIWO0gM5FCZXkfsKccZKxykLFTDjI2dZA5TF+wJ1XVwvZBMKuxt9BBJso8xZ7IeRZ7HG+MvQ0dZGzGQUY1XYI9DnNBqHJzwJ7Sb5bhydgrX3Qp2CvYOwt7aJShwLg7ij3UeNrS33qoqC9kuEehNd+xjHtDDpF7lJ1wL16mojL3' \
-			b'Qvyj3BvuOuQerbme4l6SY457SQTTJ+eqNnnu8aVOKizcm0ihsrwX7uFx4B7VQLjHSWW4R5UfuHeYPnMvVFVL2wfBrOUeF3iee1HmCfeCnOe4J/FG3NtyKT0rcso91XSaexLmglBDzZh7Wr9Zhqdyr7mkT7oU7hXuXSP32O+lnfN7acOWcE+CMtgTp5d22ull' \
-			b'jL2YwYA95fHS6iIE7En849iLd2Wwd8zLJckxi72kVfrkXNVmAnvi5dJqL5eJFCrL+4A95d/S1gp79RT2Up+Ww/QFe1LVpN5BMKuxt9CnJco8xZ7IeRZ7HG+MvQ19WtqMT4tqugR7HOaCUOXmgD2l3yzDk7F3qR+bKdgr2LsW7LFPSzvn04K6TluKPQ7KYE98' \
-			b'WtrFPi1DBgP2lE9LvNwOPi0h/nHsxbsy2Dvm05LkmMWejmD65FzVZgJ74tPSap+WiRQqy/uAPeXT0iqflnbKp6VNfVoO0xfsSVW1sH0QzGrsLfRpiTJPsSdynsUexxtjb0Ofljbj06KaLsEeh7kgVLk5YE/pN8vwZOxd6odiCvYK9q4Fe+zT0s75tKCi05Zi' \
-			b'j4My2BOflnaxT8uQwYA95dPSqi1iT+Ifx168K4O9Yz4tSY5Z7OkIpt+N7oltk8ee+LS02qdlIoXK8j5gT/m0tMqnpZ3yaWlTn5bD9AV7UlUtbB8Esxp7C31aosxT7ImcZ7EnrTHC3oY+LW3Gp0U1XYI9DnNBqHJzwJ6qK+9Pxl756EvBXsHeedhjn5Z2zqcF' \
-			b'lZu2FHsclMGe+LS0i31ahgwG7Cmflni5HXxaQvzj2It3ZbB3zKclyTGLPR3B9Mm5qs0E9sSnpdU+LRMpVJb3AXvKp6VVPi3tlE9Lm/q0HKYv2JOqamH7IJjV2Fvo0xJlnmJP5DyLPY43xt6GPi1txqdFNV2CPQ5zQahyc8Ce0m+W4cnYKx99eVLslU+A3g7+' \
-			b'HPu2uDnfFvymA20J/iToEH9OXFvcYteWIYOIP6dcW+JlN7i2hPhH8TfcdYg/d8y1Jckxh78kgumTc1WbPP6cuLY47doykUJleS/4c8q1xbFrC12Olc1D0KUOLoe5MARDhbXIfRDPWgi6hQ4usdwJBIO05yAo8UYQdBs6uLiMg4tqOg1BCXNBtKFmDEGt5SzJ' \
-			b'kyF4xidgCgQLBAsEFQT5jZ+be+OHnzSiLYUgB2UgKG/83OI3fkMGAwTVG7942Q1v/EL84xCMd2UgeOyNX5JjFoI6gumTc1WbCQjKGz+n3/hNpFBZ3gcIqjd+jt/40eVY2QkIpu/9DnMRCEqFtch9EM9qCC587xfLnUJQpD0LQY43huCG7/1c5r2faroEghzm' \
-			b'gmjl5gBBpeUsyZMhWD7hUiBYILgNBPn9n5t7/4eKTVsKQQ7KQFDe/7nF7/+GDAYIqvd/eosQlPjHIRjvykDw2Pu/JMcsBHUE0+9GpYxtk4egvP9z+v3fRAqV5X2AoHr/5/j9H12OlZ2AYPoW8DAXgaBUWIvcB/GshuDCt4Cx3CkERdqzEJQ2GUFww7eALvMW' \
-			b'UDVdAkEOc0G0cnOAoKor70+GYPmgS3kLWOB3AD84B71pQHFWvhF0/EbQzb0RdLKlbwQ5KPNG0DEI9yt+G3fIYngn6AiFqKrxKhVVXglK9Nlfx5WImXeC7ggKSWPV//x7QV0u0yfnqkYT7wUd45ArHd4L5lOoLO8Fh6iOw4tBR22055/Q7SdQSE0woBAjcuKx' \
-			b'gsNP6LIIqUurUxsP174gdEeJSIU3gz6N3g+K0OeASE2S+RXdoXU2eEPoUiQOqskNmLwi5HI7km9DRYZcmY5cTXlZqBTfsEqmdLRARXwaFCxCT3rAxx+wbA/0LAHm5wGhDybjgX7iV/HyUr8EM/ps9nVTM/fB7DJ8vC6Crho+tjx8bOeGj61s6fCRgzLDx5ap' \
-			b'Sftlw8eYwTB8bNXwsVUxwvBR4gdoEjM57GAQGe/NDCLbY4NInW92EKkjmD45V3WaGES2TE2udhhE5lOobDwM48hWjSNbHkeKT01sytw4sk3HkQcZyThS6qxl72MZ1o4j26PUHMaRodwJNoPYZ8eRHG88jmw3HEe2u8Nx5NB0yThSNDFIV24O40il7izJk8eR' \
-			b'l/qpmMLFwsXr5SL7l7o5/1L8fRTaUi5yUIaL4l/qFvuXDhkMXFT+pfGyG/xLQ/zIRc9c9BkuxnszXDzmZZrkm+WijmD65FzVaYKL4mXqtJfpRAqVjYeBi8rR1LGjKV2O9Z3gYupuepiRcFHqrGXvYxnWcnGhu2ksd8pFEfssFznemIsbupu6jLuparqEixzm' \
-			b'gnTl5sBFpe4syVO5aC71UzKFi4WL18vFjrnYzXGxky3lIgdluNgJF7vFXIwZDFzsFBc7FSNwUeJHLnbMxS7DxXhvhovdMS7qfLNc1BFMn5yrOk1wsRMudpqL+RQqGw8DFzvFxY652AkXQ5o5LnYpFw8yEi5KnbXsfSzDWi52C7kYyp1yUcQ+y0WON+ZityEX' \
-			b'QwU1F4emS7jIYbFGcnPgolJ3luTJXLzUb82Unx8shLwBQnpemuHnlmagRtOWEFKCDgnpZWmGX7w0Y8ggEtKrpRnxsh+WZoT4gZB4Ah2RdkJISoKjNb1K4ZCT/tgyjST3HCeTCKZPzlXN8pz0skzD62UaEylUNh4KJ+U0oNLzYg0vizVim2ZQ6dPFGod5MSpD' \
-			b'tbUS+FiMlaj0CxdrxHInqAzyn0NlaJMUlX7DxRo+s1hDNZ1GpYS5IOBQM0al1nvDRTwVlZf6fZqCyoLKW0Blzais51AZthSVHJRBZS2orBejMmYwoLJWqNRFCKiU+BGV7LRDu4DKmlFZMypjChlU1sdQqXPPojJpoT45VzWbQGUtqKw1KvMpVDYeBlTyaURl' \
-			b'zaisBZWhTXOorFNUHuQlqJRqJ20Qi7EWlfVCVIZyp6gU+c+iUtpkhMp6Q1TWGVQOTZegUjQzCFhuDqhUem+4iKei8lK/aVNQWVB5C6i0jEo7h0orW4pKDsqg0goq7WJUxgwGVFqFSh0joFLiR1RaRqVVqLSMSsuojClkUGmPoVLnnkWljmD65FzVbAKVVlBp' \
-			b'NSrzKVTDYUAln0ZUWkal+LrGNs2h0qaoPMhLUCnV1kqgKrsSlXYhKkO5U1SK/GdRKW0yQqXdEJU2g8qh6RJUcpgLApabAyqV3hsu4qmovNTv4BRUFlTeAirZpdXPubSiCtOWopKDMqgUl1a/2KV1yGBApXJpjZf94NIa4kdUskurVy6tnt9S4q7pVQoZVB5z' \
-			b'bE1yz6JSRzB9cq5qNoFKcWz12rF1IoXKxsOASj6NqGTfVi++rbFNc6hMfVsP8xJUSrW1EvhYjLWoXOjbGsudolLkP4tKaZMRKjf0bfUZ31bVdAkqRSWDgOXmgEql94aLeCoqb+5rOU+PxDlvnSXoE+xF3AXUCeKuEm9XgTZe4+jn1jii7tGWoo2DMmiTNY60' \
-			b'X4a2mMGANqfQ5lSMgDaJf3SJ43BXBmfHVjjmEaaLYfrkXNVgAmGyotHrFY0TKVSW94FfTsHLyZdOs7hK1zHG5IRSvG7R83pFv36toj++VnEgUxBlSiYR3yyZON6YTE7IdCaURqsUCUqSoRtTicNdkJncHaikVJZFtIZKRKNL/WxNGbiVgdstDNzYt9TP+ZZC' \
-			b'BN5SunFQhm7iW+oX+5YOGQx0U76l8bIffEtD/DhwY99Sr3xLKQkuRtOrFDKkO+ZhmuSepZ6OYPrkXNVsgnriYeq1h+lECpWNhwF8fBrZx06mXpxMY5vmSJg6mR7mJUiUamsl8LEYa/G40Mk0ljvFo8h/Fo/SJiM8buhk6jNOpqrpEkRymAs1kpsDIpXeGy7i' \
-			b'qQO3m/u4zdMjsQzcrnjg1jPa+jm09bKlaOOgDNp6QVu/GG0xgwFtvUJbr2IEtEn84wO3eFcGZ/3qgZtO0PTJuarBBMJ6QVivEZZPobK8D/zqFbz6YwO3PsVVSE4o1TOieoZTv55M/UIyBVGmZBLxzZKJ443J1G8zcOszUJIMDwZuHO6CzOTuQCWlsiyi1QO3' \
-			b'S/10TKFRodET0Khjv8tuzu+yC1tCIwk6pFEnfpfdYr/LIYNIo075XXa6CEKjEP8ojYa7DmnUHfO1zNIoKYbpk3NVgzyNOvGv7LR/5UQKleW90KhTnpVdfYRGXepLGZNjGnXsP9mx52S33m2yW+g2GUWZ0CiIb45GEm9Eo67ehEZdxmMyZDimkYS7IDO5W2ik' \
-			b'VZZFtJpGl/rBlvLhzzJVeC0EYx+Pbs7HA1WTtpRgHJQhmPh4dIt9PIYMBoIpH494uRt8PEL84wSLd2UIdsyvI8kxSzMdwfTJuarNBM3Er6PTfh0TKVSW94FmyqOja3fx5/+mqZb6chymL3iTqmph+yCY1ahb6MsRZZ6iTuQ8izqON0bdhr4cXcaXQzVdgjsO' \
-			b'c0GocnPAndJvluGpU4L2Ur/HUrBXsHct2GP/j27O/wP1krYUexyUwZ74f3SL/T+GDAbsKf+PeLkb/D9C/OPYi/Ey2Dvm/5HkmMWejmD65FzVZgJ74gvSaV+QiRQqy/uAPeUL0jmFPTeFvdQn5DB9wZ5UVQvbB8Gsxt5CR5Eo8xR7IudZ7HG8MfbchtjLeIuo' \
-			b'pkuwx2EuCFVuDthT+s0yPBl7l/q5lYK9gr1rwZ5n7Pk57HnZUuxxUAZ7XrDnF2MvZjBgzyvseRUjYE/iH8devCuDPX8MezrHLPZ0BNMn56o2E9jzgj2vsZdPobK8D9jzCnteYc9PYc+n2DtIX7AnVdXC9kEwq7HnF2IvyDzFnsh5Fnscb4w9vyH2fAZ7Q9Ml' \
-			b'2OMwF4QqNwfsKf1mGZ6MvUv9dErBXsHetWCP/SG7OX9I1EjaUuxxUAZ74g/ZLfaHHDIYsKf8IePlbvCHDPGPYy/elcHeMR/IJMcs9nQE0yfnqjYT2BMfyE77QE6kUFneB+wp78euU9ib8nvsUr/Hw/QFe1JVLWwfBLMaewv9HqPMU+yJnGexx/HG2NvQ77HL' \
-			b'+D2qpkuwx2Eu1EhuDthT+s0yPBl7l/oZlIK9gr0rwR72Zigw7o5iD/WPtgR7EnSIPQqFxqf9IuwNGUTsUW6CvV7HEOyF+EexN9x1iD0MncRekmMOe0kE0yfnqjZ57PGlTios2JtIoZK9YA+PA/aoBoI9TiqDPar8gL3D9Bl7oapa2H6o4DrscYHnsRdlnmAv' \
-			b'yHkOexJvhD1qlI2wx4qcYk81ncaehLkgVLlZsKf1m2V4MvbokyZAnYK+s9AH16EtrgeBpmDw0TCIRLDo5mIIh9gfj/MQOwZtCQ8l6JCHVni4X/HDtlQmx/8jE61iYiyDHZgYSjD727YS8RCK9hgUkyxzUJRLVEweDepbhnsnsGgFi1ZjEbWntqS5uZQq2Qse' \
-			b'rcKjVXi0U3i0KR4P02c8hkpr2ft4hJmvRKRdiMhQjhSRQexziKTaHS48sBsy0mYYKcU78PeUcBdELHcLJFWrc8U1JOEUGInXDf21+BdoCX97R38pDhLTkn2AHfGyhf59hJYRkgqPM2xkJDIPmYFT9NPcm11ZQHzLQ6wf4EVgClAKQJpaBaAAFGFjxeN/LVBm' \
-			b'YHIAkTl45MBxrlf/GBZjSFgBQ4CC02MhtwIAid3PWPzV5n6w8dHAB6O+wJxnDPlKx/tgr6dMM9nlwSiT3Y1GN1rcab95bWOjUd3LJ4ZPsZ+LjOfYbM4bzJy13MIr/sBEHhrHffgxmmgQyQ4GI4i2zB23Ze0jm7N6pUULD+2oLMsMW5cxbq4YOG3gonHLPAWD' \
-			b'0g1PwhAHf9adnoghHtiDpusSA9hge/Q4FgT1gPYw0B5sFL1+Qob/NRjIdY/I9OB6YVbSZp3d1lpK9XTbkPlYYTGtcleLVhNVo1jOKcuJyh2NJrbfgeGkGDJW4sFfMKbYT0TfU8s6jAWxKPSp2fC5on1NH2n30fLiSQvPoND7HrBF6anSH7fE7pIeLAczjJMl' \
-			b'7ZM/Y9Z9f97ExUWYYnvic+b1m9FNTSh12qpeZ0Yf/8ETUXvEhNorNKP9ec+e3XGL5y/T4rknt3ZX/cBZLNwWD4nNpVm3m3k4PMui9QtnBuuLsmhbzxHW92fVTp4jXGnZEqtGff/WLNv0u5yzLRsN1u/bujX0qcYTLRwOWM0DVADHq1CgZbauOc/WHfEEOM3c' \
-			b'UUGXmDt32kMcvpO/VpMH9b24h7l3bfLsk5g9t8rsoXBPfqizt2L6Gvrlj3f1cAcC3/q1b/NoD3dWG7wZY9e0G45Y6+sxdhdt6LYwcomjz1M927l0bm6ZkWuoCbYcuaIUr9LIvUMD1zyhX0t18uPcKSPXtszHXbVlu7CXtueNWFGcZT7uUSyaeUKLdrJry0kW' \
-			b'rbi0FIt2QRatKxbtcSya3b26QL/jI4tt3rEP8iXbMvcEPsjKnvX9tZizNaaMP0JveH0TXrw8X+RrMWcN/Zz7SSbtbF/k3f/0DwBcerPQXqSNO8muGSw5Lgjs78TGnWLfcDXq6c9t1/i89q4XV/CiTKwsFuk+rduJL0y51c6wbGjR3A1ZNCg/FA4V5aItW3YZ' \
-			b'8lNYNziH+q+3cnrxRLpooli8JRYPex+tPN+jDl6N5XMXZPz2KDjMyq23gbjaRy2B0Asf0CL6R7OI1SMYxclvQWjD6J7YKLYnPvLZ8th3jhFEAT6RJcScF5pDTAPV7RKMYePMGY+C2HGectXtKcbw4IGwezTzVz/FM6E2e9VlPg8Ws3czZm/hHF5i7RrqpZf/' \
-			b'+HeT1q5/NGvXPLW1q4u1K9buAq2dL9buiawdFPSxrJ15amvXFGtXrN0FWruuWLunsnb17bzauArTdj0OdRdjzi7akj2W2Wqosrf0KvYM35Iav35ds3sJlLJYrBu3WFu5zN2Y5aJPkF285bpBL5It/OM68wDkIQtmigUrFuzeLBiNli7l0YsKU+zXKvuF37o0' \
-			b'1HUf0P6TJbvM5QzFkhVL9qiWrL8kS9YXS7aBJbuERQtrfwjpDMPm1Q8W3YKBax7ZyDVi6MwdGDvq9anBa4b1WvT7VsP/RzSAXA5qtn6RJWyuyxJu8FM7C8xhg9Wnvt2cYBYvYeVDMYvFLF6EWTRjs2iUWUz/P6pZNOvMoilmMWcWGzGL5gSz+HjLH4pZvAGz' \
-			b'eD8m0Y5NolUm0Sb/H9Uk2nUm0RaTmB84U9OsNoePtxyiTAOWacB3Y+8ov9v0JblIm/b084DOogXjV7KPt8ShWLBiwba2YGyW7skdbjMThs0R/l+/CWvbB6QZ9C98KsM+9oD2GfoZ7Mmy+cdbzlAsW7Fs21s2WyzbqZbNxv93YdnK0oVi2dCqVfSOCyd0L9zK' \
-			b'kYZf32oG/g3kJzVyVITNBqBSoe1sHCWYtXENiRsuHrd2tn8gBIJCPSBToBM+kGGHHvSAJhm0H/aG7F5ZAFHs3sU/0VH3ukZb9+QPdFSEDW1du7Wta095nltl4coCiWLhLtXC0cu4+16beqKF49eYN/s6waJBw25U4xC1cWTJygKJYskuxpLV9DXdssr+REvG' \
-			b'zXcHL0Ytzrmh2td00JAlu4QFEsWS3aMl4z5aPhiykSmT5rwTJw9jH5CE0Pdgz+8NLmFNQ7Fkt27JuO9dyprVWzRk9+WtZvBZrKZPIPlLWH5QLNitWDDS4EtcXnDVFoxatRiwwYCRJweagr7DAx5VlpUDxZKdZcnIplz8QqmrtmTlWWxsympcOdDUZMHKyoFi' \
-			b'wc60YE2xYMWCPZkF68oKgWLBVlgw0vNLW71ZTNj9mTAcT9IosruhlQCgvvE3mi/RmkGDXtxvM1/Y+8pbsmoo8z3eeRX2Dat6SVYOBXa6iUPL1uxeUS9pUWNRfxpv6ILZvfL4pR8Ix6rAfwq2Ohg/11NTcLt71UChmg5/gbzp0Ar6r5/D8bM92E7sDhRvD9mB' \
-			b'ycLMwJz0DYUZDENzBdYDDQD07x1oASghqCDoJDQCCBUaGk1MhVYXTA6E4I9HNxV2RSh1zByugx6hXmMzolpgD6obdK+Bc5AC6iT2L+xBNagHzhj2chd0aoudH1ME44B+xB39IDXo6JaltLvF/yj3FnP3S/MHZUQzXFULStIiNdrJf3VvxL678TUqmDteMFB4' \
-			b'/MHtmn6J0RwrZ81lxV/SHpc3IgGX56EJNqM6AC8P/pErLTqFqv8HcSB3l1zBu9DkYxj9VBd0ELpClfVPXlngTIs/nQ6VhoeBzf4ZKI2puYt251eSutN0PWswcjV0r7rDZ4UqX29XH6k7PPks/odPJmkIPwNY4X1yBUqnzqk9+mx7NIj56VZx2DD4BEdtgxZT' \
-			b'fThtsqkaaS4vvyjfkS8NugWiazOa7lpWvvAXBiw3K2SLUKUvplITt0Mze2x2SAv0mJscrkFBqOm7frr5IR96pEJEa1HgI1AQB9zPIoHHXbCepgriQYN7uNGTqM9dGa5XOkq4Qf9fcGfutkwymdPDbKuJOLl6JVfT5MaxSLEg9PJ7Gg0nLmHjJqvznRGf43c4' \
-			b'QqBeCY9+8Hi5om+a07qnVV20WddNaVR1EV212WU2PYiUwDB8XLz55VFpw5GhHMkA+3h08jR87I21rikIWK1XZnevG+uMuQbjbneXsXGT2W26WfP0Pa16172t222w4TTfJgk9RU6sQvlxcrHUx3QHE77PjXVmgymMrGJsba1xRnyjjWfoz9m46fITIqW7Helu' \
-			b'OFa50411Jj+/BDpzfo/zj9Hr7O5wwwn27IWlW2XOuZ8bcmJiKo6CZ4fA1Q56hWt37h11R6+6ZCPdspLxMMRxWBF3Kd3U7w43HPLLEbZ0LsrTbxar7N5BVvxCJz+JVRBwTLfw1fF9bqwzE7N4l4oAdOe4rI2b8YxpqQsz/RfRLZGZJ23kQ6P+n5zQTB7JUbp7' \
-			b'5I31LT+ltdbUP5Z5X9Pdp/RkXkeaXXZDt4upaxKjtTMxHmNbmCvLd6P5t3tCOTr43enGOjM54bYZylE3tsW53T3Sho6Np97MzZmfiypd8FgX7Hf3urHOTE7CbdoFUTc27YboDP1oG7oXn3ozt+rkNFXpiVM9ER3b73RjnZl0Fdu8JzZ2697odo+6oZ//qTez' \
-			b'l3CZaFrfIbvdvW6sM6dPNJ0xUCVVWNk3pwaiQ//sd6dtuGBkeWxchmN55cx8XN9kL3DTF5+p1d0VF4Pd6cY6MznB9JjdNVGPx+i6uMDvnWx6zdx5SbE4rmg+6NLmknFF5+Vt+MPktLPvIDfWofXzQ277Xq01ZqPePS35frdqwyWWa+853MKS2NMTgPaFnVrC' \
-			b'CqcswjPmpPg107t+wXSJBgEXd5+0UdWgaU9O4MiGi6cfI925jfVq/bzVlZsGXNp/9RvL7ozZsfLqOaMZbnfOxhUzZ6Uxu+HXFR41g4ONVW39pNojm4kT3zevNxf97gk3VOYN4/Ea+jPm8IrZONQQ/D5M2ZKN9Wxy3q/o2Ul6ZnZlSzfWs20mOS+FUCd5ROF3' \
-			b'qW5tY+EWd7dX+LmxW9tYuFc0t3kprydwYe3ZG6+NHf5vluiwG+WiTpM4i5LMbaxAZaXpegUyu3vdWGeKd996nbG7e91YZ8oS2/U60+/udWOdKb6Lq3UGv6R7pxvrTPnM3XqdqXf3uvFHSYtL5nqdaXb3urHOnDE1e7c6Y3b3urHO4Eeq6YvTDT/ggEpIgCyF' \
-			b'bi0GYLNTYI2fbucLMEzXmgSKQDFAZBYXtKB/BX56kD3eQM+ysUG46X+O7Q9io8DpDlSv9H8j78BAs4YvaLeoNvyes+05PP16GccABYGmwPgdf5gfVZJUsCW1Q7XCcFAd/igzGOYkFVLldqS+QXXRkxe/yM2f9ocWkc/686fzu9Hn8sOn8nE1Pw9RQJ9fYacB' \
-			b'Jafv26BqMyAg2+Sz4HBfx35hzuB5g6HyAOIsHre03F7ubocQMB5fP///uqCkuw=='
+			b'eJztnXuv4zaS6L/MBaYbsAFLpEjp/Nd5zG6wncfmMbuDRhB0kp5FcPNCOsmdxWK/+60XqaJFSZat00e2iSMfSxTFVxXrJ1JF+dmrv3zx/qcvP/3kL7u//J83P38PX+Hw/a8+f/n3l7Dz8pvPXnz+4Se4G3defvPe5y/e/zfcjTtf/fWrT97/7O9hD74/+fRL' \
+			b'+P/FV+/h/5cvvvhX2f37xxQNvuH/3158Tgl+wJExGu++9+G/fPP+iy8+/EL2P34RQt/rd//W737Gu5RCLNRfYUe+Kvmu4fvjjz75itL96JNPPw7fVdipqUCUUGyFo6MvsdAffvzZl3//4kPM9aNPvvwXrPFXmNrLjz6metP/f/8cz7/EJn35KcaRxoEmpJrz' \
+			b'//c//fjjF6HVMeBzbvXPQ6tzGNXr89DqEvaCv/sSfp6Ul0r67/Dvxcefwf8P3ntJ5zD0kw+kVXHvvX73b/2utOqHL7/4EIvy+Ucf4/eH//k+NsOLL6kdMMkvuRpQ1C/DN7bnBx/97aMP8Ir3Rb4c77OX1PzQdkES//nFh+9ThA8++utfUYc++YjVkAr94pMP' \
+			b'sJHxxKd4/ccvPvviy0+liEFJKOA/WMfwq2Llgyzf/zfYffvHt2//fP3b2z/V/lvY/+71b29+/+aX3775/tsf3/7++jd1Gnbf/PNXOPPDnz+F/Z/f/Nc3r3/7r3D49o9f3/zWH3wLuz+9/v2b7375UfZ+++X/9Xuc39s3b99+F/d+jXshmdffxt0fvv9nDP39' \
+			b'95jRP15/93vY/5Uy4OA/fv6uL/M//vFrcvDND9+97UsaK/TjD33d+tDf3/wW93/648dvfvgpJvbdH7/9+N+qacLutz/8/Itupliq315/p5OCnXD455t45vX338dIr2Pl/vn2TV9TaqVYA6yTavh44o+ff/jl53jiv2OJfvj591gkEC5KnOXFaff1g5O6If98' \
+			b'HZv9519iWf7QUV7//H0Srlv62+9++emn1/Hwl5jYt9As//dNL8Y03q8/vPnuTTwAFf25b51f3/7+S8w6qk2syS8/9vWnRJODt+rKb3788/WPfYvylV/vXj3bO7NzzfMd7zjcaWr8Z3aNey6HcER7FqPtmma3l1MhgI9MuA4usCEIdynW3lNItXtmIRSiVc9j' \
+			b'gMUAa0PAvsMdU/E/DwHGPNdBtR8E+VoH4S7sVY7/eYhftc8lCHdhz8On3UEd9nzG4w58Y0L4bTv8Z3cOYlRc2D4oHO6bA6UKLeGoEt3zcOyplgcuEhSkbiGAPn1Qpw/NQXYwDBOBklQ27pGUIJFnFSQCUmm5TJQsXVlX/M9DCjXLBI5wF5uVhICyfK4Ow74K' \
+			b'r/lrT7pg6WObcNriDhZSwrnou72VQD6GMpIMdk3dB1DruP64pgjmKKCPsbdUKdvwP8dJYVEsF83KYZANlM1y4Tz/c5CI45MGhUFa5aCRUH3khKvCCduKbLlIFkvAeggZ1aihKBgpHgY1+rB2soNheDlI14B0Hcs/HDaDINGSJNgOD48utNXgMBOjadOgenCY' \
+			b'XrS3XpWs7xlSiKOA6jigVgFQIxZJZcMx9GxSSVAT03DhMHsjahyCh0H94d6SdkJOz0CicFx1uxZrtcPSG9HR4Vk0bmBG5iOBZqSR9pZsAeoGxDuEfgBlr7i3HrDjVyjaZtf40P8xOAbGkPrAIW0fUnFIf1VdU4gIBUL2hupsDP9zXSxeCPIHHYS7uNfxP2i2' \
+			b'58/7XdxruAeES7CFSe4OC92rHh5ST4mHIFCyRi3HCxYVGqMm0YJKsPZXhv95yLTiPlIZ2qV2xC4rO1S3qkL7wBDwwQRgoATF44aOJduD5IFKvsN+nAkPIRBABfSildLgcAwdneLQByKymUGzSTrn+Z+Ha2q+BpukJsMAGvysxQYXFW93LbVPDZ2hcsy4HRQb' \
+			b'org6VItOeuZd7iTYcyoZ6n4r+tlwOzjpHaKcJsgDAp+5JgqKDl1frG7nSLxgw56RFKQ74aGl9AdBxzHCIdMIjSHbO7RMdR32bCV7DF/cYX2BRmxjqnjUJdmGkHi0rxmqjRyGM2jsuSoN//MQUrN61LyL0bqdsLKmsvMeqxzusGAPEkG6B3bNmikGlqE2mt01' \
+			b'tSVG6vifN71RYnOF7ez5n7o98kLRxvE/ujPi4sou7jXh5HM5hKNwgnselKhtSFNs0BQX7lIc3YM14XK8WZH7uSacwFsvCYE9uOt7dYBWAGlCm4EBsgR40C4wd6BUaBVB8bodyA86dIfGDVqng11sRVTaBj4QXmMyqOFgAEFMFRgCwL7BWPgBawrpwzm4V6ng' \
+			b'ThCjtKBC+EERwdXYPw6wDz20cviBy6GieA1Ehg5VgfZWUJwKylNBgSooUQXlrKCgFXSLChqpghpWYCgryLzC3DFP6KVgC4HHlcNPs+vMrrO7DnbcrvO7DtPcYW0gAYgP7VmB/e8gmwMkdajghmOHt8RwQwAxDhDx0CAe4HYLZA7Zocg82asWrD4inGoD6Rww' \
+			b'YewscCE0awVxwEy0dgdCbLGtql0LQWAuul2H5Yb4UFKoDqIAKIp34tBp8QYGzD2Yd0/3t6B2YIdA5z3d0YKB88SkirQaLjqgGYQD2AfxthWCDZsWylXjzT7sgh6Q6EENnqH8MQBl+BxOY5nh0HIotjLGwpbGs6AXGIzCeE70x7Ov8EaBjintojs3qjvPOlaC' \
+			b'iqWN0iPpd5WoFOsKShkPKyvfjVwm15HY6VuukwsxhmM9IvUqJuk+1Arl7ovA70vgpYffkcBxIohuG+pAAsOW34vhl3uQzhStuB+tALG7Iu97kjdJAvt9Qx1dCe5rmtBm48B3f8lJDJWbx4ZuHqnN08sbLxFkIEOCfR7lG+QqMhMZBeloWSgZhHbntg6Nqxvz' \
+			b'3Tek6gPHen+k78eaLhp+mm6nOs26nNFh0VutrFpJj9XzSC1BFfl2gEcEpgkDASdDBB6NlgZftcGfkYXA5nXSV4yTvhMmBZpWAsKQz2Q7pYz7KxvEJSM6mjbIddIwj0B9kMaALuToQk6HAoW7ggLfHBaB343Ai7zvSN7Pqjjqq+UOzdkwbUw0wId+ULBds3NF' \
+			b'7rcjd2NF7E5QL/ccMiscbvU6Oq4g2wryrTy2DN7mQNM4bClfdOJmdAKk3RRp35G0XZH2HUnbF2nfi7SfdWG2jmcOOpkIwPryDM6BuV4m0N7JBJqry5jqjnofVpD7m0zgsfyXKI4WCybbuK/JgZCTM+skF4YABx4CNC487+Pn/eekydODr9CR/twkapnUDE8M' \
+			b'DnWZZH4Eo2SLU8cd2SSQN98DNGX+/o7E/qwJj3xklsfKoyTu/a/QNx6PW572aXn8j8YbrTA+8EPBoFtpeQL7ZLb6WStCq+R2omUytvwUsO3EsfMgE3nhIZ6RubyaAPpMHtrKUS2CpyS1pKmN0GA0fLk8CmTfgPR5YSM5OS6f42I5Lpbn8eYBzh1QNdokl6IC' \
+			b'C3Ht2Hx7FqJvS+Ou2LieraTnruG5a/huqo2DkSxtvbSt2ax4NivtoSjyeqDwAgox7uw/8qwWuNdhuFfuAO/nDvAVrSWqn5dVZPckc0six/VhdVnxdcNyxvt1XvBX5Hy7csYFnLUs7YPvItBrFygtyiw99pYFXHFfpeW02GeLaG9ItHRbJYIoC1g2PirmhevU' \
+			b'F8tC5nvqqfiigiB2/m7lNoqOS8/des/FhcckMEgeBVicke+o89Zis5taOm94chk6saUbrONlpgeOfQh3X7KCjhSp9PEN9nEsGAu0oUmrIpwtCceE3makQ9kq0+tsECF32iK6TYhOTKGpxICKjBx3syKbp5ONMSwLfkwnD0TZi6MV50d+gBfctSl+EdM7Hzja' \
+			b'0u5P0u5NafcnMEudDePjg7wAqpIlwW1880cnIU5eDCFOXx2/lLzjm/bOy7iNb9GL8N5JpzkcSmu/u3e08BN2TKyWJR715WsyXpWXa97XLIe8QgmX9JAaNWRAoZWxkUvffRxLWROezlucJFPKB56VsgI6not6RrNPX7NbfZ24VVNgGXg9uejbRgbF2bddVLxs' \
+			b'7dwsshpThfVspA2pr2sR39J7HH4V2roC4rem07KKmpdV1LysgqaMHedr4hEtqKh5QQV1fjmszXBmrJVJF36DaqH6nVCdZ7KfyaML5+QWUR47lv5//ioY7pvlzbT31J1e4Vqy4vd4E5Ik61eM4IUTPb604cVt2F6wOBZXYxLS/aEg/dL1gG2x7bdg23ERLfeJ' \
+			b'uvSJS/uEKU14aROWpTI3YlbkoaRvSp+4dPLzUPrETfSJSly74JzhZb74hRMgz+k3jfELxGzC7/oZWYhknof1K0b/vhPK3URHeXacD8dGHOflAvwCZTDilW2ei9cAO+xKhjTfVWZn7kUZbceCNw1rifxMCXv0muRnRIxErWrROHnZPHkrGvFWZJWTiE6SyD2w' \
+			b'QT86zpm6A00SldfU35JyoSMkTaGXNZS3JdZK2NEdv5jYjoQ3uXBkjwkea7V4qpEDOrZjWQ50UxrjihG4KZGiz6hhn1HDPqPSw430cCP+dfgtX43cY/IPoBU3qUcdLjbB2NblBcyPsLaV9d3KF6t9c2D9bgmPxVXsSWdLpkYeVXAENMGhTJw8WpZnyyPmtqMx' \
+			b'N/kPGX6+ZPhNqSRmx7Fo1dzX9MpUtn2y9PXADkmeTaHnyJ6T8JygZ73xbEpbMZqHfuhvy4TP9aOSJ1VsnJL5mmdf7HO5A/5618/hoH7LQNrSoJjsShhNy0ROv3yDr2pkmWdr5OKseyRU3bJuW9ZtW+7HbkrJDIm/zNzdi8Ad92SejCuPVi5YDgTq38hbKvAb' \
+			b'sgmHNvxscoOvLkGtt6WH3U0PwxYqgr9DwUOuDd8rNXyvhFqwq2UsgGGOT1XyQnRsVkfHcvMFTexkROHKss53NehrSQjQio7uj9kdMCzgMSQJvaqLxOZ5CpqddvDF9vgedvz9C/yZhtKjb6JHU3/0qBqev1r+6kT6UAxfeuk7utvyJjz2aeRFBU6+vYxr+QdS' \
+			b'qD+3RSzvynh2pbHf3eudDDY29QUb+kItfQA5VLhzG9yBHDsGTSfS5fm/w+7VAe8odyB/8nqBwuEIImo8N1S4A+HUuSnQ14ZEzo3NwtMDERmjcBNxBelRGxRUWteFauoKUu2galABaTpqKlZCFKWWI5YSy5h0yo51U5qGZRG0LuhOJ9oB8cPbP+mNoHUcZVXY' \
+			b'vLh4A3/WDn8lDfsA5F/hC0TxN+7xl8/x97ChHDW+NQUUp8YV/aADNb7YAyfgD3gOmg597fDdafjSZ3wvEXq3oZ8ctmmNgoNwbFycxMfmRVUDXavx9Wv46jU0Mbh6GB8U4EMCXEWCb9XDF+rhy/QsCgbyxFcJ4Lst8R0CoJM1Lh5tsDfCORBAjW+GaHAFCsaB' \
+			b'a3H1Mbrco7s9dn1Qrxq7Pq6nwDcNoFsevo4Hn6tCfQzUxVQH0Jw9iBYaYV9BR99DDfbQynsoxd7i/mG37yD4gOdhFz5oPfYopj3KZm/wQ8FwCUplDzq2x66/R8uwR7Owx560xy61R+uwh3rv0TDsUXp7NAV7tAV7NAR7tAT7ipKE9tsbvBJ6777D+HjKYUwQ' \
+			b'0R5DHSUMO9C+e2jnPWZM+WI1sOfusevuW9wBue07LA4minlhcT2eAYntsWTQJ/agrtgmeywzSGZvsIwNlZGKjAkcOm4QNHh7tG17NGp7tG57tDNcYyxpjedAmfYtlsdgs4CK7PE6zBTUct9gaTAMSwJ6tgcd3oMs9x4TwiJhC9GlcKLDfEggWAAqUoWnqNlh' \
+			b'h8RI1YbIhhoUk6FaUDhej81msB3xg6exgeEbFQG0ZA9asu/wigNm5LBw8EHJoMRQLtiomAM2R0sZUP0gBlUPznos1YHqhEcQD3RxD/q599jsWEe4pKUWg3TgXGuk6FhPtAL7DuWCFTPUzlD0FlPFord4Qfc1GkE0fcXwFcO33PAVq1es3pVavRqt3pi14/th' \
+			b'r8yeuqc81fjRnHQ/Ra2toB83hMMb3VlzeHRLT/fuZoFlbBdYxyq1kDhTMLCSS6yjvw4Lie+jw5eKRUtpM9YS4uEbaiatpkcp+Rn76OkvsZIUsJallPTH7aU/xWJSGhdbTR9r24VKLrOafpHd9Inl9BnbudBk+qszmlQNLIJYT5+xnySJaRu6+x/3gLj3Dwj8' \
+			b'Dr5M+7+4bup8w0pTJXp+IWNh/aSRTWcieB5BbK5TZpcmCfTkxqK5Bp5UGJuCG7PLicuhzJCQf0CnTPVwWi2ZZQpmG3+DFl+uJrMm9AzF6hkXP5xjCjNQZN5lVilMx8nMz2km/+iJDP6wc0QAxIN2YRRAPJzpwZ9XRyzgD6vjTM/aeMCfoUFdGmAC0kCNmsWF' \
+			b'HUHGQbBRX4iOqscHTk2i433EiJlHCb5HDd+eRkhpFFage0A7GbDKjJhWYQatDE4TNjOkQWWjLYGNhJLVbWUms1bUoauxazej2OkvSsjT5xfhQ5kLfyq1BRaF+IFHhAbXyLdwiQ5w/hO/8RWBMZUhoDA0MIqhd6AlLsQqKnNj0pLkuJVEMF1yrGoZYCYNqIDG' \
+			b'lZJGNCGGPYylhNOvmFDT866SigfsUc0krJJWoH1NQsqnZSEqFA7zYy6GJtC64m2s+DJYcuHnaRl1JGFm0Is5ckq8I3ZS49DYqL2YodwBGKOhswacqibURJUwXFHVhdoF4TNddd8wXNxAWmZsbR7oFtBUD6QCpn2guzvXPeD9WAunoZ8xiZEVD3SnVOHpmu6L' \
+			b'H/CeAowNHLv/pZ9K2D6qTxkhudwgaT0w1yvD+RjMx1AOQC4wflQYL4LwYgA7BrCbAzBqm6N4CYFdCEUtk72IXyf4deP4lUtS+PaJRvg6BV8dI8BX4k8OBvt4Gdi6zICQopo0wyxjdQTTJceqcCj4gxfOumPMOsGsE8w6oWw+rYOVGEJYp+jqZFzJVT6iqmOo' \
+			b'uhSqg+QFqlLnSjeAjTVdCNUT5+2i7FOoirxnocrxjqHqVoSq2w3GpqrpEphymBNxmiBeAanScxbhY4O0KSB91yPcAtE7gKhniM7Nl6Ii0ZYyNIaiksleZKgXhvpxhsolKUP7RCND1QRqPE1lFoZK/GmGxqsyDM1NqlJUk2aYZaiOYLrkWFUmjlP9MT+98NML' \
+			b'P73wM5/OwUoM4adX/PSKn/6Yn575mc7PDpMXfkp9teipJ3MtF/LzxCncKPeUnyLrWX5yvGN++hX56TP87Jsu4SeHORGnCeIVfiodZxE+Nj/dhQ/jRsl5M9gsyCzIPAWZ5IuBDTSDzLglyJSg4XPGWh410vfpDxr7XCItKUuhZVIOoWWIP0nL/qohLTFU0xJ1' \
+			b'NzyBTDLM0TJtmS45VpXJP6LkcksjJQ8qR5JBDa96WOJ+gCXVQmDJ6WUeZtapH8hR+lRx18XqJnW3sZLLYMnlnYdlFHsCyyDqOVhKvCNYUpusBEtW6BSWSjIalhKGM7cVw5K/GZZaxVmER7AMkAxwRBqiI7vQsT080G1Nhoq+ULFQsVBxDSrWTMV6joq1bCkV' \
+			b'OShDxVqoWC+jYsylp2KtqFirGIGKEn+aivGqDBXrlIoUq5EhpC5Sloq6RKZLjlVlRqgovjtc34SK+WRQw2tFxVpRsVZUrMeoWKdUHGbhQhUIin3VbazjQijWJ0IxSD2Fokh6Fooc7xiK9YpQrDNQ7AWTQFFaspUaBfkKFJWGswRXg2JboFigWKC4BhTZR6ie' \
+			b'8xHCRqEthSIHZaAozkH1uHNQFooxlx6KyjOoVluEosSfhmK8KgPFJjOxGseKOscsFXUE0yXHqjYjVBTvn7oZUDGfzMHyd6Bio6jYKCo2Y1RM3X2G6fPMaqivFru3sZYLuXiiu08UfMpFEfYsFzneMRdXdPeplbtP5GLfdAkXOQy5KC4+tXLx0UrOMpzmovAw' \
+			b'g8GuYLBgsGBwDQyyp04956mDDUJbikEOymBQnHTqcSedLAZjLj0GlY9OrWMEDEr8aQzGeBkM5nx0IgZ1jlkM6gimS45VbUYwKN45tRtgMJ8Mqrjyz6mVf06t/HPqY/+ciMHUQWeYvmBQ6qvF7m2s5UIMnuigEwWfYlCEPYtBjneMwRUddOqMg45qugSDHIYY' \
+			b'FAedWjnoaCVnGZ6LweqwLQ5euLDv8Qi4ZN3fPVNtbO3gCjRbQrEBwQbU6pha3Ry1OtlSanFQhlrd7rwlhX0+Pbc6xa1OxQjc6uaghX1frlmyzpA1sf/ksaVLZLrkWFVm4WJEuia/GpG8Xo4XY0QsdUd+L62UINahd32hU+z70vaHNu4upVN3Ip2CeFM6iUjn' \
+			b'6DS+mnENMHU9j2KrHQGJyxmWNHJN1KpGDDiCUKCOok21LdqssaRx4yOwW1/IiI+MbRmZZUdmhicozdwEJfYh2hLGSdCQcUYmKM2yCco+l0g4oyYojdoC4UL8ADk84KgRdYZph19oHGIKQ96ZqcnKJPcc7pIIpkuOVc3yuDMyWWkGk5UjyRxs3BUYymFAouEp' \
+			b'SyNgjA2bQaNJJy6HeTEXQ921OvhYjIVMNOMTl2ENb8LGWP6EjUEZ5tgY2ialo1lxAtNkJjBVE2pQShj+tIVMYBo1gak7geEinjtyu/QFLIWlhaVldnOWoTy7aeZmN7Hj0JYylIMyDJXZTbNsdrPPpWeomt00OkZgqMSPDHXMUKcY6pihjhkar8kwdGqmM8k9' \
+			b'y1AdwXTJsarZCENlptMMZjpHkkGRym5gKB9GhvJ8J8WI9R5haDrrOcxLGCp11+rgYzGWMvTEWc9Y7pSdogSz7JQ2OWLnirOeJjPrqZouYSeHITtl1tOoWU+t/IaLeC47L3jHTnn6V57+FT72fPTMRz/HRy9bykcOyvDRCx/9Mj7GXHo+esVHr2IEPkr8yYnU' \
+			b'/qoME6emUpMcs0zUEUyXHKvajDDRCxP9gIn5ZFCMXgHRKxr6fp6V08tx0KccHKQvHJT6arF7G2u5kIP+RA4GwaccFGHPcpDjHXPQr8hBn+Fg33QJBzkMOeiFg15xUCk5y/BsDl7wApvCwcLBwsGegy1zsJ3jYCtbykEOynCwFQ62yzgYc+k52CoOtipG4KDE' \
+			b'n+ZgvCrDwXaKgzrHLAd1BNMlx6o2IxxshYPtgIP5ZFCMreJgqzjYKg6OPW6kFlAcHKQvHJT6arF7G2u5kIPtiRwMgk85KMKe5SDHO+ZguyIHQwU1B/umSzjIYS7UKEhYOKiUnGV4NgcveP+MK9OpTzCdijJxBZdXi0vLy+zt3DJ7G7YElxIUcMn7Qkw6qA78' \
+			b'nScmw0Hzss8m8pLyFF5aXRDhZYgfeGkZmfQl1KQkuCR1p1IYshNDR9mZ5J5jZxLBdMmxqlmenVwJaa+EnSPJgEzDruBTDgNBqTJc+yrWmzgado9oSm3S03SYI9M0tEDSHLEwC2nK5Z+naSx9QtOgCnM0DS2T0pQaaCWasrqnNFVNp2kqYU46jAkyZ5rqLmC4' \
+			b'iHmaHr2sZoKq5a00ZXRZcLkKLmvGZT2Hy1q2FJccNBxdUigakXqUlbnRZZ9LT8ta0bJWMQItJf7k6LK/KkPIeoqQOscsIXUE0yXHqjYjhBR/Va5wQsh8MkjIWuGxVmxU3qycXmZ0SS2geDhIX3go9dVi9zbWciEP6xN5GASf8lCEPctDjnfMw3pFHtYZHvZN' \
+			b'l/CQw5CHtfCwVjxUSs4yPHt0Wd5DUzhYOLgKBw1z0Mxx0MiWcpCDMhw0wkGzjIN9kpGDRnHQqBiBgxJ/moPxqgwHzRQHdY5ZDuoIpkuOVW1GOGiEg2bAwXwyyEGjOKiWdFA1AgfNGAdNysFB+sJBqa8Wu7exlgs5aE7kYBB8ykER9iwHpTWOOGhW5KDJcLAv' \
+			b'dsJBDkMOGuGgURxUdeXvszlYXj1TOFg4uAoH2evGznndWC9bykEOynBQvG7sMq+bPpeeg8rrJp62vddNiD/NwXhVhoNTXjdJjlkO6gimS45VbUY4KF43duB1M5IMclB53VjldWOV140d87qxqdfNMH3hoNRXi93bWMuFHDzR6yYKPuWgCHuWgxzvmIMret3Y' \
+			b'jNeNarqEgxyGHBSvG6u8brSSswzP5mB590zhYOHgGhxEswwFxq9JDqLW05b+wMWB+kMGhBRa8RULQNhnE0FIeQoI42kqL4MwxJ8EYX/VEIS0DnwMhEmOORAmEUyXHKva5EHIBQ8V1iAcSQbk2IR3IzgqXQQhVUNAyOllQEgt0INwmD6DMNRXy93bWMtlIOQC' \
+			b'z4MwCj4BYRD2HAgl3hEI11zjzyqdglA1nQahhIFF5BqFmjEItZKzDM8FYb2xl88UEBYQXisI2Z+mmfOnacKWgFCCMhwUZ5pm3Jkmy8GYS89B5U7T6HIEDkr8aQ7GqzIcnHKhSXLMcjBpmi45VrUZ4aC40DQDF5qRZJCDyn+mUc4zTaU4WI1xMHWYGaYvHJT6' \
+			b'JpW3sZYLOXiiw0wUfMpBEfYsBzneMQdXdJhpMg4zqukSDnIYclAcZhrlMKOVnGV4Ngc3/FqcwsHCwWviIDvKNHOOMqjvtKUc5KAMB8VRplnmKNPn0nNQOcrE003vKBPiT3MwXpXh4JSjTJJjloM6gumSY1WbEQ6Ko0wzcJQZSQY5qBxlGuUo0yhHmWbMUaZJ' \
+			b'HWWG6QsHpb5a7N7GWi7k4ImOMlHwKQdF2LMc5HjHHFzRUabJOMqopks4yGHIQXGUaZSjjFZyluHZHNzwK20KBwsHr4mD7CjTzDnKoLLTlnKQgzIcFEeZZpmjTJ9Lz0HlKBNPN72jTIg/zcF4VYaDU44ySY5ZDuoIptsdXRMbKM9BcZRpBo4yI8kgB5WjTKMc' \
+			b'ZRrlKNOMOco0qaPMMH3hoNRXi93bWMuFHDzRUSYKPuWgCHuWg9IaRxxc0VGmyTjKqKZLOMhhyEFxlGmUo4xWcv4+m4Pl9TSFg4WDq3CQHWWaOUcZVHDaUg5yUIaD4ijTLHOU6XPpOagcZeLppneUCfGnORivynBwylEmyTHLQR3BdMmxqs0IB8VRphk4yowk' \
+			b'gxxUjjKNcpRplKNMM+Yo06SOMsP0hYNSXy12b2MtF3LwREeZKPiUgyLsWQ5yvGMOrugo02QcZVTTJRzkMOSgOMo0ylFGKznL8GwOltfTbIGD5XWmt8NDxw4zbs5hBt85QVvCQwka8tCJv4xb5i/T5xJ56JS/TDzten+ZEH+Sh/1VQx66KX+ZJMccD5MIpkuO' \
+			b'VW3yPHTiLzP87YuRZECMTvnLOOUv49hfhk7HGuep6FKvmWEuTMVQay18b2Ndl1HRneg1E8udUDGIfI6KEu+Iim5FrxmX8ZpRTaepKGFIA/GaccprRqs6S/JsKl7wsppCxULFQsUhFfmpoZt7aojvYKItpSIHZagoTw3dsqeGfS49FdVTw3ja9U8NQ/xpKsar' \
+			b'MlScemqY5Jiloo5guuRY1WaEivLU0A2eGo4kg1RUTw2demro+KkhnY41HqFi+uxwmItQUWqthe9trOtCKp747DCWO6WiiHyWihzvmIorPjt0mWeHqukSKnIY0kCeHTr17FCrOkvybCqWl80UKhYqrkpFfobo5p4honLTllKRgzJUlGeIbtkzxD6XnorqGWI8' \
+			b'7fpniCH+NBXjVRkqTj1DTHLMUlFHMF1yrGozQkV5hugGzxBHkkEqqmeI+vcTHT9DpNOxxiNUTJ8kDnMRKkqttfC9jXVdSMUTnyTGcqdUFJHPUlHa5IiKKz5JdJkniarpEipyGNJAniQ69SRRqzp/n03F8uqZLVCxPEncJg3hGHSnBuVZ+FTR8VNFN/dU0cmW' \
+			b'PlXkoMxTRcdk3C/98eA+n/65oiM2or4mEcJjRYk+iUa0LRIx81zRTbCR1FZ98s8Wdbnw2aLLbKPPFh3zkSudPFvMJ3Ow/B1++B5LGx8uOmqoPf/GcDfCRmqHno0YkROPtex/Y5hO8W8Mq0Mbd5c+ZHSTiKTCm16zjp4xiuTnCElNkvmZ4b51VnjK6FJG9vrJ' \
+			b'DZg8ZuRy42NG7JR4BnJlXHI15YGj0n7Depni0gIm8R5ROAm96AHvh8DGPdDNBRiiB7wLAOPxQL+BrAC64XfWHL0W/PoxmnsheBlgXhdSFw0wGx5gNnMDzEa2dIDJQZkBZsMYpe8FA8yYSz/AbNQAU21xgCnxA0UJohw2GGbGazPDzGZqmKnzzQ4zdQTT7Y7K' \
+			b'GpspP8xsGKNc7WSYmU/mYONuGGk2aqTZ8EhTHHVie+ZGmk060hxkJCNNqbjWAh/LsHSk2UxitB9phnInHA2ynx1pcrzjkWaz4kiz2Q1Hmn3TJSNNUcdWahRELSNNpfMsybNHmht+qU0BZQHldYOSvVjdnBcr/igMbSkoOSgDSvFidcu8WPtcelAqL9Z42vVe' \
+			b'rCF+BKVnUPoMKOO1GVBO+bIm+WZBqSOYLjlWdRoBpfiyuoEv60gyCErZDaBU7qyO3VnpdKz0CChTp9ZhRgJKqbjWAh/LsBSUJzq1xnKnoBTZz4KS4x2DckWnVpdxalVNl4CSwxAN4tTqlFOr1nmW5LmgNBt+6U0BZQHldYOyZVC2c6BsZUtByUEZULYCynYZ' \
+			b'KGMuPShbBcpWxQiglPgRlC2Dss2AMl6bAWU7BUqdbxaUOoLpkmNVpxFQtgLKdgDKfDIIStkNoGwVKFsGZSugDO2ZA2WbgnKQkYBSKq61wMcyLAVleyIoQ7lTUIrsZ0HJ8Y5B2a4IylBBDcq+6RJQclisURC1gFLpPEvybFBu+K045RcZCzJvBJmeV4T4uRUh' \
+			b'qNW0JciUoCEyvawI8ctWhPS5RGR6tSIknvb9ipAQPyATDzhqRCYlwdHqTqUwBKefWh2S5J4DZxLBdMmxqlkenF5Wh/jB6pCRZECkYVfAKYeBnZ7XiHhZIxIbNsNOn64RGebF7Ax11+rgYzEWstOfuEYkljthZ1CCOXaGNknZ6VdcI+Iza0RU02l2ShgYSi9r' \
+			b'RLxaI6KV33ARz2Xnht+kU9hZ2Hkr7KyYndUcO8OWspODMuyshJ3VMnbGXHp2VoqduhyBnRI/spM9gegrsLNidlbMzphChp3VFDt17ll2Js3UJceqZiPsrISd1YCd+WSQnbIb2MmHkZ0Vs7MSdoaGzbGzStk5yEvYKXVPGiIWYyk7qxPZGcqdslOUYJad0iZH' \
+			b'7KxWZGeVYWffdAk7RT1bqVGQtrBTKb/hIp7Lzg2/faews7DzVthpmZ12jp1WtpSdHJRhpxV2LvOg7XPp2WkVO62KEdgp8SM7LbPTKnZaZqdldsYUMuy0U+zUuWfZqSOYLjlWNRthpxV22gE788kc+t3ATj6M7LTMTvGojQ2bY6dN2TnIS9gpddfqoGq8kJ32' \
+			b'RHaGcqfsFCWYZae0yRE77YrstBl29k2XsJPDkJ1W2GkVO5XyGy7iuezc8Bt7CjsLO2+Fnew46+ccZ1GNaUvZyUEZdorjrF/mONvn0rNTOc56tUV2SvzITnac9cpx1vOTTvxChsQUMuyccp9Ncs+yU0cwXXKsajbCTnGf9QP32ZFkDjbuBnbyYWQne9B68aCN' \
+			b'DZtjZ+pBO8xL2Cl11+rgYzGWsvNED9pY7pSdogSz7JQ2OWLnih60PuNBq5ouYafoZSs1CtIWdirlN1zEc9l5i+/12QYj51yATmGhcDDyL7BPmHeVvLsK1vFaSz+31hL1j7aUdRyUYZ2staTvBayLufSsc4p1OkZgncSfXGrZX5Xh29RKyzzTdDFMlxyrGoww' \
+			b'TVZW+sHKypFkkGlqZSXuR5o5eWtrll/pesqYnGCL1096Xjfpl6+Z9NNrJntUBXmmqBIZzqKK4x2jygmqLqTU0WpJopRk6I4xxeGIKSeYUmsktd6yiJZgivC04RfslKFdGdrdytCOPVj9nAcrROAtxR0HZXAnHqx+mQdrn0uPO+XBGk/73oM1xI9DO/Zg9cqD' \
+			b'lZLgsiD6YgoZ9E35sSa5ZzGoI5guOVY1G8Gg+LH6gR/rSDKIQdkNJOTDCEN2ZfXiyhobNofG1JV1mJcwUuqu1cHHYizl5YmurLHcKS9FCWZ5KW1yxMsVXVl9xpVVNV3CTA5zoUZB2sJMpfyGi3ju0O4WX8OzDUaWod0VD+06Zl03x7pOtpR1HJRhXSes65ax' \
+			b'LubSs65TrOtUjMA6iT89tItXZfjWLR7a6QRNlxyrGowwrROmdQOm5ZNBpnUKaJ2iWTc1tOtSfoXkBFsdM6tjWnXLUdWdiKogzxRVIsNZVHG8Y1R16wztugylJMPB0I7DEVOdYKpTmFJ6yyJaPLTb8EtuCp4Knp4ITy17d7Zz3p1t2BI8SdAQT614d7bLvDv7' \
+			b'XCKeWuXd2epyCJ5C/Ek89VcN8dROeXRm8ZQUw3TJsapBHk+teHG2Ay/OkWRAdK1y4WyV/2ZbTeCpTT02Y3KMp5a9NFv2z2yXO2e2JzpnRnkmeAoynMOTxDvCU1utgqc245cZMjzGk4SDDWvFMbNVjplab1lEi/G04VfLlJeYltnFK5pdbNlxpJ1zHEH1pC1F' \
+			b'GgdlkCaOI+0yx5E+lx5pynGkVVtEmsSfRlq8KoO0KWeRJMcs3nQE0yXHqjYjeBNnkXbgLDKSzMHyd8CbchNpm138OcRxzKUOIsP0hXdSXy12b2MtF7LvRAeRKPiUfSLsWfZxvGP2regg0mYcRFTTJfzjMOSfOIi0ykFEKznL8NxZRLvhN8cUDhYOXhMH2amk' \
+			b'nXMqQd2kLeUgB2U4KE4l7TKnkj6XnoPKqaTVMQIHJf40B2O8DAennEqSHLMc1BFMlxyr2oxwUBxM2oGDyUgyyEHlYNIqB5PWKQ66MQ6mjibD9IWDUl8tdm9jLRdy8ETvkyj4lIMi7FkOcrxjDroVOZhxQVFNl3CQw5CD4oHSKg8UreQsw7M5uOEXwxQOFg5e' \
+			b'Ewc9c9DPcdDLlnKQgzIc9MJBv4yDMZeeg15x0KsYgYMSf5qD8aoMB/0UB3WOWQ7qCKZLjlVtRjjohYN+wMF8MshBrzjoFQe94qAf46BPOThIXzgo9dVi9zbWciEH/YkcDIJPOSjCnuUgxzvmoF+Rgz7Dwb7pEg5yGHLQCwe94qBScpbh2Rzc8EteCgcLB6+J' \
+			b'g+x12c55XaJW0pZykIMyHBSvy3aZ12WfS89B5XUZT7e912WIP83BeFWGg1OelkmOWQ7qCKZLjlVtRjgonpbtwNNyJBnkoHKzbJWPZdsqDo55V7apd+UwfeGg1FeL3dtYy4UcPNG7Mgo+5aAIe5aDHO+Ygyt6V7YZ70rVdAkHOcyFGgUJCweVkrMMz+bghl/Y' \
+			b'UjhYOHhFHMRODQXGr0kOog7SlnBQgoYcpFBofPo+nYN9LpGDlKVwMJ6m4jIHQ/xJDvZXDTmIoaMcTHLMcTCJYLrkWNUmz0EuuLRSwsGRZA7yLRzE/cBBqoZwkNPLcJBaoOfgMH3mYKivFrvva7mMg1zgeQ5GwSccDMKe46DEO+IgNcpKHGSVTjmomk5zUMLA' \
+			b'IHKNgoSZg1rJWYZnc5BevgIMKixcg4UQB5rkephoChcfjYtoYRETiCc0yvYwA0jsHLQlgJSgISCtAHK/9Jd/qWCOPxGSVkEyFsT2kAzFmP3xX4k4pKSdomSSZY6ScoqKyeNFfUl/7QgnrXDSDjiJelRZ0uFccgf5Fl5axUureGnHeGlTXg7TZ16Gmmst8HEP' \
+			b'ZbiQmfZEZoZypMwMsp9jJtVuuN7BrghNm4GmFG/gVSrhYDKtUNMqaqpW54prasIhQBPPG/pvHxif8L9z9J/iIEItWQr4IoA20NMn8BmpqXg5D0tmJAOSoTiGQw3C2QUNBLw81bqUZkSqQKlAqLHFB4pIkT5WFhosJcwMXQZUmaNJjiSXLiY4pscxNayQIlDC' \
+			b'6dGSW0CEBAQZBJxn/3ujHy1+sPIn2PeMZV/o7x8M+JitJkN9ZKXJEEcrHE3wuLu+NrrRyu7l/cnnGNSTrOmxHZ23oDnzuYYz/sBmDq3lPvwWT7SQZBiDVUTj5qaNW/P49q1aaOLCbT3qy+mWrs1YO1csnrZ40dpl7pNB9/p7ZYgDouF7ZogHtqFu28Qi1tge' \
+			b'HQ4aQUugPQy0B1tJr++h4VOBxVx2E013tVs0mzbrUrfUdKr735pMyVITapVTXDSjqCTFlI6ZUlTzaEWx/QaWlGLIkIoHisG6+v5eIDW1/bgRi0KyDm+N2KNt2Vf9ewHxwMNdKvTDB2xRuu/006bZbezWs7fLOL/SbOIutOq6y+Y6NmGb7Zl3ojdiV1e1qdSB' \
+			b'D+OrTZ/y1hQpPGFT7RXa1e6yu9N22gT6zZpAtwnzd9W3pMXkrXYbWW/S3N3M7eNFJq47cXax2pqJe4x5xur+zNzZ84wLTV1i5siq3KSpG39AtI6po0H+fZu7mt5DeabJwzGueYAK4BAXCnSa8asvNn4T/gbn2T8q66n2z513m4dP/q/VBkJ9N3e79yQ20D6J' \
+			b'HXTL7SCK+ezbPnsrtrCmX0J5V7d/IPVHeLhcP9rtn9UW8ATrVzcrDnKr67F+m7Z8q1k9O2353o3Vc+n83gKrV1NjrDnYRXlepdV7hxavflp3msPZN3znDnabMqd3/aZuY4+GVxjkomDLnN6jmDjztCbubI+as01c8aQpJm6TJq4tJu5xTJzdvdqmQ/TEsqAn' \
+			b'cI7esnFzT+AcrQxc112VfVti2/jN/IaXY+HJjTpJX4t9Q5fUp3KS3v1P9wAspscVzVaN3tmGzmAFcC1jdydG7xyDh+tpz7+zu9o7uidZBsIrSzFT5+/V3J35WJZbzV12X+duz8RBNaCMqC+bNnXZJdVPYe7gGOq/3OzpZR7p8o5iApeZQOyOtJ5+j1p4NabQ' \
+			b'bcga7lF6mFW73CjiCiW1WEMv0UAT6R/TRB4ewUqOvuji2FK6J7aSzZk3hbbcGF5sFVGCT2QaMecl9hETQl/RLVjH2pkLbhax6zzlCuJzrOPglrF9THtYPdVdo7aDh23eMRY7eFt2cMk8YGL+auq2279BvEnz1z2m+au3YP6qYv6K+du0+buO8fEtmj9o0Uc0' \
+			b'f2YL5q8u5q+Yv02bv7aYv6cyf9XNPS+5Clt3PY5927Jv2zdtj2XH8LXAt/XA9wKXlgrfF16xVwuUspiw+zBha7nu3aIpo1eyXYcpu0HnlTX89FrzADwik2aKSSsm7Z5NGg1uNnVzRiUqBm2RQcOXgRrqxA8IBDJtm114UUxbMW3vxrR1mzNtXTFtK5i2jSyv' \
+			b'WPprUxdaOq9+FeoWLF79yFavFstn7sX6UZ9OLWDdLzWjXxLrP49tEbkw1IDdSaaxvi7TuMLvGZ1gH2usPvXy+gw7uZE1GsVOFju5LTtpju2kUXYy/Ty+nTTL7KQpdjJnJ2uxk+YMO/moCzWKnbwRO3lnNtIe20irbKRNPo9vI+0yG2mLjcyPtan0i+3joy7c' \
+			b'KFOJZSrxHRtAyuaGXVg2aeSefi7RWTRp/OD3URdjFJNWTNqjmTSOdHdueavZNGy/8Ll+m9Y0D8g46Gl434a97QENNvQ4+CZT5x914UUxdcXUPaKps8XUXWTqbPzchakriyyKqVOm7kDPz3Bu+BrMHmn7la674B+rflKrR0VYbcwqFVrP6FGCWaNXk8zh5LT5' \
+			b's90DgRGU6QEhA93xgSw99KUHtNHQD+DbkCEsSzWKIbyqez7qaldr/J78lo+KsKLxa9Y2fs05d3yLTF5ZylFM3jWYPHraV9bZnmvy+GHpzT6jsGjhsENVOKqtHZm2spSjmLZNmraKXj1cXiFwiWnjNryDx68W5+1Q8SvaoR/29htZylFM272aNu6q5fUoq9s2' \
+			b'adg7MW7GPiAkoRfCNz+M2Mjqi2La7sG0cRd8aq/h+7Bs9+U1Z/BuraI3QPmNLJQoJu2WTBop8mYXQly/SaP2LRatt2jkQIKGoWtxpybTVtY4FNO2hmkj+/L0Sxzuw7SVu7Vj21bhGoe6IpNW1jgUk7aOSauLSSsmbQMmrS1rGYpJW27SSN03uRK12LQ7tWk4' \
+			b'BKWBZ3t7axZAleOPaW/RvEG7bu5HtDf2VPQ2zRxKf4+XX4XBw/puyeyh1M63eWjq6t0r6i8N6i4qUe0NnTC7Vx7fcgThKDb4ULDVwfiaooqCm92rGgpVt/ij8XWLZtF//Rz2n+3BmGLHoHh7yA4MGGYGhqWrKcxgGBovsCNoCqCn70C5QbVBF0AxoRFAqNDQ' \
+			b'aGwOaIbB+EBIhZ3ygJ0SOmPMHM6DHqFyYzOiWmBfqmr06oFjkAKqN/YZrG0F6oGzjp1cBd3bohnAFMFMoINz21Ap7aqltLuT/yj3BnP3p+YPyogG+XA4oSQNMqQZ/as6I5beHZ+jgrnpgoHC48+iV/RrmGaqnBWXFX/v/Li8EQ64shCNsTmqA9Bz8Ed+veic' \
+			b'qj6DOJC7S87gVWj8MYx+GQ06CJ2hyvonrywQp8HfuIdKw63Ban8GSmMq7qLt5ZWk7jRezwqMXAXdq2rxruGQr7erJuoO90En/+E9ShrCdwNWyJ+cgdKpY2qPLtseNQJ/vFUcNgzez1HboMVUL40bbapamstzk+HNJg6VoEnQxRpNdyXrcvhtCZabFX0NGn4h' \
+			b'KTdx0zezx2aHtECPucnhHBSEmr7txpsf8qGbK0S0FgXeDAVxwPUsErj/BetpDkE8aHCHG92X+tyZ/vxBRwkX6M8JV+YuyySTORxmexiJk6tXcjZN7jgWKRaEbr+n0eBiCxs3WZXvjHhHv8OxAvVKuPWDe8wFfdOc1z2t6qL1sm5K46tNdNV6l9n0kFICKxlI' \
+			b'nrz506PShmNE2ZMR93R0fCPiwiyWb6x1dUHAYr0yu3vdWGfMNRh3u9vGxk1m1+lm9dP3tMO77m3tboUNJ/xWSegpcmIVyo+Ti6We0h1M+D431pkVpjCyirG2tca58ZU2nqu/ZOOmy0+IlO420d1wrHKnG+tMfn4JdObyHucfo9fZ3XDDCfbsiVO3g7nkem7I' \
+			b'kYmpOAqeHQIfdtArXLNz76g7etUla+mWBxkPQxx8qwi+Kn4b3dTvhhsO+WUPWzoX5ek3i1V27yArfqCTn8QqCJjSLXyIfJ8b68zILN5WEYD+HdvauBkvmJbamOnfRLdEZp61kTeN+pyd0EweyV769cgb61t+SmupqX8s876ku4/pybyO1Lvshm4XY+ckRmNn' \
+			b'YjzGdmKuLN+V5t/uCeXo8XenG+vM6ITbaihH3VgX53b3SBu6OJ57MTdnfi6qdMGpLtjt7nVjnRmdhFu1C6JurNoN0TX60TZ0ND73Ym7V0Wmq0hPHeiK6ud/pxjoz6iq2ek+s7dq90e0edUOP/3MvZi/hMtG0vEO2u3vdWGfOn2i6YKBKqrCwb44NRPv+2e3O' \
+			b'23CxyOmxcUGO5TU083F9nT3BTV98phZ3V1wadqcb68zoBNNjdtdEPR6j6+Jyv3ey6dVzlyXF4rii+aCtzSXj+s7tbfiD7PRl30FurEPL54fc+r1aa8xKvXtc8t1u0YYrLpdeM9zC4tjzE4D2hS+1mBUOWYQXzEnxY6Z3/YBpiwYBl3qftVHVoGnPTmBiw2XU' \
+			b'j5Hu3MZ6tXze6spNAy70v/qNZXfB7Fh59JzRDLe7ZOOKmYvSmN3wPQuPmsFgY1VbPqn2yGbizOfNy81Ft3vCDZV5xXi8hv6CObxiNoYagm+LKVuysZ6NzvsVPTtLz8yubOnGerbOJOdWCHWWRxS+perWNhZucXd7hS8fu7WNhXtFc5tbeTyBC2sv3nhtbP9Z' \
+			b'LdH+6ygXdZjEOSnJ3MYKVFaaLlcgs7vXjXWmePct1xm7u9eNdaYssV2uM93uXjfWmeK7uFhn8L26d7qxzpTX3C3XmWp3rxu/lLS4ZC7XmXp3rxvrzAVTs3erM2Z3rxvrDL6kmt44XfMNDqiEBMhS6MZiADY7BVb4Enc+AcN0rUmgCBQDRGZxQQv6V+CrB9nj' \
+			b'DfQsGxuEm344th/ERoHTFahe6aeWZ2CgWf0btBtUG37O2XQcnr69jGOAgkBTYPyWX9GPKkkq2JDaoVphOKgOv5QZDHOSCqlyc6S+QXXRkxffyM0v+YcWkRf880v026MX54eX5uNqfh6igD6/wk4DSk7vt0HVZkBAtslrweG6lv3CnMHjGkPlBsRZ3G9oub1c' \
+			b'3fQhYDy+fv7/AWiDPAA='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -8549,7 +8681,7 @@ class Parser (LALR1):
 	# grammar definition and implementation
 
 	def expr_scolon_1      (self, expr_scolon, SCOLON, expr_ass_lvals):                return expr_scolon if expr_ass_lvals == AST.CommaEmpty else AST.flatcat (';', expr_scolon, expr_ass_lvals)
-	def expr_scolon_2      (self, expr_ass_lvals):                                     return expr_ass_lvals
+	def expr_scolon_2      (self, expr_ass_lvals):                                     return AST ('(', expr_ass_lvals.curly) if expr_ass_lvals.is_curly and expr_ass_lvals.curly.ass_valid else expr_ass_lvals
 
 	def expr_ass_lvals     (self, expr_commas):                                        return _expr_ass_lvals (expr_commas)
 
@@ -8696,7 +8828,9 @@ class Parser (LALR1):
 	def expr_sym_1         (self, SYMPY, expr_pcommas):                                return _expr_sym (self, expr_pcommas, py = True)
 	def expr_sym_2         (self, SYM, expr_var, expr_pcommas):                        return _expr_sym (self, expr_pcommas, name = expr_var.var)
 	def expr_sym_3         (self, SYM, expr_pcommas):                                  return _expr_sym (self, expr_pcommas)
-	def expr_sym_4         (self, expr_subs):                                          return expr_subs
+	def expr_sym_4         (self, SYM, expr_var):                                      return _expr_sym (self, AST.CommaEmpty, name = expr_var.var)
+	def expr_sym_5         (self, SYM):                                                return _expr_sym (self, AST.CommaEmpty, name = '')
+	def expr_sym_6         (self, expr_subs):                                          return expr_subs
 
 	def expr_subs_1        (self, L_DOT, expr_commas, R_BAR, SUB, CURLYL, subsvars, CURLYR):  return _expr_subs (expr_commas, subsvars)
 	def expr_subs_2        (self, SLASHDOT, expr_commas, BAR, SUB, CURLYL, subsvars, CURLYR): return _expr_subs (expr_commas, subsvars)
@@ -9853,6 +9987,8 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_UFUNC_MAPBACK = True # map undefined functions from SymPy back to variables if possible
 	_UFUNC_MAP     = {} # map of ufunc asts to ordered sequence of variable names
+	_SYM_MAP       = {} # map of sym asts to ordered sequence of variable names
+	_SYM_VARS      = set () # set of all variables mapped to symbols
 
 	_PARSER        = sparser.Parser ()
 	_START_ENV     = OrderedDict ([
@@ -10035,26 +10171,47 @@ class RealityRedefinitionError (NameError):	pass
 class CircularReferenceError (RecursionError): pass
 class AE35UnitError (Exception): pass
 
-def _ufunc_mapback (ast, exclude = {}):
+def _mapback (ast, assvar = None, exclude = set ()): # map back ufuncs and symbols to the variables they are assigned to if possible
 	if not isinstance (ast, AST):
 		return ast
-	elif ast.is_ass and ast.lhs.is_ufunc:
-		return AST ('=', ast.lhs, _ufunc_mapback (ast.rhs, exclude))
-	elif not ast.is_ufunc:
-		return AST (*(_ufunc_mapback (a, exclude) for a in ast))
 
-	vars = _UFUNC_MAP.get (ast)
+	if ast.is_var:
+		if ast.var not in _SYM_VARS:
+			return ast
 
-	if vars: # prevent mapping to self on assignment
-		if ast.ufunc in vars and ast.ufunc not in exclude:
-			return AST ('@', ast.ufunc)
+		if ast.var == assvar:
+			raise CircularReferenceError ('trying to assign unqualified symbol to variable of the same name')
 
-		else:
+		return AST ('-sym', ast.var)
+
+	if ast.is_sym:
+		vars = _SYM_MAP.get (ast)
+
+		if not vars:
+			return ast
+
+		if ast.sym in vars:
+			return AST ('@', ast.sym)
+
+		return AST ('@', next (iter (vars)))
+
+	if _UFUNC_MAPBACK:
+		if ast.is_ass and ast.lhs.is_ufunc:
+			return AST ('=', ast.lhs, _mapback (ast.rhs, assvar, exclude))
+		elif not ast.is_ufunc:
+			return AST (*(_mapback (a, assvar, exclude) for a in ast))
+
+		vars = _UFUNC_MAP.get (ast)
+
+		if vars: # prevent mapping to self on assignment
+			if ast.ufunc in vars and ast.ufunc not in exclude:
+				return AST ('@', ast.ufunc)
+
 			for var in vars:
 				if var not in exclude:
 					return AST ('@', var)
 
-	return AST (*(_ufunc_mapback (a, exclude) for a in ast))
+	return AST (*(_mapback (a, assvar, exclude) for a in ast))
 
 def _present_vars (vars):
 	asts = []
@@ -10063,10 +10220,8 @@ def _present_vars (vars):
 		if v != '_':
 			if e.is_lamb:
 				asts.append (AST ('=', ('-ufunc', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
- 				# asts.append (AST ('=', ('-func', v, tuple (('@', vv) for vv in e.vars)), e.lamb))
 			else:
 				asts.append (AST ('=', ('@', v), e))
-				# asts.append (AST ('=', ('@', v), _ufunc_mapback (e)))
 
 	return asts
 
@@ -10089,10 +10244,17 @@ def _vars_updated ():
 	sparser.set_sp_user_vars (vars)
 
 	_UFUNC_MAP.clear ()
+	_SYM_MAP.clear ()
+	_SYM_VARS.clear ()
 
-	for v, a in vars.items (): # build ufunc mapback list
-		if v != '_' and a.is_ufunc:
-			_UFUNC_MAP.setdefault (a, set ()).add (v)
+	for v, a in vars.items (): # build ufunc and sym mapback dict
+		if v != '_':
+			if a.is_ufunc:
+				_UFUNC_MAP.setdefault (a, set ()).add (v)
+
+			elif a.is_sym:
+				_SYM_MAP.setdefault (a, set ()).add (v)
+				_SYM_VARS.add (v)
 
 def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 	if not ast.ass_valid:
@@ -10108,23 +10270,38 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
-		vars = dict ((v.var, a) for v, a in vars.items ())
+		# vars = dict ((v.var, a) for v, a in vars.items ())
+		# vars = {v: AST (a.op, v, *a [2:]) if a.is_ufunc_anonymous or a.is_sym_anonymous else a for v, a in vars.items ()}
+
+		nvars = {}
+
+		for v, a in vars.items ():
+			v = v.var
+
+			if a.is_ufunc_anonymous:
+				a = AST (a.op, v, *a [2:])
+
+			elif a.is_sym_anonymous:
+				if a.is_sym_unqualified:
+					raise CircularReferenceError ('cannot asign unqualified anonymous symbol')
+
+				a = AST (a.op, v, *a [2:])
+
+			nvars [v] = a
 
 		try: # check for circular references
-			AST.apply_vars (AST (',', tuple (('@', v) for v in vars)), {**_VARS, **vars})
+			AST.apply_vars (AST (',', tuple (('@', v) for v in nvars)), {**_VARS, **nvars})
 		except RecursionError:
 			raise CircularReferenceError ("I'm sorry, Dave. I'm afraid I can't do that.") from None
 
-		vars = {v: AST (a.op, v, *a [2:]) if ((a.is_ufunc and not a.ufunc) or (a.is_sym and not a.sym)) else a for v, a in vars.items ()}
+		_VARS.update (nvars)
 
-		_VARS.update (vars)
-
-		return list (vars.items ())
+		return list (nvars.items ())
 
 	# start here
 	if not vars: # no assignment
-		if _UFUNC_MAPBACK and not ast.is_ufunc:
-			ast = _ufunc_mapback (ast)
+		if not ast.is_ufunc:
+			ast = _mapback (ast)
 
 		_VARS ['_'] = ast
 
@@ -10133,8 +10310,8 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		return [ast]
 
 	if len (vars) == 1: # simple assignment
-		if _UFUNC_MAPBACK:
-			ast = _ufunc_mapback (ast, {vars [0].var})
+		if ast.op not in {'-ufunc', '-sym'}:
+			ast = _mapback (ast, vars [0].var, {vars [0].var})
 
 		vars = set_vars ({vars [0]: ast})
 
@@ -10167,11 +10344,15 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		elif len (vars) > len (asts):
 			raise ValueError (f'not enough values to unpack (expected {len (vars)}, got {len (asts)})')
 
-		if _UFUNC_MAPBACK:
-			exclude = set (v.var for v in vars)
-			asts    = [_ufunc_mapback (ast, exclude) for ast in asts]
+		vasts   = list (zip (vars, asts))
+		exclude = set (va [0].var for va in filter (lambda va: va [1].is_ufunc, vasts))
+		asts    = [a if a.op in {'-ufunc', '-sym'} else _mapback (a, v.var, exclude) for v, a in vasts]
+		vars    = set_vars (dict (zip (vars, asts)))
 
-		vars = set_vars (dict (zip (vars, asts)))
+	# if len (vars) == 1:
+	# 	_VARS ['_'] = AST ('=', ('@', vars [0] [0]), vars [0] [1])
+	# else:
+	# 	_VARS ['_'] = AST ('(', (',', tuple (AST ('=', ('@', v [0]), v [1]) for v in vars)))
 
 	_vars_updated ()
 

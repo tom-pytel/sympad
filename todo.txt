@@ -1,5 +1,7 @@
 > ERROR! assign to ufuncs from iterable?
 
+> HTML escape printed text.
+
 > \gamma not accepted for gamma()?
 > Gamma not accepted for \Gamma -> gamma()?
 

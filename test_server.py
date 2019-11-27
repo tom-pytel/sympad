@@ -612,7 +612,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('s = $s'), {'err': "server.CircularReferenceError: I'm sorry, Dave. I'm afraid I can't do that."})
 		self.assertEqual (get ('s = $(real = True)'), {'math': ('s = $s(real = True)', "s = Symbol('s', real = True)", 's = \\$s\\left(real = True \\right)')})
 		self.assertEqual (get ('s'), {'math': ('s', 's', 's')})
-		self.assertEqual (get ('s = $s'), {'err': 'server.CircularReferenceError: trying to assign unqualified symbol to variable of same name'})
+		self.assertEqual (get ('s = $s'), {'err': 'server.CircularReferenceError: trying to assign unqualified symbol to variable of the same name'})
 		self.assertEqual (get ('s'), {'math': ('s', 's', 's')})
 		self.assertEqual (get ('s = $s(real = True)'), {'math': ('s = $s(real = True)', "s = Symbol('s', real = True)", 's = \\$s\\left(real = True \\right)')})
 		self.assertEqual (get ('s'), {'math': ('s', 's', 's')})
