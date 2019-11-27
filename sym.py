@@ -433,6 +433,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					(n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'})):
 				s = f'{{{s}}}'
 
+			is_exp          = i in ast.exp
 			paren_after_var = p and (s.startswith ('\\left(') and (p.tail_mul.is_var or p.tail_mul.is_attr_var))
 
 			if paren_after_var or (p and (
@@ -443,8 +444,9 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 					n.is_var_null or
  					n.op in {'#', '-mat'} or
 					(s.startswith ('\\left(') and (
+						is_exp or
 						p.is_ufunc or
-						i in ast.exp or
+						(p.strip_paren.is_lamb and n.is_paren_isolated) or
 						(p.is_diff_any_ufunc and not p.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw)))) or
  					(t [-1] [-1:] not in {'}', ')', ']'} and p.tail_mul.is_sym_unqualified) or
 					p.strip_minus.op in {'-lim', '-sum', '-diff', '-intg', '-mat'} or
@@ -458,17 +460,19 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 				a = _SYM_USER_VARS.get (v.var, AST.Null)
 
 				if paren_after_var and not (
-						i in ast.exp or
+						is_exp or
 						(v.is_var and (
 							AST.UFunc.valid_implicit_args (n.strip_paren1.as_ufunc_argskw [0])) or
 							(n.is_diffp and n.diffp.is_paren and AST.UFunc.valid_implicit_args (n.diffp.paren.as_ufunc_argskw [0])) or
 							(a.is_ufunc and a.apply_argskw (n.strip_paren1.as_ufunc_argskw)))):
-						# (a.is_diff_any_ufunc and a.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw))):
 
 					t.append (s)
 
 					if not t [-2].startswith ('{'):
 						t [-2] = f'{{{t [-2]}}}'
+
+				elif paren_after_var and not is_exp and n.is_paren_free and a.is_diff_any_ufunc and a.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw):
+					t.append (s)
 
 				else:
 					t.extend ([' \\cdot ', s])
@@ -836,6 +840,7 @@ class ast2nat: # abstract syntax tree -> native text
 			if n.strip_mmls.is_intg and n is not ast.mul [-1] and s [-1:] not in {'}', ')', ']'}:
 				s = f'{{{s}}}'
 
+			is_exp          = i in ast.exp
 			paren_after_var = p and (s.startswith ('(') and (p.tail_mul.is_var or p.tail_mul.is_attr_var))
 
 			if paren_after_var or (p and (
@@ -846,8 +851,9 @@ class ast2nat: # abstract syntax tree -> native text
 					n.is_var_null or
 					n.op in {'/', '-diff'} or
 					(s.startswith ('(') and (
+						is_exp or
 						p.is_ufunc or
-						i in ast.exp or
+						(p.strip_paren.is_lamb and n.is_paren_isolated) or
 						(p.is_diff_any_ufunc and not p.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw)))) or
 					n.strip_attrdp.is_subs_diff_ufunc or
  					(t [-1] [-1:] not in {'}', ')', ']'} and p.tail_mul.is_sym_unqualified) or
@@ -855,7 +861,6 @@ class ast2nat: # abstract syntax tree -> native text
 					(n.is_pow and (n.base.strip_paren.is_comma or n.base.is_num_pos)) or
 					(n.is_attr and n.strip_attr.strip_paren.is_comma) or
 					(n.is_idx and (n.obj.is_idx or n.obj.strip_paren.is_comma)) or
-					# (n.is_paren and p.tail_mul.is_var and not p.tail_mul.is_diff_or_part and n.as_pvarlist) or
 					(p.has_tail_lambda and n is ast.mul [-1] and t [-1] [-6:] == 'lambda') or
 					(p.tail_mul.is_var and p.tail_mul.var in _SYM_USER_FUNCS) or
 					s [:1] in {'e', 'E'} and t [-1] [-1].isdigit ())):
@@ -864,14 +869,16 @@ class ast2nat: # abstract syntax tree -> native text
 				a = _SYM_USER_VARS.get (v.var, AST.Null)
 
 				if paren_after_var and not (
-						i in ast.exp or
+						is_exp or
 						(v.is_var and (
 							AST.UFunc.valid_implicit_args (n.strip_paren1.as_ufunc_argskw [0])) or
 							(n.is_diffp and n.diffp.is_paren and AST.UFunc.valid_implicit_args (n.diffp.paren.as_ufunc_argskw [0])) or
 							(a.is_ufunc and a.apply_argskw (n.strip_paren1.as_ufunc_argskw)))):
-						# (a.is_diff_any_ufunc and a.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw))):
 
 					t.append (f'{{{s}}}')
+
+				elif paren_after_var and not is_exp and n.is_paren_free and a.is_diff_any_ufunc and a.diff_any.apply_argskw (n.strip_paren1.as_ufunc_argskw):
+					t.append (s)
 
 				else:
 					t.extend ([' * ', s])
@@ -1186,8 +1193,8 @@ class ast2py: # abstract syntax tree -> Python code text
 		nn = _ast_is_neg (ast.numer)
 		n  = self._ast2py_paren (ast.numer) if nn else self._ast2py_curly (ast.numer)
 		d  = self._ast2py_curly (ast.denom)
-		s  = " / " if nn or (ast.numer.strip_minus.op not in {"#", "@"} and not (ast.numer.is_func and ast.numer.func == 'S' and ast.numer.args.len == 1 and ast.numer.args [0].op in {"#", "@"})) or \
-			ast.denom.strip_minus.op not in {"#", "@"} or d.lstrip ("-") [:1] == "(" else "/"
+		s  = " / " if nn or (ast.numer.strip_minus.strip_pseudo.op not in {"#", "@"} and not (ast.numer.is_func and ast.numer.func == 'S' and ast.numer.args.len == 1 and ast.numer.args [0].op in {"#", "@"})) or \
+			ast.denom.strip_minus.strip_pseudo.op not in {"#", "@"} or d.lstrip ("-") [:1] == "(" else "/"
 
 		return f'{n}{s}{d}'
 
@@ -1502,7 +1509,7 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		for i in range (1, ast.mul.len):
 			m = mul [i]
 
-			if ast.mul [i].is_paren and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
+			if ast.mul [i].is_paren_free and i not in ast.exp: # non-explicit multiplication with tuple - possible function call intended: "y (...)"
 				o = out [-1]
 
 				if callable (o): # isinstance (o, sp.Lambda): # Lambda or other callable being called?

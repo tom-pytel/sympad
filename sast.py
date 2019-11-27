@@ -881,16 +881,14 @@ class AST_Curly (AST):
 class AST_Paren (AST):
 	op, is_paren = '(', True
 
-	def _init (self, paren):
-		self.paren = paren
+	def __new__ (cls, paren, isolated = False):
+		self                      = tuple.__new__ (cls, ('(', paren) if not isolated else ('(', paren, True))
+		self.paren, self.isolated = paren, isolated
 
-	def _as_pvarlist (self):
-		vars = self.paren.comma if self.paren.is_comma else (self.paren,)
+		return self
 
-		if all (v.is_var_nonconst for v in vars):
-			return vars
-
-		return None
+	_is_paren_isolated = lambda self: self.isolated
+	_is_paren_free     = lambda self: not self.isolated
 
 class AST_Brack (AST):
 	op, is_brack = '[', True

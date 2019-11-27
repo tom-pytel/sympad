@@ -751,7 +751,7 @@ def _expr_curly (ast, forceset = False):
 			elif forceset:
 				return AST ('-set', e)
 			else:
-				return AST ('{', ast)
+				return AST ('{', ast if not ast.is_paren else ('(', ast.paren, True))
 
 		kvs.append ((kv.start, kv.stop))
 
