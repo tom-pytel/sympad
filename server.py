@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.0.20'
+_VERSION         = '1.1'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
@@ -156,7 +156,7 @@ def _admin_env (*args):
 				_ENV [var] = state
 
 			if var == 'EI':
-				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.<i> - "EI"</i>')
+				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.')
 
 				if apply:
 					AST.EI (state)
@@ -166,7 +166,7 @@ def _admin_env (*args):
 							del _VARS [var]
 
 			elif var == 'quick':
-				msgs.append (f'Quick input mode is {"on" if state else "off"}.<i> - "quick"</i>')
+				msgs.append (f'Quick input mode is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_quick (state)
@@ -175,44 +175,44 @@ def _admin_env (*args):
 					vars_updated = True
 
 			elif var == 'pyS':
-				msgs.append (f'Python S escaping is {"on" if state else "off"}.<i> - "pyS"</i>')
+				msgs.append (f'Python S escaping is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_pyS (state)
 
 			elif var == 'simplify':
-				msgs.append (f'Post-evaluation simplify is {"on" if state else "off"}.<i> - "simplify"</i>')
+				msgs.append (f'Post-evaluation simplify is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_simplify (state)
 
 			elif var == 'matsimp':
-				msgs.append (f'Matrix simplify is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.<i> - "matsimp"</i>')
+				msgs.append (f'Matrix simplify is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.')
 
 				if apply:
 					spatch.set_matmulsimp (state)
 
 			elif var == 'ufuncmap':
-				msgs.append (f'Undefined function map to variable is {"on" if state else "off"}.<i> - "ufuncmap"</i>')
+				msgs.append (f'Undefined function map to variable is {"on" if state else "off"}.')
 
 				if apply:
 					global _UFUNC_MAPBACK
 					_UFUNC_MAPBACK = state
 
 			elif var == 'prodrat':
-				msgs.append (f'Leading product rational is {"on" if state else "off"}.<i> - "prodrat"</i>')
+				msgs.append (f'Leading product rational is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_prodrat (state)
 
 			elif var == 'doit':
-				msgs.append (f'Expression doit is {"on" if state else "off"}.<i> - "doit"</i>')
+				msgs.append (f'Expression doit is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_doit (state)
 
 			elif var == 'strict':
-				msgs.append (f'Strict LaTeX formatting is {"on" if state else "off"}.<i> - "strict"</i>')
+				msgs.append (f'Strict LaTeX formatting is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_strict (state)
@@ -368,9 +368,6 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
-		# vars = dict ((v.var, a) for v, a in vars.items ())
-		# vars = {v: AST (a.op, v, *a [2:]) if a.is_ufunc_anonymous or a.is_sym_anonymous else a for v, a in vars.items ()}
-
 		nvars = {}
 
 		for v, a in vars.items ():
@@ -446,11 +443,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		exclude = set (va [0].var for va in filter (lambda va: va [1].is_ufunc, vasts))
 		asts    = [a if a.op in {'-ufunc', '-sym'} else _mapback (a, v.var, exclude) for v, a in vasts]
 		vars    = set_vars (dict (zip (vars, asts)))
-
-	# if len (vars) == 1:
-	# 	_VARS ['_'] = AST ('=', ('@', vars [0] [0]), vars [0] [1])
-	# else:
-	# 	_VARS ['_'] = AST ('(', (',', tuple (AST ('=', ('@', v [0]), v [1]) for v in vars)))
 
 	_vars_updated ()
 

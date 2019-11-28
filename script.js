@@ -55,18 +55,15 @@ function copyInputStyle () {
 	overlay.style ['pointer-events'] = 'none';
 }
 
-//...............................................................................................
 function scrollToEnd () {
 	window.scrollTo (0, document.body.scrollHeight);
 }
 
-//...............................................................................................
 function resize () {
 	copyInputStyle ();
 	scrollToEnd ();
 }
 
-//...............................................................................................
 var LastDocHeight = undefined;
 var LastWinHeight = undefined;
 
@@ -89,7 +86,6 @@ function monitorStuff () {
 	setTimeout (monitorStuff, 50);
 }
 
-//...............................................................................................
 function readyMathJax () {
 	window.MJQueue = MathJax.Hub.queue;
 
@@ -105,13 +101,33 @@ function readyMathJax () {
 	}
 }
 
-//...............................................................................................
 function reprioritizeMJQueue () {
 	let p = MJQueue.queue.pop ();
 
 	if (p !== undefined) {
 		MJQueue.queue.splice (0, 0, p);
 	}
+}
+
+function escapeHTML (text) {
+	const entityMap = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#39;',
+		'/': '&#x2F;',
+		'`': '&#x60;',
+		'=': '&#x3D;'
+	};
+
+	return text.replace (/[&<>"'`=\/]/g, function (s) {
+		return entityMap [s];
+	});
+}
+
+function escapeHTMLtex (text) {
+	return text.replace (/\\text{(['"]).*?\1}/g, escapeHTML);
 }
 
 //...............................................................................................
@@ -124,7 +140,6 @@ function logResize () {
 	}
 }
 
-//...............................................................................................
 function addLogEntry () {
 	LogIdx += 1;
 
@@ -137,7 +152,6 @@ function addLogEntry () {
 	Evaluations.push (undefined);
 }
 
-//...............................................................................................
 function updateNumClicks () {
 	let t = performance.now ();
 
@@ -150,7 +164,6 @@ function updateNumClicks () {
 	LastClickTime = t;
 }
 
-//...............................................................................................
 function flashElement (e) {
 	e.style.color      = 'white';
 	e.style.background = 'black';
@@ -161,7 +174,6 @@ function flashElement (e) {
 	}, 100);
 }
 
-//...............................................................................................
 function writeToClipboard (text) {
 	PreventFocusOut = false;
 
@@ -177,13 +189,11 @@ function writeToClipboard (text) {
 	}
 }
 
-//...............................................................................................
 function cE2C (e) {
 	writeToClipboard (e.textContent);
 	flashElement (e);
 }
 
-//...............................................................................................
 function copyLogToClipboard (e, val_or_eval, idx, subidx = 0, mathidx = 0) {
 	let resp = val_or_eval ? Evaluations [idx].data [subidx].math [mathidx] : Validations [idx];
 
@@ -192,7 +202,6 @@ function copyLogToClipboard (e, val_or_eval, idx, subidx = 0, mathidx = 0) {
 	flashElement (e);
 }
 
-//...............................................................................................
 function copyVarToClipboard (e, full = true) {
 	updateNumClicks ();
 
@@ -212,7 +221,6 @@ function copyVarToClipboard (e, full = true) {
 	flashElement (full ? e : e.childNodes [2]);
 }
 
-//...............................................................................................
 function updateOverlayPosition () {
 	let left       = -JQInput.scrollLeft ();
 	let goodwidth  = $('#OverlayGood').width ();
@@ -223,7 +231,6 @@ function updateOverlayPosition () {
 	$('#OverlayAutocomplete').css ({top: 0, left: left + goodwidth + errorwidth});
 }
 
-//...............................................................................................
 function updateOverlay (text, erridx, autocomplete) {
 	ErrorIdx     = erridx;
 	Autocomplete = autocomplete;
@@ -266,7 +273,7 @@ function ajaxValidate (resp) {
 		let math                       = resp.tex ? `$${resp.tex}$` : '';
 		eLogInputWait.style.visibility = '';
 
-		$(eLogInput).append (`<span class="CopySpan" onclick="copyLogToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
+		$(eLogInput).append (`<span class="CopySpan" onclick="copyLogToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${escapeHTMLtex (math)}</span>`);
 
 		let eMath = eLogInput.lastElementChild;
 
@@ -292,7 +299,6 @@ function ajaxValidate (resp) {
 	updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
 }
 
-//...............................................................................................
 function ajaxEvaluate (resp) {
 	Variables.update (resp.vars);
 
@@ -306,7 +312,7 @@ function ajaxEvaluate (resp) {
 
 		if (subresp.msg !== undefined && subresp.msg.length) { // message present?
 			for (let msg of subresp.msg) {
-				$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
+				$(eLogEval).append (`<div class="LogMsg">${escapeHTML (msg.replace (/  /g, '&emsp;'))}</div>`);
 			}
 
 			logResize ();
@@ -318,7 +324,7 @@ function ajaxEvaluate (resp) {
 				$(eLogEval).append (`<div class="LogEval"></div>`);
 				let eLogEvalDiv = eLogEval.lastElementChild;
 
-				$(eLogEvalDiv).append (`<span class="CopySpan" style="visibility: hidden" onclick="copyLogToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${subresp.math [mathidx].tex}$</span>`);
+				$(eLogEvalDiv).append (`<span class="CopySpan" style="visibility: hidden" onclick="copyLogToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${escapeHTMLtex (subresp.math [mathidx].tex)}$</span>`);
 				let eLogEvalMath = eLogEvalDiv.lastElementChild;
 
 				$(eLogEvalDiv).append (`<img class="LogWait" src="${WaitIcon}" width="16">`);
@@ -348,11 +354,11 @@ function ajaxEvaluate (resp) {
 				eLogErrorHidden = eErrorHiddenBox.lastElementChild;
 
 				for (let i = 0; i < subresp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append (`<div class="LogError">${subresp.err [i].replace (/  /g, '&emsp;')}</div>`);
+					$(eLogErrorHidden).append (`<div class="LogError">${escapeHTML (subresp.err [i].replace (/  /g, '&emsp;'))}</div>`);
 				}
 			}
 
-			$(eLogEval).append (`<div class="LogError">${subresp.err [subresp.err.length - 1]}</div>`);
+			$(eLogEval).append (`<div class="LogError">${escapeHTML (subresp.err [subresp.err.length - 1])}</div>`);
 			let eLogErrorBottom = eLogEval.lastElementChild;
 
 			if (subresp.err.length > 1) {
@@ -405,7 +411,6 @@ function ajaxEvaluate (resp) {
 	}
 }
 
-//...............................................................................................
 function inputting (text, reset = false) {
 	if (reset) {
 		ErrorIdx     = null;
@@ -431,7 +436,6 @@ function inputting (text, reset = false) {
 	});
 }
 
-//...............................................................................................
 function inputted (text) {
 	$.ajax ({
 		url: URL,
@@ -493,7 +497,7 @@ function inputKeypress (e) {
 			let eLogInput = document.getElementById (`LogInput${LastValidation.idx}`);
 
 			$('#ValidationError').remove ();
-			$(eLogInput).append (`<span id="ValidationError">&lt;-- ${LastValidation.error}</span>`)
+			$(eLogInput).append (`<span id="ValidationError">&lt;-- ${escapeHTML (LastValidation.error)}</span>`)
 		}
 
 	} else if (e.which == 32) {
@@ -505,7 +509,6 @@ function inputKeypress (e) {
 	return true;
 }
 
-//...............................................................................................
 function inputKeydown (e) {
 	if (e.code == 'Escape') {
 		e.preventDefault ();
@@ -610,7 +613,7 @@ class _Variables {
 
 			let inserted = false;
 			let isfunc   = n.includes ('(');
-			let e        = $(`<tr><td onclick="copyVarToClipboard (this)">$${v.tex [0]}$</td><td class="VarTCell" onclick="copyVarToClipboard (this)">$=$</td><td class="VarTCell" onclick="copyVarToClipboard (this, false)">$${v.tex [1]}$</td></tr>`);
+			let e        = $(`<tr><td onclick="copyVarToClipboard (this)">$${escapeHTMLtex (v.tex [0])}$</td><td class="VarTCell" onclick="copyVarToClipboard (this)">$=$</td><td class="VarTCell" onclick="copyVarToClipboard (this, false)">$${escapeHTMLtex (v.tex [1])}$</td></tr>`);
 			e [0].name   = n;
 			e [0].val    = v.tex.join (' = ');
 			added        = true;
@@ -700,30 +703,7 @@ $(function () {
 		type: 'POST',
 		cache: false,
 		dataType: 'json',
-		success: first_vars_update, // function (resp) { Variables.update (resp.vars); },
+		success: first_vars_update,
 		data: {mode: 'vars'},
 	});
 });
-
-
-// $('#txtSearch').blur(function (event) {
-// 	setTimeout(function () { $("#txtSearch").focus(); }, 20);
-// });
-
-// document.getElementById('txtSearch').addEventListener('blur', e => {
-//   e.target.focus();
-// });
-
-// cursor_test = function (element) {
-// 	if (!element.children.length && element.innerText == '∥') {
-// 		console.log (element, element.classList);
-// 		element.innerText = '|';
-// 		element.classList.add ('blinking');
-// 	}
-
-// 	for (let e of element.children) {
-// 		cursor_test (e);
-// 	}
-// }
-
-// cursor_test (eLogInput.children [0]);

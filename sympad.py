@@ -321,18 +321,15 @@ function copyInputStyle () {
 	overlay.style ['pointer-events'] = 'none';
 }
 
-//...............................................................................................
 function scrollToEnd () {
 	window.scrollTo (0, document.body.scrollHeight);
 }
 
-//...............................................................................................
 function resize () {
 	copyInputStyle ();
 	scrollToEnd ();
 }
 
-//...............................................................................................
 var LastDocHeight = undefined;
 var LastWinHeight = undefined;
 
@@ -355,7 +352,6 @@ function monitorStuff () {
 	setTimeout (monitorStuff, 50);
 }
 
-//...............................................................................................
 function readyMathJax () {
 	window.MJQueue = MathJax.Hub.queue;
 
@@ -371,13 +367,33 @@ function readyMathJax () {
 	}
 }
 
-//...............................................................................................
 function reprioritizeMJQueue () {
 	let p = MJQueue.queue.pop ();
 
 	if (p !== undefined) {
 		MJQueue.queue.splice (0, 0, p);
 	}
+}
+
+function escapeHTML (text) {
+	const entityMap = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#39;',
+		'/': '&#x2F;',
+		'`': '&#x60;',
+		'=': '&#x3D;'
+	};
+
+	return text.replace (/[&<>"'`=\/]/g, function (s) {
+		return entityMap [s];
+	});
+}
+
+function escapeHTMLtex (text) {
+	return text.replace (/\\text{(['"]).*?\1}/g, escapeHTML);
 }
 
 //...............................................................................................
@@ -390,7 +406,6 @@ function logResize () {
 	}
 }
 
-//...............................................................................................
 function addLogEntry () {
 	LogIdx += 1;
 
@@ -403,7 +418,6 @@ function addLogEntry () {
 	Evaluations.push (undefined);
 }
 
-//...............................................................................................
 function updateNumClicks () {
 	let t = performance.now ();
 
@@ -416,7 +430,6 @@ function updateNumClicks () {
 	LastClickTime = t;
 }
 
-//...............................................................................................
 function flashElement (e) {
 	e.style.color      = 'white';
 	e.style.background = 'black';
@@ -427,7 +440,6 @@ function flashElement (e) {
 	}, 100);
 }
 
-//...............................................................................................
 function writeToClipboard (text) {
 	PreventFocusOut = false;
 
@@ -443,13 +455,11 @@ function writeToClipboard (text) {
 	}
 }
 
-//...............................................................................................
 function cE2C (e) {
 	writeToClipboard (e.textContent);
 	flashElement (e);
 }
 
-//...............................................................................................
 function copyLogToClipboard (e, val_or_eval, idx, subidx = 0, mathidx = 0) {
 	let resp = val_or_eval ? Evaluations [idx].data [subidx].math [mathidx] : Validations [idx];
 
@@ -458,7 +468,6 @@ function copyLogToClipboard (e, val_or_eval, idx, subidx = 0, mathidx = 0) {
 	flashElement (e);
 }
 
-//...............................................................................................
 function copyVarToClipboard (e, full = true) {
 	updateNumClicks ();
 
@@ -478,7 +487,6 @@ function copyVarToClipboard (e, full = true) {
 	flashElement (full ? e : e.childNodes [2]);
 }
 
-//...............................................................................................
 function updateOverlayPosition () {
 	let left       = -JQInput.scrollLeft ();
 	let goodwidth  = $('#OverlayGood').width ();
@@ -489,7 +497,6 @@ function updateOverlayPosition () {
 	$('#OverlayAutocomplete').css ({top: 0, left: left + goodwidth + errorwidth});
 }
 
-//...............................................................................................
 function updateOverlay (text, erridx, autocomplete) {
 	ErrorIdx     = erridx;
 	Autocomplete = autocomplete;
@@ -532,7 +539,7 @@ function ajaxValidate (resp) {
 		let math                       = resp.tex ? `$${resp.tex}$` : '';
 		eLogInputWait.style.visibility = '';
 
-		$(eLogInput).append (`<span class="CopySpan" onclick="copyLogToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${math}</span>`);
+		$(eLogInput).append (`<span class="CopySpan" onclick="copyLogToClipboard (this, 0, ${resp.idx})" style="visibility: hidden">${escapeHTMLtex (math)}</span>`);
 
 		let eMath = eLogInput.lastElementChild;
 
@@ -558,7 +565,6 @@ function ajaxValidate (resp) {
 	updateOverlay (JQInput.val (), resp.erridx, resp.autocomplete);
 }
 
-//...............................................................................................
 function ajaxEvaluate (resp) {
 	Variables.update (resp.vars);
 
@@ -572,7 +578,7 @@ function ajaxEvaluate (resp) {
 
 		if (subresp.msg !== undefined && subresp.msg.length) { // message present?
 			for (let msg of subresp.msg) {
-				$(eLogEval).append (`<div class="LogMsg">${msg.replace (/  /g, '&emsp;')}</div>`);
+				$(eLogEval).append (`<div class="LogMsg">${escapeHTML (msg.replace (/  /g, '&emsp;'))}</div>`);
 			}
 
 			logResize ();
@@ -584,7 +590,7 @@ function ajaxEvaluate (resp) {
 				$(eLogEval).append (`<div class="LogEval"></div>`);
 				let eLogEvalDiv = eLogEval.lastElementChild;
 
-				$(eLogEvalDiv).append (`<span class="CopySpan" style="visibility: hidden" onclick="copyLogToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${subresp.math [mathidx].tex}$</span>`);
+				$(eLogEvalDiv).append (`<span class="CopySpan" style="visibility: hidden" onclick="copyLogToClipboard (this, 1, ${resp.idx}, ${subidx}, ${mathidx})">$${escapeHTMLtex (subresp.math [mathidx].tex)}$</span>`);
 				let eLogEvalMath = eLogEvalDiv.lastElementChild;
 
 				$(eLogEvalDiv).append (`<img class="LogWait" src="${WaitIcon}" width="16">`);
@@ -614,11 +620,11 @@ function ajaxEvaluate (resp) {
 				eLogErrorHidden = eErrorHiddenBox.lastElementChild;
 
 				for (let i = 0; i < subresp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append (`<div class="LogError">${subresp.err [i].replace (/  /g, '&emsp;')}</div>`);
+					$(eLogErrorHidden).append (`<div class="LogError">${escapeHTML (subresp.err [i].replace (/  /g, '&emsp;'))}</div>`);
 				}
 			}
 
-			$(eLogEval).append (`<div class="LogError">${subresp.err [subresp.err.length - 1]}</div>`);
+			$(eLogEval).append (`<div class="LogError">${escapeHTML (subresp.err [subresp.err.length - 1])}</div>`);
 			let eLogErrorBottom = eLogEval.lastElementChild;
 
 			if (subresp.err.length > 1) {
@@ -671,7 +677,6 @@ function ajaxEvaluate (resp) {
 	}
 }
 
-//...............................................................................................
 function inputting (text, reset = false) {
 	if (reset) {
 		ErrorIdx     = null;
@@ -697,7 +702,6 @@ function inputting (text, reset = false) {
 	});
 }
 
-//...............................................................................................
 function inputted (text) {
 	$.ajax ({
 		url: URL,
@@ -759,7 +763,7 @@ function inputKeypress (e) {
 			let eLogInput = document.getElementById (`LogInput${LastValidation.idx}`);
 
 			$('#ValidationError').remove ();
-			$(eLogInput).append (`<span id="ValidationError">&lt;-- ${LastValidation.error}</span>`)
+			$(eLogInput).append (`<span id="ValidationError">&lt;-- ${escapeHTML (LastValidation.error)}</span>`)
 		}
 
 	} else if (e.which == 32) {
@@ -771,7 +775,6 @@ function inputKeypress (e) {
 	return true;
 }
 
-//...............................................................................................
 function inputKeydown (e) {
 	if (e.code == 'Escape') {
 		e.preventDefault ();
@@ -876,7 +879,7 @@ class _Variables {
 
 			let inserted = false;
 			let isfunc   = n.includes ('(');
-			let e        = $(`<tr><td onclick="copyVarToClipboard (this)">$${v.tex [0]}$</td><td class="VarTCell" onclick="copyVarToClipboard (this)">$=$</td><td class="VarTCell" onclick="copyVarToClipboard (this, false)">$${v.tex [1]}$</td></tr>`);
+			let e        = $(`<tr><td onclick="copyVarToClipboard (this)">$${escapeHTMLtex (v.tex [0])}$</td><td class="VarTCell" onclick="copyVarToClipboard (this)">$=$</td><td class="VarTCell" onclick="copyVarToClipboard (this, false)">$${escapeHTMLtex (v.tex [1])}$</td></tr>`);
 			e [0].name   = n;
 			e [0].val    = v.tex.join (' = ');
 			added        = true;
@@ -966,33 +969,10 @@ $(function () {
 		type: 'POST',
 		cache: false,
 		dataType: 'json',
-		success: first_vars_update, // function (resp) { Variables.update (resp.vars); },
+		success: first_vars_update,
 		data: {mode: 'vars'},
 	});
 });
-
-
-// $('#txtSearch').blur(function (event) {
-// 	setTimeout(function () { $("#txtSearch").focus(); }, 20);
-// });
-
-// document.getElementById('txtSearch').addEventListener('blur', e => {
-//   e.target.focus();
-// });
-
-// cursor_test = function (element) {
-// 	if (!element.children.length && element.innerText == '∥') {
-// 		console.log (element, element.classList);
-// 		element.innerText = '|';
-// 		element.classList.add ('blinking');
-// 	}
-
-// 	for (let e of element.children) {
-// 		cursor_test (e);
-// 	}
-// }
-
-// cursor_test (eLogInput.children [0]);
 """.encode ("utf8"),
 
 	'index.html': # index.html
@@ -4261,12 +4241,6 @@ class AST (tuple):
 		elif ast.is_var: # regular var substitution?
 			expr = vars.get (ast.var)
 
-			# if not expr:
-			# 	if expr is not False and '#' in vars: # if scoped out and var is masked out then replace with dummy
-			# 		return AST ('@', f'_{ast.var}')
-			# 	else:
-			# 		return ast
-
 			if not expr:
 				return ast
 			elif not expr.is_lamb:
@@ -4288,7 +4262,6 @@ class AST (tuple):
 
 		elif ast.is_subs:
 			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs)) # without mapping src
-			# return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((AST.apply_vars (src, vars, ast, mode), AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs)) # mapping src
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})
@@ -4335,9 +4308,6 @@ class AST (tuple):
 		elif ast.is_func: # function, might be user lambda call
 			if ast.func == AST.Func.NOREMAP:
 				return AST.apply_vars (ast.args [0], scopeout (vars), ast, mode)
-				# vars = scopeout (vars)
-
-				# return AST ('-func', ast.func, tuple (AST.apply_vars (a, vars, ast, mode) for a in ast.args))
 
 			else:
 				lamb = vars.get (ast.func)
@@ -5530,7 +5500,6 @@ def _xlat_pyS (ast, need = False): # Python S(1)/2 escaping where necessary
 
 	es = [_xlat_pyS (a) for a in ast]
 
-	# TODO: '<>' might be problematic in cases where it has an 'in' or 'notin'
 	return AST (*tuple (e [0] for e in es)), \
 			ast.op in {'=', '<>', '@', '.', '|', '!', '-log', '-sqrt', '-func', '-lim', '-sum', '-diff', '-intg', '-mat', '-piece', '-lamb', '||', '^^', '&&', '-or', '-and', '-not', '-ufunc', '-subs'} or any (e [1] for e in es)
 
@@ -6617,7 +6586,6 @@ class ast2nat: # abstract syntax tree -> native text
 		'-log'  : _ast2nat_log,
 		'-sqrt' : lambda self, ast: f'sqrt{"" if ast.idx is None else f"[{self._ast2nat (ast.idx)}]"}({self._ast2nat (ast.rad)})',
 		'-func' : lambda self, ast: f"{ast.func}{self._ast2nat_wrap (AST.tuple2argskw (ast.args), 0, not (ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'#', '@', '(', '[', '|', '-func', '-mat', '-set', '-dict'}))}",
-		# '-func' : lambda self, ast: f"{ast.func}({self._ast2nat (AST.tuple2argskw (ast.args))})",
 		'-lim'  : _ast2nat_lim,
 		'-sum'  : _ast2nat_sum,
 		'-diff' : _ast2nat_diff,
@@ -6736,7 +6704,6 @@ class ast2py: # abstract syntax tree -> Python code text
 		return ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - ')
 
 	def _ast2py_mul (self, ast):
-		# return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
 		def py (a):
 			return self._ast2py_paren (a, a.is_cmp_in or a.op in {',', '+'} or (a is not ast.mul [0] and (a.is_div or a.is_log_with_base)))
 
@@ -7206,9 +7173,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		spt                   = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
 		spt.is_ufunc_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through
 
-		# if _ast_is_top_ass_lhs (self, ast): # spt if it is on left side of assign at top level
-		# 	spt.is_ufunc_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through
-
 		return spt
 
 	def _ast2spt_subs (self, ast):
@@ -7281,9 +7245,6 @@ class spt2ast:
 
 			tex  = sp.latex (spt)
 			text = str (spt)
-
-			# if tex == text: # no native latex representation?
-			# 	tex = tex.replace ('_', '\\_')
 
 			if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
 				tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
@@ -7468,7 +7429,6 @@ class spt2ast:
 		name = f'?{spt.name}' if not spt.name or getattr (spt, 'is_ufunc_explicit', False) else spt.name
 
 		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
-		# return AST ('-ufunc', f'?{spt.name}', tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__
@@ -8514,7 +8474,7 @@ class Parser (LALR1):
 			b'j5Hu3MZ6tXze6spNAy70v/qNZXfB7Fh59JzRDLe7ZOOKmYvSmN3wPQuPmsFgY1VbPqn2yGbizOfNy81Ft3vCDZV5xXi8hv6CObxiNoYagm+LKVuysZ6NzvsVPTtLz8yubOnGerbOJOdWCHWWRxS+perWNhZucXd7hS8fu7WNhXtFc5tbeTyBC2sv3nhtbP9Z' \
 			b'LdH+6ygXdZjEOSnJ3MYKVFaaLlcgs7vXjXWmePct1xm7u9eNdaYssV2uM93uXjfWmeK7uFhn8L26d7qxzpTX3C3XmWp3rxu/lLS4ZC7XmXp3rxvrzAVTs3erM2Z3rxvrDL6kmt44XfMNDqiEBMhS6MZiADY7BVb4Enc+AcN0rUmgCBQDRGZxQQv6V+CrB9nj' \
 			b'DfQsGxuEm344th/ERoHTFahe6aeWZ2CgWf0btBtUG37O2XQcnr69jGOAgkBTYPyWX9GPKkkq2JDaoVphOKgOv5QZDHOSCqlyc6S+QXXRkxffyM0v+YcWkRf880v026MX54eX5uNqfh6igD6/wk4DSk7vt0HVZkBAtslrweG6lv3CnMHjGkPlBsRZ3G9oub1c' \
-			b'3fQhYDy+fv7/AWiDPAA='
+			b'3fQhYDy+fv7/AWiDPAA=' 
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -8646,7 +8606,6 @@ class Parser (LALR1):
 	_IN_QUICK      = r"in(?!teger_|tegrate|teractive_traversal|terpolate|tersecti|tervals|v_quick|verse_|vert)"
 
 	TOKENS_QUICK   = OrderedDict ([ # quick input mode different tokens (differences from normal)
-		# ('FUNC',         fr'(@|\%|{_FUNCPY}(?!\w|\\_))|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:(?:\w|\\_)*{_LTRD})?)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 		('FUNC',         fr'(@|\%|{_FUNCPY_QUICK})|\\({_FUNCTEX})|\\operatorname\s*{{\s*({_LTR}(?:(?:\w|\\_)*{_LTRD})?)(?:_{{(\d+)}})?\s*}}'), # AST.Func.NOREMAP, AST.Func.NOEVAL HERE!
 
 		('LIM',          fr'\\lim_'),
@@ -9932,7 +9891,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.0.20'
+_VERSION         = '1.1'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
@@ -10058,7 +10017,7 @@ def _admin_env (*args):
 				_ENV [var] = state
 
 			if var == 'EI':
-				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.<i> - "EI"</i>')
+				msgs.append (f'Uppercase E and I is {"on" if state else "off"}.')
 
 				if apply:
 					AST.EI (state)
@@ -10068,7 +10027,7 @@ def _admin_env (*args):
 							del _VARS [var]
 
 			elif var == 'quick':
-				msgs.append (f'Quick input mode is {"on" if state else "off"}.<i> - "quick"</i>')
+				msgs.append (f'Quick input mode is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_quick (state)
@@ -10077,44 +10036,44 @@ def _admin_env (*args):
 					vars_updated = True
 
 			elif var == 'pyS':
-				msgs.append (f'Python S escaping is {"on" if state else "off"}.<i> - "pyS"</i>')
+				msgs.append (f'Python S escaping is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_pyS (state)
 
 			elif var == 'simplify':
-				msgs.append (f'Post-evaluation simplify is {"on" if state else "off"}.<i> - "simplify"</i>')
+				msgs.append (f'Post-evaluation simplify is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_simplify (state)
 
 			elif var == 'matsimp':
-				msgs.append (f'Matrix simplify is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.<i> - "matsimp"</i>')
+				msgs.append (f'Matrix simplify is {"broken" if not spatch.SPATCHED else "on" if state else "off"}.')
 
 				if apply:
 					spatch.set_matmulsimp (state)
 
 			elif var == 'ufuncmap':
-				msgs.append (f'Undefined function map to variable is {"on" if state else "off"}.<i> - "ufuncmap"</i>')
+				msgs.append (f'Undefined function map to variable is {"on" if state else "off"}.')
 
 				if apply:
 					global _UFUNC_MAPBACK
 					_UFUNC_MAPBACK = state
 
 			elif var == 'prodrat':
-				msgs.append (f'Leading product rational is {"on" if state else "off"}.<i> - "prodrat"</i>')
+				msgs.append (f'Leading product rational is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_prodrat (state)
 
 			elif var == 'doit':
-				msgs.append (f'Expression doit is {"on" if state else "off"}.<i> - "doit"</i>')
+				msgs.append (f'Expression doit is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_doit (state)
 
 			elif var == 'strict':
-				msgs.append (f'Strict LaTeX formatting is {"on" if state else "off"}.<i> - "strict"</i>')
+				msgs.append (f'Strict LaTeX formatting is {"on" if state else "off"}.')
 
 				if apply:
 					sym.set_strict (state)
@@ -10270,9 +10229,6 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
-		# vars = dict ((v.var, a) for v, a in vars.items ())
-		# vars = {v: AST (a.op, v, *a [2:]) if a.is_ufunc_anonymous or a.is_sym_anonymous else a for v, a in vars.items ()}
-
 		nvars = {}
 
 		for v, a in vars.items ():
@@ -10348,11 +10304,6 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		exclude = set (va [0].var for va in filter (lambda va: va [1].is_ufunc, vasts))
 		asts    = [a if a.op in {'-ufunc', '-sym'} else _mapback (a, v.var, exclude) for v, a in vasts]
 		vars    = set_vars (dict (zip (vars, asts)))
-
-	# if len (vars) == 1:
-	# 	_VARS ['_'] = AST ('=', ('@', vars [0] [0]), vars [0] [1])
-	# else:
-	# 	_VARS ['_'] = AST ('(', (',', tuple (AST ('=', ('@', v [0]), v [1]) for v in vars)))
 
 	_vars_updated ()
 

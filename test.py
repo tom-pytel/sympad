@@ -4632,5 +4632,4 @@ if __name__ == '__main__':
 
 				testpy [start + 1 : end] = (f'{line}\n' for line in lines [1:])
 
-				open ('test.py', 'w').writelines (testpy)
-
+				open ('test.py', 'w', newline = '\n').writelines (testpy)

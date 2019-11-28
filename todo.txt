@@ -1,6 +1,6 @@
 > ERROR! assign to ufuncs from iterable?
 
-> HTML escape printed text.
+> HTML escape sympad strings for tex display.
 
 > \gamma not accepted for gamma()?
 > Gamma not accepted for \Gamma -> gamma()?

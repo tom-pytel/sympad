@@ -1068,7 +1068,6 @@ class ast2nat: # abstract syntax tree -> native text
 		'-log'  : _ast2nat_log,
 		'-sqrt' : lambda self, ast: f'sqrt{"" if ast.idx is None else f"[{self._ast2nat (ast.idx)}]"}({self._ast2nat (ast.rad)})',
 		'-func' : lambda self, ast: f"{ast.func}{self._ast2nat_wrap (AST.tuple2argskw (ast.args), 0, not (ast.func in {AST.Func.NOREMAP, AST.Func.NOEVAL} and ast.args [0].op in {'#', '@', '(', '[', '|', '-func', '-mat', '-set', '-dict'}))}",
-		# '-func' : lambda self, ast: f"{ast.func}({self._ast2nat (AST.tuple2argskw (ast.args))})",
 		'-lim'  : _ast2nat_lim,
 		'-sum'  : _ast2nat_sum,
 		'-diff' : _ast2nat_diff,
@@ -1187,7 +1186,6 @@ class ast2py: # abstract syntax tree -> Python code text
 		return ' + '.join (self._ast2py_paren (n, n.is_cmp_in or (n is not ast.add [0] and (n.is_num_neg or (n.is_mul and _ast_is_neg (n.mul [0]))))) for n in ast.add).replace (' + -', ' - ')
 
 	def _ast2py_mul (self, ast):
-		# return '*'.join (self._ast2py_paren (n, n.is_cmp_in or n.is_add or (n is not ast.mul [0] and (n.is_div or n.is_log_with_base))) for n in ast.mul)
 		def py (a):
 			return self._ast2py_paren (a, a.is_cmp_in or a.op in {',', '+'} or (a is not ast.mul [0] and (a.is_div or a.is_log_with_base)))
 
@@ -1657,9 +1655,6 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		spt                   = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
 		spt.is_ufunc_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through
 
-		# if _ast_is_top_ass_lhs (self, ast): # spt if it is on left side of assign at top level
-		# 	spt.is_ufunc_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through
-
 		return spt
 
 	def _ast2spt_subs (self, ast):
@@ -1732,9 +1727,6 @@ class spt2ast:
 
 			tex  = sp.latex (spt)
 			text = str (spt)
-
-			# if tex == text: # no native latex representation?
-			# 	tex = tex.replace ('_', '\\_')
 
 			if tex [0] == '<' and tex [-1] == '>': # for Python repr style of objects <class something> TODO: Move this to Javascript.
 				tex = '\\text{' + tex.replace ("<", "&lt;").replace (">", "&gt;").replace ("\n", "") + '}'
@@ -1919,7 +1911,6 @@ class spt2ast:
 		name = f'?{spt.name}' if not spt.name or getattr (spt, 'is_ufunc_explicit', False) else spt.name
 
 		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
-		# return AST ('-ufunc', f'?{spt.name}', tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__

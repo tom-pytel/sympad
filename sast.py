@@ -582,12 +582,6 @@ class AST (tuple):
 		elif ast.is_var: # regular var substitution?
 			expr = vars.get (ast.var)
 
-			# if not expr:
-			# 	if expr is not False and '#' in vars: # if scoped out and var is masked out then replace with dummy
-			# 		return AST ('@', f'_{ast.var}')
-			# 	else:
-			# 		return ast
-
 			if not expr:
 				return ast
 			elif not expr.is_lamb:
@@ -609,7 +603,6 @@ class AST (tuple):
 
 		elif ast.is_subs:
 			return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((src, AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs)) # without mapping src
-			# return AST ('-subs', AST.apply_vars (ast.expr, vars, ast, mode), tuple ((AST.apply_vars (src, vars, ast, mode), AST.apply_vars (dst, vars, ast, mode)) for src, dst in ast.subs)) # mapping src
 
 		elif ast.op in {'-lim', '-sum'}:
 			vars = push (vars, {ast [2].var: False})
@@ -656,9 +649,6 @@ class AST (tuple):
 		elif ast.is_func: # function, might be user lambda call
 			if ast.func == AST.Func.NOREMAP:
 				return AST.apply_vars (ast.args [0], scopeout (vars), ast, mode)
-				# vars = scopeout (vars)
-
-				# return AST ('-func', ast.func, tuple (AST.apply_vars (a, vars, ast, mode) for a in ast.args))
 
 			else:
 				lamb = vars.get (ast.func)
