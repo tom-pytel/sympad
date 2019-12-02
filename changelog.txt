@@ -1,3 +1,8 @@
+v1.1.1:
+-------
+* Finally put sympad on PyPI.
+* Removed recursive execution of script and relegated it to a command line switch for development.
+
 v1.1:
 -----
 * Major grammar rework to remove redundant conflicts for speedup and to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)), \int, \sum and \lim among other things.

@@ -2377,6 +2377,7 @@ This allows the Python code copied from SymPad to work directly with SymPy where
 <tr><td><b>-n, --nobrowser</b></td><td>-</td><td>Don't start system browser to SymPad page.</td></tr>
 <tr><td><b>-u, --ugly</b></td><td>-</td><td>Start in draft display style (only on command line).</td></tr>
 <tr><td><b>-d, --debug</b></td><td>-</td><td>Dump debug info to server log.</td></tr>
+<tr><td><b>-r, --restart</b></td><td>-</td><td>Restart server on source file changes (for development).</td></tr>
 <tr><td><b>--EI, --noEI</b></td><td>-</td><td>Start with SymPy constants 'E' and 'I' or regular 'e' and 'i'.</td></tr>
 <tr><td><b>--quick, --noquick</b></td><td>-</td><td>Start in/not quick input mode.</td></tr>
 <tr><td><b>--pyS, --nopyS</b></td><td>-</td><td>Start with/out Python S escaping.</td></tr>

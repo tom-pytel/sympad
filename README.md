@@ -30,10 +30,14 @@ And here are some examples of the visual output as you type:
 ## Installation
 
 If you just want to use the program you only need the file **sympad.py**, and of course Python and the SymPy Python package.
+You can download **sympad.py** from here or install it directly from the PyPI repository via:
+```
+pip3 install sympy
+```
 
-If you don't have those then first install Python 3.6+ from: [https://www.python.org/](https://www.python.org/)
+If you install SymPad from PyPI then SymPy will be installed automatically.
 
-Once Python is set up you need to install SymPy: [https://sympy.org/](https://sympy.org/)
+If you want to install SymPy yourself: [https://sympy.org/](https://sympy.org/)
 ```
 pip3 install sympy
 ```
@@ -49,6 +53,20 @@ Otherwise if you want to play with the code then download everything and run the
 If you want to regenerate the parser tables you will need the PLY Python package: [https://www.dabeaz.com/ply/](https://www.dabeaz.com/ply/)
 ```
 pip3 install ply
+```
+
+## Running SymPad
+
+If you downloaded **sympad.py** from here and have SymPy installed then you can just run the SymPad script from anywhere.
+
+If you installed from PyPI then you can run SymPad on Linux or Windows via:
+```
+python -m sympad
+```
+
+On Linux a non-py extension script version is also installed so you can just run it as:
+```
+sympad
 ```
 
 ## Open-Source License

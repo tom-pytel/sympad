@@ -1,5 +1,8 @@
 __pycache__
 .vscode
-.venvsp
+.venv*
 parser.out
 test.txt
+build
+dist
+sympad.egg-info

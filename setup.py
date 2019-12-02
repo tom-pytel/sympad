@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
+
 import setuptools
 
 setuptools.setup (
-  name                          = "sympad-test0",
+  name                          = "sympad",
   version                       = "1.1",
   author                        = "Tomasz Pytel",
   author_email                  = "tom_pytel@yahoo.com",
@@ -17,8 +19,13 @@ setuptools.setup (
   packages                      = ['sympad'],
   scripts                       = ['bin/sympad'],
   classifiers                   = [
-    'Operating System :: OS Independent',
+    'Intended Audience :: Education',
+    'Intended Audience :: Science/Research',
     'License :: OSI Approved :: BSD License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3 :: Only',
     'Topic :: Scientific/Engineering',
     'Topic :: Scientific/Engineering :: Mathematics',
   ],
