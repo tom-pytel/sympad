@@ -213,10 +213,15 @@ table.VarTable td {
 
 table.HelpTable td {
 	vertical-align: top;
+	padding: 0.25em 0;
 }
 
 table.HelpTable tr td:first-child {
 	white-space: nowrap;
+}
+
+table.HelpTable tr td:nth-child(2) {
+	padding: 0.25em 0.5em;
 }
 
 p span:hover {

@@ -1264,9 +1264,9 @@ sys.argv = [os.path.abspath ('server.py'), '--child', '--strict', '127.0.0.1:900
 
 import server
 
-HTTPD, _ = server.start_server (logging = False)
-URL      = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
-# URL      = f'http://127.0.0.1:9000/'
+HTTPD = server.start_server (logging = False)
+URL   = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
+# URL   = f'http://127.0.0.1:9000/'
 
 if __name__ == '__main__':
 	if SYSARGV [1] in {'--print', '--update'}:

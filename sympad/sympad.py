@@ -251,10 +251,15 @@ table.VarTable td {
 
 table.HelpTable td {
 	vertical-align: top;
+	padding: 0.25em 0;
 }
 
 table.HelpTable tr td:first-child {
 	white-space: nowrap;
+}
+
+table.HelpTable tr td:nth-child(2) {
+	padding: 0.25em 0.5em;
 }
 
 p span:hover {
@@ -2289,51 +2294,50 @@ You can click on any of these lines to copy it to the clipboard for pasting into
 
 <p>This is a list of the assumptions that can be applied to symbols and undefined functions.</p>
 
-<table>
-<tr><td><b>commutative</b></td><td>&emsp;- Object commutes with any other object with respect to multiplication operation.</td></tr>
-<tr><td><b>complex</b></td><td>&emsp;- Object can have only values from the set of complex numbers.</td></tr>
-<tr><td><b>imaginary</b></td><td>&emsp;- Object is a number that can be written as a real number multiplied by the imaginary unit "<b>i</b>" (excluding "<b>0</b>").</td></tr>
-<tr><td><b>real</b></td><td>&emsp;- Object can have only values from the set of real numbers.</td></tr>
-<tr><td><b>integer</b></td><td>&emsp;- Object can have only values from the set of integers.</td></tr>
-<tr><td><b>odd, even</b></td><td>&emsp;- Object can have only values from the set of odd (even).</td></tr>
-<tr><td><b>prime</b></td><td>&emsp;- Object is a natural number greater than "<b>1</b>" that has no positive divisors other than "<b>1</b>" and itself.</td></tr>
-<tr><td><b>composite</b></td><td>&emsp;- Object is a positive integer that has at least one positive divisor other than "<b>1</b>" or the number itself.</td></tr>
-<tr><td><b>zero</b></td><td>&emsp;- Object has the value of "<b>0</b>".</td></tr>
-<tr><td><b>nonzero</b></td><td>&emsp;- Object is a real number that is not zero.</td></tr>
-<tr><td><b>rational</b></td><td>&emsp;- Object can have only values from the set of rationals.</td></tr>
-<tr><td><b>algebraic</b></td><td>&emsp;- Object can have only values from the set of algebraic numbers.</td></tr>
-<tr><td><b>transcendental</b></td><td>&emsp;- Object can have only values from the set of transcendental numbers.</td></tr>
-<tr><td><b>irrational</b></td><td>&emsp;- Object value cannot be represented exactly by Rational.</td></tr>
-<tr><td><b>finite, infinite</b></td><td>&emsp;- Object absolute value is bounded (arbitrarily large).</td></tr>
-<tr><td><b>negative, nonnegative</b></td><td>&emsp;- Object can have only negative (nonnegative) values.</td></tr>
-<tr><td><b>positive, nonpositive</b></td><td>&emsp;- Object can have only positive (only nonpositive) values.</td></tr>
-<tr><td><b>hermitian, antihermitian</b></td><td>&emsp;- Object belongs to the field of hermitian (antihermitian) operators.</td></tr>
+<table class="HelpTable">
+<tr><td><b>commutative</b></td><td>-</td><td>Object commutes with any other object with respect to multiplication operation.</td></tr>
+<tr><td><b>complex</b></td><td>-</td><td>Object can have only values from the set of complex numbers.</td></tr>
+<tr><td><b>imaginary</b></td><td>-</td><td>Object is a number that can be written as a real number multiplied by the imaginary unit "<b>i</b>" (excluding "<b>0</b>").</td></tr>
+<tr><td><b>real</b></td><td>-</td><td>Object can have only values from the set of real numbers.</td></tr>
+<tr><td><b>integer</b></td><td>-</td><td>Object can have only values from the set of integers.</td></tr>
+<tr><td><b>odd, even</b></td><td>-</td><td>Object can have only values from the set of odd (even).</td></tr>
+<tr><td><b>prime</b></td><td>-</td><td>Object is a natural number greater than "<b>1</b>" that has no positive divisors other than "<b>1</b>" and itself.</td></tr>
+<tr><td><b>composite</b></td><td>-</td><td>Object is a positive integer that has at least one positive divisor other than "<b>1</b>" or the number itself.</td></tr>
+<tr><td><b>zero</b></td><td>-</td><td>Object has the value of "<b>0</b>".</td></tr>
+<tr><td><b>nonzero</b></td><td>-</td><td>Object is a real number that is not zero.</td></tr>
+<tr><td><b>rational</b></td><td>-</td><td>Object can have only values from the set of rationals.</td></tr>
+<tr><td><b>algebraic</b></td><td>-</td><td>Object can have only values from the set of algebraic numbers.</td></tr>
+<tr><td><b>transcendental</b></td><td>-</td><td>Object can have only values from the set of transcendental numbers.</td></tr>
+<tr><td><b>irrational</b></td><td>-</td><td>Object value cannot be represented exactly by Rational.</td></tr>
+<tr><td><b>finite, infinite</b></td><td>-</td><td>Object absolute value is bounded (arbitrarily large).</td></tr>
+<tr><td><b>negative, nonnegative</b></td><td>-</td><td>Object can have only negative (nonnegative) values.</td></tr>
+<tr><td><b>positive, nonpositive</b></td><td>-</td><td>Object can have only positive (only nonpositive) values.</td></tr>
+<tr><td><b>hermitian, antihermitian</b></td><td>-</td><td>Object belongs to the field of hermitian (antihermitian) operators.</td></tr>
 </table>
 
 <h4 id="Special Characters">Special Characters</h4>
 
-<p style="color: red"><b>$</b> - </p>
-
 <table class="HelpTable">
-<tr><td><b>_</b></td><td>&emsp;-</td><td>Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose. Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</td></tr>
-<tr><td><b>@</b></td><td>&emsp;-</td><td>"<b>@(expr)</b>" - Ampersand technically turns off variable remapping for any expression it encapsulates which means that if it wraps a global variable then the variable reference will be used and not its value. This also applies to calling other lambdas within lambdas, if the call is escaped with the "<b>@</b> function then the called lambda will be bound on execution rather than copied at definition.</td></tr>
-<tr><td><b>?</b></td><td>&emsp;-</td><td>"<b>?name(vars)</b>" - Used for specifying an undefined function to be used for solving differential equations. The name is optional but required if different functions of the same signature are needed like "<b>?x(t), ?y(t)</b>", otherwise you can just use "<b>?(t)</b>".</td></tr>
-<tr><td><b>;</b></td><td>&emsp;-</td><td>Semicolon is used to separate statements on a single line to be executed as if they were individual statements on separate lines like in Pyhon, e.g. "<b>1; expand (_(x+1)); expand (_(x+1)); expand (_(x+1))</b>". There is one caveat at the moment in that parsing is influenced by the variables assigned and these assignments are not done until after the whole line has been parsed. What this means for example is that for ambiguous expressions like "<b>f(x)</b>" which can be interpreted either as a concrete lambda call or an undefined function the parser will not get it right if the variable "<b>f</b>" is assigned a lambda and then called on the same line after a semicolon.</td></tr>
-<tr><td><b>Greek</b></td><td>&emsp;-</td><td>α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</td></tr>
-<tr><td><b>Symbols</b></td><td>&emsp;-</td><td>∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</td></tr>
+<tr><td><b>_</b></td><td>-</td><td>Underscore represents the last successfully evaluated expression, assignment to variables is not considered a successful evaluation for this purpose. Even if the object resulting from the expression is not natively known to SymPad it is stored on the server and so is available exactly as it was returned from the previous calculation by using underscore.</td></tr>
+<tr><td><b>;</b></td><td>-</td><td>Semicolon is used to separate statements on a single line to be executed as if they were individual statements on separate lines like in Pyhon, e.g. "<b>1; expand (_(x+1)); expand (_(x+1)); expand (_(x+1))</b>".
+There is one caveat at the moment in that parsing is influenced by the variables assigned and these assignments are not done until after the whole line has been parsed.
+What this means for example is that for ambiguous expressions like "<b>f(x)</b>" which can be interpreted either as a concrete lambda call or an undefined function the parser will not get it right if the variable "<b>f</b>" is assigned a lambda and then called on the same line after a semicolon.
+For this reason you should avoid using "<b>;</b>" with assignments, unless it is the last expression of the list.</td></tr>
+<tr><td><b>Greek</b></td><td>-</td><td>α, β, γ, δ, ε, ζ, η, θ, ι, κ, λ, μ, ν, ξ, π, ρ, σ, τ, υ, φ, χ, ψ, ω, Γ, Δ, Θ, Λ, Ξ, Π, Σ, Υ, Φ, Ψ, Ω.</td></tr>
+<tr><td><b>Symbols</b></td><td>-</td><td>∞, ≠, ≤, ≥, ∂, ∑, ∫, ∈, ∉, ∩, ∪, ⊖.</td></tr>
 </table>
 
 <h4 id="Admin Functions">Admin Functions</h4>
 
 <table class="HelpTable">
-<tr><td><b>vars ()</b></td><td>&emsp;-</td><td>Show all currently mapped variables.</td></tr>
-<tr><td><b>del (var1, var2, ...)</b></td><td>&emsp;-</td><td>Delete individual variable assignments.</td></tr>
-<tr><td><b>delall ()</b></td><td>&emsp;-</td><td>Delete ALL variable assignments.</td></tr>
-<tr><td><b>env ()</b></td><td>&emsp;-</td><td>Show or change current SymPad runtime environment.
+<tr><td><b>vars ()</b></td><td>-</td><td>Show all currently mapped variables.</td></tr>
+<tr><td><b>del (var1, var2, ...)</b></td><td>-</td><td>Delete individual variable assignments.</td></tr>
+<tr><td><b>delall ()</b></td><td>-</td><td>Delete ALL variable assignments.</td></tr>
+<tr><td><b>env ()</b></td><td>-</td><td>Show or change current SymPad runtime environment.
 Called without any arguments it will show the current state of the environment.
 If arguments are present they specify turning on or off a certain aspect of SymPad functionality.
-For example the quick input functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>", "<b>env('quick')</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env(noquick)</b>" or "<b>env(quick=False)</b>".</td></tr>
-<tr><td><b>envreset ()</b></td><td>&emsp;-</td><td>Reset environment to what it was at startup.</td></tr>
+For example the quick input functionality "<b>quick</b>" may be turned on by specifying "<b>env(quick)</b>", "<b>env('quick')</b>" or "<b>env(quick=True)</b>", to turn it off specify "<b>env('noquick')</b>" or "<b>env(quick=False)</b>".</td></tr>
+<tr><td><b>envreset ()</b></td><td>-</td><td>Reset environment to what it was at startup.</td></tr>
 </table>
 
 <h4 id="Environment Settings for env()">Environment Settings for env()</h4>
@@ -2341,55 +2345,55 @@ For example the quick input functionality "<b>quick</b>" may be turned on by spe
 <p>In quick input mode you should always use parentheses and in the case of the "<b>simplify</b>" option you need to use the quoted version "<b>env('simplify')</b>" due to that being a function name and how letters are parsed in quick mode.</p>
 
 <table class="HelpTable">
-<tr><td><b>EI</b></td><td>&emsp;-</td><td>Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
+<tr><td><b>EI</b></td><td>-</td><td>Use variables "<b>E</b>" and "<b>I</b>" as Euler's constant and imaginary unit as opposed to "<b>e</b>" and "<b>i</b>".
 This allows the Python code copied from SymPad to work directly with SymPy where the uppercase constants are used.</td></tr>
-<tr><td><b>quick</b></td><td>&emsp;-</td><td>Quick single letter variable name input mode.</td></tr>
-<tr><td><b>pyS</b></td><td>&emsp;-</td><td>Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</td></tr>
-<tr><td><b>simplify</b></td><td>&emsp;-</td><td>Post-evaluation simplification, this can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</td></tr>
-<tr><td><b>matsimp</b></td><td>&emsp;-</td><td>Matrix simplification, this turns on a patch to SymPy which does a basic simplification step on intermediate matrix multiplication products which prevents matrix operations from blowing up.</td></tr>
-<tr><td><b>ufuncmap</b></td><td>&emsp;-</td><td>When on, undefined functions resulting from SymPy calculations will be mapped back to the variables they are assigned to if possible.</td></tr>
-<tr><td><b>prodrat</b></td><td>&emsp;-</td><td>Controls whether products with leading rationals are displayed as $\frac75x^2$ (on), or $\frac{7x^2}5$ (off, default).</td></tr>
-<tr><td><b>doit</b></td><td>&emsp;-</td><td>Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</td></tr>
-<tr><td><b>strict</b></td><td>&emsp;-</td><td>This controls whether the LaTeX generated for expressions is guaranteed to be pasteable into SymPad or if it looks prettier (default), it currently only affects how undefined functions are displayed.</td></tr>
-<tr><td><b>N</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" letter.</td></tr>
-<tr><td><b>O</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" letter.</td></tr>
-<tr><td><b>S</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" letter.</td></tr>
-<tr><td><b>beta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>beta()</b>" function via the "<b>beta</b>" letter.</td></tr>
-<tr><td><b>gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" letter.</td></tr>
-<tr><td><b>Gamma</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" letter.</td></tr>
-<tr><td><b>Lambda</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>Lambda()</b>" function via the "<b>Lambda</b>" letter.</td></tr>
-<tr><td><b>zeta</b></td><td>&emsp;-</td><td>Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" letter.</td></tr>
+<tr><td><b>quick</b></td><td>-</td><td>Quick single letter variable name input mode.</td></tr>
+<tr><td><b>pyS</b></td><td>-</td><td>Python representation number escaping with the "<b>S()</b>" function where potentially necessary, e.g. "<b>S(2)/3</b>".</td></tr>
+<tr><td><b>simplify</b></td><td>-</td><td>Post-evaluation simplification, this can sometimes cause problems if the expressions are somewhat complex since simplification can take some time, in that case simply turn this off.</td></tr>
+<tr><td><b>matsimp</b></td><td>-</td><td>Matrix simplification, this turns on a patch to SymPy which does a basic simplification step on intermediate matrix multiplication products which prevents matrix operations from blowing up.</td></tr>
+<tr><td><b>ufuncmap</b></td><td>-</td><td>When on, undefined functions resulting from SymPy calculations will be mapped back to the variables they are assigned to if possible.</td></tr>
+<tr><td><b>prodrat</b></td><td>-</td><td>Controls whether products with leading rationals are displayed as $\frac75x^2$ (on), or $\frac{7x^2}5$ (off, default).</td></tr>
+<tr><td><b>doit</b></td><td>-</td><td>Expression final SymPy doit() call. Normally after an expression is converted to an internal SymPy object that object's "<b>doit</b>" member is called to fully evaluate the expression, this can be surpressed by turning this option off.</td></tr>
+<tr><td><b>strict</b></td><td>-</td><td>This controls whether the LaTeX generated for expressions is guaranteed to be pasteable into SymPad or if it looks prettier (default), it currently only affects how undefined functions are displayed.</td></tr>
+<tr><td><b>N</b></td><td>-</td><td>Mapping access to the SymPy "<b>N()</b>" function via the "<b>N</b>" letter.</td></tr>
+<tr><td><b>O</b></td><td>-</td><td>Mapping access to the SymPy "<b>O()</b>" function via the "<b>O</b>" letter.</td></tr>
+<tr><td><b>S</b></td><td>-</td><td>Mapping access to the SymPy "<b>S()</b>" function via the "<b>S</b>" letter.</td></tr>
+<tr><td><b>beta</b></td><td>-</td><td>Mapping access to the SymPy "<b>beta()</b>" function via the "<b>beta</b>" letter.</td></tr>
+<tr><td><b>gamma</b></td><td>-</td><td>Mapping access to the SymPy "<b>gamma()</b>" function via the "<b>gamma</b>" letter.</td></tr>
+<tr><td><b>Gamma</b></td><td>-</td><td>Mapping access to the SymPy "<b>Gamma()</b>" function via the "<b>Gamma</b>" letter.</td></tr>
+<tr><td><b>Lambda</b></td><td>-</td><td>Mapping access to the SymPy "<b>Lambda()</b>" function via the "<b>Lambda</b>" letter.</td></tr>
+<tr><td><b>zeta</b></td><td>-</td><td>Mapping access to the SymPy "<b>zeta()</b>" function via the "<b>zeta</b>" letter.</td></tr>
 </table>
 
 <h4 id="Command Line Arguments">Command Line Arguments</h4>
 
 <p>
-<b>sympad.py</b> [options] [host:port | host | :port]
+<b>sympad</b> [options] [host:port | host | :port]
 </p>
 
 <table class="HelpTable">
-<tr><td><b>-h, --help</b></td><td>&emsp;-</td><td>Show help information.</td></tr>
-<tr><td><b>-v, --version</b></td><td>&emsp;-</td><td>Show version string.</td></tr>
-<tr><td><b>-d, --debug</b></td><td>&emsp;-</td><td>Dump debug info to server log.</td></tr>
-<tr><td><b>-n, --nobrowser</b></td><td>&emsp;-</td><td>Don't start system browser to SymPad page.</td></tr>
-<tr><td><b>-u, --ugly</b></td><td>&emsp;-</td><td>Start in draft display style (only on command line).</td></tr>
-<tr><td><b>--EI, --noEI</b></td><td>&emsp;-</td><td>Start with SymPy constants 'E' and 'I' or regular 'e' and 'i'.</td></tr>
-<tr><td><b>--quick, --noquick</b></td><td>&emsp;-</td><td>Start in/not quick input mode.</td></tr>
-<tr><td><b>--pyS, --nopyS</b></td><td>&emsp;-</td><td>Start with/out Python S escaping.</td></tr>
-<tr><td><b>--simplify, --nosimplify</b></td><td>&emsp;-</td><td>Start with/out post-evaluation simplification.</td></tr>
-<tr><td><b>--matsimp, --nomatsimp</b></td><td>&emsp;-</td><td>Start with/out matrix simplification.</td></tr>
-<tr><td><b>--ufuncmap, --noufuncmap</b></td><td>&emsp;-</td><td>Start with/out undefined function mapping back to variables.</td></tr>
-<tr><td><b>--prodrat, --noprodrat</b></td><td>&emsp;-</td><td>Start with/out separate product leading rational.</td></tr>
-<tr><td><b>--doit, --nodoit</b></td><td>&emsp;-</td><td>Start with/out automatic expression doit().</td></tr>
-<tr><td><b>--strict, --nostrict</b></td><td>&emsp;-</td><td>Start with/out strict LaTeX formatting.</td></tr>
-<tr><td><b>--N, --noN</b></td><td>&emsp;-</td><td>Start with/out N function.</td></tr>
-<tr><td><b>--S, --noS</b></td><td>&emsp;-</td><td>Start with/out S function.</td></tr>
-<tr><td><b>--O, --noO</b></td><td>&emsp;-</td><td>Start with/out O function.</td></tr>
-<tr><td><b>--beta, --nobeta</b></td><td>&emsp;-</td><td>Start with/out beta function.</td></tr>
-<tr><td><b>--gamma, --nogamma</b></td><td>&emsp;-</td><td>Start with/out gamma function.</td></tr>
-<tr><td><b>--Gamma, --noGamma</b></td><td>&emsp;-</td><td>Start with/out Gamma function.</td></tr>
-<tr><td><b>--Lambda, --noLambda</b></td><td>&emsp;-</td><td>Start with/out Lambda function.</td></tr>
-<tr><td><b>--zeta, --nozeta</b></td><td>&emsp;-</td><td>Start with/out zeta function.</td></tr>
+<tr><td><b>-h, --help</b></td><td>-</td><td>Show help information.</td></tr>
+<tr><td><b>-v, --version</b></td><td>-</td><td>Show version string.</td></tr>
+<tr><td><b>-n, --nobrowser</b></td><td>-</td><td>Don't start system browser to SymPad page.</td></tr>
+<tr><td><b>-u, --ugly</b></td><td>-</td><td>Start in draft display style (only on command line).</td></tr>
+<tr><td><b>-d, --debug</b></td><td>-</td><td>Dump debug info to server log.</td></tr>
+<tr><td><b>--EI, --noEI</b></td><td>-</td><td>Start with SymPy constants 'E' and 'I' or regular 'e' and 'i'.</td></tr>
+<tr><td><b>--quick, --noquick</b></td><td>-</td><td>Start in/not quick input mode.</td></tr>
+<tr><td><b>--pyS, --nopyS</b></td><td>-</td><td>Start with/out Python S escaping.</td></tr>
+<tr><td><b>--simplify, --nosimplify</b></td><td>-</td><td>Start with/out post-evaluation simplification.</td></tr>
+<tr><td><b>--matsimp, --nomatsimp</b></td><td>-</td><td>Start with/out matrix simplification.</td></tr>
+<tr><td><b>--ufuncmap, --noufuncmap</b></td><td>-</td><td>Start with/out undefined function mapping back to variables.</td></tr>
+<tr><td><b>--prodrat, --noprodrat</b></td><td>-</td><td>Start with/out separate product leading rational.</td></tr>
+<tr><td><b>--doit, --nodoit</b></td><td>-</td><td>Start with/out automatic expression doit().</td></tr>
+<tr><td><b>--strict, --nostrict</b></td><td>-</td><td>Start with/out strict LaTeX formatting.</td></tr>
+<tr><td><b>--N, --noN</b></td><td>-</td><td>Start with/out N function.</td></tr>
+<tr><td><b>--S, --noS</b></td><td>-</td><td>Start with/out S function.</td></tr>
+<tr><td><b>--O, --noO</b></td><td>-</td><td>Start with/out O function.</td></tr>
+<tr><td><b>--beta, --nobeta</b></td><td>-</td><td>Start with/out beta function.</td></tr>
+<tr><td><b>--gamma, --nogamma</b></td><td>-</td><td>Start with/out gamma function.</td></tr>
+<tr><td><b>--Gamma, --noGamma</b></td><td>-</td><td>Start with/out Gamma function.</td></tr>
+<tr><td><b>--Lambda, --noLambda</b></td><td>-</td><td>Start with/out Lambda function.</td></tr>
+<tr><td><b>--zeta, --nozeta</b></td><td>-</td><td>Start with/out zeta function.</td></tr>
 </table>
 
 <h4 id="Notes">Notes</h4>
@@ -10559,7 +10563,7 @@ def start_server (logging = True):
 
 		thread.start ()
 
-		return httpd, thread
+		return httpd
 
 	except OSError as e:
 		if e.errno != 98:
@@ -10579,7 +10583,7 @@ def child ():
 				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
 	# start here
-	httpd, thread = start_server ()
+	httpd = start_server ()
 
 	if _SYMPAD_FIRSTRUN and ('--nobrowser', '') not in __OPTS and ('-n', '') not in __OPTS:
 		webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
@@ -10591,7 +10595,9 @@ def child ():
 
 	if not _SYMPAD_RESTART:
 		try:
-			thread.join ()
+			while 1:
+				time.sleep (0.5) # thread.join () doesn't catch KeyboardInterupt on Windows
+
 		except KeyboardInterrupt:
 			sys.exit (0)
 

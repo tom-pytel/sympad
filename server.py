@@ -698,7 +698,7 @@ def start_server (logging = True):
 
 		thread.start ()
 
-		return httpd, thread
+		return httpd
 
 	except OSError as e:
 		if e.errno != 98:
@@ -718,7 +718,7 @@ def child ():
 				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
 	# start here
-	httpd, thread = start_server ()
+	httpd = start_server ()
 
 	if _SYMPAD_FIRSTRUN and ('--nobrowser', '') not in __OPTS and ('-n', '') not in __OPTS:
 		webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
@@ -730,7 +730,9 @@ def child ():
 
 	if not _SYMPAD_RESTART:
 		try:
-			thread.join ()
+			while 1:
+				time.sleep (0.5) # thread.join () doesn't catch KeyboardInterupt on Windows
+
 		except KeyboardInterrupt:
 			sys.exit (0)
 
