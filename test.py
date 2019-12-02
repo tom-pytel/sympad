@@ -4627,6 +4627,8 @@ if __name__ == '__main__':
 			else: # '--update'
 				testpy = open ('test.py').readlines ()
 
+				os.chmod ('test.py', 0o755)
+
 				start  = testpy.index ('\t# BEGIN UPDATE BLOCK\n')
 				end    = testpy.index ('\t# END UPDATE BLOCK\n')
 

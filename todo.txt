@@ -1,10 +1,5 @@
 > ERROR! assign to ufuncs from iterable?
 
-> HTML escape sympad strings for tex display.
-
-> \gamma not accepted for gamma()?
-> Gamma not accepted for \Gamma -> gamma()?
-
 > \. ?F (x, 0)' |_{x = 0} ---> \. ?F (x, y) |_{x = 0, y = 0}
 > keep track of what undefined functions are created during processing?
 
@@ -80,7 +75,6 @@
 > test_sym check for VarNulls and reject expression if detected
 > add slice() to test_sym
 > add back "forbidden" functions to test_sym (reject NullVars sxlats)? - remove or reject null vars after
-> CENSORED variables problem with matches
 
 
 > patch dsolve to do: dsolve (y'' + 11 y' + 24 y, y (0) = 0, y'(0) = -7)?
@@ -108,8 +102,6 @@
 
 > overhaul function call keyword arguments: expr -> ('kw', expr)?
 > overhaul lambda AST variable storage: ('@', 'var') -> 'var'?
-
-> ast2spt mul remove callable?
 
 > allow leading underscore for vars and funcs and leading \_ for tex?
 > clean up sparser TOKENS and centralize repeated patterns

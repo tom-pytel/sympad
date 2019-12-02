@@ -3,6 +3,9 @@
 
 # Collect all source and data files into single stand-alone sympad.py script file.
 
+import io
+import os
+
 _TEXT_FILES = ('style.css', 'script.js', 'index.html', 'help.html')
 _BIN_FILES  = ('bg.png', 'wait.webp')
 _PY_FILES   = ('lalr1.py', 'sast.py', 'sxlat.py', 'sym.py', 'sparser.py', 'spatch.py', 'splot.py', 'server.py')
@@ -44,7 +47,7 @@ sys.path.insert (0, '') # allow importing from current directory first (for SymP
 '''.lstrip ()
 
 if __name__ == '__main__':
-	fdout = open ('sympad.py', 'w', newline = '', encoding="utf8")
+	fdout = io.StringIO ()
 
 	fdout.write (_HEADER)
 	fdout.write ('\n_FILES = {\n')
@@ -83,3 +86,8 @@ if __name__ == '__main__':
 			else:
 				if liner.lstrip () == '# AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END':
 					writing = True
+
+	open ('sympad/sympad.py', 'w', newline = '', encoding="utf8").write (fdout.getvalue ())
+	open ('bin/sympad', 'w', newline = '', encoding="utf8").write (fdout.getvalue ())
+
+	os.chmod ('bin/sympad', 0o755)

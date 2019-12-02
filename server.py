@@ -27,14 +27,18 @@ _VERSION         = '1.1'
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
 _ENV_OPTS_ALL    = _ENV_OPTS.union (f'no{opt}' for opt in _ENV_OPTS)
-__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvdnu', ['child', 'firstrun', 'help', 'version', 'debug', 'nobrowser', 'ugly', *_ENV_OPTS_ALL])
 
-_SERVER_DEBUG    = __name__ == '__main__' and __ARGV and __ARGV [0] == 'server-debug'
+__OPTS, __ARGV   = getopt.getopt (sys.argv [1:], 'hvnudr', ['child', 'firstrun', 'help', 'version', 'nobrowser', 'ugly', 'debug', 'restert', *_ENV_OPTS_ALL])
+__IS_MAIN        = __name__ == '__main__'
+__IS_MODULE_RUN  = sys.argv [0] == '-m'
+
+_SERVER_DEBUG    = __IS_MAIN and __ARGV and __ARGV [0] == 'server-debug'
 
 _SYMPAD_PATH     = os.path.dirname (sys.argv [0])
 _SYMPAD_NAME     = os.path.basename (sys.argv [0])
-_SYMPAD_CHILD    = ('--child', '') in __OPTS
-_SYMPAD_FIRSTRUN = ('--firstrun', '') in __OPTS
+_SYMPAD_RESTART  = not __IS_MODULE_RUN and (('-r', '') in __OPTS or ('--restart', '') in __OPTS)
+_SYMPAD_CHILD    = not _SYMPAD_RESTART or ('--child', '') in __OPTS
+_SYMPAD_FIRSTRUN = not _SYMPAD_RESTART or ('--firstrun', '') in __OPTS
 _SYMPAD_DEBUG    = os.environ.get ('SYMPAD_DEBUG')
 
 _DEFAULT_ADDRESS = ('localhost', 9000)
@@ -42,13 +46,14 @@ _FILES           = {} # pylint food # AUTO_REMOVE_IN_SINGLE_SCRIPT
 _STATIC_FILES    = {'/style.css': 'text/css', '/script.js': 'text/javascript', '/index.html': 'text/html',
 	'/help.html': 'text/html', '/bg.png': 'image/png', '/wait.webp': 'image/webp'}
 
-_HELP            = f'usage: {_SYMPAD_NAME} [options] [host:port | host | :port]' '''
+_HELP            = f'usage: sympad [options] [host:port | host | :port]' '''
 
   -h, --help               - Show help information
   -v, --version            - Show version string
-  -d, --debug              - Dump debug info to server log
   -n, --nobrowser          - Don't start system browser to SymPad page
   -u, --ugly               - Start in draft display style (only on command line)
+  -d, --debug              - Dump debug info to server log
+  -r, --restart            - Restart server on source file changes (for development)
   --EI, --noEI             - Start with SymPy constants 'E' and 'I' or regular 'e' and 'i'
   --quick, --noquick       - Start in/not quick input mode
   --pyS, --nopyS           - Start with/out Python S escaping
@@ -66,7 +71,7 @@ _HELP            = f'usage: {_SYMPAD_NAME} [options] [host:port | host | :port]'
   --Gamma, --noGamma       - Start with/out Gamma function
   --Lambda, --noLambda     - Start with/out Lambda function
   --zeta, --nozeta         - Start with/out zeta function
-'''
+'''.lstrip ()
 
 if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as is unnecessary there
 	sys.path.insert (0, '') # allow importing from current directory first (for SymPy development version) # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -693,7 +698,7 @@ def start_server (logging = True):
 
 		thread.start ()
 
-		return httpd
+		return httpd, thread
 
 	except OSError as e:
 		if e.errno != 98:
@@ -706,49 +711,53 @@ def start_server (logging = True):
 _MONTH_NAME = (None, 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 
 def child ():
-	httpd = start_server ()
-
 	def log_message (msg):
 		y, m, d, hh, mm, ss, _, _, _ = time.localtime (time.time ())
 
 		sys.stderr.write (f'{httpd.server_address [0]} - - ' \
 				f'[{"%02d/%3s/%04d %02d:%02d:%02d" % (d, _MONTH_NAME [m], y, hh, mm, ss)}] {msg}\n')
 
-	fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'splot.py', 'spatch.py', 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
-	watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
-	tstamps = [os.stat (fnm).st_mtime for fnm in watch]
+	# start here
+	httpd, thread = start_server ()
+
+	if _SYMPAD_FIRSTRUN and ('--nobrowser', '') not in __OPTS and ('-n', '') not in __OPTS:
+		webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
 
 	if _SYMPAD_FIRSTRUN:
 		print (f'SymPad v{_VERSION} server running. If a browser window does not automatically open to the address below then try navigating to that URL manually.\n')
 
 	log_message (f'Serving at http://{httpd.server_address [0]}:{httpd.server_address [1]}/')
 
-	if _SYMPAD_FIRSTRUN and ('--nobrowser', '') not in __OPTS and ('-n', '') not in __OPTS:
-		webbrowser.open (f'http://{httpd.server_address [0] if httpd.server_address [0] != "0.0.0.0" else "127.0.0.1"}:{httpd.server_address [1]}')
+	if not _SYMPAD_RESTART:
+		try:
+			thread.join ()
+		except KeyboardInterrupt:
+			sys.exit (0)
 
-	try:
-		while 1:
-			time.sleep (0.5)
+	else:
+		fnms    = (_SYMPAD_NAME,) if _RUNNING_AS_SINGLE_SCRIPT else (_SYMPAD_NAME, 'splot.py', 'spatch.py', 'sparser.py', 'sym.py', 'sxlat.py', 'sast.py', 'lalr1.py')
+		watch   = [os.path.join (_SYMPAD_PATH, fnm) for fnm in fnms]
+		tstamps = [os.stat (fnm).st_mtime for fnm in watch]
 
-			if [os.stat (fnm).st_mtime for fnm in watch] != tstamps:
-				log_message ('Files changed, restarting...')
-				sys.exit (0)
+		try:
+			while 1:
+				time.sleep (0.5)
 
-	except KeyboardInterrupt:
-		sys.exit (0)
+				if [os.stat (fnm).st_mtime for fnm in watch] != tstamps:
+					log_message ('Files changed, restarting...')
+					sys.exit (0)
+
+		except KeyboardInterrupt:
+			sys.exit (0)
 
 	sys.exit (-1)
 
 def parent ():
-	if ('--help', '') in __OPTS or ('-h', '') in __OPTS:
-		print (_HELP.lstrip ())
-		sys.exit (0)
+	if not _SYMPAD_RESTART or __IS_MODULE_RUN:
+		child () # does not return
 
-	if ('--version', '') in __OPTS or ('-v', '') in __OPTS:
-		print (_VERSION)
-		sys.exit (0)
-
-	base      = [sys.executable] + sys.argv [:1] + ['--child']
+	# continue as parent process and wait for child process to return due to file changes and restart it
+	base      = [sys.executable] + sys.argv [:1] + ['--child'] # (['--child'] if __IS_MAIN else ['sympad', '--child'])
 	opts      = [o [0] for o in __OPTS]
 	first_run = ['--firstrun']
 
@@ -780,7 +789,15 @@ if _SERVER_DEBUG: # DEBUG!
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END
 
-if __name__ == '__main__':
+def main ():
+	if ('--help', '') in __OPTS or ('-h', '') in __OPTS:
+		print (_HELP)
+		sys.exit (0)
+
+	if ('--version', '') in __OPTS or ('-v', '') in __OPTS:
+		print (_VERSION)
+		sys.exit (0)
+
 	if ('--debug', '') in __OPTS or ('-d', '') in __OPTS:
 		_SYMPAD_DEBUG = os.environ ['SYMPAD_DEBUG'] = '1'
 
@@ -788,3 +805,6 @@ if __name__ == '__main__':
 		child ()
 	else:
 		parent ()
+
+if __IS_MAIN:
+	main ()

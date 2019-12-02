@@ -1264,9 +1264,9 @@ sys.argv = [os.path.abspath ('server.py'), '--child', '--strict', '127.0.0.1:900
 
 import server
 
-HTTPD = server.start_server (logging = False)
-URL   = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
-# URL   = f'http://127.0.0.1:9000/'
+HTTPD, _ = server.start_server (logging = False)
+URL      = f'http://{HTTPD.server_address [0]}:{HTTPD.server_address [1]}/'
+# URL      = f'http://127.0.0.1:9000/'
 
 if __name__ == '__main__':
 	if SYSARGV [1] in {'--print', '--update'}:
@@ -1296,6 +1296,7 @@ if __name__ == '__main__':
 			testserver [start + 1 : end] = (f'{line}\n' for line in lines [1:])
 
 			open ('test_server.py', 'w', encoding = 'utf8', newline = '\n').writelines (testserver)
+			os.chmod ('test_server.py', 0o755)
 
 	elif SYSARGV [1] == '--human':
 		session = SYSARGV [2] if len (SYSARGV) > 2 else None

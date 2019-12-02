@@ -1,0 +1,1 @@
+from .sympad import main
