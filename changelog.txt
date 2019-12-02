@@ -1,10 +1,6 @@
-v1.1.1:
--------
-* Finally put sympad on PyPI.
-* Removed recursive execution of script and relegated it to a command line switch for development.
-
 v1.1:
 -----
+* Finally put sympad on PyPI.
 * Major grammar rework to remove redundant conflicts for speedup and to better handle tail elements (!, ', **, .attr, [idx], (x, y, ...)), \int, \sum and \lim among other things.
 * Added symbols with assumptions.
 * Added ability to 'call' derivatives of lambda functions.
@@ -20,6 +16,7 @@ v1.1:
 * Brought quick mode up to date with many recent changes.
 * Re-enabled unspaced quick mode function arguments.
 * Lots of tweaks to undefined functions for display and use in assignment to lambdas.
+* Removed recursive execution of script and relegated it to a command line switch for development.
 * Finally documented lots of changes.
 
 v1.0.19:
