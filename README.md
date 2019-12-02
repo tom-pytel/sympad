@@ -30,9 +30,15 @@ And here are some examples of the visual output as you type:
 ## Installation
 
 If you just want to use the program you only need the file **sympad.py**, and of course Python and the SymPy Python package.
-You can download **sympad.py** from here or install it directly from the PyPI repository via:
+You can download **sympad.py** from here or install it directly from the PyPI repository.
+
+To install on Linux from PyPI:
 ```
-pip3 install sympy
+pip3 install sympad
+```
+To install on Windows from PyPI:
+```
+pip3 install --user sympad
 ```
 
 If you install SymPad from PyPI then SymPy will be installed automatically.
