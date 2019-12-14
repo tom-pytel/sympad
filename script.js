@@ -312,7 +312,7 @@ function ajaxEvaluate (resp) {
 
 		if (subresp.msg !== undefined && subresp.msg.length) { // message present?
 			for (let msg of subresp.msg) {
-				$(eLogEval).append (`<div class="LogMsg">${escapeHTML (msg.replace (/  /g, '&emsp;'))}</div>`);
+				$(eLogEval).append (`<div class="LogMsg">${escapeHTML (msg).replace (/  /g, '&emsp;')}</div>`);
 			}
 
 			logResize ();
@@ -354,7 +354,7 @@ function ajaxEvaluate (resp) {
 				eLogErrorHidden = eErrorHiddenBox.lastElementChild;
 
 				for (let i = 0; i < subresp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append (`<div class="LogError">${escapeHTML (subresp.err [i].replace (/  /g, '&emsp;'))}</div>`);
+					$(eLogErrorHidden).append (`<div class="LogError">${escapeHTML (subresp.err [i]).replace (/  /g, '&emsp;')}</div>`);
 				}
 			}
 
