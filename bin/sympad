@@ -583,7 +583,7 @@ function ajaxEvaluate (resp) {
 
 		if (subresp.msg !== undefined && subresp.msg.length) { // message present?
 			for (let msg of subresp.msg) {
-				$(eLogEval).append (`<div class="LogMsg">${escapeHTML (msg.replace (/  /g, '&emsp;'))}</div>`);
+				$(eLogEval).append (`<div class="LogMsg">${escapeHTML (msg).replace (/  /g, '&emsp;')}</div>`);
 			}
 
 			logResize ();
@@ -625,7 +625,7 @@ function ajaxEvaluate (resp) {
 				eLogErrorHidden = eErrorHiddenBox.lastElementChild;
 
 				for (let i = 0; i < subresp.err.length - 1; i ++) {
-					$(eLogErrorHidden).append (`<div class="LogError">${escapeHTML (subresp.err [i].replace (/  /g, '&emsp;'))}</div>`);
+					$(eLogErrorHidden).append (`<div class="LogError">${escapeHTML (subresp.err [i]).replace (/  /g, '&emsp;')}</div>`);
 				}
 			}
 
@@ -1017,7 +1017,7 @@ r"""<!DOCTYPE html>
 		<h2>SymPad</h2>
 		<h5><script type="text/javascript">document.write (Version)</script></h5>
 		<h5>on SymPy <script type="text/javascript">document.write (SymPyVersion)</script></h5>
-		<script type="text/javascript">if (SymPyVersion !== SymPyDevVersion) { document.write ('<h5 style="color: #f99">*note SymPad was developed on SymPy 1.4</h5>'); }</script>
+		<script type="text/javascript">if (SymPyVersion !== SymPyDevVersion) { document.write ('<br><h5 style="color: #f99">* Note: This version of SymPad was developed on SymPy 1.4,</h5><h5 style="color: #f99">it may not work correctly with your version of SymPy.</h5>'); }</script>
 		<br><br>
 		Type '<b><a class="GreetingA" style="display: inline" href="/help.html" target="_blank">help</a></b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -2115,7 +2115,7 @@ You can click on any of these lines to copy it to the clipboard for pasting into
 <br>
 </p>
 
-<span onclick="cE2C (this)"><h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</span><i>&emsp; (by "hand")</i></h4>
+<h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>
 
 <p>
 <span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
@@ -9896,7 +9896,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.1'
+_VERSION         = '1.1.1'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
