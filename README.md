@@ -33,7 +33,7 @@ If you just want to use the program you only need the file **sympad.py**, and of
 You can download **sympad.py** from here or install it directly from the PyPI repository.
 Note: This version of SymPad works with SymPy 1.4, this is no longer the newest version.
 
-To install on Linux from PyPI:
+To install the latest version on Linux from PyPI:
 ```
 pip3 install sympad
 ```
