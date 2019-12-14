@@ -31,6 +31,7 @@ And here are some examples of the visual output as you type:
 
 If you just want to use the program you only need the file **sympad.py**, and of course Python and the SymPy Python package.
 You can download **sympad.py** from here or install it directly from the PyPI repository.
+Note: This version of SymPad works with SymPy 1.4, this is no longer the newest version.
 
 To install on Linux from PyPI:
 ```
@@ -45,7 +46,7 @@ If you install SymPad from PyPI then SymPy will be installed automatically.
 
 If you want to install SymPy yourself: [https://sympy.org/](https://sympy.org/)
 ```
-pip3 install sympy
+pip3 install sympy==1.4
 ```
 
 In order to get the optional plotting functionality you must have the matplotlib package installed: [https://matplotlib.org/](https://matplotlib.org/)
