@@ -35,7 +35,7 @@ Note: This version of SymPad works with SymPy 1.4, this is no longer the newest 
 
 To install on Linux from PyPI:
 ```
-pip3 install sympad==1.1.1
+pip3 install sympad
 ```
 To install on Windows from PyPI:
 ```
