@@ -302,12 +302,14 @@ def _xlat_f2a_Sum (ast = AST.VarNull, ab = None, **kw):
 
 	return None
 
-def _xlat_f2a_Union (*args):
-	if len (args) == 2 and args [0].is_add and args [1].is_add and args [0].add.len == 2 and args [1].add.len == 2 and \
-			args [0].add [1].is_minus and args [1].add [1].is_minus and args [0].add [0] == args [1].add [1].minus and args [1].add [0] == args [0].add [1].minus:
-		return AST ('^^', (args [0].add [0], args [1].add [0]))
+def _xlat_f2a_SymmetricDifference (*args):
+	if len (args) != 2:
+		return None
 
-	return AST ('||', tuple (args))
+	if not args [0].is_sdiff:
+		return AST ('^^', args)
+
+	return AST ('^^', args [0].sdiff + (args [1],))
 
 def _xlat_f2a_Subs (expr = None, src = None, dst = None):
 	def parse_subs (src, dst):
@@ -426,8 +428,9 @@ _XLAT_FUNC2AST_TEXNAT = {**_XLAT_FUNC2AST_TEXNATPY,
 	'FiniteSet'            : lambda *args: AST ('-set', tuple (args)),
 	'Contains'             : lambda a, b: AST ('<>', a, (('in', b),)),
 	'Complement'           : lambda *args: AST ('+', (args [0], ('-', args [1]))),
+	'Union'                : lambda *args: AST ('||', tuple (args)), # _xlat_f2a_Union,
+	'SymmetricDifference'  : _xlat_f2a_SymmetricDifference,
 	'Intersection'         : lambda *args: AST ('&&', tuple (args)),
-	'Union'                : _xlat_f2a_Union,
 }
 
 XLAT_FUNC2AST_TEX = {**_XLAT_FUNC2AST_TEXNAT,

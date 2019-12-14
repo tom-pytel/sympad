@@ -1139,9 +1139,9 @@ class AST_Not (AST):
 class AST_UFunc (AST):
 	op, is_ufunc = '-ufunc', True
 
-	def __new__ (cls, ufunc, vars, kw = ()):
+	def __new__ (cls, ufunc, vars, kw = None):
 		self                           = tuple.__new__ (cls, ('-ufunc', ufunc, vars, kw) if kw else ('-ufunc', ufunc, vars))
-		self.ufunc, self.vars, self.kw = ufunc.lstrip ('?'), vars, kw
+		self.ufunc, self.vars, self.kw = ufunc.lstrip ('?'), vars, kw or AST.Null
 		self.ufunc_full                = ufunc
 
 		return self

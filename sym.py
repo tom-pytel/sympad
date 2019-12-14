@@ -16,6 +16,8 @@ _SYM_MARK_PY_ASS_EQ = False # for testing to write extra information into python
 
 _TEX_SPACE      = '\\ ' # explicit LaTeX space
 
+_SYM_ASSUM_REDUCE = {(): ()} # cache to reduce extended lists of assumptions to single or a few assumptions which generated them
+
 _SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
 _SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as AST.Null
@@ -42,7 +44,7 @@ class EqCmp (sp.Eq): pass # explicit equality comparison instead of assignment
 
 class IdLambda (sp.Lambda): # identity lambda - having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
 	def __new__ (cls, a, l, **kw):
-		self = sp.Lambda.__new__ (cls, sp.Symbol (l.name), l.name)
+		self = sp.Expr.__new__(cls, sp.Tuple (l), l) # skip lambda __new__ to avoid creating identity function
 
 		return self
 
@@ -190,6 +192,9 @@ def _fltoint (num):
 
 def _trail_comma (obj):
 	return ',' if len (obj) == 1 else ''
+
+def _spt_assumptions (spt):
+	return tuple (filter (lambda kv: kv [1] is not None and kv != ('commutative', True), sorted (spt._assumptions.items ())))
 
 def _ast_is_neg (ast):
 	return ast.is_minus or ast.is_num_neg or (ast.is_mul and _ast_is_neg (ast.mul [0]))
@@ -654,7 +659,7 @@ class ast2tex: # abstract syntax tree -> LaTeX text
 			pre = ''
 
 		name = self._ast2tex (AST ("@", ast.ufunc)) if ast.ufunc else ""
-		args = ", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (f"{k} = {self._ast2tex_wrap (a, 0, a.is_comma)}" for k, a in ast.kw))
+		args = ", ".join (tuple (self._ast2tex (v) for v in ast.vars) + tuple (" = ".join ((k.replace ("_", "\\_"), self._ast2tex_wrap (a, 0, a.is_comma))) for k, a in ast.kw))
 
 		return f'{pre}{name}\\left({args} \\right)'
 
@@ -1312,11 +1317,10 @@ class ast2py: # abstract syntax tree -> Python code text
 		return f'slice({", ".join (self._ast2py_paren (a, a.op in {"=", ",", "-slice"}) for a in args)})'
 
 	def _ast2py_sdiff (self, ast):
-		sdiff = self._ast2py (ast.sdiff [0])
+		sdiff = f'SymmetricDifference({self._ast2py (ast.sdiff [0])}, {self._ast2py (ast.sdiff [1])})'
 
-		for a in ast.sdiff [1:]:
-			a     = self._ast2py (a)
-			sdiff = f'Union(Complement({sdiff}, {a}), Complement({a}, {sdiff}))'
+		for i in range (2, ast.sdiff.len):
+			sdiff = f'SymmetricDifference({sdiff}, {self._ast2py (ast.sdiff [i])})'
 
 		return sdiff
 
@@ -1643,17 +1647,20 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 		return NoEval (AST ('-idx', spt2ast (spt), ast.idx))
 
 	def _ast2spt_sdiff (self, ast):
-		sdiff = self._ast2spt (ast.sdiff [0])
+		sdiff = sp.SymmetricDifference (self._ast2spt (ast.sdiff [0]), self._ast2spt (ast.sdiff [1]))
 
-		for a in ast.sdiff [1:]:
-			a     = self._ast2spt (a)
-			sdiff = sp.Union (sp.Complement (sdiff, a), sp.Complement (a, sdiff))
+		for i in range (2, ast.sdiff.len):
+			sdiff = sp.SymmetricDifference (sdiff, self._ast2spt (ast.sdiff [i]))
 
 		return sdiff
 
 	def _ast2spt_ufunc (self, ast):
 		spt                   = sp.Function (ast.ufunc, **{k: _bool_or_None (self._ast2spt (a)) for k, a in ast.kw}) (*(self._ast2spt (v) for v in ast.vars))
 		spt.is_ufunc_explicit = ast.is_ufunc_explicit # try to pass explicit state of ufunc through
+		assum                 = _spt_assumptions (spt)
+
+		if assum not in _SYM_ASSUM_REDUCE:
+			_SYM_ASSUM_REDUCE [assum] = ast.kw
 
 		return spt
 
@@ -1773,6 +1780,12 @@ class spt2ast:
 			return AST ('@', spt.name)
 		else:
 			return AST ('-sym', spt.name, tuple (sorted ((k, self._spt2ast (v)) for k, v in spt._assumptions.generator.items ())))
+
+	def _spt2ast_Not (self, spt):
+		if isinstance (spt.args [0], sp.Contains): # "not in" compound operator
+			return AST ('<>', self._spt2ast (spt.args [0].args [0]), (('notin', self._spt2ast (spt.args [0].args [1])),))
+		else:
+			return AST ('-not', self._spt2ast (spt.args [0]))
 
 	def _spt2ast_Union (self, spt): # convert union of complements to symmetric difference if present
 		if len (spt.args) == 2 and spt.args [0].is_Complement and spt.args [1].is_Complement and \
@@ -1908,9 +1921,13 @@ class spt2ast:
 		if spt.__class__.__name__ == 'slice': # special cased converted slice object with start, stop and step present, this is REALLY unnecessary...
 			return AST ('-slice', *tuple (self._spt2ast (s) for s in spt.args))
 
-		name = f'?{spt.name}' if not spt.name or getattr (spt, 'is_ufunc_explicit', False) else spt.name
+		name  = f'?{spt.name}' if not spt.name or getattr (spt, 'is_ufunc_explicit', False) else spt.name
+		assum = _spt_assumptions (spt)
+		kw    = _SYM_ASSUM_REDUCE [assum] if assum in _SYM_ASSUM_REDUCE else tuple (sorted ((k, self._spt2ast (a))
+				for k, a in filter (lambda kv: kv [1] is not None and kv != ('commutative', True), spt._assumptions.items ())))
 
-		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		# return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
+		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), kw)
 
 	_dict_keys   = {}.keys ().__class__
 	_dict_values = {}.values ().__class__
@@ -1955,7 +1972,7 @@ class spt2ast:
 		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
 		sp.Or: lambda self, spt: AST ('-or', tuple (self._spt2ast (a) for a in spt.args)),
 		sp.And: lambda self, spt: (lambda args: sxlat._xlat_f2a_And (*args, canon = True) or AST ('-and', args)) (tuple (self._spt2ast (a) for a in spt.args)), # collapse possibly previously segmented extended comparison
-		sp.Not: lambda self, spt: AST ('-not', self._spt2ast (spt.args [0])),
+		sp.Not: _spt2ast_Not,
 
 		EqAss: lambda self, spt: AST ('=', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
 		EqCmp: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('==', self._spt2ast (spt.args [1])),), is_cmp_explicit = True),
@@ -1966,13 +1983,14 @@ class spt2ast:
 		sp.Gt: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('>',  self._spt2ast (spt.args [1])),)),
 		sp.Ge: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('>=', self._spt2ast (spt.args [1])),)),
 
-		sp.EmptySet: lambda self, spt: AST.SetEmpty,
+		sp.sets.EmptySet: lambda self, spt: AST.SetEmpty,
 		sp.fancysets.Complexes: lambda self, spt: AST.Complexes,
 		sp.fancysets.Reals: lambda self, spt: AST.Reals,
 		sp.fancysets.Integers: lambda self, spt: AST.Integers,
 		sp.fancysets.Naturals: lambda self, spt: AST.Naturals,
 		sp.fancysets.Naturals0: lambda self, spt: AST.Naturals0,
 		sp.FiniteSet: lambda self, spt: AST ('-set', tuple (self._spt2ast (arg) for arg in spt.args)),
+		sp.Contains: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('in', self._spt2ast (spt.args [1])),)),
 		sp.Union: _spt2ast_Union,
 		sp.Intersection: lambda self, spt: self._spt2ast (spt.args [0]) if len (spt.args) == 1 else AST.flatcat ('&&', self._spt2ast (spt.args [0]), self._spt2ast (spt.args [1])),
 		sp.Complement: lambda self, spt: AST ('+', (self._spt2ast (spt.args [0]), ('-', self._spt2ast (spt.args [1])))),
@@ -2066,21 +2084,20 @@ class sym: # for single script
 if __name__ == '__main__': # DEBUG!
 	# vars = {'f': AST ('-lamb', ('^', ('@', 'x'), ('#', '2')), ('x',))}
 	# vars = {'u': AST ('-diff', ('-ufunc', 'u', (('@', 'x'), ('@', 't'))), 'd', (('x', 1),))}
-	vars = {'f': AST ('-ufunc', 'f', ())}
+	# vars = {'f': AST ('-ufunc', 'f', ())}
 	# set_sym_user_funcs (set (vars))
-	set_sym_user_vars (vars)
+	# set_sym_user_vars (vars)
 
 	# set_strict (True)
 
-	# ast = AST ('*', (('-lamb', ('*', (('-lamb', ('+', (('-func', '@', (('@', 'x'),)), ('#', '1'))), ('x',)), ('(', ('+', (('@', 'x'), ('#', '1')))))), ('x',)), ('(', ('#', '0'))))
-	ast = AST ('*', (('-diff', ('(', ('@', 'f')), 'd', (('x', 1),)), ('(', ('@', 'x'))))
-	ast = AST.apply_vars (ast, vars)
+	ast = AST ('-func', 'SymmetricDifference', (('-func', 'FiniteSet', (('#', '1'), ('#', '2'), ('#', '3'))), ('-func', 'FiniteSet', (('#', '2'), ('#', '3'), ('#', '4')))))
+	# ast = AST.apply_vars (ast, vars)
 
 	# res = ast2tex (ast)
-	# res = ast2nat (ast)
+	res = ast2nat (ast)
 	# res = ast2py (ast)
 
-	res = ast2spt (ast)
+	# res = ast2spt (ast)
 	# res = spt2ast (res)
 	# res = ast2nat (res)
 

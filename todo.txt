@@ -29,8 +29,6 @@
 
 > again redo spt2ast_Add?
 
-> SymmetricDifference()
-
 
 > \int doesn't need curlys for star multiply
 > subs clarity parentheses for tex display like d/dx (f), attr, etc...?
