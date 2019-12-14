@@ -46,7 +46,7 @@ If you install SymPad from PyPI then SymPy will be installed automatically.
 
 If you want to install SymPy yourself: [https://sympy.org/](https://sympy.org/)
 ```
-pip3 install sympy==1.4
+pip3 install sympy
 ```
 
 In order to get the optional plotting functionality you must have the matplotlib package installed: [https://matplotlib.org/](https://matplotlib.org/)
