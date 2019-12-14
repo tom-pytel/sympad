@@ -1,7 +1,11 @@
-v1.1.1:
+v1.1.2:
 -------
 * Upgraded to SymPy 1.5.
 * Added usage of SymPy SymmetricDifference.
+
+v1.1.1:
+-------
+* Branched version for legacy SymPy 1.4 now that 1.5 is out.
 * Fixed Javascript bug where double spaces showed up as literal "&emsp;" strings.
 * Fixed LaTeX display of undefined function keyword argument names with underscores.
 

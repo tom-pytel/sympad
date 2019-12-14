@@ -31,8 +31,9 @@ And here are some examples of the visual output as you type:
 
 If you just want to use the program you only need the file **sympad.py**, and of course Python and the SymPy Python package.
 You can download **sympad.py** from here or install it directly from the PyPI repository.
+This version of SymPad works with SymPy 1.5, a version of SymPad which works correctly with SymPy 1.4 is available on the branch **SymPy1.4**.
 
-To install on Linux from PyPI:
+To install the latest version on Linux from PyPI:
 ```
 pip3 install sympad
 ```
