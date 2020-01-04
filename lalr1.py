@@ -41,11 +41,11 @@ class Conflict (tuple):
 
 	# 	return f'{r [:-1]}, keep)' if self.keep else r
 
-class Incomplete (Exception): # parse is head of good statement but incomplete
-	__slots__ = ['red']
+# class Incomplete (Exception): # parse is head of good statement but incomplete
+# 	__slots__ = ['red']
 
-	def __init__ (self, red):
-		self.red = red
+# 	def __init__ (self, red):
+# 		self.red = red
 
 # class KeepConf:
 # 	__slots__ = ['red']
@@ -202,10 +202,7 @@ class LALR1:
 				act, conf = terms [stidx].get (tok, (None, None))
 
 			if rederr or act is None:
-				if rederr is Reduce:
-					rederr = None
-
-				else:
+				if rederr is not Reduce:
 					self.tokens, self.tokidx, self.confs, self.stidx, self.tok, self.rederr, self.pos = \
 							tokens, tokidx, confs, stidx, tok, rederr, pos
 
@@ -221,6 +218,7 @@ class LALR1:
 					elif self.parse_error ():
 						tokidx, stidx = self.tokidx, self.stidx
 						act           = True
+						rederr        = None
 
 						continue
 
@@ -228,8 +226,8 @@ class LALR1:
 					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
-					# if self.rederr is not None: # THIS IS COMMENTED OUT BECAUSE IS NOT USED HERE AND PYLINT DOESN'T LIKE IT!
-					# 	raise self.rederr # re-raise exception from last reduction function if present
+					if rederr is not None:
+						raise rederr # re-raise exception from last reduction function if present
 
 					raise SyntaxError ( \
 						'unexpected end of input' if tok == '$end' else \
@@ -240,6 +238,7 @@ class LALR1:
 				self.stack                                   = stack
 				tok                                          = tokens [tokidx]
 				conf                                         = None
+				rederr                                       = None
 
 				self.parse_setextrastate (estate)
 
@@ -310,9 +309,9 @@ class LALR1:
 
 					continue
 
-				except Incomplete as e:
-					rederr = e
-					red    = e.red
+				# except Incomplete as e:
+				# 	rederr = e
+				# 	red    = e.red
 
 				if rnlen:
 					del stack [rnlen:]
@@ -324,7 +323,7 @@ class LALR1:
 class lalr1: # for single script
 	Token      = Token
 	State      = State
-	Incomplete = Incomplete
+	# Incomplete = Incomplete
 	PopConfs   = PopConfs
 	Reduce     = Reduce
 	LALR1      = LALR1

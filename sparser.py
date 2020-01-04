@@ -6,7 +6,7 @@ import os
 import re
 import sys
 
-from lalr1 import Token, State, Incomplete, PopConfs, Reduce, LALR1 # , KeepConf # AUTO_REMOVE_IN_SINGLE_SCRIPT
+from lalr1 import Token, State, PopConfs, Reduce, LALR1 # , KeepConf # AUTO_REMOVE_IN_SINGLE_SCRIPT
 from sast import AST # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sxlat         # AUTO_REMOVE_IN_SINGLE_SCRIPT
 import sym           # AUTO_REMOVE_IN_SINGLE_SCRIPT
@@ -720,7 +720,7 @@ def _expr_mat (mat_rows):
 	else:
 		return AST ('-mat', tuple ((c [0],) for c in mat_rows))
 
-def _expr_vec (ast):
+def _expr_vec (self, ast):
 	e = ast.comma if ast.is_comma else (ast,)
 
 	if all (c.is_brack for c in e):
@@ -736,7 +736,7 @@ def _expr_vec (ast):
 				return AST.MatEmpty
 
 		elif e [-1].brack.len < e [0].brack.len:
-			raise Incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
+			return self.mark_incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
 
 	return AST ('-mat', tuple ((c,) for c in e))
 
@@ -790,6 +790,11 @@ class Parser (LALR1):
 	def set_quick (self, state = True):
 		self.TOKENS.update (self.TOKENS_QUICK if state else self.TOKENS_LONG)
 		self.set_tokens (self.TOKENS)
+
+	def mark_incomplete (self, ast):
+		self.incomplete = True
+
+		return ast # convenienve
 
 	_PARSER_TABLES = \
 			b'eJztnXuv4zaS6L/MBaYbsAFLpEjp/Nd5zG6wncfmMbuDRhB0kp5FcPNCOsmdxWK/+60XqaJFSZat00e2iSMfSxTFVxXrJ1JF+dmrv3zx/qcvP/3kL7u//J83P38PX+Hw/a8+f/n3l7Dz8pvPXnz+4Se4G3defvPe5y/e/zfcjTtf/fWrT97/7O9hD74/+fRL' \
@@ -896,7 +901,7 @@ class Parser (LALR1):
 			b'j5Hu3MZ6tXze6spNAy70v/qNZXfB7Fh59JzRDLe7ZOOKmYvSmN3wPQuPmsFgY1VbPqn2yGbizOfNy81Ft3vCDZV5xXi8hv6CObxiNoYagm+LKVuysZ6NzvsVPTtLz8yubOnGerbOJOdWCHWWRxS+perWNhZucXd7hS8fu7WNhXtFc5tbeTyBC2sv3nhtbP9Z' \
 			b'LdH+6ygXdZjEOSnJ3MYKVFaaLlcgs7vXjXWmePct1xm7u9eNdaYssV2uM93uXjfWmeK7uFhn8L26d7qxzpTX3C3XmWp3rxu/lLS4ZC7XmXp3rxvrzAVTs3erM2Z3rxvrDL6kmt44XfMNDqiEBMhS6MZiADY7BVb4Enc+AcN0rUmgCBQDRGZxQQv6V+CrB9nj' \
 			b'DfQsGxuEm344th/ERoHTFahe6aeWZ2CgWf0btBtUG37O2XQcnr69jGOAgkBTYPyWX9GPKkkq2JDaoVphOKgOv5QZDHOSCqlyc6S+QXXRkxffyM0v+YcWkRf880v026MX54eX5uNqfh6igD6/wk4DSk7vt0HVZkBAtslrweG6lv3CnMHjGkPlBsRZ3G9oub1c' \
-			b'3fQhYDy+fv7/AWiDPAA=' 
+			b'3fQhYDy+fv7/AWiDPAA='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1246,7 +1251,7 @@ class Parser (LALR1):
 	def mat_col_1          (self, mat_col, AMP, expr):                                 return mat_col + (expr,)
 	def mat_col_2          (self, expr):                                               return (expr,)
 
-	def expr_vec_1         (self, SLASHBRACKL, expr_commas, BRACKR):                   return _expr_vec (expr_commas)
+	def expr_vec_1         (self, SLASHBRACKL, expr_commas, BRACKR):                   return _expr_vec (self, expr_commas)
 	def expr_vec_2         (self, expr_frac):                                          return expr_frac
 
 	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                     return _expr_diff (AST ('/', expr_binom1, expr_binom2))
@@ -1406,13 +1411,13 @@ class Parser (LALR1):
 		return True
 
 	def parse_getextrastate (self):
-		return (self.autocomplete [:], self.autocompleting, self.erridx, self.has_error)
+		return (self.autocomplete [:], self.autocompleting, self.erridx, self.has_error, self.incomplete)
 
 	def parse_setextrastate (self, state):
-		self.autocomplete, self.autocompleting, self.erridx, self.has_error = state
+		self.autocomplete, self.autocompleting, self.erridx, self.has_error, self.incomplete = state
 
-	def parse_result (self, red, erridx, autocomplete):
-		res             = (red is None, not self.rederr, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete, self.rederr))
+	def parse_result (self, red, erridx, autocomplete, rederr = None):
+		res             = (red is None, not rederr, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete, rederr))
 		self.parse_idx += 1
 
 		if self.parse_best is None or res < self.parse_best:
@@ -1436,11 +1441,11 @@ class Parser (LALR1):
 		self.has_error = True
 		stack          = self.stack
 
-		if isinstance (self.rederr, Incomplete):
-			return self.parse_result (self.rederr.red, self.tok.pos, [])
+		# if isinstance (self.rederr, Incomplete):
+		# 	return self.parse_result (self.rederr.red, self.tok.pos, [])
 
 		if self.tok != '$end':
-			return self.parse_result (None, self.pos, [])
+			return self.parse_result (None, self.pos, [], self.rederr)
 
 		irule, pos = self.strules [self.stidx] [0]
 		rule       = self.rules [irule]
@@ -1463,12 +1468,12 @@ class Parser (LALR1):
 			if rule [0] == 'expr_intg':
 				return self._parse_autocomplete_expr_intg ()
 
-			return self.parse_result (None, self.pos, []) if self.rederr else False
+			return self.parse_result (None, self.pos, [], self.rederr) if self.rederr else False
 
 		return self._insert_symbol (rule [1] [pos])
 
 	def parse_success (self, red):
-		self.parse_result (red, self.erridx, self.autocomplete)
+		self.parse_result (red, self.erridx, self.autocomplete, 'incomplete' if self.incomplete else None)
 
 		return True # continue parsing if conflict branches remain to find best resolution
 
@@ -1485,6 +1490,7 @@ class Parser (LALR1):
 		self.autocompleting = True
 		self.erridx         = None
 		self.has_error      = False
+		self.incomplete     = False
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			print (file = sys.stderr)
