@@ -785,8 +785,10 @@ if _SERVER_DEBUG: # DEBUG!
 	_VARS ['_'] = AST.Zero
 
 	# print (h.validate ({'text': r'del'}))
-	print (h.evaluate ({'text': r'f = f(x)'}))
-	print (h.evaluate ({'text': r'f = 1 + f(x)'}))
+	# print (h.evaluate ({'text': r'f = f(x)'}))
+	print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]]**2'}))
+	# print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]]*2'}))
+	# print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]].multiply (2)'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END

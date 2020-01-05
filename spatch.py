@@ -12,191 +12,232 @@ def _Complement__new__ (cls, a, b, evaluate = True): # sets.Complement patched t
 #...............................................................................................
 # matrix multiplication itermediate simplification routines
 
-def _dotprodsimp (a, b, simplify = True):
-	"""Sum-of-products with optional intermediate product simplification
-	targeted at the kind of blowup that occurs during summation of products.
-	Intended to reduce expression blowup during matrix multiplication or other
-	similar operations.
+def _dotprodsimp(expr, withsimp=False):
+	def count_ops_alg(expr):
+		ops  = 0
+		args = [expr]
 
-	Parameters
-	==========
+		while args:
+			a = args.pop()
 
-	a, b : iterable
-		These will be multiplied then summed together either normally or
-		using simplification on the intermediate products and cancelling at
-		the end according to the 'simplify' flag. The elements must already be
-		sympyfied and the sequences need not be of the same length, the shorter
-		will be used.
+			if not isinstance(a, Basic):
+				continue
 
-	simplify : bool
-		When set intermediate and final simplification will be used, not set
-		will indicate a normal sum of products.
-	"""
+			if a.is_Rational:
+				if a is not S.One: # -1/3 = NEG + DIV
+					ops += bool (a.p < 0) + bool (a.q != 1)
 
-	expr = S.Zero
-	itra = iter (a)
-	itrb = iter (b)
+			elif a.is_Mul:
+				if _coeff_isneg(a):
+					ops += 1
+					if a.args[0] is S.NegativeOne:
+						a = a.as_two_terms()[1]
+					else:
+						a = -a
 
-	# simple non-simplified sum of products
-	if not simplify:
-		try:
-			expr = next (itra) * next (itrb)
+				n, d = fraction(a)
 
-			for a in itra:
-				expr += a * next (itrb)
+				if n.is_Integer:
+					ops += 1 + bool (n < 0)
+					args.append(d) # won't be -Mul but could be Add
 
-		except StopIteration:
-			pass
+				elif d is not S.One:
+					if not d.is_Integer:
+						args.append(d)
+					ops += 1
+					args.append(n) # could be -Mul
 
-		return expr
+				else:
+					ops += len(a.args) - 1
+					args.extend(a.args)
 
-	# part 1, the expanded summation
-	try:
-		prod    = next (itra) * next (itrb)
-		_expand = getattr (prod, 'expand', None)
-		expr    = _expand (power_base = False, power_exp = False, log = False, \
-				multinomial = False, basic = False) if _expand else prod
+			elif a.is_Add:
+				laargs = len(a.args)
+				negs   = 0
 
-		for a in itra:
-			prod     = a * next (itrb)
-			_expand  = getattr (prod, 'expand', None)
-			expr    += _expand (power_base = False, power_exp = False, log = False, \
-					multinomial = False, basic = False) if _expand else prod
+				for ai in a.args:
+					if _coeff_isneg(ai):
+						negs += 1
+						ai	= -ai
+					args.append(ai)
 
-	except StopIteration:
-		pass
+				ops += laargs - (negs != laargs) # -x - y = NEG + SUB
 
-	# part 2, the cancelation and grouping
-	try:
-		exprops  = count_ops (expr)
-		expr2    = expr.expand (power_base = False, power_exp = False, log = False, multinomial = True, basic = False)
-		expr2ops = count_ops (expr2)
+			elif a.is_Pow:
+				ops += 1
+				args.append(a.base)
 
-		if expr2ops < exprops:
-			expr    = expr2
-			exprops = expr2ops
+		return ops
 
-		if exprops < 6: # empirically tested cutoff for expensive simplification
+	def nonalg_subs_dummies(expr, dummies):
+		if not expr.args:
 			return expr
 
-		expr2    = cancel (expr)
-		expr2ops = count_ops (expr2)
+		if expr.is_Add or expr.is_Mul or expr.is_Pow:
+			args = None
 
-		if expr2ops < exprops:
-			expr    = expr2
-			exprops = expr2ops
+			for i, a in enumerate(expr.args):
+				c = nonalg_subs_dummies(a, dummies)
 
-		expr3    = together (expr2, deep = True)
-		expr3ops = count_ops (expr3)
+				if c is a:
+					continue
 
-		if expr3ops < exprops:
-			return expr3
+				if args is None:
+					args = list(expr.args)
 
-	except:
-		pass
+				args[i] = c
 
-	return expr
+			if args is None:
+				return expr
 
-def _MatrixArithmetic_eval_matrix_mul (self, other):
-	return self._new (self.rows, other.cols, lambda i, j:
-		_dotprodsimp ((self [i,k] for k in range (self.cols)),
-		(other [k,j] for k in range (self.cols))))
+			return expr.func(*args)
 
-def _DenseMatrix_eval_matrix_mul (self, other):
-	other_len = other.rows * other.cols
-	new_len   = self.rows * other.cols
-	new_mat   = [S.Zero] * new_len
+		return dummies.setdefault(expr, Dummy())
 
-	# if we multiply an n x 0 with a 0 x m, the
-	# expected behavior is to produce an n x m matrix of zeros
-	if self.cols != 0 and other.rows != 0:
-		for i in range (new_len):
-			row, col    = i // other.cols, i % other.cols
-			row_indices = range (self.cols * row, self.cols * (row + 1))
-			col_indices = range (col, other_len, other.cols)
-			new_mat [i] = _dotprodsimp (
-				(self._mat [a] for a in row_indices),
-				(other._mat [b] for b in col_indices))
+	simplified = False # doesn't really mean simplified, rather "can simplify again"
 
-	return classof (self, other)._new (self.rows, other.cols, new_mat, copy = False)
+	if isinstance(expr, Basic) and (expr.is_Add or expr.is_Mul or expr.is_Pow):
+		expr2 = expr.expand(deep=True, modulus=None, power_base=False,
+			power_exp=False, mul=True, log=False, multinomial=True, basic=False)
 
-def _SparseMatrix_eval_matrix_mul (self, other):
-	"""Fast multiplication exploiting the sparsity of the matrix."""
-	if not isinstance (other, SparseMatrix):
-		return self.mul (self._new (other))
+		if expr2 != expr:
+			expr	   = expr2
+			simplified = True
 
-	# if we made it here, we're both sparse matrices
-	# create quick lookups for rows and cols
-	row_lookup = defaultdict (dict)
-	for (i,j), val in self._smat.items ():
-		row_lookup [i][j] = val
-	col_lookup = defaultdict (dict)
-	for (i,j), val in other._smat.items ():
-		col_lookup [j][i] = val
+		exprops = count_ops_alg(expr)
 
-	smat = {}
-	for row in row_lookup.keys ():
-		for col in col_lookup.keys ():
-			# find the common indices of non-zero entries.
-			# these are the only things that need to be multiplied.
-			indices = set (col_lookup [col].keys ()) & set (row_lookup [row].keys ())
-			if indices:
-				smat [row, col] = _dotprodsimp ((row_lookup [row][k] for k in indices),
-					(col_lookup [col][k] for k in indices))
+		if exprops >= 6: # empirically tested cutoff for expensive simplification
+			dummies = {}
+			expr2   = nonalg_subs_dummies(expr, dummies)
 
-	return self._new (self.rows, other.cols, smat)
+			if expr2 is expr or count_ops_alg(expr2) >= 6: # check again after substitution
+				expr3 = cancel(expr2)
+
+				if expr3 != expr2:
+					expr	   = expr3.subs([(d, e) for e, d in dummies.items()])
+					simplified = True
+
+		# very special case: x/(x-1) - 1/(x-1) -> 1
+		elif (exprops == 5 and expr.is_Add and expr.args [0].is_Mul and
+				expr.args [1].is_Mul and expr.args [0].args [-1].is_Pow and
+				expr.args [1].args [-1].is_Pow and
+				expr.args [0].args [-1].exp is S.NegativeOne and
+				expr.args [1].args [-1].exp is S.NegativeOne):
+
+			expr2	= together (expr)
+			expr2ops = count_ops_alg(expr2)
+
+			if expr2ops < exprops:
+				expr	   = expr2
+				simplified = True
+
+		else:
+			simplified = True
+
+	return (expr, simplified) if withsimp else expr
+
+def _MatrixArithmetic__mul__(self, other):
+	other = _matrixify(other)
+	# matrix-like objects can have shapes.  This is
+	# our first sanity check.
+	if hasattr(other, 'shape') and len(other.shape) == 2:
+		if self.shape[1] != other.shape[0]:
+			raise ShapeError("Matrix size mismatch: %s * %s." % (
+				self.shape, other.shape))
+
+	# honest sympy matrices defer to their class's routine
+	if getattr(other, 'is_Matrix', False):
+		m = self._eval_matrix_mul(other)
+		return m.applyfunc(_dotprodsimp)
+
+	# Matrix-like objects can be passed to CommonMatrix routines directly.
+	if getattr(other, 'is_MatrixLike', False):
+		return MatrixArithmetic._eval_matrix_mul(self, other)
+
+	# if 'other' is not iterable then scalar multiplication.
+	if not isinstance(other, Iterable):
+		try:
+			return self._eval_scalar_mul(other)
+		except TypeError:
+			pass
+
+	raise NotImplementedError()
+
+def _MatrixArithmetic_eval_pow_by_recursion(self, num, prevsimp=None):
+	if prevsimp is None:
+		prevsimp = [True]*len(self)
+
+	if num == 1:
+		return self
+
+	if num % 2 == 1:
+		a, b = self, self._eval_pow_by_recursion(num - 1, prevsimp=prevsimp)
+	else:
+		a = b = self._eval_pow_by_recursion(num // 2, prevsimp=prevsimp)
+
+	m     = a.multiply(b)
+	lenm  = len(m)
+	elems = [None]*lenm
+
+	for i in range(lenm):
+		if prevsimp[i]:
+			elems[i], prevsimp[i] = _dotprodsimp(m[i], withsimp=True)
+		else:
+			elems[i] = m[i]
+
+	return m._new(m.rows, m.cols, elems)
 
 #...............................................................................................
 SPATCHED = False
 
 try: # try to patch and fail silently if sympy has changed too much since this was written
-	from sympy import sympify, S, count_ops, cancel, together, SparseMatrix, Basic, Complement, boolalg
-	from sympy.matrices.common import MatrixArithmetic, classof
+	from sympy import sympify, S, cancel, together, Basic, Complement, boolalg, Dummy
+	from sympy.core.compatibility import Iterable
+	from sympy.core.function import _coeff_isneg
+	from sympy.matrices.common import MatrixArithmetic, ShapeError, _matrixify, classof
 	from sympy.matrices.dense import DenseMatrix
 	from sympy.matrices.sparse import SparseMatrix
+	from sympy.simplify.radsimp import fraction
 
-	Complement.__new__                      = _Complement__new__ # sets.Complement sympify args fix
-
-	# itermediate matrix multiplication simplification
-	_SYMPY_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
-	_SYMPY_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
-	_SYMPY_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
-
-	MatrixArithmetic._eval_matrix_mul       = _MatrixArithmetic_eval_matrix_mul
-	DenseMatrix._eval_matrix_mul            = _DenseMatrix_eval_matrix_mul
-	SparseMatrix._eval_matrix_mul           = _SparseMatrix_eval_matrix_mul
+	Complement.__new__ = _Complement__new__ # sets.Complement sympify args fix
 
 	# enable math on booleans
-	boolalg.BooleanTrue.__int__             = lambda self: 1
-	boolalg.BooleanTrue.__float__           = lambda self: 1.0
-	boolalg.BooleanTrue.__complex__         = lambda self: 1+0j
-	boolalg.BooleanTrue.as_coeff_Add        = lambda self, *a, **kw: (S.Zero, S.One)
-	boolalg.BooleanTrue.as_coeff_Mul        = lambda self, *a, **kw: (S.One, S.One)
-	boolalg.BooleanTrue._eval_evalf         = lambda self, *a, **kw: S.One
+	boolalg.BooleanTrue.__int__       = lambda self: 1
+	boolalg.BooleanTrue.__float__     = lambda self: 1.0
+	boolalg.BooleanTrue.__complex__   = lambda self: 1+0j
+	boolalg.BooleanTrue.as_coeff_Add  = lambda self, *a, **kw: (S.Zero, S.One)
+	boolalg.BooleanTrue.as_coeff_Mul  = lambda self, *a, **kw: (S.One, S.One)
+	boolalg.BooleanTrue._eval_evalf   = lambda self, *a, **kw: S.One
 
-	boolalg.BooleanFalse.__int__            = lambda self: 0
-	boolalg.BooleanFalse.__float__          = lambda self: 0.0
-	boolalg.BooleanFalse.__complex__        = lambda self: 0j
-	boolalg.BooleanFalse.as_coeff_Mul       = lambda self, *a, **kw: (S.Zero, S.Zero)
-	boolalg.BooleanFalse.as_coeff_Add       = lambda self, *a, **kw: (S.Zero, S.Zero)
-	boolalg.BooleanFalse._eval_evalf        = lambda self, *a, **kw: S.Zero
+	boolalg.BooleanFalse.__int__      = lambda self: 0
+	boolalg.BooleanFalse.__float__    = lambda self: 0.0
+	boolalg.BooleanFalse.__complex__  = lambda self: 0j
+	boolalg.BooleanFalse.as_coeff_Mul = lambda self, *a, **kw: (S.Zero, S.Zero)
+	boolalg.BooleanFalse.as_coeff_Add = lambda self, *a, **kw: (S.Zero, S.Zero)
+	boolalg.BooleanFalse._eval_evalf  = lambda self, *a, **kw: S.Zero
 
-	boolalg.BooleanAtom.__add__             = lambda self, other: self.__int__ () + other
-	boolalg.BooleanAtom.__radd__            = lambda self, other: other + self.__int__ ()
-	boolalg.BooleanAtom.__sub__             = lambda self, other: self.__int__ () - other
-	boolalg.BooleanAtom.__rsub__            = lambda self, other: other - self.__int__ ()
-	boolalg.BooleanAtom.__mul__             = lambda self, other: self.__int__ () * other
-	boolalg.BooleanAtom.__rmul__            = lambda self, other: other * self.__int__ ()
-	boolalg.BooleanAtom.__pow__             = lambda self, other: self.__int__ () ** other
-	boolalg.BooleanAtom.__rpow__            = lambda self, other: other ** self.__int__ ()
-	boolalg.BooleanAtom.__div__             = lambda self, other: self.__int__ () / other
-	boolalg.BooleanAtom.__rdiv__            = lambda self, other: other / self.__int__ ()
-	boolalg.BooleanAtom.__truediv__         = lambda self, other: self.__int__ () / other
-	boolalg.BooleanAtom.__rtruediv__        = lambda self, other: other / self.__int__ ()
-	boolalg.BooleanAtom.__floordiv__        = lambda self, other: self.__int__ () // other
-	boolalg.BooleanAtom.__rfloordiv__       = lambda self, other: other // self.__int__ ()
-	boolalg.BooleanAtom.__mod__             = lambda self, other: self.__int__ () % other
-	boolalg.BooleanAtom.__rmod__            = lambda self, other: other % self.__int__ ()
+	boolalg.BooleanAtom.__add__       = lambda self, other: self.__int__ () + other
+	boolalg.BooleanAtom.__radd__      = lambda self, other: other + self.__int__ ()
+	boolalg.BooleanAtom.__sub__       = lambda self, other: self.__int__ () - other
+	boolalg.BooleanAtom.__rsub__      = lambda self, other: other - self.__int__ ()
+	boolalg.BooleanAtom.__mul__       = lambda self, other: self.__int__ () * other
+	boolalg.BooleanAtom.__rmul__      = lambda self, other: other * self.__int__ ()
+	boolalg.BooleanAtom.__pow__       = lambda self, other: self.__int__ () ** other
+	boolalg.BooleanAtom.__rpow__      = lambda self, other: other ** self.__int__ ()
+	boolalg.BooleanAtom.__div__       = lambda self, other: self.__int__ () / other
+	boolalg.BooleanAtom.__rdiv__      = lambda self, other: other / self.__int__ ()
+	boolalg.BooleanAtom.__truediv__   = lambda self, other: self.__int__ () / other
+	boolalg.BooleanAtom.__rtruediv__  = lambda self, other: other / self.__int__ ()
+	boolalg.BooleanAtom.__floordiv__  = lambda self, other: self.__int__ ()          // other
+	boolalg.BooleanAtom.__rfloordiv__ = lambda self, other: other                    // self.__int__ ()
+	boolalg.BooleanAtom.__mod__       = lambda self, other: self.__int__ () % other
+	boolalg.BooleanAtom.__rmod__      = lambda self, other: other % self.__int__ ()
+
+	# itermediate matrix multiplication simplification
+	_SYMPY_MatrixArithmetic__mul__                = MatrixArithmetic.__mul__
+	_SYMPY_MatrixArithmetic_eval_pow_by_recursion = MatrixArithmetic._eval_pow_by_recursion
+	MatrixArithmetic.__mul__                      = _MatrixArithmetic__mul__
+	MatrixArithmetic._eval_pow_by_recursion       = _MatrixArithmetic_eval_pow_by_recursion
 
 	SPATCHED = True
 
@@ -205,10 +246,9 @@ except:
 
 def set_matmulsimp (state):
 	if SPATCHED:
-		idx                               = bool (state)
-		MatrixArithmetic._eval_matrix_mul = (_SYMPY_MatrixArithmetic_eval_matrix_mul, _MatrixArithmetic_eval_matrix_mul) [idx]
-		DenseMatrix._eval_matrix_mul      = (_SYMPY_DenseMatrix_eval_matrix_mul, _DenseMatrix_eval_matrix_mul) [idx]
-		SparseMatrix._eval_matrix_mul     = (_SYMPY_SparseMatrix_eval_matrix_mul, _SparseMatrix_eval_matrix_mul) [idx]
+		idx                                     = bool (state)
+		MatrixArithmetic.__mul__                = (_SYMPY_MatrixArithmetic__mul__, _MatrixArithmetic__mul__) [idx]
+		MatrixArithmetic._eval_pow_by_recursion = (_SYMPY_MatrixArithmetic_eval_pow_by_recursion, _MatrixArithmetic_eval_pow_by_recursion) [idx]
 
 class spatch: # for single script
 	SPATCHED       = SPATCHED
