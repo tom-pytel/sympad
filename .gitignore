@@ -5,5 +5,6 @@ parser.out
 test.txt
 build
 dist
-sympad.egg-info
+build
 dist
+sympad.egg-info
