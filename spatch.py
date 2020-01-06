@@ -187,6 +187,84 @@ def _MatrixArithmetic_eval_pow_by_recursion(self, num, prevsimp=None):
 
 	return m._new(m.rows, m.cols, elems)
 
+def _MatrixReductions_row_reduce(self, iszerofunc, simpfunc, normalize_last=True,
+				normalize=True, zero_above=True):
+	def get_col(i):
+		return mat[i::cols]
+
+	def row_swap(i, j):
+		mat[i*cols:(i + 1)*cols], mat[j*cols:(j + 1)*cols] = \
+			mat[j*cols:(j + 1)*cols], mat[i*cols:(i + 1)*cols]
+
+	def cross_cancel(a, i, b, j):
+		"""Does the row op row[i] = a*row[i] - b*row[j]"""
+		q = (j - i)*cols
+		for p in range(i*cols, (i + 1)*cols):
+			mat[p] = _dotprodsimp(a*mat[p] - b*mat[p + q])
+
+	rows, cols = self.rows, self.cols
+	mat = list(self)
+	piv_row, piv_col = 0, 0
+	pivot_cols = []
+	swaps = []
+
+	# use a fraction free method to zero above and below each pivot
+	while piv_col < cols and piv_row < rows:
+		pivot_offset, pivot_val, \
+		_, newly_determined = _find_reasonable_pivot(
+			get_col(piv_col)[piv_row:], iszerofunc, simpfunc)
+
+		# _find_reasonable_pivot may have simplified some things
+		# in the process.  Let's not let them go to waste
+		for (offset, val) in newly_determined:
+			offset += piv_row
+			mat[offset*cols + piv_col] = val
+
+		if pivot_offset is None:
+			piv_col += 1
+			continue
+
+		pivot_cols.append(piv_col)
+		if pivot_offset != 0:
+			row_swap(piv_row, pivot_offset + piv_row)
+			swaps.append((piv_row, pivot_offset + piv_row))
+
+		# if we aren't normalizing last, we normalize
+		# before we zero the other rows
+		if normalize_last is False:
+			i, j = piv_row, piv_col
+			mat[i*cols + j] = self.one
+			for p in range(i*cols + j + 1, (i + 1)*cols):
+				mat[p] = _dotprodsimp(mat[p] / pivot_val)
+			# after normalizing, the pivot value is 1
+			pivot_val = self.one
+
+		# zero above and below the pivot
+		for row in range(rows):
+			# don't zero our current row
+			if row == piv_row:
+				continue
+			# don't zero above the pivot unless we're told.
+			if zero_above is False and row < piv_row:
+				continue
+			# if we're already a zero, don't do anything
+			val = mat[row*cols + piv_col]
+			if iszerofunc(val):
+				continue
+
+			cross_cancel(pivot_val, row, val, piv_row)
+		piv_row += 1
+
+	# normalize each row
+	if normalize_last is True and normalize is True:
+		for piv_i, piv_j in enumerate(pivot_cols):
+			pivot_val = mat[piv_i*cols + piv_j]
+			mat[piv_i*cols + piv_j] = self.one
+			for p in range(piv_i*cols + piv_j + 1, (piv_i + 1)*cols):
+				mat[p] = _dotprodsimp(mat[p] / pivot_val)
+
+	return self._new(self.rows, self.cols, mat), tuple(pivot_cols), tuple(swaps)
+
 #...............................................................................................
 SPATCHED = False
 
@@ -195,6 +273,7 @@ try: # try to patch and fail silently if sympy has changed too much since this w
 	from sympy.core.compatibility import Iterable
 	from sympy.core.function import _coeff_isneg
 	from sympy.matrices.common import MatrixArithmetic, ShapeError, _matrixify, classof
+	from sympy.matrices.matrices import MatrixReductions, _find_reasonable_pivot
 	from sympy.matrices.dense import DenseMatrix
 	from sympy.matrices.sparse import SparseMatrix
 	from sympy.simplify.radsimp import fraction
@@ -236,8 +315,10 @@ try: # try to patch and fail silently if sympy has changed too much since this w
 	# itermediate matrix multiplication simplification
 	_SYMPY_MatrixArithmetic__mul__                = MatrixArithmetic.__mul__
 	_SYMPY_MatrixArithmetic_eval_pow_by_recursion = MatrixArithmetic._eval_pow_by_recursion
+	_SYMPY_MatrixReductions_row_reduce            = MatrixReductions._row_reduce
 	MatrixArithmetic.__mul__                      = _MatrixArithmetic__mul__
 	MatrixArithmetic._eval_pow_by_recursion       = _MatrixArithmetic_eval_pow_by_recursion
+	MatrixReductions._row_reduce                  = _MatrixReductions_row_reduce
 
 	SPATCHED = True
 
@@ -249,6 +330,7 @@ def set_matmulsimp (state):
 		idx                                     = bool (state)
 		MatrixArithmetic.__mul__                = (_SYMPY_MatrixArithmetic__mul__, _MatrixArithmetic__mul__) [idx]
 		MatrixArithmetic._eval_pow_by_recursion = (_SYMPY_MatrixArithmetic_eval_pow_by_recursion, _MatrixArithmetic_eval_pow_by_recursion) [idx]
+		MatrixReductions._row_reduce            = (_SYMPY_MatrixReductions_row_reduce, _MatrixReductions_row_reduce) [idx]
 
 class spatch: # for single script
 	SPATCHED       = SPATCHED

@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup (
   name                          = "sympad",
-  version                       = "1.1.2",
+  version                       = "1.1.3",
   author                        = "Tomasz Pytel",
   author_email                  = "tom_pytel@yahoo.com",
   license                       = 'BSD',

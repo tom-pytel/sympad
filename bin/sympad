@@ -3374,11 +3374,11 @@ class Conflict (tuple):
 
 	# 	return f'{r [:-1]}, keep)' if self.keep else r
 
-class Incomplete (Exception): # parse is head of good statement but incomplete
-	__slots__ = ['red']
+# class Incomplete (Exception): # parse is head of good statement but incomplete
+# 	__slots__ = ['red']
 
-	def __init__ (self, red):
-		self.red = red
+# 	def __init__ (self, red):
+# 		self.red = red
 
 # class KeepConf:
 # 	__slots__ = ['red']
@@ -3535,10 +3535,7 @@ class LALR1:
 				act, conf = terms [stidx].get (tok, (None, None))
 
 			if rederr or act is None:
-				if rederr is Reduce:
-					rederr = None
-
-				else:
+				if rederr is not Reduce:
 					self.tokens, self.tokidx, self.confs, self.stidx, self.tok, self.rederr, self.pos = \
 							tokens, tokidx, confs, stidx, tok, rederr, pos
 
@@ -3554,6 +3551,7 @@ class LALR1:
 					elif self.parse_error ():
 						tokidx, stidx = self.tokidx, self.stidx
 						act           = True
+						rederr        = None
 
 						continue
 
@@ -3561,8 +3559,8 @@ class LALR1:
 					if has_parse_success: # do not raise SyntaxError if parser relies on parse_success
 						return None
 
-					# if self.rederr is not None: # THIS IS COMMENTED OUT BECAUSE IS NOT USED HERE AND PYLINT DOESN'T LIKE IT!
-					# 	raise self.rederr # re-raise exception from last reduction function if present
+					if rederr is not None:
+						raise rederr # re-raise exception from last reduction function if present
 
 					raise SyntaxError ( \
 						'unexpected end of input' if tok == '$end' else \
@@ -3573,6 +3571,7 @@ class LALR1:
 				self.stack                                   = stack
 				tok                                          = tokens [tokidx]
 				conf                                         = None
+				rederr                                       = None
 
 				self.parse_setextrastate (estate)
 
@@ -3643,9 +3642,9 @@ class LALR1:
 
 					continue
 
-				except Incomplete as e:
-					rederr = e
-					red    = e.red
+				# except Incomplete as e:
+				# 	rederr = e
+				# 	red    = e.red
 
 				if rnlen:
 					del stack [rnlen:]
@@ -3657,7 +3656,7 @@ class LALR1:
 class lalr1: # for single script
 	Token      = Token
 	State      = State
-	Incomplete = Incomplete
+	# Incomplete = Incomplete
 	PopConfs   = PopConfs
 	Reduce     = Reduce
 	LALR1      = LALR1
@@ -8324,7 +8323,7 @@ def _expr_mat (mat_rows):
 	else:
 		return AST ('-mat', tuple ((c [0],) for c in mat_rows))
 
-def _expr_vec (ast):
+def _expr_vec (self, ast):
 	e = ast.comma if ast.is_comma else (ast,)
 
 	if all (c.is_brack for c in e):
@@ -8340,7 +8339,7 @@ def _expr_vec (ast):
 				return AST.MatEmpty
 
 		elif e [-1].brack.len < e [0].brack.len:
-			raise Incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
+			return self.mark_incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
 
 	return AST ('-mat', tuple ((c,) for c in e))
 
@@ -8394,6 +8393,11 @@ class Parser (LALR1):
 	def set_quick (self, state = True):
 		self.TOKENS.update (self.TOKENS_QUICK if state else self.TOKENS_LONG)
 		self.set_tokens (self.TOKENS)
+
+	def mark_incomplete (self, ast):
+		self.incomplete = True
+
+		return ast # convenienve
 
 	_PARSER_TABLES = \
 			b'eJztnXuv4zaS6L/MBaYbsAFLpEjp/Nd5zG6wncfmMbuDRhB0kp5FcPNCOsmdxWK/+60XqaJFSZat00e2iSMfSxTFVxXrJ1JF+dmrv3zx/qcvP/3kL7u//J83P38PX+Hw/a8+f/n3l7Dz8pvPXnz+4Se4G3defvPe5y/e/zfcjTtf/fWrT97/7O9hD74/+fRL' \
@@ -8850,7 +8854,7 @@ class Parser (LALR1):
 	def mat_col_1          (self, mat_col, AMP, expr):                                 return mat_col + (expr,)
 	def mat_col_2          (self, expr):                                               return (expr,)
 
-	def expr_vec_1         (self, SLASHBRACKL, expr_commas, BRACKR):                   return _expr_vec (expr_commas)
+	def expr_vec_1         (self, SLASHBRACKL, expr_commas, BRACKR):                   return _expr_vec (self, expr_commas)
 	def expr_vec_2         (self, expr_frac):                                          return expr_frac
 
 	def expr_frac_1        (self, FRAC, expr_binom1, expr_binom2):                     return _expr_diff (AST ('/', expr_binom1, expr_binom2))
@@ -9010,13 +9014,13 @@ class Parser (LALR1):
 		return True
 
 	def parse_getextrastate (self):
-		return (self.autocomplete [:], self.autocompleting, self.erridx, self.has_error)
+		return (self.autocomplete [:], self.autocompleting, self.erridx, self.has_error, self.incomplete)
 
 	def parse_setextrastate (self, state):
-		self.autocomplete, self.autocompleting, self.erridx, self.has_error = state
+		self.autocomplete, self.autocompleting, self.erridx, self.has_error, self.incomplete = state
 
-	def parse_result (self, red, erridx, autocomplete):
-		res             = (red is None, not self.rederr, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete, self.rederr))
+	def parse_result (self, red, erridx, autocomplete, rederr = None):
+		res             = (red is None, not rederr, -erridx if erridx is not None else float ('-inf'), len (autocomplete), self.parse_idx, (red, erridx, autocomplete, rederr))
 		self.parse_idx += 1
 
 		if self.parse_best is None or res < self.parse_best:
@@ -9040,11 +9044,8 @@ class Parser (LALR1):
 		self.has_error = True
 		stack          = self.stack
 
-		if isinstance (self.rederr, Incomplete):
-			return self.parse_result (self.rederr.red, self.tok.pos, [])
-
 		if self.tok != '$end':
-			return self.parse_result (None, self.pos, [])
+			return self.parse_result (None, self.pos, [], self.rederr)
 
 		irule, pos = self.strules [self.stidx] [0]
 		rule       = self.rules [irule]
@@ -9067,12 +9068,12 @@ class Parser (LALR1):
 			if rule [0] == 'expr_intg':
 				return self._parse_autocomplete_expr_intg ()
 
-			return self.parse_result (None, self.pos, []) if self.rederr else False
+			return self.parse_result (None, self.pos, [], self.rederr) if self.rederr else False
 
 		return self._insert_symbol (rule [1] [pos])
 
 	def parse_success (self, red):
-		self.parse_result (red, self.erridx, self.autocomplete)
+		self.parse_result (red, self.erridx, self.autocomplete, 'incomplete' if self.incomplete else None)
 
 		return True # continue parsing if conflict branches remain to find best resolution
 
@@ -9089,6 +9090,7 @@ class Parser (LALR1):
 		self.autocompleting = True
 		self.erridx         = None
 		self.has_error      = False
+		self.incomplete     = False
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			print (file = sys.stderr)
@@ -9135,191 +9137,313 @@ def _Complement__new__ (cls, a, b, evaluate = True): # sets.Complement patched t
 #...............................................................................................
 # matrix multiplication itermediate simplification routines
 
-def _dotprodsimp (a, b, simplify = True):
-	"""Sum-of-products with optional intermediate product simplification
-	targeted at the kind of blowup that occurs during summation of products.
-	Intended to reduce expression blowup during matrix multiplication or other
-	similar operations.
+def _dotprodsimp(expr, withsimp=False):
+	def count_ops_alg(expr):
+		ops  = 0
+		args = [expr]
 
-	Parameters
-	==========
+		while args:
+			a = args.pop()
 
-	a, b : iterable
-		These will be multiplied then summed together either normally or
-		using simplification on the intermediate products and cancelling at
-		the end according to the 'simplify' flag. The elements must already be
-		sympyfied and the sequences need not be of the same length, the shorter
-		will be used.
+			if not isinstance(a, Basic):
+				continue
 
-	simplify : bool
-		When set intermediate and final simplification will be used, not set
-		will indicate a normal sum of products.
-	"""
+			if a.is_Rational:
+				if a is not S.One: # -1/3 = NEG + DIV
+					ops += bool (a.p < 0) + bool (a.q != 1)
 
-	expr = S.Zero
-	itra = iter (a)
-	itrb = iter (b)
+			elif a.is_Mul:
+				if _coeff_isneg(a):
+					ops += 1
+					if a.args[0] is S.NegativeOne:
+						a = a.as_two_terms()[1]
+					else:
+						a = -a
 
-	# simple non-simplified sum of products
-	if not simplify:
-		try:
-			expr = next (itra) * next (itrb)
+				n, d = fraction(a)
 
-			for a in itra:
-				expr += a * next (itrb)
+				if n.is_Integer:
+					ops += 1 + bool (n < 0)
+					args.append(d) # won't be -Mul but could be Add
 
-		except StopIteration:
-			pass
+				elif d is not S.One:
+					if not d.is_Integer:
+						args.append(d)
+					ops += 1
+					args.append(n) # could be -Mul
 
-		return expr
+				else:
+					ops += len(a.args) - 1
+					args.extend(a.args)
 
-	# part 1, the expanded summation
-	try:
-		prod    = next (itra) * next (itrb)
-		_expand = getattr (prod, 'expand', None)
-		expr    = _expand (power_base = False, power_exp = False, log = False, \
-				multinomial = False, basic = False) if _expand else prod
+			elif a.is_Add:
+				laargs = len(a.args)
+				negs   = 0
 
-		for a in itra:
-			prod     = a * next (itrb)
-			_expand  = getattr (prod, 'expand', None)
-			expr    += _expand (power_base = False, power_exp = False, log = False, \
-					multinomial = False, basic = False) if _expand else prod
+				for ai in a.args:
+					if _coeff_isneg(ai):
+						negs += 1
+						ai	= -ai
+					args.append(ai)
 
-	except StopIteration:
-		pass
+				ops += laargs - (negs != laargs) # -x - y = NEG + SUB
 
-	# part 2, the cancelation and grouping
-	try:
-		exprops  = count_ops (expr)
-		expr2    = expr.expand (power_base = False, power_exp = False, log = False, multinomial = True, basic = False)
-		expr2ops = count_ops (expr2)
+			elif a.is_Pow:
+				ops += 1
+				args.append(a.base)
 
-		if expr2ops < exprops:
-			expr    = expr2
-			exprops = expr2ops
+		return ops
 
-		if exprops < 6: # empirically tested cutoff for expensive simplification
+	def nonalg_subs_dummies(expr, dummies):
+		if not expr.args:
 			return expr
 
-		expr2    = cancel (expr)
-		expr2ops = count_ops (expr2)
+		if expr.is_Add or expr.is_Mul or expr.is_Pow:
+			args = None
 
-		if expr2ops < exprops:
-			expr    = expr2
-			exprops = expr2ops
+			for i, a in enumerate(expr.args):
+				c = nonalg_subs_dummies(a, dummies)
 
-		expr3    = together (expr2, deep = True)
-		expr3ops = count_ops (expr3)
+				if c is a:
+					continue
 
-		if expr3ops < exprops:
-			return expr3
+				if args is None:
+					args = list(expr.args)
 
-	except:
-		pass
+				args[i] = c
 
-	return expr
+			if args is None:
+				return expr
 
-def _MatrixArithmetic_eval_matrix_mul (self, other):
-	return self._new (self.rows, other.cols, lambda i, j:
-		_dotprodsimp ((self [i,k] for k in range (self.cols)),
-		(other [k,j] for k in range (self.cols))))
+			return expr.func(*args)
 
-def _DenseMatrix_eval_matrix_mul (self, other):
-	other_len = other.rows * other.cols
-	new_len   = self.rows * other.cols
-	new_mat   = [S.Zero] * new_len
+		return dummies.setdefault(expr, Dummy())
 
-	# if we multiply an n x 0 with a 0 x m, the
-	# expected behavior is to produce an n x m matrix of zeros
-	if self.cols != 0 and other.rows != 0:
-		for i in range (new_len):
-			row, col    = i // other.cols, i % other.cols
-			row_indices = range (self.cols * row, self.cols * (row + 1))
-			col_indices = range (col, other_len, other.cols)
-			new_mat [i] = _dotprodsimp (
-				(self._mat [a] for a in row_indices),
-				(other._mat [b] for b in col_indices))
+	simplified = False # doesn't really mean simplified, rather "can simplify again"
 
-	return classof (self, other)._new (self.rows, other.cols, new_mat, copy = False)
+	if isinstance(expr, Basic) and (expr.is_Add or expr.is_Mul or expr.is_Pow):
+		expr2 = expr.expand(deep=True, modulus=None, power_base=False,
+			power_exp=False, mul=True, log=False, multinomial=True, basic=False)
 
-def _SparseMatrix_eval_matrix_mul (self, other):
-	"""Fast multiplication exploiting the sparsity of the matrix."""
-	if not isinstance (other, SparseMatrix):
-		return self.mul (self._new (other))
+		if expr2 != expr:
+			expr	   = expr2
+			simplified = True
 
-	# if we made it here, we're both sparse matrices
-	# create quick lookups for rows and cols
-	row_lookup = defaultdict (dict)
-	for (i,j), val in self._smat.items ():
-		row_lookup [i][j] = val
-	col_lookup = defaultdict (dict)
-	for (i,j), val in other._smat.items ():
-		col_lookup [j][i] = val
+		exprops = count_ops_alg(expr)
 
-	smat = {}
-	for row in row_lookup.keys ():
-		for col in col_lookup.keys ():
-			# find the common indices of non-zero entries.
-			# these are the only things that need to be multiplied.
-			indices = set (col_lookup [col].keys ()) & set (row_lookup [row].keys ())
-			if indices:
-				smat [row, col] = _dotprodsimp ((row_lookup [row][k] for k in indices),
-					(col_lookup [col][k] for k in indices))
+		if exprops >= 6: # empirically tested cutoff for expensive simplification
+			dummies = {}
+			expr2   = nonalg_subs_dummies(expr, dummies)
 
-	return self._new (self.rows, other.cols, smat)
+			if expr2 is expr or count_ops_alg(expr2) >= 6: # check again after substitution
+				expr3 = cancel(expr2)
+
+				if expr3 != expr2:
+					expr	   = expr3.subs([(d, e) for e, d in dummies.items()])
+					simplified = True
+
+		# very special case: x/(x-1) - 1/(x-1) -> 1
+		elif (exprops == 5 and expr.is_Add and expr.args [0].is_Mul and
+				expr.args [1].is_Mul and expr.args [0].args [-1].is_Pow and
+				expr.args [1].args [-1].is_Pow and
+				expr.args [0].args [-1].exp is S.NegativeOne and
+				expr.args [1].args [-1].exp is S.NegativeOne):
+
+			expr2	= together (expr)
+			expr2ops = count_ops_alg(expr2)
+
+			if expr2ops < exprops:
+				expr	   = expr2
+				simplified = True
+
+		else:
+			simplified = True
+
+	return (expr, simplified) if withsimp else expr
+
+def _MatrixArithmetic__mul__(self, other):
+	other = _matrixify(other)
+	# matrix-like objects can have shapes.  This is
+	# our first sanity check.
+	if hasattr(other, 'shape') and len(other.shape) == 2:
+		if self.shape[1] != other.shape[0]:
+			raise ShapeError("Matrix size mismatch: %s * %s." % (
+				self.shape, other.shape))
+
+	# honest sympy matrices defer to their class's routine
+	if getattr(other, 'is_Matrix', False):
+		m = self._eval_matrix_mul(other)
+		return m.applyfunc(_dotprodsimp)
+
+	# Matrix-like objects can be passed to CommonMatrix routines directly.
+	if getattr(other, 'is_MatrixLike', False):
+		return MatrixArithmetic._eval_matrix_mul(self, other)
+
+	# if 'other' is not iterable then scalar multiplication.
+	if not isinstance(other, Iterable):
+		try:
+			return self._eval_scalar_mul(other)
+		except TypeError:
+			pass
+
+	raise NotImplementedError()
+
+def _MatrixArithmetic_eval_pow_by_recursion(self, num, prevsimp=None):
+	if prevsimp is None:
+		prevsimp = [True]*len(self)
+
+	if num == 1:
+		return self
+
+	if num % 2 == 1:
+		a, b = self, self._eval_pow_by_recursion(num - 1, prevsimp=prevsimp)
+	else:
+		a = b = self._eval_pow_by_recursion(num // 2, prevsimp=prevsimp)
+
+	m     = a.multiply(b)
+	lenm  = len(m)
+	elems = [None]*lenm
+
+	for i in range(lenm):
+		if prevsimp[i]:
+			elems[i], prevsimp[i] = _dotprodsimp(m[i], withsimp=True)
+		else:
+			elems[i] = m[i]
+
+	return m._new(m.rows, m.cols, elems)
+
+def _MatrixReductions_row_reduce(self, iszerofunc, simpfunc, normalize_last=True,
+				normalize=True, zero_above=True):
+	def get_col(i):
+		return mat[i::cols]
+
+	def row_swap(i, j):
+		mat[i*cols:(i + 1)*cols], mat[j*cols:(j + 1)*cols] = \
+			mat[j*cols:(j + 1)*cols], mat[i*cols:(i + 1)*cols]
+
+	def cross_cancel(a, i, b, j):
+		"""Does the row op row[i] = a*row[i] - b*row[j]"""
+		q = (j - i)*cols
+		for p in range(i*cols, (i + 1)*cols):
+			mat[p] = _dotprodsimp(a*mat[p] - b*mat[p + q])
+
+	rows, cols = self.rows, self.cols
+	mat = list(self)
+	piv_row, piv_col = 0, 0
+	pivot_cols = []
+	swaps = []
+
+	# use a fraction free method to zero above and below each pivot
+	while piv_col < cols and piv_row < rows:
+		pivot_offset, pivot_val, \
+		_, newly_determined = _find_reasonable_pivot(
+			get_col(piv_col)[piv_row:], iszerofunc, simpfunc)
+
+		# _find_reasonable_pivot may have simplified some things
+		# in the process.  Let's not let them go to waste
+		for (offset, val) in newly_determined:
+			offset += piv_row
+			mat[offset*cols + piv_col] = val
+
+		if pivot_offset is None:
+			piv_col += 1
+			continue
+
+		pivot_cols.append(piv_col)
+		if pivot_offset != 0:
+			row_swap(piv_row, pivot_offset + piv_row)
+			swaps.append((piv_row, pivot_offset + piv_row))
+
+		# if we aren't normalizing last, we normalize
+		# before we zero the other rows
+		if normalize_last is False:
+			i, j = piv_row, piv_col
+			mat[i*cols + j] = self.one
+			for p in range(i*cols + j + 1, (i + 1)*cols):
+				mat[p] = _dotprodsimp(mat[p] / pivot_val)
+			# after normalizing, the pivot value is 1
+			pivot_val = self.one
+
+		# zero above and below the pivot
+		for row in range(rows):
+			# don't zero our current row
+			if row == piv_row:
+				continue
+			# don't zero above the pivot unless we're told.
+			if zero_above is False and row < piv_row:
+				continue
+			# if we're already a zero, don't do anything
+			val = mat[row*cols + piv_col]
+			if iszerofunc(val):
+				continue
+
+			cross_cancel(pivot_val, row, val, piv_row)
+		piv_row += 1
+
+	# normalize each row
+	if normalize_last is True and normalize is True:
+		for piv_i, piv_j in enumerate(pivot_cols):
+			pivot_val = mat[piv_i*cols + piv_j]
+			mat[piv_i*cols + piv_j] = self.one
+			for p in range(piv_i*cols + piv_j + 1, (piv_i + 1)*cols):
+				mat[p] = _dotprodsimp(mat[p] / pivot_val)
+
+	return self._new(self.rows, self.cols, mat), tuple(pivot_cols), tuple(swaps)
 
 #...............................................................................................
 SPATCHED = False
 
 try: # try to patch and fail silently if sympy has changed too much since this was written
-	from sympy import sympify, S, count_ops, cancel, together, SparseMatrix, Basic, Complement, boolalg
-	from sympy.matrices.common import MatrixArithmetic, classof
+	from sympy import sympify, S, cancel, together, Basic, Complement, boolalg, Dummy
+	from sympy.core.compatibility import Iterable
+	from sympy.core.function import _coeff_isneg
+	from sympy.matrices.common import MatrixArithmetic, ShapeError, _matrixify, classof
+	from sympy.matrices.matrices import MatrixReductions, _find_reasonable_pivot
 	from sympy.matrices.dense import DenseMatrix
 	from sympy.matrices.sparse import SparseMatrix
+	from sympy.simplify.radsimp import fraction
 
-	Complement.__new__                      = _Complement__new__ # sets.Complement sympify args fix
-
-	# itermediate matrix multiplication simplification
-	_SYMPY_MatrixArithmetic_eval_matrix_mul = MatrixArithmetic._eval_matrix_mul
-	_SYMPY_DenseMatrix_eval_matrix_mul      = DenseMatrix._eval_matrix_mul
-	_SYMPY_SparseMatrix_eval_matrix_mul     = SparseMatrix._eval_matrix_mul
-
-	MatrixArithmetic._eval_matrix_mul       = _MatrixArithmetic_eval_matrix_mul
-	DenseMatrix._eval_matrix_mul            = _DenseMatrix_eval_matrix_mul
-	SparseMatrix._eval_matrix_mul           = _SparseMatrix_eval_matrix_mul
+	Complement.__new__ = _Complement__new__ # sets.Complement sympify args fix
 
 	# enable math on booleans
-	boolalg.BooleanTrue.__int__             = lambda self: 1
-	boolalg.BooleanTrue.__float__           = lambda self: 1.0
-	boolalg.BooleanTrue.__complex__         = lambda self: 1+0j
-	boolalg.BooleanTrue.as_coeff_Add        = lambda self, *a, **kw: (S.Zero, S.One)
-	boolalg.BooleanTrue.as_coeff_Mul        = lambda self, *a, **kw: (S.One, S.One)
-	boolalg.BooleanTrue._eval_evalf         = lambda self, *a, **kw: S.One
+	boolalg.BooleanTrue.__int__       = lambda self: 1
+	boolalg.BooleanTrue.__float__     = lambda self: 1.0
+	boolalg.BooleanTrue.__complex__   = lambda self: 1+0j
+	boolalg.BooleanTrue.as_coeff_Add  = lambda self, *a, **kw: (S.Zero, S.One)
+	boolalg.BooleanTrue.as_coeff_Mul  = lambda self, *a, **kw: (S.One, S.One)
+	boolalg.BooleanTrue._eval_evalf   = lambda self, *a, **kw: S.One
 
-	boolalg.BooleanFalse.__int__            = lambda self: 0
-	boolalg.BooleanFalse.__float__          = lambda self: 0.0
-	boolalg.BooleanFalse.__complex__        = lambda self: 0j
-	boolalg.BooleanFalse.as_coeff_Mul       = lambda self, *a, **kw: (S.Zero, S.Zero)
-	boolalg.BooleanFalse.as_coeff_Add       = lambda self, *a, **kw: (S.Zero, S.Zero)
-	boolalg.BooleanFalse._eval_evalf        = lambda self, *a, **kw: S.Zero
+	boolalg.BooleanFalse.__int__      = lambda self: 0
+	boolalg.BooleanFalse.__float__    = lambda self: 0.0
+	boolalg.BooleanFalse.__complex__  = lambda self: 0j
+	boolalg.BooleanFalse.as_coeff_Mul = lambda self, *a, **kw: (S.Zero, S.Zero)
+	boolalg.BooleanFalse.as_coeff_Add = lambda self, *a, **kw: (S.Zero, S.Zero)
+	boolalg.BooleanFalse._eval_evalf  = lambda self, *a, **kw: S.Zero
 
-	boolalg.BooleanAtom.__add__             = lambda self, other: self.__int__ () + other
-	boolalg.BooleanAtom.__radd__            = lambda self, other: other + self.__int__ ()
-	boolalg.BooleanAtom.__sub__             = lambda self, other: self.__int__ () - other
-	boolalg.BooleanAtom.__rsub__            = lambda self, other: other - self.__int__ ()
-	boolalg.BooleanAtom.__mul__             = lambda self, other: self.__int__ () * other
-	boolalg.BooleanAtom.__rmul__            = lambda self, other: other * self.__int__ ()
-	boolalg.BooleanAtom.__pow__             = lambda self, other: self.__int__ () ** other
-	boolalg.BooleanAtom.__rpow__            = lambda self, other: other ** self.__int__ ()
-	boolalg.BooleanAtom.__div__             = lambda self, other: self.__int__ () / other
-	boolalg.BooleanAtom.__rdiv__            = lambda self, other: other / self.__int__ ()
-	boolalg.BooleanAtom.__truediv__         = lambda self, other: self.__int__ () / other
-	boolalg.BooleanAtom.__rtruediv__        = lambda self, other: other / self.__int__ ()
-	boolalg.BooleanAtom.__floordiv__        = lambda self, other: self.__int__ () // other
-	boolalg.BooleanAtom.__rfloordiv__       = lambda self, other: other // self.__int__ ()
-	boolalg.BooleanAtom.__mod__             = lambda self, other: self.__int__ () % other
-	boolalg.BooleanAtom.__rmod__            = lambda self, other: other % self.__int__ ()
+	boolalg.BooleanAtom.__add__       = lambda self, other: self.__int__ () + other
+	boolalg.BooleanAtom.__radd__      = lambda self, other: other + self.__int__ ()
+	boolalg.BooleanAtom.__sub__       = lambda self, other: self.__int__ () - other
+	boolalg.BooleanAtom.__rsub__      = lambda self, other: other - self.__int__ ()
+	boolalg.BooleanAtom.__mul__       = lambda self, other: self.__int__ () * other
+	boolalg.BooleanAtom.__rmul__      = lambda self, other: other * self.__int__ ()
+	boolalg.BooleanAtom.__pow__       = lambda self, other: self.__int__ () ** other
+	boolalg.BooleanAtom.__rpow__      = lambda self, other: other ** self.__int__ ()
+	boolalg.BooleanAtom.__div__       = lambda self, other: self.__int__ () / other
+	boolalg.BooleanAtom.__rdiv__      = lambda self, other: other / self.__int__ ()
+	boolalg.BooleanAtom.__truediv__   = lambda self, other: self.__int__ () / other
+	boolalg.BooleanAtom.__rtruediv__  = lambda self, other: other / self.__int__ ()
+	boolalg.BooleanAtom.__floordiv__  = lambda self, other: self.__int__ ()          // other
+	boolalg.BooleanAtom.__rfloordiv__ = lambda self, other: other                    // self.__int__ ()
+	boolalg.BooleanAtom.__mod__       = lambda self, other: self.__int__ () % other
+	boolalg.BooleanAtom.__rmod__      = lambda self, other: other % self.__int__ ()
+
+	# itermediate matrix multiplication simplification
+	_SYMPY_MatrixArithmetic__mul__                = MatrixArithmetic.__mul__
+	_SYMPY_MatrixArithmetic_eval_pow_by_recursion = MatrixArithmetic._eval_pow_by_recursion
+	_SYMPY_MatrixReductions_row_reduce            = MatrixReductions._row_reduce
+	MatrixArithmetic.__mul__                      = _MatrixArithmetic__mul__
+	MatrixArithmetic._eval_pow_by_recursion       = _MatrixArithmetic_eval_pow_by_recursion
+	MatrixReductions._row_reduce                  = _MatrixReductions_row_reduce
 
 	SPATCHED = True
 
@@ -9328,10 +9452,10 @@ except:
 
 def set_matmulsimp (state):
 	if SPATCHED:
-		idx                               = bool (state)
-		MatrixArithmetic._eval_matrix_mul = (_SYMPY_MatrixArithmetic_eval_matrix_mul, _MatrixArithmetic_eval_matrix_mul) [idx]
-		DenseMatrix._eval_matrix_mul      = (_SYMPY_DenseMatrix_eval_matrix_mul, _DenseMatrix_eval_matrix_mul) [idx]
-		SparseMatrix._eval_matrix_mul     = (_SYMPY_SparseMatrix_eval_matrix_mul, _SparseMatrix_eval_matrix_mul) [idx]
+		idx                                     = bool (state)
+		MatrixArithmetic.__mul__                = (_SYMPY_MatrixArithmetic__mul__, _MatrixArithmetic__mul__) [idx]
+		MatrixArithmetic._eval_pow_by_recursion = (_SYMPY_MatrixArithmetic_eval_pow_by_recursion, _MatrixArithmetic_eval_pow_by_recursion) [idx]
+		MatrixReductions._row_reduce            = (_SYMPY_MatrixReductions_row_reduce, _MatrixReductions_row_reduce) [idx]
 
 class spatch: # for single script
 	SPATCHED       = SPATCHED
@@ -9917,7 +10041,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.1.2'
+_VERSION         = '1.1.3'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
@@ -10379,10 +10503,7 @@ class Handler (SimpleHTTPRequestHandler):
 				print (file = sys.stderr)
 
 		if isinstance (error, Exception):
-			if isinstance (error, lalr1.Incomplete):
-				error = 'incomplete'
-			else:
-				error = (f'{error.__class__.__name__}: ' if not isinstance (error, SyntaxError) else '') + error.args [0].replace ('\n', ' ').strip ()
+			error = (f'{error.__class__.__name__}: ' if not isinstance (error, SyntaxError) else '') + error.args [0].replace ('\n', ' ').strip ()
 
 		return {
 			'tex'         : tex,

@@ -22,7 +22,7 @@ from urllib.parse import parse_qs
 
 _RUNNING_AS_SINGLE_SCRIPT = False # AUTO_REMOVE_IN_SINGLE_SCRIPT
 
-_VERSION         = '1.1.2'
+_VERSION         = '1.1.3'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
@@ -492,10 +492,7 @@ class Handler (SimpleHTTPRequestHandler):
 				print (file = sys.stderr)
 
 		if isinstance (error, Exception):
-			if isinstance (error, lalr1.Incomplete):
-				error = 'incomplete'
-			else:
-				error = (f'{error.__class__.__name__}: ' if not isinstance (error, SyntaxError) else '') + error.args [0].replace ('\n', ' ').strip ()
+			error = (f'{error.__class__.__name__}: ' if not isinstance (error, SyntaxError) else '') + error.args [0].replace ('\n', ' ').strip ()
 
 		return {
 			'tex'         : tex,
@@ -786,7 +783,7 @@ if _SERVER_DEBUG: # DEBUG!
 
 	# print (h.validate ({'text': r'del'}))
 	# print (h.evaluate ({'text': r'f = f(x)'}))
-	print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]]**2'}))
+	print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]].rref ()'}))
 	# print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]]*2'}))
 	# print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]].multiply (2)'}))
 
