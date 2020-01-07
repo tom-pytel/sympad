@@ -113,7 +113,7 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 &emsp;<a href="#Solving Equations">Solving Equations</a><br>
 &emsp;<a href="#Ordinary Differential Equations">Ordinary Differential Equations</a><br>
 &emsp;<a href="#Partial Differential Equations">Partial Differential Equations</a><br>
-&emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><i>&emsp; (by "hand")</i><br>
+&emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><br>
 &emsp;<a href="#Lambda Function Examples">Lambda Function Examples</a><br>
 &emsp;<a href="#Pseudo-Function Examples">Pseudo-Function Examples</a><br>
 &emsp;<a href="#Last Expression Variable">Last Expression Variable</a><br>
@@ -1034,7 +1034,7 @@ You can click on any of these lines to copy it to the clipboard for pasting into
 <br>
 </p>
 
-<h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>
+<h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</h4>
 
 <p>
 <span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
@@ -1043,7 +1043,7 @@ You can click on any of these lines to copy it to the clipboard for pasting into
 <span onclick="cE2C (this)">l.det ()</span><br>
 <span onclick="cE2C (this)">solve _</span><i>&emsp; this will give the eigenvalues</i><br>
 <span onclick="cE2C (this)">a, b = _</span><i>&emsp; assign to vars</i><br>
-<span onclick="cE2C (this)">m.eigenvals ()</span><i>&emsp; verify eigenvalues</i><br>
+<span onclick="cE2C (this)">m.eigenvals ().keys()</span><i>&emsp; verify eigenvalues</i><br>
 <span onclick="cE2C (this)">Subs (l, lambda, a) \[x, y]</span><br>
 <span onclick="cE2C (this)">solve (_ [0], _ [1], x, y)</span><i>&emsp; relation between x and y</i><br>
 <span onclick="cE2C (this)">\[_ [0] [x], y].subs (y, 1)</span><i>&emsp; first eigenvector for eigenvalue a</i><br>
