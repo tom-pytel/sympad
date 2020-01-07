@@ -508,6 +508,16 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
+	def has (ast, obj):
+		if ast == obj:
+			return True
+
+		if not isinstance (ast, AST):
+			return False
+
+		return any (AST.has (a, obj) for a in ast)
+
+	@staticmethod
 	def apply_vars (ast, vars, parent = None, mode = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
 		# print ('/n'.join (f'{v} ... {a}' for v, a in vars.items ()) + f'\n{ast}')
 		def push (vars, newvars): # create new frame and add new variables, this is really overkill

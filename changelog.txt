@@ -1,5 +1,9 @@
 v1.1.3:
 -------
+* Improved parsing and error marking incomplete matrices.
+
+v1.1.3:
+-------
 * Updated matrix multiplication simplification.
 * Fix bug where an incomplete matrix during entry would make the rest of the expression disappear.
 

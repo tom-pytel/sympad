@@ -198,6 +198,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()'), ('.', ('.', ('.', ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]'), ('*', (('-mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('-mat', ((('@', 'x'),), (('@', 'y'),)))), {1}))
 		self.assertEqual (p ('\\[[1, 2], [3'), ('-mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('@', '')))))
+		self.assertEqual (p ('\\[[1, 2], [3]]'), ('-mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('@', '')))))
+		self.assertEqual (p ('\\[[1], [2, 3]]'), ('-mat', ((('#', '1'), ('@', '')), (('#', '2'), ('#', '3')))))
 
 		self.assertEqual (p ('-1**x'), ('-', ('^', ('#', '1'), ('@', 'x'))))
 		self.assertEqual (p ('{-1}**x'), ('^', ('#', '-1'), ('@', 'x')))
@@ -701,6 +703,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), '\\begin{bmatrix} 1 & 2 & 3 \\\\ 4 & 5 & 6 \\end{bmatrix}.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right).T.T.\\operatorname{transpose}\\left( \\right).\\operatorname{transpose}\\left( \\right)')
 		self.assertEqual (ast2tex (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), '\\begin{bmatrix} A & B \\\\ C & D \\end{bmatrix} \\cdot \\begin{bmatrix} x \\\\ y \\end{bmatrix}')
 		self.assertEqual (ast2tex (p ('\\[[1, 2], [3')), '\\begin{bmatrix} 1 & 2 \\\\ 3 & {} \\end{bmatrix}')
+		self.assertEqual (ast2tex (p ('\\[[1, 2], [3]]')), '\\begin{bmatrix} 1 & 2 \\\\ 3 & {} \\end{bmatrix}')
+		self.assertEqual (ast2tex (p ('\\[[1], [2, 3]]')), '\\begin{bmatrix} 1 & {} \\\\ 2 & 3 \\end{bmatrix}')
 
 		self.assertEqual (ast2tex (p ('-1**x')), '-1^x')
 		self.assertEqual (ast2tex (p ('{-1}**x')), '\\left(-1 \\right)^x')
@@ -1204,6 +1208,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), '\\[[1, 2, 3], [4, 5, 6]].transpose().transpose().T.T.transpose().transpose()')
 		self.assertEqual (ast2nat (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), '\\[[A, B], [C, D]] \\[x, y]')
 		self.assertEqual (ast2nat (p ('\\[[1, 2], [3')), '\\[[1, 2], [3, ]]')
+		self.assertEqual (ast2nat (p ('\\[[1, 2], [3]]')), '\\[[1, 2], [3, ]]')
+		self.assertEqual (ast2nat (p ('\\[[1], [2, 3]]')), '\\[[1, ], [2, 3]]')
 
 		self.assertEqual (ast2nat (p ('-1**x')), '-1**x')
 		self.assertEqual (ast2nat (p ('{-1}**x')), '(-1)**x')
@@ -1707,6 +1713,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), 'Matrix([[1, 2, 3], [4, 5, 6]]).transpose().transpose().T.T.transpose().transpose()')
 		self.assertEqual (ast2py (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), 'Matrix([[A, B], [C, D]])*Matrix([x, y])')
 		self.assertEqual (ast2py (p ('\\[[1, 2], [3')), 'Matrix([[1, 2], [3, ]])')
+		self.assertEqual (ast2py (p ('\\[[1, 2], [3]]')), 'Matrix([[1, 2], [3, ]])')
+		self.assertEqual (ast2py (p ('\\[[1], [2, 3]]')), 'Matrix([[1, ], [2, 3]])')
 
 		self.assertEqual (ast2py (p ('-1**x')), '-1**x')
 		self.assertEqual (ast2py (p ('{-1}**x')), '(-1)**x')
@@ -2210,6 +2218,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2tex2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('-mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('-mat', ((('@', 'x'),), (('@', 'y'),)))), {1}))
 		self.assertEqual (ast2tex2ast (p ('\\[[1, 2], [3')), ('-mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('-dict', ())))))
+		self.assertEqual (ast2tex2ast (p ('\\[[1, 2], [3]]')), ('-mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('-dict', ())))))
+		self.assertEqual (ast2tex2ast (p ('\\[[1], [2, 3]]')), ('-mat', ((('#', '1'), ('-dict', ())), (('#', '2'), ('#', '3')))))
 
 		self.assertEqual (ast2tex2ast (p ('-1**x')), ('-', ('^', ('#', '1'), ('@', 'x'))))
 		self.assertEqual (ast2tex2ast (p ('{-1}**x')), ('^', ('(', ('#', '-1')), ('@', 'x')))
@@ -2713,6 +2723,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2nat2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('-mat', ((('@', 'A'), ('@', 'B')), (('@', 'C'), ('@', 'D')))), ('-mat', ((('@', 'x'),), (('@', 'y'),))))))
 		self.assertEqual (ast2nat2ast (p ('\\[[1, 2], [3')), ('-mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('@', '')))))
+		self.assertEqual (ast2nat2ast (p ('\\[[1, 2], [3]]')), ('-mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('@', '')))))
+		self.assertEqual (ast2nat2ast (p ('\\[[1], [2, 3]]')), ('-mat', ((('#', '1'), ('@', '')), (('#', '2'), ('#', '3')))))
 
 		self.assertEqual (ast2nat2ast (p ('-1**x')), ('-', ('^', ('#', '1'), ('@', 'x'))))
 		self.assertEqual (ast2nat2ast (p ('{-1}**x')), ('^', ('(', ('#', '-1')), ('@', 'x')))
@@ -3216,6 +3228,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('.', ('.', ('.', ('.', ('.', ('.', ('-func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'), ('#', '3'))), ('[', (('#', '4'), ('#', '5'), ('#', '6'))))),)), 'transpose', ()), 'transpose', ()), 'T'), 'T'), 'transpose', ()), 'transpose', ()))
 		self.assertEqual (ast2py2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('*', (('-func', 'Matrix', (('[', (('[', (('@', 'A'), ('@', 'B'))), ('[', (('@', 'C'), ('@', 'D'))))),)), ('-func', 'Matrix', (('[', (('@', 'x'), ('@', 'y'))),))), {1}))
 		self.assertEqual (ast2py2ast (p ('\\[[1, 2], [3')), ('-func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'))), ('[', (('#', '3'),)))),)))
+		self.assertEqual (ast2py2ast (p ('\\[[1, 2], [3]]')), ('-func', 'Matrix', (('[', (('[', (('#', '1'), ('#', '2'))), ('[', (('#', '3'),)))),)))
+		self.assertEqual (ast2py2ast (p ('\\[[1], [2, 3]]')), ('-func', 'Matrix', (('[', (('[', (('#', '1'),)), ('[', (('#', '2'), ('#', '3'))))),)))
 
 		self.assertEqual (ast2py2ast (p ('-1**x')), ('-', ('^', ('#', '1'), ('@', 'x'))))
 		self.assertEqual (ast2py2ast (p ('{-1}**x')), ('^', ('(', ('#', '-1')), ('@', 'x')))
@@ -3719,6 +3733,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('\\[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()')), ('-mat', ((('#', '1'), ('#', '2'), ('#', '3')), (('#', '4'), ('#', '5'), ('#', '6')))))
 		self.assertEqual (ast2spt2ast (p ('\\begin{matrix} A & B \\\\ C & D \\end{matrix} * \\[x, y]')), ('-mat', ((('+', (('*', (('@', 'A'), ('@', 'x'))), ('*', (('@', 'B'), ('@', 'y'))))),), (('+', (('*', (('@', 'C'), ('@', 'x'))), ('*', (('@', 'D'), ('@', 'y'))))),))))
 		self.assertEqual (ast2spt2ast (p ('\\[[1, 2], [3')), ('-mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('-sym', '')))))
+		self.assertEqual (ast2spt2ast (p ('\\[[1, 2], [3]]')), ('-mat', ((('#', '1'), ('#', '2')), (('#', '3'), ('-sym', '')))))
+		self.assertEqual (ast2spt2ast (p ('\\[[1], [2, 3]]')), ('-mat', ((('#', '1'), ('-sym', '')), (('#', '2'), ('#', '3')))))
 
 		self.assertEqual (ast2spt2ast (p ('-1**x')), ('#', '-1'))
 		self.assertEqual (ast2spt2ast (p ('{-1}**x')), ('^', ('#', '-1'), ('@', 'x')))
@@ -4223,6 +4239,8 @@ integrate (\int y dy, (x, 0, 1))
 \[[1,2,3],[4,5,6]].transpose ().transpose ().T.T.transpose ().transpose ()
 \begin{matrix} A & B \\ C & D \end{matrix} * \[x, y]
 \[[1, 2], [3
+\[[1, 2], [3]]
+\[[1], [2, 3]]
 
 -1**x
 {-1}**x
