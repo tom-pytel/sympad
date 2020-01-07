@@ -262,11 +262,21 @@ class LALR1:
 				rule  = rules [-act]
 				rnlen = -len (rule [1])
 				prod  = rule [0]
-				pos   = stack [rnlen].pos
+				pos   = self.pos = stack [rnlen].pos
 
 				try:
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
+				except SyntaxError as e:
+					rederr = e # or True
+
+					continue
+
+				# except Incomplete as e:
+				# 	rederr = e
+				# 	red    = e.red
+
+				else:
 					# if isinstance (red, KeepConf): # mark this conflict to not be removed by PopConf
 					# 	red             = red.red
 					# 	confs [-1].keep = True
@@ -303,15 +313,6 @@ class LALR1:
 							rederr = red
 
 							continue
-
-				except SyntaxError as e:
-					rederr = e # or True
-
-					continue
-
-				# except Incomplete as e:
-				# 	rederr = e
-				# 	red    = e.red
 
 				if rnlen:
 					del stack [rnlen:]

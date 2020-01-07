@@ -723,22 +723,24 @@ def _expr_mat (mat_rows):
 def _expr_vec (self, ast):
 	e = ast.comma if ast.is_comma else (ast,)
 
-	if all (c.is_brack for c in e):
+	if all (r.is_brack for r in e):
 		if len (e) == 0:
 			return AST.MatEmpty
 
-		elif len (e) == 1 or len (set (c.brack.len for c in e)) == 1:
+		elif len (e) == 1 or len (set (r.brack.len for r in e)) == 1:
 			if e [0].brack.len == 1:
-				return AST ('-mat', tuple ((c.brack [0],) for c in e))
+				return AST ('-mat', tuple ((r.brack [0],) for r in e))
 			elif e [0].brack.len:
-				return AST ('-mat', tuple (c.brack for c in e))
+				return AST ('-mat', tuple (r.brack for r in e))
 			else:
 				return AST.MatEmpty
 
-		elif e [-1].brack.len < e [0].brack.len:
-			return self.mark_incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
+		cols = max (r.brack.len for r in e)
 
-	return AST ('-mat', tuple ((c,) for c in e))
+		if not all (r.brack.len == cols for r in e):
+			return self.mark_incomplete (AST ('-mat', tuple (r.brack + (AST.VarNull,) * (cols - r.brack.len) for r in e)))
+
+	return AST ('-mat', tuple ((r,) for r in e))
 
 def _expr_curly (ast, forceset = False):
 	e   = ast.comma if ast.is_comma else (ast,)
@@ -790,11 +792,6 @@ class Parser (LALR1):
 	def set_quick (self, state = True):
 		self.TOKENS.update (self.TOKENS_QUICK if state else self.TOKENS_LONG)
 		self.set_tokens (self.TOKENS)
-
-	def mark_incomplete (self, ast):
-		self.incomplete = True
-
-		return ast # convenienve
 
 	_PARSER_TABLES = \
 			b'eJztnXuv4zaS6L/MBaYbsAFLpEjp/Nd5zG6wncfmMbuDRhB0kp5FcPNCOsmdxWK/+60XqaJFSZat00e2iSMfSxTFVxXrJ1JF+dmrv3zx/qcvP/3kL7u//J83P38PX+Hw/a8+f/n3l7Dz8pvPXnz+4Se4G3defvPe5y/e/zfcjTtf/fWrT97/7O9hD74/+fRL' \
@@ -901,7 +898,7 @@ class Parser (LALR1):
 			b'j5Hu3MZ6tXze6spNAy70v/qNZXfB7Fh59JzRDLe7ZOOKmYvSmN3wPQuPmsFgY1VbPqn2yGbizOfNy81Ft3vCDZV5xXi8hv6CObxiNoYagm+LKVuysZ6NzvsVPTtLz8yubOnGerbOJOdWCHWWRxS+perWNhZucXd7hS8fu7WNhXtFc5tbeTyBC2sv3nhtbP9Z' \
 			b'LdH+6ygXdZjEOSnJ3MYKVFaaLlcgs7vXjXWmePct1xm7u9eNdaYssV2uM93uXjfWmeK7uFhn8L26d7qxzpTX3C3XmWp3rxu/lLS4ZC7XmXp3rxvrzAVTs3erM2Z3rxvrDL6kmt44XfMNDqiEBMhS6MZiADY7BVb4Enc+AcN0rUmgCBQDRGZxQQv6V+CrB9nj' \
 			b'DfQsGxuEm344th/ERoHTFahe6aeWZ2CgWf0btBtUG37O2XQcnr69jGOAgkBTYPyWX9GPKkkq2JDaoVphOKgOv5QZDHOSCqlyc6S+QXXRkxffyM0v+YcWkRf880v026MX54eX5uNqfh6igD6/wk4DSk7vt0HVZkBAtslrweG6lv3CnMHjGkPlBsRZ3G9oub1c' \
-			b'3fQhYDy+fv7/AWiDPAA=' 
+			b'3fQhYDy+fv7/AWiDPAA='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -1299,6 +1296,11 @@ class Parser (LALR1):
 	#...............................................................................................
 	# autocomplete means autocomplete AST tree so it can be rendered, not necessarily expression
 
+	def mark_incomplete (self, ast):
+		self.incomplete = self.pos
+
+		return ast # convenienve
+
 	def stack_has_sym (self, sym):
 		return any (st.sym == sym for st in self.stack)
 
@@ -1470,7 +1472,12 @@ class Parser (LALR1):
 		return self._insert_symbol (rule [1] [pos])
 
 	def parse_success (self, red):
-		self.parse_result (red, self.erridx, self.autocomplete, 'incomplete' if self.incomplete else None)
+		if self.incomplete is not None:
+			erridx, rederr = self.incomplete, 'incomplete'
+		else:
+			erridx, rederr = self.erridx, None
+
+		self.parse_result (red, erridx, self.autocomplete, rederr)
 
 		return True # continue parsing if conflict branches remain to find best resolution
 
@@ -1482,12 +1489,12 @@ class Parser (LALR1):
 			return (AST.VarNull, 0, [])
 
 		self.parse_idx      = 0
-		self.parse_best     = None # (reduction, erridx, autocomplete)
+		self.parse_best     = None # (sort keys ..., (reduction, erridx, autocomplete, rederr))
 		self.autocomplete   = []
 		self.autocompleting = True
 		self.erridx         = None
 		self.has_error      = False
-		self.incomplete     = False
+		self.incomplete     = None # None or index of start of incomplete
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			print (file = sys.stderr)
@@ -1543,6 +1550,6 @@ if __name__ == '__main__': # DEBUG!
 	# 	print (f'{v} - {k}')
 	# print (f'total: {sum (p.reds.values ())}')
 
-	a = p.parse (r"{a = a}")
+	a = p.parse (r"\[[1],[2,3]]")
 	print (a)
 
