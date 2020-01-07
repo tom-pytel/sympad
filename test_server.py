@@ -45,9 +45,9 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('x, y = 1, 2'), {'math': [('x = 1', 'x = 1', 'x = 1'), ('y = 2', 'y = 2', 'y = 2')]})
 		self.assertEqual (get ('x, y = y, x'), {'math': [('x = 2', 'x = 2', 'x = 2'), ('y = 1', 'y = 1', 'y = 1')]})
 		self.assertEqual (get ('x, y'), {'math': ('(2, 1)', '(2, 1)', '\\left(2, 1 \\right)')})
-		self.assertEqual (get ('del vars'), {'err': "TypeError: invalid argument 'vars()'"})
-		self.assertEqual (get ('x'), {'math': ('2', '2', '2')})
-		self.assertEqual (get ('y'), {'math': ('1', '1', '1')})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
+		self.assertEqual (get ('y'), {'math': ('y', 'y', 'y')})
 
 	def test_lambda (self):
 		reset ()
@@ -139,7 +139,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (2)'), {'math': ('36', '36', '36')})
 		self.assertEqual (get ('f = 2'), {'math': ('f = 2', 'f = 2', 'f = 2')})
 		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('g (x, y) = sqrt (f(x) + f(y))'), {'math': ('g(x, y) = sqrt(x**2 + y**2)', 'g = Lambda((x, y), sqrt(x**2 + y**2))', 'g\\left(x, y \\right) = \\sqrt{x^2 + y^2}')})
 		self.assertEqual (get ('g (3, 4)'), {'math': ('5', '5', '5')})
@@ -149,7 +149,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('g (3, 4)'), {'math': ('sqrt(91)', 'sqrt(91)', '\\sqrt{91}')})
 		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('g (3, 4)'), {'math': ('5', '5', '5')})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('f (x) = \\int x dx'), {'math': ('f(x) = \\int x dx', 'f = Lambda(x, Integral(x, x))', 'f\\left(x \\right) = \\int x \\ dx')})
 		self.assertEqual (get ('f (sin x)'), {'math': ('-cos(x)', '-cos(x)', '-\\cos{\\left(x \\right)}')})
 		self.assertEqual (get ('f (x) = %(\\int x dx)'), {'math': ('f(x) = x**2 / 2', 'f = Lambda(x, x**2 / 2)', 'f\\left(x \\right) = \\frac{x^2}{2}')})
@@ -216,11 +216,11 @@ class Test (unittest.TestCase):
 		reset ()
 		self.assertEqual (get ('env (quick)'), {'msg': ['Quick input mode is on.']})
 		self.assertEqual (get ('env (noquick)'), {'msg': ['Quick input mode is off.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env ()'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 		self.assertEqual (get ('env (EI, quick, nopyS, nosimplify, nomatsimp, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is off.', 'Strict LaTeX formatting is on.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function beta is on.', 'Function gamma is off.', 'Function Gamma is off.', 'Function Lambda is on.', 'Function zeta is off.']})
-		self.assertEqual (get ('envreset'), {'msg': ['Environment has been reset.<br><br>', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
-		self.assertEqual (get ('env'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env ()'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is off.', 'Strict LaTeX formatting is on.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function beta is on.', 'Function gamma is off.', 'Function Gamma is off.', 'Function Lambda is on.', 'Function zeta is off.']})
+		self.assertEqual (get ('envreset ()'), {'msg': ['Environment has been reset.<br><br>', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('env ()'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 
 	def test_idx_and_attr (self):
 		reset ()
@@ -338,13 +338,13 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('y = ?(x, real = True)'), {'math': ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)')})
 		self.assertEqual (get ('z = z(x)'), {'math': ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)')})
 		self.assertEqual (get ('g (x) = x**3'), {'math': ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3')})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
+		self.assertEqual (get ('vars ()'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('z = z(x)', "z = Function('z')(x)", 'z = z\\left(x \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('z = y'), {'math': ('z = ?y(x, real = True)', "z = Function('y', real = True)(x)", 'z = ?y\\left(x, real = True \\right)')})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('z = ?y(x, real = True)', "z = Function('y', real = True)(x)", 'z = ?y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
+		self.assertEqual (get ('vars ()'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('y = ?y(x, real = True)', "y = Function('y', real = True)(x)", 'y = ?y\\left(x, real = True \\right)'), ('z = ?y(x, real = True)', "z = Function('y', real = True)(x)", 'z = ?y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('del y'), {'msg': ["Undefined function 'y' deleted."]})
-		self.assertEqual (get ('vars'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('z = y(x, real = True)', "z = Function('y', real = True)(x)", 'z = y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
-		self.assertEqual (get ('vars'), {'msg': ['No variables defined.']})
+		self.assertEqual (get ('vars ()'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('z = y(x, real = True)', "z = Function('y', real = True)(x)", 'z = y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('vars ()'), {'msg': ['No variables defined.']})
 
 	def test_ufuncs (self):
 		reset ()
@@ -394,7 +394,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f () = x**2'), {'math': ('f() = x**2', 'f = Lambda((), x**2)', 'f\\left( \\right) = x^2')})
 		self.assertEqual (get ('g (2) = x**2'), {'err': 'server.RealityRedefinitionError: cannot assign to a function containing non-variable parameters'})
 		self.assertEqual (get ('h (x) = x**2'), {'math': ('h(x) = x**2', 'h = Lambda(x, x**2)', 'h\\left(x \\right) = x^2')})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('?f () = x**2'), {'math': ('?f() = x**2', "Eq(Function('f'), x**2)", '?f\\left( \\right) = x^2')})
 		self.assertEqual (get ('?g (2) = x**2'), {'math': ('?g(2) = x**2', "Eq(Function('g')(2), x**2)", '?g\\left(2 \\right) = x^2')})
 		self.assertEqual (get ('?h (x) = x**2'), {'math': ('?h(x) = x**2', "Eq(Function('h')(x), x**2)", '?h\\left(x \\right) = x^2')})
@@ -423,7 +423,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('del f'), {'msg': ["Undefined function 'f' deleted."]})
 		self.assertEqual (get ('g'), {'math': ('f(x)', "Function('f')(x)", 'f\\left(x \\right)')})
 		self.assertEqual (get ('1 + g'), {'math': ('g + 1', 'g + 1', 'g + 1')})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('f (x) = x**2'), {'math': ('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2')})
 		self.assertEqual (get ('y = 1 + (?f (x) = 2)'), {'math': ('y = (?f(x) = 2) + 1', "y = Eq(Function('f')(x), 2) + 1", 'y = \\left(?f\\left(x \\right) = 2 \\right) + 1')})
 		self.assertEqual (get ('g (x) = ?f (x)'), {'math': ('g(x) = ?f(x)', "g = Lambda(x, Function('f')(x))", 'g\\left(x \\right) = ?f\\left(x \\right)')})
@@ -461,7 +461,7 @@ class Test (unittest.TestCase):
 
 	def test_LSDI (self):
 		reset ()
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('\\lim_{h\\to0} {(x + h)**2 - x**2} / h'), {'math': ('2 x', '2*x', '2 x')})
 		self.assertEqual (get ('Limit ((1 + 1/x)**x, x, \\infty)'), {'math': ('e', 'e', 'e')})
 		self.assertEqual (get ('{(1 - 1/x)**x}.limit (x, \\infty)'), {'math': ('e**-1', 'e**-1', 'e^{-1}')})
@@ -486,7 +486,7 @@ class Test (unittest.TestCase):
 
 	def test_solve (self):
 		reset ()
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('solve (x**2 = 4)'), {'math': ('[-2, 2]', '[-2, 2]', '\\left[-2, 2 \\right]')})
 		self.assertEqual (get ('solve (x**2 - 4)'), {'math': ('[-2, 2]', '[-2, 2]', '\\left[-2, 2 \\right]')})
 		self.assertEqual (get ('solve (|x| >= x**2)'), {'math': ('-1 <= x <= 1', 'And(Le(-1, x), Le(x, 1))', '-1 \\le x \\le 1')})
@@ -510,7 +510,7 @@ class Test (unittest.TestCase):
 
 	def test_ode (self):
 		reset ()
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('dsolve (d**2/dx**2 ?(x) + 9?(x))'), {'math': ('?(x) = C1 sin(3 x) + C2 cos(3 x)', "Eq(Function('')(x), C1*sin(3*x) + C2*cos(3*x))", '?\\left(x \\right) = C_{1}\\ \\sin{\\left(3 x \\right)} + C_{2}\\ \\cos{\\left(3 x \\right)}')})
 		self.assertEqual (get ("dsolve (?(x)'' + 9?(x))"), {'math': ('?(x) = C1 sin(3 x) + C2 cos(3 x)', "Eq(Function('')(x), C1*sin(3*x) + C2*cos(3*x))", '?\\left(x \\right) = C_{1}\\ \\sin{\\left(3 x \\right)} + C_{2}\\ \\cos{\\left(3 x \\right)}')})
 		self.assertEqual (get ("dsolve (y(x)'' + 9y(x))"), {'math': ('y(x) = C1 sin(3 x) + C2 cos(3 x)', 'y = Lambda(x, C1*sin(3*x) + C2*cos(3*x))', 'y\\left(x \\right) = C_{1}\\ \\sin{\\left(3 x \\right)} + C_{2}\\ \\cos{\\left(3 x \\right)}')})
@@ -520,7 +520,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ("dsolve (y' + 4/x * y = x**3 y**2)"), {'math': ('y(x) = 1 / x**4 {C1 - ln(x)}', 'y = Lambda(x, 1 / (x**4*(C1 - ln(x))))', 'y\\left(x \\right) = \\frac{1}{x^4 \\left(C_{1} - \\ln{\\left(x \\right)} \\right)}')})
 		self.assertEqual (get ("dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})"), {'math': ('y(x) = 1 / x**4 {-ln(x) + ln(2) - 1/16}', 'y = Lambda(x, 1 / (x**4*(-ln(x) + ln(2) - S(1)/16)))', 'y\\left(x \\right) = \\frac{1}{x^4 \\left(-\\ln{\\left(x \\right)} + \\ln{\\left(2 \\right)} - \\frac{1}{16} \\right)}')})
 		self.assertEqual (get ("dsolve (cos y - y' * (x sin y - y**2))"), {'math': ('y**3 / 3 + x cos(y) = C1', 'Eq(y**3 / 3 + x*cos(y), C1)', '\\frac{y^3}{3} + x \\cos{\\left(y \\right)} = C_{1}')})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('y = y(x)'), {'math': ('y = y(x)', "y = Function('y')(x)", 'y = y\\left(x \\right)')})
 		self.assertEqual (get ("eq = y' + 4/x * y == x**3 y**2"), {'math': ("eq = 4 y / x + y' == x**3 y**2", 'eq = Eq((4*y) / x + diff(y), x**3*y**2)', "eq = \\frac{4 y}{x} + y' == x^3 y^2")})
 		self.assertEqual (get ('dsolve (eq, ics = {y(2): -1})'), {'math': ('y(x) = 1 / x**4 {-ln(x) + ln(2) - 1/16}', 'y = Lambda(x, 1 / (x**4*(-ln(x) + ln(2) - S(1)/16)))', 'y\\left(x \\right) = \\frac{1}{x^4 \\left(-\\ln{\\left(x \\right)} + \\ln{\\left(2 \\right)} - \\frac{1}{16} \\right)}')})
@@ -530,14 +530,14 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('y (x) = sol'), {'math': ('y(x) = 1 / x**4 {-ln(x) + ln(2) - 1/16}', 'y = Lambda(x, 1 / (x**4*(-ln(x) + ln(2) - S(1)/16)))', 'y\\left(x \\right) = \\frac{1}{x^4 \\left(-\\ln{\\left(x \\right)} + \\ln{\\left(2 \\right)} - \\frac{1}{16} \\right)}')})
 		self.assertEqual (get ('eq'), {'math': ('True', 'True', 'True')})
 		self.assertEqual (get ("y' + 4/x * y, x**3 y**2"), {'math': ('(1 / x**5 (-ln(x) + ln(2) - 1/16)**2, 1 / x**5 (-ln(x) + ln(2) - 1/16)**2)', '(1 / (x**5*(-ln(x) + ln(2) - S(1)/16)**2), 1 / (x**5*(-ln(x) + ln(2) - S(1)/16)**2))', '\\left(\\frac{1}{x^5 \\left(-\\ln{\\left(x \\right)} + \\ln{\\left(2 \\right)} - \\frac{1}{16} \\right)^2}, \\frac{1}{x^5 \\left(-\\ln{\\left(x \\right)} + \\ln{\\left(2 \\right)} - \\frac{1}{16} \\right)^2} \\right)')})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('x, y = x(t), y(t)'), {'math': [('x = x(t)', "x = Function('x')(t)", 'x = x\\left(t \\right)'), ('y = y(t)', "y = Function('y')(t)", 'y = y\\left(t \\right)')]})
 		self.assertEqual (get ("dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})"), {'math': ('y(t) = {{7 * e**{-5 t}} / 5 - 7/5} e**{-3 t}', 'y = Lambda(t, ((7*e**(-5*t)) / 5 - S(7)/5)*e**(-3*t))', 'y\\left(t \\right) = \\left(\\frac{7 e^{-5 t}}{5} - \\frac{7}{5} \\right) e^{-3 t}')})
 		self.assertEqual (get ("dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))"), {'math': ('[x(t) = C1 x0(t) + 8 C2 {\\int e**{19t**2 / 2} / x0(t)**2 dt} * x0(t), y(t) = C1 y0(t) + C2 {e**{19t**2 / 2} / x0(t) + 8 {\\int e**{19t**2 / 2} / x0(t)**2 dt} * y0(t)}]', "[Eq(Function('x')(t), C1*Function('x0')(t) + 8*C2*Integral(e**((19*t**2) / 2) / Function('x0')(t)**2, t)*Function('x0')(t)), Eq(Function('y')(t), C1*Function('y0')(t) + C2*(e**((19*t**2) / 2) / Function('x0')(t) + 8*Integral(e**((19*t**2) / 2) / Function('x0')(t)**2, t)*Function('y0')(t)))]", '\\left[x\\left(t \\right) = C_{1}\\ x_{0}\\left(t \\right) + 8\\ C_{2} {\\int \\frac{e^\\frac{19 t^2}{2}}{x_{0}\\left(t \\right)^2} \\ dt} \\cdot x_{0}\\left(t \\right), y\\left(t \\right) = C_{1}\\ y_{0}\\left(t \\right) + {C_{2}}\\left(\\frac{e^\\frac{19 t^2}{2}}{x_{0}\\left(t \\right)} + 8 {\\int \\frac{e^\\frac{19 t^2}{2}}{x_{0}\\left(t \\right)^2} \\ dt} \\cdot y_{0}\\left(t \\right) \\right) \\right]')})
 
 	def test_pde (self):
 		reset ()
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('u, X, T = u (x, t), X (x), T (t)'), {'math': [('u = u(x, t)', "u = Function('u')(x, t)", 'u = u\\left(x, t \\right)'), ('X = X(x)', "X = Function('X')(x)", 'X = X\\left(x \\right)'), ('T = T(t)', "T = Function('T')(t)", 'T = T\\left(t \\right)')]})
 		self.assertEqual (get ('eq = (du / dx = e**u * du / dt)'), {'math': ('eq = (du / dx = du / dt * e**u)', 'eq = Eq(Derivative(u, x), Derivative(u, t)*e**u)', 'eq = \\left(\\frac{\\partial u}{\\partial x} = \\frac{\\partial u}{\\partial t} \\cdot e^u \\right)')})
 		self.assertEqual (get ('pde_separate_add (eq, u, [X, T])'), {'math': ("[X' e**-X, T' e**T]", '[diff(X)*e**-X, diff(T)*e**T]', "\\left[X' e^{-X}, T' e^T \\right]")})
@@ -564,7 +564,7 @@ class Test (unittest.TestCase):
 
 	def test_pseudo_functions (self):
 		reset ()
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('1 + 2'), {'math': ('3', '3', '3')})
 		self.assertEqual (get ('%(1 + 2)'), {'math': ('1 + 2', '1 + 2', '1 + 2')})
 		self.assertEqual (get ('_'), {'math': ('3', '3', '3')})
@@ -573,7 +573,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('%(x + y)'), {'math': ('1 + 2', '1 + 2', '1 + 2')})
 		self.assertEqual (get ('%@(x + y)'), {'math': ('x + y', 'x + y', 'x + y')})
 		self.assertEqual (get ('@(x + y)'), {'math': ('x + y', 'x + y', 'x + y')})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('x'), {'math': ('x', 'x', 'x')})
 		self.assertEqual (get ('x = 2'), {'math': ('x = 2', 'x = 2', 'x = 2')})
 		self.assertEqual (get ('x'), {'math': ('2', '2', '2')})
@@ -581,7 +581,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('lambda x: x'), {'math': ('lambda x: x', 'Lambda(x, x)', '\\left(x \\mapsto x \\right)')})
 		self.assertEqual (get ('lambda x: @x'), {'math': ('lambda x: 2', 'Lambda(x, 2)', '\\left(x \\mapsto 2 \\right)')})
 		self.assertEqual (get ('lambda x: @@x'), {'math': ('lambda x: x', 'Lambda(x, x)', '\\left(x \\mapsto x \\right)')})
-		self.assertEqual (get ('delall'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('lambda x: \\int x + 1 + 2 dx'), {'math': ('lambda x: \\int x + 3 dx', 'Lambda(x, Integral(x + 3, x))', '\\left(x \\mapsto \\int x + 3 \\ dx \\right)')})
 		self.assertEqual (get ('lambda x: %(\\int x + 1 + 2 dx)'), {'math': ('lambda x: x**2 / 2 + 3 x', 'Lambda(x, x**2 / 2 + 3*x)', '\\left(x \\mapsto \\frac{x^2}{2} + 3 x \\right)')})
 		self.assertEqual (get ('lambda x: %%(\\int x + 1 + 2 dx)'), {'math': ('lambda x: \\int x + 1 + 2 dx', 'Lambda(x, Integral(x + 1 + 2, x))', '\\left(x \\mapsto \\int x + 1 + 2 \\ dx \\right)')})
@@ -635,8 +635,8 @@ def get (text):
 	return ret
 
 def reset ():
-	get ('envreset')
-	get ('delall')
+	get ('envreset()')
+	get ('delall()')
 	get ('0')
 
 _SESSIONS = (
@@ -660,7 +660,7 @@ x, y = y, x
 x, y = 1, 2
 x, y = y, x
 x, y
-del vars
+delall ()
 x
 y
 
@@ -757,7 +757,7 @@ f (2)
 f = 2
 f (x) = x**2
 
-delall
+delall ()
 f (x) = x**2
 g (x, y) = sqrt (f(x) + f(y))
 g (3, 4)
@@ -768,7 +768,7 @@ g (3, 4)
 f (x) = x**2
 g (3, 4)
 
-delall
+delall ()
 f (x) = \\int x dx
 f (sin x)
 f (x) = %(\\int x dx)
@@ -835,11 +835,11 @@ not a
 
 env (quick)
 env (noquick)
-env
+env ()
 env (EI, quick, nopyS, nosimplify, nomatsimp, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)
-env
-envreset
-env
+env ()
+envreset ()
+env ()
 
 """), ('idx_and_attr', """
 
@@ -957,13 +957,13 @@ f = lambda x: x**2
 y = ?(x, real = True)
 z = z(x)
 g (x) = x**3
-vars
+vars ()
 z = y
-vars
+vars ()
 del y
-vars
-delall
-vars
+vars ()
+delall ()
+vars ()
 
 """), ('ufuncs', """
 
@@ -1016,7 +1016,7 @@ d**2 / dx dt (u) (1, 0)
 f () = x**2
 g (2) = x**2
 h (x) = x**2
-delall
+delall ()
 ?f () = x**2
 ?g (2) = x**2
 ?h (x) = x**2
@@ -1048,7 +1048,7 @@ del f
 g
 1 + g
 
-delall
+delall ()
 f (x) = x**2
 y = 1 + (?f (x) = 2)
 g (x) = ?f (x)
@@ -1086,7 +1086,7 @@ simplify (not (not a and not b) and not (not a or not c))
 
 """), ('LSDI', """
 
-delall
+delall ()
 \\lim_{h\\to0} {(x + h)**2 - x**2} / h
 Limit ((1 + 1/x)**x, x, \\infty)
 {(1 - 1/x)**x}.limit (x, \\infty)
@@ -1114,7 +1114,7 @@ integrate (sin x / x, (x, -oo, oo))
 
 """), ('solve', """
 
-delall
+delall ()
 solve (x**2 = 4)
 solve (x**2 - 4)
 solve (|x| >= x**2)
@@ -1139,7 +1139,7 @@ a.subs (w), b.subs (w)
 
 """), ('ode', """
 
-delall
+delall ()
 dsolve (d**2/dx**2 ?(x) + 9?(x))
 dsolve (?(x)'' + 9?(x))
 dsolve (y(x)'' + 9y(x))
@@ -1150,7 +1150,7 @@ dsolve (y' + 4/x * y = x**3 y**2)
 dsolve (y' + 4/x * y = x**3 y**2, ics = {y(2): -1})
 dsolve (cos y - y' * (x sin y - y**2))
 
-delall
+delall ()
 y = y(x)
 eq = y' + 4/x * y == x**3 y**2
 dsolve (eq, ics = {y(2): -1})
@@ -1161,14 +1161,14 @@ y (x) = sol
 eq
 y' + 4/x * y, x**3 y**2
 
-delall
+delall ()
 x, y = x(t), y(t)
 dsolve (y'' + 11y' + 24y, ics = {y(0): 0, y'(0): -7})
 dsolve ((x' = 12t x + 8y, y' = 21x + 7t y))
 
 """), ('pde', """
 
-delall
+delall ()
 u, X, T = u (x, t), X (x), T (t)
 eq = (du / dx = e**u * du / dt)
 pde_separate_add (eq, u, [X, T])
@@ -1197,7 +1197,7 @@ simplify _
 
 """), ('pseudo_functions', """
 
-delall
+delall ()
 1 + 2
 %(1 + 2)
 _
@@ -1207,7 +1207,7 @@ x + y
 %@(x + y)
 @(x + y)
 
-delall
+delall ()
 x
 x = 2
 x
@@ -1216,7 +1216,7 @@ lambda x: x
 lambda x: @x
 lambda x: @@x
 
-delall
+delall ()
 lambda x: \\int x + 1 + 2 dx
 lambda x: %(\\int x + 1 + 2 dx)
 lambda x: %%(\\int x + 1 + 2 dx)
