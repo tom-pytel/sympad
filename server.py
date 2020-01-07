@@ -100,6 +100,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_ENV           = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS          = {'_': AST.Zero} # This also!
+	_VARS_FLAT     = _VARS.copy () # Flattened vars.
 
 #...............................................................................................
 def _admin_vars (*args):
@@ -267,7 +268,7 @@ def _admin_env (*args):
 	return ret
 
 def _admin_envreset (*args):
-	return ['Environment has been reset.<br><br>'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
+	return ['Environment has been reset.'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
 
 #...............................................................................................
 class RealityRedefinitionError (NameError):	pass
@@ -332,23 +333,24 @@ def _sorted_vars ():
 	return _present_vars (sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])))
 
 def _vars_updated ():
-	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS)) # hidden functions for stuff like N and gamma
-	user_funcs = one_funcs.copy ()
+	global _VARS_FLAT
 
-	for var, ast in _VARS.items ():
-		if ast.is_lamb:
-			user_funcs.add (var)
+	vars    = {v: a if a.is_lamb else AST.apply_vars (a, _VARS, mode = False) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
+	one     = (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS)) # hidden functions for stuff like Gamma
+	lamb    = (va [0] for va in filter (lambda va: va [1].is_lamb, vars.items ())) # user lambda functions
+	assfunc = (va [0] for va in filter (lambda va: va [1].is_var and va [1].var in AST.Func.PYBASE, vars.items ())) # user variables assigned to concrete functions
+	funcs   = {*one, *lamb, *assfunc}
 
-	vars = {v: AST.apply_vars (a, _VARS, mode = False) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
-
-	sym.set_sym_user_funcs (user_funcs)
 	sym.set_sym_user_vars (vars)
-	sparser.set_sp_user_funcs (user_funcs)
+	sym.set_sym_user_funcs (funcs)
 	sparser.set_sp_user_vars (vars)
+	sparser.set_sp_user_funcs (funcs)
 
 	_UFUNC_MAP.clear ()
 	_SYM_MAP.clear ()
 	_SYM_VARS.clear ()
+
+	_VARS_FLAT = vars
 
 	for v, a in vars.items (): # build ufunc and sym mapback dict
 		if v != '_':
@@ -369,7 +371,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 		vars, ast = ast.ass_valid.lhs, ast.ass_valid.rhs
 		vars      = list (vars.comma) if vars.is_comma else [vars]
 
-	return AST.apply_vars (ast, _VARS), vars
+	return AST.apply_vars (ast, _VARS_FLAT), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
@@ -781,11 +783,9 @@ if _SERVER_DEBUG: # DEBUG!
 	# _VARS ['_'] = AST ('[', (('=', ('-ufunc', 'x', (('@', 't'),)), ('*', (('+', (('@', 'C1'), ('*', (('#', '8'), ('@', 'C2'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')))))), ('-ufunc', 'x0', (('@', 't'),))))), ('=', ('-ufunc', 'y', (('@', 't'),)), ('+', (('*', (('@', 'C1'), ('-ufunc', 'y0', (('@', 't'),)))), ('*', (('@', 'C2'), ('+', (('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('-ufunc', 'x0', (('@', 't'),))), ('*', (('#', '8'), ('-intg', ('/', ('^', ('@', 'e'), ('/', ('*', (('#', '19'), ('^', ('@', 't'), ('#', '2')))), ('#', '2'))), ('^', ('-ufunc', 'x0', (('@', 't'),)), ('#', '2'))), ('@', 'dt')), ('-ufunc', 'y0', (('@', 't'),))), {2}))))))))))
 	_VARS ['_'] = AST.Zero
 
-	# print (h.validate ({'text': r'del'}))
-	# print (h.evaluate ({'text': r'f = f(x)'}))
-	print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]].rref ()'}))
-	# print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]]*2'}))
-	# print (h.evaluate ({'text': r'\[[1+i, 1-i], [1-i, 1+i]].multiply (2)'}))
+	# print (h.validate ({'text': r'f = g'}))
+	print (h.evaluate ({'text': r'f = cos'}))
+	print (h.evaluate ({'text': r'f (pi)'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END

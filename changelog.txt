@@ -1,6 +1,8 @@
 v1.1.3:
 -------
+* Made top level SymPy functions assignable to vars and usable as vars and function object arguments.
 * Improved parsing and error marking incomplete matrices.
+* Fixed variable mapping to allow vars mapped to vars mapped to lambdas to work as functions.
 
 v1.1.3:
 -------

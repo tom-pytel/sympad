@@ -18,8 +18,8 @@ _TEX_SPACE      = '\\ ' # explicit LaTeX space
 
 _SYM_ASSUM_REDUCE = {(): ()} # cache to reduce extended lists of assumptions to single or a few assumptions which generated them
 
-_SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
+_SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as AST.Null
 
 _POST_SIMPLIFY  = False # post-evaluation simplification
@@ -29,7 +29,7 @@ _MUL_RATIONAL   = False # products should lead with a rational fraction if one i
 _STRICT_TEX     = False # strict LaTeX formatting to assure copy-in ability of generated tex
 _QUICK_MODE     = False # quick input mode affects variable spacing in products
 
-class _None: pass # unique non-None None marker
+_None = object () # unique non-None None sentinel
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op, is_text = '-text', True
@@ -44,7 +44,7 @@ class EqCmp (sp.Eq): pass # explicit equality comparison instead of assignment
 
 class IdLambda (sp.Lambda): # identity lambda - having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
 	def __new__ (cls, a, l, **kw):
-		self = sp.Expr.__new__(cls, sp.Tuple (l), l) # skip lambda __new__ to avoid creating identity function
+		self = sp.Expr.__new__(cls, sp.Tuple (l), l) # skip Lambda.__new__ to avoid creating identity function
 
 		return self
 
@@ -63,6 +63,14 @@ class NoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation
 
 	def ast (self):
 		return AST (*literal_eval (self._ast)) if isinstance (self._ast, str) else self._ast # SymPy might have re-create this object using string argument
+
+class Callable: # for wrapping SymPy concrete functions mapped to variables
+	def __init__ (self, ast, callable_):
+		self.ast       = ast
+		self.callable_ = callable_
+
+	def __call__ (self, *args, **kw):
+		return self.callable_ (*args, **kw)
 
 def _raise (exc):
 	raise exc
@@ -1495,6 +1503,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 			if spt is _None:
 				spt = sp.Symbol (ast.var)
+			elif callable (spt):
+				spt = Callable (ast, spt)
 
 		return spt
 
@@ -1584,7 +1594,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			else:
 				return NoEval (ast.args [0])
 
-		func = _ast2spt_pyfuncs.get (ast.func)
+		func = ast.func
+
+		if func in _SYM_USER_FUNCS and _SYM_USER_VARS.get (func, AST.Null).is_var: # concrete function mapped to user var
+			func = _SYM_USER_VARS [func].var
+
+		func = _ast2spt_pyfuncs.get (func)
 
 		if func is not None:
 			return _ast_func_call (func, ast.args, self._ast2spt)
@@ -1926,7 +1941,6 @@ class spt2ast:
 		kw    = _SYM_ASSUM_REDUCE [assum] if assum in _SYM_ASSUM_REDUCE else tuple (sorted ((k, self._spt2ast (a))
 				for k, a in filter (lambda kv: kv [1] is not None and kv != ('commutative', True), spt._assumptions.items ())))
 
-		# return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), kw)
 
 	_dict_keys   = {}.keys ().__class__
@@ -1936,7 +1950,8 @@ class spt2ast:
 	_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 	_spt2ast_funcs = {
-		NoEval: lambda self, spt: spt.ast (), # _spt2ast_NoEval,
+		NoEval: lambda self, spt: spt.ast (),
+		Callable: lambda self, spt: spt.ast,
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,
@@ -2031,14 +2046,14 @@ class spt2ast:
 	}
 
 #...............................................................................................
-def set_sym_user_funcs (user_funcs):
-	global _SYM_USER_FUNCS, _SYM_USER_ALL
-	_SYM_USER_FUNCS = user_funcs
-	_SYM_USER_ALL   = {**_SYM_USER_VARS, **{f: _SYM_USER_VARS.get (f, AST.VarNull) for f in _SYM_USER_FUNCS}}
-
 def set_sym_user_vars (user_vars):
 	global _SYM_USER_VARS, _SYM_USER_ALL
 	_SYM_USER_VARS = user_vars
+	_SYM_USER_ALL   = {**_SYM_USER_VARS, **{f: _SYM_USER_VARS.get (f, AST.VarNull) for f in _SYM_USER_FUNCS}}
+
+def set_sym_user_funcs (user_funcs):
+	global _SYM_USER_FUNCS, _SYM_USER_ALL
+	_SYM_USER_FUNCS = user_funcs
 	_SYM_USER_ALL   = {**_SYM_USER_VARS, **{f: _SYM_USER_VARS.get (f, AST.VarNull) for f in _SYM_USER_FUNCS}}
 
 def set_pyS (state):
@@ -2066,8 +2081,8 @@ def set_quick (state):
 	_QUICK_MODE = state
 
 class sym: # for single script
-	set_sym_user_funcs = set_sym_user_funcs
 	set_sym_user_vars  = set_sym_user_vars
+	set_sym_user_funcs = set_sym_user_funcs
 	set_pyS            = set_pyS
 	set_simplify       = set_simplify
 	set_doit           = set_doit

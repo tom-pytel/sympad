@@ -159,6 +159,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('f (sin x)'), {'math': ('-cos(x)', '-cos(x)', '-\\cos{\\left(x \\right)}')})
 		self.assertEqual (get ('f (sin y)'), {'math': ('x sin(y)', 'x*sin(y)', 'x \\sin{\\left(y \\right)}')})
 		self.assertEqual (get ('\\int sin y dx'), {'math': ('x sin(y)', 'x*sin(y)', 'x \\sin{\\left(y \\right)}')})
+		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
+		self.assertEqual (get ('f = g'), {'math': ('f = g', 'f = g', 'f = g')})
+		self.assertEqual (get ('g (x) = x**2'), {'math': ('g(x) = x**2', 'g = Lambda(x, x**2)', 'g\\left(x \\right) = x^2')})
+		self.assertEqual (get ('f'), {'math': ('lambda x: x**2', 'Lambda(x, x**2)', '\\left(x \\mapsto x^2 \\right)')})
+		self.assertEqual (get ('g (2)'), {'math': ('4', '4', '4')})
+		self.assertEqual (get ('f (2)'), {'math': ('4', '4', '4')})
 
 	def test_lambda_expr (self):
 		reset ()
@@ -219,7 +225,7 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('env ()'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 		self.assertEqual (get ('env (EI, quick, nopyS, nosimplify, nomatsimp, nodoit, noN, noO, noS, nogamma, noGamma, nozeta)'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Expression doit is off.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function gamma is off.', 'Function Gamma is off.', 'Function zeta is off.']})
 		self.assertEqual (get ('env ()'), {'msg': ['Uppercase E and I is on.', 'Quick input mode is on.', 'Python S escaping is off.', 'Post-evaluation simplify is off.', 'Matrix simplify is off.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is off.', 'Strict LaTeX formatting is on.', 'Function N is off.', 'Function O is off.', 'Function S is off.', 'Function beta is on.', 'Function gamma is off.', 'Function Gamma is off.', 'Function Lambda is on.', 'Function zeta is off.']})
-		self.assertEqual (get ('envreset ()'), {'msg': ['Environment has been reset.<br><br>', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
+		self.assertEqual (get ('envreset ()'), {'msg': ['Environment has been reset.', 'Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 		self.assertEqual (get ('env ()'), {'msg': ['Uppercase E and I is off.', 'Quick input mode is off.', 'Python S escaping is on.', 'Post-evaluation simplify is off.', 'Matrix simplify is on.', 'Undefined function map to variable is on.', 'Leading product rational is off.', 'Expression doit is on.', 'Strict LaTeX formatting is on.', 'Function N is on.', 'Function O is on.', 'Function S is on.', 'Function beta is on.', 'Function gamma is on.', 'Function Gamma is on.', 'Function Lambda is on.', 'Function zeta is on.']})
 
 	def test_idx_and_attr (self):
@@ -345,6 +351,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('vars ()'), {'math': [('f(x) = x**2', 'f = Lambda(x, x**2)', 'f\\left(x \\right) = x^2'), ('g(x) = x**3', 'g = Lambda(x, x**3)', 'g\\left(x \\right) = x^3'), ('z = y(x, real = True)', "z = Function('y', real = True)(x)", 'z = y\\left(x, real = True \\right)'), ('x = 1', 'x = 1', 'x = 1')]})
 		self.assertEqual (get ('delall ()'), {'msg': ['All variables deleted.']})
 		self.assertEqual (get ('vars ()'), {'msg': ['No variables defined.']})
+		self.assertEqual (get ('cos'), {'math': ('cos', 'cos', 'cos')})
+		self.assertEqual (get ('f = cos'), {'math': ('f = cos', 'f = cos', 'f = cos')})
+		self.assertEqual (get ('f'), {'math': ('cos', 'cos', 'cos')})
+		self.assertEqual (get ('f (pi)'), {'math': ('-1', '-1', '-1')})
+		self.assertEqual (get ('\\[[0, pi], [-pi, 0]].applyfunc (cos)'), {'math': ('\\[[1, -1], [-1, 1]]', 'Matrix([[1, -1], [-1, 1]])', '\\begin{bmatrix} 1 & -1 \\\\ -1 & 1 \\end{bmatrix}')})
+		self.assertEqual (get ('\\[[0, pi], [-pi, 0]].applyfunc (f)'), {'math': ('\\[[1, -1], [-1, 1]]', 'Matrix([[1, -1], [-1, 1]])', '\\begin{bmatrix} 1 & -1 \\\\ -1 & 1 \\end{bmatrix}')})
 
 	def test_ufuncs (self):
 		reset ()
@@ -779,6 +791,13 @@ f (sin x)
 f (sin y)
 \\int sin y dx
 
+delall ()
+f = g
+g (x) = x**2
+f
+g (2)
+f (2)
+
 """), ('lambda_expr', """
 
 a = lambda l: l
@@ -964,6 +983,13 @@ del y
 vars ()
 delall ()
 vars ()
+
+cos
+f = cos
+f
+f (pi)
+\\[[0, pi], [-pi, 0]].applyfunc (cos)
+\\[[0, pi], [-pi, 0]].applyfunc (f)
 
 """), ('ufuncs', """
 

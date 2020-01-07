@@ -1,3 +1,13 @@
+> make delall work again without parens at top level
+> make ?sin(x) work
+
+> doc: hidden function change
+> doc: functions as variables and assignment change
+> doc: new == vs. = display behavior
+> doc: new integration behavior
+> doc: caveats with variable mapping and functions like integrate, summation due to their unfree vars being remapped
+
+
 > ERROR! assign to ufuncs from iterable?
 
 > \. ?F (x, 0)' |_{x = 0} ---> \. ?F (x, y) |_{x = 0, y = 0}
@@ -43,11 +53,6 @@
 > "__" subscript shortcut with rules like "**"?
 
 > change AST._free_vars in sym to try to use ast2spt().free_symbols without .doit() and fall back to AST function if that fails?
-
-
-> doc: new == vs. = display behavior
-> doc: new integration behavior
-> doc: caveats with variable mapping and functions like integrate, summation due to their unfree vars being remapped
 
 
 > allow funcs as vars for like symbols (..., cls = Functions)?
@@ -149,85 +154,6 @@
 
 > more graphical plots
 > numpy support
-
-
-Diff stacks:
-------------
-
-print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
-(-105, 1, 1, 62, ['VAR', 'DIVIDE', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('@', 'd'))], ([], True, None, False))
-(-153, 9, 6, 23, ['VAR', 'DIVIDE', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('@', 'd')), (150, DIVIDE, 1), (23, expr_ufunc, 2, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
-(0, None, 0)
-(62, expr_div, 0, ('@', 'd'))
-(150, DIVIDE, 1)
-(23, expr_ufunc, 2, ('-ufunc', 'dx', (('@', 'f'),)))
-(110, expr_pcommas, 9, ('#', '3'))
-('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
-2
-
-print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
-(-134, 1, 1, 81, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (81, expr_diffp_ics, 0, ('@', 'd'))], ([], True, None, False))
-(-105, 5, 3, 62, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '2')))], ([], True, None, False))
-(-142, 10, 5, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '2'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dy'))], ([], True, None, False))
-(-153, 17, 9, 23, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '2'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dy')), (23, expr_ufunc, 10, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
-(0, None, 0)
-(62, expr_div, 0, ('^', ('@', 'd'), ('#', '2')))
-(150, DIVIDE, 5)
-(27, expr_var, 7, ('@', 'dy'))
-(23, expr_ufunc, 10, ('-ufunc', 'dx', (('@', 'f'),)))
-(110, expr_pcommas, 17, ('#', '3'))
-('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
-10
-
-print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
-(-134, 1, 1, 81, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (81, expr_diffp_ics, 0, ('@', 'd'))], ([], True, None, False))
-(-105, 5, 3, 62, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '3')))], ([], True, None, False))
-(-142, 10, 5, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '3'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dz'))], ([], True, None, False))
-(-142, 13, 6, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '3'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dz')), (27, expr_var, 10, ('@', 'dy'))], ([], True, None, False))
-(-153, 20, 10, 23, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '3'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dz')), (27, expr_var, 10, ('@', 'dy')), (23, expr_ufunc, 13, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
-(0, None, 0)
-(62, expr_div, 0, ('^', ('@', 'd'), ('#', '3')))
-(150, DIVIDE, 5)
-(27, expr_var, 7, ('@', 'dz'))
-(27, expr_var, 10, ('@', 'dy'))
-(23, expr_ufunc, 13, ('-ufunc', 'dx', (('@', 'f'),)))
-(110, expr_pcommas, 20, ('#', '3'))
-('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
-13
-
-print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
-(-134, 1, 1, 81, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (81, expr_diffp_ics, 0, ('@', 'd'))], ([], True, None, False))
-(-105, 5, 3, 62, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4')))], ([], True, None, False))
-(-142, 10, 5, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dw'))], ([], True, None, False))
-(-142, 13, 6, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dw')), (27, expr_var, 10, ('@', 'dz'))], ([], True, None, False))
-(-142, 16, 7, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dw')), (27, expr_var, 10, ('@', 'dz')), (27, expr_var, 13, ('@', 'dy'))], ([], True, None, False))
-(-153, 23, 11, 23, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (27, expr_var, 7, ('@', 'dw')), (27, expr_var, 10, ('@', 'dz')), (27, expr_var, 13, ('@', 'dy')), (23, expr_ufunc, 16, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
-(0, None, 0)
-(62, expr_div, 0, ('^', ('@', 'd'), ('#', '4')))
-(150, DIVIDE, 5)
-(27, expr_var, 7, ('@', 'dw'))
-(27, expr_var, 10, ('@', 'dz'))
-(27, expr_var, 13, ('@', 'dy'))
-(23, expr_ufunc, 16, ('-ufunc', 'dx', (('@', 'f'),)))
-(110, expr_pcommas, 23, ('#', '3'))
-('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
-16
-
-print ('\n'.join (str (s) for s in confs + stack + [rule, pos]))
-(-134, 1, 1, 81, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (81, expr_diffp_ics, 0, ('@', 'd'))], ([], True, None, False))
-(-105, 5, 3, 62, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4')))], ([], True, None, False))
-(-59, 16, 8, 234, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (234, expr_mul_imp, 7, ('*', (('@', 'dw'), ('^', ('@', 'dz'), ('#', '2')))))], ([], True, None, False))
-(-142, 19, 9, 27, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (234, expr_mul_imp, 7, ('*', (('@', 'dw'), ('^', ('@', 'dz'), ('#', '2'))))), (27, expr_var, 16, ('@', 'dy'))], ([], True, None, False))
-(-153, 26, 13, 23, ['VAR', 'DBLSTAR', 'NUM', 'DIVIDE', 'VAR', 'VAR', 'DBLSTAR', 'NUM', 'VAR', 'VAR', 'PARENL', 'VAR', 'PARENR', 'PARENL', 'NUM', 'PARENR', '$end'], [(0, None, 0), (62, expr_div, 0, ('^', ('@', 'd'), ('#', '4'))), (150, DIVIDE, 5), (234, expr_mul_imp, 7, ('*', (('@', 'dw'), ('^', ('@', 'dz'), ('#', '2'))))), (27, expr_var, 16, ('@', 'dy')), (23, expr_ufunc, 19, ('-ufunc', 'dx', (('@', 'f'),)))], ([], True, None, False))
-(0, None, 0)
-(62, expr_div, 0, ('^', ('@', 'd'), ('#', '4')))
-(150, DIVIDE, 5)
-(234, expr_mul_imp, 7, ('*', (('@', 'dw'), ('^', ('@', 'dz'), ('#', '2')))))
-(27, expr_var, 16, ('@', 'dy'))
-(23, expr_ufunc, 19, ('-ufunc', 'dx', (('@', 'f'),)))
-(110, expr_pcommas, 26, ('#', '3'))
-('expr_ufunc_ics', ('expr_ufunc', 'expr_pcommas'))
-19
 
 
 Slow parse - These are slow due to abuse of regex!
