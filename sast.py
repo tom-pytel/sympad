@@ -1005,8 +1005,9 @@ class AST_Func (AST):
 	TEX2PY_TRIGH_INV  = {f'arc{f}': f'a{f}' for f in TRIGH}
 
 	PY_TRIGH_ALL      = TRIGH | PY_TRIGH_INV
-	PYALL             = ADMIN | PLOT | BUILTINS | PY_TRIGH_ALL | _SYMPY_FUNCS
-	PY                = PYALL - {'sqrt', 'log', 'ln', 'beta', 'gamma', 'zeta', 'Lambda', 'Function', 'Symbol'} - {'init_printing', 'init_session', 'interactive_traversal'}
+	PYBASE            = (BUILTINS | PY_TRIGH_ALL | _SYMPY_FUNCS) - {'init_printing', 'init_session', 'interactive_traversal'}
+	PYALL             = PYBASE | ADMIN | PLOT
+	PY                = PYALL - {'sqrt', 'log', 'ln', 'beta', 'gamma', 'zeta', 'Lambda', 'Function', 'Symbol'}
 	TEX               = TEXNATIVE | TEX_TRIGH_INV | (TRIGH - {'sech', 'csch'})
 
 	def _init (self, func, args):

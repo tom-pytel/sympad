@@ -542,7 +542,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('sin sin -x [2].w'), ('-func', 'sin', (('-func', 'sin', (('-', ('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w')),)),)))
 		self.assertEqual (p ('sin -sin x [2].w'), ('-func', 'sin', (('-', ('-func', 'sin', (('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w'),))),)))
 		self.assertEqual (p ('sin(a)**b[2]'), ('^', ('-func', 'sin', (('@', 'a'),)), ('-idx', ('@', 'b'), (('#', '2'),))))
-		self.assertEqual (p ('sin**-a[b][c].d (x)'), ('^', ('-func', 'sin', (('@', ''),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (p ('sin**-a[b][c].d x'), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
+		self.assertEqual (p ('sin**-a[b][c].d (x)'), ('^', ('@', 'sin'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
 		self.assertEqual (p ('sin**-a[b][c].d {(x)}'), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (p ('sin**-a[b][c] (x)'), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (p ('\\int**-a[b][c] x'), ('-intg', ('@', 'x'), ('@', ''), ('#', '0'), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
@@ -566,6 +567,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('a {\\sum_{x=0}^1 \\int x dx} / b'), ('/', ('*', (('@', 'a'), ('-sum', ('-intg', ('@', 'x'), ('@', 'dx')), ('@', 'x'), ('#', '0'), ('#', '1')))), ('@', 'b')))
 		self.assertEqual (p ('a / \\int x dx * c'), ('*', (('/', ('@', 'a'), ('-intg', ('@', 'x'), ('@', 'dx'))), ('@', 'c')), {1}))
 		self.assertEqual (p ('a / b \\int x dx * c'), ('*', (('/', ('@', 'a'), ('*', (('@', 'b'), ('-intg', ('@', 'x'), ('@', 'dx'))))), ('@', 'c')), {1}))
+
+		self.assertEqual (p ('cos'), ('@', 'cos'))
+		self.assertEqual (p ('f = cos'), ('=', ('@', 'f'), ('@', 'cos')))
+		self.assertEqual (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)'), ('.', ('-mat', ((('#', '0'), ('@', 'pi')), (('-', ('@', 'pi')), ('#', '0')))), 'applyfunc', (('@', 'cos'),)))
+		self.assertEqual (p ('$sin (real = True)'), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (p ('sin = $(real = True)'), ('=', ('@', 'sin'), ('-sym', '', (('real', ('@', 'True')),))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -1047,7 +1054,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('sin sin -x [2].w')), '\\sin{\\left(\\sin{\\left(-x\\left[2 \\right].w \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('sin -sin x [2].w')), '\\sin{\\left(-\\sin{\\left(x\\left[2 \\right].w \\right)} \\right)}')
 		self.assertEqual (ast2tex (p ('sin(a)**b[2]')), '\\sin{\\left(a \\right)}^{b\\left[2 \\right]}')
-		self.assertEqual (ast2tex (p ('sin**-a[b][c].d (x)')), '\\sin{\\left({} \\right)}^{-a\\left[b \\right]\\left[c \\right].\\operatorname{d}\\left(x \\right)}')
+		self.assertEqual (ast2tex (p ('sin**-a[b][c].d x')), '\\sin{\\left(x \\right)}^{-a\\left[b \\right]\\left[c \\right].d}')
+		self.assertEqual (ast2tex (p ('sin**-a[b][c].d (x)')), 'sin^{-a\\left[b \\right]\\left[c \\right].\\operatorname{d}\\left(x \\right)}')
 		self.assertEqual (ast2tex (p ('sin**-a[b][c].d {(x)}')), '\\sin{\\left(x \\right)}^{-a\\left[b \\right]\\left[c \\right].d}')
 		self.assertEqual (ast2tex (p ('sin**-a[b][c] (x)')), '\\sin{\\left(x \\right)}^{-a\\left[b \\right]\\left[c \\right]}')
 		self.assertEqual (ast2tex (p ('\\int**-a[b][c] x')), '\\int_0^{-a\\left[b \\right]\\left[c \\right]} x \\ {}')
@@ -1071,6 +1079,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('a {\\sum_{x=0}^1 \\int x dx} / b')), '\\frac{a \\sum_{x = 0}^1 \\int x \\ dx}{b}')
 		self.assertEqual (ast2tex (p ('a / \\int x dx * c')), '\\frac{a}{\\int x \\ dx} c')
 		self.assertEqual (ast2tex (p ('a / b \\int x dx * c')), '\\frac{a}{b \\int x \\ dx} c')
+
+		self.assertEqual (ast2tex (p ('cos')), 'cos')
+		self.assertEqual (ast2tex (p ('f = cos')), 'f = cos')
+		self.assertEqual (ast2tex (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), '\\begin{bmatrix} 0 & \\pi \\\\ -\\pi & 0 \\end{bmatrix}.\\operatorname{applyfunc}\\left(cos \\right)')
+		self.assertEqual (ast2tex (p ('$sin (real = True)')), '\\$sin\\left(real = True \\right)')
+		self.assertEqual (ast2tex (p ('sin = $(real = True)')), 'sin = \\$\\left(real = True \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -1552,7 +1566,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('sin sin -x [2].w')), 'sin(sin(-x[2].w))')
 		self.assertEqual (ast2nat (p ('sin -sin x [2].w')), 'sin(-sin(x[2].w))')
 		self.assertEqual (ast2nat (p ('sin(a)**b[2]')), 'sin(a)**b[2]')
-		self.assertEqual (ast2nat (p ('sin**-a[b][c].d (x)')), 'sin()**-a[b][c].d(x)')
+		self.assertEqual (ast2nat (p ('sin**-a[b][c].d x')), 'sin(x)**-a[b][c].d')
+		self.assertEqual (ast2nat (p ('sin**-a[b][c].d (x)')), 'sin**-a[b][c].d(x)')
 		self.assertEqual (ast2nat (p ('sin**-a[b][c].d {(x)}')), 'sin(x)**-a[b][c].d')
 		self.assertEqual (ast2nat (p ('sin**-a[b][c] (x)')), 'sin(x)**-a[b][c]')
 		self.assertEqual (ast2nat (p ('\\int**-a[b][c] x')), '\\int_0^{-a[b][c]} x ')
@@ -1576,6 +1591,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('a {\\sum_{x=0}^1 \\int x dx} / b')), '{a \\sum_{x = 0}^1 \\int x dx} / b')
 		self.assertEqual (ast2nat (p ('a / \\int x dx * c')), 'a / {\\int x dx} * c')
 		self.assertEqual (ast2nat (p ('a / b \\int x dx * c')), 'a / b \\int x dx * c')
+
+		self.assertEqual (ast2nat (p ('cos')), 'cos')
+		self.assertEqual (ast2nat (p ('f = cos')), 'f = cos')
+		self.assertEqual (ast2nat (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), '\\[[0, pi], [-pi, 0]].applyfunc(cos)')
+		self.assertEqual (ast2nat (p ('$sin (real = True)')), '$sin(real = True)')
+		self.assertEqual (ast2nat (p ('sin = $(real = True)')), 'sin = $(real = True)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -2057,7 +2078,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('sin sin -x [2].w')), 'sin(sin(-x[2].w))')
 		self.assertEqual (ast2py (p ('sin -sin x [2].w')), 'sin(-sin(x[2].w))')
 		self.assertEqual (ast2py (p ('sin(a)**b[2]')), 'sin(a)**b[2]')
-		self.assertEqual (ast2py (p ('sin**-a[b][c].d (x)')), 'sin()**-a[b][c].d(x)')
+		self.assertEqual (ast2py (p ('sin**-a[b][c].d x')), 'sin(x)**-a[b][c].d')
+		self.assertEqual (ast2py (p ('sin**-a[b][c].d (x)')), 'sin**-a[b][c].d(x)')
 		self.assertEqual (ast2py (p ('sin**-a[b][c].d {(x)}')), 'sin(x)**-a[b][c].d')
 		self.assertEqual (ast2py (p ('sin**-a[b][c] (x)')), 'sin(x)**-a[b][c]')
 		self.assertEqual (ast2py (p ('\\int**-a[b][c] x')), 'Integral(x, (, 0, -a[b][c]))')
@@ -2081,6 +2103,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('a {\\sum_{x=0}^1 \\int x dx} / b')), '(a*Sum(Integral(x, x), (x, 0, 1))) / b')
 		self.assertEqual (ast2py (p ('a / \\int x dx * c')), 'a / Integral(x, x)*c')
 		self.assertEqual (ast2py (p ('a / b \\int x dx * c')), 'a / (b*Integral(x, x))*c')
+
+		self.assertEqual (ast2py (p ('cos')), 'cos')
+		self.assertEqual (ast2py (p ('f = cos')), 'f = cos')
+		self.assertEqual (ast2py (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), 'Matrix([[0, pi], [-pi, 0]]).applyfunc(cos)')
+		self.assertEqual (ast2py (p ('$sin (real = True)')), "Symbol('sin', real = True)")
+		self.assertEqual (ast2py (p ('sin = $(real = True)')), "sin = Symbol('', real = True)")
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -2562,7 +2590,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('sin sin -x [2].w')), ('-func', 'sin', (('-func', 'sin', (('-', ('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w')),)),)))
 		self.assertEqual (ast2tex2ast (p ('sin -sin x [2].w')), ('-func', 'sin', (('-', ('-func', 'sin', (('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w'),))),)))
 		self.assertEqual (ast2tex2ast (p ('sin(a)**b[2]')), ('^', ('-func', 'sin', (('@', 'a'),)), ('-idx', ('@', 'b'), (('#', '2'),))))
-		self.assertEqual (ast2tex2ast (p ('sin**-a[b][c].d (x)')), ('^', ('-func', 'sin', (('-dict', ()),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (ast2tex2ast (p ('sin**-a[b][c].d x')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
+		self.assertEqual (ast2tex2ast (p ('sin**-a[b][c].d (x)')), ('^', ('@', 'sin'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
 		self.assertEqual (ast2tex2ast (p ('sin**-a[b][c].d {(x)}')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2tex2ast (p ('sin**-a[b][c] (x)')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (ast2tex2ast (p ('\\int**-a[b][c] x')), ('-intg', ('*', (('@', 'x'), ('-dict', ()))), ('@', ''), ('#', '0'), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
@@ -2586,6 +2615,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('a {\\sum_{x=0}^1 \\int x dx} / b')), ('/', ('*', (('@', 'a'), ('-sum', ('-intg', ('@', 'x'), ('@', 'dx')), ('@', 'x'), ('#', '0'), ('#', '1')))), ('@', 'b')))
 		self.assertEqual (ast2tex2ast (p ('a / \\int x dx * c')), ('*', (('/', ('@', 'a'), ('-intg', ('@', 'x'), ('@', 'dx'))), ('@', 'c'))))
 		self.assertEqual (ast2tex2ast (p ('a / b \\int x dx * c')), ('*', (('/', ('@', 'a'), ('*', (('@', 'b'), ('-intg', ('@', 'x'), ('@', 'dx'))))), ('@', 'c'))))
+
+		self.assertEqual (ast2tex2ast (p ('cos')), ('@', 'cos'))
+		self.assertEqual (ast2tex2ast (p ('f = cos')), ('=', ('@', 'f'), ('@', 'cos')))
+		self.assertEqual (ast2tex2ast (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), ('.', ('-mat', ((('#', '0'), ('@', 'pi')), (('-', ('@', 'pi')), ('#', '0')))), 'applyfunc', (('@', 'cos'),)))
+		self.assertEqual (ast2tex2ast (p ('$sin (real = True)')), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2tex2ast (p ('sin = $(real = True)')), ('=', ('@', 'sin'), ('-sym', '', (('real', ('@', 'True')),))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -3067,7 +3102,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('sin sin -x [2].w')), ('-func', 'sin', (('-func', 'sin', (('-', ('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w')),)),)))
 		self.assertEqual (ast2nat2ast (p ('sin -sin x [2].w')), ('-func', 'sin', (('-', ('-func', 'sin', (('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w'),))),)))
 		self.assertEqual (ast2nat2ast (p ('sin(a)**b[2]')), ('^', ('-func', 'sin', (('@', 'a'),)), ('-idx', ('@', 'b'), (('#', '2'),))))
-		self.assertEqual (ast2nat2ast (p ('sin**-a[b][c].d (x)')), ('^', ('-func', 'sin', ()), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (ast2nat2ast (p ('sin**-a[b][c].d x')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
+		self.assertEqual (ast2nat2ast (p ('sin**-a[b][c].d (x)')), ('^', ('@', 'sin'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
 		self.assertEqual (ast2nat2ast (p ('sin**-a[b][c].d {(x)}')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2nat2ast (p ('sin**-a[b][c] (x)')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (ast2nat2ast (p ('\\int**-a[b][c] x')), ('-intg', ('@', 'x'), ('@', ''), ('#', '0'), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
@@ -3091,6 +3127,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('a {\\sum_{x=0}^1 \\int x dx} / b')), ('/', ('*', (('@', 'a'), ('-sum', ('-intg', ('@', 'x'), ('@', 'dx')), ('@', 'x'), ('#', '0'), ('#', '1')))), ('@', 'b')))
 		self.assertEqual (ast2nat2ast (p ('a / \\int x dx * c')), ('*', (('/', ('@', 'a'), ('-intg', ('@', 'x'), ('@', 'dx'))), ('@', 'c')), {1}))
 		self.assertEqual (ast2nat2ast (p ('a / b \\int x dx * c')), ('*', (('/', ('@', 'a'), ('*', (('@', 'b'), ('-intg', ('@', 'x'), ('@', 'dx'))))), ('@', 'c')), {1}))
+
+		self.assertEqual (ast2nat2ast (p ('cos')), ('@', 'cos'))
+		self.assertEqual (ast2nat2ast (p ('f = cos')), ('=', ('@', 'f'), ('@', 'cos')))
+		self.assertEqual (ast2nat2ast (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), ('.', ('-mat', ((('#', '0'), ('@', 'pi')), (('-', ('@', 'pi')), ('#', '0')))), 'applyfunc', (('@', 'cos'),)))
+		self.assertEqual (ast2nat2ast (p ('$sin (real = True)')), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2nat2ast (p ('sin = $(real = True)')), ('=', ('@', 'sin'), ('-sym', '', (('real', ('@', 'True')),))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -3572,7 +3614,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('sin sin -x [2].w')), ('-func', 'sin', (('-func', 'sin', (('-', ('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w')),)),)))
 		self.assertEqual (ast2py2ast (p ('sin -sin x [2].w')), ('-func', 'sin', (('-', ('-func', 'sin', (('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w'),))),)))
 		self.assertEqual (ast2py2ast (p ('sin(a)**b[2]')), ('^', ('-func', 'sin', (('@', 'a'),)), ('-idx', ('@', 'b'), (('#', '2'),))))
-		self.assertEqual (ast2py2ast (p ('sin**-a[b][c].d (x)')), ('^', ('-func', 'sin', ()), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (ast2py2ast (p ('sin**-a[b][c].d x')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
+		self.assertEqual (ast2py2ast (p ('sin**-a[b][c].d (x)')), ('^', ('@', 'sin'), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
 		self.assertEqual (ast2py2ast (p ('sin**-a[b][c].d {(x)}')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2py2ast (p ('sin**-a[b][c] (x)')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (ast2py2ast (p ('\\int**-a[b][c] x')), None)
@@ -3596,6 +3639,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('a {\\sum_{x=0}^1 \\int x dx} / b')), ('/', ('(', ('*', (('@', 'a'), ('-sum', ('-intg', ('@', 'x'), ('@', 'dx')), ('@', 'x'), ('#', '0'), ('#', '1'))), {1})), ('@', 'b')))
 		self.assertEqual (ast2py2ast (p ('a / \\int x dx * c')), ('*', (('/', ('@', 'a'), ('-intg', ('@', 'x'), ('@', 'dx'))), ('@', 'c')), {1}))
 		self.assertEqual (ast2py2ast (p ('a / b \\int x dx * c')), ('*', (('/', ('@', 'a'), ('(', ('*', (('@', 'b'), ('-intg', ('@', 'x'), ('@', 'dx'))), {1}))), ('@', 'c')), {1}))
+
+		self.assertEqual (ast2py2ast (p ('cos')), ('@', 'cos'))
+		self.assertEqual (ast2py2ast (p ('f = cos')), ('=', ('@', 'f'), ('@', 'cos')))
+		self.assertEqual (ast2py2ast (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), ('.', ('-func', 'Matrix', (('[', (('[', (('#', '0'), ('@', 'pi'))), ('[', (('-', ('@', 'pi')), ('#', '0'))))),)), 'applyfunc', (('@', 'cos'),)))
+		self.assertEqual (ast2py2ast (p ('$sin (real = True)')), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2py2ast (p ('sin = $(real = True)')), ('=', ('@', 'sin'), ('-sym', '', (('real', ('@', 'True')),))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -4077,7 +4126,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('sin sin -x [2].w')), ('-', ('-func', 'sin', (('-func', 'sin', (('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w'),)),))))
 		self.assertEqual (ast2spt2ast (p ('sin -sin x [2].w')), ('-', ('-func', 'sin', (('-func', 'sin', (('.', ('-idx', ('@', 'x'), (('#', '2'),)), 'w'),)),))))
 		self.assertEqual (ast2spt2ast (p ('sin(a)**b[2]')), ('^', ('-func', 'sin', (('@', 'a'),)), ('-idx', ('@', 'b'), (('#', '2'),))))
-		self.assertEqual (ast2spt2ast (p ('sin**-a[b][c].d (x)')), ('^', ('-func', 'sin', (('-sym', ''),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd', (('@', 'x'),)))))
+		self.assertEqual (ast2spt2ast (p ('sin**-a[b][c].d x')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
+		self.assertRaises (TypeError, ast2spt2ast, p ('sin**-a[b][c].d (x)'))
 		self.assertEqual (ast2spt2ast (p ('sin**-a[b][c].d {(x)}')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('.', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)), 'd'))))
 		self.assertEqual (ast2spt2ast (p ('sin**-a[b][c] (x)')), ('^', ('-func', 'sin', (('@', 'x'),)), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
 		self.assertEqual (ast2spt2ast (p ('\\int**-a[b][c] x')), ('-intg', ('@', 'x'), ('@', 'd'), ('#', '0'), ('-', ('-idx', ('-idx', ('@', 'a'), (('@', 'b'),)), (('@', 'c'),)))))
@@ -4101,6 +4151,12 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('a {\\sum_{x=0}^1 \\int x dx} / b')), ('/', ('*', (('@', 'a'), ('-sum', ('-intg', ('@', 'x'), ('@', 'dx')), ('@', 'x'), ('#', '0'), ('#', '1')))), ('@', 'b')))
 		self.assertEqual (ast2spt2ast (p ('a / \\int x dx * c')), ('/', ('*', (('@', 'a'), ('@', 'c'))), ('-intg', ('@', 'x'), ('@', 'dx'))))
 		self.assertEqual (ast2spt2ast (p ('a / b \\int x dx * c')), ('/', ('*', (('@', 'a'), ('@', 'c'))), ('*', (('@', 'b'), ('-intg', ('@', 'x'), ('@', 'dx'))))))
+
+		self.assertEqual (ast2spt2ast (p ('cos')), ('@', 'cos'))
+		self.assertEqual (ast2spt2ast (p ('f = cos')), ('@', 'False'))
+		self.assertEqual (ast2spt2ast (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), ('-mat', ((('#', '1'), ('#', '-1')), (('#', '-1'), ('#', '1')))))
+		self.assertEqual (ast2spt2ast (p ('$sin (real = True)')), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2spt2ast (p ('sin = $(real = True)')), ('@', 'False'))
 	# END UPDATE BLOCK
 
 _EXPRESSIONS = r"""
@@ -4583,6 +4639,7 @@ N N sin -a [2]
 sin sin -x [2].w
 sin -sin x [2].w
 sin(a)**b[2]
+sin**-a[b][c].d x
 sin**-a[b][c].d (x)
 sin**-a[b][c].d {(x)}
 sin**-a[b][c] (x)
@@ -4607,6 +4664,12 @@ a {\lim_{x\to0} \int x dx} / b
 a {\sum_{x=0}^1 \int x dx} / b
 a / \int x dx * c
 a / b \int x dx * c
+
+cos
+f = cos
+\[[0, pi], [-pi, 0]].applyfunc (cos)
+$sin (real = True)
+sin = $(real = True)
 
 """
 # _EXPRESSIONS = r"""

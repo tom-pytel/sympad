@@ -306,6 +306,15 @@ Variables may be assigned values, references to other variables or even entire e
 When variable assignments exist then any instance of that variable used almost anywhere will be replaced with the value of the variable, this can lead to errors if you forgot a variable is assigned and try to use it as a free variable.
 For example, when "<b>x</b>" is not assigned to anything then "<b>series (e**x, x, 0, 5)</b>" will give the correct answer, but set "<b>x = 1</b>" and all of a sudden you have a different result, set it to 2 and you have an error.
 For more on this see <a href="#Variable Assignment">Variable Assignment</a>.
+</p><p>
+Top level SymPy function names can be used as variables with some restrictions.
+This means you can do "<b>cos = 2</b>" and then "<b>cos**2</b>" will give you "<b>4</b>".
+You can even reassign functions such as "<b>sin = cos</b>" and then "<b>sin (pi)</b>" will result in "<b>-1</b>".
+The first restriction is that even if you have a function name mapped as a variable, because of the way parsing works parentheses following the variable name will always result in a call to the underlying function.
+So even if you have set "<b>cos = 2</b>", the expression "<b>cos (pi)</b>" will still evaluate to "<b>-1</b>".
+The second restriction is that if you want to assign a lambda function to a top-level SymPy function variable name you must use lambda assignment and not function assignment.
+So for example "<b>cos = lambda x: x**2</b>" will work as expected and now "<b>cos (2)</b>" will result in "<b>4</b>", however trying to set this lambda by "<b>cos (x) = x**2</b>" will not work.
+The final restriction is that you can not assign undefined functions to these function names, so no "<b>cos = ?(x, y)</b>".
 </p>
 
 <h4 id="Symbols and Assumptions">Symbols and Assumptions</h4>
@@ -563,9 +572,9 @@ The operations listed above are just the ones SymPad parses and represents in a 
 
 <p>
 There are three types of functions SymPad deals with:
-Native SymPy functions are available for use directly, they cannot be assigned however so aliases like "<b>D = Derivative</b>" do not work, though there is a workaround described below.
+Native SymPy functions are available for use directly, they can be assigned to variables so aliases like "<b>D = Derivative</b>" will work.
 User created concrete lambda functions can represent any expression, can be called for evaluation, passed to native SymPy functions and can be referenced by and copied to variables.
-And finally undefined functions are abstract mathematical objects used in differential equations.
+And finally, undefined functions are abstract mathematical objects used in differential equations.
 In addition, member functions of objects are supported like "<b>Matrix ([1, 2, 3]).transpose ()</b>".
 The first two classes of functions may take a single unparenthesized argument or multiple parenthesized comma-separated arguments and the SymPy functions take optional keyword arguments as well.
 </p>
@@ -621,7 +630,7 @@ Specifically, lambdas are treated as expressions if they are not enclosed in par
 If you want the lambda treated as an expression in these contexts then wrap it in parentheses.
 Note that this only applies to lambdas assigned to and accessed through variables, lambdas declared directly are always treated as lambdas.
 </p><p>
-Lambdas can also be called after differentiating the lambda, something with makes working with differential equations easier since you can assign the result of a solve to a lambda and call its derivatives to check on initial or boundary conditions.
+Lambdas can also be called after differentiating the lambda, something with makes working with differential equations easier since you can assign the result of a dsolve to a lambda and call its derivatives to check on initial or boundary conditions.
 For more on all of this see <a href="#Lambda Function Examples">Lambda Function Examples</a>.
 </p>
 
@@ -720,7 +729,7 @@ Or you can "parenthesize" the normal rounded parentheses with curly parentheses 
 Parenthesizing the parentheses always prevents the parentheses from being treated as a call as well with variables mapped to lambdas and member access.
 </p><p>
 SymPad normally displays implicit multiplicating with a parenthesized expression without the use of an explicit multiplication operator if that will be unambiguous in the grammar, but sometimes an explicit operator is thrown in just to clarify the meaning if it would appear ambiguous visually or for aesthetic purposes.
-There may cases where a variable is mapped to something that will resolve to a Python "callable" object on evaluation but will be displayed with an explicit multiplication operator.
+There may be cases where a variable is mapped to something that will resolve to a Python "callable" object on evaluation but will be displayed with an explicit multiplication operator.
 In those cases if the variable does in fact resolve to a callable then even though it was displayed with as an explicit multiplication the parenthesized expression will instead be used as an argument list to the callable, unless you specifically used explicit multiplication or parenthesized the parentheses.
 </p>
 
