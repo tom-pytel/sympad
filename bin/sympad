@@ -1387,6 +1387,15 @@ Variables may be assigned values, references to other variables or even entire e
 When variable assignments exist then any instance of that variable used almost anywhere will be replaced with the value of the variable, this can lead to errors if you forgot a variable is assigned and try to use it as a free variable.
 For example, when "<b>x</b>" is not assigned to anything then "<b>series (e**x, x, 0, 5)</b>" will give the correct answer, but set "<b>x = 1</b>" and all of a sudden you have a different result, set it to 2 and you have an error.
 For more on this see <a href="#Variable Assignment">Variable Assignment</a>.
+</p><p>
+Top level SymPy function names can be used as variables with some restrictions.
+This means you can do "<b>cos = 2</b>" and then "<b>cos**2</b>" will give you "<b>4</b>".
+You can even reassign functions such as "<b>sin = cos</b>" and then "<b>sin (pi)</b>" will result in "<b>-1</b>".
+The first restriction is that even if you have a function name mapped as a variable, because of the way parsing works parentheses following the variable name will always result in a call to the underlying function.
+So even if you have set "<b>cos = 2</b>", the expression "<b>cos (pi)</b>" will still evaluate to "<b>-1</b>".
+The second restriction is that if you want to assign a lambda function to a top-level SymPy function variable name you must use lambda assignment and not function assignment.
+So for example "<b>cos = lambda x: x**2</b>" will work as expected and now "<b>cos (2)</b>" will result in "<b>4</b>", however trying to set this lambda by "<b>cos (x) = x**2</b>" will not work.
+The final restriction is that you can not assign undefined functions to these function names, so no "<b>cos = ?(x, y)</b>".
 </p>
 
 <h4 id="Symbols and Assumptions">Symbols and Assumptions</h4>
@@ -1644,9 +1653,9 @@ The operations listed above are just the ones SymPad parses and represents in a 
 
 <p>
 There are three types of functions SymPad deals with:
-Native SymPy functions are available for use directly, they cannot be assigned however so aliases like "<b>D = Derivative</b>" do not work, though there is a workaround described below.
+Native SymPy functions are available for use directly, they can be assigned to variables so aliases like "<b>D = Derivative</b>" will work.
 User created concrete lambda functions can represent any expression, can be called for evaluation, passed to native SymPy functions and can be referenced by and copied to variables.
-And finally undefined functions are abstract mathematical objects used in differential equations.
+And finally, undefined functions are abstract mathematical objects used in differential equations.
 In addition, member functions of objects are supported like "<b>Matrix ([1, 2, 3]).transpose ()</b>".
 The first two classes of functions may take a single unparenthesized argument or multiple parenthesized comma-separated arguments and the SymPy functions take optional keyword arguments as well.
 </p>
@@ -1702,7 +1711,7 @@ Specifically, lambdas are treated as expressions if they are not enclosed in par
 If you want the lambda treated as an expression in these contexts then wrap it in parentheses.
 Note that this only applies to lambdas assigned to and accessed through variables, lambdas declared directly are always treated as lambdas.
 </p><p>
-Lambdas can also be called after differentiating the lambda, something with makes working with differential equations easier since you can assign the result of a solve to a lambda and call its derivatives to check on initial or boundary conditions.
+Lambdas can also be called after differentiating the lambda, something with makes working with differential equations easier since you can assign the result of a dsolve to a lambda and call its derivatives to check on initial or boundary conditions.
 For more on all of this see <a href="#Lambda Function Examples">Lambda Function Examples</a>.
 </p>
 
@@ -1801,7 +1810,7 @@ Or you can "parenthesize" the normal rounded parentheses with curly parentheses 
 Parenthesizing the parentheses always prevents the parentheses from being treated as a call as well with variables mapped to lambdas and member access.
 </p><p>
 SymPad normally displays implicit multiplicating with a parenthesized expression without the use of an explicit multiplication operator if that will be unambiguous in the grammar, but sometimes an explicit operator is thrown in just to clarify the meaning if it would appear ambiguous visually or for aesthetic purposes.
-There may cases where a variable is mapped to something that will resolve to a Python "callable" object on evaluation but will be displayed with an explicit multiplication operator.
+There may be cases where a variable is mapped to something that will resolve to a Python "callable" object on evaluation but will be displayed with an explicit multiplication operator.
 In those cases if the variable does in fact resolve to a callable then even though it was displayed with as an explicit multiplication the parenthesized expression will instead be used as an argument list to the callable, unless you specifically used explicit multiplication or parenthesized the parentheses.
 </p>
 
@@ -7652,10 +7661,13 @@ _SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidd
 def _raise (exc):
 	raise exc
 
-def _is_valid_var_name (self, text):
+def _is_valid_var_name (self, text, allow_funcs = False):
 	toks = self.tokenize (text)
 
-	return ((toks [0] == 'VAR' and not toks [0].grp [4]) or toks [0] in {'SQRT', 'LN', 'LOG', 'FUNC'}) and toks [1] == '$end'
+	if allow_funcs:
+		return ((toks [0] == 'VAR' and not toks [0].grp [4]) or toks [0] in {'SQRT', 'LN', 'LOG', 'FUNC'}) and toks [1] == '$end'
+	else:
+		return toks == ['VAR', '$end'] and not toks [0].grp [4]
 
 def _FUNC_name (FUNC):
 	if FUNC.grp [1]:
@@ -7671,7 +7683,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
 def _ast_func_tuple_args (ast):
-	ast = ast.strip_curly.strip_paren1 # ast = ast._strip (1) # ast = ast._strip_curly_of_paren_tex.strip_paren1 # ast = ast._strip (1)
+	ast = ast.strip_curly.strip_paren1
 
 	return ast.comma if ast.is_comma else (ast,)
 
@@ -7695,7 +7707,7 @@ def _ast_func_reorder (ast, unconditional = False):
 	if wrap2:
 		ast3, wrap3 = _ast_func_reorder (ast2, unconditional = unconditional)
 
-		if unconditional or ast3.op in {'{', '(', '[', '-lamb'}: # ast3.is_curly or ast3.is_paren or ast3.is_brack:
+		if unconditional or ast3.op in {'{', '(', '[', '-lamb'}:
 			return ast3, lambda a: wrap2 (wrap3 (a))
 
 	return ast, lambda a: a
@@ -7706,7 +7718,7 @@ def _ast_var_as_ufunc (var, arg, rhs, force_implicit = False): # var guaranteed 
 		ufunc  = _SP_USER_VARS.get (var.var, AST.Null)
 
 		if ufunc.is_ufunc:
-			ast = ufunc.apply_argskw (argskw) # AST ('-ufunc', ufunc.ufunc_full, *argskw, src_rhs = rhs, src_var_name = var.var)
+			ast = ufunc.apply_argskw (argskw)
 
 			if ast:
 				return ast.setkw (src_rhs = rhs, src_var_name = var.var)
@@ -7748,7 +7760,7 @@ def _ast_mulexps_to_muls (ast): # convert explicit multiplication ASTs to normal
 	elif ast.is_mulexp:
 		return AST ('*', tuple (_ast_mulexps_to_muls (a) for a in ast.mul), frozenset (range (1, ast.mul.len)))
 	else:
-		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast))#, **ast._kw)
+		return AST (*tuple (_ast_mulexps_to_muls (a) for a in ast))
 
 def _ast_tail_differential (self, want_pre = False, from_add = False): # find first instance of concatenated differential for integral expression -> pre, dv, wrap -> wrap (\int pre dv), pre may be None, if dv is None then rest are undefined
 	lself = lambda a: a
@@ -7922,7 +7934,7 @@ def _expr_comma (lhs, rhs):
 	if rhs.is_slice and rhs.step is None and rhs.stop and rhs.start and rhs.start.is_var_nonconst:
 		if lhs.is_comma:
 			for i in range (lhs.comma.len - 1, -1, -1):
-				first_var, wrap = lhs.comma [i].tail_lambda # ._tail_lambda (has_var = True)
+				first_var, wrap = lhs.comma [i].tail_lambda
 
 				if first_var and wrap:
 					ast = wrap (AST ('-lamb', rhs.stop, (first_var.var, *(v.var for v in lhs.comma [i + 1:]), rhs.start.var)))
@@ -7933,7 +7945,7 @@ def _expr_comma (lhs, rhs):
 					break
 
 		else:
-			first_var, wrap = lhs.tail_lambda # ._tail_lambda (has_var = True)
+			first_var, wrap = lhs.tail_lambda
 
 			if first_var and wrap:
 				return wrap (AST ('-lamb', rhs.stop, (first_var.var, rhs.start.var)))
@@ -7974,7 +7986,7 @@ def _expr_add (self, lhs, rhs):
 	ast = AST.flatcat ('+', lhs, rhs)
 
 	if self.in_intg () and lhs.has_tail_differential:
-		return Reduce (ast)#, keep = True)
+		return Reduce (ast)
 
 	return PopConfs (ast)
 
@@ -8034,7 +8046,7 @@ def _expr_diff (ast): # convert possible cases of derivatives in ast: ('*', ('/'
 				if n.is_ufunc_explicit or cp != 1:
 					break
 
-				v   = n.src_rhs # AST ('(', AST.tuple2ast (n.vars))
+				v   = n.src_rhs
 				n   = AST ('@', n.ufunc)
 				ns  = ns [:i] + (n, v) + ns [i + 1:]
 				ast = AST ('/', ast.numer, AST ('*', ns))
@@ -8237,7 +8249,7 @@ def _expr_ufunc_ics (self, lhs, commas): # ufunc ('f', ()) * (x) -> ufunc ('f', 
 		ast = lhs.apply_argskw (commas.as_ufunc_argskw)
 
 		if ast:
-			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw))#, is_ufunc_py = lhs.is_ufunc_py))
+			return PopConfs (AST ('-ufunc', lhs.ufunc_full, (commas.comma if commas.is_comma else (commas,)), lhs.kw))
 
 	return Reduce
 
@@ -8294,7 +8306,7 @@ def _expr_sym (self, args, py = False, name = ''):
 	elif args:
 		raise SyntaxError ('$ does not take direct arguments, only keyword assumptions')
 
-	if name and not _is_valid_var_name (self, name):
+	if name and not _is_valid_var_name (self, name, allow_funcs = True):
 		raise SyntaxError (f'invalid symbol name {name!r}')
 
 	if AST ('@', name).is_var_const:
@@ -8529,7 +8541,7 @@ class Parser (LALR1):
 			b'B9wBZQi7ZPYlnHI1nWcciF/RXGWDd5do9F1z+sZJDWcI6YgNJ/ueKSyWq8PHim6t+Q/NbW5cP+cZkaqvZkUacNmBM22U0H48W3jHbTjj/+RQWNQOH8h6fFWwFw4OVQnYAp50Q/k97EK+8fzs84ybVdWgUhGauuUby9niWFuVs6PkrG/qlm8sZzsHHZ+nVRAu' \
 			b'ePQcNq7AOzTrwrWqnsPGFXhD44nXMuyPK5UtbDwTc/rt8Hrothi0nMyvnyUZqzezENVZjocLUd/c68YyU63cDpeZobnXjWWmTv08XGbG5l43lplq33ewzODyq3e6sczU5dIOl5m2udeNF6+sJo2Hy4xt7nVjmTnPMOt9yYxr7nVjmcEFkBPR2KpJqr3lmoPS' \
 			b'phXP0BXu0oXQZ+fbC5e7fNHygUnZuTw1vMTVdppwcB1tXWhZZUyhpgplidZcGJpt94FkBGSA49panjlQqLDn613zpmvxQseGDtBG1EF89OiAAkmOkA155d5BJzFtV9BE0EeALASIJIBLwOWBuUsJcl/0DUnJf7x4sNnyjU2B7oAMz35W3swGXJ4fV2r3I60P' \
-			b'gmsqsNKARGXLUAc44lxApHCOebPSkYEA4bijqeeMqdBNLhDely//P44Hrc0=' 
+			b'gmsqsNKARGXLUAc44lxApHCOebPSkYEA4bijqeeMqdBNLhDely//P44Hrc0='
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -8749,8 +8761,8 @@ class Parser (LALR1):
 	def expr_add_3         (self, expr_add, SETMINUS, expr_mul_exp):                   return _expr_add (self, expr_add, AST ('-', expr_mul_exp))
 	def expr_add_4         (self, expr_mul_exp):                                       return expr_mul_exp
 
-	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                       return _expr_mul_exp (self, expr_mul_exp, expr_neg) # AST.flatcat ('*exp', expr_mul_exp, expr_neg)
-	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                       return _expr_mul_exp (self, expr_mul_exp, expr_neg) # AST.flatcat ('*exp', expr_mul_exp, expr_neg)
+	def expr_mul_exp_1     (self, expr_mul_exp, CDOT, expr_neg):                       return _expr_mul_exp (self, expr_mul_exp, expr_neg)
+	def expr_mul_exp_2     (self, expr_mul_exp, STAR, expr_neg):                       return _expr_mul_exp (self, expr_mul_exp, expr_neg)
 	def expr_mul_exp_3     (self, expr_neg):                                           return expr_neg
 
 	def expr_neg_1         (self, MINUS, expr_neg):                                    return _expr_neg (expr_neg)
@@ -8761,7 +8773,7 @@ class Parser (LALR1):
 	def expr_divm_1        (self, MINUS, expr_divm):                                   return PopConfs (_expr_neg (expr_divm))
 	def expr_divm_2        (self, expr_mul_imp):                                       return expr_mul_imp
 
-	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return _expr_mul_imp (self, expr_mul_imp, expr_intg) # PopConfs (AST.flatcat ('*', expr_mul_imp, expr_intg))
+	def expr_mul_imp_1     (self, expr_mul_imp, expr_intg):                            return _expr_mul_imp (self, expr_mul_imp, expr_intg)
 	def expr_mul_imp_2     (self, expr_intg):                                          return expr_intg
 
 	def expr_intg_1        (self, INTG, expr_sub, expr_super, expr_add):               return _expr_intg (expr_add, (expr_sub, expr_super))
@@ -10428,8 +10440,12 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		for v, a in vars.items ():
 			v = v.var
 
-			if a.is_ufunc_anonymous:
-				a = AST (a.op, v, *a [2:])
+			if a.is_ufunc:
+				if v in sparser.RESERVED_FUNCS:
+					raise NameError (f'cannot assign undefined function to concrete function name {v!r}')
+
+				if a.is_ufunc_anonymous:
+					a = AST (a.op, v, *a [2:])
 
 			elif a.is_sym_anonymous:
 				if a.is_sym_unqualified:
