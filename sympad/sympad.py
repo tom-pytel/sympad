@@ -297,7 +297,7 @@ NumClicks        = 0;
 
 GreetingFadedOut = false;
 ExceptionDone    = false;
-SymPyDevVersion  = '1.5'
+SymPyDevVersion  = '1.5.1'
 
 // replaced in env.js
 History          = [];
@@ -1017,7 +1017,7 @@ r"""<!DOCTYPE html>
 		<h2>SymPad</h2>
 		<h5><script type="text/javascript">document.write (Version)</script></h5>
 		<h5>on SymPy <script type="text/javascript">document.write (SymPyVersion)</script></h5>
-		<script type="text/javascript">if (SymPyVersion !== SymPyDevVersion) { document.write ('<br><h5 style="color: #f99">* Note: This version of SymPad was developed on SymPy 1.5,</h5><h5 style="color: #f99">it may not work correctly with your version of SymPy.</h5>'); }</script>
+		<script type="text/javascript">if (SymPyVersion !== SymPyDevVersion) { document.write ('<br><h5 style="color: #f99">* Note: This version of SymPad was developed on SymPy 1.5.1,</h5><h5 style="color: #f99">it may not work correctly with your version of SymPy.</h5>'); }</script>
 		<br><br>
 		Type '<b><a class="GreetingA" style="display: inline" href="/help.html" target="_blank">help</a></b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -10090,7 +10090,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.1.4'
+_VERSION         = '1.1.5'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}

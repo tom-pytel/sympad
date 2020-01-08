@@ -1,3 +1,7 @@
+v1.1.5:
+-------
+* Updated for SymPy 1.5.1.
+
 v1.1.4:
 -------
 * Made top level SymPy functions assignable to vars and usable as vars and function object arguments.
