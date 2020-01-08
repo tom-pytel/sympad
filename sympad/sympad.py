@@ -1194,7 +1194,7 @@ If you want to jump in and see what SymPad can do then just go directly to <a hr
 &emsp;<a href="#Solving Equations">Solving Equations</a><br>
 &emsp;<a href="#Ordinary Differential Equations">Ordinary Differential Equations</a><br>
 &emsp;<a href="#Partial Differential Equations">Partial Differential Equations</a><br>
-&emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><i>&emsp; (by "hand")</i><br>
+&emsp;<a href="#Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</a><br>
 &emsp;<a href="#Lambda Function Examples">Lambda Function Examples</a><br>
 &emsp;<a href="#Pseudo-Function Examples">Pseudo-Function Examples</a><br>
 &emsp;<a href="#Last Expression Variable">Last Expression Variable</a><br>
@@ -2115,7 +2115,7 @@ You can click on any of these lines to copy it to the clipboard for pasting into
 <br>
 </p>
 
-<h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors<i>&emsp; (by "hand")</i></h4>
+<h4 id="Calculating Eigenvalues and Eigenvectors">Calculating Eigenvalues and Eigenvectors</h4>
 
 <p>
 <span onclick="cE2C (this)">delall</span><i>&emsp; make sure no variables are mapped</i><br>
@@ -2124,7 +2124,7 @@ You can click on any of these lines to copy it to the clipboard for pasting into
 <span onclick="cE2C (this)">l.det ()</span><br>
 <span onclick="cE2C (this)">solve _</span><i>&emsp; this will give the eigenvalues</i><br>
 <span onclick="cE2C (this)">a, b = _</span><i>&emsp; assign to vars</i><br>
-<span onclick="cE2C (this)">m.eigenvals ()</span><i>&emsp; verify eigenvalues</i><br>
+<span onclick="cE2C (this)">m.eigenvals ().keys()</span><i>&emsp; verify eigenvalues</i><br>
 <span onclick="cE2C (this)">Subs (l, lambda, a) \[x, y]</span><br>
 <span onclick="cE2C (this)">solve (_ [0], _ [1], x, y)</span><i>&emsp; relation between x and y</i><br>
 <span onclick="cE2C (this)">\[_ [0] [x], y].subs (y, 1)</span><i>&emsp; first eigenvector for eigenvalue a</i><br>
@@ -3595,11 +3595,21 @@ class LALR1:
 				rule  = rules [-act]
 				rnlen = -len (rule [1])
 				prod  = rule [0]
-				pos   = stack [rnlen].pos
+				pos   = self.pos = stack [rnlen].pos
 
 				try:
 					red = rfuncs [-act] (*((t.sym if t.red is None else t.red for t in stack [rnlen:]) if rnlen else ()))
 
+				except SyntaxError as e:
+					rederr = e # or True
+
+					continue
+
+				# except Incomplete as e:
+				# 	rederr = e
+				# 	red    = e.red
+
+				else:
 					# if isinstance (red, KeepConf): # mark this conflict to not be removed by PopConf
 					# 	red             = red.red
 					# 	confs [-1].keep = True
@@ -3636,15 +3646,6 @@ class LALR1:
 							rederr = red
 
 							continue
-
-				except SyntaxError as e:
-					rederr = e # or True
-
-					continue
-
-				# except Incomplete as e:
-				# 	rederr = e
-				# 	red    = e.red
 
 				if rnlen:
 					del stack [rnlen:]
@@ -4171,6 +4172,16 @@ class AST (tuple):
 				return AST (op, (ast0, ast1))
 
 	@staticmethod
+	def has (ast, obj):
+		if ast == obj:
+			return True
+
+		if not isinstance (ast, AST):
+			return False
+
+		return any (AST.has (a, obj) for a in ast)
+
+	@staticmethod
 	def apply_vars (ast, vars, parent = None, mode = True): # remap vars to assigned expressions and 'execute' funcs which map to lambda vars
 		# print ('/n'.join (f'{v} ... {a}' for v, a in vars.items ()) + f'\n{ast}')
 		def push (vars, newvars): # create new frame and add new variables, this is really overkill
@@ -4658,8 +4669,9 @@ class AST_Func (AST):
 	TEX2PY_TRIGH_INV  = {f'arc{f}': f'a{f}' for f in TRIGH}
 
 	PY_TRIGH_ALL      = TRIGH | PY_TRIGH_INV
-	PYALL             = ADMIN | PLOT | BUILTINS | PY_TRIGH_ALL | _SYMPY_FUNCS
-	PY                = PYALL - {'sqrt', 'log', 'ln', 'beta', 'gamma', 'zeta', 'Lambda', 'Function', 'Symbol'} - {'init_printing', 'init_session', 'interactive_traversal'}
+	PYBASE            = (BUILTINS | PY_TRIGH_ALL | _SYMPY_FUNCS) - {'init_printing', 'init_session', 'interactive_traversal'}
+	PYALL             = PYBASE | ADMIN | PLOT
+	PY                = PYALL - {'sqrt', 'log', 'ln', 'beta', 'gamma', 'zeta', 'Lambda', 'Function', 'Symbol'}
 	TEX               = TEXNATIVE | TEX_TRIGH_INV | (TRIGH - {'sech', 'csch'})
 
 	def _init (self, func, args):
@@ -5543,8 +5555,8 @@ _TEX_SPACE      = '\\ ' # explicit LaTeX space
 
 _SYM_ASSUM_REDUCE = {(): ()} # cache to reduce extended lists of assumptions to single or a few assumptions which generated them
 
-_SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_VARS  = {} # flattened user vars {name: ast, ...}
+_SYM_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SYM_USER_ALL   = {} # all funcs and vars dict, user funcs not in vars stored as AST.Null
 
 _POST_SIMPLIFY  = False # post-evaluation simplification
@@ -5554,7 +5566,7 @@ _MUL_RATIONAL   = False # products should lead with a rational fraction if one i
 _STRICT_TEX     = False # strict LaTeX formatting to assure copy-in ability of generated tex
 _QUICK_MODE     = False # quick input mode affects variable spacing in products
 
-class _None: pass # unique non-None None marker
+_None = object () # unique non-None None sentinel
 
 class AST_Text (AST): # for displaying elements we do not know how to handle, only returned from SymPy processing, not passed in
 	op, is_text = '-text', True
@@ -5569,7 +5581,7 @@ class EqCmp (sp.Eq): pass # explicit equality comparison instead of assignment
 
 class IdLambda (sp.Lambda): # identity lambda - having SymPy remap Lambda (y, y) to Lambda (_x, _x) is really annoying
 	def __new__ (cls, a, l, **kw):
-		self = sp.Expr.__new__(cls, sp.Tuple (l), l) # skip lambda __new__ to avoid creating identity function
+		self = sp.Expr.__new__(cls, sp.Tuple (l), l) # skip Lambda.__new__ to avoid creating identity function
 
 		return self
 
@@ -5588,6 +5600,14 @@ class NoEval (sp.Expr): # prevent any kind of evaluation on AST on instantiation
 
 	def ast (self):
 		return AST (*literal_eval (self._ast)) if isinstance (self._ast, str) else self._ast # SymPy might have re-create this object using string argument
+
+class Callable: # for wrapping SymPy concrete functions mapped to variables
+	def __init__ (self, ast, callable_):
+		self.ast       = ast
+		self.callable_ = callable_
+
+	def __call__ (self, *args, **kw):
+		return self.callable_ (*args, **kw)
 
 def _raise (exc):
 	raise exc
@@ -7020,6 +7040,8 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 
 			if spt is _None:
 				spt = sp.Symbol (ast.var)
+			elif callable (spt):
+				spt = Callable (ast, spt)
 
 		return spt
 
@@ -7109,7 +7131,12 @@ class ast2spt: # abstract syntax tree -> sympy tree (expression)
 			else:
 				return NoEval (ast.args [0])
 
-		func = _ast2spt_pyfuncs.get (ast.func)
+		func = ast.func
+
+		if func in _SYM_USER_FUNCS and _SYM_USER_VARS.get (func, AST.Null).is_var: # concrete function mapped to user var
+			func = _SYM_USER_VARS [func].var
+
+		func = _ast2spt_pyfuncs.get (func)
 
 		if func is not None:
 			return _ast_func_call (func, ast.args, self._ast2spt)
@@ -7451,7 +7478,6 @@ class spt2ast:
 		kw    = _SYM_ASSUM_REDUCE [assum] if assum in _SYM_ASSUM_REDUCE else tuple (sorted ((k, self._spt2ast (a))
 				for k, a in filter (lambda kv: kv [1] is not None and kv != ('commutative', True), spt._assumptions.items ())))
 
-		# return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), tuple (sorted ((k, self._spt2ast (a)) for k, a in spt._extra_kwargs.items ()))) # i._explicit_class_assumptions.items ()))
 		return AST ('-ufunc', name, tuple (self._spt2ast (a) for a in spt.args), kw)
 
 	_dict_keys   = {}.keys ().__class__
@@ -7461,7 +7487,8 @@ class spt2ast:
 	_spt2ast_Limit_dirs = {'+': ('+',), '-': ('-',), '+-': ()}
 
 	_spt2ast_funcs = {
-		NoEval: lambda self, spt: spt.ast (), # _spt2ast_NoEval,
+		NoEval: lambda self, spt: spt.ast (),
+		Callable: lambda self, spt: spt.ast,
 
 		None.__class__: lambda self, spt: AST.None_,
 		bool: lambda self, spt: AST.True_ if spt else AST.False_,
@@ -7556,14 +7583,14 @@ class spt2ast:
 	}
 
 #...............................................................................................
-def set_sym_user_funcs (user_funcs):
-	global _SYM_USER_FUNCS, _SYM_USER_ALL
-	_SYM_USER_FUNCS = user_funcs
-	_SYM_USER_ALL   = {**_SYM_USER_VARS, **{f: _SYM_USER_VARS.get (f, AST.VarNull) for f in _SYM_USER_FUNCS}}
-
 def set_sym_user_vars (user_vars):
 	global _SYM_USER_VARS, _SYM_USER_ALL
 	_SYM_USER_VARS = user_vars
+	_SYM_USER_ALL   = {**_SYM_USER_VARS, **{f: _SYM_USER_VARS.get (f, AST.VarNull) for f in _SYM_USER_FUNCS}}
+
+def set_sym_user_funcs (user_funcs):
+	global _SYM_USER_FUNCS, _SYM_USER_ALL
+	_SYM_USER_FUNCS = user_funcs
 	_SYM_USER_ALL   = {**_SYM_USER_VARS, **{f: _SYM_USER_VARS.get (f, AST.VarNull) for f in _SYM_USER_FUNCS}}
 
 def set_pyS (state):
@@ -7591,8 +7618,8 @@ def set_quick (state):
 	_QUICK_MODE = state
 
 class sym: # for single script
-	set_sym_user_funcs = set_sym_user_funcs
 	set_sym_user_vars  = set_sym_user_vars
+	set_sym_user_funcs = set_sym_user_funcs
 	set_pyS            = set_pyS
 	set_simplify       = set_simplify
 	set_doit           = set_doit
@@ -7615,10 +7642,12 @@ import sys
 
 
 ALL_FUNC_NAMES = AST.Func.PY | AST.Func.TEX | {'sech', 'csch', AST.Func.NOREMAP, AST.Func.NOEVAL}
-RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'sqrt', 'log', 'ln', 'Function', 'Symbol'} | AST.Func.PY
+RESERVED_FUNCS = {'sqrt', 'log', 'ln', 'Function', 'Symbol'} | AST.Func.PY
+RESERVED_WORDS = {'in', 'if', 'else', 'or', 'and', 'not', 'Function', 'Symbol'}
+RESERVED_ALL   = RESERVED_WORDS | RESERVED_FUNCS
 
-_SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden N and gamma and the like
 _SP_USER_VARS  = {} # flattened user vars {name: ast, ...}
+_SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidden Gamma and the like
 
 def _raise (exc):
 	raise exc
@@ -7626,7 +7655,7 @@ def _raise (exc):
 def _is_valid_var_name (self, text):
 	toks = self.tokenize (text)
 
-	return toks == ['VAR', '$end'] and not toks [0].grp [4]
+	return ((toks [0] == 'VAR' and not toks [0].grp [4]) or toks [0] in {'SQRT', 'LN', 'LOG', 'FUNC'}) and toks [1] == '$end'
 
 def _FUNC_name (FUNC):
 	if FUNC.grp [1]:
@@ -8228,7 +8257,7 @@ def _expr_ufunc (self, args, py = False, name = ''):
 		if not argskw:
 			raise SyntaxError ('invalid undefined function arguments')
 
-	if name and (name in RESERVED_WORDS or not _is_valid_var_name (self, name)):
+	if name and not _is_valid_var_name (self, name):
 		raise SyntaxError (f'invalid undefined function name {name!r}')
 
 	if AST ('@', name).is_var_const:
@@ -8265,7 +8294,7 @@ def _expr_sym (self, args, py = False, name = ''):
 	elif args:
 		raise SyntaxError ('$ does not take direct arguments, only keyword assumptions')
 
-	if name and (name in RESERVED_WORDS or not _is_valid_var_name (self, name)):
+	if name and not _is_valid_var_name (self, name):
 		raise SyntaxError (f'invalid symbol name {name!r}')
 
 	if AST ('@', name).is_var_const:
@@ -8326,22 +8355,24 @@ def _expr_mat (mat_rows):
 def _expr_vec (self, ast):
 	e = ast.comma if ast.is_comma else (ast,)
 
-	if all (c.is_brack for c in e):
+	if all (r.is_brack for r in e):
 		if len (e) == 0:
 			return AST.MatEmpty
 
-		elif len (e) == 1 or len (set (c.brack.len for c in e)) == 1:
+		elif len (e) == 1 or len (set (r.brack.len for r in e)) == 1:
 			if e [0].brack.len == 1:
-				return AST ('-mat', tuple ((c.brack [0],) for c in e))
+				return AST ('-mat', tuple ((r.brack [0],) for r in e))
 			elif e [0].brack.len:
-				return AST ('-mat', tuple (c.brack for c in e))
+				return AST ('-mat', tuple (r.brack for r in e))
 			else:
 				return AST.MatEmpty
 
-		elif e [-1].brack.len < e [0].brack.len:
-			return self.mark_incomplete (AST ('-mat', tuple (c.brack for c in e [:-1]) + (e [-1].brack + (AST.VarNull,) * (e [0].brack.len - e [-1].brack.len),)))
+		cols = max (r.brack.len for r in e)
 
-	return AST ('-mat', tuple ((c,) for c in e))
+		if not all (r.brack.len == cols for r in e):
+			return self.mark_incomplete (AST ('-mat', tuple (r.brack + (AST.VarNull,) * (cols - r.brack.len) for r in e)))
+
+	return AST ('-mat', tuple ((r,) for r in e))
 
 def _expr_curly (ast, forceset = False):
 	e   = ast.comma if ast.is_comma else (ast,)
@@ -8394,117 +8425,111 @@ class Parser (LALR1):
 		self.TOKENS.update (self.TOKENS_QUICK if state else self.TOKENS_LONG)
 		self.set_tokens (self.TOKENS)
 
-	def mark_incomplete (self, ast):
-		self.incomplete = True
-
-		return ast # convenienve
-
 	_PARSER_TABLES = \
-			b'eJztnXuv4zaS6L/MBaYbsAFLpEjp/Nd5zG6wncfmMbuDRhB0kp5FcPNCOsmdxWK/+60XqaJFSZat00e2iSMfSxTFVxXrJ1JF+dmrv3zx/qcvP/3kL7u//J83P38PX+Hw/a8+f/n3l7Dz8pvPXnz+4Se4G3defvPe5y/e/zfcjTtf/fWrT97/7O9hD74/+fRL' \
-			b'+P/FV+/h/5cvvvhX2f37xxQNvuH/3158Tgl+wJExGu++9+G/fPP+iy8+/EL2P34RQt/rd//W737Gu5RCLNRfYUe+Kvmu4fvjjz75itL96JNPPw7fVdipqUCUUGyFo6MvsdAffvzZl3//4kPM9aNPvvwXrPFXmNrLjz6metP/f/8cz7/EJn35KcaRxoEmpJrz' \
-			b'//c//fjjF6HVMeBzbvXPQ6tzGNXr89DqEvaCv/sSfp6Ul0r67/Dvxcefwf8P3ntJ5zD0kw+kVXHvvX73b/2utOqHL7/4EIvy+Ucf4/eH//k+NsOLL6kdMMkvuRpQ1C/DN7bnBx/97aMP8Ir3Rb4c77OX1PzQdkES//nFh+9ThA8++utfUYc++YjVkAr94pMP' \
-			b'sJHxxKd4/ccvPvviy0+liEFJKOA/WMfwq2Llgyzf/zfYffvHt2//fP3b2z/V/lvY/+71b29+/+aX3775/tsf3/7++jd1Gnbf/PNXOPPDnz+F/Z/f/Nc3r3/7r3D49o9f3/zWH3wLuz+9/v2b7375UfZ+++X/9Xuc39s3b99+F/d+jXshmdffxt0fvv9nDP39' \
-			b'95jRP15/93vY/5Uy4OA/fv6uL/M//vFrcvDND9+97UsaK/TjD33d+tDf3/wW93/648dvfvgpJvbdH7/9+N+qacLutz/8/Itupliq315/p5OCnXD455t45vX338dIr2Pl/vn2TV9TaqVYA6yTavh44o+ff/jl53jiv2OJfvj591gkEC5KnOXFaff1g5O6If98' \
-			b'HZv9519iWf7QUV7//H0Srlv62+9++emn1/Hwl5jYt9As//dNL8Y03q8/vPnuTTwAFf25b51f3/7+S8w6qk2syS8/9vWnRJODt+rKb3788/WPfYvylV/vXj3bO7NzzfMd7zjcaWr8Z3aNey6HcER7FqPtmma3l1MhgI9MuA4usCEIdynW3lNItXtmIRSiVc9j' \
-			b'gMUAa0PAvsMdU/E/DwHGPNdBtR8E+VoH4S7sVY7/eYhftc8lCHdhz8On3UEd9nzG4w58Y0L4bTv8Z3cOYlRc2D4oHO6bA6UKLeGoEt3zcOyplgcuEhSkbiGAPn1Qpw/NQXYwDBOBklQ27pGUIJFnFSQCUmm5TJQsXVlX/M9DCjXLBI5wF5uVhICyfK4Ow74K' \
-			b'r/lrT7pg6WObcNriDhZSwrnou72VQD6GMpIMdk3dB1DruP64pgjmKKCPsbdUKdvwP8dJYVEsF83KYZANlM1y4Tz/c5CI45MGhUFa5aCRUH3khKvCCduKbLlIFkvAeggZ1aihKBgpHgY1+rB2soNheDlI14B0Hcs/HDaDINGSJNgOD48utNXgMBOjadOgenCY' \
-			b'XrS3XpWs7xlSiKOA6jigVgFQIxZJZcMx9GxSSVAT03DhMHsjahyCh0H94d6SdkJOz0CicFx1uxZrtcPSG9HR4Vk0bmBG5iOBZqSR9pZsAeoGxDuEfgBlr7i3HrDjVyjaZtf40P8xOAbGkPrAIW0fUnFIf1VdU4gIBUL2hupsDP9zXSxeCPIHHYS7uNfxP2i2' \
-			b'58/7XdxruAeES7CFSe4OC92rHh5ST4mHIFCyRi3HCxYVGqMm0YJKsPZXhv95yLTiPlIZ2qV2xC4rO1S3qkL7wBDwwQRgoATF44aOJduD5IFKvsN+nAkPIRBABfSildLgcAwdneLQByKymUGzSTrn+Z+Ha2q+BpukJsMAGvysxQYXFW93LbVPDZ2hcsy4HRQb' \
-			b'org6VItOeuZd7iTYcyoZ6n4r+tlwOzjpHaKcJsgDAp+5JgqKDl1frG7nSLxgw56RFKQ74aGl9AdBxzHCIdMIjSHbO7RMdR32bCV7DF/cYX2BRmxjqnjUJdmGkHi0rxmqjRyGM2jsuSoN//MQUrN61LyL0bqdsLKmsvMeqxzusGAPEkG6B3bNmikGlqE2mt01' \
-			b'tSVG6vifN71RYnOF7ez5n7o98kLRxvE/ujPi4sou7jXh5HM5hKNwgnselKhtSFNs0BQX7lIc3YM14XK8WZH7uSacwFsvCYE9uOt7dYBWAGlCm4EBsgR40C4wd6BUaBVB8bodyA86dIfGDVqng11sRVTaBj4QXmMyqOFgAEFMFRgCwL7BWPgBawrpwzm4V6ng' \
-			b'ThCjtKBC+EERwdXYPw6wDz20cviBy6GieA1Ehg5VgfZWUJwKylNBgSooUQXlrKCgFXSLChqpghpWYCgryLzC3DFP6KVgC4HHlcNPs+vMrrO7DnbcrvO7DtPcYW0gAYgP7VmB/e8gmwMkdajghmOHt8RwQwAxDhDx0CAe4HYLZA7Zocg82asWrD4inGoD6Rww' \
-			b'YewscCE0awVxwEy0dgdCbLGtql0LQWAuul2H5Yb4UFKoDqIAKIp34tBp8QYGzD2Yd0/3t6B2YIdA5z3d0YKB88SkirQaLjqgGYQD2AfxthWCDZsWylXjzT7sgh6Q6EENnqH8MQBl+BxOY5nh0HIotjLGwpbGs6AXGIzCeE70x7Ov8EaBjintojs3qjvPOlaC' \
-			b'iqWN0iPpd5WoFOsKShkPKyvfjVwm15HY6VuukwsxhmM9IvUqJuk+1Arl7ovA70vgpYffkcBxIohuG+pAAsOW34vhl3uQzhStuB+tALG7Iu97kjdJAvt9Qx1dCe5rmtBm48B3f8lJDJWbx4ZuHqnN08sbLxFkIEOCfR7lG+QqMhMZBeloWSgZhHbntg6Nqxvz' \
-			b'3Tek6gPHen+k78eaLhp+mm6nOs26nNFh0VutrFpJj9XzSC1BFfl2gEcEpgkDASdDBB6NlgZftcGfkYXA5nXSV4yTvhMmBZpWAsKQz2Q7pYz7KxvEJSM6mjbIddIwj0B9kMaALuToQk6HAoW7ggLfHBaB343Ai7zvSN7Pqjjqq+UOzdkwbUw0wId+ULBds3NF' \
-			b'7rcjd2NF7E5QL/ccMiscbvU6Oq4g2wryrTy2DN7mQNM4bClfdOJmdAKk3RRp35G0XZH2HUnbF2nfi7SfdWG2jmcOOpkIwPryDM6BuV4m0N7JBJqry5jqjnofVpD7m0zgsfyXKI4WCybbuK/JgZCTM+skF4YABx4CNC487+Pn/eekydODr9CR/twkapnUDE8M' \
-			b'DnWZZH4Eo2SLU8cd2SSQN98DNGX+/o7E/qwJj3xklsfKoyTu/a/QNx6PW572aXn8j8YbrTA+8EPBoFtpeQL7ZLb6WStCq+R2omUytvwUsO3EsfMgE3nhIZ6RubyaAPpMHtrKUS2CpyS1pKmN0GA0fLk8CmTfgPR5YSM5OS6f42I5Lpbn8eYBzh1QNdokl6IC' \
-			b'C3Ht2Hx7FqJvS+Ou2LieraTnruG5a/huqo2DkSxtvbSt2ax4NivtoSjyeqDwAgox7uw/8qwWuNdhuFfuAO/nDvAVrSWqn5dVZPckc0six/VhdVnxdcNyxvt1XvBX5Hy7csYFnLUs7YPvItBrFygtyiw99pYFXHFfpeW02GeLaG9ItHRbJYIoC1g2PirmhevU' \
-			b'F8tC5nvqqfiigiB2/m7lNoqOS8/des/FhcckMEgeBVicke+o89Zis5taOm94chk6saUbrONlpgeOfQh3X7KCjhSp9PEN9nEsGAu0oUmrIpwtCceE3makQ9kq0+tsECF32iK6TYhOTKGpxICKjBx3syKbp5ONMSwLfkwnD0TZi6MV50d+gBfctSl+EdM7Hzja' \
-			b'0u5P0u5NafcnMEudDePjg7wAqpIlwW1880cnIU5eDCFOXx2/lLzjm/bOy7iNb9GL8N5JpzkcSmu/u3e08BN2TKyWJR715WsyXpWXa97XLIe8QgmX9JAaNWRAoZWxkUvffRxLWROezlucJFPKB56VsgI6not6RrNPX7NbfZ24VVNgGXg9uejbRgbF2bddVLxs' \
-			b'7dwsshpThfVspA2pr2sR39J7HH4V2roC4rem07KKmpdV1LysgqaMHedr4hEtqKh5QQV1fjmszXBmrJVJF36DaqH6nVCdZ7KfyaML5+QWUR47lv5//ioY7pvlzbT31J1e4Vqy4vd4E5Ik61eM4IUTPb604cVt2F6wOBZXYxLS/aEg/dL1gG2x7bdg23ERLfeJ' \
-			b'uvSJS/uEKU14aROWpTI3YlbkoaRvSp+4dPLzUPrETfSJSly74JzhZb74hRMgz+k3jfELxGzC7/oZWYhknof1K0b/vhPK3URHeXacD8dGHOflAvwCZTDilW2ei9cAO+xKhjTfVWZn7kUZbceCNw1rifxMCXv0muRnRIxErWrROHnZPHkrGvFWZJWTiE6SyD2w' \
-			b'QT86zpm6A00SldfU35JyoSMkTaGXNZS3JdZK2NEdv5jYjoQ3uXBkjwkea7V4qpEDOrZjWQ50UxrjihG4KZGiz6hhn1HDPqPSw430cCP+dfgtX43cY/IPoBU3qUcdLjbB2NblBcyPsLaV9d3KF6t9c2D9bgmPxVXsSWdLpkYeVXAENMGhTJw8WpZnyyPmtqMx' \
-			b'N/kPGX6+ZPhNqSRmx7Fo1dzX9MpUtn2y9PXADkmeTaHnyJ6T8JygZ73xbEpbMZqHfuhvy4TP9aOSJ1VsnJL5mmdf7HO5A/5618/hoH7LQNrSoJjsShhNy0ROv3yDr2pkmWdr5OKseyRU3bJuW9ZtW+7HbkrJDIm/zNzdi8Ad92SejCuPVi5YDgTq38hbKvAb' \
-			b'sgmHNvxscoOvLkGtt6WH3U0PwxYqgr9DwUOuDd8rNXyvhFqwq2UsgGGOT1XyQnRsVkfHcvMFTexkROHKss53NehrSQjQio7uj9kdMCzgMSQJvaqLxOZ5CpqddvDF9vgedvz9C/yZhtKjb6JHU3/0qBqev1r+6kT6UAxfeuk7utvyJjz2aeRFBU6+vYxr+QdS' \
-			b'qD+3RSzvynh2pbHf3eudDDY29QUb+kItfQA5VLhzG9yBHDsGTSfS5fm/w+7VAe8odyB/8nqBwuEIImo8N1S4A+HUuSnQ14ZEzo3NwtMDERmjcBNxBelRGxRUWteFauoKUu2galABaTpqKlZCFKWWI5YSy5h0yo51U5qGZRG0LuhOJ9oB8cPbP+mNoHUcZVXY' \
-			b'vLh4A3/WDn8lDfsA5F/hC0TxN+7xl8/x97ChHDW+NQUUp8YV/aADNb7YAyfgD3gOmg597fDdafjSZ3wvEXq3oZ8ctmmNgoNwbFycxMfmRVUDXavx9Wv46jU0Mbh6GB8U4EMCXEWCb9XDF+rhy/QsCgbyxFcJ4Lst8R0CoJM1Lh5tsDfCORBAjW+GaHAFCsaB' \
-			b'a3H1Mbrco7s9dn1Qrxq7Pq6nwDcNoFsevo4Hn6tCfQzUxVQH0Jw9iBYaYV9BR99DDfbQynsoxd7i/mG37yD4gOdhFz5oPfYopj3KZm/wQ8FwCUplDzq2x66/R8uwR7Owx560xy61R+uwh3rv0TDsUXp7NAV7tAV7NAR7tAT7ipKE9tsbvBJ6777D+HjKYUwQ' \
-			b'0R5DHSUMO9C+e2jnPWZM+WI1sOfusevuW9wBue07LA4minlhcT2eAYntsWTQJ/agrtgmeywzSGZvsIwNlZGKjAkcOm4QNHh7tG17NGp7tG57tDNcYyxpjedAmfYtlsdgs4CK7PE6zBTUct9gaTAMSwJ6tgcd3oMs9x4TwiJhC9GlcKLDfEggWAAqUoWnqNlh' \
-			b'h8RI1YbIhhoUk6FaUDhej81msB3xg6exgeEbFQG0ZA9asu/wigNm5LBw8EHJoMRQLtiomAM2R0sZUP0gBlUPznos1YHqhEcQD3RxD/q599jsWEe4pKUWg3TgXGuk6FhPtAL7DuWCFTPUzlD0FlPFord4Qfc1GkE0fcXwFcO33PAVq1es3pVavRqt3pi14/th' \
-			b'r8yeuqc81fjRnHQ/Ra2toB83hMMb3VlzeHRLT/fuZoFlbBdYxyq1kDhTMLCSS6yjvw4Lie+jw5eKRUtpM9YS4uEbaiatpkcp+Rn76OkvsZIUsJallPTH7aU/xWJSGhdbTR9r24VKLrOafpHd9Inl9BnbudBk+qszmlQNLIJYT5+xnySJaRu6+x/3gLj3Dwj8' \
-			b'Dr5M+7+4bup8w0pTJXp+IWNh/aSRTWcieB5BbK5TZpcmCfTkxqK5Bp5UGJuCG7PLicuhzJCQf0CnTPVwWi2ZZQpmG3+DFl+uJrMm9AzF6hkXP5xjCjNQZN5lVilMx8nMz2km/+iJDP6wc0QAxIN2YRRAPJzpwZ9XRyzgD6vjTM/aeMCfoUFdGmAC0kCNmsWF' \
-			b'HUHGQbBRX4iOqscHTk2i433EiJlHCb5HDd+eRkhpFFage0A7GbDKjJhWYQatDE4TNjOkQWWjLYGNhJLVbWUms1bUoauxazej2OkvSsjT5xfhQ5kLfyq1BRaF+IFHhAbXyLdwiQ5w/hO/8RWBMZUhoDA0MIqhd6AlLsQqKnNj0pLkuJVEMF1yrGoZYCYNqIDG' \
-			b'lZJGNCGGPYylhNOvmFDT866SigfsUc0krJJWoH1NQsqnZSEqFA7zYy6GJtC64m2s+DJYcuHnaRl1JGFm0Is5ckq8I3ZS49DYqL2YodwBGKOhswacqibURJUwXFHVhdoF4TNddd8wXNxAWmZsbR7oFtBUD6QCpn2guzvXPeD9WAunoZ8xiZEVD3SnVOHpmu6L' \
-			b'H/CeAowNHLv/pZ9K2D6qTxkhudwgaT0w1yvD+RjMx1AOQC4wflQYL4LwYgA7BrCbAzBqm6N4CYFdCEUtk72IXyf4deP4lUtS+PaJRvg6BV8dI8BX4k8OBvt4Gdi6zICQopo0wyxjdQTTJceqcCj4gxfOumPMOsGsE8w6oWw+rYOVGEJYp+jqZFzJVT6iqmOo' \
-			b'uhSqg+QFqlLnSjeAjTVdCNUT5+2i7FOoirxnocrxjqHqVoSq2w3GpqrpEphymBNxmiBeAanScxbhY4O0KSB91yPcAtE7gKhniM7Nl6Ii0ZYyNIaiksleZKgXhvpxhsolKUP7RCND1QRqPE1lFoZK/GmGxqsyDM1NqlJUk2aYZaiOYLrkWFUmjlP9MT+98NML' \
-			b'P73wM5/OwUoM4adX/PSKn/6Yn575mc7PDpMXfkp9teipJ3MtF/LzxCncKPeUnyLrWX5yvGN++hX56TP87Jsu4SeHORGnCeIVfiodZxE+Nj/dhQ/jRsl5M9gsyCzIPAWZ5IuBDTSDzLglyJSg4XPGWh410vfpDxr7XCItKUuhZVIOoWWIP0nL/qohLTFU0xJ1' \
-			b'NzyBTDLM0TJtmS45VpXJP6LkcksjJQ8qR5JBDa96WOJ+gCXVQmDJ6WUeZtapH8hR+lRx18XqJnW3sZLLYMnlnYdlFHsCyyDqOVhKvCNYUpusBEtW6BSWSjIalhKGM7cVw5K/GZZaxVmER7AMkAxwRBqiI7vQsT080G1Nhoq+ULFQsVBxDSrWTMV6joq1bCkV' \
-			b'OShDxVqoWC+jYsylp2KtqFirGIGKEn+aivGqDBXrlIoUq5EhpC5Sloq6RKZLjlVlRqgovjtc34SK+WRQw2tFxVpRsVZUrMeoWKdUHGbhQhUIin3VbazjQijWJ0IxSD2Fokh6Fooc7xiK9YpQrDNQ7AWTQFFaspUaBfkKFJWGswRXg2JboFigWKC4BhTZR6ie' \
-			b'8xHCRqEthSIHZaAozkH1uHNQFooxlx6KyjOoVluEosSfhmK8KgPFJjOxGseKOscsFXUE0yXHqjYjVBTvn7oZUDGfzMHyd6Bio6jYKCo2Y1RM3X2G6fPMaqivFru3sZYLuXiiu08UfMpFEfYsFzneMRdXdPeplbtP5GLfdAkXOQy5KC4+tXLx0UrOMpzmovAw' \
-			b'g8GuYLBgsGBwDQyyp04956mDDUJbikEOymBQnHTqcSedLAZjLj0GlY9OrWMEDEr8aQzGeBkM5nx0IgZ1jlkM6gimS45VbUYwKN45tRtgMJ8Mqrjyz6mVf06t/HPqY/+ciMHUQWeYvmBQ6qvF7m2s5UIMnuigEwWfYlCEPYtBjneMwRUddOqMg45qugSDHIYY' \
-			b'FAedWjnoaCVnGZ6LweqwLQ5euLDv8Qi4ZN3fPVNtbO3gCjRbQrEBwQbU6pha3Ry1OtlSanFQhlrd7rwlhX0+Pbc6xa1OxQjc6uaghX1frlmyzpA1sf/ksaVLZLrkWFVm4WJEuia/GpG8Xo4XY0QsdUd+L62UINahd32hU+z70vaHNu4upVN3Ip2CeFM6iUjn' \
-			b'6DS+mnENMHU9j2KrHQGJyxmWNHJN1KpGDDiCUKCOok21LdqssaRx4yOwW1/IiI+MbRmZZUdmhicozdwEJfYh2hLGSdCQcUYmKM2yCco+l0g4oyYojdoC4UL8ADk84KgRdYZph19oHGIKQ96ZqcnKJPcc7pIIpkuOVc3yuDMyWWkGk5UjyRxs3BUYymFAouEp' \
-			b'SyNgjA2bQaNJJy6HeTEXQ921OvhYjIVMNOMTl2ENb8LGWP6EjUEZ5tgY2ialo1lxAtNkJjBVE2pQShj+tIVMYBo1gak7geEinjtyu/QFLIWlhaVldnOWoTy7aeZmN7Hj0JYylIMyDJXZTbNsdrPPpWeomt00OkZgqMSPDHXMUKcY6pihjhkar8kwdGqmM8k9' \
-			b'y1AdwXTJsarZCENlptMMZjpHkkGRym5gKB9GhvJ8J8WI9R5haDrrOcxLGCp11+rgYzGWMvTEWc9Y7pSdogSz7JQ2OWLnirOeJjPrqZouYSeHITtl1tOoWU+t/IaLeC47L3jHTnn6V57+FT72fPTMRz/HRy9bykcOyvDRCx/9Mj7GXHo+esVHr2IEPkr8yYnU' \
-			b'/qoME6emUpMcs0zUEUyXHKvajDDRCxP9gIn5ZFCMXgHRKxr6fp6V08tx0KccHKQvHJT6arF7G2u5kIP+RA4GwaccFGHPcpDjHXPQr8hBn+Fg33QJBzkMOeiFg15xUCk5y/BsDl7wApvCwcLBwsGegy1zsJ3jYCtbykEOynCwFQ62yzgYc+k52CoOtipG4KDE' \
-			b'n+ZgvCrDwXaKgzrHLAd1BNMlx6o2IxxshYPtgIP5ZFCMreJgqzjYKg6OPW6kFlAcHKQvHJT6arF7G2u5kIPtiRwMgk85KMKe5SDHO+ZguyIHQwU1B/umSzjIYS7UKEhYOKiUnGV4NgcveP+MK9OpTzCdijJxBZdXi0vLy+zt3DJ7G7YElxIUcMn7Qkw6qA78' \
-			b'nScmw0Hzss8m8pLyFF5aXRDhZYgfeGkZmfQl1KQkuCR1p1IYshNDR9mZ5J5jZxLBdMmxqlmenVwJaa+EnSPJgEzDruBTDgNBqTJc+yrWmzgado9oSm3S03SYI9M0tEDSHLEwC2nK5Z+naSx9QtOgCnM0DS2T0pQaaCWasrqnNFVNp2kqYU46jAkyZ5rqLmC4' \
-			b'iHmaHr2sZoKq5a00ZXRZcLkKLmvGZT2Hy1q2FJccNBxdUigakXqUlbnRZZ9LT8ta0bJWMQItJf7k6LK/KkPIeoqQOscsIXUE0yXHqjYjhBR/Va5wQsh8MkjIWuGxVmxU3qycXmZ0SS2geDhIX3go9dVi9zbWciEP6xN5GASf8lCEPctDjnfMw3pFHtYZHvZN' \
-			b'l/CQw5CHtfCwVjxUSs4yPHt0Wd5DUzhYOLgKBw1z0Mxx0MiWcpCDMhw0wkGzjIN9kpGDRnHQqBiBgxJ/moPxqgwHzRQHdY5ZDuoIpkuOVW1GOGiEg2bAwXwyyEGjOKiWdFA1AgfNGAdNysFB+sJBqa8Wu7exlgs5aE7kYBB8ykER9iwHpTWOOGhW5KDJcLAv' \
-			b'dsJBDkMOGuGgURxUdeXvszlYXj1TOFg4uAoH2evGznndWC9bykEOynBQvG7sMq+bPpeeg8rrJp62vddNiD/NwXhVhoNTXjdJjlkO6gimS45VbUY4KF43duB1M5IMclB53VjldWOV140d87qxqdfNMH3hoNRXi93bWMuFHDzR6yYKPuWgCHuWgxzvmIMret3Y' \
-			b'jNeNarqEgxyGHBSvG6u8brSSswzP5mB590zhYOHgGhxEswwFxq9JDqLW05b+wMWB+kMGhBRa8RULQNhnE0FIeQoI42kqL4MwxJ8EYX/VEIS0DnwMhEmOORAmEUyXHKva5EHIBQ8V1iAcSQbk2IR3IzgqXQQhVUNAyOllQEgt0INwmD6DMNRXy93bWMtlIOQC' \
-			b'z4MwCj4BYRD2HAgl3hEI11zjzyqdglA1nQahhIFF5BqFmjEItZKzDM8FYb2xl88UEBYQXisI2Z+mmfOnacKWgFCCMhwUZ5pm3Jkmy8GYS89B5U7T6HIEDkr8aQ7GqzIcnHKhSXLMcjBpmi45VrUZ4aC40DQDF5qRZJCDyn+mUc4zTaU4WI1xMHWYGaYvHJT6' \
-			b'JpW3sZYLOXiiw0wUfMpBEfYsBzneMQdXdJhpMg4zqukSDnIYclAcZhrlMKOVnGV4Ngc3/FqcwsHCwWviIDvKNHOOMqjvtKUc5KAMB8VRplnmKNPn0nNQOcrE003vKBPiT3MwXpXh4JSjTJJjloM6gumSY1WbEQ6Ko0wzcJQZSQY5qBxlGuUo0yhHmWbMUaZJ' \
-			b'HWWG6QsHpb5a7N7GWi7k4ImOMlHwKQdF2LMc5HjHHFzRUabJOMqopks4yGHIQXGUaZSjjFZyluHZHNzwK20KBwsHr4mD7CjTzDnKoLLTlnKQgzIcFEeZZpmjTJ9Lz0HlKBNPN72jTIg/zcF4VYaDU44ySY5ZDuoIptsdXRMbKM9BcZRpBo4yI8kgB5WjTKMc' \
-			b'ZRrlKNOMOco0qaPMMH3hoNRXi93bWMuFHDzRUSYKPuWgCHuWg9IaRxxc0VGmyTjKqKZLOMhhyEFxlGmUo4xWcv4+m4Pl9TSFg4WDq3CQHWWaOUcZVHDaUg5yUIaD4ijTLHOU6XPpOagcZeLppneUCfGnORivynBwylEmyTHLQR3BdMmxqs0IB8VRphk4yowk' \
-			b'gxxUjjKNcpRplKNMM+Yo06SOMsP0hYNSXy12b2MtF3LwREeZKPiUgyLsWQ5yvGMOrugo02QcZVTTJRzkMOSgOMo0ylFGKznL8GwOltfTbIGD5XWmt8NDxw4zbs5hBt85QVvCQwka8tCJv4xb5i/T5xJ56JS/TDzten+ZEH+Sh/1VQx66KX+ZJMccD5MIpkuO' \
-			b'VW3yPHTiLzP87YuRZECMTvnLOOUv49hfhk7HGuep6FKvmWEuTMVQay18b2Ndl1HRneg1E8udUDGIfI6KEu+Iim5FrxmX8ZpRTaepKGFIA/GaccprRqs6S/JsKl7wsppCxULFQsUhFfmpoZt7aojvYKItpSIHZagoTw3dsqeGfS49FdVTw3ja9U8NQ/xpKsar' \
-			b'MlScemqY5Jiloo5guuRY1WaEivLU0A2eGo4kg1RUTw2demro+KkhnY41HqFi+uxwmItQUWqthe9trOtCKp747DCWO6WiiHyWihzvmIorPjt0mWeHqukSKnIY0kCeHTr17FCrOkvybCqWl80UKhYqrkpFfobo5p4honLTllKRgzJUlGeIbtkzxD6XnorqGWI8' \
-			b'7fpniCH+NBXjVRkqTj1DTHLMUlFHMF1yrGozQkV5hugGzxBHkkEqqmeI+vcTHT9DpNOxxiNUTJ8kDnMRKkqttfC9jXVdSMUTnyTGcqdUFJHPUlHa5IiKKz5JdJkniarpEipyGNJAniQ69SRRqzp/n03F8uqZLVCxPEncJg3hGHSnBuVZ+FTR8VNFN/dU0cmW' \
-			b'PlXkoMxTRcdk3C/98eA+n/65oiM2or4mEcJjRYk+iUa0LRIx81zRTbCR1FZ98s8Wdbnw2aLLbKPPFh3zkSudPFvMJ3Ow/B1++B5LGx8uOmqoPf/GcDfCRmqHno0YkROPtex/Y5hO8W8Mq0Mbd5c+ZHSTiKTCm16zjp4xiuTnCElNkvmZ4b51VnjK6FJG9vrJ' \
-			b'DZg8ZuRy42NG7JR4BnJlXHI15YGj0n7Depni0gIm8R5ROAm96AHvh8DGPdDNBRiiB7wLAOPxQL+BrAC64XfWHL0W/PoxmnsheBlgXhdSFw0wGx5gNnMDzEa2dIDJQZkBZsMYpe8FA8yYSz/AbNQAU21xgCnxA0UJohw2GGbGazPDzGZqmKnzzQ4zdQTT7Y7K' \
-			b'GpspP8xsGKNc7WSYmU/mYONuGGk2aqTZ8EhTHHVie+ZGmk060hxkJCNNqbjWAh/LsHSk2UxitB9phnInHA2ynx1pcrzjkWaz4kiz2Q1Hmn3TJSNNUcdWahRELSNNpfMsybNHmht+qU0BZQHldYOSvVjdnBcr/igMbSkoOSgDSvFidcu8WPtcelAqL9Z42vVe' \
-			b'rCF+BKVnUPoMKOO1GVBO+bIm+WZBqSOYLjlWdRoBpfiyuoEv60gyCErZDaBU7qyO3VnpdKz0CChTp9ZhRgJKqbjWAh/LsBSUJzq1xnKnoBTZz4KS4x2DckWnVpdxalVNl4CSwxAN4tTqlFOr1nmW5LmgNBt+6U0BZQHldYOyZVC2c6BsZUtByUEZULYCynYZ' \
-			b'KGMuPShbBcpWxQiglPgRlC2Dss2AMl6bAWU7BUqdbxaUOoLpkmNVpxFQtgLKdgDKfDIIStkNoGwVKFsGZSugDO2ZA2WbgnKQkYBSKq61wMcyLAVleyIoQ7lTUIrsZ0HJ8Y5B2a4IylBBDcq+6RJQclisURC1gFLpPEvybFBu+K045RcZCzJvBJmeV4T4uRUh' \
-			b'qNW0JciUoCEyvawI8ctWhPS5RGR6tSIknvb9ipAQPyATDzhqRCYlwdHqTqUwBKefWh2S5J4DZxLBdMmxqlkenF5Wh/jB6pCRZECkYVfAKYeBnZ7XiHhZIxIbNsNOn64RGebF7Ax11+rgYzEWstOfuEYkljthZ1CCOXaGNknZ6VdcI+Iza0RU02l2ShgYSi9r' \
-			b'RLxaI6KV33ARz2Xnht+kU9hZ2Hkr7KyYndUcO8OWspODMuyshJ3VMnbGXHp2VoqduhyBnRI/spM9gegrsLNidlbMzphChp3VFDt17ll2Js3UJceqZiPsrISd1YCd+WSQnbIb2MmHkZ0Vs7MSdoaGzbGzStk5yEvYKXVPGiIWYyk7qxPZGcqdslOUYJad0iZH' \
-			b'7KxWZGeVYWffdAk7RT1bqVGQtrBTKb/hIp7Lzg2/faews7DzVthpmZ12jp1WtpSdHJRhpxV2LvOg7XPp2WkVO62KEdgp8SM7LbPTKnZaZqdldsYUMuy0U+zUuWfZqSOYLjlWNRthpxV22gE788kc+t3ATj6M7LTMTvGojQ2bY6dN2TnIS9gpddfqoGq8kJ32' \
-			b'RHaGcqfsFCWYZae0yRE77YrstBl29k2XsJPDkJ1W2GkVO5XyGy7iuezc8Bt7CjsLO2+Fnew46+ccZ1GNaUvZyUEZdorjrF/mONvn0rNTOc56tUV2SvzITnac9cpx1vOTTvxChsQUMuyccp9Ncs+yU0cwXXKsajbCTnGf9QP32ZFkDjbuBnbyYWQne9B68aCN' \
-			b'DZtjZ+pBO8xL2Cl11+rgYzGWsvNED9pY7pSdogSz7JQ2OWLnih60PuNBq5ouYafoZSs1CtIWdirlN1zEc9l5i+/12QYj51yATmGhcDDyL7BPmHeVvLsK1vFaSz+31hL1j7aUdRyUYZ2staTvBayLufSsc4p1OkZgncSfXGrZX5Xh29RKyzzTdDFMlxyrGoww' \
-			b'TVZW+sHKypFkkGlqZSXuR5o5eWtrll/pesqYnGCL1096Xjfpl6+Z9NNrJntUBXmmqBIZzqKK4x2jygmqLqTU0WpJopRk6I4xxeGIKSeYUmsktd6yiJZgivC04RfslKFdGdrdytCOPVj9nAcrROAtxR0HZXAnHqx+mQdrn0uPO+XBGk/73oM1xI9DO/Zg9cqD' \
-			b'lZLgsiD6YgoZ9E35sSa5ZzGoI5guOVY1G8Gg+LH6gR/rSDKIQdkNJOTDCEN2ZfXiyhobNofG1JV1mJcwUuqu1cHHYizl5YmurLHcKS9FCWZ5KW1yxMsVXVl9xpVVNV3CTA5zoUZB2sJMpfyGi3ju0O4WX8OzDUaWod0VD+06Zl03x7pOtpR1HJRhXSes65ax' \
-			b'LubSs65TrOtUjMA6iT89tItXZfjWLR7a6QRNlxyrGowwrROmdQOm5ZNBpnUKaJ2iWTc1tOtSfoXkBFsdM6tjWnXLUdWdiKogzxRVIsNZVHG8Y1R16wztugylJMPB0I7DEVOdYKpTmFJ6yyJaPLTb8EtuCp4Knp4ITy17d7Zz3p1t2BI8SdAQT614d7bLvDv7' \
-			b'XCKeWuXd2epyCJ5C/Ek89VcN8dROeXRm8ZQUw3TJsapBHk+teHG2Ay/OkWRAdK1y4WyV/2ZbTeCpTT02Y3KMp5a9NFv2z2yXO2e2JzpnRnkmeAoynMOTxDvCU1utgqc245cZMjzGk4SDDWvFMbNVjplab1lEi/G04VfLlJeYltnFK5pdbNlxpJ1zHEH1pC1F' \
-			b'GgdlkCaOI+0yx5E+lx5pynGkVVtEmsSfRlq8KoO0KWeRJMcs3nQE0yXHqjYjeBNnkXbgLDKSzMHyd8CbchNpm138OcRxzKUOIsP0hXdSXy12b2MtF7LvRAeRKPiUfSLsWfZxvGP2regg0mYcRFTTJfzjMOSfOIi0ykFEKznL8NxZRLvhN8cUDhYOXhMH2amk' \
-			b'nXMqQd2kLeUgB2U4KE4l7TKnkj6XnoPKqaTVMQIHJf40B2O8DAennEqSHLMc1BFMlxyr2oxwUBxM2oGDyUgyyEHlYNIqB5PWKQ66MQ6mjibD9IWDUl8tdm9jLRdy8ETvkyj4lIMi7FkOcrxjDroVOZhxQVFNl3CQw5CD4oHSKg8UreQsw7M5uOEXwxQOFg5e' \
-			b'Ewc9c9DPcdDLlnKQgzIc9MJBv4yDMZeeg15x0KsYgYMSf5qD8aoMB/0UB3WOWQ7qCKZLjlVtRjjohYN+wMF8MshBrzjoFQe94qAf46BPOThIXzgo9dVi9zbWciEH/YkcDIJPOSjCnuUgxzvmoF+Rgz7Dwb7pEg5yGHLQCwe94qBScpbh2Rzc8EteCgcLB6+J' \
-			b'g+x12c55XaJW0pZykIMyHBSvy3aZ12WfS89B5XUZT7e912WIP83BeFWGg1OelkmOWQ7qCKZLjlVtRjgonpbtwNNyJBnkoHKzbJWPZdsqDo55V7apd+UwfeGg1FeL3dtYy4UcPNG7Mgo+5aAIe5aDHO+Ygyt6V7YZ70rVdAkHOcyFGgUJCweVkrMMz+bghl/Y' \
-			b'UjhYOHhFHMRODQXGr0kOog7SlnBQgoYcpFBofPo+nYN9LpGDlKVwMJ6m4jIHQ/xJDvZXDTmIoaMcTHLMcTCJYLrkWNUmz0EuuLRSwsGRZA7yLRzE/cBBqoZwkNPLcJBaoOfgMH3mYKivFrvva7mMg1zgeQ5GwSccDMKe46DEO+IgNcpKHGSVTjmomk5zUMLA' \
-			b'IHKNgoSZg1rJWYZnc5BevgIMKixcg4UQB5rkephoChcfjYtoYRETiCc0yvYwA0jsHLQlgJSgISCtAHK/9Jd/qWCOPxGSVkEyFsT2kAzFmP3xX4k4pKSdomSSZY6ScoqKyeNFfUl/7QgnrXDSDjiJelRZ0uFccgf5Fl5axUureGnHeGlTXg7TZ16Gmmst8HEP' \
-			b'ZbiQmfZEZoZypMwMsp9jJtVuuN7BrghNm4GmFG/gVSrhYDKtUNMqaqpW54prasIhQBPPG/pvHxif8L9z9J/iIEItWQr4IoA20NMn8BmpqXg5D0tmJAOSoTiGQw3C2QUNBLw81bqUZkSqQKlAqLHFB4pIkT5WFhosJcwMXQZUmaNJjiSXLiY4pscxNayQIlDC' \
-			b'6dGSW0CEBAQZBJxn/3ujHy1+sPIn2PeMZV/o7x8M+JitJkN9ZKXJEEcrHE3wuLu+NrrRyu7l/cnnGNSTrOmxHZ23oDnzuYYz/sBmDq3lPvwWT7SQZBiDVUTj5qaNW/P49q1aaOLCbT3qy+mWrs1YO1csnrZ40dpl7pNB9/p7ZYgDouF7ZogHtqFu28Qi1tge' \
-			b'HQ4aQUugPQy0B1tJr++h4VOBxVx2E013tVs0mzbrUrfUdKr735pMyVITapVTXDSjqCTFlI6ZUlTzaEWx/QaWlGLIkIoHisG6+v5eIDW1/bgRi0KyDm+N2KNt2Vf9ewHxwMNdKvTDB2xRuu/006bZbezWs7fLOL/SbOIutOq6y+Y6NmGb7Zl3ojdiV1e1qdSB' \
-			b'D+OrTZ/y1hQpPGFT7RXa1e6yu9N22gT6zZpAtwnzd9W3pMXkrXYbWW/S3N3M7eNFJq47cXax2pqJe4x5xur+zNzZ84wLTV1i5siq3KSpG39AtI6po0H+fZu7mt5DeabJwzGueYAK4BAXCnSa8asvNn4T/gbn2T8q66n2z513m4dP/q/VBkJ9N3e79yQ20D6J' \
-			b'HXTL7SCK+ezbPnsrtrCmX0J5V7d/IPVHeLhcP9rtn9UW8ATrVzcrDnKr67F+m7Z8q1k9O2353o3Vc+n83gKrV1NjrDnYRXlepdV7hxavflp3msPZN3znDnabMqd3/aZuY4+GVxjkomDLnN6jmDjztCbubI+as01c8aQpJm6TJq4tJu5xTJzdvdqmQ/TEsqAn' \
-			b'cI7esnFzT+AcrQxc112VfVti2/jN/IaXY+HJjTpJX4t9Q5fUp3KS3v1P9wAspscVzVaN3tmGzmAFcC1jdydG7xyDh+tpz7+zu9o7uidZBsIrSzFT5+/V3J35WJZbzV12X+duz8RBNaCMqC+bNnXZJdVPYe7gGOq/3OzpZR7p8o5iApeZQOyOtJ5+j1p4NabQ' \
-			b'bcga7lF6mFW73CjiCiW1WEMv0UAT6R/TRB4ewUqOvuji2FK6J7aSzZk3hbbcGF5sFVGCT2QaMecl9hETQl/RLVjH2pkLbhax6zzlCuJzrOPglrF9THtYPdVdo7aDh23eMRY7eFt2cMk8YGL+auq2279BvEnz1z2m+au3YP6qYv6K+du0+buO8fEtmj9o0Uc0' \
-			b'f2YL5q8u5q+Yv02bv7aYv6cyf9XNPS+5Clt3PY5927Jv2zdtj2XH8LXAt/XA9wKXlgrfF16xVwuUspiw+zBha7nu3aIpo1eyXYcpu0HnlTX89FrzADwik2aKSSsm7Z5NGg1uNnVzRiUqBm2RQcOXgRrqxA8IBDJtm114UUxbMW3vxrR1mzNtXTFtK5i2jSyv' \
-			b'WPprUxdaOq9+FeoWLF79yFavFstn7sX6UZ9OLWDdLzWjXxLrP49tEbkw1IDdSaaxvi7TuMLvGZ1gH2usPvXy+gw7uZE1GsVOFju5LTtpju2kUXYy/Ty+nTTL7KQpdjJnJ2uxk+YMO/moCzWKnbwRO3lnNtIe20irbKRNPo9vI+0yG2mLjcyPtan0i+3joy7c' \
-			b'KFOJZSrxHRtAyuaGXVg2aeSefi7RWTRp/OD3URdjFJNWTNqjmTSOdHdueavZNGy/8Ll+m9Y0D8g46Gl434a97QENNvQ4+CZT5x914UUxdcXUPaKps8XUXWTqbPzchakriyyKqVOm7kDPz3Bu+BrMHmn7la674B+rflKrR0VYbcwqFVrP6FGCWaNXk8zh5LT5' \
-			b's90DgRGU6QEhA93xgSw99KUHtNHQD+DbkCEsSzWKIbyqez7qaldr/J78lo+KsKLxa9Y2fs05d3yLTF5ZylFM3jWYPHraV9bZnmvy+GHpzT6jsGjhsENVOKqtHZm2spSjmLZNmraKXj1cXiFwiWnjNryDx68W5+1Q8SvaoR/29htZylFM272aNu6q5fUoq9s2' \
-			b'adg7MW7GPiAkoRfCNz+M2Mjqi2La7sG0cRd8aq/h+7Bs9+U1Z/BuraI3QPmNLJQoJu2WTBop8mYXQly/SaP2LRatt2jkQIKGoWtxpybTVtY4FNO2hmkj+/L0Sxzuw7SVu7Vj21bhGoe6IpNW1jgUk7aOSauLSSsmbQMmrS1rGYpJW27SSN03uRK12LQ7tWk4' \
-			b'BKWBZ3t7axZAleOPaW/RvEG7bu5HtDf2VPQ2zRxKf4+XX4XBw/puyeyh1M63eWjq6t0r6i8N6i4qUe0NnTC7Vx7fcgThKDb4ULDVwfiaooqCm92rGgpVt/ij8XWLZtF//Rz2n+3BmGLHoHh7yA4MGGYGhqWrKcxgGBovsCNoCqCn70C5QbVBF0AxoRFAqNDQ' \
-			b'aGwOaIbB+EBIhZ3ygJ0SOmPMHM6DHqFyYzOiWmBfqmr06oFjkAKqN/YZrG0F6oGzjp1cBd3bohnAFMFMoINz21Ap7aqltLuT/yj3BnP3p+YPyogG+XA4oSQNMqQZ/as6I5beHZ+jgrnpgoHC48+iV/RrmGaqnBWXFX/v/Li8EQ64shCNsTmqA9Bz8Ed+veic' \
-			b'qj6DOJC7S87gVWj8MYx+GQ06CJ2hyvonrywQp8HfuIdKw63Ban8GSmMq7qLt5ZWk7jRezwqMXAXdq2rxruGQr7erJuoO90En/+E9ShrCdwNWyJ+cgdKpY2qPLtseNQJ/vFUcNgzez1HboMVUL40bbapamstzk+HNJg6VoEnQxRpNdyXrcvhtCZabFX0NGn4h' \
-			b'KTdx0zezx2aHtECPucnhHBSEmr7txpsf8qGbK0S0FgXeDAVxwPUsErj/BetpDkE8aHCHG92X+tyZ/vxBRwkX6M8JV+YuyySTORxmexiJk6tXcjZN7jgWKRaEbr+n0eBiCxs3WZXvjHhHv8OxAvVKuPWDe8wFfdOc1z2t6qL1sm5K46tNdNV6l9n0kFICKxlI' \
-			b'nrz506PShmNE2ZMR93R0fCPiwiyWb6x1dUHAYr0yu3vdWGfMNRh3u9vGxk1m1+lm9dP3tMO77m3tboUNJ/xWSegpcmIVyo+Ti6We0h1M+D431pkVpjCyirG2tca58ZU2nqu/ZOOmy0+IlO420d1wrHKnG+tMfn4JdObyHucfo9fZ3XDDCfbsiVO3g7nkem7I' \
-			b'kYmpOAqeHQIfdtArXLNz76g7etUla+mWBxkPQxx8qwi+Kn4b3dTvhhsO+WUPWzoX5ek3i1V27yArfqCTn8QqCJjSLXyIfJ8b68zILN5WEYD+HdvauBkvmJbamOnfRLdEZp61kTeN+pyd0EweyV769cgb61t+SmupqX8s876ku4/pybyO1Lvshm4XY+ckRmNn' \
-			b'YjzGdmKuLN+V5t/uCeXo8XenG+vM6ITbaihH3VgX53b3SBu6OJ57MTdnfi6qdMGpLtjt7nVjnRmdhFu1C6JurNoN0TX60TZ0ND73Ym7V0Wmq0hPHeiK6ud/pxjoz6iq2ek+s7dq90e0edUOP/3MvZi/hMtG0vEO2u3vdWGfOn2i6YKBKqrCwb44NRPv+2e3O' \
-			b'23CxyOmxcUGO5TU083F9nT3BTV98phZ3V1wadqcb68zoBNNjdtdEPR6j6+Jyv3ey6dVzlyXF4rii+aCtzSXj+s7tbfiD7PRl30FurEPL54fc+r1aa8xKvXtc8t1u0YYrLpdeM9zC4tjzE4D2hS+1mBUOWYQXzEnxY6Z3/YBpiwYBl3qftVHVoGnPTmBiw2XU' \
-			b'j5Hu3MZ6tXze6spNAy70v/qNZXfB7Fh59JzRDLe7ZOOKmYvSmN3wPQuPmsFgY1VbPqn2yGbizOfNy81Ft3vCDZV5xXi8hv6CObxiNoYagm+LKVuysZ6NzvsVPTtLz8yubOnGerbOJOdWCHWWRxS+perWNhZucXd7hS8fu7WNhXtFc5tbeTyBC2sv3nhtbP9Z' \
-			b'LdH+6ygXdZjEOSnJ3MYKVFaaLlcgs7vXjXWmePct1xm7u9eNdaYssV2uM93uXjfWmeK7uFhn8L26d7qxzpTX3C3XmWp3rxu/lLS4ZC7XmXp3rxvrzAVTs3erM2Z3rxvrDL6kmt44XfMNDqiEBMhS6MZiADY7BVb4Enc+AcN0rUmgCBQDRGZxQQv6V+CrB9nj' \
-			b'DfQsGxuEm344th/ERoHTFahe6aeWZ2CgWf0btBtUG37O2XQcnr69jGOAgkBTYPyWX9GPKkkq2JDaoVphOKgOv5QZDHOSCqlyc6S+QXXRkxffyM0v+YcWkRf880v026MX54eX5uNqfh6igD6/wk4DSk7vt0HVZkBAtslrweG6lv3CnMHjGkPlBsRZ3G9oub1c' \
-			b'3fQhYDy+fv7/AWiDPAA=' 
+			b'eJztnXmP5DaW4L/MAl0FKACKpCgp/ysfPWtM+RgfvdMoGEb56IGxvuBre9CY777vpEgFFYorIyMyiFSkJIri+fh+FPVIvXjzl8/e/fj1xx/9pfnL//rup29hp6fvfvHp67+/hoPXX33y6tP3P8LDePD6q3c+ffXuv+NhPPjir1989O4nf9cj2H/08efw/7Mv' \
+			b'3sH/r1999r/l8O8fkjfYw/+/vfoUj//jU/T7GmN+/fG/wX8J4/VX73EoeD8fvvP+v3317qvP3v9Mjj98pa7vTId/mw4/4UMKIab2r3Agu1b2FvYffvDRFxTuBx99/KHuWz2wlCAKKBbP7OxzzM37H37y+d8/ex9j/eCjzzE3H32Bob3+4EMqkA+5CCnn/P/d' \
+			b'jz/88JWWOjp8yqX+qZY6u1HyP9VSF7dXvJ8S8mmWLErQf8C/Vx9+Av/fe+c1XUPXj96TwsOjd6bDv02HUnjvv/7sfXHRoseAPufEQwLR04evPvns848xxZ9+8CF5/893sVBeff559IZl+d4Hf/vgPbz+rtQtB/PJayp6KDethf/87P13ycN7H/z1ryhYH33A' \
+			b'skk5efXRe1jAeOFjvJ+i/j8sY7hrWfgg9Hf/HQ5/++Pr3/58++tvfybHv8HxN29//e73r37+9atvv/7ht9/f/ppchsPv/vkLXPn+zx/h+Me3v3/1zc8/yNGvP/+/6YgD+u273377Jh79Eo80HAh3Ovzlu1/15Kfv/uurt7/+l56+/Tre8f23/4yuv/8eb/jH' \
+			b'229+1+NfKB3s/MdP30xp/sc/fslOvvr+myQlP+rhD9/Hw58m19+/+zUe//jHD199/2MM7Js/fv3hv5Oi0cOvv//p5x+TLMVU/fr2mzQoONDTP7+LV95++2309DZm7p+/fTfllAoz5gDzlBRsvPDHT9///FO88N8xRd//9HtMElQu1nhSH99M+YOLaUH++Xaq' \
+			b'p59jWv5Ivbz96dvMPS3pr7/5+ccf38bTn2NgX0Ox/N/vpmrM/f3y/XfffBdPQER/mkrnl99+/zlGHaUr5uTnH6b8U6DZyW/JnV/98OfbH6YS5Tu/bN682ATXBPey4QOPB12H/0LThZdyCmd01KO3Bh3kkjrwWdD74IZenfCQfG1o37XNC++ajWu69mV08Ojg' \
+			b'vTpsRjxwLf/r0bt7mTrBNnfqfeqEh3DUBv7Xj82mHV6KEx7CESZ+aDq4j6/0eAB7C3fj3o/4zzdhgDs4sZOTnm46Q6H65kWgTIwv9bynXBpOEiTEYcAD/iYnl546LwfohoHADa2PRx0lbmheWDiDSgj2pbhsHCXCtvyvBxfLdQJneIjFSpWAd75MTvU4cbe8' \
+			b'21CVe/r5Ti97PMBEijsnvdl4ceRzSKPrKPd2cqDSCdM5FVfnZg6Tj42nTPmO/wW+gEnxnDQvp1o3kDbPiev5X28gF3zRYWWQVAUoJBQQuRBaveAHqVsWXY8pYDmEiKiQMYGSPHQa01OuAefJDW+H2kVRkxKIp27uJFKSO/fbp7Mbh+3Tgg+fO43bp9lNG89t' \
+			b'1EhxttIiMXUtiRNUsRslYKxRLsTovO00nW48SZa30N6hBUPoYzOA3IUGY3YiX9tXUTH1bg9PUKu5p42ndoz1OjYhyjA2Z64tg40Wk9aBHui17aJzdJxcPLsMk0vHLsldgVyCUZeNozw7x//6NiYvOtnUCQ/xaOR/UGwvX06HeNSx9Oot2Mq4zqBM2kmK8BT9' \
+			b'TadQoaRJBvan2hBVBVUtFCg3uNbxvwFub1m+W0eHVI7Y3OSA8tZie2pYgffafNFRnOI5KQQv0RqJA1tog22w4K4u4EAJ7EUqRWfAOTRS8kM/8MiZRZVHMtfzvx5qxXIlwRkeYolACx6wwEXEfTNQ+UAVvrCG+dS0JGTBarboYsusKl0EXUwpgxIE8WP57Lgc' \
+			b'pO2rcDqtD3B8EaZGSKd+ShYwmZIL0veCakGaE556Cn/Lae5DT5kkKMaWNRTk0rd6ZK0csTjhAZctFOLEPzwbs2jVJZ5tLEtRJ6d6BRU1BW07/tejXxYPbEmWLkLIzDk8CHoQLw16wIViKX98xGKJB1z5RjxIE8I6tUwpaBo2Y7Ol8kZPI//ru0lxsQ5DUhj+' \
+			b'N3V/ghFKdiP/w+6ONH44w0M8GvTiSzmFM73A4UCKho6kyas0Be2FBMQcKC+5HYUjUAmFTi9g10pc4Ah6dW8MlAL+2gY2TwAHCQSZBMEDFAJdQaVAHUOjx8JswPPQN8MApQi3tSj5HfwC/Hr4Yek6+HnUsVBcrQGfBm6D3gL4AVS2HqsJKgiOUNTgbo9XwMnA' \
+			b'sYFjKK0WWjqoLABpC+q2hQJooWBaoGYLzi26Q+paSF7rUBDgDmyFoL1aaAktNKUWSr+FHLcYL9RiC2BuqdIhY7CBj4C/rhnGZjTNCBm0zeiaEeOABDWYMUwN3APtbuyaMTRjD52phjrAyInWQMQGyq5vIHiQANDk2K/tScMNwAkENqRsHJoR0gkF2UJJtlC+' \
+			b'LRQwdDZBf4H6HLCkoFhBn4F6gSRhmjG/BrUC5AQyhi0cNGCPvcwwYpcFIAFQAOJBjxYEscdKwIoBhBlUlZBbyCy0Y2hAPdYDaqLWYmceDkEOqOpBDF5g/aMD795gNxtPsXJekoYiX5BiuoolD85Y+C+Jr3j1DUKczinsKjvPVHZejCwELde2SNCbF0MvIsWy' \
+			b'MrBwUE3TXiSLqpwcguzlPqxsCogEAeWIQqgq6T7ECuvd1Qq/rwr3tcLvp8LxKZO6DVZIYJggBACUB8tkGMYqFfcjFW9wKKTW9x3Vd+ula+ipoScV9yWNRbJy4CeQ7CK6SufRk8wUyzwPrpPepe9V6VAIWt9az1KHUkdaO2ldxDrQcuey5sJNC/MyBZm0gbnc' \
+			b'z+R9Luki4fvJ9m6ZZlkuyLDIbSquqZjOBHQumiCOVNmGnxAwYfxgEORZgp44a6Gfv9BfjILkIE9rTh7SOh0n6KTtdvoU6Irt1Ek71ftlxKDlIYM92q3T8LtWHiutpkC7Dx09LrwIHEXgGAJHYFCpYaawjCEExAEUXBWJY9phx4NBgWWjN7WEz17C3Fx6lvWe' \
+			b'xz96t6ugWxynhwKoBX5UgbPS6Fmy+66K9LlLuPbq76xXb/ta4XdV4W2t7/up7xdUGNTvtk6eEby+9yMHtOyA9DRdE2q9P5965+c7fPjWRzp5BpfnQJGBkZ8K8OEAe7HYhcVHMXxmwAc0SEuVieciE1Dbba3tO6ptW2v7jmrb1dq+l9p+MUa6E85HZvwYdMTd' \
+			b'yGBffeVxmVGTYOtD1R01P8wQNTh5O8nVf5jc5DWzXfIQDXfd37zg2M4fvCoRw+PXnaoPGRI6RxzOcBz8FHqWIK28YpJXxONQXyo+klrzdWjwjrQa1De/KaSXxrXa76TaX+ibeq9WGlb2MmugZ6kY+PLAQwjyFjN7s1mtbp5MV78YpNKM9EgG7qAMPNw3dGLc' \
+			b'H8QoI1qBSJ2z+dYLMdSxHJgMGPcUZFrTVGaoMMTCQF6Ds4VHbhAixh69RCyTD9hMBSdc0kUdoa565470zhuaxWRf1vlr91TnUPSWZ6bZOtfsGdczFJ7lqYa1np9vPePUUSuTCmFfK/TWK5Smg9YW+5wrGGvNykRe2NeqfUZVawi3UhF1qsyVP7TzlHlui64+' \
+			b'+t5PS8UlErTaee+lG0XwrS332lsuTnmmChuo31ut6O6p8drAjTY2Yh0v10bsSThmE+O83CUDojo5S6cQ6cwWrEcKpTQ9Tu+uM17OyOBsepzWSy3hM5ZwaXqcCn6dJvcYBe6T6XGqWqpInw//rPLf4BR31PS1h3aFVRSM4Lijg1o511Q5TvtKTgaj+H3BfDGB' \
+			b'IL4sPSbXqruCqgtSJ0EeVSeo1NI8pvfJDxF11vU9PULiSK2d98lq8zlqraGtB+JajkeVoz/JEKzlNQJrPZxaD7zI4vGBNOv28y3P+8aBDyJ5byrJT+8XQcFwadpamucYwnC1GM+hT9jE9nH1iaz/2sszXd/VqjvHEJO8MLC9vGaQZ+FAxVyfgZ+wbpzjumCO' \
+			b'ymCrWNjL3DQmrE7HJf+1mi6u/Xwt9ycp966W+xOopVFHvPVdprx4I1sEWYl3FBdWTS9aeb88tmzHwOZIo+i3UUheq+8izWYMtbgv2MEyhjtWwcqINu3P3T1+U7+Hc1dju7rKOS7aQGLVUaumr0jW1vx4ypMfk86zwAS/kxl553uuR8+mfvQ2+UueFm2z0VCa' \
+			b'PWHqw9lTS8LQyivl4oKHA5vcDjwPcRADjqLixlpYukoj5ZZHykk8+BU1DpVvvcfuRYJ4nKSC4E5A0LGIdWLiL70NqFvHE2Bxh7X/kr7TjLuBzniKjpMpOu6lzuxw6TeXUApcNCFnk3I9d2JSLjfgznYc8sARjazE8LWzREiJrKJ5J6KJxe7EgM0l3wlhaymX' \
+			b'fbfDiVd0ccn6wWgBQhcCSx6NV1K/WgVeJjc41cfs3nMEPYfWi7habiy9pIcFkwY/WZolDUGkuqTbcViOM8VBUberLmr8jOQWx1WJuXXi4vOqVoHW1jKWvuzcFZyRaU5Hv6yMepHRIBZanYDzrMQlVA3wrKoUx58djz87Hn+WBu64gTsZp8O97DrpuvKHzerw' \
+			b'yiM/VPN34+pim483o5R7ul52/JzWCdN6Oq3DSk86rGSWHz1oWMnxsJLjYSVHz0KW61EfnbSLArf5ulzO7XOLR058HHf5kodY/Evpjn7Z6EANPSb7lzrkUq2jTreO8jJA4Olhn9SljhLIWNj0lpu7EN0gFmpcRctN2XNT9tyUfe1qPqsma6n662DnfVQ40baT' \
+			b'hRpwD0Wgp56XVuheypcvO1zEA8oD4qjicR/iwV/ArBV/hxUPMXUM+o5Bj1LQWOm3k46QlRSw/AKdS5cB8hpkme1QTbYu9wzmqRqgJAP163h2mqweDgGFmUEGVVzPo8L8Yh7XxMACxblsWHa1MT+LxkwtskfRcLzzvOuk9iHqvrbTiz2d9U7fxXRiiRxk38sT' \
+			b'ma75j+VdK+ZyCrSrxX3JUYoRi5vag9f2YKUdII0qfZ4HfSCWkXEzSu3yWKBp3hjsUtJHttEWBT+0PSYtgAtG+yEcOmcekspVzoXLlZc+ifDjiTytcLlQpvhVmJRqJxnE3HHWgqQey4obu8fiYSGcV53WEb72Idl0M/nk4kGjtta2UR7i14FITrjcuV/mWMZi' \
+			b'nXmR3zbpmcE5fmsIv1mD7WLARy44x28X4zdOUZ7wnT+++8B0jVh0UHYoNmh6ZKAEcRFFkHwLMmBxTWQ0vkMTNzSWw0lhOEEJl7/G9Vax6LHsLVYw+MFKwFrAJoZV4bBe4BqqJVytCBclwtWK8NMGkA+Ln7LwWHFwD678iAs9os0wLg+JxsIgrRZtADtcLgH8' \
+			b'oD04VJBFw1FSKnANO6eQd4tqAerGohkx5NPijBDIp8PFYKHVu9aAVG08vf7ZYIlv8AexbiAFG4/HptmM4GzwerOBAtygZtlg9W2wzjaQlw3kZYNqZIOlv2nRE7SxDWqNDaqMDdbQZsRrAb2jS0e+0MnhkcOjDgPtMDDI3QbVxAb1xAYVxQY1xAbFYePQHfK6' \
+			b'GekAf+AKGdugY0BHg9FAOkFaNpgUChkzg3Kywca9GSjRcG3AENAzRoUR9+gA9bjBxELdbaAMsZQ2UCcbTC0l1mNy0AUVZDnFplvKCqYZU0NZcVhMWCiBbiInuAm0yAYkedNThoyUImYVSwJkdTNQJcABhoUl02NWwTuVIVYa5paCh7AG3FNxGcwPVSWmrcXw' \
+			b'4RpI6MZSZcGBo7RSEkk2IJxAtUmlhrdhxeOT0QaUwabHPSYAPeMFrAVH3jBADAuSjMKEggCeR6wxdKPqw9Dhh2WDIgHtZIOyg9KEaRgwexQxpxBlp8c6aCk6FEysLZIPKl6sVYwYqx8U0mbovkRFiuqzKs+qPM+rPKvmrJrzmWtOi5pzSWNyP7xPVGfStz1G' \
+			b'gYa8e55q0nZZmWon+wCV6nOtSk8L7ozatduhYf2eWtYmmvYQDdteqZYFd5zKmGnbblvj4qwrqL1lzdtjrfUrOpb/Mk1LDo+obSXKZZ3b76F1KYiTNe+U/5jtR9G8/S7d2++pfRP9e6Da7a9d8VKqx1wD9wUdLIKzpIebf4UH7Fr0D9i5GGHnhv/BSV+onHtS' \
+			b'y6yTZwo5amMa5JnGQqJCZm0cX0zu0MYtaWMe8qBxFFHLJtHMNPKyOhQyaenSKOG6uh7j4M5k+9TTWNakvv2CCi+p73QUKlXjVlT5wsjWfJxuPmamI2o0AuZ5lEyHG3HxjPiJDzdDgrxPimjwq3jIUTDHQLeH6g+J+keJgWu4sPIcAfiRPsj3KgpwhnMRB90M' \
+			b'CW2OBbTGx+WAIx68IKKAB/y8HH40hTDRJaiADgeUh4PyYGwMCTpQKDrRaIoLdkNngYU40JAp/yZYiM8IigiJyStzwk7hphvRgeLyubsgQn0JJlAyEBW8F1zQCYop7lFkYyDb3EBXRUeL6MABTNKuGACmdwkhxeTnWVGmcL4XuDLLvWTP8N7pzTSeTEjJ/Rsu' \
+			b'pj5hDLr3sdroCuKg90vJNFxUnGTmkd4pWKJSSshEaep7LlNBUw4hARCH2Ql49mFOS8Ur4HEuJjInjwrFCn/E24xAlJsJQswap+FqA1IcaQISGrETtiquM8mnkCmtTa6NSCnrHqiD5doHKmo3PFDnydsHEg2P1zu0jHkgAfHdA/ecwB1a2ABgw5cDtmXvoKvZ' \
+			b'f0sB0yXPd4D4PlBXBPThw4YQB3vSKxCmDf9Dy6ldFR33eW4xBz66rLHQXpCHSyzcl4NzBt4h//bi3sHMw1dlc+ahpLC7Qi9kW0I8Pi8QTzxG3oXCxrwLzLvUXXknvnY9Fk3eCnwLhUcj8rqEtVIq8xRjDdJjgffisEC2PJ+SESOlIvc6vhzm3o1eF6gFhpoG' \
+			b'JkArJ9BIHAqzMIEszEAWmGNhjWM6hHU8x1Qaco5JZa9xjL3NORZyjoWEY9PjlEac8iupFd0Lu5IrXOhXyq6usqty6865hYU551YvW8RWn20Jtvi8gC3xGLHVFzbGVs/YSt0VW+JrJ7biTQVs9SVs9TuwVUplnuL4NNbvQFaeR8mEkRKRex35I2Rl3o1eF2T1' \
+			b'jCwNTJBVTpyROBRZ/YSsfoasnpHVryFLB/+OR5ZKQo4sqeg1ZLG3ObL6HFl9gqx+QpZEnCIrqRXJmyIrucKFfqXICvsiawlWN02qSqn7pBRmuJ1RyuqmlFJP9O5JCSWO24TK3jfZKbR0I0BRDD53F0Cpr12Amm7aBhS6poBCgdj5xqmYyjzFq6+gZhmUHBje' \
+			b'Z++e0CXkN2AK2SPjCY/7JDTG00LSjEQieCKrDsYTFUThpRUV2y4+cXin8EkTl/NJ63mFT+JtxifKzcQnCl74RBliPmnECZ/SepG8CZ/SK1zqkU/KpX15FB64H7QXkJB1qJm2QdRXEFUQ3R+IMLNzEFnZIojEUw4idlwFEX1i1c43JpFlEqXuSiLxtZNE8aYC' \
+			b'iWxOIrsGoq0UbiV4FURZTolEYgJB+5xElklUiEZBZBlEGpiAqJw0I3EoiOwEIrsAIrsGInsyiDRDOYikmtdAxN7mILI5iGwCoundlEacgiipFsmbgii5wqX+1CAaKogqiO4PRBjpHESdbBFE4ikHETuuPxF1hY05xJYVmbtySHzt5FC8qcChrjBkt5tEpWTm' \
+			b'SV5/JMpzKFkwvM9BxOYT+Q2klxIUselEDE5QVE6bkVgURd2Eom4BRWvmEvZkcwlN3AxFUtNrKGJvcxTl5hI2MZegDAmKJOIURUnFSN4URckVLvVjUbQPggrkGSt5KnnujzxoPjgnT5Atkkc85eRhx3XyhMLG5GEbh8xdySO+dpIneiuQp2TjsJs8pWTmSV4n' \
+			b'T55DyYLhfU4etm/IbzBefAp52L4hBifkKafNSCxKnsm+wYYF8qwZOMQ5OseTRwKZkUdqeo087G1OntzAwSYGDom9uEackiepGN0LeZIrXOoXJk9rBD0X5s7jTQ86J3FKU4VOoMyR04mujiKrU4fa/amxRYwtSiBWUkKMskVCiIecEGMzmyO0PEwWst8Ufssy' \
+			b'T5wYE3flxLgCCWyWcsvJM4TSBBS3vYbJ8t+umUJSEpNXtCZwqQWcExO4KTCxKHDKBK2CtQlFVEA7aTCeTAMpoxkNpD5PnDYk5RQBoAKbAEAFSvKSThrK5g3tpcUT7d1exYPD0ROJbugh4hlOH6IXAeMzfbhA+Z4Pa7Gbm4a11FOGDnFcBUcMLd0IGo6HtTJ3' \
+			b'gYb6Em6QPmMnpQfdbGiH7TUGsI0Qd/AQVzHJefJXKTLLrWSHE5xzxPEQV36D8fFQSOJ4lCsNlEmykEJjpsQyXeRUGOMWhrvc2nCXO3q4S2fCKW5iDjPcqCSs4EZzkwPH5cNeLhn2ctOwl0acsCctV8mj4Ce9wtVw6YcPW/FV8fXUTzPXha3QxJ55xFaQLWJL' \
+			b'POXYYsd1bIXCxtjiMbHMXbElvhRbgbEVEmwFxlZgbMVbCtg6eHysmOQ8+evYynMr2eEEz7DFT0D5DcbHQ8UWP/+kgQq2yik0ZkqsYItPFVsLY2VubazMnTxWFnOW40okYA1XkosZrvKxMpeMlSWPShpxiqukPHUvuEqucPFfGld7r99QX9PU1zTPB0l94+YT' \
+			b'e9jNTRN71FOOJHZcR1Jf2BhJPKcnc1ckia9dI3DTTQUMleb07MZQKZl5ktcxlOdQsmB4n2OI5/TkNxgvPoVBPKcnBicAKqfNSCxKn2lOj+sX0LM2qcedPKlHEzdDj9T0GnrY2xw9+aQel0zqcdOkHo04RU9SMZI3RU9yhUv90ujZe3GEip6KnueDnqEhUGTo' \
+			b'GWSL6BFPOXrYcR09Q2Fj9AyMntRd0SO+dqIn3lRAz3Aweta2fdCT51CyYHifo2dg9GQ3GC8+BT0Do0eDE/SU02YkFkXPMKFn4Z0QFdxO9Awno0cSN0OP1PQaetjbHD1Djh5NOIcb0SMRp+hJKkbypuhJrnCpXxo9e69tEOo43c2N0wVaXqwS6lhCoUzP55N6' \
+			b'3ZRQ6smPvFdIifs2pMiXIsq3hY0Q5XlCaeYuiFJfgihSvB3vBFSeWYU7OyYBbOMKXQ/DVTHJefJXcTXLrWTHSNmkuKJczW8wPh4KsfC4zwNlaC2k0JgpscwtORV0UbFM3mcAo6LcBTAO+BSAxfxlAFM5WAGY5iUHGOVpAhhnzGm4CrCY5QlgaalK3gRg6RWu' \
+			b'hC2AHbgQwrEg23vFgwqyCrK7A5ltSN9nILOyRZCJJ6y5fNU5kp0iy9p81TnxqL8pCgKaZaDZxF2X8GHP01KrLb+D4r0wjU5opVR+DTXFUFrUZ75owh5cs4VNIokJXLfDm5UBreyjiye026sntLJ8QhIR+0KbPNtqCYtdniykECPIFqibxZynwnDBcSaYeDEE' \
+			b'Xf1H1ldg3REK2LNr2LMnY0/kZYY9kZYV7MXczlcCmi21QDHoUkDJWgsaeYq+KAXMvmSO66yW6fYnw9/e6yxU/FX83R3+sNnN8edki/gTT4S/PsOfpV8Rf32Gv/w3RUH4c4w/l7hH/Fn2FvHXC/76FH+94K8X/MU0l/BnD8afK2wSSUzgHvjLy4DxZxV/dht/' \
+			b'VvAXI2JfhD+rJaz4s4I/m1yM+NuugSQ4LjjOhOJPQoj4s4I/qYEt/Lk1/LmT8SfyMsOfSMsq/iS3W/izOf5cij874U8iT/EXpYDx51L8ZbVMtz8Z/vZe3aHir+Lv7vCHzW2OPy9bxJ94IvwNGf4c/Yr4y+ZaiUf9TVEQ/jzjL9km/Dn2FvE3CP6GFH+D4G8Q' \
+			b'/GkMRfwdPAfL+8ImkcQE7oG/vAwYf07x57bx5wR/MSL2ZeSkTd7K0RXCn0suRvy5xZ/gb5BMKP4khIg/J/gbJOQ5/vwa/vzJ+BN5meFPpGUVf5LbLfy5HH8+xZ+b8CeRp/iLUsD48yn+slqm258Mf3svMVHxV/F3d/jDZjbHXydbxJ94IvyltiYsL76MvzHD' \
+			b'n89+UxSEP541Fh19l+DPs7eIv1HwN6b4GwV/o+BPAyvizx+Mv66wSSQxgXvgLy8Dxp9X/Plt/HnBX4yIfRkJg0tY8ecFf+nFiL/ln+BvlEwo/iSEiD8v+NOKneNvbYaZP3qGWcSfyMsMfyItq/iT3G7hz+f4SyaX0TXFn0Se4i9KAeMvmV42q2Uu2yfCnzXV' \
+			b'frLaT94f10Lj57PJ2M1Ps8nUU2Y/KY6r9pMxtHRjnPFsssxdjVPE1y77yemmgkHKwTPIisnMk7xukJLnULJgeJ8bpPAMsvwG48WnWKPw9LEYnJiilNNmJBa1Q5leyPmFWWN+bdaYP3nWmCZuhiKp6TXzE/Y2Nz/JZ435ZNaYn2aNacQphpKK0b2YnyRXuNQv' \
+			b'bD9pr2ONjoqeip6Loqdv/HzWGLv5adaYesrRw47r6OkLG6OHZ41l7ooe8bUTPfGmAnoOnjVWTGae5HX05DmULBje5+jhWWP5DcaLT0EPzxqLwQl6ymkzEouiZ3oZ5hdmjfm1WWP+5FljmrgZeqSm19DD3uboyWeN+WTWmJ9mjWnEKXqSipG8KXqSK1zql0bP' \
+			b'dayvUdFT0XNJ9KBQzm3yO90UPeopQ484rqKnawsboadjk/zMXdCjvnahZ7ppGz3dweaKxWTmSV5FzyyHkgXD+ww9HVsp5jcYLz4ZPR0bJ8bgGD0LaTMSi6Cnm0zvu7aMnm7N6L472eheE5ejR2t6BT3ibYaeLjc97BKj+26yPNSIE/SkFSN5E/SkV7jUL42e' \
+			b'ulZGRc8dosc33dyOgt26yY4CRaXzW+xhP+vs8YWN2cP2E5m7skd87WRPvKnAnoPfFhWTmSd5nT15DiULhvc5e/glUX6Dkb2yh98NxeCEPeW0GYlF2eMn9vgF9qzZPnQn2z5o4mbskZpeYw97m7Mnf/PTJYYP3fTiRyNO2ZNUjORN2ZNc4VK/NHvqYhmVPXfI' \
+			b'nq7p5kYM7NZNRgzqKUcPO66jpytsjB62XcjcFT3iayd64k0F9HQHo6eUzDzJ6+jJcyhZMLzP0dMxerIbjBefgp6O0aPBCXrKaTMSi6Knm9DTLaBnze6gO9nuQBM3Q4/U9Bp62NscPV2OnsTogDIk6JGIU/QkFSN5U/QkV7jUL42evRfLqOip6Hk+6AkoizP0' \
+			b'BNkiesRTjh52XEdPKGyMHrYzyNwVPeJrJ3qitwJ6DrYzKCYzT/I6evIcShYM73P0sJ1BfoPx4lPQw3YGMThBTzltRmJR9Ex2Bt2CnUG3ZmfQnWxnoImboUdqeg097G2OntzOoEvsDLrJzkAjTtGTVIzuBT3JFS71S6Nn7+UtKnoqep4Pevqmm9sZsFs32Rmo' \
+			b'pxw97LiOnr6wMXrYziBzV/SIr53oiTcV0HOwnUExmXmS19GT51CyYHifo4ftDPIbjBefgh62M4jBCXrKaTMSi6JnsjPoFuwMujU7g+5kOwNN3Aw9UtNr6GFvc/TkdgZdYmfQTXYGGnGKnqRiJG+KnuQKl/ql0bP30hIVPRU9zwY9KHlzO4Ogm6JHPWXoEcdV' \
+			b'9IS2sBF6AtsZZO6CHvW1Cz3TTdvoCQfbGRSTmSd5FT2zHEoWDO8z9AS2M8hvMF58MnoC2xnE4Bg9C2kzEougJ0x2BmHBziCs2RmEk+0MNHE5erSmV9Aj3mboCbmdQUjsDMJkZ6ARJ+hJK0byJuhJr3CpXxo9ey/rUNFzBHrONZG1IuiREOSbMLc3YLcw2Ruo' \
+			b'pxxB7LiOIF/YGEFsbpC5K4LE104ExZsKCDrY3KCYzDzJ6wjKcyhZMLzPEcTmBvkNZjpUCrHFQRqogKicQiNxKYgmo4OwYHQQ1owOwslGBzFPOYikvtdAxN7mIMqNDkJidBAmowONOAVRUpKSNwVRcoUL/tIg2nuBhQqiCqLnB6KAa3rMQBRkiyASTzmI2HEd' \
+			b'RKGwMYj4DVDmriASXztBFL0VQHTwG6BiMvMkr4Moz6FkwfA+BxG/AcpvMD4eKoj4JVAaqIConEIjcSmIpvdAYeE9UFh7DxROfg8U85SDSOp7DUTsbQ6i/D1QSN4Dhek9kEacgigpSd0LiJIrXPAXBpGrSx1UEN0xiPomzN8HsVuY3geppxxE7LgOor6wMYj4' \
+			b'fVDmriASXztBFG8qgOjg90HFZOZJXgdRnkPJguF9DiJ+H5TfYHw8VBDxK6E0UAFROYVG4lIQTW+FwsJbobD2Viic/FYo5ikHkdT3GojY2xxE+VuhkLwVCtNbIY04BVFSkpI3BVFyhQv+0iC61MIH7l5Z9FxeDLU3wiE4h3KwUA4HMsmgPM6YZGSLTBJPOZOM' \
+			b'KL9VKrFkTL8pfCKTITK10VWuKZ3E5y46oSYQfwU8mYPxZFa2PfA0zzMhygiizBaiDC8kx4Uz3YMLyaUf1W3lq7pJqMyorFiTdBpNL0MK5TBSylCZb1PKrFHKnEIpitO5mMIZqaTuV0hF+UBBm7NK8qSsMhOrWvnAbpuUTgordbUkzhCEYMsk2ErkdmS5Umyt' \
+			b'4WofToFie8B+AyiEBySu8AoVwAMglrh1Hasm5OukPjd0PeYKqfVR6kyPUiMuzzvD1ihbxJZ4yrHFjuuPUmNhY2CN/CiVuiusxJfAKvBSqGEsPFDFWwvEGg8mVimxecLXH6jyfEpGDO9zWo38QJXdYHw81AeqkR+okkDlgaqcQmOmxMozVUKrceGZalyj1Xjy' \
+			b'M5VmKyeVVPzaMxV7m3NqzJ+pxuSZapyeqSTiFFNJYUreFE7JFd5f+pnqOpZVqGyqbHpaNuGK8XPbu143ZZN6ytgkjqts6tvCRmzq2fYucxc2qS9hEx5DEdBuxqbp1m029Qdb4BUTmyd8lU2zfEpGDO8zNvVsgZffYHw8FDb1bISXBspsWkihMVNimU39ZIrX' \
+			b'L5ji9WumeP3JpngxWxmbtOJX2CTeZmzqc1O8PjHF6ydTPI04YVNamJI3YVN6hcv+0my6jmUXKpsqm56YTRZlbsYmK1tkk3jK2cSO62wqbcwmy2xK3ZVN4kvZZJlNtsCmeGuBTfZgNi2kN0n4OpvyfEpGDO9zNllmU3aD8fFQ2WSZTUmgwqZyCo2ZEitsshOb' \
+			b'7AKb7Bqb7Mls0mzlbJKKX2MTe5uzyeZssgmb7MQmiThlU1KYkjdlU3KFy/7SbLqOdRnqt4/O/+2jSqkjKeVR4maU8rJFSomnnFLsuE4pX9iYUmw6nrkrpcSXUsozpfxEKbrZ0A6VSQygwKqDzciLSc6Tv86qPLeSHU7wjFVsRp7fYKZDZRWbkaeBCqvKKTRm' \
+			b'Sqywik8VVwvG5P2aMXl/sjF5zFmOK5GANVxJLma4yo3J+8SYvJ+MyTXiFFdJeUreFFfJFS7+S+PqOtZyqLiquLoaXHUN6ZEMV51sEVfiKccVO67jqitsjKuOcZW6K67El+KqY1wl9hN0s6EdKpMYQAFX3cG4KiU5T/46rvLcSnY4wTNcdYyr7Abj46HiqmNc' \
+			b'JYEKrsopNGZKrOCKTxVX3QKuujVcdSfjSnOW40okYA1XkosZrrocV12Cq27ClUSc4iopT8mb4iq5wsV/aVxdx/oPFVcVV1eDqwGlbIarQbaIK/GU44od13E1FDbG1cC4St0VV+JLcTUwroYEVwPjamBcxQAKuBoOxtXatg+u8txKdjjBM1wNjKvsBuPjoeJq' \
+			b'YFwlgQquyik0Zkqs4IpPFVfDAq6GNVwNJ+NKc5bjSiRgDVeSixmuhhxXmnAON+JKIk5xlZSn5E1xlVzh4r80rq5jzYiKq4qrq8HViCI2w9UoW8SVeMpxxY7ruBoLG+OKTf0yd8WV+FJcsalfn5j60c2GdjYNoICrgw3+iknOk7+Oqzy3kh1O8AxXbPCX32B8' \
+			b'PFRcscFfGqjgqpxCY6bECq74VHG1YPPXr9n89Sfb/MWc5bgSCVjDleRihqvc5q9PbP76yeZPI05xlZSn5E1xlVzh/aVxVVeWOAeiOsZSxJEX9FzrBKnnihoUkvlkKHYbpslQ6ilDjTiuoqakh6cYUEIGng4VHYdpKpT62jUVarppGzPDwTOh0lQUtz0wU3az' \
+			b'khUJJcPNwLOh6IJJXjZtyGrPF5NhNDkMElK0TBHKdYEiw9o8p+HgeU4JQDRdOUC0PlcAIt5mAKGMTAAZkslNmFwliMacECSVMMmXECS9MnIMc4IIIUT7o9b317GMQ31IqQ8pV0MO2wxzuzp2Gya7OvWUk4MdV8kxlDYmBtvVZe5KDPElxBjYrm5I7OroZkM7' \
+			b'VAAxgAI9DrauKyY5T/4qPWa5lexwgmfUYOu6/Abj46FAZGDrujRQfkhZSKExU2KFLXyqeFkwsBvWDOyGkw3sYs5yxogErDFGcjFjTG5gNyQGdsNkYKcRp4hJylPypohJrnDxX/ghxV9qsYf6kFIfUi6AGmhSbo4aJ1tEjXjKUcOOxz2kxBgIOY6R4xJ3RY74' \
+			b'2vmQEm8qYMYdjBm3sp3ykOIEN24LN45x45YeUgrJMBKQgsRNFHELFHFrFHGnPKRIumYAkfpcA4hkYAYQlwPELTykSMwpQRIJk3wpQZIrI8ewx0PKdSyVULV+1fpn0frQbZ/bmLHbMNmYqadc67PjcVo/xkBan23NouMw2Zqpr51aP95U0PoH25elqShup2h9' \
+			b'sTMbtuzMBrYzG7olrV9IhpGAVOtP5mPDgvnYsGY+NhxsPpZqfUnXTOtLfa5pffY21/q55diQWI5lWl9iTrV+ImGSL9X6yZWRY9hD61/HIgS3rvWf+6puz40OKCh+Rgd2Q2ehg3rK6CCOq3SIoaUbUYFimLkLFdTXLipMN21TAV0Po0IxmXmSV6kwy6FkwfA+' \
+			b'owG6hPkNRvZCBjzu2yk4HmxaSJuRWAQVeCyooKIooIIKbhcqOLxThpk0cTkvtKZXeCHeZryg3Ey8oOCFF5QhxoVGnOAirRjJm+AivcKlfulhJlpjALjQQEgNJJUg1CqH/BaKTEIjnwDJJEzyOZbMTjKZJ111dDgeUeYJMAXXsYofCVctlEg7Yj1jRUNNQ5lY' \
+			b'KJMcY30BZSAMICuMtHDji5WGM+ENFRuqMEjwBlUjQgINbORd/TAk2NugaGGDoE3Zt0EhFCcG4JBAkFyNflUgstCFJR62zeIjE6U18A8ld4Mi7dnsGYLtprT5yfZZU7a2yKn42yalP9jgWYJCEGLG3JglbErhPk9Rplu4YCVbhvcZPD3bQOeRgQj4xADaswG0' \
+			b'XhV4ooxCgaDMlxJsJDaBqJ/sn/2C/bNP7Z/xhRgmEa2paEVryuEwx2vbR8R6tY52lHEjrEV9djhwW/p2lYu5yamrYrNCXcrQtgmazy2mY4Zmj2kadTt7VkvKWHMt8E2vcK1F+PYPcAoExuuW/jv67+l/R//Jjx/wf09Xx0D/yR1xTDvLO8c7uh8xjLuA4RCE' \
+			b'O9AWOxAcyZsw9zDgMmcZsgzWJaSmMF0lKQH0OEr2Mzq68pAdEU1ppiQrUexYgh1Drzm5ZsRaI1WRUimhSnSaUYlIpBQK6UNVOIA4GWgKiDkbXyaoRKIoRdb5USDHgdhQWJzKhU27vQr2Rj8RtDWsRko9anRV50VdfooiP0mLzxX4XHWvKu2Sxk7VdVFXb2tp' \
+			b'Us5RM5NCVm2MCjLsVpDdZXVkd6Ca1EcNWhn90bWlL2hMeydaM9WYs748lEXenwc/UGkWysVCzdlhyLSqHQdaVd1BWTgoCwdtiDVtn/bz4deC1j2so0/d7NtQvZjS09Vv0l+3Zq/hrLOrYZ98fk1VMcrQnaljbA6ZJqZySbUx+QjT8yA/+GIy8AlZWkiurqdn' \
+			b'YMwiSYDORty09KwwzaHHkx562NBeH7AAqf/b71bv4Yq7wJNux3Gj7kZ6w+4RxnQeW7/7I3vEz1Y3n1UvU1M3e76Avs4uMnYBduhlf/26eTytlzzsVqP9TajRcCMq9Ja6xlVtPpbatJylW1WZt9qNPUlNjnuOtrbXrCavZdz1lLeH16gqjx13PVBdZqqSeyb3' \
+			b'oS5Pfzn3eOqSBjueq8q0tBjRkWoTn9fdA6QDH9ch4P0UqD2rAt1hB3KcDqV0n0uHLpickx61T9TlHJ5/t/Na9Kh/Al1KJfFIutTv1Ke2NJp60S4oCtfT69RTuqEgC4/80j88WjfUp1r0EXuhXXvEA3v3THqil9aej6k5/W7teRHNGfLxzov2Qq0VG6/DtCYK' \
+			b'wvPriZ6kNe31mEr5ozuel35wb+sY502py+t6ZX8ND+xY73WMc3816a5HTR5tLXVxNXkPVlJVTT5vNemqmjxATfrmzTWoyFs3ur9VpTicyeg+UYyk0m5ZL96Rsf2z0IOWvokkuvBkY/vmX+MDsJ1e83RVOZbGJMEtoFFqd0eKMu09osi1pynJ2+893qiWpBnW' \
+			b'lGzWWfepMtOuo5TGCX3IUNVkSU1CeLgsBST2dtRlYfmBc6jMgLbJ44GqM51ylE81qmr06dUoJpTWptjg4hu3qU7D42jUDeYPbxsOU6yObMPixKF0uhCq2f5SatY/gqY9ejGZPbUtpPUimtaMj9c5pYVeagd1p2ZFW7KnUa+9vbiOJXXQXk7DWgr0sTutuFDT' \
+			b'efTswRp2q+s6XEqndjfWe011aQg30HOtuvSGdOllx0UzFYpScXMd1WtWoeOlVGi4ZRXaVxVaVeizUaG2qtAzqlAoqwup0P6WVehQVWhVoc9GhbqqQs+pQtv6Duqe7ZhOM+68eh15B+rxJF1o6RsYN/4i/th56Qa/e9DSxwwgtqoGC6/iu+l1/NWrxIWvAJz1' \
+			b'NXxVkbenIlE6NtjoT1WWl+84Pvqr9mN7je761OU+3295ZI057Og8uifWluFC6yivGMLj2smju06NSR/TSX7n1pYUZqoxyeGcCrOQg0VlyddTXanfGymrSU79tajK4jdEzq8p97OKt9iSubiXu5trX+MawgMRdJ/PcYHwPiDsqOt6hTORqi6uuvhEXQzRpr+z' \
+			b'62I8y3SxP3PntZCDZV1M1w/QxZT6qouLuthqcT+BLu6aN9OneFn7OtW7+3x4dyRde74xgsM/lfs4A6Tlz9na5vCPnF9CT+7zZM/tMirCqAOzr83OtN4hnyJnhYea4pIP6Md/Q/zxhy1z5ZUprmM+C34xBbX3Q3WoyuNOlMcm+3L17SiPlr5WXJXHlSmP5l9D' \
+			b'/wCKnbogfdUiVYtcqxbBirl0D4TirDpkXYfoQ0/6QDNUbVK1ydVqk/HyzzMUZ9Umx2mT8cLaZI9x6MdRKMePPp+mWMITK5edo8lnVDBc2tPvPMqFQsoHhduTFUwhqcvKha4fMg7cXkDLZOO7T6NqpOAuP6IL5VA7QLUDdJkOUIsttw7oPpMeUCAt0pIWaasW' \
+			b'qVrk/FpEpsXU90JnVCNYpvq7BjXSjQ8IC5Bw7MGglD+glgNJx94KaRdbtUvVLo+gXbCFVO1yXu0C7vq7Ee3izqJdzjr15XkpmEuaAKZKxpDhKhpMXYHCIf/3Y+rCxXMBpUMRnevpiAJbUjySpUnxWFSuWOK7VRA0sAfUwSC8D7wsuXsAJUa6x1fd8zx1z9Pr' \
+			b'G7zzjvRNuFAnh827z6VvqACX9A1nac+Ozi4tcwar3UeY33sbiuYaFi+4amVDTk8y2/aGH6soSdexwMCJVr39wVa9l1o/4Pr1yzUtkPLEOoYE/1qn9d+mouEivbLlTE7VNntZ/z7RgiXXr3CubVWmCyodViG3tqDIjWoeLmvz/NTPLnPhK1gyqWqgq9JALEu3' \
+			b'v6zRbWqh613T7VQtVDAzvr7l265p/crbW6/yvHqJ2vozXnft2pekpKzc6gqUJ2qrIbMwvuL1JqvCenqFxbpBO1PPfLXIa9daj7mmzvWrrbaqraq29lZbtqqtqrauQW3Z5g024pkisF1PQrsgUrb3dLODmz1OKwXpwjWgcAyDf3TZzy8PMhV0oMtd88aiBcJg' \
+			b'v8Qj1JBwHxy/2IAypUWl0N8Gkgj6q0NPoDUCuTl0Qw2GiqYhVdCAdEHkEAFIH4gClD2IORQq1g+9RO1xMUPUKvgFFGjBMXK4DsJEq9RBo0N5wKaKrYomV+L0OKjRFvy3A6YB9DboKdRNg9yJC2JD2x/whyFT4W78WVMJVNj3j2LvMPZ+3/hB8kARYPNZT0mH' \
+			b'a1V2i38tBjQOtGLk7BolLOxOGBQ7SBt+6TLgl4Z2pLPltOI3gefpjcuf45dz0LzFz/IQmu2/lsxouuw394NLYIbsCt5laYZEx1/XgXZBVyiz/ZNnFnDU4TehIdPQGzjbH31UveUmOpyeyXE8PJ+h3ZFX6Pbs/Yfrmy794TqhyTnldyzm1yLt8z7cUgkYKgQn' \
+			b'5QAqcrEorBRHz0Wy1TsL9PoEyYOMpCJzOGe351WPaRo3rr6JcmrIkAQ7DwhVes2Fckv29zzdsh12FLcfpYfUcdGTvM+KH6jDVQBdXdCMzmh1oELd3qhzWfgVPZt4bfKy6Dn3uRRPEt+al5XbduetkNJCtIaEC1yvrzXRU8NTbVwsbbnRYTe9wZUeqPWB3EO3' \
+			b'+Lg2CF2QfZshPuEtNkVz5uZoHqtJ2qawpc+H4jjyU1/R++qGz3prnuyCa3dgXOnNWKzH3kwbS52tqv5guXLNvW4sM+4aFbhvnm7jYvFnb0pDeJzWNFxbixqaM284Cnctoey1sQiVn2mrNt4lO/h4c58by8wZhhuKgnGqRsZB7LNt9oh7uHjKAxS1Se1oUvjM' \
+			b'cacby0x5vAdk5vRW1Z+jZflme8OXW8UL+274cuqwe7iwFgaL4hPrIY+rwTchNCDo/YWanMmbHY7u72x6bmp+/cBNkNY57h+rKfbN9oaP53KEbwNLXm5j6/A3nBgMv0QpDypVNb9LtvCt7n1uLDMLI27XoubRnOLpNy6q8wwT3aJ6f5Smh1w8eWNTlOl3lkDn' \
+			b'EZRPyr7OkgiWt/IQk8jb+VV4KkfdeVXy/jJhm+KGtg1L18QHZHW3j3Nte8bEdXj+8bBnj2Q0nLvTjWVmcQDsbEhGWTgNy755pA3tAQ+5gYusPP5Tm9muZjY297qxzCwOip21mZEsnNLU0Gr40Ta0vD3kBi65xaGh2tqWWhvcfK8by8yiOdX5W5s9scWhSf5j' \
+			b'bmjmfsgNbA1bB3cObnQ4seJON5aZ4wd3TnxwxKrdVa1LD4ZTG3TNcRvORTnoBpxIQvNAQuliX76Li7faDR3eJIfmXjeWmcVBncdukml1n948x+ZiWzrD68B7uchvaAzm0LHax26uOB3x+jacE5ichEeNjWXo8DEZ8ygtN635Y1rwck275qAN54Eeek9x00ma' \
+			b'B9wBZQi7ZPYlnHI1nWcciF/RXGWDd5do9F1z+sZJDWcI6YgNJ/ueKSyWq8PHim6t+Q/NbW5cP+cZkaqvZkUacNmBM22U0H48W3jHbTjj/+RQWNQOH8h6fFWwFw4OVQnYAp50Q/k97EK+8fzs84ybVdWgUhGauuUby9niWFuVs6PkrG/qlm8sZzsHHZ+nVRAu' \
+			b'ePQcNq7AOzTrwrWqnsPGFXhD44nXMuyPK5UtbDwTc/rt8Hrothi0nMyvnyUZqzezENVZjocLUd/c68YyU63cDpeZobnXjWWmTv08XGbG5l43lplq33ewzODyq3e6sczU5dIOl5m2udeNF6+sJo2Hy4xt7nVjmTnPMOt9yYxr7nVjmcEFkBPR2KpJqr3lmoPS' \
+			b'phXP0BXu0oXQZ+fbC5e7fNHygUnZuTw1vMTVdppwcB1tXWhZZUyhpgplidZcGJpt94FkBGSA49panjlQqLDn613zpmvxQseGDtBG1EF89OiAAkmOkA155d5BJzFtV9BE0EeALASIJIBLwOWBuUsJcl/0DUnJf7x4sNnyjU2B7oAMz35W3swGXJ4fV2r3I60P' \
+			b'gmsqsNKARGXLUAc44lxApHCOebPSkYEA4bijqeeMqdBNLhDely//P44Hrc0=' 
 
 	_UPARTIAL = '\u2202' # \partial
 	_USUM     = '\u2211' # \sum
@@ -8747,7 +8772,7 @@ class Parser (LALR1):
 	def expr_lim_1         (self, LIM, CURLYL, expr_var, TO, expr, CURLYR, expr_neg):                          return AST ('-lim', expr_neg, expr_var, expr)
 	def expr_lim_2         (self, LIM, CURLYL, expr_var, TO, expr, caret_or_dblstar, PLUS, CURLYR, expr_neg):  return AST ('-lim', expr_neg, expr_var, expr, '+')
 	def expr_lim_3         (self, LIM, CURLYL, expr_var, TO, expr, caret_or_dblstar, MINUS, CURLYR, expr_neg): return AST ('-lim', expr_neg, expr_var, expr, '-')
-	def expr_lim_6         (self, expr_sum):                                                                   return expr_sum
+	def expr_lim_4         (self, expr_sum):                                                                   return expr_sum
 
 	def expr_sum_1         (self, SUM, CURLYL, expr_var, EQ, expr_commas, CURLYR, expr_super, expr_neg):       return AST ('-sum', expr_neg, expr_var, expr_commas, expr_super)
 	def expr_sum_2         (self, expr_diffp_ics):                                                             return expr_diffp_ics
@@ -8769,11 +8794,6 @@ class Parser (LALR1):
 	def expr_func_9        (self, FUNC, expr_neg_arg):                                 return _expr_func_func (FUNC, expr_neg_arg)
 	def expr_func_10       (self, FUNC, expr_super, expr_neg_arg):                     return _expr_func_func (FUNC, expr_neg_arg, expr_super)
 	def expr_func_11       (self, expr_pow):                                           return expr_pow
-
-	def expr_func_12       (self, SQRT, EQ, expr_mapsto):                              return AST ('=', ('@', 'sqrt'), expr_mapsto) # allow usage of function names in keyword arguments, dunno about this
-	def expr_func_13       (self, LN, EQ, expr_mapsto):                                return AST ('=', ('@', 'ln'), expr_mapsto)
-	def expr_func_14       (self, LOG, EQ, expr_mapsto):                               return AST ('=', ('@', 'log'), expr_mapsto)
-	def expr_func_15       (self, FUNC, EQ, expr_mapsto):                              return AST ('=', ('@', _FUNC_name (FUNC)), expr_mapsto)
 
 	def expr_pow_1         (self, expr_diffp_ics, expr_super):                         return AST ('^', expr_diffp_ics, expr_super, is_pypow = expr_super.is_dblstar)
 	def expr_pow_2         (self, expr_fact):                                          return expr_fact
@@ -8811,8 +8831,8 @@ class Parser (LALR1):
 	def expr_ufunc_3       (self, UFUNC, expr_pcommas):                                return _expr_ufunc (self, expr_pcommas)
 	def expr_ufunc_4       (self, expr_varfunc):                                       return expr_varfunc
 
-	def expr_varfunc_2     (self, expr_var_or_sub, expr_intg):                         return _expr_varfunc (self, expr_var_or_sub, expr_intg)
-	def expr_varfunc_3     (self, expr_sym):                                           return expr_sym
+	def expr_varfunc_1     (self, expr_var_or_sub, expr_intg):                         return _expr_varfunc (self, expr_var_or_sub, expr_intg)
+	def expr_varfunc_2     (self, expr_sym):                                           return expr_sym
 
 	def expr_sym_1         (self, SYMPY, expr_pcommas):                                return _expr_sym (self, expr_pcommas, py = True)
 	def expr_sym_2         (self, SYM, expr_var, expr_pcommas):                        return _expr_sym (self, expr_pcommas, name = expr_var.var)
@@ -8873,8 +8893,8 @@ class Parser (LALR1):
 	def expr_curly_4       (self, SLASHCURLYL, expr_commas, CURLYR):                   return AST ('-set', expr_commas.comma) if expr_commas.is_comma else AST ('-set', (expr_commas,))
 	def expr_curly_5       (self, expr_term):                                          return expr_term
 
-	def expr_term_1        (self, expr_var_or_sub):                                    return expr_var_or_sub
-	def expr_term_2        (self, expr_num):                                           return expr_num
+	def expr_term_1        (self, expr_num):                                           return expr_num
+	def expr_term_2        (self, expr_var_or_sub):                                    return expr_var_or_sub
 	def expr_term_3        (self, STR):                                                return AST ('"', py_ast.literal_eval (STR.grp [0] or STR.grp [1].replace ('\\}', '}')))
 	def expr_term_4        (self, EMPTYSET):                                           return AST.SetEmpty
 
@@ -8882,8 +8902,13 @@ class Parser (LALR1):
 	def expr_var_or_sub_2  (self, SUB):                                                return AST ('@', '_') # special cased for last expression variable
 	def expr_var_or_sub_3  (self, SLASHSUB):                                           return AST ('@', '_') # special cased for last expression variable
 
-	def expr_var           (self, VAR):                                                return _expr_var (VAR)
 	def expr_num           (self, NUM):                                                return _expr_num (NUM)
+
+	def expr_var_1         (self, VAR):                                                return _expr_var (VAR)
+	def expr_var_2         (self, SQRT):                                               return AST ('@', 'sqrt')
+	def expr_var_3         (self, LN):                                                 return AST ('@', 'ln')
+	def expr_var_4         (self, LOG):                                                return AST ('@', 'log')
+	def expr_var_5         (self, FUNC):                                               return AST ('@', _FUNC_name (FUNC))
 
 	def expr_sub_1         (self, WSUB, expr_frac):                                    return expr_frac
 	def expr_sub_2         (self, WSUB1):                                              return _ast_from_tok_digit_or_var (WSUB1)
@@ -8901,6 +8926,11 @@ class Parser (LALR1):
 
 	#...............................................................................................
 	# autocomplete means autocomplete AST tree so it can be rendered, not necessarily expression
+
+	def mark_incomplete (self, ast):
+		self.incomplete = self.pos
+
+		return ast # convenienve
 
 	def stack_has_sym (self, sym):
 		return any (st.sym == sym for st in self.stack)
@@ -9033,7 +9063,6 @@ class Parser (LALR1):
 			elif self.parse_idx == 33:
 				sys.stdout.write ('... |')
 				sys.stdout.flush ()
-
 			else:
 				sys.stdout.write ('\x08' + '\\|/-' [self.parse_idx & 3])
 				sys.stdout.flush ()
@@ -9051,8 +9080,8 @@ class Parser (LALR1):
 		rule       = self.rules [irule]
 
 		if pos == 1:
-			if rule == ('expr_func', ('FUNC', 'expr_neg_arg')):
-				return self._insert_symbol (('PARENL', 'PARENR'))
+			# if rule == ('expr_func', ('FUNC', 'expr_neg_arg')): # autocomplete parentheses for function name
+			# 	return self._insert_symbol (('PARENL', 'PARENR'))
 
 			if rule == ('expr_paren', ('PARENL', 'expr_commas', 'PARENR')) and stack [-2].sym == 'expr_mul_imp' and \
 					(stack [-2].red.is_attr or (stack [-2].red.is_var and stack [-2].red.var in _SP_USER_FUNCS)):
@@ -9068,12 +9097,18 @@ class Parser (LALR1):
 			if rule [0] == 'expr_intg':
 				return self._parse_autocomplete_expr_intg ()
 
+		if pos >= len (rule [1]) or (pos == 2 and rule [0] == 'expr_func'):
 			return self.parse_result (None, self.pos, [], self.rederr) if self.rederr else False
 
 		return self._insert_symbol (rule [1] [pos])
 
 	def parse_success (self, red):
-		self.parse_result (red, self.erridx, self.autocomplete, 'incomplete' if self.incomplete else None)
+		if self.incomplete is not None:
+			erridx, rederr = self.incomplete, 'incomplete'
+		else:
+			erridx, rederr = self.erridx, None
+
+		self.parse_result (red, erridx, self.autocomplete, rederr)
 
 		return True # continue parsing if conflict branches remain to find best resolution
 
@@ -9085,12 +9120,12 @@ class Parser (LALR1):
 			return (AST.VarNull, 0, [])
 
 		self.parse_idx      = 0
-		self.parse_best     = None # (reduction, erridx, autocomplete)
+		self.parse_best     = None # (sort keys ..., (reduction, erridx, autocomplete, rederr))
 		self.autocomplete   = []
 		self.autocompleting = True
 		self.erridx         = None
 		self.has_error      = False
-		self.incomplete     = False
+		self.incomplete     = None # None or index of start of incomplete
 
 		if os.environ.get ('SYMPAD_DEBUG'):
 			print (file = sys.stderr)
@@ -9109,18 +9144,20 @@ class Parser (LALR1):
 
 		return postprocess (res)
 
-def set_sp_user_funcs (user_funcs):
-	global _SP_USER_FUNCS
-	_SP_USER_FUNCS = user_funcs
-
 def set_sp_user_vars (user_vars):
 	global _SP_USER_VARS
 	_SP_USER_VARS = user_vars
 
+def set_sp_user_funcs (user_funcs):
+	global _SP_USER_FUNCS
+	_SP_USER_FUNCS = user_funcs
+
 class sparser: # for single script
 	RESERVED_WORDS    = RESERVED_WORDS
-	set_sp_user_funcs = set_sp_user_funcs
+	RESERVED_FUNCS    = RESERVED_FUNCS
+	RESERVED_ALL      = RESERVED_ALL
 	set_sp_user_vars  = set_sp_user_vars
+	set_sp_user_funcs = set_sp_user_funcs
 	Parser            = Parser
 
 # Patch SymPy bugs and inconveniences.
@@ -10041,7 +10078,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.1.3'
+_VERSION         = '1.1.4'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
@@ -10111,6 +10148,7 @@ if _SYMPAD_CHILD: # sympy slow to import so don't do it for watcher process as i
 
 	_ENV           = _START_ENV.copy () # This is individual session STATE! Threading can corrupt this! It is GLOBAL to survive multiple Handlers.
 	_VARS          = {'_': AST.Zero} # This also!
+	_VARS_FLAT     = _VARS.copy () # Flattened vars.
 
 #...............................................................................................
 def _admin_vars (*args):
@@ -10278,7 +10316,7 @@ def _admin_env (*args):
 	return ret
 
 def _admin_envreset (*args):
-	return ['Environment has been reset.<br><br>'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
+	return ['Environment has been reset.'] + _admin_env (*(AST ('@', var if state else f'no{var}') for var, state in _START_ENV.items ()))
 
 #...............................................................................................
 class RealityRedefinitionError (NameError):	pass
@@ -10343,23 +10381,24 @@ def _sorted_vars ():
 	return _present_vars (sorted (_VARS.items (), key = lambda kv: (kv [1].op not in {'-lamb', '-ufunc'}, kv [0])))
 
 def _vars_updated ():
-	one_funcs  = set (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS)) # hidden functions for stuff like N and gamma
-	user_funcs = one_funcs.copy ()
+	global _VARS_FLAT
 
-	for var, ast in _VARS.items ():
-		if ast.is_lamb:
-			user_funcs.add (var)
+	vars    = {v: a if a.is_lamb else AST.apply_vars (a, _VARS, mode = False) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
+	one     = (f for f in filter (lambda f: _ENV.get (f), _ONE_FUNCS)) # hidden functions for stuff like Gamma
+	lamb    = (va [0] for va in filter (lambda va: va [1].is_lamb, vars.items ())) # user lambda functions
+	assfunc = (va [0] for va in filter (lambda va: va [1].is_var and va [1].var in AST.Func.PYBASE, vars.items ())) # user variables assigned to concrete functions
+	funcs   = {*one, *lamb, *assfunc}
 
-	vars = {v: AST.apply_vars (a, _VARS, mode = False) for v, a in _VARS.items ()} # flattened vars so sym and sparser don't need to do apply_vars()
-
-	sym.set_sym_user_funcs (user_funcs)
 	sym.set_sym_user_vars (vars)
-	sparser.set_sp_user_funcs (user_funcs)
+	sym.set_sym_user_funcs (funcs)
 	sparser.set_sp_user_vars (vars)
+	sparser.set_sp_user_funcs (funcs)
 
 	_UFUNC_MAP.clear ()
 	_SYM_MAP.clear ()
 	_SYM_VARS.clear ()
+
+	_VARS_FLAT = vars
 
 	for v, a in vars.items (): # build ufunc and sym mapback dict
 		if v != '_':
@@ -10380,7 +10419,7 @@ def _prepare_ass (ast): # check and prepare for simple or tuple assignment
 		vars, ast = ast.ass_valid.lhs, ast.ass_valid.rhs
 		vars      = list (vars.comma) if vars.is_comma else [vars]
 
-	return AST.apply_vars (ast, _VARS), vars
+	return AST.apply_vars (ast, _VARS_FLAT), vars
 
 def _execute_ass (ast, vars): # execute assignment if it was detected
 	def set_vars (vars):
@@ -10524,8 +10563,8 @@ class Handler (SimpleHTTPRequestHandler):
 
 				return {'msg': ['Plotting not available because matplotlib is not installed.']} if ret is None else {'img': ret}
 
-			elif ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
-				asts = globals () [f'_admin_{ast.func}'] (*ast.args)
+			elif ast.op in {'@', '-func'} and ast [1] in AST.Func.ADMIN: # special admin function?
+				asts = globals () [f'_admin_{ast [1]}'] (*(ast.args if ast.is_func else ()))
 
 				if isinstance (asts, str):
 					return {'msg': [asts]}

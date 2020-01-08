@@ -515,8 +515,8 @@ class Handler (SimpleHTTPRequestHandler):
 
 				return {'msg': ['Plotting not available because matplotlib is not installed.']} if ret is None else {'img': ret}
 
-			elif ast.is_func and ast.func in AST.Func.ADMIN: # special admin function?
-				asts = globals () [f'_admin_{ast.func}'] (*ast.args)
+			elif ast.op in {'@', '-func'} and ast [1] in AST.Func.ADMIN: # special admin function?
+				asts = globals () [f'_admin_{ast [1]}'] (*(ast.args if ast.is_func else ()))
 
 				if isinstance (asts, str):
 					return {'msg': [asts]}
@@ -784,8 +784,8 @@ if _SERVER_DEBUG: # DEBUG!
 	_VARS ['_'] = AST.Zero
 
 	# print (h.validate ({'text': r'f = g'}))
-	print (h.evaluate ({'text': r'f = cos'}))
-	print (h.evaluate ({'text': r'f (pi)'}))
+	print (h.evaluate ({'text': r'sin = ?(x)'}))
+	print (h.evaluate ({'text': r'sin (2)'}))
 
 	sys.exit (0)
 # AUTO_REMOVE_IN_SINGLE_SCRIPT_BLOCK_END

@@ -496,7 +496,7 @@ def _randidentifier ():
 	while 1:
 		s = f'{choice (_LETTERS)}{"".join (choice (_LETTERS_NUMBERS) for _ in range (randint (0, 6)))}{choice (_LETTERS)}'
 
-		if not (s in sparser.RESERVED_WORDS or s [:2] == 'd_' or s [:8] == 'partial_' or (s [:1] == 'd' and s [1:] in sparser.RESERVED_WORDS) or (s [:7] == 'partial' and s [7:] in sparser.RESERVED_WORDS)):
+		if not (s in sparser.RESERVED_ALL or s [:2] == 'd_' or s [:8] == 'partial_' or (s [:1] == 'd' and s [1:] in sparser.RESERVED_ALL) or (s [:7] == 'partial' and s [7:] in sparser.RESERVED_ALL)):
 			break
 
 	return s
@@ -901,7 +901,7 @@ def test (argv = None):
 					return ast
 
 				if ast.is_var:
-					if ast.var in sparser.RESERVED_WORDS or ast.var_name.startswith ('_'):
+					if ast.var in sparser.RESERVED_ALL or ast.var_name.startswith ('_'):
 						return AST ('@', 'C')
 
 				if ast.is_func: # the slice function is evil
@@ -911,11 +911,11 @@ def test (argv = None):
 						ast = AST ('-func', 'print', *ast [2:])
 
 				elif ast.is_diff: # reserved words can make it into diff via dif or partialelse
-					if any (v [0] in sparser.RESERVED_WORDS for v in ast.dvs):
+					if any (v [0] in sparser.RESERVED_ALL for v in ast.dvs):
 						return AST ('@', 'C')
 
 				elif ast.is_intg: # same
-					if ast.dv.as_var.var in sparser.RESERVED_WORDS:
+					if ast.dv.as_var.var in sparser.RESERVED_ALL:
 						return AST ('@', 'C')
 
 				elif ast.is_slice: # the slice object is evil

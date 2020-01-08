@@ -1,5 +1,4 @@
-> make delall work again without parens at top level
-> make ?sin(x) work
+> sin = ?(x) then sin(2)?
 
 > doc: hidden function change
 > doc: functions as variables and assignment change
