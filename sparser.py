@@ -22,10 +22,13 @@ _SP_USER_FUNCS = set () # set of user funcs present {name, ...} - including hidd
 def _raise (exc):
 	raise exc
 
-def _is_valid_var_name (self, text):
+def _is_valid_var_name (self, text, allow_funcs = False):
 	toks = self.tokenize (text)
 
-	return ((toks [0] == 'VAR' and not toks [0].grp [4]) or toks [0] in {'SQRT', 'LN', 'LOG', 'FUNC'}) and toks [1] == '$end'
+	if allow_funcs:
+		return ((toks [0] == 'VAR' and not toks [0].grp [4]) or toks [0] in {'SQRT', 'LN', 'LOG', 'FUNC'}) and toks [1] == '$end'
+	else:
+		return toks == ['VAR', '$end'] and not toks [0].grp [4]
 
 def _FUNC_name (FUNC):
 	if FUNC.grp [1]:
@@ -41,7 +44,7 @@ def _ast_from_tok_digit_or_var (tok, i = 0, noerr = False):
 			AST ('@', AST.Var.ANY2PY.get (tok.grp [i + 2].replace (' ', ''), tok.grp [i + 1]) if tok.grp [i + 2] else tok.grp [i + 1])
 
 def _ast_func_tuple_args (ast):
-	ast = ast.strip_curly.strip_paren1 # ast = ast._strip (1) # ast = ast._strip_curly_of_paren_tex.strip_paren1 # ast = ast._strip (1)
+	ast = ast.strip_curly.strip_paren1
 
 	return ast.comma if ast.is_comma else (ast,)
 
@@ -664,7 +667,7 @@ def _expr_sym (self, args, py = False, name = ''):
 	elif args:
 		raise SyntaxError ('$ does not take direct arguments, only keyword assumptions')
 
-	if name and not _is_valid_var_name (self, name):
+	if name and not _is_valid_var_name (self, name, allow_funcs = True):
 		raise SyntaxError (f'invalid symbol name {name!r}')
 
 	if AST ('@', name).is_var_const:

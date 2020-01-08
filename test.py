@@ -571,6 +571,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (p ('cos'), ('@', 'cos'))
 		self.assertEqual (p ('f = cos'), ('=', ('@', 'f'), ('@', 'cos')))
 		self.assertEqual (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)'), ('.', ('-mat', ((('#', '0'), ('@', 'pi')), (('-', ('@', 'pi')), ('#', '0')))), 'applyfunc', (('@', 'cos'),)))
+		self.assertEqual (p ('$sin (real = True)'), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (p ('sin = $(real = True)'), ('=', ('@', 'sin'), ('-sym', '', (('real', ('@', 'True')),))))
 
 	def test_ast2tex (self):
 		self.assertEqual (ast2tex (p ('1')), '1')
@@ -1081,6 +1083,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex (p ('cos')), 'cos')
 		self.assertEqual (ast2tex (p ('f = cos')), 'f = cos')
 		self.assertEqual (ast2tex (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), '\\begin{bmatrix} 0 & \\pi \\\\ -\\pi & 0 \\end{bmatrix}.\\operatorname{applyfunc}\\left(cos \\right)')
+		self.assertEqual (ast2tex (p ('$sin (real = True)')), '\\$sin\\left(real = True \\right)')
+		self.assertEqual (ast2tex (p ('sin = $(real = True)')), 'sin = \\$\\left(real = True \\right)')
 
 	def test_ast2nat (self):
 		self.assertEqual (ast2nat (p ('1')), '1')
@@ -1591,6 +1595,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat (p ('cos')), 'cos')
 		self.assertEqual (ast2nat (p ('f = cos')), 'f = cos')
 		self.assertEqual (ast2nat (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), '\\[[0, pi], [-pi, 0]].applyfunc(cos)')
+		self.assertEqual (ast2nat (p ('$sin (real = True)')), '$sin(real = True)')
+		self.assertEqual (ast2nat (p ('sin = $(real = True)')), 'sin = $(real = True)')
 
 	def test_ast2py (self):
 		self.assertEqual (ast2py (p ('1')), '1')
@@ -2101,6 +2107,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py (p ('cos')), 'cos')
 		self.assertEqual (ast2py (p ('f = cos')), 'f = cos')
 		self.assertEqual (ast2py (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), 'Matrix([[0, pi], [-pi, 0]]).applyfunc(cos)')
+		self.assertEqual (ast2py (p ('$sin (real = True)')), "Symbol('sin', real = True)")
+		self.assertEqual (ast2py (p ('sin = $(real = True)')), "sin = Symbol('', real = True)")
 
 	def test_ast2tex2ast (self):
 		self.assertEqual (ast2tex2ast (p ('1')), ('#', '1'))
@@ -2611,6 +2619,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2tex2ast (p ('cos')), ('@', 'cos'))
 		self.assertEqual (ast2tex2ast (p ('f = cos')), ('=', ('@', 'f'), ('@', 'cos')))
 		self.assertEqual (ast2tex2ast (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), ('.', ('-mat', ((('#', '0'), ('@', 'pi')), (('-', ('@', 'pi')), ('#', '0')))), 'applyfunc', (('@', 'cos'),)))
+		self.assertEqual (ast2tex2ast (p ('$sin (real = True)')), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2tex2ast (p ('sin = $(real = True)')), ('=', ('@', 'sin'), ('-sym', '', (('real', ('@', 'True')),))))
 
 	def test_ast2nat2ast (self):
 		self.assertEqual (ast2nat2ast (p ('1')), ('#', '1'))
@@ -3121,6 +3131,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2nat2ast (p ('cos')), ('@', 'cos'))
 		self.assertEqual (ast2nat2ast (p ('f = cos')), ('=', ('@', 'f'), ('@', 'cos')))
 		self.assertEqual (ast2nat2ast (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), ('.', ('-mat', ((('#', '0'), ('@', 'pi')), (('-', ('@', 'pi')), ('#', '0')))), 'applyfunc', (('@', 'cos'),)))
+		self.assertEqual (ast2nat2ast (p ('$sin (real = True)')), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2nat2ast (p ('sin = $(real = True)')), ('=', ('@', 'sin'), ('-sym', '', (('real', ('@', 'True')),))))
 
 	def test_ast2py2ast (self):
 		self.assertEqual (ast2py2ast (p ('1')), ('#', '1'))
@@ -3631,6 +3643,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2py2ast (p ('cos')), ('@', 'cos'))
 		self.assertEqual (ast2py2ast (p ('f = cos')), ('=', ('@', 'f'), ('@', 'cos')))
 		self.assertEqual (ast2py2ast (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), ('.', ('-func', 'Matrix', (('[', (('[', (('#', '0'), ('@', 'pi'))), ('[', (('-', ('@', 'pi')), ('#', '0'))))),)), 'applyfunc', (('@', 'cos'),)))
+		self.assertEqual (ast2py2ast (p ('$sin (real = True)')), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2py2ast (p ('sin = $(real = True)')), ('=', ('@', 'sin'), ('-sym', '', (('real', ('@', 'True')),))))
 
 	def test_ast2spt2ast (self):
 		self.assertEqual (ast2spt2ast (p ('1')), ('#', '1'))
@@ -4141,6 +4155,8 @@ class Test (unittest.TestCase):
 		self.assertEqual (ast2spt2ast (p ('cos')), ('@', 'cos'))
 		self.assertEqual (ast2spt2ast (p ('f = cos')), ('@', 'False'))
 		self.assertEqual (ast2spt2ast (p ('\\[[0, pi], [-pi, 0]].applyfunc (cos)')), ('-mat', ((('#', '1'), ('#', '-1')), (('#', '-1'), ('#', '1')))))
+		self.assertEqual (ast2spt2ast (p ('$sin (real = True)')), ('-sym', 'sin', (('real', ('@', 'True')),)))
+		self.assertEqual (ast2spt2ast (p ('sin = $(real = True)')), ('@', 'False'))
 	# END UPDATE BLOCK
 
 _EXPRESSIONS = r"""
@@ -4652,6 +4668,8 @@ a / b \int x dx * c
 cos
 f = cos
 \[[0, pi], [-pi, 0]].applyfunc (cos)
+$sin (real = True)
+sin = $(real = True)
 
 """
 # _EXPRESSIONS = r"""

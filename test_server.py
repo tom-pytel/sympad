@@ -603,6 +603,21 @@ class Test (unittest.TestCase):
 		self.assertEqual (get ('lambda x: %%@(\\int x + y + y dx)'), {'math': ('lambda x: \\int x + y + y dx', 'Lambda(x, Integral(x + y + y, x))', '\\left(x \\mapsto \\int x + y + y \\ dx \\right)')})
 		self.assertEqual (get ('lambda x: %%(\\int x + @y + y dx)'), {'math': ('lambda x: \\int x + y + 2 dx', 'Lambda(x, Integral(x + y + 2, x))', '\\left(x \\mapsto \\int x + y + 2 \\ dx \\right)')})
 
+	def test_symbols (self):
+		reset ()
+		self.assertEqual (get ('(sqrt $(positive = True)).is_real'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('(sqrt $(negative = True)).is_real'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('s = $(positive = True)'), {'math': ('s = $s(positive = True)', "s = Symbol('s', positive = True)", 's = \\$s\\left(positive = True \\right)')})
+		self.assertEqual (get ('s'), {'math': ('s', 's', 's')})
+		self.assertEqual (get ('(sqrt s).is_real'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('s = $(negative = True)'), {'math': ('s = $s(negative = True)', "s = Symbol('s', negative = True)", 's = \\$s\\left(negative = True \\right)')})
+		self.assertEqual (get ('s'), {'math': ('s', 's', 's')})
+		self.assertEqual (get ('(sqrt s).is_real'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('(sqrt $sin (positive = True)).is_real'), {'math': ('True', 'True', 'True')})
+		self.assertEqual (get ('sin = $(negative = True)'), {'math': ('sin = $sin(negative = True)', "sin = Symbol('sin', negative = True)", 'sin = \\$sin\\left(negative = True \\right)')})
+		self.assertEqual (get ('(sqrt sin).is_real'), {'math': ('False', 'False', 'False')})
+		self.assertEqual (get ('del sin'), {'msg': ["Variable 'sin' deleted."]})
+
 	def test_assign_and_mapback (self):
 		reset ()
 		self.assertEqual (get ('f = ?()'), {'math': ('f = f()', "f = Function('f')", 'f = f\\left( \\right)')})
@@ -1251,6 +1266,22 @@ y = 2
 lambda x: %%(\\int x + y + y dx)
 lambda x: %%@(\\int x + y + y dx)
 lambda x: %%(\\int x + @y + y dx)
+
+"""), ('symbols', """
+
+(sqrt $(positive = True)).is_real
+(sqrt $(negative = True)).is_real
+s = $(positive = True)
+s
+(sqrt s).is_real
+s = $(negative = True)
+s
+(sqrt s).is_real
+
+(sqrt $sin (positive = True)).is_real
+sin = $(negative = True)
+(sqrt sin).is_real
+del sin
 
 """), ('assign_and_mapback', """
 

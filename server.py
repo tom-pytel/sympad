@@ -380,8 +380,12 @@ def _execute_ass (ast, vars): # execute assignment if it was detected
 		for v, a in vars.items ():
 			v = v.var
 
-			if a.is_ufunc_anonymous:
-				a = AST (a.op, v, *a [2:])
+			if a.is_ufunc:
+				if v in sparser.RESERVED_FUNCS:
+					raise NameError (f'cannot assign undefined function to concrete function name {v!r}')
+
+				if a.is_ufunc_anonymous:
+					a = AST (a.op, v, *a [2:])
 
 			elif a.is_sym_anonymous:
 				if a.is_sym_unqualified:
