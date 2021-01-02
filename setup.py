@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup (
   name                          = "sympad",
-  version                       = "1.1.5",
+  version                       = "1.1.6",
   author                        = "Tomasz Pytel",
   author_email                  = "tom_pytel@yahoo.com",
   license                       = 'BSD',
@@ -29,6 +29,6 @@ setuptools.setup (
     'Topic :: Scientific/Engineering',
     'Topic :: Scientific/Engineering :: Mathematics',
   ],
-  install_requires              = ['sympy>=1.5'],
+  install_requires              = ['sympy>=1.7.1'],
   python_requires               = '>=3.6',
 )

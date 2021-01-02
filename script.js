@@ -26,7 +26,7 @@ NumClicks        = 0;
 
 GreetingFadedOut = false;
 ExceptionDone    = false;
-SymPyDevVersion  = '1.5.1'
+SymPyDevVersion  = '1.7.1'
 
 // replaced in env.js
 History          = [];

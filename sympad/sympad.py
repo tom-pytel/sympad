@@ -297,7 +297,7 @@ NumClicks        = 0;
 
 GreetingFadedOut = false;
 ExceptionDone    = false;
-SymPyDevVersion  = '1.5.1'
+SymPyDevVersion  = '1.7.1'
 
 // replaced in env.js
 History          = [];
@@ -1017,7 +1017,7 @@ r"""<!DOCTYPE html>
 		<h2>SymPad</h2>
 		<h5><script type="text/javascript">document.write (Version)</script></h5>
 		<h5>on SymPy <script type="text/javascript">document.write (SymPyVersion)</script></h5>
-		<script type="text/javascript">if (SymPyVersion !== SymPyDevVersion) { document.write ('<br><h5 style="color: #f99">* Note: This version of SymPad was developed on SymPy 1.5.1,</h5><h5 style="color: #f99">it may not work correctly with your version of SymPy.</h5>'); }</script>
+		<script type="text/javascript">if (SymPyVersion !== SymPyDevVersion) { document.write ('<br><h5 style="color: #f99">* Note: This version of SymPad was developed on SymPy 1.7.1,</h5><h5 style="color: #f99">it may not work correctly with your version of SymPy.</h5>'); }</script>
 		<br><br>
 		Type '<b><a class="GreetingA" style="display: inline" href="/help.html" target="_blank">help</a></b>' or '<b>?</b>' at any time for more information.
 		<br>
@@ -7519,18 +7519,18 @@ class spt2ast:
 		sp.Integer: _spt2ast_num,
 		sp.Float: _spt2ast_num,
 		sp.Rational: lambda self, spt: AST ('/', ('#', str (spt.p)), ('#', str (spt.q))) if spt.p >= 0 else AST ('-', ('/', ('#', str (-spt.p)), ('#', str (spt.q)))),
-		sp.numbers.ImaginaryUnit: lambda self, spt: AST.I,
-		sp.numbers.Pi: lambda self, spt: AST.Pi,
-		sp.numbers.Exp1: lambda self, spt: AST.E,
-		sp.numbers.Infinity: lambda self, spt: AST.Infty,
-		sp.numbers.NegativeInfinity: lambda self, spt: AST ('-', AST.Infty),
-		sp.numbers.ComplexInfinity: lambda self, spt: AST.CInfty,
-		sp.numbers.NaN: lambda self, spt: AST.NaN,
+		sp.S.ImaginaryUnit: lambda self, spt: AST.I,
+		sp.S.Pi: lambda self, spt: AST.Pi,
+		sp.S.Exp1: lambda self, spt: AST.E,
+		sp.S.Infinity: lambda self, spt: AST.Infty,
+		sp.S.NegativeInfinity: lambda self, spt: AST ('-', AST.Infty),
+		sp.S.ComplexInfinity: lambda self, spt: AST.CInfty,
+		sp.S.NaN: lambda self, spt: AST.NaN,
 
 		sp.Symbol: _spt2ast_Symbol,
 
-		sp.boolalg.BooleanTrue: lambda self, spt: AST.True_,
-		sp.boolalg.BooleanFalse: lambda self, spt: AST.False_,
+		sp.S.BooleanTrue: lambda self, spt: AST.True_,
+		sp.S.BooleanFalse: lambda self, spt: AST.False_,
 		sp.Or: lambda self, spt: AST ('-or', tuple (self._spt2ast (a) for a in spt.args)),
 		sp.And: lambda self, spt: (lambda args: sxlat._xlat_f2a_And (*args, canon = True) or AST ('-and', args)) (tuple (self._spt2ast (a) for a in spt.args)), # collapse possibly previously segmented extended comparison
 		sp.Not: _spt2ast_Not,
@@ -7545,11 +7545,11 @@ class spt2ast:
 		sp.Ge: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('>=', self._spt2ast (spt.args [1])),)),
 
 		sp.sets.EmptySet: lambda self, spt: AST.SetEmpty,
-		sp.fancysets.Complexes: lambda self, spt: AST.Complexes,
-		sp.fancysets.Reals: lambda self, spt: AST.Reals,
-		sp.fancysets.Integers: lambda self, spt: AST.Integers,
-		sp.fancysets.Naturals: lambda self, spt: AST.Naturals,
-		sp.fancysets.Naturals0: lambda self, spt: AST.Naturals0,
+		sp.S.Complexes: lambda self, spt: AST.Complexes,
+		sp.S.Reals: lambda self, spt: AST.Reals,
+		sp.S.Integers: lambda self, spt: AST.Integers,
+		sp.S.Naturals: lambda self, spt: AST.Naturals,
+		sp.S.Naturals0: lambda self, spt: AST.Naturals0,
 		sp.FiniteSet: lambda self, spt: AST ('-set', tuple (self._spt2ast (arg) for arg in spt.args)),
 		sp.Contains: lambda self, spt: AST ('<>', self._spt2ast (spt.args [0]), (('in', self._spt2ast (spt.args [1])),)),
 		sp.Union: _spt2ast_Union,
@@ -7584,7 +7584,7 @@ class spt2ast:
 
 		sp.Lambda: lambda self, spt: AST ('-lamb', self._spt2ast (spt.args [1]), tuple (v.name for v in spt.args [0])),
 		sp.Order: lambda self, spt: AST ('-func', 'O', ((self._spt2ast (spt.args [0]) if spt.args [1] [1] == 0 else self._spt2ast (spt.args)),)),
-		sp.Piecewise: lambda self, spt: AST ('-piece', tuple ((self._spt2ast (t [0]), True if isinstance (t [1], sp.boolalg.BooleanTrue) else self._spt2ast (t [1])) for t in spt.args)),
+		sp.Piecewise: lambda self, spt: AST ('-piece', tuple ((self._spt2ast (t [0]), True if isinstance (t [1], sp.S.BooleanTrue) else self._spt2ast (t [1])) for t in spt.args)),
 		sp.Subs: lambda self, spt: AST ('-subs', self._spt2ast (spt.args [0]), tuple ((self._spt2ast (s), self._spt2ast (d)) for s, d in zip (spt.args [1], spt.args [2]))),
 
 		sp.Function: _spt2ast_Function,
@@ -10090,7 +10090,7 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs
 
 
-_VERSION         = '1.1.5'
+_VERSION         = '1.1.6'
 
 _ONE_FUNCS       = {'N', 'O', 'S', 'beta', 'gamma', 'Gamma', 'Lambda', 'zeta'}
 _ENV_OPTS        = {'EI', 'quick', 'pyS', 'simplify', 'matsimp', 'ufuncmap', 'prodrat', 'doit', 'strict', *_ONE_FUNCS}
